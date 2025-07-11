@@ -1,0 +1,58 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+}
+
+.section {
+  flex: 1;
+  min-width: 150px;
+}
+
+.section h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.icons,
+.colors,
+.holes {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.icons span,
+.colors span,
+.holes span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.colors span {
+  border-radius: 50%;
+}
+
+.holes span {
+  font-size: 12px;
+  background-color: #fff;
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 5px 0;
+}
+
+input[type="checkbox"] {
+  margin-left: 5px;
+}

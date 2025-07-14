@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import UndoRedo from '../UndoRedo/UndoRedo'; // Імпорт компонента
@@ -10,6 +10,7 @@ const Toolbar = () => {
   const [sizeValues, setSizeValues] = useState({ width: 150, height: 150, cornerRadius: 2 });
   const [thickness, setThickness] = useState(1.6);
   const [isAdhesiveTape, setIsAdhesiveTape] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Оновлення активного об'єкта та розмірів при зміні
   useEffect(() => {
@@ -111,33 +112,70 @@ const Toolbar = () => {
     }
   };
 
-  // Додавання зображення (placeholder)
+  // Додавання зображення через файловий діалог
   const addImage = () => {
-    if (canvas) {
-      fabric.Image.fromURL('https://via.placeholder.com/100', (img) => {
-        img.set({ left: 100, top: 100 });
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-      });
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
-  // Upload (placeholder)
+  // Покращена функція завантаження зображень
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (file && canvas) {
+      // Перевіряємо тип файлу
+      if (!file.type.startsWith('image/')) {
+        alert('Будь ласка, виберіть файл зображення');
+        return;
+      }
+
+      // Перевіряємо розмір файлу (максимум 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Файл занадто великий. Максимальний розмір: 5MB');
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (event) => {
-        fabric.Image.fromURL(event.target.result, (img) => {
-          img.set({ left: 100, top: 100 });
+      reader.onload = async (event) => {
+        try {
+          // Використовуємо новий API для fabric.js v6+
+          const img = await fabric.FabricImage.fromURL(event.target.result, {
+            crossOrigin: 'anonymous'
+          });
+          
+          // Масштабуємо зображення, якщо воно занадто велике
+          const maxWidth = 300;
+          const maxHeight = 300;
+          
+          if (img.width > maxWidth || img.height > maxHeight) {
+            const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+            img.scale(scale);
+          }
+          
+          img.set({ 
+            left: 100, 
+            top: 100,
+            selectable: true,
+            hasControls: true,
+            hasBorders: true,
+          });
+          
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.renderAll();
-        });
+        } catch (error) {
+          console.error('Помилка завантаження зображення:', error);
+          alert('Помилка завантаження зображення');
+        }
+      };
+      reader.onerror = () => {
+        alert('Помилка завантаження файлу');
       };
       reader.readAsDataURL(file);
     }
+    
+    // Очищаємо input після завантаження
+    e.target.value = '';
   };
 
   // Додавання рамки (border)
@@ -454,11 +492,7 @@ const Toolbar = () => {
         <h3>Elements</h3>
         <div className={styles.icons}>
           <span onClick={addText}>A</span>
-          <span onClick={addImage}>📷</span>
-          <label>
-            <span>⬆️</span>
-            <input type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
-          </label>
+          <span onClick={addImage} title="Add image">📷</span>
           <span onClick={addRectangle}>□</span>
           <span onClick={addBorder}>┃</span>
           <span onClick={cut}>✂️</span>
@@ -481,6 +515,15 @@ const Toolbar = () => {
 
       {/* Undo/Redo */}
       <UndoRedo />
+      
+      {/* Прихований input для завантаження файлів через іконку камери */}
+      <input 
+        ref={fileInputRef}
+        type="file" 
+        accept="image/*" 
+        onChange={handleUpload} 
+        style={{ display: 'none' }} 
+      />
     </div>
   );
 };

@@ -7,7 +7,6 @@ function App() {
   return (
     <CanvasProvider>
       <div className="app">
-        <h1>Редактор візиток</h1>
         <TextList />
         <Toolbar />
         <Canvas />

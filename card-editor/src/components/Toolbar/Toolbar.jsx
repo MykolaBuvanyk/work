@@ -1,13 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useCanvasContext } from '../../contexts/CanvasContext';
-import * as fabric from 'fabric';
-import UndoRedo from '../UndoRedo/UndoRedo'; // Імпорт компонента
-import styles from './Toolbar.module.css';
+import React, { useState, useEffect, useRef } from "react";
+import { useCanvasContext } from "../../contexts/CanvasContext";
+import * as fabric from "fabric";
+import UndoRedo from "../UndoRedo/UndoRedo"; // Імпорт компонента
+import styles from "./Toolbar.module.css";
+import {
+  Icon0,
+  Icon1,
+  Icon2,
+  Icon3,
+  Icon4,
+  Icon5,
+  Icon6,
+  Icon7,
+  Icon8,
+  Icon9,
+  Icon10,
+  Icon11,
+  Icon12,
+  Icon13,
+  Icon14,
+} from "../../assets/Icons";
 
 const Toolbar = () => {
   const { canvas } = useCanvasContext();
   const [activeObject, setActiveObject] = useState(null);
-  const [sizeValues, setSizeValues] = useState({ width: 150, height: 150, cornerRadius: 2 });
+  const [sizeValues, setSizeValues] = useState({
+    width: 150,
+    height: 150,
+    cornerRadius: 2,
+  });
   const [thickness, setThickness] = useState(1.6);
   const [isAdhesiveTape, setIsAdhesiveTape] = useState(false);
   const fileInputRef = useRef(null);
@@ -15,7 +36,7 @@ const Toolbar = () => {
   // Оновлення активного об'єкта та розмірів при зміні
   useEffect(() => {
     if (canvas) {
-      canvas.on('selection:created', () => {
+      canvas.on("selection:created", () => {
         const obj = canvas.getActiveObject();
         setActiveObject(obj);
         if (obj) {
@@ -26,7 +47,7 @@ const Toolbar = () => {
           });
         }
       });
-      canvas.on('selection:updated', () => {
+      canvas.on("selection:updated", () => {
         const obj = canvas.getActiveObject();
         setActiveObject(obj);
         if (obj) {
@@ -37,11 +58,11 @@ const Toolbar = () => {
           });
         }
       });
-      canvas.on('selection:cleared', () => {
+      canvas.on("selection:cleared", () => {
         setActiveObject(null);
         setSizeValues({ width: 150, height: 150, cornerRadius: 2 });
       });
-      canvas.on('object:modified', () => {
+      canvas.on("object:modified", () => {
         const obj = canvas.getActiveObject();
         if (obj) {
           setSizeValues({
@@ -54,10 +75,10 @@ const Toolbar = () => {
     }
     return () => {
       if (canvas) {
-        canvas.off('selection:created');
-        canvas.off('selection:updated');
-        canvas.off('selection:cleared');
-        canvas.off('object:modified');
+        canvas.off("selection:created");
+        canvas.off("selection:updated");
+        canvas.off("selection:cleared");
+        canvas.off("object:modified");
       }
     };
   }, [canvas]);
@@ -82,7 +103,7 @@ const Toolbar = () => {
     if (activeObject) {
       activeObject.set({ strokeWidth: value });
       if (isAdhesiveTape) {
-        activeObject.set({ stroke: '#888' });
+        activeObject.set({ stroke: "#888" });
       }
       canvas.renderAll();
     }
@@ -99,11 +120,11 @@ const Toolbar = () => {
   // Додавання тексту
   const addText = () => {
     if (canvas) {
-      const text = new fabric.IText('Текст', {
+      const text = new fabric.IText("Текст", {
         left: 100,
         top: 100,
-        fontFamily: 'Arial',
-        fill: '#000000',
+        fontFamily: "Arial",
+        fill: "#000000",
         fontSize: 20,
       });
       canvas.add(text);
@@ -124,14 +145,14 @@ const Toolbar = () => {
     const file = e.target.files[0];
     if (file && canvas) {
       // Перевіряємо тип файлу
-      if (!file.type.startsWith('image/')) {
-        alert('Будь ласка, виберіть файл зображення');
+      if (!file.type.startsWith("image/")) {
+        alert("Будь ласка, виберіть файл зображення");
         return;
       }
 
       // Перевіряємо розмір файлу (максимум 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Файл занадто великий. Максимальний розмір: 5MB');
+        alert("Файл занадто великий. Максимальний розмір: 5MB");
         return;
       }
 
@@ -140,42 +161,45 @@ const Toolbar = () => {
         try {
           // Використовуємо новий API для fabric.js v6+
           const img = await fabric.FabricImage.fromURL(event.target.result, {
-            crossOrigin: 'anonymous'
+            crossOrigin: "anonymous",
           });
-          
+
           // Масштабуємо зображення, якщо воно занадто велике
           const maxWidth = 300;
           const maxHeight = 300;
-          
+
           if (img.width > maxWidth || img.height > maxHeight) {
-            const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+            const scale = Math.min(
+              maxWidth / img.width,
+              maxHeight / img.height
+            );
             img.scale(scale);
           }
-          
-          img.set({ 
-            left: 100, 
+
+          img.set({
+            left: 100,
             top: 100,
             selectable: true,
             hasControls: true,
             hasBorders: true,
           });
-          
+
           canvas.add(img);
           canvas.setActiveObject(img);
           canvas.renderAll();
         } catch (error) {
-          console.error('Помилка завантаження зображення:', error);
-          alert('Помилка завантаження зображення');
+          console.error("Помилка завантаження зображення:", error);
+          alert("Помилка завантаження зображення");
         }
       };
       reader.onerror = () => {
-        alert('Помилка завантаження файлу');
+        alert("Помилка завантаження файлу");
       };
       reader.readAsDataURL(file);
     }
-    
+
     // Очищаємо input після завантаження
-    e.target.value = '';
+    e.target.value = "";
   };
 
   // Додавання рамки (border)
@@ -186,8 +210,8 @@ const Toolbar = () => {
         top: 50,
         width: 200,
         height: 150,
-        fill: 'transparent',
-        stroke: '#000',
+        fill: "transparent",
+        stroke: "#000",
         strokeWidth: 2,
       });
       canvas.add(rect);
@@ -213,7 +237,7 @@ const Toolbar = () => {
         top: 100,
         width: 80,
         height: 80,
-        fill: '#000',
+        fill: "#000",
       });
       canvas.add(qr);
       canvas.setActiveObject(qr);
@@ -229,7 +253,7 @@ const Toolbar = () => {
         top: 100,
         width: 100,
         height: 40,
-        fill: '#000',
+        fill: "#000",
       });
       canvas.add(bar);
       canvas.setActiveObject(bar);
@@ -244,8 +268,8 @@ const Toolbar = () => {
         left: 100,
         top: 100,
         radius: 5,
-        fill: '#fff',
-        stroke: '#000',
+        fill: "#fff",
+        stroke: "#000",
         strokeWidth: 1,
       });
       canvas.add(hole);
@@ -262,8 +286,8 @@ const Toolbar = () => {
         top: 100,
         width: 100,
         height: 100,
-        fill: '#A9A9A9',
-        stroke: '#000',
+        fill: "#A9A9A9",
+        stroke: "#000",
         strokeWidth: 1,
       });
       canvas.add(rect);
@@ -278,8 +302,8 @@ const Toolbar = () => {
         left: 100,
         top: 100,
         radius: 50,
-        fill: '#FFA500',
-        stroke: '#000',
+        fill: "#FFA500",
+        stroke: "#000",
         strokeWidth: 1,
       });
       canvas.add(circle);
@@ -290,11 +314,11 @@ const Toolbar = () => {
 
   const addHalfCircle = () => {
     if (canvas) {
-      const halfCircle = new fabric.Path('M 0 0 Q 50 0 50 50 L 0 50 Z', {
+      const halfCircle = new fabric.Path("M 0 0 Q 50 0 50 50 L 0 50 Z", {
         left: 100,
         top: 100,
-        fill: '#800000',
-        stroke: '#000',
+        fill: "#800000",
+        stroke: "#000",
         strokeWidth: 1,
         scaleX: 1,
         scaleY: 0.5,
@@ -317,8 +341,8 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: '#DAA520',
-          stroke: '#000',
+          fill: "#DAA520",
+          stroke: "#000",
           strokeWidth: 1,
         }
       );
@@ -335,8 +359,8 @@ const Toolbar = () => {
         top: 100,
         width: 100,
         height: 100,
-        fill: '#A52A2A',
-        stroke: '#000',
+        fill: "#A52A2A",
+        stroke: "#000",
         strokeWidth: 1,
       });
       canvas.add(triangle);
@@ -344,58 +368,125 @@ const Toolbar = () => {
       canvas.renderAll();
     }
   };
+  const handleInputChange = (key, max, rawValue) => {
+    const parsed = parseInt(rawValue);
+    const value = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
+    setSizeValues((prev) => ({ ...prev, [key]: value }));
+    updateSize();
+  };
+
+  const changeValue = (key, delta, max) => {
+    setSizeValues((prev) => {
+      const newValue = Math.max(0, Math.min(max, prev[key] + delta));
+      const updated = { ...prev, [key]: newValue };
+      updateSize();
+      return updated;
+    });
+  };
 
   return (
     <div className={styles.toolbar}>
       {/* 1. Shape */}
       <div className={styles.section}>
-        <h3>Shape</h3>
-        <div className={styles.icons}>
-          <span onClick={addRectangle}>□</span>
-          <span onClick={addCircle}>○</span>
-          <span onClick={addHalfCircle}>∟</span>
-          <span onClick={addDiamond}>◇</span>
-          <span onClick={addTriangle}>△</span>
+        <div className={styles.numbering}>
+          <p>1</p>
         </div>
+          <div className={styles.icons}>
+            <h3>Shape</h3>
+            <span onClick={addRectangle}>{Icon0}</span>
+            <span onClick={addCircle}>{Icon1}</span>
+            <span onClick={addHalfCircle}>{Icon2}</span>
+            <span onClick={addDiamond}>{Icon3}</span>
+            <span onClick={addTriangle}>{Icon4}</span>
+            <span>{Icon5}</span>
+            <span>{Icon6}</span>
+            <span>{Icon7}</span>
+            <span>{Icon8}</span>
+            <span>{Icon9}</span>
+            <span>{Icon10}</span>
+            <span>{Icon11}</span>
+            <span>{Icon12}</span>
+            <span>{Icon13}</span>
+            <span>{Icon14}</span>
+          </div>
       </div>
 
       {/* 2. Size */}
       <div className={styles.section}>
-        <h3>Size</h3>
-        <div>
-          <label>Width: {sizeValues.width} <span>(mm)</span></label>
-          <input
-            type="range"
-            min="0"
-            max="300"
-            value={sizeValues.width}
-            onChange={(e) => {
-              setSizeValues({ ...sizeValues, width: parseInt(e.target.value) });
-              updateSize();
-            }}
-          />
-          <label>Height: {sizeValues.height} <span>(mm)</span></label>
-          <input
-            type="range"
-            min="0"
-            max="300"
-            value={sizeValues.height}
-            onChange={(e) => {
-              setSizeValues({ ...sizeValues, height: parseInt(e.target.value) });
-              updateSize();
-            }}
-          />
-          <label>Corner radius: {sizeValues.cornerRadius} <span>(mm)</span></label>
-          <input
-            type="range"
-            min="0"
-            max="10"
-            value={sizeValues.cornerRadius}
-            onChange={(e) => {
-              setSizeValues({ ...sizeValues, cornerRadius: parseInt(e.target.value) });
-              updateSize();
-            }}
-          />
+        <div className={styles.numbering}>
+          <p>2</p>
+        </div>
+        <div className={styles.grid}>
+          <div className={styles.field}>
+            <label>Width</label>
+            <div className={styles.inputGroup}>
+              <input
+                type="number"
+                value={sizeValues.width}
+                onChange={(e) =>
+                  handleInputChange("width", 300, e.target.value)
+                }
+              />
+              <div className={styles.arrows}>
+                <i
+                  className="fa-solid fa-chevron-up"
+                  onClick={() => changeValue("width", 1, 300)}
+                />
+                <i
+                  className="fa-solid fa-chevron-down"
+                  onClick={() => changeValue("width", -1, 300)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Height</label>
+            <div className={styles.inputGroup}>
+              <input
+                type="number"
+                value={sizeValues.height}
+                onChange={(e) =>
+                  handleInputChange("height", 300, e.target.value)
+                }
+              />
+              <div className={styles.arrows}>
+                <i
+                  className="fa-solid fa-chevron-up"
+                  onClick={() => changeValue("height", 1, 300)}
+                />
+                <i
+                  className="fa-solid fa-chevron-down"
+                  onClick={() => changeValue("height", -1, 300)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Corner radius</label>
+            <div className={styles.inputGroup}>
+              <input
+                type="number"
+                value={sizeValues.cornerRadius}
+                onChange={(e) =>
+                  handleInputChange("cornerRadius", 10, e.target.value)
+                }
+              />
+              <div className={styles.arrows}>
+                <i
+                  className="fa-solid fa-chevron-up"
+                  onClick={() => changeValue("cornerRadius", 1, 10)}
+                />
+                <i
+                  className="fa-solid fa-chevron-down"
+                  onClick={() => changeValue("cornerRadius", -1, 10)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.unitLabel}>* (mm)</div>
         </div>
       </div>
 
@@ -453,36 +544,36 @@ const Toolbar = () => {
         <h3>Colour</h3>
         <div className={styles.colors}>
           <span
-            style={{ backgroundColor: '#A9A9A9' }}
-            onClick={() => updateColor('#A9A9A9')}
+            style={{ backgroundColor: "#A9A9A9" }}
+            onClick={() => updateColor("#A9A9A9")}
           ></span>
           <span
-            style={{ backgroundColor: '#FFA500' }}
-            onClick={() => updateColor('#FFA500')}
+            style={{ backgroundColor: "#FFA500" }}
+            onClick={() => updateColor("#FFA500")}
           ></span>
           <span
-            style={{ backgroundColor: '#800000' }}
-            onClick={() => updateColor('#800000')}
+            style={{ backgroundColor: "#800000" }}
+            onClick={() => updateColor("#800000")}
           ></span>
           <span
-            style={{ backgroundColor: '#000000' }}
-            onClick={() => updateColor('#000000')}
+            style={{ backgroundColor: "#000000" }}
+            onClick={() => updateColor("#000000")}
           ></span>
           <span
-            style={{ backgroundColor: '#FFFFFF' }}
-            onClick={() => updateColor('#FFFFFF')}
+            style={{ backgroundColor: "#FFFFFF" }}
+            onClick={() => updateColor("#FFFFFF")}
           ></span>
           <span
-            style={{ backgroundColor: '#808080' }}
-            onClick={() => updateColor('#808080')}
+            style={{ backgroundColor: "#808080" }}
+            onClick={() => updateColor("#808080")}
           ></span>
           <span
-            style={{ backgroundColor: '#A52A2A' }}
-            onClick={() => updateColor('#A52A2A')}
+            style={{ backgroundColor: "#A52A2A" }}
+            onClick={() => updateColor("#A52A2A")}
           ></span>
           <span
-            style={{ backgroundColor: '#DAA520' }}
-            onClick={() => updateColor('#DAA520')}
+            style={{ backgroundColor: "#DAA520" }}
+            onClick={() => updateColor("#DAA520")}
           ></span>
         </div>
       </div>
@@ -492,7 +583,9 @@ const Toolbar = () => {
         <h3>Elements</h3>
         <div className={styles.icons}>
           <span onClick={addText}>A</span>
-          <span onClick={addImage} title="Add image">📷</span>
+          <span onClick={addImage} title="Add image">
+            📷
+          </span>
           <span onClick={addRectangle}>□</span>
           <span onClick={addBorder}>┃</span>
           <span onClick={cut}>✂️</span>
@@ -515,14 +608,14 @@ const Toolbar = () => {
 
       {/* Undo/Redo */}
       <UndoRedo />
-      
+
       {/* Прихований input для завантаження файлів через іконку камери */}
-      <input 
+      <input
         ref={fileInputRef}
-        type="file" 
-        accept="image/*" 
-        onChange={handleUpload} 
-        style={{ display: 'none' }} 
+        type="file"
+        accept="image/*"
+        onChange={handleUpload}
+        style={{ display: "none" }}
       />
     </div>
   );

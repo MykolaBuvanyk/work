@@ -1,5 +1,5 @@
 .toolbar {
-  width: 33%;
+  width: 380px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -10,11 +10,26 @@
 .section {
   flex: 0 0 auto;
   min-width: 150px;
+  display: flex;
+  align-items:flex-start;
+  gap: 10px;
 }
+
+.numbering p{
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 157, 0, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
 
 .section h3 {
   font-size: 14px;
-  margin-bottom: 10px;
+  margin: 0px;
   font-weight: bold;
 }
 
@@ -25,10 +40,11 @@
   gap: 5px;
   flex-wrap: wrap;
   color: #000;
+  justify-content: flex-end;
+  width: fit-content;
 }
 
 .icons span,
-.colors span,
 .holes span {
   display: inline-flex;
   justify-content: center;
@@ -37,10 +53,17 @@
   height: 30px;
   cursor: pointer;
   font-size: 16px;
+  transition: all ease 0.3s;
 }
 
-.colors span {
-  border-radius: 50%;
+.icons svg:hover > *{
+  stroke: rgba(0, 108, 164, 1) !important;
+}
+
+.colors svg {
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
 }
 
 .holes span {
@@ -55,3 +78,72 @@ input[type="range"] {
 input[type="checkbox"] {
   margin-left: 5px;
 }
+
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: auto auto;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inputGroup input {
+  width: 100px;
+  padding: 6px 10px;
+  font-size: 14px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+  /* Вимикаємо нативні стрілки у number */
+  -moz-appearance: textfield;
+}
+.inputGroup input::-webkit-inner-spin-button,
+.inputGroup input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.arrows i {
+  font-size: 14px;
+  color: #444;
+  transition: color 0.2s;
+}
+.arrows i:hover {
+  color: #000;
+}
+
+.unitLabel {
+  align-self: end;
+  justify-self: end;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+

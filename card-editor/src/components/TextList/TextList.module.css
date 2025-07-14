@@ -1,0 +1,420 @@
+.textListContainer {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.addTextSection {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.addTextButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.addTextButton:hover {
+  background: #0056b3;
+}
+
+.addIcon {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.textList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.textItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.textItem:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+}
+
+.textItem.selected {
+  border-color: #007bff;
+  background: #e7f3ff;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+}
+
+.textNumber {
+  font-weight: 600;
+  color: #6c757d;
+  min-width: 20px;
+  font-size: 14px;
+}
+
+.textContent {
+  flex: 1;
+  max-width: 200px;
+}
+
+.textInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.textControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fontSizeSelect {
+  padding: 4px 6px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  min-width: 50px;
+}
+
+.fontFamilySelect {
+  padding: 4px 6px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.formatButtons {
+  display: flex;
+  gap: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.formatButton {
+  padding: 4px 8px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.formatButton:hover {
+  background: #f8f9fa;
+}
+
+.formatButton.active {
+  background: #007bff;
+  color: white;
+}
+
+.formatButton:not(:last-child) {
+  border-right: 1px solid #ced4da;
+}
+
+.alignButtons {
+  display: flex;
+  gap: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.alignButton {
+  padding: 4px 6px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alignButton:hover {
+  background: #f8f9fa;
+}
+
+.alignButton.active {
+  background: #007bff;
+  color: white;
+}
+
+.alignButton:not(:last-child) {
+  border-right: 1px solid #ced4da;
+}
+
+.colorPicker {
+  width: 30px;
+  height: 24px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.colorPicker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.colorPicker::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+}
+
+.symbolButton {
+  padding: 4px 6px;
+  border: 1px solid #6f42c1;
+  border-radius: 4px;
+  background: white;
+  color: #6f42c1;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.symbolButton:hover {
+  background: #6f42c1;
+  color: white;
+}
+
+.deleteButton {
+  padding: 4px 6px;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  background: white;
+  color: #dc3545;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* Модальне вікно для спеціальних символів */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #495057;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.symbolGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 8px;
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.symbolItem {
+  padding: 12px 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.symbolItem:hover {
+  background: #e7f3ff;
+  border-color: #007bff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.symbolItem:active {
+  transform: translateY(0);
+}
+
+/* Стилі для скролбару в модальному вікні */
+.symbolGrid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.symbolGrid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.symbolGrid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.symbolGrid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .textItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .textControls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .textContent {
+    max-width: 100%;
+  }
+  
+  .fontSizeSelect,
+  .fontFamilySelect {
+    min-width: 60px;
+  }
+  
+  .modalContent {
+    width: 95%;
+    max-width: none;
+  }
+  
+  .symbolGrid {
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 6px;
+    padding: 15px;
+  }
+  
+  .symbolItem {
+    padding: 8px 6px;
+    font-size: 16px;
+    min-height: 35px;
+  }
+  
+  .modalHeader {
+    padding: 12px 16px;
+  }
+  
+  .modalHeader h3 {
+    font-size: 16px;
+  }
+}

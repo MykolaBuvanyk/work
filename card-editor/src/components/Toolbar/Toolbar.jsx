@@ -391,24 +391,24 @@ const Toolbar = () => {
         <div className={styles.numbering}>
           <p>1</p>
         </div>
-          <div className={styles.icons}>
-            <h3>Shape</h3>
-            <span onClick={addRectangle}>{Icon0}</span>
-            <span onClick={addCircle}>{Icon1}</span>
-            <span onClick={addHalfCircle}>{Icon2}</span>
-            <span onClick={addDiamond}>{Icon3}</span>
-            <span onClick={addTriangle}>{Icon4}</span>
-            <span>{Icon5}</span>
-            <span>{Icon6}</span>
-            <span>{Icon7}</span>
-            <span>{Icon8}</span>
-            <span>{Icon9}</span>
-            <span>{Icon10}</span>
-            <span>{Icon11}</span>
-            <span>{Icon12}</span>
-            <span>{Icon13}</span>
-            <span>{Icon14}</span>
-          </div>
+        <div className={styles.icons}>
+          <h3>Shape</h3>
+          <span onClick={addRectangle}>{Icon0}</span>
+          <span onClick={addCircle}>{Icon1}</span>
+          <span onClick={addHalfCircle}>{Icon2}</span>
+          <span onClick={addDiamond}>{Icon3}</span>
+          <span onClick={addTriangle}>{Icon4}</span>
+          <span>{Icon5}</span>
+          <span>{Icon6}</span>
+          <span>{Icon7}</span>
+          <span>{Icon8}</span>
+          <span>{Icon9}</span>
+          <span>{Icon10}</span>
+          <span>{Icon11}</span>
+          <span>{Icon12}</span>
+          <span>{Icon13}</span>
+          <span>{Icon14}</span>
+        </div>
       </div>
 
       {/* 2. Size */}
@@ -441,29 +441,6 @@ const Toolbar = () => {
           </div>
 
           <div className={styles.field}>
-            <label>Height</label>
-            <div className={styles.inputGroup}>
-              <input
-                type="number"
-                value={sizeValues.height}
-                onChange={(e) =>
-                  handleInputChange("height", 300, e.target.value)
-                }
-              />
-              <div className={styles.arrows}>
-                <i
-                  className="fa-solid fa-chevron-up"
-                  onClick={() => changeValue("height", 1, 300)}
-                />
-                <i
-                  className="fa-solid fa-chevron-down"
-                  onClick={() => changeValue("height", -1, 300)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.field}>
             <label>Corner radius</label>
             <div className={styles.inputGroup}>
               <input
@@ -486,56 +463,92 @@ const Toolbar = () => {
             </div>
           </div>
 
+          <div className={styles.field}>
+            <label>Height</label>
+            <div className={styles.inputGroup}>
+              <input
+                type="number"
+                value={sizeValues.height}
+                onChange={(e) =>
+                  handleInputChange("height", 300, e.target.value)
+                }
+              />
+              <div className={styles.arrows}>
+                <i
+                  className="fa-solid fa-chevron-up"
+                  onClick={() => changeValue("height", 1, 300)}
+                />
+                <i
+                  className="fa-solid fa-chevron-down"
+                  onClick={() => changeValue("height", -1, 300)}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className={styles.unitLabel}>* (mm)</div>
         </div>
       </div>
 
       {/* 3. Thickness */}
       <div className={styles.section}>
-        <h3>Thickness</h3>
-        <div>
-          <label>1.6</label>
-          <input
-            type="radio"
-            name="thickness"
-            value="1.6"
-            checked={thickness === 1.6}
-            onChange={() => {
-              setThickness(1.6);
-              updateThickness(1.6);
-            }}
-          />
-          <label>0.8</label>
-          <input
-            type="radio"
-            name="thickness"
-            value="0.8"
-            checked={thickness === 0.8}
-            onChange={() => {
-              setThickness(0.8);
-              updateThickness(0.8);
-            }}
-          />
-          <label>3.2</label>
-          <input
-            type="radio"
-            name="thickness"
-            value="3.2"
-            checked={thickness === 3.2}
-            onChange={() => {
-              setThickness(3.2);
-              updateThickness(3.2);
-            }}
-          />
-          <label>Adhesive Tape</label>
-          <input
-            type="checkbox"
-            checked={isAdhesiveTape}
-            onChange={(e) => {
-              setIsAdhesiveTape(e.target.checked);
-              updateThickness(thickness);
-            }}
-          />
+        <div className={styles.numbering}>
+          <p>3</p>
+        </div>
+        <div className={styles.thicknessWrapper}>
+          <div className={styles.field}>
+            <h3>Thickness:</h3>
+            <label>1.6</label>
+            <input
+              type="radio"
+              name="thickness"
+              value="1.6"
+              checked={thickness === 1.6}
+              onChange={() => {
+                setThickness(1.6);
+                updateThickness(1.6);
+              }}
+            />
+          </div>
+          <div className={styles.field}>
+            <label>0.8</label>
+            <input
+              type="radio"
+              name="thickness"
+              value="0.8"
+              checked={thickness === 0.8}
+              onChange={() => {
+                setThickness(0.8);
+                updateThickness(0.8);
+              }}
+            />
+          </div>
+          <div className="">
+            <label>3.2</label>
+            <input
+              type="radio"
+              name="thickness"
+              value="3.2"
+              checked={thickness === 3.2}
+              onChange={() => {
+                setThickness(3.2);
+                updateThickness(3.2);
+              }}
+            />
+          </div>
+          <div className="">
+            <label>Adhesive Tape</label>
+            <input
+              type="checkbox"
+              checked={isAdhesiveTape}
+              onChange={(e) => {
+                setIsAdhesiveTape(e.target.checked);
+                updateThickness(thickness);
+              }}
+            />
+          </div>
+          <div></div>
+          <div className={styles.unitLabel}>* (mm)</div>
         </div>
       </div>
 

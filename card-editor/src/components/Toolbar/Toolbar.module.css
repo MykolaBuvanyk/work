@@ -1,5 +1,5 @@
 .toolbar {
-  width: 380px;
+  width: 400px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -89,8 +89,13 @@ input[type="checkbox"] {
 
 .field {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  /* flex-direction: column; */
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .label {
@@ -146,4 +151,73 @@ input[type="checkbox"] {
   font-style: italic;
 }
 
+input[type="number"] {
+  width: 50px;
+  background-color: rgba(0, 108, 164, 1);
+  color: white;
+  border-radius: 0;
+  font-size: 14px;
+  text-align: center;
+}
+input[type="number"]:focus {
+  outline: none; /* Прибирає стандартний контур */
+  border: none; /* Переконуємось, що бордер відсутній */
+}
 
+.unitLabel{
+  font-weight: 500;
+  color: #000;
+  font-style: italic;
+}
+
+
+.thicknessWrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 10px 5px;
+  justify-content: space-between;
+  align-items: center;
+}
+.thicknessWrapper h3{
+  margin-right: 10px;
+}
+.thicknessWrapper > div {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+/* Стилізація radio */
+.thicknessWrapper input[type="radio"],
+.thicknessWrapper input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.61);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.thicknessWrapper input[type="radio"]:checked,
+.thicknessWrapper input[type="checkbox"]:checked {
+  background-color: rgba(0, 108, 164, 1);
+  border: none;
+}
+
+.thicknessWrapper input[type="radio"]:checked::after,
+.thicknessWrapper input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 7px;
+  width: 5px;
+  font-weight: 900;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}

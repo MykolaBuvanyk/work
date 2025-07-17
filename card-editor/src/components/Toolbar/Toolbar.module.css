@@ -33,9 +33,7 @@
   font-weight: bold;
 }
 
-.icons,
-.colors,
-.holes {
+.icons {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
@@ -44,8 +42,7 @@
   width: fit-content;
 }
 
-.icons span,
-.holes span {
+.icons span{
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -64,10 +61,6 @@
   width: 36px;
   height: 36px;
   cursor: pointer;
-}
-
-.holes span {
-  font-size: 12px;
 }
 
 input[type="range"] {
@@ -220,4 +213,74 @@ input[type="number"]:focus {
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+}
+
+.colorSection{
+  display: flex;
+  flex-direction: column;
+}
+
+.colorTitleWrapper{
+  display: flex;
+  gap: 10px;
+}
+
+.colors {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(2, auto);
+  flex-wrap: wrap;
+  color: #000;
+  justify-content: space-evenly;
+  width: 100%;
+}
+
+.colors span{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.elementsList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.elementsEl {
+  flex: 0 1 calc(33.333% - 50px);
+  display: flex;
+  justify-content: center;
+  
+}
+
+.elementsSpanWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #000;
+  border-radius: 10px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  margin-bottom: 15px;
+}
+
+.holes{
+  display: flex;
+  width: 100%;
+  justify-content: space-evenly;
+}
+.holes span svg > :nth-child(2){
+  transition: all ease .3s;
+}
+.holes span:hover svg > :nth-child(2){
+  stroke: rgba(0, 108, 164, 1);
+  stroke-width: 2;
+  stroke-opacity: 1;
 }

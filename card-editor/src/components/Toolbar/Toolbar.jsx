@@ -19,6 +19,34 @@ import {
   Icon12,
   Icon13,
   Icon14,
+  A1,
+  A2,
+  A3,
+  A4,
+  A5,
+  A6,
+  A7,
+  A8,
+  A9,
+  A10,
+  A11,
+  A12,
+  A13,
+  A14,
+  Image,
+  Upload,
+  Shape,
+  Border,
+  Cut,
+  QrCode,
+  BarCode,
+  Hole1, 
+  Hole2, 
+  Hole3,
+  Hole4, 
+  Hole5,
+  Hole6,
+  Hole7
 } from "../../assets/Icons";
 
 const Toolbar = () => {
@@ -553,69 +581,104 @@ const Toolbar = () => {
       </div>
 
       {/* 4. Colour */}
-      <div className={styles.section}>
-        <h3>Colour</h3>
+      <div className={`${styles.section} ${styles.colorSection}`}>
+        <div className={styles.colorTitleWrapper}>
+          <div className={styles.numbering}>
+            <p>4</p>
+          </div>
+          <h3>Colour</h3>
+        </div>
         <div className={styles.colors}>
-          <span
-            style={{ backgroundColor: "#A9A9A9" }}
-            onClick={() => updateColor("#A9A9A9")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#FFA500" }}
-            onClick={() => updateColor("#FFA500")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#800000" }}
-            onClick={() => updateColor("#800000")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#000000" }}
-            onClick={() => updateColor("#000000")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#FFFFFF" }}
-            onClick={() => updateColor("#FFFFFF")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#808080" }}
-            onClick={() => updateColor("#808080")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#A52A2A" }}
-            onClick={() => updateColor("#A52A2A")}
-          ></span>
-          <span
-            style={{ backgroundColor: "#DAA520" }}
-            onClick={() => updateColor("#DAA520")}
-          ></span>
+          <span>{A1}</span>
+          <span>{A2}</span>
+          <span>{A3}</span>
+          <span>{A4}</span>
+          <span>{A5}</span>
+          <span>{A6}</span>
+          <span>{A7}</span>
+          <span>{A8}</span>
+          <span>{A9}</span>
+          <span>{A10}</span>
+          <span>{A11}</span>
+          <span>{A12}</span>
+          <span>{A13}</span>
+          <span>{A14}</span>
         </div>
       </div>
 
       {/* 5. Elements & Tools */}
-      <div className={styles.section}>
-        <h3>Elements</h3>
-        <div className={styles.icons}>
-          <span onClick={addText}>A</span>
-          <span onClick={addImage} title="Add image">
-            📷
-          </span>
-          <span onClick={addRectangle}>□</span>
-          <span onClick={addBorder}>┃</span>
-          <span onClick={cut}>✂️</span>
-          <span onClick={addQRCode}>🔳</span>
-          <span onClick={addBarCode}>▱</span>
+      <div className={`${styles.section} ${styles.colorSection}`}>
+        <div className={styles.numbering}>
+          <p>5</p>
         </div>
+        <ul className={styles.elementsList}>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              <span style={{ fontWeight: "bold" }}>A</span>
+              <span>Text</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {Image}
+              <span>Image</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {Upload}
+              <span>Upload</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {Shape}
+              <span>Shape</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {Border}
+              <span>Border</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {Cut}
+              <span>Cut</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {QrCode}
+              <span>QR Code</span>
+            </span>
+          </li>
+          <li className={styles.elementsEl}>
+            <span className={styles.elementsSpanWrapper}>
+              {BarCode}
+              <span>Bar Code</span>
+            </span>
+          </li>
+        </ul>
       </div>
 
       {/* 6. Holes */}
-      <div className={styles.section}>
-        <h3>Holes</h3>
+      <div className={`${styles.section} ${styles.colorSection}`}>
+        <div className={styles.colorTitleWrapper}>
+          <div className={styles.numbering}>
+            <p>6</p>
+          </div>
+          <h3>Holes</h3>
+        </div>
         <div className={styles.holes}>
-          <span onClick={addHole}>●</span>
-          <span onClick={addHole}>⬤</span>
-          <span onClick={addHole}>⬤</span>
-          <span onClick={addHole}>⬤</span>
-          <span onClick={addHole}>⬤</span>
+          <span onClick={addHole}>{Hole1}</span>
+          <span onClick={addHole}>{Hole2}</span>
+          <span onClick={addHole}>{Hole3}</span>
+          <span onClick={addHole}>{Hole4}</span>
+          <span onClick={addHole}>{Hole5}</span>
+          <span onClick={addHole}>{Hole6}</span>
+          <span onClick={addHole}>{Hole7}</span>
         </div>
       </div>
 

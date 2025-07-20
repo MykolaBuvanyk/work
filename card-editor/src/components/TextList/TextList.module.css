@@ -3,93 +3,128 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background: #f8f9fa;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .addTextSection {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e9ecef;
+  margin-left: 15px;
+  display: flex;
+  align-items: center;
 }
 
 .addTextButton {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  background: #007bff;
-  color: black;
-  border: none;
-  border-radius: 6px;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
+}
+.addTextInput{
+  width: 130px;
+  padding: 3px 5px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  background: transparent;
+  color: rgba(0, 108, 164, 1);
 }
-
-.addTextButton:hover {
-  background: #0056b3;
-}
-
-.addIcon {
-  font-size: 18px;
-  font-weight: bold;
-  line-height: 1;
-}
-
 .textList {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  color: black;
 }
 
-.textItem {
+.textItem{
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 7px;
+}
+
+.textItemWrap {
+  display: flex;
+  align-items: center;
+  gap: 15px;
   background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .textItem:hover {
   border-color: #007bff;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
 }
 
 .textItem.selected {
-  border-color: #007bff;
-  background: #e7f3ff;
-  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+  border-color: rgba(0, 108, 164, 1);
 }
 
 .textNumber {
   font-weight: 600;
-  color: #6c757d;
-  min-width: 20px;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .textContent {
-  flex: 1;
-  max-width: 200px;
+  width: 50%;
 }
 
 .textInput {
   width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  padding: 3px 5px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
   font-size: 14px;
-  background: white;
-  transition: border-color 0.2s;
+  background: transparent;
 }
 
+.fontSizeControl {
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  overflow: hidden; /* Щоб уникнути виступу елементів за межі */
+}
+
+.sizeButton {
+  background-color: transparent;
+  padding: 0 5px;
+  color: rgba(0, 108, 164, 1);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sizeButton:hover,
+.sizeButton:focus,
+.sizeButton:active {
+  border: none;
+  background-color: transparent;
+}
+
+.fontSizeInput {
+  background-color: rgba(218, 218, 218, 1) !important;
+  border: none;
+  color: #000 !important;
+  padding: 2px 5px;
+  width: 40px;
+  text-align: center;
+  border-radius: 0;
+  height: 22px;
+  width: auto;
+}
+.fontSizeInput::-webkit-inner-spin-button,
+.fontSizeInput::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+  .fontSizeInput {
+    -moz-appearance: textfield;
+  }
 .textInput:focus {
   outline: none;
   border-color: #007bff;
@@ -100,7 +135,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .fontSizeSelect {
@@ -108,93 +142,60 @@
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 12px;
-  background: white;
+  background: transparent;
   cursor: pointer;
   min-width: 50px;
 }
 
 .fontFamilySelect {
-  padding: 4px 6px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  padding: 2px 4px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 10px;
   font-size: 12px;
-  background: white;
+  background: transparent;
   cursor: pointer;
   min-width: 80px;
+  max-width: 130px;
+  height: 22px;
 }
 
 .formatButtons {
   display: flex;
-  gap: 2px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  gap: 8px;
   overflow: hidden;
 }
 
 .formatButton {
-  padding: 4px 8px;
+  padding: 0;
   border: none;
-  background: white;
+  background: transparent;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
   transition: all 0.2s;
-  min-width: 24px;
-  height: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.formatButton:hover {
-  background: #f8f9fa;
-}
-
-.formatButton.active {
-  background: #007bff;
-  color: black;
-}
-
-.formatButton:not(:last-child) {
-  border-right: 1px solid #ced4da;
 }
 
 .alignButtons {
   display: flex;
-  gap: 2px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  gap: 8px;
   overflow: hidden;
 }
 
 .alignButton {
-  padding: 4px 6px;
+  padding: 0;
   border: none;
-  background: white;
+  background: transparent;
   cursor: pointer;
-  font-size: 12px;
   transition: all 0.2s;
-  min-width: 24px;
-  height: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
-.alignButton:hover {
-  background: #f8f9fa;
-}
-
-.alignButton.active {
-  background: #007bff;
-  color: black;
-}
-
-.alignButton:not(:last-child) {
-  border-right: 1px solid #ced4da;
-}
-
-.colorPicker {
+/* TODO: буваник перестарався */
+/* .colorPicker {
   width: 30px;
   height: 24px;
   border: 1px solid #ced4da;
@@ -213,49 +214,26 @@
   padding: 0;
   border: none;
   border-radius: 2px;
-}
+} */
 
 .symbolButton {
-  padding: 4px 6px;
-  border: 1px solid #6f42c1;
-  border-radius: 4px;
-  background: white;
-  color: #6f42c1;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: all 0.2s;
-  min-width: 24px;
-  height: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.symbolButton:hover {
-  background: #6f42c1;
-  color: black;
 }
 
 .deleteButton {
-  padding: 4px 6px;
-  border: 1px solid #dc3545;
-  border-radius: 4px;
-  background: white;
-  color: #dc3545;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-  min-width: 24px;
-  height: 24px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.deleteButton:hover {
-  background: #dc3545;
-  color: black;
 }
 
 /* Модальне вікно для спеціальних символів */

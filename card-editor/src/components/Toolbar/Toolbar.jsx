@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import * as XLSX from "xlsx";
 import UndoRedo from "../UndoRedo/UndoRedo"; // Імпорт компонента
+import QRCodeGenerator from "../QRCodeGenerator/QRCodeGenerator";
 import styles from "./Toolbar.module.css";
 import {
   Icon0,
@@ -257,45 +258,6 @@ const Toolbar = () => {
       canvas.remove(activeObject);
       setActiveObject(null);
       canvas.renderAll();
-    }
-  };
-
-  // Додавання QR-коду з реальною генерацією
-  const addQRCode = async () => {
-    if (!canvas) return;
-    
-    const text = prompt("Введіть текст для QR-коду:", "https://example.com");
-    if (!text) return;
-    
-    try {
-      // Генеруємо QR-код як Data URL
-      const qrDataURL = await QRCode.toDataURL(text, {
-        width: 150,
-        margin: 1,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      
-      // Створюємо зображення з QR-коду
-      const img = await fabric.FabricImage.fromURL(qrDataURL);
-      
-      img.set({
-        left: 100,
-        top: 100,
-        selectable: true,
-        hasControls: true,
-        hasBorders: true,
-      });
-      
-      canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-      
-    } catch (error) {
-      console.error('Помилка генерації QR-коду:', error);
-      alert('Помилка генерації QR-коду');
     }
   };
 
@@ -1678,11 +1640,8 @@ const Toolbar = () => {
               <span>Cut</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={addQRCode}>
-            <span className={styles.elementsSpanWrapper}>
-              {QrCode}
-              <span>QR Code</span>
-            </span>
+          <li className={styles.elementsEl}>
+            <QRCodeGenerator />
           </li>
           <li className={styles.elementsEl} onClick={addBarCode}>
             <span className={styles.elementsSpanWrapper}>

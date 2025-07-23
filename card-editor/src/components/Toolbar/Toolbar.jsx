@@ -44,13 +44,13 @@ import {
   Cut,
   QrCode,
   BarCode,
-  Hole1, 
-  Hole2, 
+  Hole1,
+  Hole2,
   Hole3,
-  Hole4, 
+  Hole4,
   Hole5,
   Hole6,
-  Hole7
+  Hole7,
 } from "../../assets/Icons";
 
 const Toolbar = () => {
@@ -64,6 +64,11 @@ const Toolbar = () => {
   const [thickness, setThickness] = useState(1.6);
   const [isAdhesiveTape, setIsAdhesiveTape] = useState(false);
   const fileInputRef = useRef(null);
+  const [isQrOpen, setIsQrOpen] = useState(false);
+
+  const addQrCode = () => {
+    setIsQrOpen(true);
+  };
 
   // Оновлення активного об'єкта та розмірів при зміні
   useEffect(() => {
@@ -264,14 +269,14 @@ const Toolbar = () => {
   // Додавання бар-коду з реальною генерацією
   const addBarCode = () => {
     if (!canvas) return;
-    
+
     const text = prompt("Введіть текст для штрих-коду:", "1234567890");
     if (!text) return;
-    
+
     try {
       // Створюємо тимчасовий canvas для генерації штрих-коду
-      const tempCanvas = document.createElement('canvas');
-      
+      const tempCanvas = document.createElement("canvas");
+
       // Генеруємо штрих-код
       JsBarcode(tempCanvas, text, {
         format: "CODE128",
@@ -280,12 +285,12 @@ const Toolbar = () => {
         displayValue: true,
         fontSize: 14,
         textMargin: 5,
-        margin: 10
+        margin: 10,
       });
-      
+
       // Конвертуємо в Data URL
       const barcodeDataURL = tempCanvas.toDataURL();
-      
+
       // Створюємо зображення зі штрих-коду
       fabric.FabricImage.fromURL(barcodeDataURL).then((img) => {
         img.set({
@@ -295,20 +300,21 @@ const Toolbar = () => {
           hasControls: true,
           hasBorders: true,
         });
-        
+
         canvas.add(img);
         canvas.setActiveObject(img);
         canvas.renderAll();
       });
-      
     } catch (error) {
-      console.error('Помилка генерації штрих-коду:', error);
-      alert('Помилка генерації штрих-коду. Перевірте правильність введених даних.');
+      console.error("Помилка генерації штрих-коду:", error);
+      alert(
+        "Помилка генерації штрих-коду. Перевірте правильність введених даних."
+      );
     }
   };
 
   // Функції для різних типів отворів
-  
+
   // Тип 1 - без отворів (по дефолту)
   const addHoleType1 = () => {
     // Нічого не робимо - це тип без отворів
@@ -326,8 +332,8 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
       canvas.add(hole);
       canvas.setActiveObject(hole);
@@ -340,7 +346,7 @@ const Toolbar = () => {
     if (canvas) {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      
+
       // Лівий отвір
       const leftHole = new fabric.Circle({
         left: 15,
@@ -349,10 +355,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Правий отвір
       const rightHole = new fabric.Circle({
         left: canvasWidth - 15,
@@ -361,10 +367,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       canvas.add(leftHole);
       canvas.add(rightHole);
       canvas.setActiveObject(leftHole);
@@ -377,7 +383,7 @@ const Toolbar = () => {
     if (canvas) {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      
+
       // Верхній лівий
       const topLeft = new fabric.Circle({
         left: 15,
@@ -386,10 +392,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Верхній правий
       const topRight = new fabric.Circle({
         left: canvasWidth - 15,
@@ -398,10 +404,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Нижній лівий
       const bottomLeft = new fabric.Circle({
         left: 15,
@@ -410,10 +416,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Нижній правий
       const bottomRight = new fabric.Circle({
         left: canvasWidth - 15,
@@ -422,10 +428,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       canvas.add(topLeft);
       canvas.add(topRight);
       canvas.add(bottomLeft);
@@ -440,7 +446,7 @@ const Toolbar = () => {
     if (canvas) {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      
+
       // Верхній лівий
       const topLeft = new fabric.Rect({
         left: 15,
@@ -450,10 +456,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Верхній правий
       const topRight = new fabric.Rect({
         left: canvasWidth - 15,
@@ -463,10 +469,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Нижній лівий
       const bottomLeft = new fabric.Rect({
         left: 15,
@@ -476,10 +482,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       // Нижній правий
       const bottomRight = new fabric.Rect({
         left: canvasWidth - 15,
@@ -489,10 +495,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       canvas.add(topLeft);
       canvas.add(topRight);
       canvas.add(bottomLeft);
@@ -506,7 +512,7 @@ const Toolbar = () => {
   const addHoleType6 = () => {
     if (canvas) {
       const canvasHeight = canvas.getHeight();
-      
+
       const leftHole = new fabric.Circle({
         left: 15,
         top: canvasHeight / 2,
@@ -514,10 +520,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       canvas.add(leftHole);
       canvas.setActiveObject(leftHole);
       canvas.renderAll();
@@ -529,7 +535,7 @@ const Toolbar = () => {
     if (canvas) {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      
+
       const rightHole = new fabric.Circle({
         left: canvasWidth - 15,
         top: canvasHeight / 2,
@@ -537,10 +543,10 @@ const Toolbar = () => {
         fill: "#fff",
         stroke: "#000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
       });
-      
+
       canvas.add(rightHole);
       canvas.setActiveObject(rightHole);
       canvas.renderAll();
@@ -559,8 +565,9 @@ const Toolbar = () => {
       const canvasData = {
         width: canvas.getWidth(),
         height: canvas.getHeight(),
-        backgroundColor: canvas.backgroundColor || canvas.get('backgroundColor') || "#ffffff",
-        objects: []
+        backgroundColor:
+          canvas.backgroundColor || canvas.get("backgroundColor") || "#ffffff",
+        objects: [],
       };
 
       // Проходимо по всіх об'єктах canvas
@@ -581,11 +588,11 @@ const Toolbar = () => {
           opacity: obj.opacity !== undefined ? obj.opacity : 1,
           visible: obj.visible !== undefined ? obj.visible : true,
           originX: obj.originX || "left",
-          originY: obj.originY || "top"
+          originY: obj.originY || "top",
         };
 
         // Додаткові властивості для тексту
-        if (obj.type === 'i-text' || obj.type === 'text') {
+        if (obj.type === "i-text" || obj.type === "text") {
           objData.text = obj.text || "";
           objData.fontSize = obj.fontSize || 20;
           objData.fontFamily = obj.fontFamily || "Arial";
@@ -595,7 +602,7 @@ const Toolbar = () => {
         }
 
         // Додаткові властивості для зображень
-        if (obj.type === 'image') {
+        if (obj.type === "image") {
           try {
             objData.src = obj.getSrc ? obj.getSrc() : obj.src;
           } catch (e) {
@@ -605,17 +612,17 @@ const Toolbar = () => {
         }
 
         // Додаткові властивості для кругів
-        if (obj.type === 'circle') {
+        if (obj.type === "circle") {
           objData.radius = obj.radius || 50;
         }
 
         // Додаткові властивості для полігонів
-        if (obj.type === 'polygon') {
+        if (obj.type === "polygon") {
           objData.points = obj.points || [];
         }
 
         // Додаткові властивості для path (включаючи halfCircle)
-        if (obj.type === 'path') {
+        if (obj.type === "path") {
           objData.path = obj.path || "";
         }
 
@@ -634,8 +641,8 @@ const Toolbar = () => {
         { property: "=== OBJECTS DATA ===", value: "" },
         ...canvasData.objects.map((obj, index) => ({
           property: `Object ${index + 1}`,
-          value: JSON.stringify(obj)
-        }))
+          value: JSON.stringify(obj),
+        })),
       ]);
 
       const workbook = XLSX.utils.book_new();
@@ -645,7 +652,9 @@ const Toolbar = () => {
       const fileName = `canvas-template-${Date.now()}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
-      alert(`Шаблон успішно експортовано! Збережено об'єктів: ${canvasData.objects.length}`);
+      alert(
+        `Шаблон успішно експортовано! Збережено об'єктів: ${canvasData.objects.length}`
+      );
     } catch (error) {
       console.error("Помилка експорту:", error);
       alert(`Помилка при експорті шаблону: ${error.message}`);
@@ -654,10 +663,10 @@ const Toolbar = () => {
 
   // Імпорт шаблону з Excel
   const importFromExcel = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls';
-    
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -666,8 +675,8 @@ const Toolbar = () => {
       reader.onload = (event) => {
         try {
           const data = new Uint8Array(event.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          
+          const workbook = XLSX.read(data, { type: "array" });
+
           // Читаємо перший лист
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
@@ -690,7 +699,7 @@ const Toolbar = () => {
           let backgroundColor = "#ffffff";
 
           // Шукаємо параметри canvas
-          jsonData.forEach(row => {
+          jsonData.forEach((row) => {
             if (row.property === "Canvas Width" && row.value) {
               canvasWidth = Number(row.value) || 800;
             }
@@ -706,16 +715,17 @@ const Toolbar = () => {
           if (canvas) {
             canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
             // Використовуємо правильний метод для fabric.js v6+
-            canvas.set('backgroundColor', backgroundColor);
+            canvas.set("backgroundColor", backgroundColor);
             canvas.renderAll();
           }
 
           // Відновлюємо об'єкти
-          const objectsData = jsonData.filter(row => 
-            row.property && 
-            row.property.toString().startsWith("Object ") && 
-            row.value && 
-            row.value.toString().trim() !== ""
+          const objectsData = jsonData.filter(
+            (row) =>
+              row.property &&
+              row.property.toString().startsWith("Object ") &&
+              row.value &&
+              row.value.toString().trim() !== ""
           );
 
           console.log("Objects to restore:", objectsData.length); // Для діагностики
@@ -725,9 +735,9 @@ const Toolbar = () => {
           objectsData.forEach((row, index) => {
             try {
               let objData;
-              
+
               // Спробуємо розпарсити JSON
-              if (typeof row.value === 'string') {
+              if (typeof row.value === "string") {
                 objData = JSON.parse(row.value);
               } else {
                 objData = row.value;
@@ -738,13 +748,17 @@ const Toolbar = () => {
                 return;
               }
 
-              console.log(`Restoring object ${index + 1}:`, objData.type, objData); // Для діагностики
-              
+              console.log(
+                `Restoring object ${index + 1}:`,
+                objData.type,
+                objData
+              ); // Для діагностики
+
               // Створюємо об'єкт відповідно до типу
               let fabricObj = null;
 
               switch (objData.type) {
-                case 'rect':
+                case "rect":
                   fabricObj = new fabric.Rect({
                     left: objData.left || 0,
                     top: objData.top || 0,
@@ -754,11 +768,11 @@ const Toolbar = () => {
                     stroke: objData.stroke || null,
                     strokeWidth: objData.strokeWidth || 0,
                     originX: objData.originX || "left",
-                    originY: objData.originY || "top"
+                    originY: objData.originY || "top",
                   });
                   break;
 
-                case 'circle':
+                case "circle":
                   fabricObj = new fabric.Circle({
                     left: objData.left || 0,
                     top: objData.top || 0,
@@ -767,11 +781,11 @@ const Toolbar = () => {
                     stroke: objData.stroke || null,
                     strokeWidth: objData.strokeWidth || 0,
                     originX: objData.originX || "left",
-                    originY: objData.originY || "top"
+                    originY: objData.originY || "top",
                   });
                   break;
 
-                case 'triangle':
+                case "triangle":
                   fabricObj = new fabric.Triangle({
                     left: objData.left || 0,
                     top: objData.top || 0,
@@ -781,12 +795,12 @@ const Toolbar = () => {
                     stroke: objData.stroke || null,
                     strokeWidth: objData.strokeWidth || 0,
                     originX: objData.originX || "left",
-                    originY: objData.originY || "top"
+                    originY: objData.originY || "top",
                   });
                   break;
 
-                case 'i-text':
-                case 'text':
+                case "i-text":
+                case "text":
                   fabricObj = new fabric.IText(objData.text || "Text", {
                     left: objData.left || 0,
                     top: objData.top || 0,
@@ -797,11 +811,11 @@ const Toolbar = () => {
                     fontStyle: objData.fontStyle || "normal",
                     textAlign: objData.textAlign || "left",
                     originX: objData.originX || "left",
-                    originY: objData.originY || "top"
+                    originY: objData.originY || "top",
                   });
                   break;
 
-                case 'polygon':
+                case "polygon":
                   if (objData.points && Array.isArray(objData.points)) {
                     fabricObj = new fabric.Polygon(objData.points, {
                       left: objData.left || 0,
@@ -810,12 +824,12 @@ const Toolbar = () => {
                       stroke: objData.stroke || null,
                       strokeWidth: objData.strokeWidth || 0,
                       originX: objData.originX || "left",
-                      originY: objData.originY || "top"
+                      originY: objData.originY || "top",
                     });
                   }
                   break;
 
-                case 'path':
+                case "path":
                   if (objData.path) {
                     fabricObj = new fabric.Path(objData.path, {
                       left: objData.left || 0,
@@ -824,29 +838,31 @@ const Toolbar = () => {
                       stroke: objData.stroke || null,
                       strokeWidth: objData.strokeWidth || 0,
                       originX: objData.originX || "left",
-                      originY: objData.originY || "top"
+                      originY: objData.originY || "top",
                     });
                   }
                   break;
 
-                case 'image':
+                case "image":
                   if (objData.src) {
-                    fabric.FabricImage.fromURL(objData.src).then((img) => {
-                      img.set({
-                        left: objData.left || 0,
-                        top: objData.top || 0,
-                        scaleX: objData.scaleX || 1,
-                        scaleY: objData.scaleY || 1,
-                        angle: objData.angle || 0,
-                        opacity: objData.opacity || 1,
-                        originX: objData.originX || "left",
-                        originY: objData.originY || "top"
+                    fabric.FabricImage.fromURL(objData.src)
+                      .then((img) => {
+                        img.set({
+                          left: objData.left || 0,
+                          top: objData.top || 0,
+                          scaleX: objData.scaleX || 1,
+                          scaleY: objData.scaleY || 1,
+                          angle: objData.angle || 0,
+                          opacity: objData.opacity || 1,
+                          originX: objData.originX || "left",
+                          originY: objData.originY || "top",
+                        });
+                        canvas.add(img);
+                        canvas.renderAll();
+                      })
+                      .catch((err) => {
+                        console.error("Помилка завантаження зображення:", err);
                       });
-                      canvas.add(img);
-                      canvas.renderAll();
-                    }).catch(err => {
-                      console.error("Помилка завантаження зображення:", err);
-                    });
                   }
                   break;
 
@@ -862,13 +878,18 @@ const Toolbar = () => {
                   scaleY: objData.scaleY || 1,
                   angle: objData.angle || 0,
                   opacity: objData.opacity !== undefined ? objData.opacity : 1,
-                  visible: objData.visible !== undefined ? objData.visible : true
+                  visible:
+                    objData.visible !== undefined ? objData.visible : true,
                 });
                 canvas.add(fabricObj);
                 restoredCount++;
               }
             } catch (objError) {
-              console.error(`Помилка створення об'єкта ${index + 1}:`, objError, row);
+              console.error(
+                `Помилка створення об'єкта ${index + 1}:`,
+                objError,
+                row
+              );
             }
           });
 
@@ -876,27 +897,30 @@ const Toolbar = () => {
             canvas.renderAll();
           }
 
-          alert(`Шаблон успішно імпортовано! Відновлено об'єктів: ${restoredCount}`);
-
+          alert(
+            `Шаблон успішно імпортовано! Відновлено об'єктів: ${restoredCount}`
+          );
         } catch (error) {
           console.error("Детальна помилка імпорту:", error);
-          alert(`Помилка при імпорті шаблону: ${error.message}. Перевірте консоль для деталей.`);
+          alert(
+            `Помилка при імпорті шаблону: ${error.message}. Перевірте консоль для деталей.`
+          );
         }
       };
-      
+
       reader.onerror = (error) => {
         console.error("Помилка читання файлу:", error);
         alert("Помилка при читанні файлу");
       };
-      
+
       reader.readAsArrayBuffer(file);
     };
-    
+
     input.click();
   };
 
   // Фігури (Shape Icons)
-  
+
   // Icon0 - Прямокутник
   const addRectangle = () => {
     if (canvas) {
@@ -963,16 +987,19 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       // Дужка замка
-      const lockShackle = new fabric.Path("M 20 0 Q 20 -15 40 -15 Q 60 -15 60 0", {
-        left: 100,
-        top: 130,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 2,
-      });
-      
+      const lockShackle = new fabric.Path(
+        "M 20 0 Q 20 -15 40 -15 Q 60 -15 60 0",
+        {
+          left: 100,
+          top: 130,
+          fill: "transparent",
+          stroke: "#000",
+          strokeWidth: 2,
+        }
+      );
+
       canvas.add(lockBase);
       canvas.add(lockShackle);
       canvas.setActiveObject(lockBase);
@@ -991,7 +1018,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       const line = new fabric.Rect({
         left: 72,
         top: 98,
@@ -1000,7 +1027,7 @@ const Toolbar = () => {
         fill: "#000",
         rx: 2,
       });
-      
+
       canvas.add(circle);
       canvas.add(line);
       canvas.setActiveObject(circle);
@@ -1019,7 +1046,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       // Горизонтальна лінія
       const hLine = new fabric.Rect({
         left: 72,
@@ -1029,7 +1056,7 @@ const Toolbar = () => {
         fill: "#000",
         rx: 2,
       });
-      
+
       // Вертикальна лінія
       const vLine = new fabric.Rect({
         left: 98,
@@ -1041,7 +1068,7 @@ const Toolbar = () => {
         strokeWidth: 1,
         rx: 2,
       });
-      
+
       canvas.add(circle);
       canvas.add(hLine);
       canvas.add(vLine);
@@ -1063,20 +1090,23 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       // Дах будинку (трикутник)
-      const roof = new fabric.Polygon([
-        { x: 25, y: 50 },
-        { x: 50, y: 0 },
-        { x: 75, y: 50 }
-      ], {
-        left: 80,
-        top: 70,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
-      
+      const roof = new fabric.Polygon(
+        [
+          { x: 25, y: 50 },
+          { x: 50, y: 0 },
+          { x: 75, y: 50 },
+        ],
+        {
+          left: 80,
+          top: 70,
+          fill: "transparent",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
+
       canvas.add(base);
       canvas.add(roof);
       canvas.setActiveObject(base);
@@ -1097,7 +1127,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 0.5,
       });
-      
+
       // Півколо
       const arc = new fabric.Path("M 0 40 Q 40 0 80 40", {
         left: 80,
@@ -1106,7 +1136,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       canvas.add(base);
       canvas.add(arc);
       canvas.setActiveObject(arc);
@@ -1125,7 +1155,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       // Основа арки
       const base = new fabric.Path("M 0 60 L 0 80 L 80 80 L 80 60", {
         left: 80,
@@ -1134,7 +1164,7 @@ const Toolbar = () => {
         stroke: "#000",
         strokeWidth: 1,
       });
-      
+
       canvas.add(arc);
       canvas.add(base);
       canvas.setActiveObject(arc);
@@ -1145,20 +1175,23 @@ const Toolbar = () => {
   // Icon9 - Шестикутник
   const addHexagon = () => {
     if (canvas) {
-      const hexagon = new fabric.Polygon([
-        { x: 40, y: 0 },
-        { x: 80, y: 20 },
-        { x: 80, y: 60 },
-        { x: 40, y: 80 },
-        { x: 0, y: 60 },
-        { x: 0, y: 20 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const hexagon = new fabric.Polygon(
+        [
+          { x: 40, y: 0 },
+          { x: 80, y: 20 },
+          { x: 80, y: 60 },
+          { x: 40, y: 80 },
+          { x: 0, y: 60 },
+          { x: 0, y: 20 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "transparent",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(hexagon);
       canvas.setActiveObject(hexagon);
       canvas.renderAll();
@@ -1168,22 +1201,25 @@ const Toolbar = () => {
   // Icon10 - Восьмикутник
   const addOctagon = () => {
     if (canvas) {
-      const octagon = new fabric.Polygon([
-        { x: 30, y: 0 },
-        { x: 70, y: 0 },
-        { x: 100, y: 30 },
-        { x: 100, y: 70 },
-        { x: 70, y: 100 },
-        { x: 30, y: 100 },
-        { x: 0, y: 70 },
-        { x: 0, y: 30 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "#20B2AA",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const octagon = new fabric.Polygon(
+        [
+          { x: 30, y: 0 },
+          { x: 70, y: 0 },
+          { x: 100, y: 30 },
+          { x: 100, y: 70 },
+          { x: 70, y: 100 },
+          { x: 30, y: 100 },
+          { x: 0, y: 70 },
+          { x: 0, y: 30 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "#20B2AA",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(octagon);
       canvas.setActiveObject(octagon);
       canvas.renderAll();
@@ -1193,17 +1229,20 @@ const Toolbar = () => {
   // Icon11 - Трикутник вгору
   const addTriangleUp = () => {
     if (canvas) {
-      const triangle = new fabric.Polygon([
-        { x: 50, y: 0 },
-        { x: 100, y: 100 },
-        { x: 0, y: 100 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "#FF6347",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const triangle = new fabric.Polygon(
+        [
+          { x: 50, y: 0 },
+          { x: 100, y: 100 },
+          { x: 0, y: 100 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "#FF6347",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(triangle);
       canvas.setActiveObject(triangle);
       canvas.renderAll();
@@ -1213,21 +1252,24 @@ const Toolbar = () => {
   // Icon12 - Стрілка вліво
   const addArrowLeft = () => {
     if (canvas) {
-      const arrow = new fabric.Polygon([
-        { x: 0, y: 30 },
-        { x: 20, y: 10 },
-        { x: 20, y: 20 },
-        { x: 80, y: 20 },
-        { x: 80, y: 40 },
-        { x: 20, y: 40 },
-        { x: 20, y: 50 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "#32CD32",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const arrow = new fabric.Polygon(
+        [
+          { x: 0, y: 30 },
+          { x: 20, y: 10 },
+          { x: 20, y: 20 },
+          { x: 80, y: 20 },
+          { x: 80, y: 40 },
+          { x: 20, y: 40 },
+          { x: 20, y: 50 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "#32CD32",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(arrow);
       canvas.setActiveObject(arrow);
       canvas.renderAll();
@@ -1237,21 +1279,24 @@ const Toolbar = () => {
   // Icon13 - Стрілка вправо
   const addArrowRight = () => {
     if (canvas) {
-      const arrow = new fabric.Polygon([
-        { x: 80, y: 30 },
-        { x: 60, y: 10 },
-        { x: 60, y: 20 },
-        { x: 0, y: 20 },
-        { x: 0, y: 40 },
-        { x: 60, y: 40 },
-        { x: 60, y: 50 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "#FF4500",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const arrow = new fabric.Polygon(
+        [
+          { x: 80, y: 30 },
+          { x: 60, y: 10 },
+          { x: 60, y: 20 },
+          { x: 0, y: 20 },
+          { x: 0, y: 40 },
+          { x: 60, y: 40 },
+          { x: 60, y: 50 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "#FF4500",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(arrow);
       canvas.setActiveObject(arrow);
       canvas.renderAll();
@@ -1261,23 +1306,26 @@ const Toolbar = () => {
   // Icon14 - Прапор
   const addFlag = () => {
     if (canvas) {
-      const flag = new fabric.Polygon([
-        { x: 0, y: 40 },   // Початок прапора
-        { x: 0, y: 80 },   // Низ лівої сторони
-        { x: 30, y: 70 },  // Точка на прапорі
-        { x: 60, y: 85 },  // Кінець прапора
-        { x: 88, y: 70 },  // Верх правої сторони
-        { x: 88, y: 40 },  // Верх правої сторони
-        { x: 60, y: 35 },  // Середина верху
-        { x: 35, y: 0 },   // Верхня точка
-        { x: 0, y: 40 }    // Повернення до початку
-      ], {
-        left: 100,
-        top: 100,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const flag = new fabric.Polygon(
+        [
+          { x: 0, y: 40 }, // Початок прапора
+          { x: 0, y: 80 }, // Низ лівої сторони
+          { x: 30, y: 70 }, // Точка на прапорі
+          { x: 60, y: 85 }, // Кінець прапора
+          { x: 88, y: 70 }, // Верх правої сторони
+          { x: 88, y: 40 }, // Верх правої сторони
+          { x: 60, y: 35 }, // Середина верху
+          { x: 35, y: 0 }, // Верхня точка
+          { x: 0, y: 40 }, // Повернення до початку
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "transparent",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(flag);
       canvas.setActiveObject(flag);
       canvas.renderAll();
@@ -1287,18 +1335,21 @@ const Toolbar = () => {
   // Icon15 - Ромб (якщо є)
   const addDiamond = () => {
     if (canvas) {
-      const diamond = new fabric.Polygon([
-        { x: 50, y: 0 },
-        { x: 100, y: 50 },
-        { x: 50, y: 100 },
-        { x: 0, y: 50 }
-      ], {
-        left: 100,
-        top: 100,
-        fill: "#DAA520",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const diamond = new fabric.Polygon(
+        [
+          { x: 50, y: 0 },
+          { x: 100, y: 50 },
+          { x: 50, y: 100 },
+          { x: 0, y: 50 },
+        ],
+        {
+          left: 100,
+          top: 100,
+          fill: "#DAA520",
+          stroke: "#000",
+          strokeWidth: 1,
+        }
+      );
       canvas.add(diamond);
       canvas.setActiveObject(diamond);
       canvas.renderAll();
@@ -1308,45 +1359,57 @@ const Toolbar = () => {
     const parsed = parseInt(rawValue);
     const value = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
     setSizeValues((prev) => ({ ...prev, [key]: value }));
-    
+
     // Застосовуємо зміни відразу
     setTimeout(() => {
       if (activeObject && canvas) {
         const currentLeft = activeObject.left;
         const currentTop = activeObject.top;
-        
-        if (activeObject.type === 'circle') {
+
+        if (activeObject.type === "circle") {
           const originalRadius = activeObject.radius;
           const scaleX = value / (originalRadius * 2);
-          const scaleY = (key === 'width' ? value : sizeValues.height) / (originalRadius * 2);
-          if (key === 'height') {
+          const scaleY =
+            (key === "width" ? value : sizeValues.height) /
+            (originalRadius * 2);
+          if (key === "height") {
             const scaleX = sizeValues.width / (originalRadius * 2);
             const scaleY = value / (originalRadius * 2);
-            activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+            activeObject.set({
+              scaleX,
+              scaleY,
+              left: currentLeft,
+              top: currentTop,
+            });
           } else {
             const scaleY = sizeValues.height / (originalRadius * 2);
-            activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+            activeObject.set({
+              scaleX,
+              scaleY,
+              left: currentLeft,
+              top: currentTop,
+            });
           }
-        } else if (activeObject.type === 'ellipse') {
+        } else if (activeObject.type === "ellipse") {
           const originalRx = activeObject.rx;
           const originalRy = activeObject.ry;
-          if (key === 'width') {
+          if (key === "width") {
             const scaleX = value / (originalRx * 2);
             activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-          } else if (key === 'height') {
+          } else if (key === "height") {
             const scaleY = value / (originalRy * 2);
             activeObject.set({ scaleY, left: currentLeft, top: currentTop });
           }
         } else {
           const originalWidth = activeObject.width;
           const originalHeight = activeObject.height;
-          if (key === 'width') {
+          if (key === "width") {
             const scaleX = value / originalWidth;
             activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-          } else if (key === 'height') {
+          } else if (key === "height") {
             const scaleY = value / originalHeight;
             activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-          } else if (key === 'cornerRadius') {
+          } else if (key === "cornerRadius") {
             activeObject.set({ rx: value, ry: value });
           }
         }
@@ -1359,47 +1422,52 @@ const Toolbar = () => {
     setSizeValues((prev) => {
       const newValue = Math.max(0, Math.min(max, prev[key] + delta));
       const updated = { ...prev, [key]: newValue };
-      
+
       // Застосовуємо зміни відразу
       setTimeout(() => {
         if (activeObject && canvas) {
           const currentLeft = activeObject.left;
           const currentTop = activeObject.top;
-          
-          if (activeObject.type === 'circle') {
+
+          if (activeObject.type === "circle") {
             const originalRadius = activeObject.radius;
-            if (key === 'width' || key === 'height') {
+            if (key === "width" || key === "height") {
               const scaleX = updated.width / (originalRadius * 2);
               const scaleY = updated.height / (originalRadius * 2);
-              activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+              activeObject.set({
+                scaleX,
+                scaleY,
+                left: currentLeft,
+                top: currentTop,
+              });
             }
-          } else if (activeObject.type === 'ellipse') {
+          } else if (activeObject.type === "ellipse") {
             const originalRx = activeObject.rx;
             const originalRy = activeObject.ry;
-            if (key === 'width') {
+            if (key === "width") {
               const scaleX = newValue / (originalRx * 2);
               activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-            } else if (key === 'height') {
+            } else if (key === "height") {
               const scaleY = newValue / (originalRy * 2);
               activeObject.set({ scaleY, left: currentLeft, top: currentTop });
             }
           } else {
             const originalWidth = activeObject.width;
             const originalHeight = activeObject.height;
-            if (key === 'width') {
+            if (key === "width") {
               const scaleX = newValue / originalWidth;
               activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-            } else if (key === 'height') {
+            } else if (key === "height") {
               const scaleY = newValue / originalHeight;
               activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-            } else if (key === 'cornerRadius') {
+            } else if (key === "cornerRadius") {
               activeObject.set({ rx: newValue, ry: newValue });
             }
           }
           canvas.renderAll();
         }
       }, 0);
-      
+
       return updated;
     });
   };
@@ -1640,8 +1708,11 @@ const Toolbar = () => {
               <span>Cut</span>
             </span>
           </li>
-          <li className={styles.elementsEl}>
-            <QRCodeGenerator />
+          <li className={styles.elementsEl} onClick={addQrCode}>
+            <span className={styles.elementsSpanWrapper}>
+              {QrCode}
+              <span>QR Code</span>
+            </span>
           </li>
           <li className={styles.elementsEl} onClick={addBarCode}>
             <span className={styles.elementsSpanWrapper}>
@@ -1649,7 +1720,7 @@ const Toolbar = () => {
               <span>Bar Code</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={exportToExcel}>
+          {/* <li className={styles.elementsEl} onClick={exportToExcel}>
             <span className={styles.elementsSpanWrapper}>
               <span style={{ fontWeight: "bold" }}>📤</span>
               <span>Export</span>
@@ -1660,7 +1731,7 @@ const Toolbar = () => {
               <span style={{ fontWeight: "bold" }}>📥</span>
               <span>Import</span>
             </span>
-          </li>
+          </li> */}
         </ul>
       </div>
 
@@ -1673,19 +1744,33 @@ const Toolbar = () => {
           <h3>Holes</h3>
         </div>
         <div className={styles.holes}>
-          <span onClick={addHoleType1} title="Без отворів">{Hole1}</span>
-          <span onClick={addHoleType2} title="Отвір зверху по центру">{Hole2}</span>
-          <span onClick={addHoleType3} title="Два отвори по бокам">{Hole3}</span>
-          <span onClick={addHoleType4} title="4 круглі отвори по кутам">{Hole4}</span>
-          <span onClick={addHoleType5} title="4 квадратні отвори по кутам">{Hole5}</span>
-          <span onClick={addHoleType6} title="Отвір зліва по центру">{Hole6}</span>
-          <span onClick={addHoleType7} title="Отвір зправа по центру">{Hole7}</span>
+          <span onClick={addHoleType1} title="Без отворів">
+            {Hole1}
+          </span>
+          <span onClick={addHoleType2} title="Отвір зверху по центру">
+            {Hole2}
+          </span>
+          <span onClick={addHoleType3} title="Два отвори по бокам">
+            {Hole3}
+          </span>
+          <span onClick={addHoleType4} title="4 круглі отвори по кутам">
+            {Hole4}
+          </span>
+          <span onClick={addHoleType5} title="4 квадратні отвори по кутам">
+            {Hole5}
+          </span>
+          <span onClick={addHoleType6} title="Отвір зліва по центру">
+            {Hole6}
+          </span>
+          <span onClick={addHoleType7} title="Отвір зправа по центру">
+            {Hole7}
+          </span>
         </div>
       </div>
 
       {/* Undo/Redo */}
       <UndoRedo />
-
+      <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
       {/* Прихований input для завантаження файлів через іконку камери */}
       <input
         ref={fileInputRef}

@@ -1,91 +1,64 @@
 .qrGenerator {
-  position: relative;
-  display: inline-block;
-}
-
-.trigger {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  z-index: 2000;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.trigger:hover {
-  background-color: #f0f0f0;
-}
-
-.trigger span:first-child {
-  font-size: 18px;
-  margin-bottom: 4px;
-}
-
-.trigger span:last-child {
-  font-size: 12px;
-  font-weight: 500;
+  justify-content: flex-start;
+  align-items: flex-start;
+  pointer-events: none;
 }
 
 .dropdown {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  top: 0;
+  left: 0;
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2100;
   min-width: 320px;
   max-width: 400px;
-  margin-top: 4px;
+  margin-top: 0;
+  margin-left: 0;
+  pointer-events: auto;
 }
 
 .dropdownHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid #eee;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  padding: 30px 15px 0 0;
 }
 
-.dropdownHeader h3 {
-  margin: 0;
+.dropdownHeader h3{
+  color: rgba(0, 108, 164, 1);
   font-size: 16px;
-  font-weight: 600;
-  color: #333;
+  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  margin: 0;
 }
 
 .closeBtn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #666;
+  position: absolute;
+  top: 15px;
+  right: 15px;
   padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.closeBtn:hover {
-  background-color: #f0f0f0;
+  background-color: transparent;
+  cursor: pointer;
 }
 
 .content {
-  padding: 16px 20px;
+  padding: 20px;
+  padding-top: 0;
 }
 
 .content p {
-  margin: 0 0 16px 0;
-  font-size: 13px;
-  color: #666;
+  font-size: 14px;
+  color: #000;
   text-align: center;
 }
 
@@ -233,11 +206,11 @@
     min-width: 280px;
     max-width: 90vw;
   }
-  
+
   .content {
     padding: 12px 16px;
   }
-  
+
   .dropdownHeader {
     padding: 12px 16px 8px;
   }

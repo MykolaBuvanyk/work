@@ -7,9 +7,11 @@ function App() {
   return (
     <CanvasProvider>
       <div className="app">
-        <TextList />
-        <Toolbar />
-        <IconMenu />
+        <div className="sidebar">
+          <TextList />
+          <Toolbar />
+          <IconMenu />
+        </div>
         <Canvas />
       </div>
     </CanvasProvider>

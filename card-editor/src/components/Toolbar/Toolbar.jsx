@@ -933,14 +933,16 @@ const Toolbar = () => {
     input.click();
   };
 
-  // Фігури
+  // Фігури (Shape Icons)
+  
+  // Icon0 - Прямокутник
   const addRectangle = () => {
     if (canvas) {
       const rect = new fabric.Rect({
         left: 100,
         top: 100,
         width: 100,
-        height: 100,
+        height: 60,
         fill: "#A9A9A9",
         stroke: "#000",
         strokeWidth: 1,
@@ -951,6 +953,7 @@ const Toolbar = () => {
     }
   };
 
+  // Icon1 - Коло
   const addCircle = () => {
     if (canvas) {
       const circle = new fabric.Circle({
@@ -967,54 +970,275 @@ const Toolbar = () => {
     }
   };
 
-  const addHalfCircle = () => {
+  // Icon2 - Еліпс
+  const addEllipse = () => {
     if (canvas) {
-      const halfCircle = new fabric.Path("M 0 0 Q 50 0 50 50 L 0 50 Z", {
+      const ellipse = new fabric.Ellipse({
         left: 100,
         top: 100,
-        fill: "#800000",
+        rx: 60,
+        ry: 35,
+        fill: "#87CEEB",
         stroke: "#000",
         strokeWidth: 1,
-        scaleX: 1,
-        scaleY: 0.5,
       });
-      canvas.add(halfCircle);
-      canvas.setActiveObject(halfCircle);
+      canvas.add(ellipse);
+      canvas.setActiveObject(ellipse);
       canvas.renderAll();
     }
   };
 
-  const addDiamond = () => {
+  // Icon3 - Замок (складна фігура з кругом та прямокутником)
+  const addLock = () => {
     if (canvas) {
-      const diamond = new fabric.Polygon(
-        [
-          { x: 0, y: 50 },
-          { x: 50, y: 0 },
-          { x: 100, y: 50 },
-          { x: 50, y: 100 },
-        ],
-        {
-          left: 100,
-          top: 100,
-          fill: "#DAA520",
-          stroke: "#000",
-          strokeWidth: 1,
-        }
-      );
-      canvas.add(diamond);
-      canvas.setActiveObject(diamond);
+      // Основа замка
+      const lockBase = new fabric.Rect({
+        left: 100,
+        top: 130,
+        width: 60,
+        height: 40,
+        fill: "#D2691E",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      // Дужка замка
+      const lockShackle = new fabric.Path("M 20 0 Q 20 -15 40 -15 Q 60 -15 60 0", {
+        left: 100,
+        top: 130,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 2,
+      });
+      
+      canvas.add(lockBase);
+      canvas.add(lockShackle);
+      canvas.setActiveObject(lockBase);
       canvas.renderAll();
     }
   };
 
-  const addTriangle = () => {
+  // Icon4 - Коло з горизонтальною лінією (мінус)
+  const addCircleWithLine = () => {
     if (canvas) {
-      const triangle = new fabric.Triangle({
+      const circle = new fabric.Circle({
         left: 100,
         top: 100,
-        width: 100,
-        height: 100,
-        fill: "#A52A2A",
+        radius: 40,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      const line = new fabric.Rect({
+        left: 72,
+        top: 98,
+        width: 56,
+        height: 4,
+        fill: "#000",
+        rx: 2,
+      });
+      
+      canvas.add(circle);
+      canvas.add(line);
+      canvas.setActiveObject(circle);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon5 - Коло з хрестом (плюс)
+  const addCircleWithCross = () => {
+    if (canvas) {
+      const circle = new fabric.Circle({
+        left: 100,
+        top: 100,
+        radius: 40,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      // Горизонтальна лінія
+      const hLine = new fabric.Rect({
+        left: 72,
+        top: 98,
+        width: 56,
+        height: 4,
+        fill: "#000",
+        rx: 2,
+      });
+      
+      // Вертикальна лінія
+      const vLine = new fabric.Rect({
+        left: 98,
+        top: 115,
+        width: 4,
+        height: 22,
+        fill: "#D9D9D9",
+        stroke: "#000",
+        strokeWidth: 1,
+        rx: 2,
+      });
+      
+      canvas.add(circle);
+      canvas.add(hLine);
+      canvas.add(vLine);
+      canvas.setActiveObject(circle);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon6 - Будинок з дахом
+  const addHouse = () => {
+    if (canvas) {
+      // Основа будинку
+      const base = new fabric.Rect({
+        left: 80,
+        top: 120,
+        width: 60,
+        height: 50,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      // Дах будинку (трикутник)
+      const roof = new fabric.Polygon([
+        { x: 25, y: 50 },
+        { x: 50, y: 0 },
+        { x: 75, y: 50 }
+      ], {
+        left: 80,
+        top: 70,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      canvas.add(base);
+      canvas.add(roof);
+      canvas.setActiveObject(base);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon7 - Півколо з основою (дуга)
+  const addHalfCircle = () => {
+    if (canvas) {
+      // Основа
+      const base = new fabric.Rect({
+        left: 80,
+        top: 140,
+        width: 80,
+        height: 2,
+        fill: "#D9D9D9",
+        stroke: "#000",
+        strokeWidth: 0.5,
+      });
+      
+      // Півколо
+      const arc = new fabric.Path("M 0 40 Q 40 0 80 40", {
+        left: 80,
+        top: 100,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      canvas.add(base);
+      canvas.add(arc);
+      canvas.setActiveObject(arc);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon8 - Арка з основою
+  const addArcWithBase = () => {
+    if (canvas) {
+      // Арка
+      const arc = new fabric.Path("M 0 60 Q 40 0 80 60", {
+        left: 80,
+        top: 100,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      // Основа арки
+      const base = new fabric.Path("M 0 60 L 0 80 L 80 80 L 80 60", {
+        left: 80,
+        top: 100,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      
+      canvas.add(arc);
+      canvas.add(base);
+      canvas.setActiveObject(arc);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon9 - Шестикутник
+  const addHexagon = () => {
+    if (canvas) {
+      const hexagon = new fabric.Polygon([
+        { x: 40, y: 0 },
+        { x: 80, y: 20 },
+        { x: 80, y: 60 },
+        { x: 40, y: 80 },
+        { x: 0, y: 60 },
+        { x: 0, y: 20 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(hexagon);
+      canvas.setActiveObject(hexagon);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon10 - Восьмикутник
+  const addOctagon = () => {
+    if (canvas) {
+      const octagon = new fabric.Polygon([
+        { x: 30, y: 0 },
+        { x: 70, y: 0 },
+        { x: 100, y: 30 },
+        { x: 100, y: 70 },
+        { x: 70, y: 100 },
+        { x: 30, y: 100 },
+        { x: 0, y: 70 },
+        { x: 0, y: 30 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "#20B2AA",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(octagon);
+      canvas.setActiveObject(octagon);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon11 - Трикутник вгору
+  const addTriangleUp = () => {
+    if (canvas) {
+      const triangle = new fabric.Polygon([
+        { x: 50, y: 0 },
+        { x: 100, y: 100 },
+        { x: 0, y: 100 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "#FF6347",
         stroke: "#000",
         strokeWidth: 1,
       });
@@ -1023,18 +1247,197 @@ const Toolbar = () => {
       canvas.renderAll();
     }
   };
+
+  // Icon12 - Стрілка вліво
+  const addArrowLeft = () => {
+    if (canvas) {
+      const arrow = new fabric.Polygon([
+        { x: 0, y: 30 },
+        { x: 20, y: 10 },
+        { x: 20, y: 20 },
+        { x: 80, y: 20 },
+        { x: 80, y: 40 },
+        { x: 20, y: 40 },
+        { x: 20, y: 50 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "#32CD32",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(arrow);
+      canvas.setActiveObject(arrow);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon13 - Стрілка вправо
+  const addArrowRight = () => {
+    if (canvas) {
+      const arrow = new fabric.Polygon([
+        { x: 80, y: 30 },
+        { x: 60, y: 10 },
+        { x: 60, y: 20 },
+        { x: 0, y: 20 },
+        { x: 0, y: 40 },
+        { x: 60, y: 40 },
+        { x: 60, y: 50 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "#FF4500",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(arrow);
+      canvas.setActiveObject(arrow);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon14 - Прапор
+  const addFlag = () => {
+    if (canvas) {
+      const flag = new fabric.Polygon([
+        { x: 0, y: 40 },   // Початок прапора
+        { x: 0, y: 80 },   // Низ лівої сторони
+        { x: 30, y: 70 },  // Точка на прапорі
+        { x: 60, y: 85 },  // Кінець прапора
+        { x: 88, y: 70 },  // Верх правої сторони
+        { x: 88, y: 40 },  // Верх правої сторони
+        { x: 60, y: 35 },  // Середина верху
+        { x: 35, y: 0 },   // Верхня точка
+        { x: 0, y: 40 }    // Повернення до початку
+      ], {
+        left: 100,
+        top: 100,
+        fill: "transparent",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(flag);
+      canvas.setActiveObject(flag);
+      canvas.renderAll();
+    }
+  };
+
+  // Icon15 - Ромб (якщо є)
+  const addDiamond = () => {
+    if (canvas) {
+      const diamond = new fabric.Polygon([
+        { x: 50, y: 0 },
+        { x: 100, y: 50 },
+        { x: 50, y: 100 },
+        { x: 0, y: 50 }
+      ], {
+        left: 100,
+        top: 100,
+        fill: "#DAA520",
+        stroke: "#000",
+        strokeWidth: 1,
+      });
+      canvas.add(diamond);
+      canvas.setActiveObject(diamond);
+      canvas.renderAll();
+    }
+  };
   const handleInputChange = (key, max, rawValue) => {
     const parsed = parseInt(rawValue);
     const value = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
     setSizeValues((prev) => ({ ...prev, [key]: value }));
-    updateSize();
+    
+    // Застосовуємо зміни відразу
+    setTimeout(() => {
+      if (activeObject && canvas) {
+        const currentLeft = activeObject.left;
+        const currentTop = activeObject.top;
+        
+        if (activeObject.type === 'circle') {
+          const originalRadius = activeObject.radius;
+          const scaleX = value / (originalRadius * 2);
+          const scaleY = (key === 'width' ? value : sizeValues.height) / (originalRadius * 2);
+          if (key === 'height') {
+            const scaleX = sizeValues.width / (originalRadius * 2);
+            const scaleY = value / (originalRadius * 2);
+            activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+          } else {
+            const scaleY = sizeValues.height / (originalRadius * 2);
+            activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+          }
+        } else if (activeObject.type === 'ellipse') {
+          const originalRx = activeObject.rx;
+          const originalRy = activeObject.ry;
+          if (key === 'width') {
+            const scaleX = value / (originalRx * 2);
+            activeObject.set({ scaleX, left: currentLeft, top: currentTop });
+          } else if (key === 'height') {
+            const scaleY = value / (originalRy * 2);
+            activeObject.set({ scaleY, left: currentLeft, top: currentTop });
+          }
+        } else {
+          const originalWidth = activeObject.width;
+          const originalHeight = activeObject.height;
+          if (key === 'width') {
+            const scaleX = value / originalWidth;
+            activeObject.set({ scaleX, left: currentLeft, top: currentTop });
+          } else if (key === 'height') {
+            const scaleY = value / originalHeight;
+            activeObject.set({ scaleY, left: currentLeft, top: currentTop });
+          } else if (key === 'cornerRadius') {
+            activeObject.set({ rx: value, ry: value });
+          }
+        }
+        canvas.renderAll();
+      }
+    }, 0);
   };
 
   const changeValue = (key, delta, max) => {
     setSizeValues((prev) => {
       const newValue = Math.max(0, Math.min(max, prev[key] + delta));
       const updated = { ...prev, [key]: newValue };
-      updateSize();
+      
+      // Застосовуємо зміни відразу
+      setTimeout(() => {
+        if (activeObject && canvas) {
+          const currentLeft = activeObject.left;
+          const currentTop = activeObject.top;
+          
+          if (activeObject.type === 'circle') {
+            const originalRadius = activeObject.radius;
+            if (key === 'width' || key === 'height') {
+              const scaleX = updated.width / (originalRadius * 2);
+              const scaleY = updated.height / (originalRadius * 2);
+              activeObject.set({ scaleX, scaleY, left: currentLeft, top: currentTop });
+            }
+          } else if (activeObject.type === 'ellipse') {
+            const originalRx = activeObject.rx;
+            const originalRy = activeObject.ry;
+            if (key === 'width') {
+              const scaleX = newValue / (originalRx * 2);
+              activeObject.set({ scaleX, left: currentLeft, top: currentTop });
+            } else if (key === 'height') {
+              const scaleY = newValue / (originalRy * 2);
+              activeObject.set({ scaleY, left: currentLeft, top: currentTop });
+            }
+          } else {
+            const originalWidth = activeObject.width;
+            const originalHeight = activeObject.height;
+            if (key === 'width') {
+              const scaleX = newValue / originalWidth;
+              activeObject.set({ scaleX, left: currentLeft, top: currentTop });
+            } else if (key === 'height') {
+              const scaleY = newValue / originalHeight;
+              activeObject.set({ scaleY, left: currentLeft, top: currentTop });
+            } else if (key === 'cornerRadius') {
+              activeObject.set({ rx: newValue, ry: newValue });
+            }
+          }
+          canvas.renderAll();
+        }
+      }, 0);
+      
       return updated;
     });
   };
@@ -1050,19 +1453,19 @@ const Toolbar = () => {
           <h3>Shape</h3>
           <span onClick={addRectangle}>{Icon0}</span>
           <span onClick={addCircle}>{Icon1}</span>
-          <span onClick={addHalfCircle}>{Icon2}</span>
-          <span onClick={addDiamond}>{Icon3}</span>
-          <span onClick={addTriangle}>{Icon4}</span>
-          <span>{Icon5}</span>
-          <span>{Icon6}</span>
-          <span>{Icon7}</span>
-          <span>{Icon8}</span>
-          <span>{Icon9}</span>
-          <span>{Icon10}</span>
-          <span>{Icon11}</span>
-          <span>{Icon12}</span>
-          <span>{Icon13}</span>
-          <span>{Icon14}</span>
+          <span onClick={addEllipse}>{Icon2}</span>
+          <span onClick={addLock}>{Icon3}</span>
+          <span onClick={addCircleWithLine}>{Icon4}</span>
+          <span onClick={addCircleWithCross}>{Icon5}</span>
+          <span onClick={addHouse}>{Icon6}</span>
+          <span onClick={addHalfCircle}>{Icon7}</span>
+          <span onClick={addArcWithBase}>{Icon8}</span>
+          <span onClick={addHexagon}>{Icon9}</span>
+          <span onClick={addOctagon}>{Icon10}</span>
+          <span onClick={addTriangleUp}>{Icon11}</span>
+          <span onClick={addArrowLeft}>{Icon12}</span>
+          <span onClick={addArrowRight}>{Icon13}</span>
+          <span onClick={addFlag}>{Icon14}</span>
         </div>
       </div>
 

@@ -7,41 +7,48 @@ const TextList = () => {
   const { canvas } = useCanvasContext();
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
+  const [newTextValue, setNewTextValue] = useState("Add text");
   const isUpdatingRef = useRef(false);
+
+  // Функція для примусового оновлення списку
+  const forceUpdate = () => {
+    if (canvas && !isUpdatingRef.current) {
+      const allObjects = canvas.getObjects();
+      const textObjects = allObjects.filter(
+        (obj) =>
+          obj.type === "i-text" ||
+          obj.type === "text" ||
+          obj.type === "textbox"
+      );
+
+      const textList = textObjects.map((obj) => ({
+        id: obj.id || `text_${Date.now()}_${Math.random()}`,
+        content: obj.text || "Без тексту",
+        object: obj,
+        fontSize: obj.fontSize || 20,
+        fontFamily: obj.fontFamily || "Arial",
+        fontWeight: obj.fontWeight || "normal",
+        textAlign: obj.textAlign || "left",
+        fill: obj.fill || "#000000",
+      }));
+
+      // Присвоюємо id об'єктам, якщо їх немає
+      textObjects.forEach((obj, index) => {
+        if (!obj.id) {
+          obj.id = textList[index].id;
+        }
+      });
+
+      setTexts(textList);
+    }
+  };
 
   // Синхронізація текстів з canvas
   useEffect(() => {
     if (canvas) {
       const updateTextList = () => {
         if (isUpdatingRef.current) return;
-
-        const allObjects = canvas.getObjects();
-        const textObjects = allObjects.filter(
-          (obj) =>
-            obj.type === "i-text" ||
-            obj.type === "text" ||
-            obj.type === "textbox"
-        );
-
-        const textList = textObjects.map((obj) => ({
-          id: obj.id || `text_${Date.now()}_${Math.random()}`,
-          content: obj.text || "Без тексту",
-          object: obj,
-          fontSize: obj.fontSize || 20,
-          fontFamily: obj.fontFamily || "Arial",
-          fontWeight: obj.fontWeight || "normal",
-          textAlign: obj.textAlign || "left",
-          fill: obj.fill || "#000000",
-        }));
-
-        // Присвоюємо id об'єктам, якщо їх немає
-        textObjects.forEach((obj, index) => {
-          if (!obj.id) {
-            obj.id = textList[index].id;
-          }
-        });
-
-        setTexts(textList);
+        forceUpdate();
       };
 
       // Початкове оновлення
@@ -74,7 +81,7 @@ const TextList = () => {
     if (canvas) {
       isUpdatingRef.current = true;
 
-      const text = new fabric.IText("Новий текст", {
+      const text = new fabric.IText(newTextValue || "Новий текст", {
         left: 100,
         top: 100 + texts.length * 30,
         fontSize: 20,
@@ -90,8 +97,12 @@ const TextList = () => {
       canvas.setActiveObject(text);
       canvas.renderAll();
 
+      // Очищуємо поле після додавання
+      setNewTextValue("Add text");
+
       setTimeout(() => {
         isUpdatingRef.current = false;
+        forceUpdate();
       }, 100);
     }
   };
@@ -278,6 +289,7 @@ const TextList = () => {
       textObj.selectionStart = cursorPosition + symbol.length;
       textObj.selectionEnd = cursorPosition + symbol.length;
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
@@ -310,9 +322,8 @@ const TextList = () => {
         {texts.map((text, index) => (
           <div
             key={text.id}
-            className={`${styles.textItem} ${
-              activeText?.id === text.id ? styles.selected : ""
-            }`}
+            className={`${styles.textItem} ${activeText?.id === text.id ? styles.selected : ""
+              }`}
             onClick={() => handleTextSelect(text)}
           >
             <div className={styles.textNumber}>{index + 1}.</div>
@@ -325,6 +336,7 @@ const TextList = () => {
                     if (text.object) {
                       text.object.set("text", e.target.value);
                       canvas.renderAll();
+                      forceUpdate();
                     }
                   }}
                   className={styles.textInput}
@@ -344,6 +356,7 @@ const TextList = () => {
                           currentText.object.fontSize - 1
                         );
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
                     className={styles.sizeButton}
@@ -361,6 +374,7 @@ const TextList = () => {
                       if (text.object) {
                         text.object.set("fontSize", newSize);
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
                     min="5"
@@ -382,6 +396,7 @@ const TextList = () => {
                           currentText.object.fontSize + 1
                         );
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
                     className={styles.sizeButton}
@@ -395,6 +410,7 @@ const TextList = () => {
                     if (text.object) {
                       text.object.set("fontFamily", e.target.value);
                       canvas.renderAll();
+                      forceUpdate();
                     }
                   }}
                   className={styles.fontFamilySelect}
@@ -415,11 +431,11 @@ const TextList = () => {
                           currentWeight === "bold" ? "normal" : "bold";
                         text.object.set("fontWeight", newWeight);
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${
-                      text.object?.fontWeight === "bold" ? styles.active : ""
-                    }`}
+                    className={`${styles.formatButton} ${text.object?.fontWeight === "bold" ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="14"
@@ -442,11 +458,11 @@ const TextList = () => {
                           currentStyle === "italic" ? "normal" : "italic";
                         text.object.set("fontStyle", newStyle);
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${
-                      text.object?.fontStyle === "italic" ? styles.active : ""
-                    }`}
+                    className={`${styles.formatButton} ${text.object?.fontStyle === "italic" ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="16"
@@ -467,11 +483,11 @@ const TextList = () => {
                         const currentUnderline = text.object.underline;
                         text.object.set("underline", !currentUnderline);
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${
-                      text.object?.underline ? styles.active : ""
-                    }`}
+                    className={`${styles.formatButton} ${text.object?.underline ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="19"
@@ -503,11 +519,11 @@ const TextList = () => {
                       if (text.object) {
                         text.object.set("textAlign", "left");
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "left" ? styles.active : ""
-                    }`}
+                    className={`${styles.alignButton} ${text.object?.textAlign === "left" ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="16"
@@ -537,13 +553,13 @@ const TextList = () => {
                   <button
                     onClick={() => {
                       if (text.object) {
-                        text.object.set("textAlign", "right");
+                        text.object.set("textAlign", "center");
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "right" ? styles.active : ""
-                    }`}
+                    className={`${styles.alignButton} ${text.object?.textAlign === "center" ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="16"
@@ -573,13 +589,13 @@ const TextList = () => {
                   <button
                     onClick={() => {
                       if (text.object) {
-                        text.object.set("textAlign", "center");
+                        text.object.set("textAlign", "right");
                         canvas.renderAll();
+                        forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "center" ? styles.active : ""
-                    }`}
+                    className={`${styles.alignButton} ${text.object?.textAlign === "right" ? styles.active : ""
+                      }`}
                   >
                     <svg
                       width="16"
@@ -605,7 +621,9 @@ const TextList = () => {
                         fill="#2D264B"
                       />
                     </svg>
+
                   </button>
+
                 </div>
                 {/* TODO: буваник перестарався */}
                 {/* <input
@@ -715,8 +733,15 @@ const TextList = () => {
           </button>
           <input
             type="text"
-            defaultValue={"Add text"}
+            value={newTextValue}
+            onChange={(e) => setNewTextValue(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                addText();
+              }
+            }}
             className={styles.addTextInput}
+            placeholder="Введіть текст для додавання"
           />
         </div>
       </div>

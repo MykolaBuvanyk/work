@@ -12,7 +12,11 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/*Я добавив не пізди*/
+.app {
+  display: flex;
 
+}
 * {
   box-sizing: border-box;
 }

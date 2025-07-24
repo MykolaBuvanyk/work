@@ -6,6 +6,21 @@ import styles from "./QRCodeGenerator.module.css";
 import { QrCode } from "../../assets/Icons";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
+  // Типи безпеки WiFi для селектора
+  const wifiSecurityTypes = [
+    { value: "WPA", label: "WPA" },
+    { value: "WPA2-EAP", label: "WPA2-EAP" },
+    { value: "nopass", label: "Without Password" },
+  ];
+
+  // Функція для зміни значень інпутів
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
   const { canvas } = useCanvasContext();
   const [selectedType, setSelectedType] = useState(null);
   const [formData, setFormData] = useState({
@@ -27,53 +42,30 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     { id: "message", label: "Message" },
   ];
 
-  const wifiSecurityTypes = [
-    { value: "WPA", label: "WPA" },
-    { value: "WPA2-EAP", label: "WPA2-EAP" },
-    { value: "nopass", label: "Without Password" },
-  ];
-
-  const handleTypeSelect = (type) => {
-    setSelectedType(type);
-    setFormData({
-      url: "",
-      email: "",
-      phone: "",
-      wifiSSID: "",
-      wifiPassword: "",
-      wifiSecurity: "WPA",
-      message: "",
-    });
-  };
-
+  // Генерує дані для QR-коду залежно від типу
   const generateQRData = () => {
     switch (selectedType) {
       case "url":
         return formData.url || "https://example.com";
-
       case "email":
         return `mailto:${formData.email}`;
-
       case "phone":
         return `tel:${formData.phone}`;
-
       case "whatsapp":
         return `https://wa.me/${formData.phone.replace(/[^0-9]/g, "")}`;
-
       case "wifi":
         if (formData.wifiSecurity === "nopass") {
           return `WIFI:T:nopass;S:${formData.wifiSSID};;`;
         }
         return `WIFI:T:${formData.wifiSecurity};S:${formData.wifiSSID};P:${formData.wifiPassword};;`;
-
       case "message":
         return formData.message || "Default message";
-
       default:
         return "https://example.com";
     }
   };
 
+  // Додає QR-код на canvas
   const generateQRCode = async () => {
     if (!canvas) return;
 
@@ -92,7 +84,6 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
 
       // Створюємо зображення з QR-коду
       const img = await fabric.FabricImage.fromURL(qrDataURL);
-
       img.set({
         left: 100,
         top: 100,
@@ -114,117 +105,188 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  // Локальний стейт для показу помилки тільки після спроби сабміту (wifi)
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  // Рендер формы для каждого типа
   const renderTypeForm = (typeId) => {
-    switch (typeId) {
-      case "url":
-        return (
-          <div className={styles.formGroup}>
-            <label>Website - Link</label>
-            <input
-              type="url"
-              placeholder="https://example.com"
-              value={formData.url}
-              onChange={(e) => handleInputChange("url", e.target.value)}
-            />
-          </div>
-        );
-      case "email":
-        return (
-          <div className={styles.formGroup}>
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="example@domain.com"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-            />
-          </div>
-        );
-      case "phone":
-        return (
-          <div className={styles.formGroup}>
-            <label>Phone Number</label>
-            <input
-              type="tel"
-              placeholder="+380123456789"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-            />
-          </div>
-        );
-      case "whatsapp":
-        return (
-          <div className={styles.formGroup}>
-            <label>WhatsApp Number</label>
-            <input
-              type="tel"
-              placeholder="+380123456789"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-            />
-          </div>
-        );
-      case "wifi":
-        return (
-          <div className={styles.formGroup}>
-            <label>Network Name (SSID)</label>
-            <input
-              type="text"
-              placeholder="WiFi Network Name"
-              value={formData.wifiSSID}
-              onChange={(e) => handleInputChange("wifiSSID", e.target.value)}
-            />
-            <label>Security Type</label>
-            <select
-              value={formData.wifiSecurity}
-              onChange={(e) =>
-                handleInputChange("wifiSecurity", e.target.value)
-              }
-            >
-              {wifiSecurityTypes.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            {formData.wifiSecurity !== "nopass" && (
-              <>
-                <label>Password</label>
-                <input
-                  type="password"
-                  placeholder="WiFi Password"
-                  value={formData.wifiPassword}
-                  onChange={(e) =>
-                    handleInputChange("wifiPassword", e.target.value)
-                  }
-                />
-              </>
-            )}
-          </div>
-        );
-      case "message":
-        return (
-          <div className={styles.formGroup}>
-            <label>Custom Message</label>
-            <textarea
-              placeholder="Enter your message here..."
-              value={formData.message}
-              onChange={(e) => handleInputChange("message", e.target.value)}
-              rows={3}
-            />
-          </div>
-        );
-      default:
-        return null;
+    let value = "";
+    let label = "";
+    let placeholder = "";
+    let error = "";
+    let isValid = false;
+    let inputType = "text";
+    let showBtn = false;
+    let showError = false;
+    let extra = null;
+    let fieldKey = typeId; // Додано для правильного mapping ключів
+
+    if (typeId === "url") {
+      value = formData.url;
+      fieldKey = "url";
+      label = "Website - Link";
+      placeholder = "https://example.com";
+      inputType = "url";
+      isValid = /^https?:\/\/.+\..+/.test(value);
+      showBtn = !!value;
+      showError = value && !isValid;
+      if (!value) error = "X Empty field";
+      else if (!isValid) error = "X Empty field";
     }
+
+    if (typeId === "email") {
+      value = formData.email;
+      fieldKey = "email";
+      label = "Email Address";
+      placeholder = "example@domain.com";
+      inputType = "email";
+      isValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
+      showBtn = !!value;
+      showError = value && !isValid;
+      if (!value) error = "X Empty field";
+      else if (!isValid) error = "X Incorrect email";
+    }
+
+    if (typeId === "phone" || typeId === "whatsapp") {
+      value = formData.phone;
+      fieldKey = "phone";
+      label = typeId === "phone" ? "Phone Number" : "WhatsApp Number";
+      placeholder = "+380123456789";
+      inputType = "tel";
+      isValid = /^\+?\d{10,15}$/.test(value);
+      showBtn = !!value;
+      showError = value && !isValid;
+      if (!value) error = "X Empty field";
+      else if (!isValid) error = "X Incorrect phone number";
+    }
+
+    if (typeId === "wifi") {
+      value = formData.wifiSSID;
+      fieldKey = "wifiSSID";
+      label = "Network Name (SSID)";
+      placeholder = "WiFi Network Name";
+      inputType = "text";
+      isValid = !!value;
+      showBtn = !!value;
+      showError = submitAttempted && !value;
+      if (!value) error = "X Empty field";
+      extra = (
+        <div>
+          {formData.wifiSecurity !== "nopass" && (
+            <div>
+              <label style={{ position: "static" }}>Password</label>
+              <input
+                type="password"
+                placeholder="WiFi Password"
+                value={formData.wifiPassword}
+                onChange={(e) =>
+                  handleInputChange("wifiPassword", e.target.value)
+                }
+                className={styles.formInput}
+                style={{
+                  marginBottom: 0,
+                  color: formData.wifiPassword ? "#000" : undefined,
+                }}
+              />
+            </div>
+          )}
+          <label style={{ position: "static" }}>Security Type</label>
+          <select
+            value={formData.wifiSecurity}
+            onChange={(e) => handleInputChange("wifiSecurity", e.target.value)}
+            className={styles.formInput}
+          >
+            {wifiSecurityTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (typeId === "message") {
+      value = formData.message;
+      fieldKey = "message";
+      label = "Custom Message";
+      placeholder = "Enter your message here...";
+      inputType = "textarea";
+      isValid = !!value;
+      showBtn = !!value;
+      showError = false; // Никогда не показываем ошибку
+    }
+
+    const handleBtnClick = (e) => {
+      e.preventDefault();
+      if (typeId === "wifi") setSubmitAttempted(true);
+    };
+
+    // Обробник для телефону: заборонити букви
+    const handlePhoneInput = (e) => {
+      let val = e.target.value.replace(/[^\d+]/g, "");
+      handleInputChange("phone", val);
+    };
+
+    return (
+      <div className={styles.formGroup}>
+        <div className={styles.inputWrapper}>
+          {/* Лейбл зникає якщо є значення */}
+          {!value && <label className={styles.floatingLabel}>{label}</label>}
+          {inputType !== "textarea" ? (
+            typeId === "phone" || typeId === "whatsapp" ? (
+              <input
+                type={inputType}
+                placeholder={placeholder}
+                value={value}
+                onChange={handlePhoneInput}
+                className={styles.formInput}
+                style={{
+                  marginBottom: 0,
+                  color: value ? "#000" : undefined,
+                }}
+              />
+            ) : (
+              <input
+                type={inputType}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+                className={styles.formInput}
+                style={{
+                  marginBottom: 0,
+                  color: value ? "#000" : undefined,
+                }}
+              />
+            )
+          ) : (
+            <textarea
+              placeholder={placeholder}
+              value={value}
+              onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+              rows={3}
+              className={styles.formInput}
+              style={{
+                marginBottom: 0,
+                color: value ? "#000" : undefined,
+              }}
+            />
+          )}
+        </div>
+        {extra}
+        <button
+          className={styles.formGroupBtn + (value ? " " + styles.active : "")}
+          disabled={!value}
+          style={{
+            cursor: value ? "pointer" : "not-allowed",
+            background: value ? "rgba(0, 108, 164, 1)" : undefined,
+          }}
+          onClick={handleBtnClick}
+        >
+          Update
+        </button>
+        {showError && <div className={styles.formGroupError}>{error}</div>}
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -263,28 +325,35 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           <div className={styles.typesList}>
             {qrTypes.map((type) => (
               <div key={type.id} className={styles.typeItem}>
-                <input
-                  type="checkbox"
-                  checked={selectedType === type.id}
-                  onChange={() =>
-                    setSelectedType(type.id === selectedType ? null : type.id)
+                <div className={styles.typeHeader}>
+                  <input
+                    type="checkbox"
+                    checked={selectedType === type.id}
+                    onChange={() =>
+                      setSelectedType(type.id === selectedType ? null : type.id)
+                    }
+                    style={{ marginRight: 8 }}
+                  />
+                  <span className={styles.typeLabel}>{type.label}</span>
+                  <span className={styles.description}>
+                    {type.id === "url" && "* Scan to visit Website"}
+                    {type.id === "email" && "* Scan to send an Email"}
+                    {type.id === "phone" && "* Scan to call directly"}
+                    {type.id === "whatsapp" && "* Scan to send Message"}
+                    {type.id === "wifi" && "* Scan to connect to Network"}
+                    {type.id === "message" && "* Scan to read Custom Message"}
+                  </span>
+                </div>
+                <div
+                  className={
+                    selectedType === type.id
+                      ? styles.typeFormWrapper + " " + styles.active
+                      : styles.typeFormWrapper
                   }
-                  style={{ marginRight: 8 }}
-                />
-                <span className={styles.typeLabel}>{type.label}</span>
-                <span className={styles.description}>
-                  {type.id === "url" && "* Scan to visit Website"}
-                  {type.id === "email" && "* Scan to send an Email"}
-                  {type.id === "phone" && "* Scan to call directly"}
-                  {type.id === "whatsapp" && "* Scan to send Message"}
-                  {type.id === "wifi" && "* Scan to connect to Network"}
-                  {type.id === "message" && "* Scan to read Custom Message"}
-                </span>
-                {selectedType === type.id && (
-                  <div style={{ width: "100%", marginTop: 8 }}>
-                    {renderTypeForm(type.id)}
-                  </div>
-                )}
+                  style={{ width: "100%", marginTop: 8 }}
+                >
+                  {selectedType === type.id && renderTypeForm(type.id)}
+                </div>
               </div>
             ))}
           </div>

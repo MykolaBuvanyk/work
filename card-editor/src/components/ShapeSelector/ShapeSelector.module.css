@@ -1,7 +1,7 @@
 .shapeSelector {
   position: absolute;
-  top: 5%;
-  left: 5%;
+  top: 1%;
+  left: 1%;
   z-index: 2000;
   display: flex;
   justify-content: flex-start;
@@ -38,7 +38,7 @@
 .dropdownHeader h3 {
   color: rgba(0, 108, 164, 1);
   font-size: 16px;
-  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  text-decoration: underline;
   margin: 0;
 }
 
@@ -49,20 +49,9 @@
   padding: 0;
   background-color: transparent;
   cursor: pointer;
-  border: none;
-  font-size: 20px;
-  color: #666;
-  width: 24px;
-  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.closeBtn:hover {
-  background-color: #f0f0f0;
 }
 
 .content {
@@ -71,35 +60,27 @@
 }
 
 .shapesGrid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Центрування елементів у рядку */
   gap: 15px;
-  margin-bottom: 10px;
+  margin-top: 40px;
 }
 
 .shapeItem {
-  display: flex;
+display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 12px 8px;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  border: 1px solid transparent;
-}
-
-.shapeItem:hover {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
+  flex: 0 0 calc(20% - 12px);
 }
 
 .shapeIcon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
 }
 
 .shapeName {

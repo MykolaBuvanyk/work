@@ -1,7 +1,7 @@
 .cutSelector {
   position: absolute;
-  top: 5%;
-  left: 5%;
+  top: 1%;
+  left: 1%;
   z-index: 2000;
   display: flex;
   justify-content: flex-start;
@@ -18,11 +18,54 @@
   border-radius: 8px;
   box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
   z-index: 2100;
-  min-width: 350px;
-  max-width: 450px;
+  width: fit-content;
+  max-width: none;
+  margin: 0 auto;
   margin-top: 0;
   margin-left: 0;
   pointer-events: auto;
+  overflow-x: hidden;
+}
+
+.content {
+  padding: 20px;
+  padding-top: 0;
+}
+
+.shapesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.shapeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 10px;
+}
+
+.shapeItem:hover {
+  background-color: #f0f0f0;
+}
+
+.shapeIcon {
+  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  text-align: center;
+}
+
+.shapeName {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
 }
 
 .dropdownHeader {
@@ -38,7 +81,7 @@
 .dropdownHeader h3 {
   color: rgba(0, 108, 164, 1);
   font-size: 16px;
-  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  text-decoration: underline;
   margin: 0;
 }
 
@@ -49,21 +92,12 @@
   padding: 0;
   background-color: transparent;
   border: none;
-  font-size: 18px;
   cursor: pointer;
-  color: #999;
-  line-height: 1;
   width: 20px;
   height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.closeBtn:hover {
-  color: #000;
-  background-color: #f0f0f0;
-  border-radius: 50%;
 }
 
 .cutGrid {
@@ -80,19 +114,9 @@
   align-items: center;
   justify-content: center;
   padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: #fafafa;
   min-height: 60px;
-}
-
-.cutOption:hover {
-  border-color: rgba(0, 108, 164, 1);
-  background-color: rgba(0, 108, 164, 0.05);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .cutOption svg {
@@ -136,18 +160,18 @@
     min-width: 300px;
     max-width: 350px;
   }
-  
+
   .cutGrid {
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     padding: 15px;
   }
-  
+
   .cutOption {
     padding: 10px;
     min-height: 50px;
   }
-  
+
   .cutOption svg {
     width: 30px;
     height: 30px;
@@ -159,18 +183,18 @@
     min-width: 280px;
     max-width: 320px;
   }
-  
+
   .cutGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     padding: 12px;
   }
-  
+
   .cutOption {
     padding: 8px;
     min-height: 45px;
   }
-  
+
   .cutOption svg {
     width: 25px;
     height: 25px;

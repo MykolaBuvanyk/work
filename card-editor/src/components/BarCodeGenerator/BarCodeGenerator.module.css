@@ -1,7 +1,7 @@
 .barGenerator {
   position: absolute;
-  top: 5%;
-  left: 5%;
+  top: 1%;
+  left: 1%;
   z-index: 2000;
   display: flex;
   justify-content: flex-start;
@@ -32,37 +32,36 @@
   width: 100%;
   text-align: center;
   position: relative;
-  padding: 30px 15px 0 0;
+  margin: 15px 0;
 }
-
+.titleWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 .dropdownHeader h3 {
   color: rgba(0, 108, 164, 1);
   font-size: 16px;
-  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  text-decoration: underline;
+  margin: 0;
+}
+
+.dropdownHeader p {
+  text-decoration: underline;
+  padding: 0;
   margin: 0;
 }
 
 .closeBtn {
   position: absolute;
-  top: 15px;
+  top: -5px;
   right: 15px;
-  padding: 0;
   background-color: transparent;
   cursor: pointer;
-  border: none;
-  font-size: 20px;
-  color: #666;
-  width: 24px;
-  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.closeBtn:hover {
-  background-color: #f0f0f0;
+  padding: 0;
 }
 
 .content {
@@ -96,34 +95,21 @@
   flex: 1;
 }
 
-.selectGroup label,
-.inputGroup label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-}
-
 .select,
 .input {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  background: transparent;
+  padding: 2px 7px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s;
-  height: 40px;
   box-sizing: border-box;
-}
-
-.select:focus,
-.input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+  max-width: 150px;
 }
 
 .select {
   cursor: pointer;
-  background-color: white;
+  background-color: transparent;
 }
 
 .actions {
@@ -133,23 +119,27 @@
 }
 
 .updateBtn {
-  background-color: #007bff;
-  color: white;
+  width: fit-content;
+  height: fit-content;
+  border-radius: 8px;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 15px;
+  font-weight: 600;
+  background: rgba(0, 108, 164, 0.4);
+  color: white;
+  cursor: not-allowed;
+  transition: background 0.2s, color 0.2s, cursor 0.2s;
+  padding: 2px 20px;
 }
 
-.updateBtn:hover {
-  background-color: #0056b3;
+.updateBtn.active {
+  background: rgba(0, 108, 164, 1);
+  color: #fff;
+  cursor: pointer;
 }
 
 .updateBtn:active {
-  background-color: #004085;
+  background: #005b8a;
 }
 
 /* Адаптивність для мобільних пристроїв */

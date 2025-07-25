@@ -25,7 +25,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     try {
       // Створюємо canvas для генерації бар-коду
       const barcodeCanvas = document.createElement("canvas");
-      
+
       // Генеруємо бар-код
       JsBarcode(barcodeCanvas, formData.text, {
         format: formData.codeType,
@@ -76,9 +76,33 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     <div className={styles.barGenerator}>
       <div className={styles.dropdown}>
         <div className={styles.dropdownHeader}>
-          <h3>Bar Code</h3>
+          <div className={styles.titleWrapper}>
+            <h3>Bar Code</h3>
+            <p>Enter text or numbers to encode</p>
+          </div>
           <button className={styles.closeBtn} onClick={onClose}>
-            ×
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.0005 12L14.8289 14.8284M9.17212 14.8284L12.0005 12L9.17212 14.8284ZM14.8289 9.17157L12.0005 12L14.8289 9.17157ZM12.0005 12L9.17212 9.17157L12.0005 12Z"
+                stroke="#006CA4"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="#006CA4"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </button>
         </div>
 
@@ -86,10 +110,11 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
           <div className={styles.formContainer}>
             <div className={styles.inputRow}>
               <div className={styles.selectGroup}>
-                <label>Type</label>
                 <select
                   value={formData.codeType}
-                  onChange={(e) => handleInputChange("codeType", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("codeType", e.target.value)
+                  }
                   className={styles.select}
                 >
                   {barcodeTypes.map((type) => (
@@ -101,10 +126,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
               </div>
 
               <div className={styles.inputGroup}>
-                <label>Text</label>
                 <input
                   type="text"
-                  placeholder="Enter text or numbers"
+                  placeholder="ABC - 123"
                   value={formData.text}
                   onChange={(e) => handleInputChange("text", e.target.value)}
                   className={styles.input}
@@ -113,7 +137,12 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
             </div>
 
             <div className={styles.actions}>
-              <button className={styles.updateBtn} onClick={generateBarCode}>
+              <button
+                className={`${styles.updateBtn} ${
+                  formData.text.trim() ? styles.active : ""
+                }`}
+                onClick={formData.text.trim() ? generateBarCode : undefined}
+              >
                 Update
               </button>
             </div>

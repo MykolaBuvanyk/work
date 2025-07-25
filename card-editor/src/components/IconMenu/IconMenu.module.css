@@ -1,6 +1,11 @@
 .iconMenu {
-  position: relative;
-  display: inline-block;
+  position: absolute;
+  top: 1%;
+  left: 1%;
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .toggleButton {
@@ -30,30 +35,17 @@
 }
 
 .dropdown {
-  position: absolute;
-  top: 100%;
+  position: relative;
+  top: 0;
   left: 0;
-  z-index: 1000;
   background: white;
-  border: 1px solid #dee2e6;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  width: 400px;
-  max-height: 500px;
-  overflow: hidden;
-  margin-top: 5px;
-  animation: slideDown 0.2s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2100;
+  width: 500px;
+  max-width: 500px;
+  overflow-x: hidden;
 }
 
 .header {
@@ -73,24 +65,12 @@
 }
 
 .closeButton {
-  background: none;
-  border: none;
-  font-size: 24px;
+  background: transparent;
   cursor: pointer;
-  color: #6c757d;
   padding: 0;
-  width: 30px;
-  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.closeButton:hover {
-  background: #e9ecef;
-  color: #333;
 }
 
 .categorySelect {
@@ -116,25 +96,25 @@
 
 .iconGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 15px;
   padding: 20px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .iconGrid::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .iconGrid::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .iconGrid::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .iconGrid::-webkit-scrollbar-thumb:hover {
@@ -145,18 +125,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  border: none;
+  box-shadow: none;
+  transition: none;
 }
 
 .iconItem:hover {
-  background: #f8f9fa;
-  border-color: #007bff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.15);
+  background: none;
+  border: none;
+  transform: none;
+  box-shadow: none;
 }
 
 .iconPreview {
@@ -215,23 +196,46 @@
   font-style: italic;
 }
 
+/* Update scrollbar styles to match CutSelector */
+.categorySelect::-webkit-scrollbar {
+  width: 8px;
+}
+
+.categorySelect::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.categorySelect::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.categorySelect::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.categorySelect::-webkit-scrollbar-thumb:active {
+  background: #888;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .dropdown {
     width: 300px;
   }
-  
+
   .iconGrid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 8px;
     padding: 15px;
   }
-  
+
   .iconPreview {
     width: 35px;
     height: 35px;
   }
-  
+
   .iconName {
     font-size: 9px;
   }

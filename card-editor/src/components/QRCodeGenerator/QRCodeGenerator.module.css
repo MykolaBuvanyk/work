@@ -1,3 +1,94 @@
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.floatingLabel {
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  color: #888;
+  font-size: 13px;
+  pointer-events: none;
+  transition: 0.2s;
+  background: transparent;
+  z-index: 2;
+}
+
+.formInput {
+  width: calc(100% - 40px);
+  padding: 10px 12px;
+  border: 1.5px solid #006ca4;
+  border-radius: 6px;
+  font-size: 15px;
+  background: #f8f9fa;
+  color: #000;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 0;
+}
+
+.formInput:focus {
+  border-color: #004085;
+  background: #fff;
+}
+
+.formGroupBtn.active,
+.formGroupBtn:active,
+.formGroupBtn:focus {
+  background: rgba(0, 108, 164, 1) !important;
+  color: #fff;
+}
+
+.formGroup label {
+  position: static;
+  display: block;
+  margin-bottom: 4px;
+  color: #888;
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  padding: 0;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.formGroup {
+  position: relative;
+}
+
+.formGroupBtn {
+  margin-top: 8px;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 5px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  background: #eee;
+  color: #888;
+  cursor: not-allowed;
+  transition: background 0.2s, color 0.2s, cursor 0.2s;
+}
+.formGroupBtn.active {
+  background: rgba(0, 108, 164, 1);
+  color: #fff;
+  cursor: pointer;
+}
+.formGroupBtn:active {
+  background: #005b8a;
+}
+
+.formGroupError {
+  color: #d32f2f;
+  font-size: 13px;
+  margin-top: 4px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .qrGenerator {
   position: absolute;
   top: 5%;
@@ -16,7 +107,7 @@
   background: white;
   border: 1px solid #ddd;
   border-radius: 8px;
-box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
   z-index: 2100;
   min-width: 320px;
   max-width: 400px;
@@ -35,7 +126,7 @@ box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
   padding: 30px 15px 0 0;
 }
 
-.dropdownHeader h3{
+.dropdownHeader h3 {
   color: rgba(0, 108, 164, 1);
   font-size: 16px;
   border-bottom: 2px solid rgba(0, 108, 164, 1);
@@ -65,25 +156,91 @@ box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
 .typesList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 10px;
 }
 
 .typeItem {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
+  flex-direction: column;
+  align-items: self-start;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid rgba(125, 125, 125, 1);
   border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.2s;
-  border: 1px solid transparent;
+  padding: 10px;
+}
+.typeItem input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.61);
+  border-radius: 5px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s;
 }
 
-.typeItem:hover {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
+.typeItem input[type="checkbox"]:checked {
+  background: rgba(0, 108, 164, 1);
+  border: 1px solid rgba(0, 108, 164, 1);
 }
 
+.typeItem input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 3px 3px 0;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+.typeHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.typeFormWrapper {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s,
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: max-height, opacity, transform;
+  margin-left: 30px;
+}
+.typeFormWrapper.active {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s,
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.formGroupBtn {
+  background-color: rgba(0, 108, 164, 0.4);
+  color: white;
+  border: 1px solid rgba(125, 125, 125, 1);
+  padding: 2px 20px;
+  width: fit-content;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .typeIcon {
   font-size: 16px;
   width: 20px;
@@ -98,8 +255,7 @@ box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
 
 .description {
   font-size: 12px;
-  color: #666;
-  font-style: italic;
+  color: #000;
 }
 
 .formContainer {
@@ -144,28 +300,20 @@ box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
 }
 
 .formGroup label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  font-style: italic;
 }
 
 .formGroup input,
 .formGroup select,
 .formGroup textarea {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s;
-}
-
-.formGroup input:focus,
-.formGroup select:focus,
-.formGroup textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
 .formGroup textarea {

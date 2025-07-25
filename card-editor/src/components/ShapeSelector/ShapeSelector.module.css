@@ -1,0 +1,147 @@
+.shapeSelector {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.dropdown {
+  position: relative;
+  top: 0;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2100;
+  min-width: 450px;
+  max-width: 550px;
+  margin-top: 0;
+  margin-left: 0;
+  pointer-events: auto;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  padding: 30px 15px 0 0;
+}
+
+.dropdownHeader h3 {
+  color: rgba(0, 108, 164, 1);
+  font-size: 16px;
+  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  margin: 0;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 0;
+  background-color: transparent;
+  cursor: pointer;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeBtn:hover {
+  background-color: #f0f0f0;
+}
+
+.content {
+  padding: 20px;
+  padding-top: 0;
+}
+
+.shapesGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.shapeItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: 1px solid transparent;
+}
+
+.shapeItem:hover {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+}
+
+.shapeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+}
+
+.shapeName {
+  font-size: 11px;
+  color: #333;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Адаптивність для мобільних пристроїв */
+@media (max-width: 600px) {
+  .dropdown {
+    min-width: 320px;
+    max-width: 90vw;
+  }
+
+  .shapesGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .shapeIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .shapeName {
+    font-size: 10px;
+  }
+
+  .content {
+    padding: 12px 16px;
+  }
+
+  .dropdownHeader {
+    padding: 12px 16px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .shapesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

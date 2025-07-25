@@ -6,6 +6,8 @@ import JsBarcode from "jsbarcode";
 import * as XLSX from "xlsx";
 import UndoRedo from "../UndoRedo/UndoRedo"; // Імпорт компонента
 import QRCodeGenerator from "../QRCodeGenerator/QRCodeGenerator";
+import BarCodeGenerator from "../BarCodeGenerator/BarCodeGenerator";
+import ShapeSelector from "../ShapeSelector/ShapeSelector";
 import styles from "./Toolbar.module.css";
 import {
   Icon0,
@@ -65,9 +67,19 @@ const Toolbar = () => {
   const [isAdhesiveTape, setIsAdhesiveTape] = useState(false);
   const fileInputRef = useRef(null);
   const [isQrOpen, setIsQrOpen] = useState(false);
+  const [isBarCodeOpen, setIsBarCodeOpen] = useState(false);
+  const [isShapeOpen, setIsShapeOpen] = useState(false);
 
   const addQrCode = () => {
     setIsQrOpen(true);
+  };
+
+  const addBarCode = () => {
+    setIsBarCodeOpen(true);
+  };
+
+  const addShape = () => {
+    setIsShapeOpen(true);
   };
 
   // Оновлення активного об'єкта та розмірів при зміні
@@ -263,53 +275,6 @@ const Toolbar = () => {
       canvas.remove(activeObject);
       setActiveObject(null);
       canvas.renderAll();
-    }
-  };
-
-  // Додавання бар-коду з реальною генерацією
-  const addBarCode = () => {
-    if (!canvas) return;
-
-    const text = prompt("Введіть текст для штрих-коду:", "1234567890");
-    if (!text) return;
-
-    try {
-      // Створюємо тимчасовий canvas для генерації штрих-коду
-      const tempCanvas = document.createElement("canvas");
-
-      // Генеруємо штрих-код
-      JsBarcode(tempCanvas, text, {
-        format: "CODE128",
-        width: 2,
-        height: 60,
-        displayValue: true,
-        fontSize: 14,
-        textMargin: 5,
-        margin: 10,
-      });
-
-      // Конвертуємо в Data URL
-      const barcodeDataURL = tempCanvas.toDataURL();
-
-      // Створюємо зображення зі штрих-коду
-      fabric.FabricImage.fromURL(barcodeDataURL).then((img) => {
-        img.set({
-          left: 100,
-          top: 100,
-          selectable: true,
-          hasControls: true,
-          hasBorders: true,
-        });
-
-        canvas.add(img);
-        canvas.setActiveObject(img);
-        canvas.renderAll();
-      });
-    } catch (error) {
-      console.error("Помилка генерації штрих-коду:", error);
-      alert(
-        "Помилка генерації штрих-коду. Перевірте правильність введених даних."
-      );
     }
   };
 
@@ -1690,7 +1655,7 @@ const Toolbar = () => {
               <span>Upload</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={addRectangle}>
+          <li className={styles.elementsEl} onClick={addShape}>
             <span className={styles.elementsSpanWrapper}>
               {Shape}
               <span>Shape</span>
@@ -1771,6 +1736,8 @@ const Toolbar = () => {
       {/* Undo/Redo */}
       <UndoRedo />
       <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
+      <BarCodeGenerator isOpen={isBarCodeOpen} onClose={() => setIsBarCodeOpen(false)} />
+      <ShapeSelector isOpen={isShapeOpen} onClose={() => setIsShapeOpen(false)} />
       {/* Прихований input для завантаження файлів через іконку камери */}
       <input
         ref={fileInputRef}

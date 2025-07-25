@@ -1,0 +1,178 @@
+.barGenerator {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.dropdown {
+  position: relative;
+  top: 0;
+  left: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2100;
+  min-width: 350px;
+  max-width: 450px;
+  margin-top: 0;
+  margin-left: 0;
+  pointer-events: auto;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  padding: 30px 15px 0 0;
+}
+
+.dropdownHeader h3 {
+  color: rgba(0, 108, 164, 1);
+  font-size: 16px;
+  border-bottom: 2px solid rgba(0, 108, 164, 1);
+  margin: 0;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 0;
+  background-color: transparent;
+  cursor: pointer;
+  border: none;
+  font-size: 20px;
+  color: #666;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.closeBtn:hover {
+  background-color: #f0f0f0;
+}
+
+.content {
+  padding: 20px;
+  padding-top: 0;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 15px;
+  align-items: end;
+}
+
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 140px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.selectGroup label,
+.inputGroup label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.select,
+.input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+.select:focus,
+.input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.select {
+  cursor: pointer;
+  background-color: white;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.updateBtn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.updateBtn:hover {
+  background-color: #0056b3;
+}
+
+.updateBtn:active {
+  background-color: #004085;
+}
+
+/* Адаптивність для мобільних пристроїв */
+@media (max-width: 480px) {
+  .dropdown {
+    min-width: 280px;
+    max-width: 90vw;
+  }
+
+  .inputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .selectGroup {
+    flex: none;
+  }
+
+  .content {
+    padding: 12px 16px;
+  }
+
+  .dropdownHeader {
+    padding: 12px 16px 8px;
+  }
+}

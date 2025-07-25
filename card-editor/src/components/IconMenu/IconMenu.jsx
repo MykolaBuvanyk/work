@@ -3,9 +3,8 @@ import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import styles from './IconMenu.module.css';
 
-const IconMenu = () => {
+const IconMenu = ({ isOpen, onClose }) => {
   const { canvas } = useCanvasContext();
-  const [isOpen, setIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Animals');
   const [isLoading, setIsLoading] = useState(false);
   const [availableIcons, setAvailableIcons] = useState({});
@@ -134,7 +133,7 @@ const IconMenu = () => {
       createPlaceholder(iconName);
     } finally {
       setIsLoading(false);
-      setIsOpen(false);
+      onClose(); // Використовуємо пропс onClose замість setIsOpen(false)
     }
   };
 
@@ -149,38 +148,35 @@ const IconMenu = () => {
 
   const getPreviewUrl = (iconName) => `/src/assets/images/icon/${iconName}`;
 
+  if (!isOpen) return null;
+
   return (
     <div className={styles.iconMenu}>
-      <button className={styles.toggleButton} onClick={() => setIsOpen(!isOpen)} disabled={isLoading}>
-        {isLoading ? 'Завантаження...' : 'Додати іконку'}
-      </button>
-      {isOpen && (
-        <div className={styles.dropdown}>
-          <div className={styles.header}>
-            <h3>Виберіть іконку</h3>
-            <button className={styles.closeButton} onClick={() => setIsOpen(false)}>×</button>
-          </div>
-          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={styles.categorySelect}>
-            {categories.map((category) => (
-              <option key={category} value={category}>{category} ({availableIcons[category]?.length || 0})</option>
-            ))}
-          </select>
-          <div className={styles.iconGrid}>
-            {(availableIcons[selectedCategory] || []).map((icon) => (
-              <div key={icon} className={styles.iconItem} onClick={() => addIcon(icon)} title={icon}>
-                <div className={styles.iconPreview}>
-                  <img src={getPreviewUrl(icon)} alt={icon} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
-                  <div className={styles.iconPlaceholder}><span>{icon.split('.')[0]}</span></div>
-                </div>
-                <span className={styles.iconName}>{icon.replace('.svg', '')}</span>
-              </div>
-            ))}
-          </div>
-          {(!availableIcons[selectedCategory] || availableIcons[selectedCategory].length === 0) && (
-            <div className={styles.noIcons}>Іконки в цій категорії недоступні</div>
-          )}
+      <div className={styles.dropdown}>
+        <div className={styles.header}>
+          <h3>Виберіть іконку</h3>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-      )}
+        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={styles.categorySelect}>
+          {categories.map((category) => (
+            <option key={category} value={category}>{category} ({availableIcons[category]?.length || 0})</option>
+          ))}
+        </select>
+        <div className={styles.iconGrid}>
+          {(availableIcons[selectedCategory] || []).map((icon) => (
+            <div key={icon} className={styles.iconItem} onClick={() => addIcon(icon)} title={icon}>
+              <div className={styles.iconPreview}>
+                <img src={getPreviewUrl(icon)} alt={icon} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
+                <div className={styles.iconPlaceholder}><span>{icon.split('.')[0]}</span></div>
+              </div>
+              <span className={styles.iconName}>{icon.replace('.svg', '')}</span>
+            </div>
+          ))}
+        </div>
+        {(!availableIcons[selectedCategory] || availableIcons[selectedCategory].length === 0) && (
+          <div className={styles.noIcons}>Іконки в цій категорії недоступні</div>
+        )}
+      </div>
     </div>
   );
 };

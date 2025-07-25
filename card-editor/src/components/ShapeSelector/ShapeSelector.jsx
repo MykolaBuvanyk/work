@@ -17,6 +17,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     { id: "warningTriangle", name: "Warning Triangle" },
     { id: "semiround", name: "Semi round" },
     { id: "roundTop", name: "Round Top" },
+    { id: "leftArrow", name: "Left arrow" },
     { id: "rightArrow", name: "Right arrow" },
     { id: "turnLeft", name: "Turn left" },
     { id: "turnRight", name: "Turn right" },
@@ -25,6 +26,246 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     { id: "dashedLine", name: "Dashed Line" },
   ];
 
+  // const addShape = (shapeType) => {
+  //   if (!canvas) return;
+
+  //   let shape = null;
+
+  //   switch (shapeType) {
+  //     case "rectangle":
+  //       shape = new fabric.Rect({
+  //         left: 100,
+  //         top: 100,
+  //         width: 100,
+  //         height: 60,
+  //         fill: "#000000",
+  //       });
+  //       break;
+
+  //     case "roundedCorners":
+  //       shape = new fabric.Rect({
+  //         left: 100,
+  //         top: 100,
+  //         width: 100,
+  //         height: 60,
+  //         fill: "#000000",
+  //         rx: 15,
+  //         ry: 15,
+  //       });
+  //       break;
+
+  //     case "round":
+  //       shape = new fabric.Circle({
+  //         left: 100,
+  //         top: 100,
+  //         radius: 40,
+  //         fill: "#000000",
+  //       });
+  //       break;
+
+  //     case "oval":
+  //       shape = new fabric.Ellipse({
+  //         left: 100,
+  //         top: 100,
+  //         rx: 60,
+  //         ry: 30,
+  //         fill: "#000000",
+  //       });
+  //       break;
+
+  //     case "hexagon":
+  //       shape = new fabric.Polygon(
+  //         [
+  //           { x: 50, y: 0 },
+  //           { x: 100, y: 25 },
+  //           { x: 100, y: 75 },
+  //           { x: 50, y: 100 },
+  //           { x: 0, y: 75 },
+  //           { x: 0, y: 25 },
+  //         ],
+  //         {
+  //           left: 100,
+  //           top: 100,
+  //           fill: "#000000",
+  //         }
+  //       );
+  //       break;
+
+  //     case "octagon":
+  //       shape = new fabric.Path(
+  //         "M39 1L55 17V39L39 55H17L1 39V17L17 1H39Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "triangle":
+  //       shape = new fabric.Path(
+  //         "M59 51H2L31 2L59 51Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "warningTriangle":
+  //       shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", {
+  //         left: 0,
+  //         top: 0,
+  //         fill: "black",
+  //         stroke: "black",
+  //         strokeWidth: 2,
+  //         originX: 'left',
+  //         originY: 'top',
+  //       });
+  //       break;
+
+  //     case "semiround":
+  //       shape = new fabric.Path(
+  //         "M57 28.5C57 24.7573 56.2628 21.0513 54.8306 17.5935C53.3983 14.1357 51.299 10.9939 48.6525 8.34746C46.0061 5.70099 42.8643 3.60169 39.4065 2.16943C35.9487 0.737174 32.2427 -1.63597e-07 28.5 0C24.7573 1.63597e-07 21.0513 0.737175 17.5935 2.16943C14.1357 3.60169 10.9939 5.70099 8.34746 8.34746C5.70099 10.9939 3.60169 14.1357 2.16943 17.5935C0.737174 21.0513 -3.27195e-07 24.7573 0 28.5L28.5 28.5H57Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: null,
+  //           strokeWidth: 0,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+  //     case "roundTop":
+  //       shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", {
+  //         left: 100,
+  //         top: 100,
+  //         fill: "#000000",
+  //       });
+  //       break;
+  //     case "leftArrow":
+  //       shape = new fabric.Path(
+  //         "M56 34V10H18V3L2 22L18 41V34H56Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+  //     case "rightArrow":
+  //       shape = new fabric.Path(
+  //         "M1 34V10H39V3L55 22L39 41V34H1Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "turnLeft":
+  //       shape = new fabric.Path(
+  //         "M14 45H43V1H13L2 23L14 45Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "turnRight":
+  //       shape = new fabric.Path(
+  //         "M30 45H1V1H31L42 23L30 45Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "customShape":
+  //       shape = new fabric.Path(
+  //         "M1 16V48L17 43L38 52L53 43V16H38L21 2L1 16Z",
+  //         {
+  //           left: 0,
+  //           top: 0,
+  //           fill: "black",
+  //           stroke: "black",
+  //           strokeWidth: 2,
+  //           originX: 'left',
+  //           originY: 'top',
+  //         }
+  //       );
+  //       break;
+
+
+  //     case "line":
+  //       shape = new fabric.Line([0, 0, 100, 0], {
+  //         left: 100,
+  //         top: 100,
+  //         stroke: "#000000",
+  //         strokeWidth: 3,
+  //       });
+  //       break;
+
+  //     case "dashedLine":
+  //       shape = new fabric.Line([0, 0, 100, 0], {
+  //         left: 100,
+  //         top: 100,
+  //         stroke: "#000000",
+  //         strokeWidth: 3,
+  //         strokeDashArray: [5, 5],
+  //       });
+  //       break;
+
+  //     default:
+  //       return;
+  //   }
+
+  //   if (shape) {
+  //     canvas.add(shape);
+  //     canvas.setActiveObject(shape);
+  //     canvas.renderAll();
+  //     onClose();
+  //   }
+  // };
   const addShape = (shapeType) => {
     if (!canvas) return;
 
@@ -32,223 +273,240 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     switch (shapeType) {
       case "rectangle":
-        shape = new fabric.Rect({
-          left: 100,
-          top: 100,
-          width: 100,
-          height: 60,
-          fill: "#000000",
+        shape = new fabric.Path("M1 1h52v52H1z", {
+          left: 0,
+          top: 0,
+          fill: "black",
+          stroke: "black",
+          strokeWidth: 2,
+          originX: "left",
+          originY: "top",
         });
         break;
 
       case "roundedCorners":
-        shape = new fabric.Rect({
-          left: 100,
-          top: 100,
-          width: 100,
-          height: 60,
-          fill: "#000000",
-          rx: 15,
-          ry: 15,
-        });
+        shape = new fabric.Path(
+          "M13 1H41C47.6274 1 53 6.37258 53 13V41C53 47.6274 47.6274 53 41 53H13C6.37258 53 1 47.6274 1 41V13C1 6.37258 6.37258 1 13 1Z",
+          {
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
+          }
+        );
         break;
 
       case "round":
-        shape = new fabric.Circle({
-          left: 100,
-          top: 100,
-          radius: 40,
-          fill: "#000000",
-        });
+        shape = new fabric.Path(
+          "M30 1a29 29 0 1 1 0 58 29 29 0 0 1 0-58Z",
+          {
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
+          }
+        );
         break;
 
       case "oval":
-        shape = new fabric.Ellipse({
-          left: 100,
-          top: 100,
-          rx: 60,
-          ry: 30,
-          fill: "#000000",
-        });
+        shape = new fabric.Path(
+          "M30 1c8 0 15 2 21 6 5 4 8 9 8 14s-3 10-8 14c-6 4-13 6-21 6s-15-2-21-6c-5-4-8-9-8-14S4 11 9 7c6-4 13-6 21-6Z",
+          {
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
+          }
+        );
         break;
 
       case "hexagon":
-        shape = new fabric.Polygon(
-          [
-            { x: 50, y: 0 },
-            { x: 100, y: 25 },
-            { x: 100, y: 75 },
-            { x: 50, y: 100 },
-            { x: 0, y: 75 },
-            { x: 0, y: 25 },
-          ],
+        shape = new fabric.Path(
+          "M59 27 45 51H16L2 27 16 2h29l14 25Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "octagon":
-        shape = new fabric.Polygon(
-          [
-            { x: 30, y: 0 },
-            { x: 70, y: 0 },
-            { x: 100, y: 30 },
-            { x: 100, y: 70 },
-            { x: 70, y: 100 },
-            { x: 30, y: 100 },
-            { x: 0, y: 70 },
-            { x: 0, y: 30 },
-          ],
+        shape = new fabric.Path(
+          "M39 1L55 17V39L39 55H17L1 39V17L17 1H39Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "triangle":
-        shape = new fabric.Polygon(
-          [
-            { x: 50, y: 0 },
-            { x: 100, y: 100 },
-            { x: 0, y: 100 },
-          ],
-          {
-            left: 100,
-            top: 100,
-            fill: "#000000",
-          }
-        );
+        shape = new fabric.Path("M59 51H2L31 2L59 51Z", {
+          left: 0,
+          top: 0,
+          fill: "black",
+          stroke: "black",
+          strokeWidth: 2,
+          originX: "left",
+          originY: "top",
+        });
         break;
 
       case "warningTriangle":
-        shape = new fabric.Polygon(
-          [
-            { x: 50, y: 0 },
-            { x: 100, y: 80 },
-            { x: 0, y: 80 },
-          ],
-          {
-            left: 100,
-            top: 100,
-            fill: "#000000",
-          }
-        );
+        shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", {
+          left: 0,
+          top: 0,
+          fill: "black",
+          stroke: "black",
+          strokeWidth: 2,
+          originX: "left",
+          originY: "top",
+        });
         break;
 
       case "semiround":
-        shape = new fabric.Path("M 0 50 Q 50 0 100 50 L 100 100 L 0 100 Z", {
-          left: 100,
-          top: 100,
-          fill: "#000000",
-        });
+        shape = new fabric.Path(
+          "M57 28.5C57 24.7573 56.2628 21.0513 54.8306 17.5935C53.3983 14.1357 51.299 10.9939 48.6525 8.34746C46.0061 5.70099 42.8643 3.60169 39.4065 2.16943C35.9487 0.737174 32.2427 -1.63597e-07 28.5 0C24.7573 1.63597e-07 21.0513 0.737175 17.5935 2.16943C14.1357 3.60169 10.9939 5.70099 8.34746 8.34746C5.70099 10.9939 3.60169 14.1357 2.16943 17.5935C0.737174 21.0513 -3.27195e-07 24.7573 0 28.5L28.5 28.5H57Z",
+          {
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: null,
+            strokeWidth: 0,
+            originX: "left",
+            originY: "top",
+          }
+        );
         break;
 
       case "roundTop":
         shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", {
-          left: 100,
-          top: 100,
-          fill: "#000000",
+          left: 0,
+          top: 0,
+          fill: "black",
+          stroke: "black",
+          strokeWidth: 2,
+          originX: "left",
+          originY: "top",
         });
         break;
 
-      case "rightArrow":
-        shape = new fabric.Polygon(
-          [
-            { x: 0, y: 25 },
-            { x: 60, y: 25 },
-            { x: 60, y: 10 },
-            { x: 100, y: 40 },
-            { x: 60, y: 70 },
-            { x: 60, y: 55 },
-            { x: 0, y: 55 },
-          ],
+      case "leftArrow":
+        shape = new fabric.Path(
+          "M56 34V10H18V3L2 22L18 41V34H56Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
+          }
+        );
+        break;
+
+      case "rightArrow":
+        shape = new fabric.Path(
+          "M1 34V10H39V3L55 22L39 41V34H1Z",
+          {
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "turnLeft":
-        shape = new fabric.Polygon(
-          [
-            { x: 20, y: 40 },
-            { x: 0, y: 20 },
-            { x: 20, y: 0 },
-            { x: 30, y: 10 },
-            { x: 80, y: 10 },
-            { x: 80, y: 30 },
-            { x: 30, y: 30 },
-          ],
+        shape = new fabric.Path(
+          "M14 45H43V1H13L2 23L14 45Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "turnRight":
-        shape = new fabric.Polygon(
-          [
-            { x: 80, y: 40 },
-            { x: 100, y: 20 },
-            { x: 80, y: 0 },
-            { x: 70, y: 10 },
-            { x: 20, y: 10 },
-            { x: 20, y: 30 },
-            { x: 70, y: 30 },
-          ],
+        shape = new fabric.Path(
+          "M30 45H1V1H31L42 23L30 45Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "customShape":
-        shape = new fabric.Polygon(
-          [
-            { x: 20, y: 0 },
-            { x: 80, y: 0 },
-            { x: 100, y: 30 },
-            { x: 80, y: 60 },
-            { x: 60, y: 80 },
-            { x: 40, y: 80 },
-            { x: 20, y: 60 },
-            { x: 0, y: 30 },
-          ],
+        shape = new fabric.Path(
+          "M1 16V48L17 43L38 52L53 43V16H38L21 2L1 16Z",
           {
-            left: 100,
-            top: 100,
-            fill: "#000000",
+            left: 0,
+            top: 0,
+            fill: "black",
+            stroke: "black",
+            strokeWidth: 2,
+            originX: "left",
+            originY: "top",
           }
         );
         break;
 
       case "line":
-        shape = new fabric.Line([0, 0, 100, 0], {
-          left: 100,
-          top: 100,
-          stroke: "#000000",
+        shape = new fabric.Path("M0 0L100 0", {
+          left: 0,
+          top: 0,
+          stroke: "black",
           strokeWidth: 3,
+          fill: "",
+          originX: "left",
+          originY: "top",
         });
         break;
 
       case "dashedLine":
-        shape = new fabric.Line([0, 0, 100, 0], {
-          left: 100,
-          top: 100,
-          stroke: "#000000",
+        shape = new fabric.Path("M0 0L100 0", {
+          left: 0,
+          top: 0,
+          stroke: "black",
           strokeWidth: 3,
           strokeDashArray: [5, 5],
+          fill: "",
+          originX: "left",
+          originY: "top",
         });
         break;
 
@@ -265,113 +523,93 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   };
 
   const renderShapeIcon = (shapeType) => {
-    const iconStyle = {
-      width: "40px",
-      height: "40px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    };
 
     switch (shapeType) {
       case "rectangle":
-        return <div style={{...iconStyle, backgroundColor: "#000000"}}></div>;
-      
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M1 1h52v52H1z" /></svg>
+        );
+
       case "roundedCorners":
-        return <div style={{...iconStyle, backgroundColor: "#000000", borderRadius: "8px"}}></div>;
-      
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" width="54" height="54" fill="none"><rect width="52" height="52" x="1" y="1" fill="#000" stroke="#000" stroke-width="2" rx="12" /></svg>
+        );
+
       case "round":
-        return <div style={{...iconStyle, backgroundColor: "#000000", borderRadius: "50%"}}></div>;
-      
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M30 1a29 29 0 1 1 0 58 29 29 0 0 1 0-58Z" /></svg>
+        );
+
       case "oval":
-        return <div style={{...iconStyle, backgroundColor: "#000000", borderRadius: "50%", width: "50px", height: "30px"}}></div>;
-      
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" width="60" height="42" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M30 1c8 0 15 2 21 6 5 4 8 9 8 14s-3 10-8 14c-6 4-13 6-21 6s-15-2-21-6c-5-4-8-9-8-14S4 11 9 7c6-4 13-6 21-6Z" /></svg>
+        );
+
       case "hexagon":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="20,2 35,12 35,28 20,38 5,28 5,12" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="61" height="53" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M59 27 45 51H16L2 27 16 2h29l14 25Z" /></svg>
         );
-      
+
       case "octagon":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="12,2 28,2 38,12 38,28 28,38 12,38 2,28 2,12" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="m39 1 16 16v22L39 55H17L1 39V17L17 1h22Z" /></svg>
         );
-      
+
       case "triangle":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="20,2 38,35 2,35" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="61" height="52" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M59 51H2L31 2l28 49Z" /></svg>
         );
-      
+
       case "warningTriangle":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="20,5 35,32 5,32" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="53" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M1 32v20h42V32L22 2 1 32Z" /></svg>
         );
-      
+
       case "semiround":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <path d="M 2 20 Q 20 2 38 20 L 38 38 L 2 38 Z" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="57" height="29" fill="none"><path fill="#000" d="M57 29a29 29 0 0 0-57 0h57Z" /></svg>
         );
-      
+
       case "roundTop":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <path d="M 2 38 L 2 20 Q 2 2 20 2 Q 38 2 38 20 L 38 38 Z" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="none"><path fill="#000" d="M44 22a22 22 0 1 0-44 0h44ZM0 22h44v20H0z" /></svg>
         );
-      
+      case "leftArrow":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" width="57" height="44" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M56 34V10H18V3L2 22l16 19v-7h38Z" /></svg>
+        );
       case "rightArrow":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="2,15 25,15 25,8 38,20 25,32 25,25 2,25" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="57" height="44" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M1 34V10h38V3l16 19-16 19v-7H1Z" /></svg>
         );
-      
+
       case "turnLeft":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="15,20 2,10 15,2 20,6 30,6 30,14 20,14" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="46" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M14 45h29V1H13L2 23l12 22Z" /></svg>
         );
-      
+
       case "turnRight":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="25,20 38,10 25,2 20,6 10,6 10,14 20,14" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="46" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M30 45H1V1h30l11 22-12 22Z" /></svg>
         );
-      
+
       case "customShape":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <polygon points="20,2 30,8 38,15 30,25 25,35 15,35 10,25 2,15 10,8" fill="#000000"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="54" height="53" fill="none"><path fill="#000" stroke="#000" stroke-width="2" d="M1 16v32l16-5 21 9 15-9V16H38L21 2 1 16Z" /></svg>
         );
-      
+
       case "line":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <line x1="5" y1="20" x2="35" y2="20" stroke="#000000" strokeWidth="3"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="62" height="2" fill="none"><path stroke="#000" stroke-width="2" d="M0 1h62" /></svg>
         );
-      
+
       case "dashedLine":
         return (
-          <svg width="40" height="40" viewBox="0 0 40 40">
-            <line x1="5" y1="20" x2="35" y2="20" stroke="#000000" strokeWidth="3" strokeDasharray="3,3"/>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="62" height="2" fill="none"><path stroke="#000" stroke-dasharray="10.5 4.5" stroke-width="2" d="M0 1h62" /></svg>
         );
-      
+
       default:
-        return <div style={iconStyle}></div>;
+        return <div></div>;
     }
   };
 

@@ -10,7 +10,7 @@ function App() {
         <div className="sidebar">
           <TextList />
           <Toolbar />
-          <IconMenu />
+          {/* <IconMenu /> */}
         </div>
         <Canvas />
       </div>

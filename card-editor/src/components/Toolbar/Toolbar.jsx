@@ -8,6 +8,8 @@ import UndoRedo from "../UndoRedo/UndoRedo"; // Імпорт компонент�
 import QRCodeGenerator from "../QRCodeGenerator/QRCodeGenerator";
 import BarCodeGenerator from "../BarCodeGenerator/BarCodeGenerator";
 import ShapeSelector from "../ShapeSelector/ShapeSelector";
+import CutSelector from "../CutSelector/CutSelector";
+import IconMenu from "../IconMenu/IconMenu";
 import styles from "./Toolbar.module.css";
 import {
   Icon0,
@@ -69,6 +71,8 @@ const Toolbar = () => {
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isBarCodeOpen, setIsBarCodeOpen] = useState(false);
   const [isShapeOpen, setIsShapeOpen] = useState(false);
+  const [isCutOpen, setIsCutOpen] = useState(false);
+  const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
 
   const addQrCode = () => {
     setIsQrOpen(true);
@@ -80,6 +84,10 @@ const Toolbar = () => {
 
   const addShape = () => {
     setIsShapeOpen(true);
+  };
+
+  const openIconMenu = () => {
+    setIsIconMenuOpen(true);
   };
 
   // Оновлення активного об'єкта та розмірів при зміні
@@ -182,8 +190,13 @@ const Toolbar = () => {
     }
   };
 
-  // Додавання зображення через файловий діалог
+  // Додавання зображення через IconMenu
   const addImage = () => {
+    setIsIconMenuOpen(true);
+  };
+
+  // Додавання зображення через файловий діалог (для Upload кнопки)
+  const addUploadImage = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -269,13 +282,9 @@ const Toolbar = () => {
     }
   };
 
-  // Cut (видалення активного об'єкта)
+  // Cut (відкриття селектора форм вирізів)
   const cut = () => {
-    if (activeObject) {
-      canvas.remove(activeObject);
-      setActiveObject(null);
-      canvas.renderAll();
-    }
+    setIsCutOpen(true);
   };
 
   // Функції для різних типів отворів
@@ -894,7 +903,7 @@ const Toolbar = () => {
         top: 100,
         width: 100,
         height: 60,
-        fill: "#A9A9A9",
+        fill: "transparent",
         stroke: "#000",
         strokeWidth: 1,
       });
@@ -911,7 +920,7 @@ const Toolbar = () => {
         left: 100,
         top: 100,
         radius: 50,
-        fill: "#FFA500",
+        fill: "transparent",
         stroke: "#000",
         strokeWidth: 1,
       });
@@ -929,7 +938,7 @@ const Toolbar = () => {
         top: 100,
         rx: 60,
         ry: 35,
-        fill: "#87CEEB",
+        fill: "transparent",
         stroke: "#000",
         strokeWidth: 1,
       });
@@ -942,32 +951,22 @@ const Toolbar = () => {
   // Icon3 - Замок (складна фігура з кругом та прямокутником)
   const addLock = () => {
     if (canvas) {
-      // Основа замка
-      const lockBase = new fabric.Rect({
-        left: 100,
-        top: 130,
-        width: 60,
-        height: 40,
-        fill: "#D2691E",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
-
-      // Дужка замка
-      const lockShackle = new fabric.Path(
-        "M 20 0 Q 20 -15 40 -15 Q 60 -15 60 0",
+      const shape = new fabric.Path(
+        `M16 7C16 3.68629 13.3137 1 10 1C6.68629 1 4 3.68629 4 7
+   M4.6 6H1V17H19V6H15.4
+   M10 4C11.6569 4 13 5.34315 13 7C13 8.65685 11.6569 10 10 10C8.34315 10 7 8.65685 7 7C7 5.34315 8.34315 4 10 4Z`,
         {
-          left: 100,
-          top: 130,
-          fill: "transparent",
-          stroke: "#000",
-          strokeWidth: 2,
+          left: 0,
+          top: 0,
+          stroke: 'black',
+          strokeWidth: 1,
+          fill: '',
+          originX: 'left',
+          originY: 'top',
         }
       );
-
-      canvas.add(lockBase);
-      canvas.add(lockShackle);
-      canvas.setActiveObject(lockBase);
+      canvas.add(shape);
+      canvas.setActiveObject(shape);
       canvas.renderAll();
     }
   };
@@ -975,27 +974,29 @@ const Toolbar = () => {
   // Icon4 - Коло з горизонтальною лінією (мінус)
   const addCircleWithLine = () => {
     if (canvas) {
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 40,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const shape = new fabric.Path(
+        `M10 0.5
+   A9.5 9.5 0 1 1 9.999 0.5Z
+   M4.5 9.5
+   H15.5
+   A0.5 0.5 0 0 1 16 10
+   A0.5 0.5 0 0 1 15.5 10.5
+   H4.5
+   A0.5 0.5 0 0 1 4 10
+   A0.5 0.5 0 0 1 4.5 9.5Z`,
+        {
+          left: 0,
+          top: 0,
+          stroke: 'black',
+          strokeWidth: 1,
+          fill: '', // без заливки, як у SVG
+          originX: 'left',
+          originY: 'top',
+        }
+      );
 
-      const line = new fabric.Rect({
-        left: 72,
-        top: 98,
-        width: 56,
-        height: 4,
-        fill: "#000",
-        rx: 2,
-      });
-
-      canvas.add(circle);
-      canvas.add(line);
-      canvas.setActiveObject(circle);
+      canvas.add(shape);
+      canvas.setActiveObject(shape);
       canvas.renderAll();
     }
   };
@@ -1003,41 +1004,37 @@ const Toolbar = () => {
   // Icon5 - Коло з хрестом (плюс)
   const addCircleWithCross = () => {
     if (canvas) {
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 40,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      const shape = new fabric.Path(
+        `M10 0.5
+        A9.5 9.5 0 1 1 9.999 0.5Z
 
-      // Горизонтальна лінія
-      const hLine = new fabric.Rect({
-        left: 72,
-        top: 98,
-        width: 56,
-        height: 4,
-        fill: "#000",
-        rx: 2,
-      });
+        M3.5 9
+        H16.5
+        A0.5 0.5 0 0 1 17 9.5
+        A0.5 0.5 0 0 1 16.5 10
+        H3.5
+        A0.5 0.5 0 0 1 3 9.5
+        A0.5 0.5 0 0 1 3.5 9Z
 
-      // Вертикальна лінія
-      const vLine = new fabric.Rect({
-        left: 98,
-        top: 115,
-        width: 4,
-        height: 22,
-        fill: "#D9D9D9",
-        stroke: "#000",
-        strokeWidth: 1,
-        rx: 2,
-      });
-
-      canvas.add(circle);
-      canvas.add(hLine);
-      canvas.add(vLine);
-      canvas.setActiveObject(circle);
+        M10.5 10.5
+        V15.5
+        A0.5 0.5 0 0 1 10 16
+        A0.5 0.5 0 0 1 9.5 15.5
+        V10.5
+        A0.5 0.5 0 0 1 10 10
+        A0.5 0.5 0 0 1 10.5 10.5Z`,
+        {
+          left: 0,
+          top: 0,
+          stroke: 'black',
+          strokeWidth: 1,
+          fill: '',
+          originX: 'left',
+          originY: 'top',
+        }
+      );
+      canvas.add(shape);
+      canvas.setActiveObject(shape);
       canvas.renderAll();
     }
   };
@@ -1045,36 +1042,18 @@ const Toolbar = () => {
   // Icon6 - Будинок з дахом
   const addHouse = () => {
     if (canvas) {
-      // Основа будинку
-      const base = new fabric.Rect({
-        left: 80,
-        top: 120,
-        width: 60,
-        height: 50,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
+      const shape = new fabric.Path("M1 11V17.5H8.5H15V11L8 1L1 11Z", {
+        left: 0,
+        top: 0,
+        stroke: "black",
+        fill: "",
+        strokeWidth: 1.5,
+        originX: "left",
+        originY: "top",
       });
 
-      // Дах будинку (трикутник)
-      const roof = new fabric.Polygon(
-        [
-          { x: 25, y: 50 },
-          { x: 50, y: 0 },
-          { x: 75, y: 50 },
-        ],
-        {
-          left: 80,
-          top: 70,
-          fill: "transparent",
-          stroke: "#000",
-          strokeWidth: 1,
-        }
-      );
-
-      canvas.add(base);
-      canvas.add(roof);
-      canvas.setActiveObject(base);
+      canvas.add(shape);
+      canvas.setActiveObject(shape);
       canvas.renderAll();
     }
   };
@@ -1082,29 +1061,43 @@ const Toolbar = () => {
   // Icon7 - Півколо з основою (дуга)
   const addHalfCircle = () => {
     if (canvas) {
-      // Основа
-      const base = new fabric.Rect({
-        left: 80,
-        top: 140,
-        width: 80,
-        height: 2,
-        fill: "#D9D9D9",
-        stroke: "#000",
-        strokeWidth: 0.5,
+      // Створюємо групу для об'єднання всіх елементів
+      const group = new fabric.Group([], {
+        left: 0,
+        top: 0,
+        originX: 'left',
+        originY: 'top'
       });
 
-      // Півколо
-      const arc = new fabric.Path("M 0 40 Q 40 0 80 40", {
-        left: 80,
-        top: 100,
-        fill: "transparent",
-        stroke: "#000",
+      // Напівколо
+      const semicircle = new fabric.Path(
+        'M1 10 A9 10 0 0 1 19 10',
+        {
+          left: 0,
+          top: 0,
+          stroke: 'black',
+          strokeWidth: 1,
+          fill: '',
+          originX: 'left',
+          originY: 'top'
+        }
+      );
+
+      // Лінія діаметра
+      const diameterLine = new fabric.Line([0.05, 10, 18.95, 10], {
+        stroke: 'black',
         strokeWidth: 1,
+        originX: 'left',
+        originY: 'top'
       });
 
-      canvas.add(base);
-      canvas.add(arc);
-      canvas.setActiveObject(arc);
+      // Додаємо елементи до групи
+      group.add(semicircle);
+      group.add(diameterLine);
+
+      // Додаємо групу на канвас
+      canvas.add(group);
+      canvas.setActiveObject(group);
       canvas.renderAll();
     }
   };
@@ -1112,27 +1105,23 @@ const Toolbar = () => {
   // Icon8 - Арка з основою
   const addArcWithBase = () => {
     if (canvas) {
-      // Арка
-      const arc = new fabric.Path("M 0 60 Q 40 0 80 60", {
-        left: 80,
-        top: 100,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
+      // Створюємо фігуру одним path
+      const shape = new fabric.Path(
+        'M1 9C1 10.9526 1 14 1 14H10.6429H19V9 M19 9.60215C19 4.53459 15.6806 1 9.99999 1C4.31935 1 1 4.82133 1 9.88889',
+        {
+          left: 0,
+          top: 0,
+          stroke: 'black',
+          strokeWidth: 1,
+          fill: '',
+          originX: 'left',
+          originY: 'top'
+        }
+      );
 
-      // Основа арки
-      const base = new fabric.Path("M 0 60 L 0 80 L 80 80 L 80 60", {
-        left: 80,
-        top: 100,
-        fill: "transparent",
-        stroke: "#000",
-        strokeWidth: 1,
-      });
-
-      canvas.add(arc);
-      canvas.add(base);
-      canvas.setActiveObject(arc);
+      // Додаємо фігуру на канвас
+      canvas.add(shape);
+      canvas.setActiveObject(shape);
       canvas.renderAll();
     }
   };
@@ -1140,23 +1129,21 @@ const Toolbar = () => {
   // Icon9 - Шестикутник
   const addHexagon = () => {
     if (canvas) {
-      const hexagon = new fabric.Polygon(
-        [
-          { x: 40, y: 0 },
-          { x: 80, y: 20 },
-          { x: 80, y: 60 },
-          { x: 40, y: 80 },
-          { x: 0, y: 60 },
-          { x: 0, y: 20 },
-        ],
+      // Створюємо шестикутник одним path
+      const hexagon = new fabric.Path(
+        'M19.9477 9.52512L15.2861 17.5993L5.96169 17.5992L1.30026 9.52458L5.96188 1.45042L15.2859 1.44917L19.9477 9.52512Z',
         {
-          left: 100,
-          top: 100,
-          fill: "transparent",
-          stroke: "#000",
+          left: 0,
+          top: 0,
+          stroke: 'black',
           strokeWidth: 1,
+          fill: '',
+          originX: 'left',
+          originY: 'top'
         }
       );
+
+      // Додаємо шестикутник на канвас
       canvas.add(hexagon);
       canvas.setActiveObject(hexagon);
       canvas.renderAll();
@@ -1180,7 +1167,7 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: "#20B2AA",
+          fill: "transparent",
           stroke: "#000",
           strokeWidth: 1,
         }
@@ -1203,7 +1190,7 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: "#FF6347",
+          fill: "transparent",
           stroke: "#000",
           strokeWidth: 1,
         }
@@ -1230,7 +1217,7 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: "#32CD32",
+          fill: "transparent",
           stroke: "#000",
           strokeWidth: 1,
         }
@@ -1257,7 +1244,7 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: "#FF4500",
+          fill: "transparent",
           stroke: "#000",
           strokeWidth: 1,
         }
@@ -1310,7 +1297,7 @@ const Toolbar = () => {
         {
           left: 100,
           top: 100,
-          fill: "#DAA520",
+          fill: "transparent",
           stroke: "#000",
           strokeWidth: 1,
         }
@@ -1649,7 +1636,7 @@ const Toolbar = () => {
               <span>Image</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={addImage}>
+          <li className={styles.elementsEl} onClick={addUploadImage}>
             <span className={styles.elementsSpanWrapper}>
               {Upload}
               <span>Upload</span>
@@ -1738,6 +1725,8 @@ const Toolbar = () => {
       <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
       <BarCodeGenerator isOpen={isBarCodeOpen} onClose={() => setIsBarCodeOpen(false)} />
       <ShapeSelector isOpen={isShapeOpen} onClose={() => setIsShapeOpen(false)} />
+      <CutSelector isOpen={isCutOpen} onClose={() => setIsCutOpen(false)} />
+      <IconMenu isOpen={isIconMenuOpen} onClose={() => setIsIconMenuOpen(false)} />
       {/* Прихований input для завантаження файлів через іконку камери */}
       <input
         ref={fileInputRef}

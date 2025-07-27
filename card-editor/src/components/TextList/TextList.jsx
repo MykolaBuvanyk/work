@@ -7,7 +7,7 @@ const TextList = () => {
   const { canvas } = useCanvasContext();
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
-  const [newTextValue, setNewTextValue] = useState("Add text");
+  const [newTextValue, setNewTextValue] = useState("");
   const isUpdatingRef = useRef(false);
 
   // Функція для примусового оновлення списку
@@ -741,7 +741,7 @@ const TextList = () => {
               }
             }}
             className={styles.addTextInput}
-            placeholder="Введіть текст для додавання"
+            placeholder="Add text"
           />
         </div>
       </div>

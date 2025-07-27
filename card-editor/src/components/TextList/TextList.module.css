@@ -1,9 +1,7 @@
 .textListContainer {
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
   border-radius: 8px;
+  margin-top: 20px;
 }
 
 .addTextSection {
@@ -17,10 +15,11 @@
   align-items: center;
   gap: 8px;
   padding: 0;
+  margin: 0;
   background: transparent;
   cursor: pointer;
 }
-.addTextInput{
+.addTextInput {
   width: 130px;
   padding: 3px 5px;
   border: 1px solid rgba(125, 125, 125, 1);
@@ -37,7 +36,7 @@
   color: black;
 }
 
-.textItem{
+.textItem {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -50,6 +49,7 @@
   background: white;
   cursor: pointer;
   transition: all 0.2s;
+  width: 80%;
 }
 
 .textItem:hover {
@@ -122,9 +122,10 @@
   margin: 0;
 }
 
-  .fontSizeInput {
-    -moz-appearance: textfield;
-  }
+.fontSizeInput {
+  -moz-appearance: textfield;
+  appearance: textfield; /* Добавлено для совместимости */
+}
 .textInput:focus {
   outline: none;
   border-color: #007bff;
@@ -133,8 +134,9 @@
 
 .textControls {
   display: flex;
+  justify-content: space-between; /* Равномерное распределение элементов */
   align-items: center;
-  gap: 8px;
+  width: 100%; /* Задана ширина 100% */
 }
 
 .fontSizeSelect {
@@ -356,42 +358,42 @@
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .textControls {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .textContent {
     max-width: 100%;
   }
-  
+
   .fontSizeSelect,
   .fontFamilySelect {
     min-width: 60px;
   }
-  
+
   .modalContent {
     width: 95%;
     max-width: none;
   }
-  
+
   .symbolGrid {
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     gap: 6px;
     padding: 15px;
   }
-  
+
   .symbolItem {
     padding: 8px 6px;
     font-size: 16px;
     min-height: 35px;
   }
-  
+
   .modalHeader {
     padding: 12px 16px;
   }
-  
+
   .modalHeader h3 {
     font-size: 16px;
   }

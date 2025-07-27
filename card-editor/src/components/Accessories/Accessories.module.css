@@ -1,0 +1,145 @@
+.accessories {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.toolbarList {
+  background-color: rgba(128, 128, 128, 0.19);
+  border: 1px solid rgba(158, 158, 158, 1);
+  border-radius: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.toolbarItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.accessoriesList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+.accessoriesEl {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.accessoriesEl .price {
+  margin-left: auto;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inputGroup input {
+  width: 100px;
+  padding: 6px 10px;
+  font-size: 14px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.inputGroup input::-webkit-inner-spin-button,
+.inputGroup input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.arrows i {
+  font-size: 14px;
+  color: #444;
+  transition: color 0.2s;
+}
+
+.arrows i:hover {
+  color: #000;
+}
+
+input[type="number"] {
+  width: 50px;
+  background-color: rgba(0, 108, 164, 1);
+  color: white;
+  border-radius: 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border: none;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.61);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: rgba(0, 108, 164, 1);
+  border: none;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 7px;
+  width: 5px;
+  font-weight: 900;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.moreAccessories {
+  display: flex;
+  align-items: center; /* Выравнивание текста и иконки по вертикали */
+  gap: 10px; /* Расстояние между текстом и иконкой */
+  margin-top: 10px; /* Отступ сверху */
+}

@@ -1,15 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
+import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
 
 const TopToolbar = ({ className }) => {
+  const { undo, redo, canUndo, canRedo } = useUndoRedo();
+  const { importFromExcel, exportToExcel } = useExcelImport();
+  const { canvas } = useCanvasContext();
+
+  const handleDelete = () => {
+    if (!canvas) return;
+    
+    const activeObject = canvas.getActiveObject();
+    if (activeObject) {
+      // Якщо обраний об'єкт є групою (кілька елементів)
+      if (activeObject.type === 'activeSelection') {
+        const objects = activeObject.getObjects();
+        canvas.discardActiveObject();
+        objects.forEach(obj => canvas.remove(obj));
+      } else {
+        // Видаляємо один елемент
+        canvas.remove(activeObject);
+      }
+      canvas.renderAll();
+    }
+  };
+
+  // Додаємо підтримку клавіші Delete
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        handleDelete();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canvas]);
   return (
     <div className={`${styles.topToolbar} ${className}`}>
       <div className={styles.leftSide}>
         <div className={styles.toolbarRow}>
           <ul className={styles.toolbarList}>
-            <li className={styles.toolbarItem}>
+            <li className={styles.toolbarItem} onClick={importFromExcel}>
               <svg
                 width="24"
                 height="24"
@@ -233,7 +270,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Save Project
           </div>
-          <div className={styles.topToolbarEL}>
+          <div className={styles.topToolbarEL} onClick={exportToExcel}>
             <svg
               width="24"
               height="24"
@@ -286,7 +323,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Save Project as
           </div>
-          <div className={styles.topToolbarEL}>
+          <div className={styles.topToolbarEL} onClick={handleDelete}>
             <svg
               width="24"
               height="24"
@@ -301,7 +338,10 @@ const TopToolbar = ({ className }) => {
             </svg>
             Delete
           </div>
-          <div className={styles.topToolbarEL}>
+          <div 
+            className={`${styles.topToolbarEL} ${!canUndo ? styles.disabled : ''}`}
+            onClick={canUndo ? undo : undefined}
+          >
             <svg
               width="24"
               height="24"
@@ -311,12 +351,15 @@ const TopToolbar = ({ className }) => {
             >
               <path
                 d="M5.00005 9L5.00005 9.75H5.00005V9ZM6.00005 18.25C5.58584 18.25 5.25005 18.5858 5.25005 19C5.25005 19.4142 5.58584 19.75 6.00005 19.75V18.25ZM6.67204 13.5327C6.96624 13.8243 7.44111 13.8222 7.73269 13.528C8.02427 13.2338 8.02216 12.7589 7.72796 12.4673L6.67204 13.5327ZM5.78962 11.6022L5.26167 12.1348H5.26167L5.78962 11.6022ZM5.78962 6.39785L5.26167 5.86516L5.26167 5.86516L5.78962 6.39785ZM7.72796 5.53269C8.02216 5.24111 8.02427 4.76624 7.73269 4.47204C7.44111 4.17784 6.96624 4.17573 6.67204 4.46731L7.72796 5.53269ZM4.01591 9.25067L3.27193 9.34549L3.27193 9.3455L4.01591 9.25067ZM4.01591 8.74933L3.27193 8.6545L3.27193 8.65451L4.01591 8.74933ZM5.00005 9V9.75H14V9V8.25H5.00005V9ZM14 19V18.25H6.00005V19V19.75H14V19ZM19 14H18.25C18.25 16.3472 16.3473 18.25 14 18.25V19V19.75C17.1757 19.75 19.75 17.1756 19.75 14H19ZM14 9V9.75C16.3473 9.75 18.25 11.6528 18.25 14H19H19.75C19.75 10.8244 17.1757 8.25 14 8.25V9ZM7.2 13L7.72796 12.4673L6.31758 11.0695L5.78962 11.6022L5.26167 12.1348L6.67204 13.5327L7.2 13ZM5.78962 6.39785L6.31758 6.93054L7.72796 5.53269L7.2 5L6.67204 4.46731L5.26167 5.86516L5.78962 6.39785ZM5.78962 11.6022L6.31758 11.0695C5.74268 10.4997 5.35733 10.1161 5.09823 9.79351C4.84863 9.48272 4.77852 9.302 4.75989 9.15584L4.01591 9.25067L3.27193 9.3455C3.33989 9.87869 3.59427 10.3163 3.92869 10.7328C4.25361 11.1373 4.71182 11.5899 5.26167 12.1348L5.78962 11.6022ZM5.78962 6.39785L5.26167 5.86516C4.71182 6.41012 4.25362 6.86265 3.92869 7.26724C3.59427 7.68366 3.33989 8.12131 3.27193 8.6545L4.01591 8.74933L4.75989 8.84416C4.77852 8.698 4.84863 8.51728 5.09823 8.20649C5.35733 7.88386 5.74268 7.50033 6.31758 6.93054L5.78962 6.39785ZM4.01591 9.25067L4.75989 9.15584C4.7533 9.10409 4.75 9.05204 4.75 9H4H3.25C3.25 9.1154 3.25731 9.23079 3.27193 9.34549L4.01591 9.25067ZM4 9H4.75C4.75 8.94796 4.7533 8.89591 4.75989 8.84416L4.01591 8.74933L3.27193 8.65451C3.25731 8.76921 3.25 8.8846 3.25 9H4ZM5.00005 9L5.00005 8.25L4 8.25L4 9L4 9.75L5.00005 9.75L5.00005 9Z"
-                fill="#2D264B"
+                fill={canUndo ? "#2D264B" : "#CCCCCC"}
               />
             </svg>
             Undo
           </div>
-          <div className={styles.topToolbarEL}>
+          <div 
+            className={`${styles.topToolbarEL} ${!canRedo ? styles.disabled : ''}`}
+            onClick={canRedo ? redo : undefined}
+          >
             <svg
               width="24"
               height="24"
@@ -326,7 +369,7 @@ const TopToolbar = ({ className }) => {
             >
               <path
                 d="M19 9L19 9.75H19V9ZM18 18.25C18.4142 18.25 18.75 18.5858 18.75 19C18.75 19.4142 18.4142 19.75 18 19.75V18.25ZM17.328 13.5327C17.0338 13.8243 16.5589 13.8222 16.2673 13.528C15.9757 13.2338 15.9778 12.7589 16.272 12.4673L17.328 13.5327ZM18.2104 11.6022L18.7383 12.1348H18.7383L18.2104 11.6022ZM18.2104 6.39785L18.7383 5.86516L18.7383 5.86516L18.2104 6.39785ZM16.272 5.53269C15.9778 5.24111 15.9757 4.76624 16.2673 4.47204C16.5589 4.17784 17.0338 4.17573 17.328 4.46731L16.272 5.53269ZM19.9841 9.25067L20.7281 9.34549L20.7281 9.3455L19.9841 9.25067ZM19.9841 8.74933L20.7281 8.6545L20.7281 8.65451L19.9841 8.74933ZM19 9V9.75H9.99995V9V8.25H19V9ZM9.99995 19V18.25H18V19V19.75H9.99995V19ZM4.99995 14H5.74995C5.74995 16.3472 7.65274 18.25 9.99995 18.25V19V19.75C6.82432 19.75 4.24995 17.1756 4.24995 14H4.99995ZM9.99995 9V9.75C7.65274 9.75 5.74995 11.6528 5.74995 14H4.99995H4.24995C4.24995 10.8244 6.82432 8.25 9.99995 8.25V9ZM16.8 13L16.272 12.4673L17.6824 11.0695L18.2104 11.6022L18.7383 12.1348L17.328 13.5327L16.8 13ZM18.2104 6.39785L17.6824 6.93054L16.272 5.53269L16.8 5L17.328 4.46731L18.7383 5.86516L18.2104 6.39785ZM18.2104 11.6022L17.6824 11.0695C18.2573 10.4997 18.6427 10.1161 18.9018 9.79351C19.1514 9.48272 19.2215 9.302 19.2401 9.15584L19.9841 9.25067L20.7281 9.3455C20.6601 9.87869 20.4057 10.3163 20.0713 10.7328C19.7464 11.1373 19.2882 11.5899 18.7383 12.1348L18.2104 11.6022ZM18.2104 6.39785L18.7383 5.86516C19.2882 6.41012 19.7464 6.86265 20.0713 7.26724C20.4057 7.68366 20.6601 8.12131 20.7281 8.6545L19.9841 8.74933L19.2401 8.84416C19.2215 8.698 19.1514 8.51728 18.9018 8.20649C18.6427 7.88386 18.2573 7.50033 17.6824 6.93054L18.2104 6.39785ZM19.9841 9.25067L19.2401 9.15584C19.2467 9.10409 19.25 9.05204 19.25 9H20H20.75C20.75 9.1154 20.7427 9.23079 20.7281 9.34549L19.9841 9.25067ZM20 9H19.25C19.25 8.94796 19.2467 8.89591 19.2401 8.84416L19.9841 8.74933L20.7281 8.65451C20.7427 8.76921 20.75 8.8846 20.75 9H20ZM19 9L18.9999 8.25L20 8.25L20 9L20 9.75L19 9.75L19 9Z"
-                fill="#2D264B"
+                fill={canRedo ? "#2D264B" : "#CCCCCC"}
               />
             </svg>
             Redo

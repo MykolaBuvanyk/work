@@ -105,4 +105,15 @@
 
 .fontSizeInput {
   -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.disabled:hover {
+  cursor: not-allowed !important;
 }

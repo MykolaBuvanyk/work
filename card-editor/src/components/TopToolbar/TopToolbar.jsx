@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
+import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 
 const TopToolbar = ({ className }) => {
   return (
@@ -353,7 +354,9 @@ const TopToolbar = ({ className }) => {
           </div>
         </div>
       </div>
-      <div className={styles.rightSide}></div>
+      <div className={styles.rightSide}>
+        <InfoAboutProject />
+      </div>
     </div>
   );
 };

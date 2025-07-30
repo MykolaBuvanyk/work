@@ -10,6 +10,7 @@ import BarCodeGenerator from "../BarCodeGenerator/BarCodeGenerator";
 import ShapeSelector from "../ShapeSelector/ShapeSelector";
 import CutSelector from "../CutSelector/CutSelector";
 import IconMenu from "../IconMenu/IconMenu";
+import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
 import {
   Icon0,
@@ -73,6 +74,7 @@ const Toolbar = () => {
   const [isShapeOpen, setIsShapeOpen] = useState(false);
   const [isCutOpen, setIsCutOpen] = useState(false);
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
+  const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
 
   const addQrCode = () => {
     setIsQrOpen(true);
@@ -958,11 +960,11 @@ const Toolbar = () => {
         {
           left: 0,
           top: 0,
-          stroke: 'black',
+          stroke: "black",
           strokeWidth: 1,
-          fill: '',
-          originX: 'left',
-          originY: 'top',
+          fill: "",
+          originX: "left",
+          originY: "top",
         }
       );
       canvas.add(shape);
@@ -987,11 +989,11 @@ const Toolbar = () => {
         {
           left: 0,
           top: 0,
-          stroke: 'black',
+          stroke: "black",
           strokeWidth: 1,
-          fill: '', // без заливки, як у SVG
-          originX: 'left',
-          originY: 'top',
+          fill: "", // без заливки, як у SVG
+          originX: "left",
+          originY: "top",
         }
       );
 
@@ -1026,11 +1028,11 @@ const Toolbar = () => {
         {
           left: 0,
           top: 0,
-          stroke: 'black',
+          stroke: "black",
           strokeWidth: 1,
-          fill: '',
-          originX: 'left',
-          originY: 'top',
+          fill: "",
+          originX: "left",
+          originY: "top",
         }
       );
       canvas.add(shape);
@@ -1065,30 +1067,27 @@ const Toolbar = () => {
       const group = new fabric.Group([], {
         left: 0,
         top: 0,
-        originX: 'left',
-        originY: 'top'
+        originX: "left",
+        originY: "top",
       });
 
       // Напівколо
-      const semicircle = new fabric.Path(
-        'M1 10 A9 10 0 0 1 19 10',
-        {
-          left: 0,
-          top: 0,
-          stroke: 'black',
-          strokeWidth: 1,
-          fill: '',
-          originX: 'left',
-          originY: 'top'
-        }
-      );
+      const semicircle = new fabric.Path("M1 10 A9 10 0 0 1 19 10", {
+        left: 0,
+        top: 0,
+        stroke: "black",
+        strokeWidth: 1,
+        fill: "",
+        originX: "left",
+        originY: "top",
+      });
 
       // Лінія діаметра
       const diameterLine = new fabric.Line([0.05, 10, 18.95, 10], {
-        stroke: 'black',
+        stroke: "black",
         strokeWidth: 1,
-        originX: 'left',
-        originY: 'top'
+        originX: "left",
+        originY: "top",
       });
 
       // Додаємо елементи до групи
@@ -1107,15 +1106,15 @@ const Toolbar = () => {
     if (canvas) {
       // Створюємо фігуру одним path
       const shape = new fabric.Path(
-        'M1 9C1 10.9526 1 14 1 14H10.6429H19V9 M19 9.60215C19 4.53459 15.6806 1 9.99999 1C4.31935 1 1 4.82133 1 9.88889',
+        "M1 9C1 10.9526 1 14 1 14H10.6429H19V9 M19 9.60215C19 4.53459 15.6806 1 9.99999 1C4.31935 1 1 4.82133 1 9.88889",
         {
           left: 0,
           top: 0,
-          stroke: 'black',
+          stroke: "black",
           strokeWidth: 1,
-          fill: '',
-          originX: 'left',
-          originY: 'top'
+          fill: "",
+          originX: "left",
+          originY: "top",
         }
       );
 
@@ -1131,15 +1130,15 @@ const Toolbar = () => {
     if (canvas) {
       // Створюємо шестикутник одним path
       const hexagon = new fabric.Path(
-        'M19.9477 9.52512L15.2861 17.5993L5.96169 17.5992L1.30026 9.52458L5.96188 1.45042L15.2859 1.44917L19.9477 9.52512Z',
+        "M19.9477 9.52512L15.2861 17.5993L5.96169 17.5992L1.30026 9.52458L5.96188 1.45042L15.2859 1.44917L19.9477 9.52512Z",
         {
           left: 0,
           top: 0,
-          stroke: 'black',
+          stroke: "black",
           strokeWidth: 1,
-          fill: '',
-          originX: 'left',
-          originY: 'top'
+          fill: "",
+          originX: "left",
+          originY: "top",
         }
       );
 
@@ -1723,10 +1722,23 @@ const Toolbar = () => {
       {/* Undo/Redo */}
       <UndoRedo />
       <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
-      <BarCodeGenerator isOpen={isBarCodeOpen} onClose={() => setIsBarCodeOpen(false)} />
-      <ShapeSelector isOpen={isShapeOpen} onClose={() => setIsShapeOpen(false)} />
+      <BarCodeGenerator
+        isOpen={isBarCodeOpen}
+        onClose={() => setIsBarCodeOpen(false)}
+      />
+      <ShapeSelector
+        isOpen={isShapeOpen}
+        onClose={() => setIsShapeOpen(false)}
+      />
       <CutSelector isOpen={isCutOpen} onClose={() => setIsCutOpen(false)} />
-      <IconMenu isOpen={isIconMenuOpen} onClose={() => setIsIconMenuOpen(false)} />
+      <IconMenu
+        isOpen={isIconMenuOpen}
+        onClose={() => setIsIconMenuOpen(false)}
+      />
+      <ShapeProperties
+        isOpen={isShapePropertiesOpen}
+        onClose={() => setIsShapePropertiesOpen(false)}
+      />
       {/* Прихований input для завантаження файлів через іконку камери */}
       <input
         ref={fileInputRef}

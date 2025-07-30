@@ -1,0 +1,46 @@
+.infoAboutProject{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-weight: 500;
+    font-size: 14px;
+    min-width: 220px;
+    padding: 10px;
+    border: 1px solid rgba(93, 93, 93, 1);
+    border-radius: 8px;
+    color: rgba(0, 108, 164, 1);
+}
+.infoAboutProjectEl{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+.title{
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    text-decoration: underline;
+}
+.cartButton{
+    background-color: rgba(218, 218, 218, 1);
+    border: 1px solid rgba(0, 0, 0, 0.61);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 75px;
+    padding: 5px;
+}
+.para{
+    padding: 0;
+    margin: 0;
+}
+.para span{
+    color: #000;
+}
+.price{
+    color: #000;
+    font-weight: 600;
+}

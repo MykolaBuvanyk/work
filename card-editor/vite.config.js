@@ -7,4 +7,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ['fabric'],
   },
+  server: {
+    allowedHosts: ['22d047ef0cbd.ngrok-free.app'],
+  },
 })

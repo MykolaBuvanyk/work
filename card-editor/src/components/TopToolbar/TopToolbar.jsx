@@ -4,6 +4,7 @@ import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
+import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -396,7 +397,9 @@ const TopToolbar = ({ className }) => {
           </div>
         </div>
       </div>
-      <div className={styles.rightSide}></div>
+      <div className={styles.rightSide}>
+        <InfoAboutProject />
+      </div>
     </div>
   );
 };

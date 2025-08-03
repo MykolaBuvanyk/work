@@ -10,6 +10,7 @@ import BarCodeGenerator from "../BarCodeGenerator/BarCodeGenerator";
 import ShapeSelector from "../ShapeSelector/ShapeSelector";
 import CutSelector from "../CutSelector/CutSelector";
 import IconMenu from "../IconMenu/IconMenu";
+import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
 import {
   Icon0,
@@ -74,6 +75,7 @@ const Toolbar = () => {
   const [isShapeOpen, setIsShapeOpen] = useState(false);
   const [isCutOpen, setIsCutOpen] = useState(false);
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
+  const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
 
   const addQrCode = () => {
     setIsQrOpen(true);
@@ -2434,10 +2436,23 @@ const Toolbar = () => {
       {/* Undo/Redo */}
       {/* <UndoRedo /> */}
       <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
-      <BarCodeGenerator isOpen={isBarCodeOpen} onClose={() => setIsBarCodeOpen(false)} />
-      <ShapeSelector isOpen={isShapeOpen} onClose={() => setIsShapeOpen(false)} />
+      <BarCodeGenerator
+        isOpen={isBarCodeOpen}
+        onClose={() => setIsBarCodeOpen(false)}
+      />
+      <ShapeSelector
+        isOpen={isShapeOpen}
+        onClose={() => setIsShapeOpen(false)}
+      />
       <CutSelector isOpen={isCutOpen} onClose={() => setIsCutOpen(false)} />
-      <IconMenu isOpen={isIconMenuOpen} onClose={() => setIsIconMenuOpen(false)} />
+      <IconMenu
+        isOpen={isIconMenuOpen}
+        onClose={() => setIsIconMenuOpen(false)}
+      />
+      <ShapeProperties
+        isOpen={isShapePropertiesOpen}
+        onClose={() => setIsShapePropertiesOpen(false)}
+      />
       {/* Прихований input для завантаження файлів через іконку камери */}
       <input
         ref={fileInputRef}

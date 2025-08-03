@@ -14,8 +14,6 @@
 }
 .rightSide {
   width: 250px;
-  height: 100px;
-  background-color: rgba(158, 158, 158, 1);
 }
 .toolbarRow {
   display: flex;

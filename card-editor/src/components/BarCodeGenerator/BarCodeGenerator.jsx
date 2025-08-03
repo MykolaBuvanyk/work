@@ -5,7 +5,7 @@ import * as fabric from "fabric";
 import styles from "./BarCodeGenerator.module.css";
 
 const BarCodeGenerator = ({ isOpen, onClose }) => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
   const [formData, setFormData] = useState({
     text: "",
     codeType: "CODE128",
@@ -35,6 +35,8 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         fontSize: 14,
         textMargin: 5,
         margin: 10,
+        background: globalColors.backgroundColor || "#FFFFFF",
+        lineColor: globalColors.textColor || "#000000",
       });
 
       // Конвертуємо в Data URL
@@ -49,6 +51,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         selectable: true,
         hasControls: true,
         hasBorders: true,
+        isBarCode: true, // Позначаємо як Bar код
+        barCodeText: formData.text, // Зберігаємо текст для регенерації
+        barCodeType: formData.codeType, // Зберігаємо тип коду
       });
 
       canvas.add(img);

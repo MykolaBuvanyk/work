@@ -4,7 +4,7 @@ import * as fabric from "fabric";
 import styles from "./TextList.module.css";
 
 const TextList = () => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState("");
@@ -89,7 +89,7 @@ const TextList = () => {
         fontWeight: "normal",
         textAlign: "left",
         selectable: true,
-        fill: "#000000",
+        fill: globalColors.textColor,
         id: `text_${Date.now()}_${Math.random()}`,
       });
 

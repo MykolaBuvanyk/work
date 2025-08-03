@@ -4,7 +4,7 @@ import * as fabric from "fabric";
 import styles from "./ShapeSelector.module.css";
 
 const ShapeSelector = ({ isOpen, onClose }) => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
 
   const shapes = [
     { id: "rectangle", name: "Rectangle" },
@@ -276,8 +276,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M1 1h52v52H1z", {
           left: 0,
           top: 0,
-          fill: "black",
-          stroke: "black",
+          fill: globalColors.fillColor || "transparent",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 2,
           originX: "left",
           originY: "top",
@@ -290,8 +290,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -305,8 +305,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -320,8 +320,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -335,8 +335,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -350,8 +350,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -363,8 +363,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M59 51H2L31 2L59 51Z", {
           left: 0,
           top: 0,
-          fill: "black",
-          stroke: "black",
+          fill: globalColors.fillColor || "transparent",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 2,
           originX: "left",
           originY: "top",
@@ -375,8 +375,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", {
           left: 0,
           top: 0,
-          fill: "black",
-          stroke: "black",
+          fill: globalColors.fillColor || "transparent",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 2,
           originX: "left",
           originY: "top",
@@ -389,9 +389,9 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: null,
-            strokeWidth: 0,
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
+            strokeWidth: 2,
             originX: "left",
             originY: "top",
           }
@@ -402,8 +402,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", {
           left: 0,
           top: 0,
-          fill: "black",
-          stroke: "black",
+          fill: globalColors.fillColor || "transparent",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 2,
           originX: "left",
           originY: "top",
@@ -416,8 +416,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -431,8 +431,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -446,8 +446,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -461,8 +461,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -476,8 +476,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           {
             left: 0,
             top: 0,
-            fill: "black",
-            stroke: "black",
+            fill: globalColors.fillColor || "transparent",
+            stroke: globalColors.strokeColor || "#000000",
             strokeWidth: 2,
             originX: "left",
             originY: "top",
@@ -489,7 +489,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M0 0L100 0", {
           left: 0,
           top: 0,
-          stroke: "black",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 3,
           fill: "",
           originX: "left",
@@ -501,7 +501,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = new fabric.Path("M0 0L100 0", {
           left: 0,
           top: 0,
-          stroke: "black",
+          stroke: globalColors.strokeColor || "#000000",
           strokeWidth: 3,
           strokeDashArray: [5, 5],
           fill: "",

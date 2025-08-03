@@ -21,7 +21,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     }));
   };
 
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
   const [selectedType, setSelectedType] = useState(null);
   const [formData, setFormData] = useState({
     url: "",
@@ -77,8 +77,8 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         width: 150,
         margin: 1,
         color: {
-          dark: "#000000",
-          light: "#FFFFFF",
+          dark: globalColors.textColor || "#000000",
+          light: globalColors.backgroundColor || "#FFFFFF",
         },
       });
 
@@ -90,6 +90,8 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         selectable: true,
         hasControls: true,
         hasBorders: true,
+        isQRCode: true, // Позначаємо як QR код
+        qrText: qrData, // Зберігаємо текст для регенерації
       });
 
       canvas.add(img);

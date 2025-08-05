@@ -10,6 +10,7 @@ const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
   const { canvas } = useCanvasContext();
+  const [zoom, setZoom] = useState(100);
 
   const handleDelete = () => {
     if (!canvas) return;
@@ -29,6 +30,43 @@ const TopToolbar = ({ className }) => {
     }
   };
 
+  const handleZoomIn = () => {
+    if (canvas) {
+      const newZoomValue = Math.min(zoom + 1, 500); // Збільшуємо на 1%, максимум 500%
+      setZoom(newZoomValue);
+      canvas.setZoom(newZoomValue / 100);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (canvas) {
+      const newZoomValue = Math.max(zoom - 1, 10); // Зменшуємо на 1%, мінімум 10%
+      setZoom(newZoomValue);
+      canvas.setZoom(newZoomValue / 100);
+    }
+  };
+
+  const handleZoomInputChange = (e) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value >= 10 && value <= 500) {
+      setZoom(value);
+      if (canvas) {
+        canvas.setZoom(value / 100);
+      }
+    } else if (e.target.value === '') {
+      setZoom('');
+    }
+  };
+
+  const handleZoomInputBlur = (e) => {
+    if (e.target.value === '' || isNaN(parseInt(e.target.value, 10))) {
+      setZoom(100);
+      if (canvas) {
+        canvas.setZoom(1);
+      }
+    }
+  };
+
   // Додаємо підтримку клавіші Delete
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -41,6 +79,14 @@ const TopToolbar = ({ className }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
+  }, [canvas]);
+
+  // Синхронізуємо zoom state з canvas при ініціалізації
+  useEffect(() => {
+    if (canvas) {
+      const currentZoom = canvas.getZoom();
+      setZoom(Math.round(currentZoom * 100));
+    }
   }, [canvas]);
   return (
     <div className={`${styles.topToolbar} ${className}`}>
@@ -377,22 +423,17 @@ const TopToolbar = ({ className }) => {
           </div>
           <div className={styles.topToolbarEL}>
             <div className={styles.fontSizeControl}>
-              <button className={styles.sizeButton}>-</button>
+              <button className={styles.sizeButton} onClick={handleZoomOut}>-</button>
               <input
                 type="number"
                 className={styles.fontSizeInput}
-                min={0}
-                max={100}
-                onInput={(e) => {
-                  if (e.target.value > 100) {
-                    e.target.value = 100;
-                  }
-                  else if (e.target.value < 0) {
-                    e.target.value = 0;
-                  }
-                }}
+                value={zoom}
+                min={10}
+                max={500}
+                onChange={handleZoomInputChange}
+                onBlur={handleZoomInputBlur}
               />
-              <button className={styles.sizeButton}>+</button>
+              <button className={styles.sizeButton} onClick={handleZoomIn}>+</button>
             </div>
           </div>
         </div>

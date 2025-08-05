@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
+import paper from "paper";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import * as XLSX from "xlsx";
@@ -800,8 +801,8 @@ const Toolbar = () => {
       // Налаштовуємо як обводку
       borderShape.set({
         fill: "transparent",
-        stroke: globalColors.strokeColor,
-        strokeWidth: 3,
+        stroke: "black",
+        strokeWidth: 4,
         selectable: false,
         evented: false,
         excludeFromExport: false,

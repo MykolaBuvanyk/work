@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "clipper-js": "^1.0.2",
+    "clipper-lib": "^6.4.2",
     "fabric": "^6.7.0",
     "jsbarcode": "^3.12.1",
+    "paper": "^0.12.18",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

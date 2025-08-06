@@ -4,11 +4,158 @@ import * as fabric from "fabric";
 import styles from "./TextList.module.css";
 
 const TextList = () => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState("");
+  const [availableFonts, setAvailableFonts] = useState([]);
   const isUpdatingRef = useRef(false);
+
+  // Функція для завантаження списку доступних шрифтів
+  const loadAvailableFonts = async () => {
+    try {
+      // Список файлів шрифтів з папки fonts
+      const fontFiles = [
+        { file: 'AbrilFatface-Regular.ttf', name: 'Abril Fatface' },
+        { file: 'AlfaSlabOne-Regular.ttf', name: 'Alfa Slab One' },
+        { file: 'ArialMT.ttf', name: 'Arial' },
+        { file: 'Arial-BoldMT.ttf', name: 'Arial Bold' },
+        { file: 'Arial-ItalicMT.ttf', name: 'Arial Italic' },
+        { file: 'Arial-BoldItalicMT.ttf', name: 'Arial Bold Italic' },
+        { file: 'ArialNarrow.ttf', name: 'Arial Narrow' },
+        { file: 'ArialNarrow-Bold.ttf', name: 'Arial Narrow Bold' },
+        { file: 'Audiowide-Regular.ttf', name: 'Audiowide' },
+        { file: 'Baloo-Regular.ttf', name: 'Baloo' },
+        { file: 'Baloo2-Regular.ttf', name: 'Baloo 2' },
+        { file: 'Baloo2-Bold.ttf', name: 'Baloo 2 Bold' },
+        { file: 'Baloo2-Medium.ttf', name: 'Baloo 2 Medium' },
+        { file: 'BreeSerif-Regular.ttf', name: 'Bree Serif' },
+        { file: 'ComicSansMS.ttf', name: 'Comic Sans MS' },
+        { file: 'ComicSansMS-Bold.ttf', name: 'Comic Sans MS Bold' },
+        { file: 'ComicSansMS-BoldItalic.ttf', name: 'Comic Sans MS Bold Italic' },
+        { file: 'Courgette-Regular.ttf', name: 'Courgette' },
+        { file: 'DancingScript-Bold.ttf', name: 'Dancing Script Bold' },
+        { file: 'Daniel-Bold.ttf', name: 'Daniel Bold' },
+        { file: 'DIN1451Engschrift.ttf', name: 'DIN 1451 Engschrift' },
+        { file: 'DIN1451Mittelschrift.ttf', name: 'DIN 1451 Mittelschrift' },
+        { file: 'exmouth_.ttf', name: 'Exmouth' },
+        { file: 'Exo2-Regular.ttf', name: 'Exo 2' },
+        { file: 'Exo2-Bold.ttf', name: 'Exo 2 Bold' },
+        { file: 'Exo2-Medium.ttf', name: 'Exo 2 Medium' },
+        { file: 'Exo2-BoldItalic.ttf', name: 'Exo 2 Bold Italic' },
+        { file: 'Exo2-MediumItalic.ttf', name: 'Exo 2 Medium Italic' },
+        { file: 'Gotham-Medium.ttf', name: 'Gotham Medium' },
+        { file: 'Gotham-Bold.ttf', name: 'Gotham Bold' },
+        { file: 'Gotham-MediumItalic.ttf', name: 'Gotham Medium Italic' },
+        { file: 'Gotham-BoldItalic.ttf', name: 'Gotham Bold Italic' },
+        { file: 'GreatVibes-Regular.ttf', name: 'Great Vibes' },
+        { file: 'Handlee-Regular.ttf', name: 'Handlee' },
+        { file: 'ImpactLTStd.ttf', name: 'Impact' },
+        { file: 'Inter-Regular.ttf', name: 'Inter' },
+        { file: 'Inter-Bold.ttf', name: 'Inter Bold' },
+        { file: 'Inter-Italic.ttf', name: 'Inter Italic' },
+        { file: 'Inter-ExtraBoldItalic.ttf', name: 'Inter Extra Bold Italic' },
+        { file: 'Kalam-Regular.ttf', name: 'Kalam' },
+        { file: 'Kalam-Bold.ttf', name: 'Kalam Bold' },
+        { file: 'KeaniaOne-Regular.ttf', name: 'Keania One' },
+        { file: 'Lobster-Regular.ttf', name: 'Lobster' },
+        { file: 'Merriweather-Regular.ttf', name: 'Merriweather' },
+        { file: 'Merriweather-BoldItalic.ttf', name: 'Merriweather Bold Italic' },
+        { file: 'Merriweather-BlackItalic.ttf', name: 'Merriweather Black Italic' },
+        { file: 'Oswald-Regular.ttf', name: 'Oswald' },
+        { file: 'Oswald-Bold.ttf', name: 'Oswald Bold' },
+        { file: 'Pacifico-Regular.ttf', name: 'Pacifico' },
+        { file: 'PatuaOne-Regular.ttf', name: 'Patua One' },
+        { file: 'Roboto-Regular.ttf', name: 'Roboto' },
+        { file: 'Roboto-Bold.ttf', name: 'Roboto Bold' },
+        { file: 'Roboto-Italic.ttf', name: 'Roboto Italic' },
+        { file: 'Roboto-BoldItalic.ttf', name: 'Roboto Bold Italic' },
+        { file: 'Rubik-Regular.ttf', name: 'Rubik' },
+        { file: 'Rubik-Bold.ttf', name: 'Rubik Bold' },
+        { file: 'Rubik-BoldItalic.ttf', name: 'Rubik Bold Italic' },
+        { file: 'Sacramento-Regular.ttf', name: 'Sacramento' },
+        { file: 'Satisfy-Regular.ttf', name: 'Satisfy' },
+        { file: 'StardosStencil-Regular.ttf', name: 'Stardos Stencil' },
+        { file: 'StardosStencil-Bold.ttf', name: 'Stardos Stencil Bold' },
+        { file: 'Teko-Regular.ttf', name: 'Teko' },
+        { file: 'Teko-SemiBold.ttf', name: 'Teko SemiBold' },
+        { file: 'Teko-Bold.ttf', name: 'Teko Bold' },
+        { file: 'TimesNewRomanMTStd.ttf', name: 'Times New Roman' },
+        { file: 'TimesNewRomanMTStd-Bold.ttf', name: 'Times New Roman Bold' },
+        { file: 'TimesNewRomanMTStd-Italic.ttf', name: 'Times New Roman Italic' },
+        { file: 'TimesNewRomanMTStd-BoldIt.ttf', name: 'Times New Roman Bold Italic' },
+        { file: 'VT323-Regular.ttf', name: 'VT323' },
+      ];
+
+      // Базові системні шрифти
+      const systemFonts = [
+        { name: 'Arial', value: 'Arial' },
+        { name: 'Helvetica', value: 'Helvetica' },
+        { name: 'Georgia', value: 'Georgia' },
+        { name: 'Verdana', value: 'Verdana' },
+        { name: 'Courier New', value: 'Courier New' },
+      ];
+
+      // Завантажуємо кастомні шрифти
+      const loadedFonts = [];
+      
+      for (const font of fontFiles) {
+        try {
+          // Спробуємо кілька можливих шляхів
+          const possiblePaths = [
+            `/src/assets/fonts/${font.file}`,
+            `./src/assets/fonts/${font.file}`,
+            `../assets/fonts/${font.file}`,
+            `../../assets/fonts/${font.file}`
+          ];
+          
+          let fontLoaded = false;
+          
+          for (const path of possiblePaths) {
+            try {
+              const fontFace = new FontFace(font.name, `url(${path})`);
+              await fontFace.load();
+              document.fonts.add(fontFace);
+              loadedFonts.push({ name: font.name, value: font.name, loaded: true });
+              fontLoaded = true;
+              break;
+            } catch (error) {
+              // Продовжуємо спробувати інші шляхи
+              continue;
+            }
+          }
+          
+          if (!fontLoaded) {
+            console.warn(`Не вдалося завантажити шрифт ${font.name} з жодного шляху`);
+          }
+        } catch (error) {
+          console.warn(`Помилка завантаження шрифту ${font.name}:`, error);
+        }
+      }
+
+      // Об'єднуємо системні та завантажені шрифти
+      const allFonts = [...systemFonts, ...loadedFonts];
+      
+      setAvailableFonts(allFonts);
+      console.log(`Завантажено ${loadedFonts.length} кастомних шрифтів`);
+    } catch (error) {
+      console.error('Помилка завантаження шрифтів:', error);
+      // Fallback до базових шрифтів
+      setAvailableFonts([
+        { name: 'Arial', value: 'Arial' },
+        { name: 'Times New Roman', value: 'Times New Roman' },
+        { name: 'Courier New', value: 'Courier New' },
+        { name: 'Helvetica', value: 'Helvetica' },
+        { name: 'Georgia', value: 'Georgia' },
+        { name: 'Verdana', value: 'Verdana' },
+      ]);
+    }
+  };
+
+  // Завантажуємо шрифти при ініціалізації компонента
+  useEffect(() => {
+    loadAvailableFonts();
+  }, []);
 
   // Функція для примусового оновлення списку
   const forceUpdate = () => {
@@ -89,7 +236,7 @@ const TextList = () => {
         fontWeight: "normal",
         textAlign: "left",
         selectable: true,
-        fill: "#000000",
+        fill: globalColors.textColor,
         id: `text_${Date.now()}_${Math.random()}`,
       });
 
@@ -236,7 +383,7 @@ const TextList = () => {
     { symbol: "ψ", name: "Псі" },
     { symbol: "ω", name: "Омега мала" },
     { symbol: "Α", name: "Альфа велика" },
-    { symbol: "Β", name: "Бета велика" },
+    { symbol: "Β",   name: "Бета велика" },
     { symbol: "Γ", name: "Гамма велика" },
     { symbol: "Δ", name: "Дельта велика" },
     { symbol: "Θ", name: "Тета велика" },
@@ -414,13 +561,17 @@ const TextList = () => {
                     }
                   }}
                   className={styles.fontFamilySelect}
+                  style={{ fontFamily: text.object?.fontFamily || "Arial" }}
                 >
-                  <option value="Arial">Arial</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Courier New">Courier New</option>
-                  <option value="Helvetica">Helvetica</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Verdana">Verdana</option>
+                  {availableFonts.map((font) => (
+                    <option 
+                      key={font.value} 
+                      value={font.value}
+                      style={{ fontFamily: font.value }}
+                    >
+                      {font.name}
+                    </option>
+                  ))}
                 </select>
                 <div className={styles.formatButtons}>
                   <button

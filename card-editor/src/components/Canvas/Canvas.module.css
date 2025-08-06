@@ -1,0 +1,38 @@
+.viewport {
+  width: 860px;
+  height: 590px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid #999;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.canvasWrapper {
+  position: relative;
+}
+
+.widthLabel, .heightLabel {
+  position: absolute;
+  background: white;
+  color: #333;
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.widthLabel {
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.heightLabel {
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+}

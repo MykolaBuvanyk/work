@@ -37,7 +37,7 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
             cornerRadius: 0, // Для Path об'єктів це не застосовується напряму
             thickness: activeObject.strokeWidth || 2,
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500' // Перевіряємо чи є оранжевий колір
+            cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement // Перевіряємо чи є оранжевий колір або позначка cut
           });
         }
       };
@@ -81,7 +81,7 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
             cornerRadius: 0,
             thickness: activeObject.strokeWidth || 2,
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500'
+            cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement
           });
         }
       };
@@ -158,13 +158,30 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
         if (value) {
           // Заповнити контур оранжевим кольором
           activeObject.set('stroke', '#FFA500');
+          // Додаємо тип cut елементу та блокуємо зміну розміру
+          activeObject.set({
+            isCutElement: true,
+            cutType: 'manual', // Тип для мануально встановлених cut елементів
+            hasControls: false,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockUniScaling: true,
+          });
           // Якщо fill також активний, то fill теж оранжевий
           if (properties.fill) {
             activeObject.set('fill', '#FFA500');
           }
         } else {
-          // Повернути до звичайного чорного кольору
+          // Повернути до звичайного чорного кольору та розблокувати
           activeObject.set('stroke', '#000000');
+          activeObject.set({
+            isCutElement: false,
+            cutType: null,
+            hasControls: true,
+            lockScalingX: false,
+            lockScalingY: false,
+            lockUniScaling: false,
+          });
           if (properties.fill) {
             activeObject.set('fill', '#000000');
           }

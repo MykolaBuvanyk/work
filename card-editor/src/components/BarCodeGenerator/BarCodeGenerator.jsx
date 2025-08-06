@@ -45,9 +45,15 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       // Створюємо зображення з бар-коду
       const img = await fabric.FabricImage.fromURL(barcodeDataURL);
 
+      // Розраховуємо центр полотна
+      const canvasWidth = canvas.getWidth();
+      const canvasHeight = canvas.getHeight();
+
       img.set({
-        left: 100,
-        top: 100,
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center',
         selectable: true,
         hasControls: true,
         hasBorders: true,

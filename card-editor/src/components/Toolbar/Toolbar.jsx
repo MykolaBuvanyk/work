@@ -132,7 +132,7 @@ const Toolbar = () => {
       });
       canvas.on("object:modified", () => {
         const obj = canvas.getActiveObject();
-        if (obj) {
+        if (obj && !obj.isCutElement) { // Ігноруємо cut елементи
           setSizeValues({
             width: Math.round(obj.width * obj.scaleX),
             height: Math.round(obj.height * obj.scaleY),
@@ -864,6 +864,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
       canvas.add(hole);
       canvas.setActiveObject(hole);
@@ -888,6 +894,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Правий отвір
@@ -901,6 +913,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(leftHole);
@@ -927,6 +945,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Верхній правий
@@ -940,6 +964,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній лівий
@@ -953,6 +983,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній правий
@@ -966,6 +1002,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(topLeft);
@@ -995,6 +1037,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Верхній правий
@@ -1009,6 +1057,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній лівий
@@ -1023,6 +1077,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній правий
@@ -1037,6 +1097,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(topLeft);
@@ -1063,6 +1129,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(leftHole);
@@ -1087,6 +1159,12 @@ const Toolbar = () => {
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(rightHole);

@@ -8,14 +8,26 @@ const CutSelector = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
+    // Функція для отримання координат центру полотна
+    const getCenterCoordinates = () => {
+        if (!canvas) return { centerX: 100, centerY: 100 };
+        return {
+            centerX: canvas.getWidth() / 2,
+            centerY: canvas.getHeight() / 2
+        };
+    };
+
     // Функції для додавання різних форм вирізів (тут ви додасте свою логіку)
 
     const addCut1 = () => {
         if (canvas) {
+            const { centerX, centerY } = getCenterCoordinates();
             // Коло з вирізом зверху
             const path = new fabric.Path("M43 1a45 45 0 1 0 8 0M43 5h8M51 5V1M43 5V1", {
-                left: 100,
-                top: 100,
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
                 fill: "transparent",
                 stroke: "#FD7714",
                 strokeWidth: 1.5,
@@ -27,6 +39,8 @@ const CutSelector = ({ isOpen, onClose }) => {
                 lockScalingX: true,
                 lockScalingY: true,
                 lockUniScaling: true,
+                isCutElement: true, // Позначаємо як Cut елемент
+                cutType: 'shape', // Додаємо тип cut елементу
             });
             canvas.add(path);
             canvas.setActiveObject(path);
@@ -37,10 +51,13 @@ const CutSelector = ({ isOpen, onClose }) => {
 
     const addCut2 = () => {
         if (canvas) {
+            const { centerX, centerY } = getCenterCoordinates();
             // Напівкруглі вирізи з боків
             const path = new fabric.Path("M21 1h56M21 78h56M21 1a48 48 0 0 0 0 77M77 78a48 48 0 0 0 0-77", {
-                left: 100,
-                top: 100,
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
                 fill: "transparent",
                 stroke: "#FD7714",
                 strokeWidth: 1.5,
@@ -52,6 +69,8 @@ const CutSelector = ({ isOpen, onClose }) => {
                 lockScalingX: true,
                 lockScalingY: true,
                 lockUniScaling: true,
+                isCutElement: true, // Позначаємо як Cut елемент
+                cutType: 'shape', // Додаємо тип cut елементу
             });
             canvas.add(path);
             canvas.setActiveObject(path);
@@ -62,10 +81,13 @@ const CutSelector = ({ isOpen, onClose }) => {
 
     const addCut3 = () => {
         if (canvas) {
+            const { centerX, centerY } = getCenterCoordinates();
             // Напівколо з прямою лінією внизу
             const path = new fabric.Path("M10.47 71.22h65.65M76.12 71.22a42.52 42.52 0 1 0-65.65 0", {
-                left: 100,
-                top: 100,
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
                 fill: "transparent",
                 stroke: "#FD7714",
                 strokeWidth: 1.5,
@@ -77,6 +99,8 @@ const CutSelector = ({ isOpen, onClose }) => {
                 lockScalingX: true,
                 lockScalingY: true,
                 lockUniScaling: true,
+                isCutElement: true, // Позначаємо як Cut елемент
+                cutType: 'shape', // Додаємо тип cut елементу
             });
             canvas.add(path);
             canvas.setActiveObject(path);
@@ -87,10 +111,13 @@ const CutSelector = ({ isOpen, onClose }) => {
 
     const addCut4 = () => {
         if (canvas) {
+            const { centerX, centerY } = getCenterCoordinates();
             // Вертикальні напівкруглі вирізи
             const path = new fabric.Path("M2 26v37M78 26v37M78 26a43 43 0 0 0-76 0M2 63a43 43 0 0 0 76 0", {
-                left: 100,
-                top: 100,
+                left: centerX,
+                top: centerY,
+                originX: 'center',
+                originY: 'center',
                 fill: "transparent",
                 stroke: "#FD7714",
                 strokeWidth: 1.5,
@@ -102,6 +129,8 @@ const CutSelector = ({ isOpen, onClose }) => {
                 lockScalingX: true,
                 lockScalingY: true,
                 lockUniScaling: true,
+                isCutElement: true, // Позначаємо як Cut елемент
+                cutType: 'shape', // Додаємо тип cut елементу
             });
             canvas.add(path);
             canvas.setActiveObject(path);

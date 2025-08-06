@@ -84,9 +84,16 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
 
       // Створюємо зображення з QR-коду
       const img = await fabric.FabricImage.fromURL(qrDataURL);
+      
+      // Розраховуємо центр полотна
+      const canvasWidth = canvas.getWidth();
+      const canvasHeight = canvas.getHeight();
+      
       img.set({
-        left: 100,
-        top: 100,
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center',
         selectable: true,
         hasControls: true,
         hasBorders: true,
@@ -129,7 +136,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       placeholder = "https://example.com";
       inputType = "url";
       isValid = /^https?:\/\/.+\..+/.test(value);
-      showBtn = !!value;
+      showBtn = isValid;
       showError = value && !isValid;
       if (!value) error = "X Empty field";
       else if (!isValid) error = "X Empty field";
@@ -142,7 +149,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       placeholder = "example@domain.com";
       inputType = "email";
       isValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
-      showBtn = !!value;
+      showBtn = isValid;
       showError = value && !isValid;
       if (!value) error = "X Empty field";
       else if (!isValid) error = "X Incorrect email";
@@ -155,7 +162,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       placeholder = "+380123456789";
       inputType = "tel";
       isValid = /^\+?\d{10,15}$/.test(value);
-      showBtn = !!value;
+      showBtn = isValid;
       showError = value && !isValid;
       if (!value) error = "X Empty field";
       else if (!isValid) error = "X Incorrect phone number";
@@ -167,10 +174,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       label = "Network Name (SSID)";
       placeholder = "WiFi Network Name";
       inputType = "text";
-      isValid = !!value;
-      showBtn = !!value;
+      // Для WiFi перевіряємо SSID та пароль (якщо потрібен)
+      isValid = !!value && (formData.wifiSecurity === "nopass" || !!formData.wifiPassword);
+      showBtn = isValid;
       showError = submitAttempted && !value;
       if (!value) error = "X Empty field";
+      else if (formData.wifiSecurity !== "nopass" && !formData.wifiPassword) error = "X Password required";
       extra = (
         <div>
           {formData.wifiSecurity !== "nopass" && (
@@ -189,6 +198,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                   color: formData.wifiPassword ? "#000" : undefined,
                 }}
               />
+              {submitAttempted && formData.wifiSecurity !== "nopass" && !formData.wifiPassword && (
+                <div className={styles.formGroupError}>X Password required</div>
+              )}
             </div>
           )}
           <label style={{ position: "static" }}>Security Type</label>
@@ -220,7 +232,15 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
 
     const handleBtnClick = (e) => {
       e.preventDefault();
-      if (typeId === "wifi") setSubmitAttempted(true);
+      if (typeId === "wifi") {
+        setSubmitAttempted(true);
+        // Перевіряємо валідність для WiFi
+        if (!formData.wifiSSID || (formData.wifiSecurity !== "nopass" && !formData.wifiPassword)) {
+          return;
+        }
+      }
+      // Генеруємо QR код для поточного типу
+      generateQRCode();
     };
 
     // Обробник для телефону: заборонити букви
@@ -276,11 +296,11 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         </div>
         {extra}
         <button
-          className={styles.formGroupBtn + (value ? " " + styles.active : "")}
-          disabled={!value}
+          className={styles.formGroupBtn + (showBtn ? " " + styles.active : "")}
+          disabled={!showBtn}
           style={{
-            cursor: value ? "pointer" : "not-allowed",
-            background: value ? "rgba(0, 108, 164, 1)" : undefined,
+            cursor: showBtn ? "pointer" : "not-allowed",
+            background: showBtn ? "rgba(0, 108, 164, 1)" : undefined,
           }}
           onClick={handleBtnClick}
         >

@@ -4,7 +4,7 @@ import * as fabric from 'fabric';
 import styles from './IconMenu.module.css';
 
 const IconMenu = ({ isOpen, onClose }) => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors } = useCanvasContext();
   const [selectedCategory, setSelectedCategory] = useState('Animals');
   const [isLoading, setIsLoading] = useState(false);
   const [availableIcons, setAvailableIcons] = useState({});
@@ -71,6 +71,23 @@ const IconMenu = ({ isOpen, onClose }) => {
       } else {
         svgObject = fabric.util.groupSVGElements(result.objects, result.options);
       }
+      
+      // Застосовуємо глобальні кольори до SVG об'єкта
+      const applyColorsToObject = (obj) => {
+        if (obj.type === 'group') {
+          obj.forEachObject(applyColorsToObject);
+        } else {
+          if (globalColors.strokeColor && globalColors.strokeColor !== 'transparent') {
+            obj.set({
+              fill: globalColors.strokeColor,
+              stroke: globalColors.strokeColor
+            });
+          }
+        }
+      };
+      
+      applyColorsToObject(svgObject);
+      
       const bounds = svgObject.getBoundingRect ? svgObject.getBoundingRect() : { width: 100, height: 100 };
       const scale = 80 / Math.max(bounds.width, bounds.height);
       svgObject.set({
@@ -88,7 +105,23 @@ const IconMenu = ({ isOpen, onClose }) => {
   };
 
   const createImageFromSVG = async (svgText, iconName) => {
-    const blob = new Blob([svgText], { type: 'image/svg+xml' });
+    // Застосовуємо глобальні кольори до SVG тексту перед створенням зображення
+    let modifiedSvgText = svgText;
+    if (globalColors.strokeColor && globalColors.strokeColor !== 'transparent') {
+      modifiedSvgText = svgText
+        .replace(/fill="[^"]*"/g, `fill="${globalColors.strokeColor}"`)
+        .replace(/stroke="[^"]*"/g, `stroke="${globalColors.strokeColor}"`);
+      
+      // Додаємо стилі до SVG, якщо їх немає
+      if (!modifiedSvgText.includes('fill=') && !modifiedSvgText.includes('style=')) {
+        modifiedSvgText = modifiedSvgText.replace(
+          /<svg([^>]*)>/,
+          `<svg$1 fill="${globalColors.strokeColor}">`
+        );
+      }
+    }
+    
+    const blob = new Blob([modifiedSvgText], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(blob);
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -138,9 +171,41 @@ const IconMenu = ({ isOpen, onClose }) => {
   };
 
   const createPlaceholder = (iconName) => {
-    const rect = new fabric.Rect({ left: canvas.getWidth() / 2, top: canvas.getHeight() / 2, width: 80, height: 80, fill: '#f8f9fa', stroke: '#dee2e6', strokeWidth: 2, originX: 'center', originY: 'center', rx: 8, ry: 8 });
-    const text = new fabric.Text(iconName.replace('.svg', ''), { left: canvas.getWidth() / 2, top: canvas.getHeight() / 2, fontSize: 12, fill: '#6c757d', textAlign: 'center', originX: 'center', originY: 'center' });
-    const group = new fabric.Group([rect, text], { left: canvas.getWidth() / 2, top: canvas.getHeight() / 2, originX: 'center', originY: 'center' });
+    const fillColor = globalColors.strokeColor && globalColors.strokeColor !== 'transparent' 
+      ? globalColors.strokeColor 
+      : '#6c757d';
+    
+    const rect = new fabric.Rect({ 
+      left: canvas.getWidth() / 2, 
+      top: canvas.getHeight() / 2, 
+      width: 80, 
+      height: 80, 
+      fill: '#f8f9fa', 
+      stroke: fillColor, 
+      strokeWidth: 2, 
+      originX: 'center', 
+      originY: 'center', 
+      rx: 8, 
+      ry: 8 
+    });
+    
+    const text = new fabric.Text(iconName.replace('.svg', ''), { 
+      left: canvas.getWidth() / 2, 
+      top: canvas.getHeight() / 2, 
+      fontSize: 12, 
+      fill: fillColor, 
+      textAlign: 'center', 
+      originX: 'center', 
+      originY: 'center' 
+    });
+    
+    const group = new fabric.Group([rect, text], { 
+      left: canvas.getWidth() / 2, 
+      top: canvas.getHeight() / 2, 
+      originX: 'center', 
+      originY: 'center' 
+    });
+    
     canvas.add(group);
     canvas.setActiveObject(group);
     canvas.renderAll();

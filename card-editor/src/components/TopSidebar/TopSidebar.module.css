@@ -1,0 +1,41 @@
+.topSidebar{
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+.buttonWrapper{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+.button{
+  width: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 8px;
+  gap: 3px;
+  background-color: rgba(0, 108, 164, 1);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 11px;
+}
+.textWrapper{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  gap: 40px;
+  font-weight: 500;
+  font-size: 14px;
+}
+.bold{
+  font-weight: 700;
+}

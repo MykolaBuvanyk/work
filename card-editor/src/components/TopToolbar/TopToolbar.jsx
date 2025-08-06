@@ -14,14 +14,14 @@ const TopToolbar = ({ className }) => {
 
   const handleDelete = () => {
     if (!canvas) return;
-    
+
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
       // Якщо обраний об'єкт є групою (кілька елементів)
-      if (activeObject.type === 'activeSelection') {
+      if (activeObject.type === "activeSelection") {
         const objects = activeObject.getObjects();
         canvas.discardActiveObject();
-        objects.forEach(obj => canvas.remove(obj));
+        objects.forEach((obj) => canvas.remove(obj));
       } else {
         // Видаляємо один елемент
         canvas.remove(activeObject);
@@ -70,14 +70,14 @@ const TopToolbar = ({ className }) => {
   // Додаємо підтримку клавіші Delete
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.key === "Delete" || e.key === "Backspace") {
         handleDelete();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [canvas]);
 
@@ -370,7 +370,10 @@ const TopToolbar = ({ className }) => {
             </svg>
             Save Project as
           </div>
-          <div className={styles.topToolbarEL} onClick={handleDelete}>
+          <div
+            className={`${styles.topToolbarEL} ${styles.delete}`}
+            onClick={handleDelete}
+          >
             <svg
               width="24"
               height="24"
@@ -385,8 +388,10 @@ const TopToolbar = ({ className }) => {
             </svg>
             Delete
           </div>
-          <div 
-            className={`${styles.topToolbarEL} ${!canUndo ? styles.disabled : ''}`}
+          <div
+            className={`${styles.topToolbarEL} ${
+              !canUndo ? styles.disabled : ""
+            }`}
             onClick={canUndo ? undo : undefined}
           >
             <svg
@@ -403,8 +408,10 @@ const TopToolbar = ({ className }) => {
             </svg>
             Undo
           </div>
-          <div 
-            className={`${styles.topToolbarEL} ${!canRedo ? styles.disabled : ''}`}
+          <div
+            className={`${styles.topToolbarEL} ${
+              !canRedo ? styles.disabled : ""
+            }`}
             onClick={canRedo ? redo : undefined}
           >
             <svg

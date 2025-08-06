@@ -77,6 +77,7 @@ const Toolbar = () => {
   const [isCutOpen, setIsCutOpen] = useState(false);
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
+  const [copiesCount, setCopiesCount] = useState(1);
 
   const addQrCode = () => {
     setIsQrOpen(true);
@@ -525,7 +526,11 @@ const Toolbar = () => {
   };
 
   // Оновлена функція для зміни кольору всіх текстів та фону canvas
-  const updateColorScheme = (textColor, backgroundColor, backgroundType = 'solid') => {
+  const updateColorScheme = (
+    textColor,
+    backgroundColor,
+    backgroundType = "solid"
+  ) => {
     if (!canvas) return;
 
     // Оновлюємо глобальні кольори
@@ -560,16 +565,16 @@ const Toolbar = () => {
     });
 
     // Встановлюємо фон canvas
-    if (backgroundType === 'solid') {
-      canvas.set('backgroundColor', backgroundColor);
-    } else if (backgroundType === 'gradient') {
+    if (backgroundType === "solid") {
+      canvas.set("backgroundColor", backgroundColor);
+    } else if (backgroundType === "gradient") {
       // Місце для градієнта - буде реалізовано пізніше
-      console.log('Gradient background will be implemented here');
-      canvas.set('backgroundColor', backgroundColor); // Тимчасово використовуємо solid color
-    } else if (backgroundType === 'texture') {
-      // Місце для текстури - буде реалізовано пізніше  
-      console.log('Texture background will be implemented here');
-      canvas.set('backgroundColor', backgroundColor); // Тимчасово використовуємо solid color
+      console.log("Gradient background will be implemented here");
+      canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
+    } else if (backgroundType === "texture") {
+      // Місце для текстури - буде реалізовано пізніше
+      console.log("Texture background will be implemented here");
+      canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
     }
 
     // Рендеримо canvas
@@ -2164,7 +2169,6 @@ const Toolbar = () => {
           <span onClick={addFlag}>{Icon14}</span>
         </div>
       </div>
-
       {/* 2. Size */}
       <div className={styles.section}>
         <div className={styles.numbering}>
@@ -2243,7 +2247,6 @@ const Toolbar = () => {
           <div className={styles.unitLabel}>* (mm)</div>
         </div>
       </div>
-
       {/* 3. Thickness */}
       <div className={styles.section}>
         <div className={styles.numbering}>
@@ -2305,7 +2308,6 @@ const Toolbar = () => {
           <div className={styles.unitLabel}>* (mm)</div>
         </div>
       </div>
-
       {/* 4. Colour */}
       <div className={`${styles.section} ${styles.colorSection}`}>
         <div className={styles.colorTitleWrapper}>
@@ -2315,23 +2317,92 @@ const Toolbar = () => {
           <h3>Colour</h3>
         </div>
         <div className={styles.colors}>
-          <span onClick={() => updateColorScheme('#000000', '#FFFFFF')} title="Чорний текст, білий фон">{A1}</span>
-          <span onClick={() => updateColorScheme('#0000FF', '#FFFFFF')} title="Синій текст, білий фон">{A2}</span>
-          <span onClick={() => updateColorScheme('#FF0000', '#FFFFFF')} title="Червоний текст, білий фон">{A3}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#000000')} title="Білий текст, чорний фон">{A4}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#0000FF')} title="Білий текст, синій фон">{A5}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#FF0000')} title="Білий текст, червоний фон">{A6}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#00FF00')} title="Білий текст, зелений фон">{A7}</span>
-          <span onClick={() => updateColorScheme('#000000', '#FFFF00')} title="Чорний текст, жовтий фон">{A8}</span>
-          <span onClick={() => updateColorScheme('#000000', '#F0F0F0', 'gradient')} title="Чорний текст, градієнт фон">{A9}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#8B4513')} title="Білий текст, коричневий фон">{A10}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#FFA500')} title="Білий текст, оранжевий фон">{A11}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#808080')} title="Білий текст, сірий фон">{A12}</span>
-          <span onClick={() => updateColorScheme('#000000', '#D2B48C', 'texture')} title="Чорний текст, фон дерева">{A13}</span>
-          <span onClick={() => updateColorScheme('#FFFFFF', '#36454F', 'texture')} title="Білий текст, карбоновий фон">{A14}</span>
+          <span
+            onClick={() => updateColorScheme("#000000", "#FFFFFF")}
+            title="Чорний текст, білий фон"
+          >
+            {A1}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#0000FF", "#FFFFFF")}
+            title="Синій текст, білий фон"
+          >
+            {A2}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FF0000", "#FFFFFF")}
+            title="Червоний текст, білий фон"
+          >
+            {A3}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#000000")}
+            title="Білий текст, чорний фон"
+          >
+            {A4}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#0000FF")}
+            title="Білий текст, синій фон"
+          >
+            {A5}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#FF0000")}
+            title="Білий текст, червоний фон"
+          >
+            {A6}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#00FF00")}
+            title="Білий текст, зелений фон"
+          >
+            {A7}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#000000", "#FFFF00")}
+            title="Чорний текст, жовтий фон"
+          >
+            {A8}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#000000", "#F0F0F0", "gradient")}
+            title="Чорний текст, градієнт фон"
+          >
+            {A9}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#8B4513")}
+            title="Білий текст, коричневий фон"
+          >
+            {A10}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#FFA500")}
+            title="Білий текст, оранжевий фон"
+          >
+            {A11}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#808080")}
+            title="Білий текст, сірий фон"
+          >
+            {A12}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#000000", "#D2B48C", "texture")}
+            title="Чорний текст, фон дерева"
+          >
+            {A13}
+          </span>
+          <span
+            onClick={() => updateColorScheme("#FFFFFF", "#36454F", "texture")}
+            title="Білий текст, карбоновий фон"
+          >
+            {A14}
+          </span>
         </div>
       </div>
-
       {/* 5. Elements & Tools */}
       <div className={`${styles.section} ${styles.colorSection}`}>
         <div className={styles.numbering}>
@@ -2400,14 +2471,41 @@ const Toolbar = () => {
           </li> */}
         </ul>
       </div>
-
       {/* 6. Holes */}
       <div className={`${styles.section} ${styles.colorSection}`}>
         <div className={styles.colorTitleWrapper}>
           <div className={styles.numbering}>
             <p>6</p>
           </div>
-          <h3>Holes</h3>
+          <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+            <h3 style={{ marginRight: "60px" }}>Holes</h3>
+            <div className={styles.field} style={{ margin: 0 }}>
+              <div className={styles.inputGroup}>
+                <input
+                  type="number"
+                  min={1}
+                  value={holesDiameter}
+                  onChange={(e) => {
+                    const val = Math.max(1, parseInt(e.target.value) || 1);
+                    setHolesDiameter(val);
+                  }}
+                />
+                <div className={styles.arrows}>
+                  <i
+                    className="fa-solid fa-chevron-up"
+                    onClick={() => setHolesDiameter((prev) => prev + 1)}
+                  />
+                  <i
+                    className="fa-solid fa-chevron-down"
+                    onClick={() =>
+                      setHolesDiameter((prev) => (prev > 1 ? prev - 1 : 1))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+            <p style={{ padding: "0", margin: "0 0 0 10px" }}>Ø mm</p>
+          </div>
         </div>
         <div className={styles.holes}>
           <span onClick={addHoleType1} title="Без отворів">
@@ -2433,7 +2531,37 @@ const Toolbar = () => {
           </span>
         </div>
       </div>
-
+      {/* Copies */}
+      <div className={`${styles.section} ${styles.colorSection}`}>
+        <div className={styles.colorTitleWrapper}>
+          <h3>Copies</h3>
+          <div className={styles.field} style={{ margin: 0 }}>
+            <div className={styles.inputGroup}>
+              <input
+                type="number"
+                min={1}
+                value={copiesCount}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  setCopiesCount(val);
+                }}
+              />
+              <div className={styles.arrows}>
+                <i
+                  className="fa-solid fa-chevron-up"
+                  onClick={() => setCopiesCount((prev) => prev + 1)}
+                />
+                <i
+                  className="fa-solid fa-chevron-down"
+                  onClick={() =>
+                    setCopiesCount((prev) => (prev > 1 ? prev - 1 : 1))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Undo/Redo */}
       {/* <UndoRedo /> */}
       <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />

@@ -7,20 +7,26 @@ import TopToolbar from "./components/TopToolbar/TopToolbar";
 import Accessories from "./components/Accessories/Accessories";
 import ShapeProperties from "./components/ShapeProperties/ShapeProperties";
 import "./App.css";
+import Header from "./components/Header/Header";
+import TopSidebar from "./components/TopSidebar/TopSidebar";
 
 function App() {
   return (
     <CanvasProvider>
       <div className="app">
-        <div className="sidebar">
-          <Toolbar />
-          <Accessories />
-          {/* <IconMenu /> */}
-        </div>
-        <div className="main-content">
-          <TopToolbar className="topToolbar" />
-          <Canvas className="canvas" />
-          <TextList />
+        <Header />
+        <div className="main-wrapper">
+          <div className="sidebar">
+            <TopSidebar />
+            <Toolbar />
+            <Accessories />
+            {/* <IconMenu /> */}
+          </div>
+          <div className="main-content">
+            <TopToolbar className="topToolbar" />
+            <Canvas className="canvas" />
+            <TextList />
+          </div>
         </div>
         <ShapeProperties />
       </div>

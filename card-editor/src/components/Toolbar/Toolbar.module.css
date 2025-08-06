@@ -1,5 +1,5 @@
 .toolbar {
-  width: 400px;
+  width: 310px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -34,24 +34,26 @@
 
 .icons {
   display: flex;
-  gap: 5px;
+  gap: 3px;
   flex-wrap: wrap;
   color: #000;
-  justify-content: flex-start;
+  justify-content: flex-end;
+  align-items: center;
   width: fit-content;
 }
 
 .icons span{
-  display: inline-flex;
+  display: flex;
   justify-content: center;
   align-items: center;
   width: 30px;
   height: 30px;
   cursor: pointer;
-  font-size: 16px;
   transition: all ease 0.3s;
 }
-
+.icons :first-child {
+  margin-right: auto;
+}
 .icons svg:hover > *{
   stroke: rgba(0, 108, 164, 1) !important;
 }
@@ -76,7 +78,7 @@ input[type="checkbox"] {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: auto auto;
-  gap: 20px;
+  gap: 15px;
 }
 
 .field {
@@ -84,7 +86,7 @@ input[type="checkbox"] {
   /* flex-direction: column; */
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-weight: 700;
   font-size: 14px;
   white-space: nowrap;
@@ -99,7 +101,7 @@ input[type="checkbox"] {
 .inputGroup {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 3px;
 }
 
 .inputGroup input {
@@ -144,12 +146,13 @@ input[type="checkbox"] {
 }
 
 input[type="number"] {
-  width: 50px;
+  width: 40px !important;
   background-color: rgba(0, 108, 164, 1);
   color: white;
   border-radius: 0;
   font-size: 14px;
   text-align: center;
+  padding: 5px;
 }
 input[type="number"]:focus {
   outline: none; /* Прибирає стандартний контур */
@@ -222,6 +225,7 @@ input[type="number"]:focus {
 .colorTitleWrapper{
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .colors {

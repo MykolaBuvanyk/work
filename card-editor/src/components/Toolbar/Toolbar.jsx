@@ -78,6 +78,7 @@ const Toolbar = () => {
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
   const [copiesCount, setCopiesCount] = useState(1);
+  const [holesDiameter, setHolesDiameter] = useState(3);
 
   const addQrCode = () => {
     setIsQrOpen(true);

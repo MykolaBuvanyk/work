@@ -22,7 +22,7 @@
   flex-direction: row;
   justify-content: center;
   box-sizing: border-box;
-  gap: 40px;
+  gap: 30px;
   margin: 0 auto;
   width: 1210px;
 }
@@ -43,11 +43,13 @@
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  align-items: flex-end;
 }
 
 .topToolbar {
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
 .canvas {

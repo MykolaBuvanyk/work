@@ -89,9 +89,9 @@
   gap: 4px;
 }
 .qrGenerator {
-  position: absolute;
-  top: 1%;
-  left: 1%;
+  position: fixed;
+  top: 5%;
+  left: 5%;
   z-index: 2000;
   display: flex;
   justify-content: flex-start;

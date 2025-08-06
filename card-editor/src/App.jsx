@@ -5,6 +5,7 @@ import TextList from "./components/TextList/TextList";
 import IconMenu from "./components/IconMenu/IconMenu";
 import TopToolbar from "./components/TopToolbar/TopToolbar";
 import Accessories from "./components/Accessories/Accessories";
+import ShapeProperties from "./components/ShapeProperties/ShapeProperties";
 import "./App.css";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <Canvas className="canvas" />
           <TextList />
         </div>
+        <ShapeProperties />
       </div>
     </CanvasProvider>
   );

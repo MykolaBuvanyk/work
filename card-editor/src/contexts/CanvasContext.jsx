@@ -5,6 +5,7 @@ const CanvasContext = createContext();
 export const CanvasProvider = ({ children }) => {
   const [canvas, setCanvas] = useState(null);
   const [activeObject, setActiveObject] = useState(null);
+  const [shapePropertiesOpen, setShapePropertiesOpen] = useState(false);
   
   // Глобальні налаштування кольорів
   const [globalColors, setGlobalColors] = useState({
@@ -26,6 +27,8 @@ export const CanvasProvider = ({ children }) => {
       setCanvas, 
       activeObject, 
       setActiveObject,
+      shapePropertiesOpen,
+      setShapePropertiesOpen,
       globalColors,
       updateGlobalColors
     }}>

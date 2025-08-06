@@ -109,6 +109,11 @@
 .arrows i {
   font-size: 13px;
   cursor: pointer;
+  transition: color 0.2s;
+}
+
+.arrows i:hover {
+  color: #006ca4;
 }
 
 .closeButton {

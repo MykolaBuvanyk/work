@@ -34,239 +34,126 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
+    const baseOptions = {
+      left: centerX,
+      top: centerY,
+      fill: globalColors.fillColor || 'transparent',
+      stroke: globalColors.strokeColor || '#000000',
+      strokeWidth: 2,
+      originX: 'center',
+      originY: 'center',
+      strokeUniform: true, // утримує товщину контуру при масштабуванні
+      strokeLineJoin: 'round',
+      strokeMiterLimit: 2,
+    };
+
     switch (shapeType) {
       case "rectangle":
-        shape = new fabric.Path("M1 1h52v52H1z", {
-          left: centerX,
-          top: centerY,
-          fill: globalColors.fillColor || "transparent",
-          stroke: globalColors.strokeColor || "#000000",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-        });
+        shape = new fabric.Path("M1 1h52v52H1z", baseOptions);
         break;
 
       case "roundedCorners":
         shape = new fabric.Path(
           "M13 1H41C47.6274 1 53 6.37258 53 13V41C53 47.6274 47.6274 53 41 53H13C6.37258 53 1 47.6274 1 41V13C1 6.37258 6.37258 1 13 1Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "round":
         shape = new fabric.Path(
           "M30 1a29 29 0 1 1 0 58 29 29 0 0 1 0-58Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "oval":
         shape = new fabric.Path(
           "M30 1c8 0 15 2 21 6 5 4 8 9 8 14s-3 10-8 14c-6 4-13 6-21 6s-15-2-21-6c-5-4-8-9-8-14S4 11 9 7c6-4 13-6 21-6Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "hexagon":
         shape = new fabric.Path(
           "M59 27 45 51H16L2 27 16 2h29l14 25Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "octagon":
         shape = new fabric.Path(
           "M39 1L55 17V39L39 55H17L1 39V17L17 1H39Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "triangle":
-        shape = new fabric.Path("M59 51H2L31 2L59 51Z", {
-          left: centerX,
-          top: centerY,
-          fill: globalColors.fillColor || "transparent",
-          stroke: globalColors.strokeColor || "#000000",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-        });
+  shape = new fabric.Path("M59 51H2L31 2L59 51Z", baseOptions);
         break;
 
       case "warningTriangle":
-        shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", {
-          left: centerX,
-          top: centerY,
-          fill: globalColors.fillColor || "transparent",
-          stroke: globalColors.strokeColor || "#000000",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-        });
+  shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", baseOptions);
         break;
 
       case "semiround":
         shape = new fabric.Path(
           "M57 28.5C57 24.7573 56.2628 21.0513 54.8306 17.5935C53.3983 14.1357 51.299 10.9939 48.6525 8.34746C46.0061 5.70099 42.8643 3.60169 39.4065 2.16943C35.9487 0.737174 32.2427 -1.63597e-07 28.5 0C24.7573 1.63597e-07 21.0513 0.737175 17.5935 2.16943C14.1357 3.60169 10.9939 5.70099 8.34746 8.34746C5.70099 10.9939 3.60169 14.1357 2.16943 17.5935C0.737174 21.0513 -3.27195e-07 24.7573 0 28.5L28.5 28.5H57Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "roundTop":
-        shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", {
-          left: centerX,
-          top: centerY,
-          fill: globalColors.fillColor || "transparent",
-          stroke: globalColors.strokeColor || "#000000",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-        });
+  shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", baseOptions);
         break;
 
       case "leftArrow":
-        shape = new fabric.Path("M56 34V10H18V3L2 22L18 41V34H56Z", {
-          left: centerX,
-          top: centerY,
-          fill: globalColors.fillColor || "transparent",
-          stroke: globalColors.strokeColor || "#000000",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-        });
+  shape = new fabric.Path("M56 34V10H18V3L2 22L18 41V34H56Z", baseOptions);
         break;
 
       case "rightArrow":
         shape = new fabric.Path(
           "M1 34V10H39V3L55 22L39 41V34H1Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "turnLeft":
         shape = new fabric.Path(
           "M14 45H43V1H13L2 23L14 45Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "turnRight":
         shape = new fabric.Path(
           "M30 45H1V1H31L42 23L30 45Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          baseOptions
         );
         break;
 
       case "customShape":
         shape = new fabric.Path(
-          "M1 16V48L17 43L38 52L53 43V16H38L21 2L1 16Z",
-          {
-            left: centerX,
-            top: centerY,
-            fill: globalColors.fillColor || "transparent",
-            stroke: globalColors.strokeColor || "#000000",
-            strokeWidth: 2,
-            originX: "center",
-            originY: "center",
-          }
+          "M1 16V48L17 43L38 52L53 43В16H38L21 2L1 16Z",
+          baseOptions
         );
         break;
 
       case "line":
         shape = new fabric.Path("M0 0L100 0", {
-          left: centerX,
-          top: centerY,
-          stroke: globalColors.strokeColor || "#000000",
+          ...baseOptions,
+          fill: '',
           strokeWidth: 3,
-          fill: "",
-          originX: "center",
-          originY: "center",
+          strokeLineCap: 'round',
         });
         break;
 
       case "dashedLine":
         shape = new fabric.Path("M0 0L100 0", {
-          left: centerX,
-          top: centerY,
-          stroke: globalColors.strokeColor || "#000000",
+          ...baseOptions,
+          fill: '',
           strokeWidth: 3,
           strokeDashArray: [5, 5],
-          fill: "",
-          originX: "center",
-          originY: "center",
+          strokeLineCap: 'round',
         });
         break;
 

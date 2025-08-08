@@ -99,6 +99,17 @@ const Toolbar = () => {
   // Оновлення активного об'єкта та розмірів при зміні
   useEffect(() => {
     if (canvas) {
+      const getLogicalCanvasSize = () => {
+        if (typeof canvas.getDesignSize === 'function') {
+          return canvas.getDesignSize();
+        }
+        const zoom = typeof canvas.getZoom === 'function' ? canvas.getZoom() : 1;
+        return {
+          width: Math.round(canvas.getWidth() / (zoom || 1)),
+          height: Math.round(canvas.getHeight() / (zoom || 1)),
+        };
+      };
+
       canvas.on("selection:created", () => {
         const obj = canvas.getActiveObject();
         setActiveObject(obj);
@@ -124,9 +135,10 @@ const Toolbar = () => {
       canvas.on("selection:cleared", () => {
         setActiveObject(null);
         // Коли нічого не вибрано, показуємо розміри canvas
+        const sz = getLogicalCanvasSize();
         setSizeValues({ 
-          width: canvas.getWidth(), 
-          height: canvas.getHeight(), 
+          width: sz.width, 
+          height: sz.height, 
           cornerRadius: 0 
         });
       });
@@ -142,9 +154,10 @@ const Toolbar = () => {
       });
       
       // Ініціалізуємо початкові значення розмірів canvas
+      const sz = getLogicalCanvasSize();
       setSizeValues({ 
-        width: canvas.getWidth(), 
-        height: canvas.getHeight(), 
+        width: sz.width, 
+        height: sz.height, 
         cornerRadius: 0 
       });
     }

@@ -3,175 +3,189 @@ import * as fabric from 'fabric';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import styles from './Canvas.module.css';
 
-const VIEWPORT_WIDTH = 860;
-const VIEWPORT_HEIGHT = 590;
-const MARGIN = 60; // відступ від краю viewport
+// Відступи всередині viewport
+const MARGIN = 60;
+
+const DEFAULT_DESIGN = { width: 1200, height: 800 };
 
 const Canvas = () => {
   const canvasRef = useRef(null);
-  const { setCanvas, setActiveObject, setShapePropertiesOpen } = useCanvasContext();
+  const viewportRef = useRef(null);
+  const designRef = useRef(DEFAULT_DESIGN); // логічний розмір макету без урахування масштабу/DPR
+  const { setCanvas, setActiveObject, setShapePropertiesOpen, globalColors, canvas } = useCanvasContext();
+  const resizingRef = useRef(false);
 
-  const [canvasWidth, setCanvasWidth] = useState(1200); // Початковий розмір полотна
-  const [canvasHeight, setCanvasHeight] = useState(800);
-  
-  // Окремі стейти для відображення фактичного розміру полотна в лейблах
-  const [displayWidth, setDisplayWidth] = useState(1200);
-  const [displayHeight, setDisplayHeight] = useState(800);
-
+  // Для лейблів показуємо фактичний відображуваний (CSS) розмір полотна
+  const [displayWidth, setDisplayWidth] = useState(DEFAULT_DESIGN.width); // логічний розмір (текст)
+  const [displayHeight, setDisplayHeight] = useState(DEFAULT_DESIGN.height); // логічний розмір (текст)
+  const [cssHeight, setCssHeight] = useState(DEFAULT_DESIGN.height); // візуальна висота для лінійки
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    const canvas = new fabric.Canvas(canvasRef.current, {
+    // Уникаємо подвійної ініціалізації (React StrictMode)
+    if (canvasRef.current && canvasRef.current.__fabricCanvas) {
+      try {
+        canvasRef.current.__fabricCanvas.dispose();
+      } catch {}
+      canvasRef.current.__fabricCanvas = undefined;
+    }
+
+    const fCanvas = new fabric.Canvas(canvasRef.current, {
       backgroundColor: '#f5f5f5',
       selection: true,
+      enableRetinaScaling: true,
     });
 
-    setCanvas(canvas);
+    // Зберігаємо посилання на DOM-вузлі для подальших перевірок
+    if (canvasRef.current) {
+      canvasRef.current.__fabricCanvas = fCanvas;
+    }
 
-    // Додаємо обробники подій
-    canvas.on('selection:created', (e) => {
-      const selectedObject = e.selected[0];
+    setCanvas(fCanvas);
+
+    // Події вибору
+    fCanvas.on('selection:created', (e) => {
+      const selectedObject = e.selected?.[0];
       if (selectedObject && selectedObject.type === 'path') {
         setActiveObject(selectedObject);
         setShapePropertiesOpen(true);
       }
     });
 
-    canvas.on('selection:updated', (e) => {
-      const selectedObject = e.selected[0];
+    fCanvas.on('selection:updated', (e) => {
+      const selectedObject = e.selected?.[0];
       if (selectedObject && selectedObject.type === 'path') {
         setActiveObject(selectedObject);
         setShapePropertiesOpen(true);
       }
     });
 
-    canvas.on('selection:cleared', () => {
+    fCanvas.on('selection:cleared', () => {
       setActiveObject(null);
       setShapePropertiesOpen(false);
     });
 
-    // Обробник для кліку по об'єкту
-    canvas.on('mouse:down', (e) => {
+    // Клік по об'єкту
+    fCanvas.on('mouse:down', (e) => {
       if (e.target && e.target.type === 'path') {
         setActiveObject(e.target);
         setShapePropertiesOpen(true);
       }
     });
 
-    // Відстежуємо зміни об'єктів (розмір, поворот, позиція)
-    canvas.on('object:modified', (e) => {
-      if (e.target && e.target.type === 'path') {
-        setActiveObject(e.target);
-        // Форсуємо оновлення, створюючи новий об'єкт з тими ж властивостями
-        setActiveObject({ ...e.target });
-      }
-    });
-
-    canvas.on('object:scaling', (e) => {
+    // Відстеження змін об'єктів
+    const mirrorIfPath = (e) => {
       if (e.target && e.target.type === 'path') {
         setActiveObject({ ...e.target });
       }
-    });
+    };
+    fCanvas.on('object:modified', mirrorIfPath);
+    fCanvas.on('object:scaling', mirrorIfPath);
+    fCanvas.on('object:rotating', mirrorIfPath);
+    fCanvas.on('object:moving', mirrorIfPath);
 
-    canvas.on('object:rotating', (e) => {
-      if (e.target && e.target.type === 'path') {
-        setActiveObject({ ...e.target });
-      }
-    });
+    // Функція масштабування без втрати якості (DPR-aware) з збереженням пропорцій
+  const resizeToViewport = () => {
+      if (!viewportRef.current) return;
 
-    canvas.on('object:moving', (e) => {
-      if (e.target && e.target.type === 'path') {
-        setActiveObject({ ...e.target });
-      }
-    });
+      const { width: baseW, height: baseH } = designRef.current;
+  const dpr = window.devicePixelRatio || 1; // базовий DPR
 
-    const updateCanvasSize = () => {
-      setCanvasWidth(canvas.getWidth());
-      setCanvasHeight(canvas.getHeight());
-      
-      // Оновлюємо відображувані розміри (фактичний розмір без урахування масштабу)
-      const actualWidth = canvas.getWidth() / canvas.getZoom();
-      const actualHeight = canvas.getHeight() / canvas.getZoom();
-      setDisplayWidth(Math.round(actualWidth));
-      setDisplayHeight(Math.round(actualHeight));
+      // Фактичний розмір контейнера (viewport)
+      const availW = Math.max(0, viewportRef.current.clientWidth - 2 * MARGIN);
+      const availH = Math.max(0, viewportRef.current.clientHeight - 2 * MARGIN);
+
+      // Масштаб по меншій стороні
+      const scaleToFit = Math.min(availW / baseW, availH / baseH) || 1;
+
+      // Розмір відображення (CSS px)
+      const cssW = Math.max(1, Math.round(baseW * scaleToFit));
+      const cssH = Math.max(1, Math.round(baseH * scaleToFit));
+
+  // Підвищуємо ретина-скейл при апскейлі, щоб уникнути розмиття на малих полотнах
+  const maxBoost = 4; // ліміт захисту від надмірного споживання пам'яті
+  const boost = Math.min(Math.max(1, scaleToFit), maxBoost);
+  const effectiveRetina = dpr * boost;
+  fCanvas.getRetinaScaling = () => effectiveRetina;
+
+  // Встановлюємо логічний розмір. Fabric з enableRetinaScaling використає наш getRetinaScaling
+  resizingRef.current = true;
+  originalSetDimensions({ width: baseW, height: baseH });
+  resizingRef.current = false;
+
+  // Не масштабуємо через zoom, зберігаємо логіку в 1:1
+  fCanvas.setZoom(1);
+
+  // Встановлюємо CSS-розміри одночасно для wrapper/lower/upper
+  fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
+
+  // Експонуємо допоміжні методи для інших компонентів
+  fCanvas.getDesignSize = () => ({ width: baseW, height: baseH });
+  fCanvas.getCssSize = () => ({ width: cssW, height: cssH });
+
+  setDisplayWidth(baseW);
+      setDisplayHeight(baseH);
+      setCssHeight(cssH);
+      setScale(scaleToFit);
+
+      // Центруємо в межах viewport (wrapper вже по центру, але перерахунок корисний)
+      fCanvas.calcOffset();
+      fCanvas.renderAll();
     };
 
-    // Перевизначаємо методи setWidth та setHeight для оновлення стану
-    const originalSetWidth = canvas.setWidth.bind(canvas);
-    const originalSetHeight = canvas.setHeight.bind(canvas);
-
-    canvas.setWidth = (width) => {
-      originalSetWidth(width);
-      updateCanvasSize();
+    // Перехоплюємо зміну логічних розмірів через setDimensions
+    const originalSetDimensions = fCanvas.setDimensions.bind(fCanvas);
+    fCanvas.setDimensions = (dimensions, options) => {
+      const result = originalSetDimensions(dimensions, options);
+      const cssOnly = options && options.cssOnly;
+      if (cssOnly) {
+        // CSS-only оновлення не змінює логічний розмір
+        return result;
+      }
+      const nextW = dimensions?.width ?? designRef.current.width;
+      const nextH = dimensions?.height ?? designRef.current.height;
+      if (!resizingRef.current && typeof nextW === 'number' && typeof nextH === 'number') {
+        designRef.current = { width: nextW, height: nextH };
+        // Після зміни логічного розміру — підженемо під viewport асинхронно, щоб уникнути каскадів
+        resizingRef.current = true;
+        requestAnimationFrame(() => {
+          try {
+            resizeToViewport();
+          } finally {
+            resizingRef.current = false;
+          }
+        });
+      }
+      return result;
     };
 
-    canvas.setHeight = (height) => {
-      originalSetHeight(height);
-      updateCanvasSize();
-    };
-
-    // Додаємо обробники для різних подій, що можуть змінити розмір
-    canvas.on('canvas:cleared', updateCanvasSize);
-    canvas.on('path:created', updateCanvasSize);
-    
-    // Початкове оновлення після налаштування canvas
-    setTimeout(() => {
-      updateCanvasSize();
-    }, 100);
-
-    // Розрахунок масштабу
-    const scaleX = (VIEWPORT_WIDTH - 2 * MARGIN) / canvasWidth;
-    const scaleY = (VIEWPORT_HEIGHT - 2 * MARGIN) / canvasHeight;
-    const newScale = Math.min(scaleX, scaleY);
-
-    // Масштабуємо
-    canvas.setZoom(newScale);
-    canvas.setWidth(canvasWidth * newScale);
-    canvas.setHeight(canvasHeight * newScale);
-
-    setScale(newScale);
-
-    // Оновлюємо розміри після встановлення масштабу
-    setTimeout(() => {
-      updateCanvasSize();
-    }, 150);
-
-    // Центруємо канвас вручну всередині viewport
-    canvas.calcOffset();
+    // Початковий розрахунок та підписка на ресайз
+    resizeToViewport();
+    window.addEventListener('resize', resizeToViewport);
 
     return () => {
-      canvas.dispose();
+      window.removeEventListener('resize', resizeToViewport);
+      fCanvas.dispose();
+      if (canvasRef.current) {
+        canvasRef.current.__fabricCanvas = undefined;
+      }
     };
-  }, [canvasWidth, canvasHeight, setCanvas, setActiveObject, setShapePropertiesOpen]);
+  }, [setCanvas, setActiveObject, setShapePropertiesOpen]);
 
-  // Додатковий useEffect для регулярного оновлення розмірів
-  const { canvas } = useCanvasContext();
-  
+  // Оновлюємо фон canvas відповідно до глобальних налаштувань
   useEffect(() => {
     if (!canvas) return;
-    
-    const updateSizes = () => {
-      const actualWidth = canvas.getWidth() ;
-      const actualHeight = canvas.getHeight();
-      setDisplayWidth(Math.round(actualWidth));
-      setDisplayHeight(Math.round(actualHeight));
-    };
-
-    // Початкове оновлення
-    updateSizes();
-
-    // Створюємо інтервал для регулярного оновлення
-    const interval = setInterval(updateSizes, 500);
-
-    return () => clearInterval(interval);
-  }, [canvas]);
+    const bg = globalColors?.backgroundColor || '#FFFFFF';
+    canvas.set('backgroundColor', bg);
+    canvas.renderAll();
+  }, [canvas, globalColors?.backgroundColor]);
 
   return (
-    <div className={styles.viewport}>
+    <div className={styles.viewport} ref={viewportRef}>
       <div className={styles.canvasWrapper}>
-        <canvas ref={canvasRef} className={styles.canvas}/>
-        <div className={styles.widthLabel}><span>{displayWidth}px</span></div>
-        <div className={styles.heightLabel} style={{ height: `${displayHeight}px`}}><span>{displayHeight}px</span></div>
+        <canvas ref={canvasRef} className={styles.canvas} />
+  <div className={styles.widthLabel}><span>{displayWidth}px</span></div>
+  <div className={styles.heightLabel} style={{ height: `${cssHeight}px` }}><span>{displayHeight}px</span></div>
       </div>
     </div>
   );

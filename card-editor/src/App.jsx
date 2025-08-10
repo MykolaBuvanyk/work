@@ -28,7 +28,6 @@ function App() {
             <TextList />
           </div>
         </div>
-        <ShapeProperties />
       </div>
     </CanvasProvider>
   );

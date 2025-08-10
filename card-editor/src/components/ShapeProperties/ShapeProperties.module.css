@@ -1,3 +1,17 @@
+input[type="checkbox"][disabled] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 .modalOverlay {
   position: absolute;
   top: 0;
@@ -13,8 +27,8 @@
 }
 
 .modalContent {
-  top: 5%;
-  left: 5%;
+  top: -8%;
+  left: -2%;
   pointer-events: auto;
   background: #bdffd1;
   border-radius: 12px;
@@ -23,13 +37,13 @@
   max-width: 95vw;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   border: 1px solid #e3e3e3;
-  position: fixed;
+  position: relative;
   margin-top: 0;
   margin-left: 0;
 }
 
 .title {
-  margin: 0 0 20px;
+  margin: 0 0 20px !important;
   font-size: 16px;
   font-weight: 600;
   text-align: center;

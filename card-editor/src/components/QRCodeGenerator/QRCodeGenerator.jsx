@@ -22,7 +22,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
   };
 
   const { canvas, globalColors } = useCanvasContext();
-  const [selectedType, setSelectedType] = useState(null);
+
   const [formData, setFormData] = useState({
     url: "",
     email: "",
@@ -33,14 +33,17 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     message: "",
   });
 
-  const qrTypes = [
-    { id: "url", label: "URL (Website)" },
-    { id: "email", label: "E-MAIL" },
-    { id: "phone", label: "Call (Phone)" },
-    { id: "whatsapp", label: "WhatsApp" },
-    { id: "wifi", label: "Wi-Fi" },
-    { id: "message", label: "Message" },
-  ];
+const qrTypes = [
+  { id: "url", label: "URL (Website)" },
+  { id: "email", label: "E-MAIL" },
+  { id: "phone", label: "Call (Phone)" },
+  { id: "whatsapp", label: "WhatsApp" },
+  { id: "wifi", label: "Wi-Fi" },
+  { id: "message", label: "Message" },
+];
+
+const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
+
 
   // Генерує дані для QR-коду залежно від типу
   const generateQRData = () => {

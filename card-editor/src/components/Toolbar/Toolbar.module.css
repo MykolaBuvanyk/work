@@ -10,11 +10,11 @@
   flex: 0 0 auto;
   min-width: 150px;
   display: flex;
-  align-items:flex-start;
+  align-items: flex-start;
   gap: 10px;
 }
 
-.numbering p{
+.numbering p {
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -24,7 +24,6 @@
   align-items: center;
   margin: 0;
 }
-
 
 .section h3 {
   font-size: 14px;
@@ -42,7 +41,7 @@
   width: fit-content;
 }
 
-.icons span{
+.icons span {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -54,7 +53,7 @@
 .icons :first-child {
   margin-right: auto;
 }
-.icons svg:hover > *{
+.icons svg:hover > * {
   stroke: rgba(0, 108, 164, 1) !important;
 }
 
@@ -72,7 +71,6 @@ input[type="range"] {
 input[type="checkbox"] {
   margin-left: 5px;
 }
-
 
 .grid {
   display: grid;
@@ -111,6 +109,7 @@ input[type="checkbox"] {
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 4px;
+  appearance: textfield;
 
   /* Вимикаємо нативні стрілки у number */
   -moz-appearance: textfield;
@@ -159,12 +158,11 @@ input[type="number"]:focus {
   border: none; /* Переконуємось, що бордер відсутній */
 }
 
-.unitLabel{
+.unitLabel {
   font-weight: 500;
   color: #000;
   font-style: italic;
 }
-
 
 .thicknessWrapper {
   display: grid;
@@ -174,7 +172,7 @@ input[type="number"]:focus {
   justify-content: space-between;
   align-items: center;
 }
-.thicknessWrapper h3{
+.thicknessWrapper h3 {
   margin-right: 10px;
 }
 .thicknessWrapper > div {
@@ -217,12 +215,13 @@ input[type="number"]:focus {
   transform: rotate(45deg);
 }
 
-.colorSection{
+.colorSection {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-.colorTitleWrapper{
+.colorTitleWrapper {
   display: flex;
   gap: 10px;
   align-items: center;
@@ -238,7 +237,7 @@ input[type="number"]:focus {
   width: 100%;
 }
 
-.colors span{
+.colors span {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -259,7 +258,14 @@ input[type="number"]:focus {
   flex: 0 1 calc(33.333% - 20px);
   display: flex;
   justify-content: center;
-  
+  cursor: pointer;
+  /* Додаємо плавний перехід для фону */
+  transition: background 0.2s;
+}
+
+.elementsEl[class*="active"] {
+  background: #e0e0e0;
+  border-radius: 10px;
 }
 
 .elementsSpanWrapper {
@@ -274,15 +280,21 @@ input[type="number"]:focus {
   margin-bottom: 15px;
 }
 
-.holes{
+.elementsSpanWrapper.active {
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  border: 1px solid #888;
+}
+
+.holes {
   display: flex;
   width: 100%;
   justify-content: space-evenly;
 }
-.holes span svg > :nth-child(2){
-  transition: all ease .3s;
+.holes span svg > :nth-child(2) {
+  transition: all ease 0.3s;
 }
-.holes span:hover svg > :nth-child(2){
+.holes span:hover svg > :nth-child(2) {
   stroke: rgba(0, 108, 164, 1);
   stroke-width: 2;
   stroke-opacity: 1;

@@ -2,14 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import styles from "./ShapeProperties.module.css";
 
-const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onClose: propOnClose }) => {
-  const { canvas, shapePropertiesOpen, setShapePropertiesOpen } = useCanvasContext();
-  
+const ShapeProperties = ({
+  isOpen: propIsOpen,
+  activeShape: propActiveShape,
+  onClose: propOnClose,
+}) => {
+  const { canvas, shapePropertiesOpen, setShapePropertiesOpen } =
+    useCanvasContext();
+
   // Використовуємо пропси якщо вони передані (з ShapeSelector), інакше контекст
   const isOpen = propIsOpen !== undefined ? propIsOpen : shapePropertiesOpen;
   const activeShape = propActiveShape || null;
   const onClose = propOnClose || (() => setShapePropertiesOpen(false));
-  
+
   const [properties, setProperties] = useState({
     width: 0,
     height: 0,
@@ -17,7 +22,7 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
     cornerRadius: 0,
     thickness: 2,
     fill: false,
-    cut: false
+    cut: false,
   });
 
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
@@ -36,8 +41,9 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0, // Для Path об'єктів це не застосовується напряму
             thickness: activeObject.strokeWidth || 2,
-            fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500' // Перевіряємо чи є оранжевий колір
+            fill:
+              activeObject.fill !== "transparent" && activeObject.fill !== "",
+            cut: activeObject.stroke === "#FFA500", // Перевіряємо чи є оранжевий колір
           });
         }
       };
@@ -50,17 +56,17 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
         const handleObjectModified = () => updateProperties();
         const handleObjectScaling = () => updateProperties();
         const handleObjectRotating = () => updateProperties();
-        
-        activeObject.on('modified', handleObjectModified);
-        activeObject.on('scaling', handleObjectScaling);
-        activeObject.on('rotating', handleObjectRotating);
+
+        activeObject.on("modified", handleObjectModified);
+        activeObject.on("scaling", handleObjectScaling);
+        activeObject.on("rotating", handleObjectRotating);
 
         // Прибираємо слухачі при розмонтуванні
         return () => {
           if (activeObject.off) {
-            activeObject.off('modified', handleObjectModified);
-            activeObject.off('scaling', handleObjectScaling);
-            activeObject.off('rotating', handleObjectRotating);
+            activeObject.off("modified", handleObjectModified);
+            activeObject.off("scaling", handleObjectScaling);
+            activeObject.off("rotating", handleObjectRotating);
           }
         };
       }
@@ -80,24 +86,25 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0,
             thickness: activeObject.strokeWidth || 2,
-            fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500'
+            fill:
+              activeObject.fill !== "transparent" && activeObject.fill !== "",
+            cut: activeObject.stroke === "#FFA500",
           });
         }
       };
 
       // Слухачі подій canvas
-      canvas.on('object:modified', updateProperties);
-      canvas.on('object:scaling', updateProperties);
-      canvas.on('object:rotating', updateProperties);
-      canvas.on('object:moving', updateProperties);
-      
+      canvas.on("object:modified", updateProperties);
+      canvas.on("object:scaling", updateProperties);
+      canvas.on("object:rotating", updateProperties);
+      canvas.on("object:moving", updateProperties);
+
       // Реал-тайм оновлення під час трансформації
-      canvas.on('object:scaling', updateProperties);
-      canvas.on('object:rotating', updateProperties);
-      
+      canvas.on("object:scaling", updateProperties);
+      canvas.on("object:rotating", updateProperties);
+
       // Додаткові події для більш точного відстеження
-      canvas.on('after:render', () => {
+      canvas.on("after:render", () => {
         const currentActiveObject = canvas.getActiveObject();
         if (currentActiveObject === activeObject) {
           // Обмежуємо частоту оновлень
@@ -107,11 +114,11 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
       });
 
       return () => {
-        canvas.off('object:modified', updateProperties);
-        canvas.off('object:scaling', updateProperties);
-        canvas.off('object:rotating', updateProperties);
-        canvas.off('object:moving', updateProperties);
-        canvas.off('after:render', updateProperties);
+        canvas.off("object:modified", updateProperties);
+        canvas.off("object:scaling", updateProperties);
+        canvas.off("object:rotating", updateProperties);
+        canvas.off("object:moving", updateProperties);
+        canvas.off("after:render", updateProperties);
         clearTimeout(updateProperties.timeout);
       };
     }
@@ -121,59 +128,61 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
     if (!activeObject) return;
 
     setIsManuallyEditing(true);
-    setProperties(prev => ({ ...prev, [property]: value }));
+    setProperties((prev) => ({ ...prev, [property]: value }));
 
     switch (property) {
-      case 'width':
+      case "width":
         const currentWidth = activeObject.getScaledWidth();
         const widthScale = value / currentWidth;
         activeObject.scaleX = activeObject.scaleX * widthScale;
         break;
-      
-      case 'height':
+
+      case "height":
         const currentHeight = activeObject.getScaledHeight();
         const heightScale = value / currentHeight;
         activeObject.scaleY = activeObject.scaleY * heightScale;
         break;
-      
-      case 'rotation':
-        activeObject.set('angle', value);
+
+      case "rotation":
+        activeObject.set("angle", value);
         break;
-      
-      case 'thickness':
-        activeObject.set('strokeWidth', value);
+
+      case "thickness":
+        activeObject.set("strokeWidth", value);
         break;
-      
-      case 'fill':
+
+      case "fill":
         if (value) {
           // Заповнити фігуру кольором stroke або чорним, якщо cut активний то оранжевим
-          const fillColor = properties.cut ? '#FFA500' : (activeObject.stroke || '#000000');
-          activeObject.set('fill', fillColor);
+          const fillColor = properties.cut
+            ? "#FFA500"
+            : activeObject.stroke || "#000000";
+          activeObject.set("fill", fillColor);
         } else {
-          activeObject.set('fill', 'transparent');
+          activeObject.set("fill", "transparent");
         }
         break;
-      
-      case 'cut':
+
+      case "cut":
         if (value) {
           // Заповнити контур оранжевим кольором
-          activeObject.set('stroke', '#FFA500');
+          activeObject.set("stroke", "#FFA500");
           // Якщо fill також активний, то fill теж оранжевий
           if (properties.fill) {
-            activeObject.set('fill', '#FFA500');
+            activeObject.set("fill", "#FFA500");
           }
         } else {
           // Повернути до звичайного чорного кольору
-          activeObject.set('stroke', '#000000');
+          activeObject.set("stroke", "#000000");
           if (properties.fill) {
-            activeObject.set('fill', '#000000');
+            activeObject.set("fill", "#000000");
           }
         }
         break;
     }
 
     canvas.renderAll();
-    
+
     // Знімаємо флаг ручного редагування через невеликий таймаут
     setTimeout(() => setIsManuallyEditing(false), 100);
   };
@@ -189,19 +198,19 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
     setIsManuallyEditing(true);
     const currentValue = properties[property];
     let newValue;
-    
-    if (property === 'rotation') {
+
+    if (property === "rotation") {
       // Для rotation дозволяємо від'ємні значення
       newValue = currentValue - decrement;
     } else {
       // Для інших властивостей не дозволяємо від'ємні значення
       newValue = Math.max(0, currentValue - decrement);
     }
-    
+
     updateProperty(property, newValue);
   };
 
-  if (!isOpen || !activeObject || activeObject.type !== 'path') return null;
+  if (!isOpen || !activeObject || activeObject.type !== "path") return null;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -241,22 +250,26 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.label}>
             Width:
             <div className={styles.inputGroup}>
-              <input 
-                type="number" 
-                className={styles.input} 
+              <input
+                type="number"
+                className={styles.input}
                 value={properties.width}
-                onChange={(e) => updateProperty('width', parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  updateProperty("width", parseInt(e.target.value) || 0)
+                }
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => setTimeout(() => setIsManuallyEditing(false), 100)}
+                onBlur={() =>
+                  setTimeout(() => setIsManuallyEditing(false), 100)
+                }
               />
               <div className={styles.arrows}>
-                <i 
+                <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue('width', 5)}
+                  onClick={() => incrementValue("width", 5)}
                 ></i>
-                <i 
+                <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue('width', 5)}
+                  onClick={() => decrementValue("width", 5)}
                 ></i>
               </div>
             </div>
@@ -264,22 +277,26 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.label}>
             Rotate:
             <div className={styles.inputGroup}>
-              <input 
-                type="number" 
-                className={styles.input} 
+              <input
+                type="number"
+                className={styles.input}
                 value={properties.rotation}
-                onChange={(e) => updateProperty('rotation', parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  updateProperty("rotation", parseInt(e.target.value) || 0)
+                }
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => setTimeout(() => setIsManuallyEditing(false), 100)}
+                onBlur={() =>
+                  setTimeout(() => setIsManuallyEditing(false), 100)
+                }
               />
               <div className={styles.arrows}>
-                <i 
+                <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue('rotation', 15)}
+                  onClick={() => incrementValue("rotation", 15)}
                 ></i>
-                <i 
+                <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue('rotation', 15)}
+                  onClick={() => decrementValue("rotation", 15)}
                 ></i>
               </div>
             </div>
@@ -287,22 +304,26 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.label}>
             Height:
             <div className={styles.inputGroup}>
-              <input 
-                type="number" 
-                className={styles.input} 
+              <input
+                type="number"
+                className={styles.input}
                 value={properties.height}
-                onChange={(e) => updateProperty('height', parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  updateProperty("height", parseInt(e.target.value) || 0)
+                }
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => setTimeout(() => setIsManuallyEditing(false), 100)}
+                onBlur={() =>
+                  setTimeout(() => setIsManuallyEditing(false), 100)
+                }
               />
               <div className={styles.arrows}>
-                <i 
+                <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue('height', 5)}
+                  onClick={() => incrementValue("height", 5)}
                 ></i>
-                <i 
+                <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue('height', 5)}
+                  onClick={() => decrementValue("height", 5)}
                 ></i>
               </div>
             </div>
@@ -310,22 +331,26 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.label}>
             Corner Radius:
             <div className={styles.inputGroup}>
-              <input 
-                type="number" 
-                className={styles.input} 
+              <input
+                type="number"
+                className={styles.input}
                 value={properties.cornerRadius}
-                onChange={(e) => updateProperty('cornerRadius', parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  updateProperty("cornerRadius", parseInt(e.target.value) || 0)
+                }
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => setTimeout(() => setIsManuallyEditing(false), 100)}
+                onBlur={() =>
+                  setTimeout(() => setIsManuallyEditing(false), 100)
+                }
               />
               <div className={styles.arrows}>
-                <i 
+                <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue('cornerRadius')}
+                  onClick={() => incrementValue("cornerRadius")}
                 ></i>
-                <i 
+                <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue('cornerRadius')}
+                  onClick={() => decrementValue("cornerRadius")}
                 ></i>
               </div>
             </div>
@@ -333,22 +358,26 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.label}>
             Thickness:
             <div className={styles.inputGroup}>
-              <input 
-                type="number" 
-                className={styles.input} 
+              <input
+                type="number"
+                className={styles.input}
                 value={properties.thickness}
-                onChange={(e) => updateProperty('thickness', parseInt(e.target.value) || 1)}
+                onChange={(e) =>
+                  updateProperty("thickness", parseInt(e.target.value) || 1)
+                }
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => setTimeout(() => setIsManuallyEditing(false), 100)}
+                onBlur={() =>
+                  setTimeout(() => setIsManuallyEditing(false), 100)
+                }
               />
               <div className={styles.arrows}>
-                <i 
+                <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue('thickness')}
+                  onClick={() => incrementValue("thickness")}
                 ></i>
-                <i 
+                <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue('thickness')}
+                  onClick={() => decrementValue("thickness")}
                 ></i>
               </div>
             </div>
@@ -356,18 +385,20 @@ const ShapeProperties = ({ isOpen: propIsOpen, activeShape: propActiveShape, onC
           <label className={styles.cutFillWrapper}>
             <div className={styles.cutFillWrapperEl}>
               Fill
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={properties.fill}
-                onChange={(e) => updateProperty('fill', e.target.checked)}
+                disabled={properties.cut}
+                onChange={(e) => updateProperty("fill", e.target.checked)}
               />
             </div>
             <div className={styles.cutFillWrapperEl}>
               Cut
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={properties.cut}
-                onChange={(e) => updateProperty('cut', e.target.checked)}
+                disabled={properties.fill}
+                onChange={(e) => updateProperty("cut", e.target.checked)}
               />
             </div>
           </label>

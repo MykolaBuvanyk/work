@@ -79,7 +79,7 @@ const Toolbar = () => {
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
   const [copiesCount, setCopiesCount] = useState(1);
   const [holesDiameter, setHolesDiameter] = useState(3);
-
+const [isHolesSelected, setIsHolesSelected] = useState(false);
   const addQrCode = () => {
     setIsQrOpen(true);
   };
@@ -124,10 +124,10 @@ const Toolbar = () => {
       canvas.on("selection:cleared", () => {
         setActiveObject(null);
         // Коли нічого не вибрано, показуємо розміри canvas
-        setSizeValues({ 
-          width: canvas.getWidth(), 
-          height: canvas.getHeight(), 
-          cornerRadius: 0 
+        setSizeValues({
+          width: canvas.getWidth(),
+          height: canvas.getHeight(),
+          cornerRadius: 0,
         });
       });
       canvas.on("object:modified", () => {
@@ -140,12 +140,12 @@ const Toolbar = () => {
           });
         }
       });
-      
+
       // Ініціалізуємо початкові значення розмірів canvas
-      setSizeValues({ 
-        width: canvas.getWidth(), 
-        height: canvas.getHeight(), 
-        cornerRadius: 0 
+      setSizeValues({
+        width: canvas.getWidth(),
+        height: canvas.getHeight(),
+        cornerRadius: 0,
       });
     }
     return () => {
@@ -175,15 +175,15 @@ const Toolbar = () => {
       // Змінюємо розміри canvas і оновлюємо clipPath
       const width = sizeValues.width;
       const height = sizeValues.height;
-      
+
       // Встановлюємо нові розміри canvas
       canvas.setDimensions({ width, height });
-      
+
       // Створюємо новий clipPath з новими розмірами
       let newClipPath = null;
-      
+
       switch (currentShapeType) {
-        case 'rectangle':
+        case "rectangle":
           newClipPath = new fabric.Rect({
             left: 0,
             top: 0,
@@ -192,34 +192,34 @@ const Toolbar = () => {
             absolutePositioned: true,
           });
           break;
-          
-        case 'circle':
-        case 'circleWithLine':
-        case 'circleWithCross':
+
+        case "circle":
+        case "circleWithLine":
+        case "circleWithCross":
           const radius = Math.min(width, height) / 2;
           newClipPath = new fabric.Circle({
             left: width / 2,
             top: height / 2,
             radius: radius,
-            originX: 'center',
-            originY: 'center',
+            originX: "center",
+            originY: "center",
             absolutePositioned: true,
           });
           break;
-          
-        case 'ellipse':
+
+        case "ellipse":
           newClipPath = new fabric.Ellipse({
             left: width / 2,
             top: height / 2,
             rx: width / 2,
             ry: height / 2,
-            originX: 'center',
-            originY: 'center',
+            originX: "center",
+            originY: "center",
             absolutePositioned: true,
           });
           break;
-          
-        case 'lock':
+
+        case "lock":
           const lockScale = Math.min(width / 120, height / 108);
           newClipPath = new fabric.Path(
             `M96 42C96 21.9771 81.8823 6 60 6C38.1177 6 24 21.9771 24 42
@@ -234,8 +234,8 @@ const Toolbar = () => {
             }
           );
           break;
-          
-        case 'house':
+
+        case "house":
           const houseScale = Math.min(width / 96, height / 105);
           newClipPath = new fabric.Path("M6 66V105H51H90V66L48 6L6 66Z", {
             left: (width - 96 * houseScale) / 2,
@@ -245,10 +245,10 @@ const Toolbar = () => {
             scaleY: houseScale,
           });
           break;
-          
-        case 'halfCircle':
+
+        case "halfCircle":
           const halfCircleScale = Math.min(width / 120, height / 60);
-          newClipPath = new fabric.Path('M6 60 A54 60 0 0 1 114 60 L6 60Z', {
+          newClipPath = new fabric.Path("M6 60 A54 60 0 0 1 114 60 L6 60Z", {
             left: (width - 120 * halfCircleScale) / 2,
             top: (height - 60 * halfCircleScale) / 2,
             absolutePositioned: true,
@@ -256,11 +256,11 @@ const Toolbar = () => {
             scaleY: halfCircleScale,
           });
           break;
-          
-        case 'arc':
+
+        case "arc":
           const arcScale = Math.min(width / 120, height / 84);
           newClipPath = new fabric.Path(
-            'M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333',
+            "M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333",
             {
               left: (width - 120 * arcScale) / 2,
               top: (height - 84 * arcScale) / 2,
@@ -270,11 +270,11 @@ const Toolbar = () => {
             }
           );
           break;
-          
-        case 'hexagon':
+
+        case "hexagon":
           const hexagonScale = Math.min(width / 127, height / 114);
           newClipPath = new fabric.Path(
-            'M119.6862 57.15072L91.7166 105.5958L35.77014 105.5952L7.80156 57.14748L35.77128 8.70252L91.7154 8.69502L119.6862 57.15072Z',
+            "M119.6862 57.15072L91.7166 105.5958L35.77014 105.5952L7.80156 57.14748L35.77128 8.70252L91.7154 8.69502L119.6862 57.15072Z",
             {
               left: (width - 127 * hexagonScale) / 2,
               top: (height - 114 * hexagonScale) / 2,
@@ -284,58 +284,80 @@ const Toolbar = () => {
             }
           );
           break;
-          
-        case 'octagon':
+
+        case "octagon":
           newClipPath = new fabric.Path(
-            `M${width * 0.3} 0L${width * 0.7} 0L${width} ${height * 0.3}L${width} ${height * 0.7}L${width * 0.7} ${height}L${width * 0.3} ${height}L0 ${height * 0.7}L0 ${height * 0.3}Z`,
+            `M${width * 0.3} 0L${width * 0.7} 0L${width} ${
+              height * 0.3
+            }L${width} ${height * 0.7}L${width * 0.7} ${height}L${
+              width * 0.3
+            } ${height}L0 ${height * 0.7}L0 ${height * 0.3}Z`,
             { absolutePositioned: true }
           );
           break;
-          
-        case 'triangle':
+
+        case "triangle":
           newClipPath = new fabric.Path(
             `M${width / 2} 0L${width} ${height}L0 ${height}Z`,
             { absolutePositioned: true }
           );
           break;
-          
-        case 'arrowLeft':
+
+        case "arrowLeft":
           newClipPath = new fabric.Path(
-            `M0 ${height * 0.5625}L${width * 0.25} ${height * 0.1875}L${width * 0.25} ${height * 0.375}L${width} ${height * 0.375}L${width} ${height * 0.75}L${width * 0.25} ${height * 0.75}L${width * 0.25} ${height * 0.9375}Z`,
+            `M0 ${height * 0.5625}L${width * 0.25} ${height * 0.1875}L${
+              width * 0.25
+            } ${height * 0.375}L${width} ${height * 0.375}L${width} ${
+              height * 0.75
+            }L${width * 0.25} ${height * 0.75}L${width * 0.25} ${
+              height * 0.9375
+            }Z`,
             { absolutePositioned: true }
           );
           break;
-          
-        case 'arrowRight':
+
+        case "arrowRight":
           newClipPath = new fabric.Path(
-            `M${width} ${height * 0.5625}L${width * 0.75} ${height * 0.1875}L${width * 0.75} ${height * 0.375}L0 ${height * 0.375}L0 ${height * 0.75}L${width * 0.75} ${height * 0.75}L${width * 0.75} ${height * 0.9375}Z`,
+            `M${width} ${height * 0.5625}L${width * 0.75} ${height * 0.1875}L${
+              width * 0.75
+            } ${height * 0.375}L0 ${height * 0.375}L0 ${height * 0.75}L${
+              width * 0.75
+            } ${height * 0.75}L${width * 0.75} ${height * 0.9375}Z`,
             { absolutePositioned: true }
           );
           break;
-          
-        case 'flag':
+
+        case "flag":
           newClipPath = new fabric.Path(
-            `M0 ${height * 0.4}L0 ${height * 0.8}L${width * 0.25} ${height * 0.7}L${width * 0.5} ${height * 0.85}L${width * 0.733} ${height * 0.7}L${width * 0.733} ${height * 0.4}L${width * 0.5} ${height * 0.35}L${width * 0.292} 0L0 ${height * 0.4}Z`,
+            `M0 ${height * 0.4}L0 ${height * 0.8}L${width * 0.25} ${
+              height * 0.7
+            }L${width * 0.5} ${height * 0.85}L${width * 0.733} ${
+              height * 0.7
+            }L${width * 0.733} ${height * 0.4}L${width * 0.5} ${
+              height * 0.35
+            }L${width * 0.292} 0L0 ${height * 0.4}Z`,
             { absolutePositioned: true }
           );
           break;
-          
-        case 'diamond':
+
+        case "diamond":
           newClipPath = new fabric.Path(
-            `M${width * 0.5} 0L${width} ${height * 0.5}L${width * 0.5} ${height}L0 ${height * 0.5}Z`,
+            `M${width * 0.5} 0L${width} ${height * 0.5}L${
+              width * 0.5
+            } ${height}L0 ${height * 0.5}Z`,
             { absolutePositioned: true }
           );
           break;
-          
+
         default:
           break;
       }
-      
+
       // Встановлюємо новий clipPath
       if (newClipPath) {
         canvas.clipPath = newClipPath;
       }
-      
+
       // Оновлюємо візуальний контур і обводки
       updateCanvasOutline();
       updateExistingBorders();
@@ -344,7 +366,7 @@ const Toolbar = () => {
       // Якщо нічого не вибрано і немає фігури - просто змінюємо розміри canvas
       canvas.setDimensions({
         width: sizeValues.width,
-        height: sizeValues.height
+        height: sizeValues.height,
       });
       updateCanvasOutline();
       canvas.renderAll();
@@ -354,31 +376,33 @@ const Toolbar = () => {
   // Функція для оновлення візуального контуру canvas
   const updateCanvasOutline = () => {
     if (!canvas) return;
-    
+
     // Видаляємо попередній контур
-    const existingOutline = canvas.getObjects().find(obj => obj.isCanvasOutline);
+    const existingOutline = canvas
+      .getObjects()
+      .find((obj) => obj.isCanvasOutline);
     if (existingOutline) {
       canvas.remove(existingOutline);
     }
-    
+
     // Перевіряємо чи є користувацькі обводки
-    const hasBorder = canvas.getObjects().some(obj => obj.isBorderShape);
-    
+    const hasBorder = canvas.getObjects().some((obj) => obj.isBorderShape);
+
     // Додаємо контур тільки якщо немає користувацьких обводок
     if (!hasBorder && canvas.clipPath) {
       let outlineShape;
       const clipPathData = canvas.clipPath.toObject();
-      
-      if (canvas.clipPath.type === 'rect') {
+
+      if (canvas.clipPath.type === "rect") {
         outlineShape = new fabric.Rect(clipPathData);
-      } else if (canvas.clipPath.type === 'circle') {
+      } else if (canvas.clipPath.type === "circle") {
         outlineShape = new fabric.Circle(clipPathData);
-      } else if (canvas.clipPath.type === 'ellipse') {
+      } else if (canvas.clipPath.type === "ellipse") {
         outlineShape = new fabric.Ellipse(clipPathData);
-      } else if (canvas.clipPath.type === 'path') {
+      } else if (canvas.clipPath.type === "path") {
         outlineShape = new fabric.Path(canvas.clipPath.path, clipPathData);
       }
-      
+
       if (outlineShape) {
         outlineShape.set({
           fill: "transparent",
@@ -390,7 +414,7 @@ const Toolbar = () => {
           excludeFromExport: true,
           isCanvasOutline: true,
         });
-        
+
         canvas.add(outlineShape);
         // Переміщуємо контур на задній план
         canvas.sendObjectToBack(outlineShape);
@@ -401,24 +425,33 @@ const Toolbar = () => {
   // Функція для оновлення існуючих обводок при зміні розмірів
   const updateExistingBorders = () => {
     if (!canvas || !canvas.clipPath) return;
-    
-    const borderShapes = canvas.getObjects().filter(obj => obj.isBorderShape);
-    
-    borderShapes.forEach(borderShape => {
+
+    const borderShapes = canvas.getObjects().filter((obj) => obj.isBorderShape);
+
+    borderShapes.forEach((borderShape) => {
       const clipPathData = canvas.clipPath.toObject();
-      
-      if (canvas.clipPath.type === 'rect' && borderShape.type === 'rect') {
+
+      if (canvas.clipPath.type === "rect" && borderShape.type === "rect") {
         borderShape.set({
           width: clipPathData.width,
           height: clipPathData.height,
           rx: sizeValues.cornerRadius,
           ry: sizeValues.cornerRadius,
         });
-      } else if (canvas.clipPath.type === 'circle' && borderShape.type === 'circle') {
+      } else if (
+        canvas.clipPath.type === "circle" &&
+        borderShape.type === "circle"
+      ) {
         borderShape.set(clipPathData);
-      } else if (canvas.clipPath.type === 'ellipse' && borderShape.type === 'ellipse') {
+      } else if (
+        canvas.clipPath.type === "ellipse" &&
+        borderShape.type === "ellipse"
+      ) {
         borderShape.set(clipPathData);
-      } else if (canvas.clipPath.type === 'path' && borderShape.type === 'path') {
+      } else if (
+        canvas.clipPath.type === "path" &&
+        borderShape.type === "path"
+      ) {
         borderShape.set({ path: canvas.clipPath.path });
       }
     });
@@ -444,7 +477,12 @@ const Toolbar = () => {
   };
 
   // Функція для регенерації QR коду з новими кольорами
-  const regenerateQRCode = async (qrObj, text, foregroundColor, backgroundColor) => {
+  const regenerateQRCode = async (
+    qrObj,
+    text,
+    foregroundColor,
+    backgroundColor
+  ) => {
     try {
       const qrCodeDataURL = await QRCode.toDataURL(text, {
         width: 200,
@@ -456,7 +494,7 @@ const Toolbar = () => {
       });
 
       const newImg = await fabric.FabricImage.fromURL(qrCodeDataURL);
-      
+
       // Зберігаємо властивості оригінального об'єкта
       newImg.set({
         left: qrObj.left,
@@ -478,16 +516,21 @@ const Toolbar = () => {
         canvas.insertAt(newImg, index);
       }
     } catch (error) {
-      console.error('Помилка регенерації QR коду:', error);
+      console.error("Помилка регенерації QR коду:", error);
     }
   };
 
   // Функція для регенерації Bar коду з новими кольорами
-  const regenerateBarCode = async (barObj, text, foregroundColor, backgroundColor) => {
+  const regenerateBarCode = async (
+    barObj,
+    text,
+    foregroundColor,
+    backgroundColor
+  ) => {
     try {
-      const canvas2D = document.createElement('canvas');
+      const canvas2D = document.createElement("canvas");
       const codeType = barObj.barCodeType || "CODE128"; // Використовуємо збережений тип коду
-      
+
       JsBarcode(canvas2D, text, {
         format: codeType,
         width: 2,
@@ -499,7 +542,7 @@ const Toolbar = () => {
 
       const barCodeDataURL = canvas2D.toDataURL();
       const newImg = await fabric.FabricImage.fromURL(barCodeDataURL);
-      
+
       // Зберігаємо властивості оригінального об'єкта
       newImg.set({
         left: barObj.left,
@@ -522,7 +565,7 @@ const Toolbar = () => {
         canvas.insertAt(newImg, index);
       }
     } catch (error) {
-      console.error('Помилка регенерації Bar коду:', error);
+      console.error("Помилка регенерації Bar коду:", error);
     }
   };
 
@@ -539,27 +582,36 @@ const Toolbar = () => {
       textColor,
       backgroundColor,
       strokeColor: textColor,
-      fillColor: textColor === '#FFFFFF' ? backgroundColor : 'transparent',
-      backgroundType
+      fillColor: textColor === "#FFFFFF" ? backgroundColor : "transparent",
+      backgroundType,
     });
 
     // Змінюємо колір всіх об'єктів на canvas (крім Cut елементів)
     const objects = canvas.getObjects();
-    
-    objects.forEach(obj => {
+
+    objects.forEach((obj) => {
       // Пропускаємо об'єкти, які позначені як Cut елементи
       if (obj.isCutElement) return;
 
-      if (obj.type === 'i-text' || obj.type === 'text') {
+      if (obj.type === "i-text" || obj.type === "text") {
         obj.set({ fill: textColor });
-      } else if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'ellipse' || 
-                 obj.type === 'triangle' || obj.type === 'polygon' || obj.type === 'path') {
+      } else if (
+        obj.type === "rect" ||
+        obj.type === "circle" ||
+        obj.type === "ellipse" ||
+        obj.type === "triangle" ||
+        obj.type === "polygon" ||
+        obj.type === "path"
+      ) {
         // Для фігур встановлюємо stroke колір та прозору заливку або колір тексту
-        obj.set({ 
+        obj.set({
           stroke: textColor,
-          fill: obj.fill === 'transparent' || obj.fill === '' ? 'transparent' : textColor
+          fill:
+            obj.fill === "transparent" || obj.fill === ""
+              ? "transparent"
+              : textColor,
         });
-      } else if (obj.type === 'line') {
+      } else if (obj.type === "line") {
         obj.set({ stroke: textColor });
       }
       // QR та Bar коди залишаємо без змін - вони будуть використовувати нові кольори при створенні
@@ -570,11 +622,9 @@ const Toolbar = () => {
       canvas.set("backgroundColor", backgroundColor);
     } else if (backgroundType === "gradient") {
       // Місце для градієнта - буде реалізовано пізніше
-      console.log("Gradient background will be implemented here");
       canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
     } else if (backgroundType === "texture") {
       // Місце для текстури - буде реалізовано пізніше
-      console.log("Texture background will be implemented here");
       canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
     }
 
@@ -588,8 +638,8 @@ const Toolbar = () => {
       const text = new fabric.IText("Текст", {
         left: canvas.width / 2,
         top: canvas.height / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         fontFamily: "Arial",
         fill: globalColors.textColor,
         fontSize: 20,
@@ -632,25 +682,34 @@ const Toolbar = () => {
       reader.onload = async (event) => {
         try {
           // Перевіряємо чи це SVG файл
-          if (file.type === "image/svg+xml" || file.name.toLowerCase().endsWith('.svg')) {
+          if (
+            file.type === "image/svg+xml" ||
+            file.name.toLowerCase().endsWith(".svg")
+          ) {
             // Обробляємо SVG файл з застосуванням кольорів
             let svgText = event.target.result;
-            
+
             // Застосовуємо поточні кольори до SVG
-            if (globalColors.strokeColor && globalColors.strokeColor !== 'transparent') {
+            if (
+              globalColors.strokeColor &&
+              globalColors.strokeColor !== "transparent"
+            ) {
               svgText = svgText
                 .replace(/fill="[^"]*"/g, `fill="${globalColors.strokeColor}"`)
-                .replace(/stroke="[^"]*"/g, `stroke="${globalColors.strokeColor}"`);
-              
+                .replace(
+                  /stroke="[^"]*"/g,
+                  `stroke="${globalColors.strokeColor}"`
+                );
+
               // Додаємо стилі до SVG, якщо їх немає
-              if (!svgText.includes('fill=') && !svgText.includes('style=')) {
+              if (!svgText.includes("fill=") && !svgText.includes("style=")) {
                 svgText = svgText.replace(
                   /<svg([^>]*)>/,
                   `<svg$1 fill="${globalColors.strokeColor}">`
                 );
               }
             }
-            
+
             try {
               // Спробуємо завантажити як SVG об'єкт
               const result = await fabric.loadSVGFromString(svgText);
@@ -658,40 +717,51 @@ const Toolbar = () => {
               if (result.objects.length === 1) {
                 svgObject = result.objects[0];
               } else {
-                svgObject = fabric.util.groupSVGElements(result.objects, result.options);
+                svgObject = fabric.util.groupSVGElements(
+                  result.objects,
+                  result.options
+                );
               }
-              
+
               // Застосовуємо кольори до SVG об'єктів
               const applyColorsToObject = (obj) => {
-                if (obj.type === 'group') {
+                if (obj.type === "group") {
                   obj.forEachObject(applyColorsToObject);
                 } else {
-                  if (globalColors.strokeColor && globalColors.strokeColor !== 'transparent') {
+                  if (
+                    globalColors.strokeColor &&
+                    globalColors.strokeColor !== "transparent"
+                  ) {
                     obj.set({
                       fill: globalColors.strokeColor,
-                      stroke: globalColors.strokeColor
+                      stroke: globalColors.strokeColor,
                     });
                   }
                 }
               };
-              
+
               applyColorsToObject(svgObject);
-              
+
               // Масштабуємо SVG, якщо воно занадто велике
-              const bounds = svgObject.getBoundingRect ? svgObject.getBoundingRect() : { width: 100, height: 100 };
+              const bounds = svgObject.getBoundingRect
+                ? svgObject.getBoundingRect()
+                : { width: 100, height: 100 };
               const maxWidth = 300;
               const maxHeight = 300;
-              
+
               if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const scale = Math.min(maxWidth / bounds.width, maxHeight / bounds.height);
+                const scale = Math.min(
+                  maxWidth / bounds.width,
+                  maxHeight / bounds.height
+                );
                 svgObject.scale(scale);
               }
-              
+
               svgObject.set({
                 left: canvas.width / 2,
                 top: canvas.height / 2,
-                originX: 'center',
-                originY: 'center',
+                originX: "center",
+                originY: "center",
                 selectable: true,
                 hasControls: true,
                 hasBorders: true,
@@ -701,25 +771,34 @@ const Toolbar = () => {
               canvas.setActiveObject(svgObject);
               canvas.renderAll();
             } catch (svgError) {
-              console.warn("Не вдалося завантажити як SVG, спробуємо як зображення:", svgError);
+              console.warn(
+                "Не вдалося завантажити як SVG, спробуємо як зображення:",
+                svgError
+              );
               // Якщо не вдалося завантажити як SVG, завантажуємо як звичайне зображення
-              const img = await fabric.FabricImage.fromURL(event.target.result, {
-                crossOrigin: "anonymous",
-              });
-              
+              const img = await fabric.FabricImage.fromURL(
+                event.target.result,
+                {
+                  crossOrigin: "anonymous",
+                }
+              );
+
               const maxWidth = 300;
               const maxHeight = 300;
 
               if (img.width > maxWidth || img.height > maxHeight) {
-                const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                const scale = Math.min(
+                  maxWidth / img.width,
+                  maxHeight / img.height
+                );
                 img.scale(scale);
               }
 
               img.set({
                 left: canvas.width / 2,
                 top: canvas.height / 2,
-                originX: 'center',
-                originY: 'center',
+                originX: "center",
+                originY: "center",
                 selectable: true,
                 hasControls: true,
                 hasBorders: true,
@@ -750,8 +829,8 @@ const Toolbar = () => {
             img.set({
               left: canvas.width / 2,
               top: canvas.height / 2,
-              originX: 'center',
-              originY: 'center',
+              originX: "center",
+              originY: "center",
               selectable: true,
               hasControls: true,
               hasBorders: true,
@@ -780,30 +859,32 @@ const Toolbar = () => {
   const addBorder = () => {
     if (canvas && canvas.clipPath) {
       // Видаляємо візуальний контур canvas
-      const existingOutline = canvas.getObjects().find(obj => obj.isCanvasOutline);
+      const existingOutline = canvas
+        .getObjects()
+        .find((obj) => obj.isCanvasOutline);
       if (existingOutline) {
         canvas.remove(existingOutline);
       }
-      
+
       // Створюємо копію clipPath для використання як обводки
       const clipPathData = canvas.clipPath.toObject();
-      
+
       // Створюємо новий об'єкт на основі типу clipPath
       let borderShape;
-      
-      if (canvas.clipPath.type === 'rect') {
+
+      if (canvas.clipPath.type === "rect") {
         borderShape = new fabric.Rect(clipPathData);
-      } else if (canvas.clipPath.type === 'circle') {
+      } else if (canvas.clipPath.type === "circle") {
         borderShape = new fabric.Circle(clipPathData);
-      } else if (canvas.clipPath.type === 'ellipse') {
+      } else if (canvas.clipPath.type === "ellipse") {
         borderShape = new fabric.Ellipse(clipPathData);
-      } else if (canvas.clipPath.type === 'path') {
+      } else if (canvas.clipPath.type === "path") {
         borderShape = new fabric.Path(canvas.clipPath.path, clipPathData);
       } else {
         // Для інших типів створюємо path
-        borderShape = new fabric.Path(canvas.clipPath.path || '', clipPathData);
+        borderShape = new fabric.Path(canvas.clipPath.path || "", clipPathData);
       }
-      
+
       // Налаштовуємо як обводку
       borderShape.set({
         fill: "transparent",
@@ -814,7 +895,7 @@ const Toolbar = () => {
         excludeFromExport: false,
         isBorderShape: true, // Позначаємо як користувацьку обводку
       });
-      
+
       // Додаємо обводку на canvas
       canvas.add(borderShape);
       canvas.renderAll();
@@ -823,8 +904,8 @@ const Toolbar = () => {
       const rect = new fabric.Rect({
         left: canvas.width / 2,
         top: canvas.height / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         width: 200,
         height: 150,
         fill: "transparent",
@@ -848,11 +929,13 @@ const Toolbar = () => {
   const addHoleType1 = () => {
     // Нічого не робимо - це тип без отворів
     console.log("Тип 1: без отворів");
+    setIsHolesSelected(false);
   };
 
   // Тип 2 - отвір по центру ширини і зверху по висоті (відступ 15px)
   const addHoleType2 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasWidth = canvas.getWidth();
       const hole = new fabric.Circle({
         left: canvasWidth / 2,
@@ -874,6 +957,7 @@ const Toolbar = () => {
   // Тип 3 - два отвори по середині висоти, по бокам ширини (відступ 15px)
   const addHoleType3 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
@@ -913,6 +997,7 @@ const Toolbar = () => {
   // Тип 4 - 4 отвори по кутам (відступ 15px)
   const addHoleType4 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
@@ -980,6 +1065,7 @@ const Toolbar = () => {
   // Тип 5 - 4 прямокутні отвори по кутам (відступ 15px)
   const addHoleType5 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
@@ -1051,6 +1137,7 @@ const Toolbar = () => {
   // Тип 6 - отвір по середині висоти і лівого краю ширини
   const addHoleType6 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasHeight = canvas.getHeight();
 
       const leftHole = new fabric.Circle({
@@ -1074,6 +1161,7 @@ const Toolbar = () => {
   // Тип 7 - отвір по середині висоти і правого краю ширини
   const addHoleType7 = () => {
     if (canvas) {
+      setIsHolesSelected(true);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
@@ -1468,15 +1556,15 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('rectangle');
-      
+      setCurrentShapeType("rectangle");
+
       // Встановлюємо розміри canvas (120x80 для прямокутника з відступами)
       const width = 120;
       const height = 80;
       canvas.setDimensions({ width, height });
-      
+
       // Створюємо clipPath для обмеження області малювання
       const clipPath = new fabric.Rect({
         left: 0,
@@ -1485,20 +1573,20 @@ const Toolbar = () => {
         height: height,
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в стані
-      setSizeValues({ 
-        width: width, 
-        height: height, 
-        cornerRadius: 0 
+      setSizeValues({
+        width: width,
+        height: height,
+        cornerRadius: 0,
       });
-      
+
       // Додаємо візуальний контур
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1508,39 +1596,39 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('circle');
-      
+      setCurrentShapeType("circle");
+
       // Встановлюємо розміри canvas (100x100 для кола)
       const width = 100;
       const height = 100;
       canvas.setDimensions({ width, height });
-      
+
       // Створюємо clipPath у формі кола з правильними розмірами
       const radius = Math.min(width, height) / 2;
       const clipPath = new fabric.Circle({
         left: width / 2,
         top: height / 2,
         radius: radius,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в стані
-      setSizeValues({ 
-        width: width, 
-        height: height, 
-        cornerRadius: 0 
+      setSizeValues({
+        width: width,
+        height: height,
+        cornerRadius: 0,
       });
-      
+
       // Додаємо візуальний контур
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1550,39 +1638,39 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('ellipse');
-      
+      setCurrentShapeType("ellipse");
+
       // Встановлюємо розміри canvas (140x80 для еліпса)
       const width = 140;
       const height = 80;
       canvas.setDimensions({ width, height });
-      
+
       // Створюємо clipPath у формі еліпса з правильними розмірами
       const clipPath = new fabric.Ellipse({
         left: width / 2,
         top: height / 2,
         rx: width / 2,
         ry: height / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в стані
-      setSizeValues({ 
-        width: width, 
-        height: height, 
-        cornerRadius: 0 
+      setSizeValues({
+        width: width,
+        height: height,
+        cornerRadius: 0,
       });
-      
+
       // Додаємо візуальний контур
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1592,13 +1680,13 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('lock');
-      
+      setCurrentShapeType("lock");
+
       // Встановлюємо розміри canvas (120x108 для замка)
       canvas.setDimensions({ width: 120, height: 108 });
-      
+
       // Створюємо clipPath у формі замка
       const clipPath = new fabric.Path(
         `M96 42C96 21.9771 81.8823 6 60 6C38.1177 6 24 21.9771 24 42
@@ -1608,16 +1696,16 @@ const Toolbar = () => {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 120, height: 108 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1627,32 +1715,32 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('circleWithLine');
-      
+      setCurrentShapeType("circleWithLine");
+
       // Встановлюємо розміри canvas (100x100 для кола)
       canvas.setDimensions({ width: 100, height: 100 });
-      
+
       // Створюємо clipPath у формі кола
       const clipPath = new fabric.Circle({
         left: 50,
         top: 50,
         radius: 50,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 100, height: 100 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1662,32 +1750,32 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('circleWithCross');
-      
+      setCurrentShapeType("circleWithCross");
+
       // Встановлюємо розміри canvas (100x100 для кола)
       canvas.setDimensions({ width: 100, height: 100 });
-      
+
       // Створюємо clipPath у формі кола
       const clipPath = new fabric.Circle({
         left: 50,
         top: 50,
         radius: 50,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 100, height: 100 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1697,27 +1785,27 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('house');
-      
+      setCurrentShapeType("house");
+
       // Встановлюємо розміри canvas (96x105 для будинка)
       canvas.setDimensions({ width: 96, height: 105 });
-      
+
       // Створюємо clipPath у формі будинка
       const clipPath = new fabric.Path("M6 66V105H51H90V66L48 6L6 66Z", {
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 96, height: 105 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1727,27 +1815,27 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('halfCircle');
-      
+      setCurrentShapeType("halfCircle");
+
       // Встановлюємо розміри canvas (120x60 для півкола)
       canvas.setDimensions({ width: 120, height: 60 });
-      
+
       // Створюємо clipPath у формі півкола
-      const clipPath = new fabric.Path('M6 60 A54 60 0 0 1 114 60 L6 60Z', {
+      const clipPath = new fabric.Path("M6 60 A54 60 0 0 1 114 60 L6 60Z", {
         absolutePositioned: true,
       });
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 120, height: 60 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1757,30 +1845,30 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('arc');
-      
+      setCurrentShapeType("arc");
+
       // Встановлюємо розміри canvas (120x84 для арки)
       canvas.setDimensions({ width: 120, height: 84 });
-      
+
       // Створюємо clipPath у формі арки
       const clipPath = new fabric.Path(
-        'M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333',
+        "M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333",
         {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 120, height: 84 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1790,30 +1878,30 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('hexagon');
-      
+      setCurrentShapeType("hexagon");
+
       // Встановлюємо розміри canvas (127x114 для шестикутника)
       canvas.setDimensions({ width: 127, height: 114 });
-      
+
       // Створюємо clipPath у формі шестикутника
       const clipPath = new fabric.Path(
-        'M119.6862 57.15072L91.7166 105.5958L35.77014 105.5952L7.80156 57.14748L35.77128 8.70252L91.7154 8.69502L119.6862 57.15072Z',
+        "M119.6862 57.15072L91.7166 105.5958L35.77014 105.5952L7.80156 57.14748L35.77128 8.70252L91.7154 8.69502L119.6862 57.15072Z",
         {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 127, height: 114 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1823,13 +1911,13 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('octagon');
-      
+      setCurrentShapeType("octagon");
+
       // Встановлюємо розміри canvas (100x100 для восьмикутника, масштабуємо path)
       canvas.setDimensions({ width: 100, height: 100 });
-      
+
       // Створюємо clipPath у формі восьмикутника (масштабований)
       const clipPath = new fabric.Path(
         "M30 0L70 0L100 30L100 70L70 100L30 100L0 70L0 30Z",
@@ -1837,16 +1925,16 @@ const Toolbar = () => {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 100, height: 100 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1856,30 +1944,27 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('triangle');
-      
+      setCurrentShapeType("triangle");
+
       // Встановлюємо розміри canvas (100x100 для трикутника, масштабуємо path)
       canvas.setDimensions({ width: 100, height: 100 });
-      
+
       // Створюємо clipPath у формі трикутника (масштабований)
-      const clipPath = new fabric.Path(
-        "M50 0L100 100L0 100Z",
-        {
-          absolutePositioned: true,
-        }
-      );
-      
+      const clipPath = new fabric.Path("M50 0L100 100L0 100Z", {
+        absolutePositioned: true,
+      });
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 100, height: 100 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1889,13 +1974,13 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('arrowLeft');
-      
+      setCurrentShapeType("arrowLeft");
+
       // Встановлюємо розміри canvas (120x80 для стрілки, масштабуємо path)
       canvas.setDimensions({ width: 120, height: 80 });
-      
+
       // Створюємо clipPath у формі стрілки вліво (масштабований)
       const clipPath = new fabric.Path(
         "M0 45L30 15L30 30L120 30L120 60L30 60L30 75Z",
@@ -1903,16 +1988,16 @@ const Toolbar = () => {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 120, height: 80 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1922,13 +2007,13 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('arrowRight');
-      
+      setCurrentShapeType("arrowRight");
+
       // Встановлюємо розміри canvas (120x80 для стрілки, масштабуємо path)
       canvas.setDimensions({ width: 120, height: 80 });
-      
+
       // Створюємо clipPath у формі стрілки вправо (масштабований)
       const clipPath = new fabric.Path(
         "M120 45L90 15L90 30L0 30L0 60L90 60L90 75Z",
@@ -1936,16 +2021,16 @@ const Toolbar = () => {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 120, height: 80 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1955,13 +2040,13 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('flag');
-      
+      setCurrentShapeType("flag");
+
       // Встановлюємо розміри canvas
       canvas.setDimensions({ width: 720, height: 600 });
-      
+
       // Створюємо clipPath у формі прапора
       const clipPath = new fabric.Path(
         "M0 240L0 480L180 420L360 510L528 420L528 240L360 210L210 0L0 240Z",
@@ -1969,16 +2054,16 @@ const Toolbar = () => {
           absolutePositioned: true,
         }
       );
-      
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 720, height: 600 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -1988,30 +2073,27 @@ const Toolbar = () => {
     if (canvas) {
       // Очищуємо canvas
       canvas.clear();
-      
+
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('diamond');
-      
+      setCurrentShapeType("diamond");
+
       // Встановлюємо розміри canvas
       canvas.setDimensions({ width: 600, height: 600 });
-      
+
       // Створюємо clipPath у формі ромба
-      const clipPath = new fabric.Path(
-        "M300 0L600 300L300 600L0 300Z",
-        {
-          absolutePositioned: true,
-        }
-      );
-      
+      const clipPath = new fabric.Path("M300 0L600 300L300 600L0 300Z", {
+        absolutePositioned: true,
+      });
+
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
-      
+
       // Оновлюємо розміри в state
       setSizeValues({ width: 600, height: 600 });
-      
+
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
-      
+
       canvas.renderAll();
     }
   };
@@ -2183,17 +2265,25 @@ const Toolbar = () => {
                 type="number"
                 value={sizeValues.width}
                 onChange={(e) =>
-                  handleInputChange("width", activeObject ? 300 : 1200, e.target.value)
+                  handleInputChange(
+                    "width",
+                    activeObject ? 300 : 1200,
+                    e.target.value
+                  )
                 }
               />
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => changeValue("width", 1, activeObject ? 300 : 1200)}
+                  onClick={() =>
+                    changeValue("width", 1, activeObject ? 300 : 1200)
+                  }
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => changeValue("width", -1, activeObject ? 300 : 1200)}
+                  onClick={() =>
+                    changeValue("width", -1, activeObject ? 300 : 1200)
+                  }
                 />
               </div>
             </div>
@@ -2229,17 +2319,25 @@ const Toolbar = () => {
                 type="number"
                 value={sizeValues.height}
                 onChange={(e) =>
-                  handleInputChange("height", activeObject ? 300 : 1200, e.target.value)
+                  handleInputChange(
+                    "height",
+                    activeObject ? 300 : 1200,
+                    e.target.value
+                  )
                 }
               />
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => changeValue("height", 1, activeObject ? 300 : 1200)}
+                  onClick={() =>
+                    changeValue("height", 1, activeObject ? 300 : 1200)
+                  }
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => changeValue("height", -1, activeObject ? 300 : 1200)}
+                  onClick={() =>
+                    changeValue("height", -1, activeObject ? 300 : 1200)
+                  }
                 />
               </div>
             </div>
@@ -2403,6 +2501,7 @@ const Toolbar = () => {
             {A14}
           </span>
         </div>
+        <ShapeProperties />
       </div>
       {/* 5. Elements & Tools */}
       <div className={`${styles.section} ${styles.colorSection}`}>
@@ -2417,7 +2516,12 @@ const Toolbar = () => {
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addImage}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[
+                styles.elementsSpanWrapper,
+                isIconMenuOpen ? styles.active : "",
+              ].join(" ")}
+            >
               {Image}
               <span>Image</span>
             </span>
@@ -2429,7 +2533,12 @@ const Toolbar = () => {
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addShape}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[
+                styles.elementsSpanWrapper,
+                isShapeOpen ? styles.active : "",
+              ].join(" ")}
+            >
               {Shape}
               <span>Shape</span>
             </span>
@@ -2441,19 +2550,34 @@ const Toolbar = () => {
             </span>
           </li>
           <li className={styles.elementsEl} onClick={cut}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[
+                styles.elementsSpanWrapper,
+                isCutOpen ? styles.active : "",
+              ].join(" ")}
+            >
               {Cut}
               <span>Cut</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addQrCode}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[
+                styles.elementsSpanWrapper,
+                isQrOpen ? styles.active : "",
+              ].join(" ")}
+            >
               {QrCode}
               <span>QR Code</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addBarCode}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[
+                styles.elementsSpanWrapper,
+                isBarCodeOpen ? styles.active : "",
+              ].join(" ")}
+            >
               {BarCode}
               <span>Bar Code</span>
             </span>
@@ -2480,32 +2604,36 @@ const Toolbar = () => {
           </div>
           <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
             <h3 style={{ marginRight: "60px" }}>Holes</h3>
-            <div className={styles.field} style={{ margin: 0 }}>
-              <div className={styles.inputGroup}>
-                <input
-                  type="number"
-                  min={1}
-                  value={holesDiameter}
-                  onChange={(e) => {
-                    const val = Math.max(1, parseInt(e.target.value) || 1);
-                    setHolesDiameter(val);
-                  }}
-                />
-                <div className={styles.arrows}>
-                  <i
-                    className="fa-solid fa-chevron-up"
-                    onClick={() => setHolesDiameter((prev) => prev + 1)}
-                  />
-                  <i
-                    className="fa-solid fa-chevron-down"
-                    onClick={() =>
-                      setHolesDiameter((prev) => (prev > 1 ? prev - 1 : 1))
-                    }
-                  />
+            {isHolesSelected && (
+              <>
+                <div className={styles.field} style={{ margin: 0 }}>
+                  <div className={styles.inputGroup}>
+                    <input
+                      type="number"
+                      min={1}
+                      value={holesDiameter}
+                      onChange={(e) => {
+                        const val = Math.max(1, parseInt(e.target.value) || 1);
+                        setHolesDiameter(val);
+                      }}
+                    />
+                    <div className={styles.arrows}>
+                      <i
+                        className="fa-solid fa-chevron-up"
+                        onClick={() => setHolesDiameter((prev) => prev + 1)}
+                      />
+                      <i
+                        className="fa-solid fa-chevron-down"
+                        onClick={() =>
+                          setHolesDiameter((prev) => (prev > 1 ? prev - 1 : 1))
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <p style={{ padding: "0", margin: "0 0 0 10px" }}>Ø mm</p>
+                <p style={{ padding: "0", margin: "0 0 0 10px" }}>Ø mm</p>
+              </>
+            )}
           </div>
         </div>
         <div className={styles.holes}>

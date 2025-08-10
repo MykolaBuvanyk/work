@@ -99,6 +99,17 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   // Оновлення активного об'єкта та розмірів при зміні
   useEffect(() => {
     if (canvas) {
+      const getLogicalCanvasSize = () => {
+        if (typeof canvas.getDesignSize === 'function') {
+          return canvas.getDesignSize();
+        }
+        const zoom = typeof canvas.getZoom === 'function' ? canvas.getZoom() : 1;
+        return {
+          width: Math.round(canvas.getWidth() / (zoom || 1)),
+          height: Math.round(canvas.getHeight() / (zoom || 1)),
+        };
+      };
+
       canvas.on("selection:created", () => {
         const obj = canvas.getActiveObject();
         setActiveObject(obj);
@@ -124,15 +135,23 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.on("selection:cleared", () => {
         setActiveObject(null);
         // Коли нічого не вибрано, показуємо розміри canvas
+<<<<<<< HEAD
         setSizeValues({
           width: canvas.getWidth(),
           height: canvas.getHeight(),
           cornerRadius: 0,
+=======
+        const sz = getLogicalCanvasSize();
+        setSizeValues({ 
+          width: sz.width, 
+          height: sz.height, 
+          cornerRadius: 0 
+>>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
         });
       });
       canvas.on("object:modified", () => {
         const obj = canvas.getActiveObject();
-        if (obj) {
+        if (obj && !obj.isCutElement) { // Ігноруємо cut елементи
           setSizeValues({
             width: Math.round(obj.width * obj.scaleX),
             height: Math.round(obj.height * obj.scaleY),
@@ -142,10 +161,18 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       });
 
       // Ініціалізуємо початкові значення розмірів canvas
+<<<<<<< HEAD
       setSizeValues({
         width: canvas.getWidth(),
         height: canvas.getHeight(),
         cornerRadius: 0,
+=======
+      const sz = getLogicalCanvasSize();
+      setSizeValues({ 
+        width: sz.width, 
+        height: sz.height, 
+        cornerRadius: 0 
+>>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
       });
     }
     return () => {
@@ -947,6 +974,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
       canvas.add(hole);
       canvas.setActiveObject(hole);
@@ -972,6 +1005,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Правий отвір
@@ -985,6 +1024,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(leftHole);
@@ -1012,6 +1057,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Верхній правий
@@ -1025,6 +1076,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній лівий
@@ -1038,6 +1095,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній правий
@@ -1051,6 +1114,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(topLeft);
@@ -1081,6 +1150,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Верхній правий
@@ -1095,6 +1170,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній лівий
@@ -1109,6 +1190,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       // Нижній правий
@@ -1123,6 +1210,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(topLeft);
@@ -1150,6 +1243,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(leftHole);
@@ -1175,6 +1274,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
+        cutType: 'hole', // Додаємо тип cut елементу
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
       });
 
       canvas.add(rightHole);

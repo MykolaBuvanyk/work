@@ -228,9 +228,15 @@ const TextList = () => {
     if (canvas) {
       isUpdatingRef.current = true;
 
+      // Розраховуємо центр полотна
+      const canvasWidth = canvas.getWidth();
+      const canvasHeight = canvas.getHeight();
+
       const text = new fabric.IText(newTextValue || "Новий текст", {
-        left: 100,
-        top: 100 + texts.length * 30,
+        left: canvasWidth / 2,
+        top: canvasHeight / 2,
+        originX: 'center',
+        originY: 'center',
         fontSize: 20,
         fontFamily: "Arial",
         fontWeight: "normal",

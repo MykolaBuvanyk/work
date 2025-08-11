@@ -1,0 +1,206 @@
+.yourProjectsModal {
+  position: absolute;
+  top: 250px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  box-shadow: 0px 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 2000;
+  border-radius: 8px;
+  width: 1100px;
+  padding: 40px 50px;
+}
+.headerWrapper {
+  position: relative; 
+  text-align: center; 
+  font-weight: 700; 
+  font-size: 16px;
+  text-decoration: underline;
+  color: rgba(0, 108, 164, 1);
+  padding: 15px 40px;
+}
+
+.headerWrapper svg {
+  position: absolute;
+  top: -30px;
+  right: -40px;
+  cursor: pointer;
+}
+.addInfoWrapper{
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  margin-bottom: 50px;
+}
+.addInfoWrapper button{
+  background-color: rgba(218, 218, 218, 1);
+  border: 1px solid rgba(0, 0, 0, 0.61);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: rgba(0, 108, 164, 1);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.savedOrderedWrapper{
+  width: 100%; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+.savedOrderedWrapper button {
+  background-color: transparent;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
+  color: rgba(0, 108, 164, 1);
+  font-weight: 500;
+  font-size: 12px;
+  width: 90px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.savedOrderedWrapper button:hover {
+  background-color: rgba(205, 203, 203, 0.284);
+}
+.savedOrderedWrapper .active{
+  background-color: rgba(0, 108, 164, 1);
+  color: white;
+}
+.savedOrderedWrapper .active:hover {
+  background-color: rgba(0, 108, 164, 1);
+}
+/* Table */
+table {
+  border-collapse: separate;
+  border-spacing: 0px 35px;
+  width: max-content;
+}
+input[type="checkbox"] {
+  margin-top: 8px;
+}
+table td:nth-child(1) {
+  padding-right: 15px;
+}
+
+table td:nth-child(2) {
+  padding-left: 0;
+  padding-right: 65px;
+}
+
+table td:nth-child(3) {
+  padding-left: 0;
+  padding-right: 115px;
+}
+
+table td:nth-child(4) {
+  padding-left: 0;
+  padding-right: 45px;
+}
+
+table td:nth-child(5) {
+  padding-left: 0;
+  padding-right: 45px;
+  width: 375px;
+}
+table td:nth-child(5) img{
+  max-height: 54px;
+}
+table td {
+  padding-left: 0;
+}
+/* Slider */
+.image-slider {
+  position: relative;
+  width: 375px; /* ширина як у td */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.slider-track {
+  display: flex;
+  flex-wrap: nowrap; /* Запобігає перенесенню зображень на новий рядок */
+  transition: transform 0.3s ease;
+  will-change: transform;
+  width: max-content; /* Трек займає ширину всіх зображень */
+}
+
+.image-slider img {
+  max-height: 54px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.image-slider button.prev,
+.image-slider button.next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 25px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 10;
+  user-select: none;
+  display: none; /* За замовчуванням кнопки приховані */
+}
+
+.image-slider button.prev {
+  left: 0;
+}
+
+.image-slider button.next {
+  right: 0;
+}
+
+/* Показуємо кнопки, якщо трек ширший за контейнер */
+.image-slider.show-buttons button.prev,
+.image-slider.show-buttons button.next {
+  display: block;
+}
+
+
+.actionList{
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  gap: 5px;
+}
+.actionList li{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionList li:nth-child(1):hover {
+  color: rgba(0, 108, 164, 1);
+}
+
+.actionList li:nth-child(2):hover {
+  color: rgba(255, 0, 0, 1);
+}
+.addToCurrProject{
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  margin-left: 40px;
+}

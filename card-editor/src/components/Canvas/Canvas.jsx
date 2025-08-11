@@ -5,12 +5,12 @@ import { useCanvasContext } from '../../contexts/CanvasContext';
 import styles from './Canvas.module.css';
 
 // Відступи в межах viewport
-const MARGIN = 60;
+const MARGIN = 20;
 const DEFAULT_DESIGN = { width: 1200, height: 800 };
 
 // Параметри панелі керування
-const TOP_PANEL_GAP = 50;           // від рамки до центру кнопок (CSS px)
-const BOTTOM_ROTATE_GAP = 54;       // від рамки до центру кнопки обертання
+const TOP_PANEL_GAP = 25;           // від рамки до центру кнопок (CSS px)
+const BOTTOM_ROTATE_GAP = 25;       // від рамки до центру кнопки обертання
 const PANEL_BUTTON_DIAMETER = 24;   // діаметр кнопки
 const PANEL_BUTTON_GAP = 8;         // проміжок між кнопками
 

@@ -135,18 +135,11 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.on("selection:cleared", () => {
         setActiveObject(null);
         // Коли нічого не вибрано, показуємо розміри canvas
-<<<<<<< HEAD
-        setSizeValues({
-          width: canvas.getWidth(),
-          height: canvas.getHeight(),
-          cornerRadius: 0,
-=======
         const sz = getLogicalCanvasSize();
         setSizeValues({ 
           width: sz.width, 
           height: sz.height, 
           cornerRadius: 0 
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
         });
       });
       canvas.on("object:modified", () => {
@@ -161,18 +154,11 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       });
 
       // Ініціалізуємо початкові значення розмірів canvas
-<<<<<<< HEAD
-      setSizeValues({
-        width: canvas.getWidth(),
-        height: canvas.getHeight(),
-        cornerRadius: 0,
-=======
       const sz = getLogicalCanvasSize();
       setSizeValues({ 
         width: sz.width, 
         height: sz.height, 
         cornerRadius: 0 
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
       });
     }
     return () => {
@@ -432,10 +418,10 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
       if (outlineShape) {
         outlineShape.set({
-          fill: "transparent",
-          stroke: "#cccccc",
+          fill: 'transparent',
+          stroke: '#000000', // solid black per requirement
           strokeWidth: 1,
-          strokeDashArray: [5, 5],
+          strokeDashArray: null, // remove dashed pattern
           selectable: false,
           evented: false,
           excludeFromExport: true,

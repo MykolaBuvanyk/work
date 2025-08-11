@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import QRCode from "qrcode";
 import * as fabric from "fabric";
@@ -44,6 +44,19 @@ const qrTypes = [
 
 const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
 
+// При відкритті вікна завжди активуємо URL та генеруємо дефолтний QR (якщо ще не додано або немає активного QR)
+useEffect(() => {
+  if (!isOpen) return;
+  setSelectedType('url');
+  if (canvas) {
+    const existing = canvas.getObjects()?.find(o => o.isQRCode);
+    if (!existing) {
+      generateQRCode({ auto: true, keepSelection: true, mode: 'new' });
+    }
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isOpen]);
+
 
   // Генерує дані для QR-коду залежно від типу
   const generateQRData = () => {
@@ -68,54 +81,107 @@ const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
     }
   };
 
-  // Додає QR-код на canvas
-  const generateQRCode = async () => {
+  // Додає QR-код на canvas (подавляємо "хибну" помилку, якщо зображення реально додалось)
+  // mode: 'update' (replace target qr) | 'new' (add another)
+  const generateQRCode = async ({ auto = false, keepSelection = false, mode = 'update' } = {}) => {
     if (!canvas) return;
-
     const qrData = generateQRData();
-
+    let qrDataURL;
     try {
-      // Генеруємо QR-код як Data URL
-      const qrDataURL = await QRCode.toDataURL(qrData, {
+      qrDataURL = await QRCode.toDataURL(qrData, {
         width: 150,
         margin: 1,
         color: {
-          dark: globalColors.textColor || "#000000",
-          light: globalColors.backgroundColor || "#FFFFFF",
+          dark: globalColors?.textColor || "#000000",
+          light: globalColors?.backgroundColor || "#FFFFFF",
         },
       });
+    } catch (e) {
+      console.error("Помилка створення dataURL QR:", e);
+      if (!auto) alert("Не вдалося згенерувати QR-код");
+      return;
+    }
 
-      // Створюємо зображення з QR-коду
-      const img = await fabric.FabricImage.fromURL(qrDataURL);
-      
-      // Розраховуємо центр полотна
+    // Пошук цільового QR для update
+    const allQrs = canvas.getObjects().filter(o => o.isQRCode);
+    const active = canvas.getActiveObject();
+    const target = active && active.isQRCode ? active : allQrs[0];
+    let left, top, scaleX, scaleY, angle;
+    let replacing = false;
+    if (mode === 'update' && target) {
+      replacing = true;
+      ({ left, top, scaleX, scaleY, angle } = target);
+      canvas.__suspendUndoRedo = true;
+      canvas.remove(target);
+    }
+    let img;
+    try {
+      img = await fabric.Image.fromURL(qrDataURL);
+      if (!img) throw new Error('fabric.Image.fromURL повернула null/undefined');
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      
       img.set({
-        left: canvasWidth / 2,
-        top: canvasHeight / 2,
+        left: left ?? (canvasWidth / 2 + (mode === 'new' && allQrs.length ? 30 * allQrs.length : 0)),
+        top: top ?? (canvasHeight / 2 + (mode === 'new' && allQrs.length ? 30 * allQrs.length : 0)),
+        scaleX: scaleX ?? 1,
+        scaleY: scaleY ?? 1,
+        angle: angle ?? 0,
         originX: 'center',
         originY: 'center',
         selectable: true,
         hasControls: true,
         hasBorders: true,
-        isQRCode: true, // Позначаємо як QR код
-        qrText: qrData, // Зберігаємо текст для регенерації
+        isQRCode: true,
+        qrText: qrData,
       });
-
       canvas.add(img);
-      canvas.setActiveObject(img);
-      canvas.renderAll();
-
-      // Закриваємо меню після створення
-      if (onClose) onClose();
-      setSelectedType(null);
-    } catch (error) {
-      console.error("Помилка генерації QR-коду:", error);
-      alert("Помилка генерації QR-коду");
+      if (keepSelection || !auto) canvas.setActiveObject(img);
+    } catch (e) {
+      console.error('Помилка створення нового QR:', e);
+      if (!auto) alert('Помилка створення QR-коду');
+    } finally {
+      if (replacing) {
+        canvas.__suspendUndoRedo = false;
+        canvas.fire('object:added'); // Один запис в історії для заміни
+      }
+      canvas.requestRenderAll();
     }
   };
+
+  // Видалення поточного (active) QR або першого знайденого
+  const deleteQRCode = () => {
+    if (!canvas) return;
+    const active = canvas.getActiveObject();
+    const target = active && active.isQRCode ? active : canvas.getObjects().find(o => o.isQRCode);
+    if (!target) return;
+    canvas.remove(target);
+    canvas.requestRenderAll();
+  };
+
+  // Дублювання активного або першого QR
+  const duplicateQRCode = async () => {
+    if (!canvas) return;
+    const active = canvas.getActiveObject();
+    const target = active && active.isQRCode ? active : canvas.getObjects().find(o => o.isQRCode);
+    if (!target) return;
+    try {
+      const clone = await target.clone();
+      clone.set({
+        left: target.left + 30,
+        top: target.top + 30,
+        isQRCode: true,
+        qrText: target.qrText,
+      });
+      canvas.add(clone);
+      canvas.setActiveObject(clone);
+      canvas.requestRenderAll();
+    } catch (e) {
+      console.error('Помилка дублювання QR:', e);
+    }
+  };
+
+  // Створення абсолютно нового QR з поточними даними (не заміняє існуючі)
+  const createNewQRCode = () => generateQRCode({ keepSelection: true, mode: 'new' });
 
   // Локальний стейт для показу помилки тільки після спроби сабміту (wifi)
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -243,7 +309,7 @@ const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
         }
       }
       // Генеруємо QR код для поточного типу
-      generateQRCode();
+  generateQRCode({ keepSelection: true, mode: 'update' });
     };
 
     // Обробник для телефону: заборонити букви
@@ -383,7 +449,7 @@ const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
             ))}
           </div>
           <div className={styles.actions}>
-            <button className={styles.actionBtn}>
+            <button className={styles.actionBtn} onClick={deleteQRCode}>
               <svg
                 width="24"
                 height="24"
@@ -398,7 +464,7 @@ const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
               </svg>
               <span className={styles.actionText}>Delete QR</span>
             </button>
-            <button className={styles.actionBtn}>
+            <button className={styles.actionBtn} onClick={duplicateQRCode}>
               <svg
                 width="24"
                 height="24"
@@ -439,7 +505,7 @@ const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
               </svg>
               <span className={styles.actionText}>Duplicate QR</span>
             </button>
-            <button className={styles.actionBtn} onClick={generateQRCode}>
+            <button className={styles.actionBtn} onClick={createNewQRCode}>
               <svg
                 width="24"
                 height="24"

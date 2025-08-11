@@ -142,6 +142,61 @@
   background: #005b8a;
 }
 
+/* Action buttons (aligned with QR generator style) */
+.actions {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-top: 15px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actionBtn {
+  background: transparent;
+  /* border: 1px solid rgba(125,125,125,1); */
+  /* border-radius: 8px; */
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color .2s, color .2s, border-color .2s;
+  min-width: 70px;
+}
+
+.actionBtn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* .actionBtn:hover:not(:disabled) {
+  background: rgba(0,108,164,0.08);
+  border-color: rgba(0,108,164,1);
+}
+
+.actionBtn:active:not(:disabled) {
+  background: rgba(0,108,164,0.18);
+} */
+
+.actionText {
+  font-size: 13px;
+  font-weight: 500;
+  color: #000;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.extraActions {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Адаптивність для мобільних пристроїв */
 @media (max-width: 480px) {
   .dropdown {

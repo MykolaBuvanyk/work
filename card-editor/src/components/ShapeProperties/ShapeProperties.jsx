@@ -41,14 +41,8 @@ const ShapeProperties = ({
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0, // Для Path об'єктів це не застосовується напряму
             thickness: activeObject.strokeWidth || 2,
-<<<<<<< HEAD
-            fill:
-              activeObject.fill !== "transparent" && activeObject.fill !== "",
-            cut: activeObject.stroke === "#FFA500", // Перевіряємо чи є оранжевий колір
-=======
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
             cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement // Перевіряємо чи є оранжевий колір або позначка cut
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
           });
         }
       };
@@ -91,14 +85,8 @@ const ShapeProperties = ({
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0,
             thickness: activeObject.strokeWidth || 2,
-<<<<<<< HEAD
-            fill:
-              activeObject.fill !== "transparent" && activeObject.fill !== "",
-            cut: activeObject.stroke === "#FFA500",
-=======
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
             cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
           });
         }
       };
@@ -176,9 +164,6 @@ const ShapeProperties = ({
       case "cut":
         if (value) {
           // Заповнити контур оранжевим кольором
-<<<<<<< HEAD
-          activeObject.set("stroke", "#FFA500");
-=======
           activeObject.set('stroke', '#FFA500');
           // Додаємо тип cut елементу та блокуємо зміну розміру
           activeObject.set({
@@ -189,16 +174,11 @@ const ShapeProperties = ({
             lockScalingY: true,
             lockUniScaling: true,
           });
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
           // Якщо fill також активний, то fill теж оранжевий
           if (properties.fill) {
             activeObject.set("fill", "#FFA500");
           }
         } else {
-<<<<<<< HEAD
-          // Повернути до звичайного чорного кольору
-          activeObject.set("stroke", "#000000");
-=======
           // Повернути до звичайного чорного кольору та розблокувати
           activeObject.set('stroke', '#000000');
           activeObject.set({
@@ -209,7 +189,6 @@ const ShapeProperties = ({
             lockScalingY: false,
             lockUniScaling: false,
           });
->>>>>>> 7d42ffa53e4eaf9008ea19a9de29ed940fab9508
           if (properties.fill) {
             activeObject.set("fill", "#000000");
           }

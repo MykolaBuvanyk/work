@@ -22,7 +22,7 @@ export const useUndoRedo = () => {
 
   // Функція збереження стану
   const saveState = () => {
-    if (canvas && !isSavingRef.current) {
+  if (canvas && !isSavingRef.current && !canvas.__suspendUndoRedo) {
       const json = canvas.toJSON(['objects', 'background']);
       console.log('Saving state:', json);
       

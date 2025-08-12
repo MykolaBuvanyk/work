@@ -1,6 +1,6 @@
 .yourProjectsModal {
-  position: absolute;
-  top: 250px;
+  position: fixed;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   background-color: #fff;
@@ -9,6 +9,7 @@
   border-radius: 8px;
   width: 1100px;
   padding: 40px 50px;
+  max-height: 90vh;
 }
 .headerWrapper {
   position: relative; 
@@ -55,6 +56,7 @@
   justify-content: center;
   align-items: center;
   gap: 15px;
+  margin-bottom: 30px;
 }
 .savedOrderedWrapper button {
   background-color: transparent;
@@ -84,7 +86,6 @@
 /* Table */
 table {
   border-collapse: separate;
-  border-spacing: 0px 35px;
   width: max-content;
 }
 input[type="checkbox"] {
@@ -121,15 +122,33 @@ table td {
   padding-left: 0;
 }
 /* Slider */
-.image-slider {
+.imageSlider {
   position: relative;
   width: 375px; /* ширина як у td */
-  overflow: hidden;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+.nextBtn,
+.prevBtn{
+    position: absolute; /* додати */
+  z-index: 10; /* додати */
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
+.prevBtn {
+  left: -30px; /* позиція зліва */
 }
 
-.slider-track {
+.nextBtn {
+  right: -30px; /* позиція справа */
+}
+.prevBtn:disabled,
+.nextBtn:disabled {
+  cursor: not-allowed;
+}
+.sliderTrack {
   display: flex;
   flex-wrap: nowrap; /* Запобігає перенесенню зображень на новий рядок */
   transition: transform 0.3s ease;
@@ -137,14 +156,14 @@ table td {
   width: max-content; /* Трек займає ширину всіх зображень */
 }
 
-.image-slider img {
+.imageSlider img {
   max-height: 54px;
   margin-right: 10px;
   flex-shrink: 0;
 }
 
-.image-slider button.prev,
-.image-slider button.next {
+.imageSlider button.prev,
+.imageSlider button.next {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -160,26 +179,41 @@ table td {
   display: none; /* За замовчуванням кнопки приховані */
 }
 
-.image-slider button.prev {
+.imageSlider button.prev {
   left: 0;
 }
 
-.image-slider button.next {
+.imageSlider button.next {
   right: 0;
 }
 
 /* Показуємо кнопки, якщо трек ширший за контейнер */
-.image-slider.show-buttons button.prev,
-.image-slider.show-buttons button.next {
+.imageSlider.show-buttons button.prev,
+.imageSlider.show-buttons button.next {
   display: block;
 }
 
+.imagesContainer{
+  display: flex;
+    justify-content: flex-start; /* прижати до лівого краю */
+  gap: 0; /* прибрати фіксований gap */
+  overflow: hidden;
+  width: 100%;
+}
+.imageItem {
+  flex-shrink: 0;
+}
 
+.imageItem:not(:first-child) {
+  margin-left: auto; /* або використовувати calc для рівномірного розподілу */
+}
 .actionList{
   display: flex;
   flex-direction: column;
   list-style: none;
   gap: 5px;
+  margin: 0;
+  padding: 0;
 }
 .actionList li{
   display: flex;
@@ -203,4 +237,18 @@ table td {
   align-items: center;
   gap: 5px;
   margin-left: 40px;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.pageBtn {
+  background-color: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }

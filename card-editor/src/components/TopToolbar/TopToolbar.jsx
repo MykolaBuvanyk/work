@@ -5,13 +5,15 @@ import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
 import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
+import SaveAsModal from "../SaveAsModal/SaveAsModal";
 
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
   const { canvas } = useCanvasContext();
   const [zoom, setZoom] = useState(100);
-
+  const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
+  
   const handleDelete = () => {
     if (!canvas) return;
 
@@ -317,7 +319,10 @@ const TopToolbar = ({ className }) => {
             </svg>
             Save Project
           </div>
-          <div className={styles.topToolbarEL} onClick={exportToExcel}>
+          <div
+            className={styles.topToolbarEL}
+            onClick={() => setSaveAsModalOpen(true)}
+          >
             <svg
               width="24"
               height="24"
@@ -430,7 +435,9 @@ const TopToolbar = ({ className }) => {
           </div>
           <div className={styles.topToolbarEL}>
             <div className={styles.fontSizeControl}>
-              <button className={styles.sizeButton} onClick={handleZoomOut}>-</button>
+              <button className={styles.sizeButton} onClick={handleZoomOut}>
+                -
+              </button>
               <input
                 type="number"
                 className={styles.fontSizeInput}
@@ -440,7 +447,9 @@ const TopToolbar = ({ className }) => {
                 onChange={handleZoomInputChange}
                 onBlur={handleZoomInputBlur}
               />
-              <button className={styles.sizeButton} onClick={handleZoomIn}>+</button>
+              <button className={styles.sizeButton} onClick={handleZoomIn}>
+                +
+              </button>
             </div>
           </div>
         </div>
@@ -448,6 +457,10 @@ const TopToolbar = ({ className }) => {
       <div className={styles.rightSide}>
         <InfoAboutProject />
       </div>
+      {/* Додати модалку */}
+      {isSaveAsModalOpen && (
+        <SaveAsModal onClose={() => setSaveAsModalOpen(false)} />
+      )}
     </div>
   );
 };

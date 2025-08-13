@@ -5,14 +5,18 @@ import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopSidebar.module.css";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
+import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 
 const TopSidebar = () => {
   const [isProjectsModalOpen, setProjectsModalOpen] = useState(false);
-
+  const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
   return (
     <div className={styles.topSidebar}>
       <div className={styles.buttonWrapper}>
-        <button className={styles.button}>
+        <button
+          className={styles.button}
+          onClick={() => setNewProjectModalOpen(true)}
+        >
           <svg
             width="24"
             height="24"
@@ -52,6 +56,9 @@ const TopSidebar = () => {
       </div>
       {isProjectsModalOpen && (
         <YourProjectsModal onClose={() => setProjectsModalOpen(false)} />
+      )}
+      {isNewProjectModalOpen && (
+        <NewProjectsModal onClose={() => setNewProjectModalOpen(false)} />
       )}
     </div>
   );

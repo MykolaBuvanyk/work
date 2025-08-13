@@ -5,19 +5,15 @@ import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./YourProjectsModal.module.css";
 
-const YourProjectsModal = () => {
-  const [activeTab, setActiveTab] = useState("saved");
-  const [sliderPositions, setSliderPositions] = useState({});
-  const [showButtons, setShowButtons] = useState({});
-  const sliderTrackRefs = useRef({});
-
-  // Дані про проекти
   const projects = [
     {
       id: 1,
       name: "Water Des Sol 01",
       date: "07 - 07 - 2025",
       images: [
+        "../src/assets/images/image.png",
+        "../src/assets/images/image2.png",
+        "../src/assets/images/image3.png",
         "../src/assets/images/image.png",
       ],
     },
@@ -31,67 +27,106 @@ const YourProjectsModal = () => {
       id: 3,
       name: "Water Des Sol 03",
       date: "07 - 07 - 2025",
-      images: [
-        "../src/assets/images/image.png",
-      ],
+      images: ["../src/assets/images/image.png"],
+    },
+    {
+      id: 4,
+      name: "Water Des Sol 04",
+      date: "07 - 07 - 2025",
+      images: ["../src/assets/images/image.png"],
+    },
+    {
+      id: 5,
+      name: "Water Des Sol 05",
+      date: "07 - 07 - 2025",
+      images: ["../src/assets/images/image.png"],
+    },
+    {
+      id: 6,
+      name: "Water Des Sol 06",
+      date: "07 - 07 - 2025",
+      images: ["../src/assets/images/image.png"],
+    },
+    {
+      id: 7,
+      name: "Water Des Sol 07",
+      date: "07 - 07 - 2025",
+      images: ["../src/assets/images/image.png"],
     },
   ];
 
+
+const YourProjectsModal = ({ onClose }) => {
+  const [activeTab, setActiveTab] = useState("saved");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3; // по 3 записи на сторінку
+  const [currentSlideIndex, setCurrentSlideIndex] = useState({});
+
+  // 3. Ініціалізація слайдерів для кожного проекту
   useEffect(() => {
-    if (projects.length > 0) {
-      const initialPositions = {};
-      const initialShowButtons = {};
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentProjects = projects.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
 
-      projects.forEach((project) => {
-        initialPositions[project.id] = 0;
-        // За замовчуванням припускаємо, що кнопки не потрібні
-        initialShowButtons[project.id] = false;
+    const initialSlides = {};
+    currentProjects.forEach((project) => {
+      initialSlides[project.id] = 0;
+    });
+    setCurrentSlideIndex(initialSlides);
+  }, [currentPage, projects]);
 
-        // Перевіряємо ширину треку після рендерингу
-        setTimeout(() => {
-          const trackElement = sliderTrackRefs.current[project.id];
-          if (trackElement) {
-            const trackWidth = trackElement.scrollWidth;
-            setShowButtons((prev) => ({
-              ...prev,
-              [project.id]: trackWidth > 375, // Показуємо кнопки, якщо трек ширший за 375px
-            }));
-          }
-        }, 0); // Виконуємо після завершення рендерингу
-      });
+  // 4. Логіка переключення слайдера
+  const handleSlideChange = (projectId, direction) => {
+    const project = projects.find((p) => p.id === projectId);
+    if (!project || project.images.length <= 3) return;
 
-      setSliderPositions(initialPositions);
-      setShowButtons(initialShowButtons);
-    }
-  }, [projects]);
+    setCurrentSlideIndex((prev) => {
+      const currentIndex = prev[projectId] || 0;
+      const maxSlides = Math.ceil(project.images.length / 3) - 1;
 
-  const handlePrev = (projectId, images) => {
-    setSliderPositions((prev) => {
-      const currentPosition = prev[projectId] || 0;
-      const newPosition = Math.max(currentPosition - 1, 0);
-      return { ...prev, [projectId]: newPosition };
+      let newIndex;
+      if (direction === "next") {
+        newIndex = currentIndex < maxSlides ? currentIndex + 1 : currentIndex;
+      } else {
+        newIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
+      }
+
+      return { ...prev, [projectId]: newIndex };
     });
   };
 
-  const handleNext = (projectId, images) => {
-    setSliderPositions((prev) => {
-      const currentPosition = prev[projectId] || 0;
-      const maxPosition = images.length - 1;
-      const newPosition = Math.min(currentPosition + 1, maxPosition);
-      return { ...prev, [projectId]: newPosition };
-    });
+  // 5. Функція для отримання видимих зображень
+  const getVisibleImages = (project) => {
+    const startIndex = (currentSlideIndex[project.id] || 0) * 3;
+    return project.images.slice(startIndex, startIndex + 3);
   };
 
-  const getTransform = (projectId) => {
-    const position = sliderPositions[projectId] || 0;
-    return `translateX(-${position * (375 + 10)}px)`;
+  // 6. Перевірка чи потрібні кнопки слайдера
+  const needsSliderButtons = (project) => {
+    return project.images.length > 3;
   };
+  // Вираховуємо кількість сторінок
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
 
+  // Формуємо масив діапазонів для пагінації
+  const ranges = [];
+  for (let i = 0; i < totalPages; i++) {
+    const start = i * itemsPerPage + 1;
+    const end = Math.min((i + 1) * itemsPerPage, projects.length);
+    ranges.push({ start, end, page: i + 1 });
+  }
+
+  // Поточні дані для відображення
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentProjects = projects.slice(startIndex, startIndex + itemsPerPage);
   return (
     <div className={styles.yourProjectsModal}>
       <div className={styles.headerWrapper}>
         My Projects
         <svg
+          onClick={onClose}
           width="24"
           height="24"
           viewBox="0 0 24 24"
@@ -160,65 +195,67 @@ const YourProjectsModal = () => {
         </button>
       </div>
       <div className={styles.projectsTableWrapper}>
-        {projects.length > 0 ? (
-          <table className={styles.table}>
-            <tbody>
-              <tr
-              className={styles.tr}>
-                <td></td>
-                <td>Nr.</td>
-                <td>Name</td>
-                <td>Date</td>
-                <td>Image</td>
-                <td></td>
-              </tr>
-              {projects.map((project, index) => (
-                <tr key={project.id}
-                className={styles.tr}>
+        <table className={styles.table}>
+          <tbody>
+            <tr className={styles.tr}>
+              <td></td>
+              <td>Nr.</td>
+              <td>Name</td>
+              <td>Date</td>
+              <td>Image</td>
+              <td></td>
+            </tr>
+
+            {currentProjects.map((project, index) => {
+              const imageWidth = 115; // Припускаємо, що ширина зображення 115px (54px висота + маржин)
+              const marginRight = 10; // Відповідно до CSS margin-right: 10px
+              const totalImageWidth = imageWidth + marginRight;
+
+              return (
+                <tr key={project.id} className={styles.tr}>
                   <td>
                     <input type="checkbox" />
                   </td>
-                  <td>{index + 1}</td>
+                  <td>{startIndex + index + 1}</td>
                   <td>{project.name}</td>
                   <td>{project.date}</td>
                   <td>
-                    <div
-                      className={`${styles.imageSlider} ${
-                        showButtons[project.id] === true
-                          ? styles.showButtons
-                          : ""
-                      }`}
-                    >
-                      {/* <button
-                        className="prev"
-                        onClick={() => handlePrev(project.id, project.images)}
-                        disabled={sliderPositions[project.id] === 0}
-                      >
-                        &lt;
-                      </button> */}
-                      <div
-                        className={styles.sliderTrack}
-                        style={{ transform: getTransform(project.id) }}
-                        ref={(el) => (sliderTrackRefs.current[project.id] = el)}
-                      >
-                        {project.images.map((image, imgIndex) => (
-                          <img
-                            key={imgIndex}
-                            src={image}
-                            alt={`Project ${project.id} image ${imgIndex + 1}`}
-                          />
+                    <div className={styles.imageSlider}>
+                      {needsSliderButtons(project) && (
+                        <button
+                          className={styles.prevBtn}
+                          onClick={() => handleSlideChange(project.id, "prev")}
+                          disabled={(currentSlideIndex[project.id] || 0) === 0}
+                        >
+                          &lt;&lt;
+                        </button>
+                      )}
+
+                      <div className={styles.imagesContainer}>
+                        {getVisibleImages(project).map((image, imgIndex) => (
+                          <div key={imgIndex} className={styles.imageItem}>
+                            <img
+                              src={image}
+                              alt={`Project ${project.name} image ${
+                                imgIndex + 1
+                              }`}
+                            />
+                          </div>
                         ))}
                       </div>
-                      {/* <button
-                        className="next"
-                        onClick={() => handleNext(project.id, project.images)}
-                        disabled={
-                          sliderPositions[project.id] ===
-                          project.images.length - 1
-                        }
-                      >
-                        &gt;
-                      </button> */}
+
+                      {needsSliderButtons(project) && (
+                        <button
+                          className={styles.nextBtn}
+                          onClick={() => handleSlideChange(project.id, "next")}
+                          disabled={
+                            (currentSlideIndex[project.id] || 0) >=
+                            Math.ceil(project.images.length / 3) - 1
+                          }
+                        >
+                          &gt;&gt;
+                        </button>
+                      )}
                     </div>
                   </td>
                   <td>
@@ -280,12 +317,10 @@ const YourProjectsModal = () => {
                     </ul>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div>Loading...</div>
-        )}
+              );
+            })}
+          </tbody>
+        </table>
         <div className={styles.addToCurrProject}>
           <svg
             width="24"
@@ -309,6 +344,38 @@ const YourProjectsModal = () => {
           </svg>
           Add to current project
         </div>
+        {/* Пагінація */}
+        {projects.length > itemsPerPage && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.pageBtn}
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              &lt;&lt;
+            </button>
+
+            {ranges.map((range) => (
+              <button
+                key={range.page}
+                className={`${styles.pageBtn} ${
+                  currentPage === range.page ? styles.activePage : ""
+                }`}
+                onClick={() => setCurrentPage(range.page)}
+              >
+                {range.start}–{range.end}
+              </button>
+            ))}
+
+            <button
+              className={styles.pageBtn}
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              &gt;&gt;
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

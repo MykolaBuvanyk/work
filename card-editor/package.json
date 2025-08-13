@@ -13,6 +13,7 @@
     "clipper-js": "^1.0.2",
     "clipper-lib": "^6.4.2",
     "fabric": "^6.7.0",
+    "imagetracerjs": "^1.2.6",
     "jsbarcode": "^3.12.1",
     "paper": "^0.12.18",
     "qrcode": "^1.5.4",

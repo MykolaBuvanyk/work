@@ -7,6 +7,9 @@ import styles from './Canvas.module.css';
 // Відступи в межах viewport
 const MARGIN = 20;
 const DEFAULT_DESIGN = { width: 1200, height: 800 };
+// Unit conversion (96 DPI)
+const PX_PER_MM = 96 / 25.4;
+const pxToMm = (px) => (typeof px === 'number' ? px / PX_PER_MM : 0);
 
 // Параметри панелі керування
 const TOP_PANEL_GAP = 25;           // від рамки до центру кнопок (CSS px)
@@ -106,7 +109,12 @@ const Canvas = () => {
       if (!resizingRef.current && typeof nextW === 'number' && typeof nextH === 'number') {
         designRef.current = { width: nextW, height: nextH };
         resizingRef.current = true;
-        requestAnimationFrame(() => { try { resizeToViewport(); } finally { resizingRef.current = false; } });
+        try {
+          // Run synchronously so labels (width/height) reflect new size immediately
+          resizeToViewport();
+        } finally {
+          resizingRef.current = false;
+        }
       }
       return result;
     };
@@ -230,6 +238,22 @@ const Canvas = () => {
 
     const ensureActionControls = (obj) => {
       if (!obj || !obj.controls) return;
+      // Ensure coordinates exist (text objects can lack aCoords right after creation)
+      if (typeof obj.setCoords === 'function') {
+        try { obj.setCoords(); } catch {}
+      }
+      // If aCoords are still not available, postpone applying controls to avoid Fabric reading undefined positions
+      const ac = obj.aCoords;
+      if (!ac || !ac.tl || !ac.tr || !ac.br || !ac.bl) {
+        // Hide controls just in case and try again next frame
+        obj.hasControls = false;
+        try { requestAnimationFrame(() => ensureActionControls(obj)); } catch {}
+        return;
+      }
+      // Ensure per-instance controls object so changes don't leak to other objects
+      if (!Object.prototype.hasOwnProperty.call(obj, 'controls')) {
+        obj.controls = { ...obj.controls };
+      }
       obj.hasBorders = false;
       if (obj.setControlsVisibility) obj.setControlsVisibility({ tl:false,tr:false,bl:false,br:false,ml:false,mr:false,mt:false,mb:false,mtr:false });
       const cu = fabric.controlsUtils;
@@ -331,8 +355,8 @@ const Canvas = () => {
       });
     };
 
-    fCanvas.on('selection:created', e => { const o=e.selected?.[0]; if(o){ ensureActionControls(o); fCanvas.requestRenderAll(); }});
-    fCanvas.on('selection:updated', e => { const o=e.selected?.[0]; if(o){ ensureActionControls(o); fCanvas.requestRenderAll(); }});
+  fCanvas.on('selection:created', e => { const o=e.selected?.[0]; if(o){ ensureActionControls(o); fCanvas.requestRenderAll(); }});
+  fCanvas.on('selection:updated', e => { const o=e.selected?.[0]; if(o){ ensureActionControls(o); fCanvas.requestRenderAll(); }});
 
     // Top overlay: тільки рамка (фон панелі малюється як окремий control)
     const clearTop = () => {
@@ -358,8 +382,14 @@ const Canvas = () => {
 
     // Забезпечити появу контролів одразу при додаванні і автоматичному виборі
     fCanvas.on('object:added', (e) => {
+      const target = e.target;
+      if (!target) return;
+      // Ensure text objects compute aCoords before applying controls
+      if (typeof target.setCoords === 'function') {
+        try { target.setCoords(); } catch {}
+      }
       const active = fCanvas.getActiveObject();
-      if (active && active === e.target) {
+      if (active && active === target) {
         ensureActionControls(active);
         fCanvas.requestRenderAll();
       }
@@ -385,8 +415,8 @@ const Canvas = () => {
     <div className={styles.viewport} ref={viewportRef}>
       <div className={styles.canvasWrapper}>
         <canvas ref={canvasRef} className={styles.canvas} />
-        <div className={styles.widthLabel}><span>{displayWidth}px</span></div>
-        <div className={styles.heightLabel} style={{ height: `${cssHeight}px` }}><span>{displayHeight}px</span></div>
+  <div className={styles.widthLabel}><span>{pxToMm(displayWidth).toFixed(1)} mm</span></div>
+  <div className={styles.heightLabel} style={{ height: `${cssHeight}px` }}><span>{pxToMm(displayHeight).toFixed(1)} mm</span></div>
       </div>
     </div>
   );

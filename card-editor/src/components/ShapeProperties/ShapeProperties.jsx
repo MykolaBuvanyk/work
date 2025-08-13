@@ -16,11 +16,11 @@ const ShapeProperties = ({
   const onClose = propOnClose || (() => setShapePropertiesOpen(false));
 
   const [properties, setProperties] = useState({
-    width: 0,
-    height: 0,
+  width: 0,      // mm
+  height: 0,     // mm
     rotation: 0,
     cornerRadius: 0,
-    thickness: 2,
+  thickness: 2,  // mm
     fill: false,
     cut: false,
   });
@@ -29,6 +29,12 @@ const ShapeProperties = ({
 
   const activeObject = activeShape || canvas?.getActiveObject();
 
+  // Unit conversion (96 DPI)
+  const PX_PER_MM = 96 / 25.4;
+  const mmToPx = (mm) => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
+  const pxToMm = (px) => (typeof px === 'number' ? px / PX_PER_MM : 0);
+  const roundMm = (mm) => Math.round((mm || 0) * 10) / 10;
+
   useEffect(() => {
     if (activeObject && (isOpen || shapePropertiesOpen)) {
       // Функція для оновлення властивостей
@@ -36,11 +42,11 @@ const ShapeProperties = ({
         // Не оновлюємо якщо користувач зараз редагує вручну
         if (!isManuallyEditing) {
           setProperties({
-            width: Math.round(activeObject.getScaledWidth() || 0),
-            height: Math.round(activeObject.getScaledHeight() || 0),
+            width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
+            height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0, // Для Path об'єктів це не застосовується напряму
-            thickness: activeObject.strokeWidth || 2,
+            thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
             cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement // Перевіряємо чи є оранжевий колір або позначка cut
           });
@@ -80,11 +86,11 @@ const ShapeProperties = ({
         const currentActiveObject = canvas.getActiveObject();
         if (currentActiveObject === activeObject && !isManuallyEditing) {
           setProperties({
-            width: Math.round(activeObject.getScaledWidth() || 0),
-            height: Math.round(activeObject.getScaledHeight() || 0),
+            width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
+            height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius: 0,
-            thickness: activeObject.strokeWidth || 2,
+            thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
             fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
             cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement
           });
@@ -130,14 +136,18 @@ const ShapeProperties = ({
 
     switch (property) {
       case "width":
-        const currentWidth = activeObject.getScaledWidth();
-        const widthScale = value / currentWidth;
+  // value is in mm -> convert to px for scaling
+  const currentWidth = activeObject.getScaledWidth(); // px
+  const targetWidthPx = mmToPx(value);
+  const widthScale = currentWidth ? (targetWidthPx / currentWidth) : 1;
         activeObject.scaleX = activeObject.scaleX * widthScale;
         break;
 
       case "height":
-        const currentHeight = activeObject.getScaledHeight();
-        const heightScale = value / currentHeight;
+  // value is in mm -> convert to px for scaling
+  const currentHeight = activeObject.getScaledHeight(); // px
+  const targetHeightPx = mmToPx(value);
+  const heightScale = currentHeight ? (targetHeightPx / currentHeight) : 1;
         activeObject.scaleY = activeObject.scaleY * heightScale;
         break;
 
@@ -146,7 +156,8 @@ const ShapeProperties = ({
         break;
 
       case "thickness":
-        activeObject.set("strokeWidth", value);
+  // value in mm -> px
+  activeObject.set("strokeWidth", mmToPx(value));
         break;
 
       case "fill":
@@ -263,14 +274,15 @@ const ShapeProperties = ({
         </div>
         <div className={styles.propertyGroup}>
           <label className={styles.label}>
-            Width:
+            Width (mm):
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 className={styles.input}
                 value={properties.width}
+                step={0.1}
                 onChange={(e) =>
-                  updateProperty("width", parseInt(e.target.value) || 0)
+                  updateProperty("width", parseFloat(e.target.value) || 0)
                 }
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>
@@ -317,14 +329,15 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Height:
+            Height (mm):
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 className={styles.input}
                 value={properties.height}
+                step={0.1}
                 onChange={(e) =>
-                  updateProperty("height", parseInt(e.target.value) || 0)
+                  updateProperty("height", parseFloat(e.target.value) || 0)
                 }
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>
@@ -371,14 +384,15 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Thickness:
+            Thickness (mm):
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 className={styles.input}
                 value={properties.thickness}
+                step={0.1}
                 onChange={(e) =>
-                  updateProperty("thickness", parseInt(e.target.value) || 1)
+                  updateProperty("thickness", parseFloat(e.target.value) || 1)
                 }
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>

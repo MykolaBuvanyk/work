@@ -63,8 +63,10 @@ const Toolbar = () => {
   const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
-  const mmToPx = (mm) => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
-  const pxToMm = (px) => (typeof px === 'number' ? px / PX_PER_MM : 0);
+  const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
+  const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
+  // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
+  const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
   const [activeObject, setActiveObject] = useState(null);
   const [sizeValues, setSizeValues] = useState({
     // Store UI values in millimeters
@@ -84,16 +86,24 @@ const Toolbar = () => {
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
   const [copiesCount, setCopiesCount] = useState(1);
   const [holesDiameter, setHolesDiameter] = useState(3);
-const [isHolesSelected, setIsHolesSelected] = useState(false);
-    // Set default selected shape on mount
-    useEffect(() => {
-      // Choose the default shape type, e.g., rectangle
-      setCurrentShapeType("rectangle");
-      // Call addRectangle to initialize the canvas with the default shape
-      if (canvas) {
-        addRectangle();
-      }
-    }, [canvas]);
+  const [isHolesSelected, setIsHolesSelected] = useState(false);
+  // Set default selected shape on mount
+  useEffect(() => {
+    // Choose the default shape type, e.g., rectangle
+    setCurrentShapeType("rectangle");
+    // Call addRectangle to initialize the canvas with the default shape
+    if (canvas) {
+      addRectangle();
+    }
+  }, [canvas]);
+
+  // Визначаємо, чи наразі вибране коло (для відключення Corner radius)
+  const isCircleSelected =
+    (activeObject &&
+      (activeObject.type === "circle" || activeObject.isCircle)) ||
+    currentShapeType === "circle" ||
+    currentShapeType === "circleWithLine" ||
+    currentShapeType === "circleWithCross";
   const addQrCode = () => {
     setIsQrOpen(true);
   };
@@ -109,7 +119,10 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   // Preserve current theme background when clearing/changing shape
   const clearCanvasPreserveTheme = () => {
     if (!canvas) return;
-    const bg = canvas.backgroundColor || canvas.get("backgroundColor") || globalColors?.backgroundColor;
+    const bg =
+      canvas.backgroundColor ||
+      canvas.get("backgroundColor") ||
+      globalColors?.backgroundColor;
     canvas.clear();
     if (bg) canvas.set("backgroundColor", bg);
   };
@@ -122,10 +135,11 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   useEffect(() => {
     if (canvas) {
       const getLogicalCanvasSize = () => {
-        if (typeof canvas.getDesignSize === 'function') {
+        if (typeof canvas.getDesignSize === "function") {
           return canvas.getDesignSize(); // returns px
         }
-        const zoom = typeof canvas.getZoom === 'function' ? canvas.getZoom() : 1;
+        const zoom =
+          typeof canvas.getZoom === "function" ? canvas.getZoom() : 1;
         return {
           width: Math.round(canvas.getWidth() / (zoom || 1)),
           height: Math.round(canvas.getHeight() / (zoom || 1)),
@@ -162,15 +176,16 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         setActiveObject(null);
         // Коли нічого не вибрано, показуємо розміри canvas
         const sz = getLogicalCanvasSize();
-        setSizeValues({ 
-          width: Number(pxToMm(sz.width).toFixed(1)), 
-          height: Number(pxToMm(sz.height).toFixed(1)), 
-          cornerRadius: 0 
+        setSizeValues({
+          width: Number(pxToMm(sz.width).toFixed(1)),
+          height: Number(pxToMm(sz.height).toFixed(1)),
+          cornerRadius: 0,
         });
       });
       canvas.on("object:modified", () => {
         const obj = canvas.getActiveObject();
-        if (obj && !obj.isCutElement) { // Ігноруємо cut елементи
+        if (obj && !obj.isCutElement) {
+          // Ігноруємо cut елементи
           const wPx = Math.round(obj.width * obj.scaleX);
           const hPx = Math.round(obj.height * obj.scaleY);
           setSizeValues({
@@ -183,10 +198,10 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
       // Ініціалізуємо початкові значення розмірів canvas
       const sz = getLogicalCanvasSize();
-      setSizeValues({ 
-        width: Number(pxToMm(sz.width).toFixed(1)), 
-        height: Number(pxToMm(sz.height).toFixed(1)), 
-        cornerRadius: 0 
+      setSizeValues({
+        width: Number(pxToMm(sz.width).toFixed(1)),
+        height: Number(pxToMm(sz.height).toFixed(1)),
+        cornerRadius: 0,
       });
     }
     return () => {
@@ -212,7 +227,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       const len = Math.hypot(dx, dy);
       if (len > 0) minEdge = Math.min(minEdge, len);
     }
-    const maxR = Math.max(0, (minEdge / 2) - 0.001);
+    const maxR = Math.max(0, minEdge / 2 - 0.001);
     return Math.max(0, Math.min(r, maxR));
   };
 
@@ -221,7 +236,8 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
     const r = clampRadiusForEdges(points, radius);
     if (r <= 0) {
       let d0 = `M ${points[0].x} ${points[0].y}`;
-      for (let i = 1; i < points.length; i++) d0 += ` L ${points[i].x} ${points[i].y}`;
+      for (let i = 1; i < points.length; i++)
+        d0 += ` L ${points[i].x} ${points[i].y}`;
       d0 += " Z";
       return d0;
     }
@@ -232,19 +248,24 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       const curr = points[i];
       const next = points[(i + 1) % n];
 
-      const v1x = curr.x - prev.x, v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x, v2y = next.y - curr.y;
+      const v1x = curr.x - prev.x,
+        v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x,
+        v2y = next.y - curr.y;
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1, u1y = v1y / len1;
-      const u2x = v2x / len2, u2y = v2y / len2;
+      const u1x = v1x / len1,
+        u1y = v1y / len1;
+      const u2x = v2x / len2,
+        u2y = v2y / len2;
 
       const p1x = curr.x - u1x * r;
       const p1y = curr.y - u1y * r;
       const p2x = curr.x + u2x * r;
       const p2y = curr.y + u2y * r;
 
-      if (i === 0) d += `M ${p1x} ${p1y}`; else d += ` L ${p1x} ${p1y}`;
+      if (i === 0) d += `M ${p1x} ${p1y}`;
+      else d += ` L ${p1x} ${p1y}`;
       d += ` Q ${curr.x} ${curr.y} ${p2x} ${p2y}`;
     }
     d += " Z";
@@ -255,10 +276,10 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
     const pts = [
       { x: w * 0.25, y: 0 },
       { x: w * 0.75, y: 0 },
-      { x: w,        y: h * 0.5 },
+      { x: w, y: h * 0.5 },
       { x: w * 0.75, y: h },
       { x: w * 0.25, y: h },
-      { x: 0,        y: h * 0.5 },
+      { x: 0, y: h * 0.5 },
     ];
     return buildRoundedPolygonPath(pts, r);
   };
@@ -267,12 +288,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
     const pts = [
       { x: w * 0.3, y: 0 },
       { x: w * 0.7, y: 0 },
-      { x: w,       y: h * 0.3 },
-      { x: w,       y: h * 0.7 },
+      { x: w, y: h * 0.3 },
+      { x: w, y: h * 0.7 },
       { x: w * 0.7, y: h },
       { x: w * 0.3, y: h },
-      { x: 0,       y: h * 0.7 },
-      { x: 0,       y: h * 0.3 },
+      { x: 0, y: h * 0.7 },
+      { x: 0, y: h * 0.3 },
     ];
     return buildRoundedPolygonPath(pts, r);
   };
@@ -280,19 +301,19 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   const makeRoundedTrianglePath = (w, h, r) => {
     const pts = [
       { x: w / 2, y: 0 },
-      { x: w,     y: h },
-      { x: 0,     y: h },
+      { x: w, y: h },
+      { x: 0, y: h },
     ];
     return buildRoundedPolygonPath(pts, r);
   };
 
   const makeRoundedArrowLeftPath = (w, h, r) => {
     const pts = [
-      { x: 0,        y: h * 0.5625 },
+      { x: 0, y: h * 0.5625 },
       { x: w * 0.25, y: h * 0.1875 },
       { x: w * 0.25, y: h * 0.375 },
-      { x: w,        y: h * 0.375 },
-      { x: w,        y: h * 0.75 },
+      { x: w, y: h * 0.375 },
+      { x: w, y: h * 0.75 },
       { x: w * 0.25, y: h * 0.75 },
       { x: w * 0.25, y: h * 0.9375 },
     ];
@@ -301,11 +322,11 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
   const makeRoundedArrowRightPath = (w, h, r) => {
     const pts = [
-      { x: w,        y: h * 0.5625 },
+      { x: w, y: h * 0.5625 },
       { x: w * 0.75, y: h * 0.1875 },
       { x: w * 0.75, y: h * 0.375 },
-      { x: 0,        y: h * 0.375 },
-      { x: 0,        y: h * 0.75 },
+      { x: 0, y: h * 0.375 },
+      { x: 0, y: h * 0.75 },
       { x: w * 0.75, y: h * 0.75 },
       { x: w * 0.75, y: h * 0.9375 },
     ];
@@ -314,15 +335,15 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
   const makeRoundedFlagPath = (w, h, r) => {
     const pts = [
-      { x: 0,        y: h * 0.4 },
-      { x: 0,        y: h * 0.8 },
+      { x: 0, y: h * 0.4 },
+      { x: 0, y: h * 0.8 },
       { x: w * 0.25, y: h * 0.7 },
-      { x: w * 0.5,  y: h * 0.85 },
+      { x: w * 0.5, y: h * 0.85 },
       { x: w * 0.733, y: h * 0.7 },
       { x: w * 0.733, y: h * 0.4 },
-      { x: w * 0.5,  y: h * 0.35 },
+      { x: w * 0.5, y: h * 0.35 },
       { x: w * 0.292, y: 0 },
-      { x: 0,        y: h * 0.4 },
+      { x: 0, y: h * 0.4 },
     ];
     return buildRoundedPolygonPath(pts, r);
   };
@@ -381,13 +402,29 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
     let pts = poly;
     // Left x>=0
-    pts = clipEdge(pts, (p) => p.x >= 0, (a, b) => intersectX(0, a, b));
+    pts = clipEdge(
+      pts,
+      (p) => p.x >= 0,
+      (a, b) => intersectX(0, a, b)
+    );
     // Right x<=width
-    pts = clipEdge(pts, (p) => p.x <= width, (a, b) => intersectX(width, a, b));
+    pts = clipEdge(
+      pts,
+      (p) => p.x <= width,
+      (a, b) => intersectX(width, a, b)
+    );
     // Top y>=0
-    pts = clipEdge(pts, (p) => p.y >= 0, (a, b) => intersectY(0, a, b));
+    pts = clipEdge(
+      pts,
+      (p) => p.y >= 0,
+      (a, b) => intersectY(0, a, b)
+    );
     // Bottom y<=height
-    pts = clipEdge(pts, (p) => p.y <= height, (a, b) => intersectY(height, a, b));
+    pts = clipEdge(
+      pts,
+      (p) => p.y <= height,
+      (a, b) => intersectY(height, a, b)
+    );
     return pts;
   };
 
@@ -395,13 +432,13 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
     // Референс трикутник 190x165
     const refW = 190;
     const refH = 165;
-    
+
     // Обчислюємо співвідношення
     const refRatio = refW / refH; // ~1.15
     const currentRatio = width / height;
-    
+
     let triangleWidth, triangleHeight;
-    
+
     if (currentRatio > refRatio) {
       // Якщо ширина більше по співвідношенню - збільшуємо і висоту пропорційно
       const scale = width / refW; // масштаб за шириною
@@ -413,17 +450,17 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       triangleWidth = refW * scale;
       triangleHeight = height;
     }
-    
+
     // Центр по ширині
     const centerX = width / 2;
-    
+
     // Точки трикутника (верхівка по центру, основа внизу)
     const triangle = [
-      { x: centerX, y: 0 },                           // верхівка
+      { x: centerX, y: 0 }, // верхівка
       { x: centerX - triangleWidth / 2, y: triangleHeight }, // ліва основа
-      { x: centerX + triangleWidth / 2, y: triangleHeight }  // права основа
+      { x: centerX + triangleWidth / 2, y: triangleHeight }, // права основа
     ];
-    
+
     // Обрізання трикутника прямокутником canvas
     // Коли ширина менша за потрібну, бічні кути обрізаються -> утворюється "хатинка"
     const clippedPoints = clipPolygonWithRect(triangle, width, height);
@@ -459,33 +496,38 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         const inputWidth = mmToPx(widthMm);
         const inputHeight = mmToPx(heightMm);
         const currentRatio = inputWidth / inputHeight;
-        
+
         let finalWidth = inputWidth;
         let finalHeight = inputHeight;
-        
+
         // Якщо ширина збільшилась понад стандартне співвідношення
         if (currentRatio > refRatio) {
           // Автоматично збільшуємо висоту пропорційно
           const scale = inputWidth / refW;
           finalHeight = refH * scale;
-          
+
           // Оновлюємо sizeValues з новою висотою
-          setSizeValues((prev) => ({ ...prev, height: Number(pxToMm(finalHeight).toFixed(1)) }));
+          setSizeValues((prev) => ({
+            ...prev,
+            height: Number(pxToMm(finalHeight).toFixed(1)),
+          }));
         }
-        
+
         // Встановлюємо розміри canvas
         canvas.setDimensions({ width: finalWidth, height: finalHeight });
-        
+
         // Створюємо clipPath з оновленими розмірами
         const pts = getAdaptiveTrianglePoints(finalWidth, finalHeight);
-        const newClipPath = new fabric.Polygon(pts, { absolutePositioned: true });
+        const newClipPath = new fabric.Polygon(pts, {
+          absolutePositioned: true,
+        });
         canvas.clipPath = newClipPath;
-        
+
         updateCanvasOutline();
         canvas.renderAll();
         return;
       }
-      
+
       // Для всіх інших типів фігур - стандартна логіка
       const width = mmToPx(widthMm);
       const height = mmToPx(heightMm);
@@ -502,8 +544,8 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
           newClipPath = new fabric.Rect({
             left: 0,
             top: 0,
-            width: width-1,
-            height: height-1,
+            width: width - 1,
+            height: height - 1,
             rx: cr,
             ry: cr,
             absolutePositioned: true,
@@ -699,8 +741,8 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
       if (outlineShape) {
         outlineShape.set({
-          fill: 'transparent',
-          stroke: '#000000', // solid black per requirement
+          fill: "transparent",
+          stroke: "#000000", // solid black per requirement
           strokeWidth: 1,
           strokeDashArray: null, // remove dashed pattern
           selectable: false,
@@ -742,9 +784,15 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         borderShape.type === "ellipse"
       ) {
         borderShape.set(clipPathData);
-      } else if (canvas.clipPath.type === "path" && borderShape.type === "path") {
+      } else if (
+        canvas.clipPath.type === "path" &&
+        borderShape.type === "path"
+      ) {
         borderShape.set({ path: canvas.clipPath.path });
-      } else if (canvas.clipPath.type === "polygon" && borderShape.type === "polygon") {
+      } else if (
+        canvas.clipPath.type === "polygon" &&
+        borderShape.type === "polygon"
+      ) {
         borderShape.set({ points: canvas.clipPath.points });
       }
     });
@@ -753,7 +801,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   // Оновлення товщини обводки
   const updateThickness = (value) => {
     if (activeObject) {
-  activeObject.set({ strokeWidth: mmToPx(value) });
+      activeObject.set({ strokeWidth: mmToPx(value) });
       if (isAdhesiveTape) {
         activeObject.set({ stroke: "#888" });
       }
@@ -1240,7 +1288,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1271,7 +1319,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1290,7 +1338,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1323,7 +1371,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1342,7 +1390,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1361,7 +1409,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1380,7 +1428,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1416,7 +1464,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1436,7 +1484,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1456,7 +1504,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1476,7 +1524,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1509,7 +1557,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1540,7 +1588,7 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
-        cutType: 'hole', // Додаємо тип cut елементу
+        cutType: "hole", // Додаємо тип cut елементу
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -1925,23 +1973,23 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   // Icon0 - Прямокутник (задає форму canvas)
   const addRectangle = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("rectangle");
 
-  // Встановлюємо розміри canvas (120x80 мм для прямокутника з відступами)
-  const width = 120; // mm
-  const height = 80; // mm
-  canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
+      // Встановлюємо розміри canvas (120x80 мм для прямокутника з відступами)
+      const width = 120; // mm
+      const height = 80; // mm
+      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
 
       // Створюємо clipPath для обмеження області малювання
       const clipPath = new fabric.Rect({
         left: 0,
         top: 0,
-  width: mmToPx(width) - 1,
-  height: mmToPx(height) - 1,
+        width: mmToPx(width) - 1,
+        height: mmToPx(height) - 1,
         absolutePositioned: true,
       });
 
@@ -1949,28 +1997,28 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в стані
-  setSizeValues((prev) => ({ ...prev, width, height }));
+      setSizeValues((prev) => ({ ...prev, width, height }));
 
       // Додаємо візуальний контур
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon1 - Коло (задає форму canvas)
   const addCircle = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("circle");
 
-  // Встановлюємо розміри canvas (100x100 мм для кола)
-  const width = 100; // mm
-  const height = 100; // mm
-  canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
+      // Встановлюємо розміри canvas (100x100 мм для кола)
+      const width = 100; // mm
+      const height = 100; // mm
+      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
 
       // Створюємо clipPath у формі кола з правильними розмірами
       const radius = mmToPx(Math.min(width, height) / 2);
@@ -1987,35 +2035,35 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в стані
-  setSizeValues((prev) => ({ ...prev, width, height }));
+      setSizeValues((prev) => ({ ...prev, width, height }));
 
       // Додаємо візуальний контур
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon2 - Еліпс (задає форму canvas)
   const addEllipse = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("ellipse");
 
-  // Встановлюємо розміри canvas (140x80 мм для еліпса)
-  const width = 140; // mm
-  const height = 80; // mm
-  canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
+      // Встановлюємо розміри canvas (140x80 мм для еліпса)
+      const width = 140; // mm
+      const height = 80; // mm
+      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
 
       // Створюємо clipPath у формі еліпса з правильними розмірами
       const clipPath = new fabric.Ellipse({
-  left: mmToPx(width) / 2,
-  top: mmToPx(height) / 2,
-  rx: mmToPx(width) / 2,
-  ry: mmToPx(height) / 2,
+        left: mmToPx(width) / 2,
+        top: mmToPx(height) / 2,
+        rx: mmToPx(width) / 2,
+        ry: mmToPx(height) / 2,
         originX: "center",
         originY: "center",
         absolutePositioned: true,
@@ -2025,28 +2073,28 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в стані
-  setSizeValues((prev) => ({ ...prev, width, height }));
+      setSizeValues((prev) => ({ ...prev, width, height }));
 
       // Додаємо візуальний контур
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon3 - Замок (задає форму canvas)
   const addLock = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("lock");
 
-  // Встановлюємо розміри canvas (120x108 мм для замка)
-  const wPx = mmToPx(120);
-  const hPx = mmToPx(108);
-  canvas.setDimensions({ width: wPx, height: hPx });
+      // Встановлюємо розміри canvas (120x108 мм для замка)
+      const wPx = mmToPx(120);
+      const hPx = mmToPx(108);
+      canvas.setDimensions({ width: wPx, height: hPx });
 
       // Створюємо clipPath у формі замка
       const clipPath = new fabric.Path(
@@ -2066,32 +2114,32 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 120, height: 108 }));
+      setSizeValues((prev) => ({ ...prev, width: 120, height: 108 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon4 - Коло з горизонтальною лінією (задає форму canvas)
   const addCircleWithLine = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("circleWithLine");
 
-  // Встановлюємо розміри canvas (100x100 мм для кола)
-  canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
+      // Встановлюємо розміри canvas (100x100 мм для кола)
+      canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
 
       // Створюємо clipPath у формі кола
       const clipPath = new fabric.Circle({
-  left: mmToPx(100) / 2,
-  top: mmToPx(100) / 2,
-  radius: mmToPx(100) / 2,
+        left: mmToPx(100) / 2,
+        top: mmToPx(100) / 2,
+        radius: mmToPx(100) / 2,
         originX: "center",
         originY: "center",
         absolutePositioned: true,
@@ -2101,32 +2149,32 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
+      setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon5 - Коло з хрестом (задає форму canvas)
   const addCircleWithCross = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("circleWithCross");
 
-  // Встановлюємо розміри canvas (100x100 мм для кола)
-  canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
+      // Встановлюємо розміри canvas (100x100 мм для кола)
+      canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
 
       // Створюємо clipPath у формі кола
       const clipPath = new fabric.Circle({
-  left: mmToPx(100) / 2,
-  top: mmToPx(100) / 2,
-  radius: mmToPx(100) / 2,
+        left: mmToPx(100) / 2,
+        top: mmToPx(100) / 2,
+        radius: mmToPx(100) / 2,
         originX: "center",
         originY: "center",
         absolutePositioned: true,
@@ -2136,28 +2184,28 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
+      setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon6 - Будинок (задає форму canvas)
   const addHouse = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("house");
 
-  // Встановлюємо розміри canvas (96x105 мм для будинка)
-  const wPxH = mmToPx(96);
-  const hPxH = mmToPx(105);
-  canvas.setDimensions({ width: wPxH, height: hPxH });
+      // Встановлюємо розміри canvas (96x105 мм для будинка)
+      const wPxH = mmToPx(96);
+      const hPxH = mmToPx(105);
+      canvas.setDimensions({ width: wPxH, height: hPxH });
 
       // Створюємо clipPath у формі будинка
       const clipPath = new fabric.Path("M6 66V105H51H90V66L48 6L6 66Z", {
@@ -2172,12 +2220,12 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 96, height: 105 }));
+      setSizeValues((prev) => ({ ...prev, width: 96, height: 105 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
@@ -2185,8 +2233,8 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
   // Icon7 - Півкруг (задає форму canvas)
   const addExtendedHalfCircle = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("extendedHalfCircle");
@@ -2211,14 +2259,14 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   const addHalfCircle = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("halfCircle");
@@ -2250,26 +2298,26 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon8 - Адаптивний трикутник (задає форму canvas)
   const addAdaptiveTriangle = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Тип поточної фігури - адаптивний трикутник
       setCurrentShapeType("adaptiveTriangle");
 
-  // Початкові розміри — референс 190x165 мм (по дефолту трикутник)
-  const width = 190;
-  const height = 165;
-  canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
+      // Початкові розміри — референс 190x165 мм (по дефолту трикутник)
+      const width = 190;
+      const height = 165;
+      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
 
       // Побудова адаптивного трикутника та обрізання по краях
-  const pts = getAdaptiveTrianglePoints(mmToPx(width), mmToPx(height));
+      const pts = getAdaptiveTrianglePoints(mmToPx(width), mmToPx(height));
       const clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
@@ -2281,200 +2329,226 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon9 - Шестикутник (задає форму canvas)
   const addHexagon = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("hexagon");
 
-  // Встановлюємо розміри canvas (127x114 мм для шестикутника)
-  canvas.setDimensions({ width: mmToPx(127), height: mmToPx(114) });
+      // Встановлюємо розміри canvas (127x114 мм для шестикутника)
+      canvas.setDimensions({ width: mmToPx(127), height: mmToPx(114) });
 
-  // Створюємо clipPath у формі шестикутника з урахуванням радіуса кутів
-  const d = makeRoundedHexagonPath(mmToPx(127), mmToPx(114), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі шестикутника з урахуванням радіуса кутів
+      const d = makeRoundedHexagonPath(
+        mmToPx(127),
+        mmToPx(114),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 127, height: 114 }));
+      setSizeValues((prev) => ({ ...prev, width: 127, height: 114 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon10 - Восьмикутник (задає форму canvas)
   const addOctagon = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("octagon");
 
-  // Встановлюємо розміри canvas (100x100 мм для восьмикутника)
-  canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
+      // Встановлюємо розміри canvas (100x100 мм для восьмикутника)
+      canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
 
-  // Створюємо clipPath у формі восьмикутника з урахуванням радіуса кутів
-  const d = makeRoundedOctagonPath(mmToPx(100), mmToPx(100), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі восьмикутника з урахуванням радіуса кутів
+      const d = makeRoundedOctagonPath(
+        mmToPx(100),
+        mmToPx(100),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
+      setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon11 - Трикутник (задає форму canvas)
   const addTriangleUp = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("triangle");
 
-  // Встановлюємо розміри canvas (100x100 мм для трикутника)
-  canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
+      // Встановлюємо розміри canvas (100x100 мм для трикутника)
+      canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
 
-  // Створюємо clipPath у формі трикутника з урахуванням радіуса кутів
-  const d = makeRoundedTrianglePath(mmToPx(100), mmToPx(100), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі трикутника з урахуванням радіуса кутів
+      const d = makeRoundedTrianglePath(
+        mmToPx(100),
+        mmToPx(100),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
+      setSizeValues((prev) => ({ ...prev, width: 100, height: 100 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon12 - Стрілка вліво (задає форму canvas)
   const addArrowLeft = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("arrowLeft");
 
-  // Встановлюємо розміри canvas (120x80 мм для стрілки)
-  canvas.setDimensions({ width: mmToPx(120), height: mmToPx(80) });
+      // Встановлюємо розміри canvas (120x80 мм для стрілки)
+      canvas.setDimensions({ width: mmToPx(120), height: mmToPx(80) });
 
-  // Створюємо clipPath у формі стрілки вліво з урахуванням радіуса кутів
-  const d = makeRoundedArrowLeftPath(mmToPx(120), mmToPx(80), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі стрілки вліво з урахуванням радіуса кутів
+      const d = makeRoundedArrowLeftPath(
+        mmToPx(120),
+        mmToPx(80),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 120, height: 80 }));
+      setSizeValues((prev) => ({ ...prev, width: 120, height: 80 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon13 - Стрілка вправо (задає форму canvas)
   const addArrowRight = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("arrowRight");
 
-  // Встановлюємо розміри canvas (120x80 мм для стрілки)
-  canvas.setDimensions({ width: mmToPx(120), height: mmToPx(80) });
+      // Встановлюємо розміри canvas (120x80 мм для стрілки)
+      canvas.setDimensions({ width: mmToPx(120), height: mmToPx(80) });
 
-  // Створюємо clipPath у формі стрілки вправо з урахуванням радіуса кутів
-  const d = makeRoundedArrowRightPath(mmToPx(120), mmToPx(80), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі стрілки вправо з урахуванням радіуса кутів
+      const d = makeRoundedArrowRightPath(
+        mmToPx(120),
+        mmToPx(80),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 120, height: 80 }));
+      setSizeValues((prev) => ({ ...prev, width: 120, height: 80 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon14 - Прапор (задає форму canvas)
   const addFlag = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("flag");
 
-  // Встановлюємо розміри canvas (720x600 мм)
-  canvas.setDimensions({ width: mmToPx(720), height: mmToPx(600) });
+      // Встановлюємо розміри canvas (720x600 мм)
+      canvas.setDimensions({ width: mmToPx(720), height: mmToPx(600) });
 
-  // Створюємо clipPath у формі прапора з урахуванням радіуса кутів
-  const d = makeRoundedFlagPath(mmToPx(720), mmToPx(600), mmToPx(sizeValues.cornerRadius || 0));
-  const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      // Створюємо clipPath у формі прапора з урахуванням радіуса кутів
+      const d = makeRoundedFlagPath(
+        mmToPx(720),
+        mmToPx(600),
+        mmToPx(sizeValues.cornerRadius || 0)
+      );
+      const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 720, height: 600 }));
+      setSizeValues((prev) => ({ ...prev, width: 720, height: 600 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
 
   // Icon15 - Ромб (задає форму canvas)
   const addDiamond = () => {
     if (canvas) {
-  // Очищуємо canvas з збереженням теми
-  clearCanvasPreserveTheme();
+      // Очищуємо canvas з збереженням теми
+      clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("diamond");
 
-  // Встановлюємо розміри canvas (600x600 мм)
-  const wPxD = mmToPx(600);
-  const hPxD = mmToPx(600);
-  canvas.setDimensions({ width: wPxD, height: hPxD });
+      // Встановлюємо розміри canvas (600x600 мм)
+      const wPxD = mmToPx(600);
+      const hPxD = mmToPx(600);
+      canvas.setDimensions({ width: wPxD, height: hPxD });
 
       // Створюємо clipPath у формі ромба на весь canvas
-      const dPath = `M${wPxD/2} 0L${wPxD} ${hPxD/2}L${wPxD/2} ${hPxD}L0 ${hPxD/2}Z`;
+      const dPath = `M${wPxD / 2} 0L${wPxD} ${hPxD / 2}L${wPxD / 2} ${hPxD}L0 ${
+        hPxD / 2
+      }Z`;
       const clipPath = new fabric.Path(dPath, {
         absolutePositioned: true,
       });
@@ -2483,17 +2557,19 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-  setSizeValues((prev) => ({ ...prev, width: 600, height: 600 }));
+      setSizeValues((prev) => ({ ...prev, width: 600, height: 600 }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
 
-  canvas.renderAll();
+      canvas.renderAll();
     }
   };
   const handleInputChange = (key, max, rawValue) => {
-    const parsed = parseFloat(rawValue);
-    const value = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
+    // Поддерживаем запятую как разделитель, затем округляем до 1 знака
+    const parsed = parseFloat(String(rawValue).replace(",", "."));
+    const clamped = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
+    const value = round1(clamped);
 
     // Compute next mm values synchronously
     const next = {
@@ -2510,8 +2586,8 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
 
       if (activeObject.type === "circle") {
         const originalRadius = activeObject.radius;
-        const targetWpx = mmToPx(next.width);
-        const targetHpx = mmToPx(next.height);
+        const targetWpx = mmToPx(round1(next.width));
+        const targetHpx = mmToPx(round1(next.height));
         const scaleX = targetWpx / (originalRadius * 2);
         const scaleY = targetHpx / (originalRadius * 2);
         activeObject.set({
@@ -2551,16 +2627,18 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
     } else if (canvas) {
       // Update canvas/clipPath using explicit overrides to avoid one-step lag
       updateSize({
-        widthMm: next.width,
-        heightMm: next.height,
-        cornerRadiusMm: next.cornerRadius,
+        widthMm: round1(next.width),
+        heightMm: round1(next.height),
+        cornerRadiusMm: round1(next.cornerRadius),
       });
     }
   };
 
   const changeValue = (key, delta, max) => {
     setSizeValues((prev) => {
-      const newValue = Math.max(0, Math.min(max, (parseFloat(prev[key]) || 0) + delta));
+      const cur = parseFloat(String(prev[key]).replace(",", ".")) || 0;
+      const nextVal = Math.max(0, Math.min(max, cur + delta));
+      const newValue = round1(nextVal);
       const updated = { ...prev, [key]: newValue };
 
       // Apply immediately using explicit values
@@ -2608,9 +2686,11 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
         canvas.renderAll();
       } else if (canvas) {
         updateSize({
-          widthMm: key === "width" ? newValue : updated.width,
-          heightMm: key === "height" ? newValue : updated.height,
-          cornerRadiusMm: key === "cornerRadius" ? newValue : updated.cornerRadius,
+          widthMm: round1(key === "width" ? newValue : updated.width),
+          heightMm: round1(key === "height" ? newValue : updated.height),
+          cornerRadiusMm: round1(
+            key === "cornerRadius" ? newValue : updated.cornerRadius
+          ),
         });
       }
 
@@ -2681,24 +2761,47 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
             </div>
           </div>
 
-          <div className={styles.field}>
-            <label>Corner radius</label>
+          <div
+            className={styles.field}
+            style={{
+              opacity: isCircleSelected ? 0.5 : 1,
+              cursor: isCircleSelected ? "not-allowed" : "default",
+            }}
+          >
+            <label
+              style={{ cursor: isCircleSelected ? "not-allowed" : "inherit" }}
+            >
+              Corner radius
+            </label>
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 value={sizeValues.cornerRadius}
+                disabled={isCircleSelected}
+                style={{ cursor: isCircleSelected ? "not-allowed" : "text" }}
                 onChange={(e) =>
+                  !isCircleSelected &&
                   handleInputChange("cornerRadius", 50, e.target.value)
                 }
               />
-              <div className={styles.arrows}>
+              <div
+                className={styles.arrows}
+                style={{
+                  pointerEvents: isCircleSelected ? "none" : "auto",
+                  opacity: isCircleSelected ? 0.6 : 1,
+                }}
+              >
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => changeValue("cornerRadius", 1, 50)}
+                  onClick={() =>
+                    !isCircleSelected && changeValue("cornerRadius", 1, 50)
+                  }
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => changeValue("cornerRadius", -1, 50)}
+                  onClick={() =>
+                    !isCircleSelected && changeValue("cornerRadius", -1, 50)
+                  }
                 />
               </div>
             </div>
@@ -3005,7 +3108,10 @@ const [isHolesSelected, setIsHolesSelected] = useState(false);
                       min={1}
                       value={holesDiameter}
                       onChange={(e) => {
-                        const val = Math.max(1, parseFloat(e.target.value) || 1);
+                        const val = Math.max(
+                          1,
+                          parseFloat(e.target.value) || 1
+                        );
                         setHolesDiameter(val);
                       }}
                     />

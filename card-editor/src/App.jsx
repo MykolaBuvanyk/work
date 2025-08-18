@@ -9,11 +9,13 @@ import ShapeProperties from "./components/ShapeProperties/ShapeProperties";
 import "./App.css";
 import Header from "./components/Header/Header";
 import TopSidebar from "./components/TopSidebar/TopSidebar";
+import GlobalInputFormat from "./components/GlobalInputFormat";
 
 function App() {
   return (
     <CanvasProvider>
       <div className="app">
+        <GlobalInputFormat />
         <Header />
         <div className="main-wrapper">
           <div className="sidebar">

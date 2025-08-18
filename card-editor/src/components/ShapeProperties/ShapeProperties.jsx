@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import * as fabric from "fabric";
 import styles from "./ShapeProperties.module.css";
 
 const ShapeProperties = ({
@@ -16,11 +17,11 @@ const ShapeProperties = ({
   const onClose = propOnClose || (() => setShapePropertiesOpen(false));
 
   const [properties, setProperties] = useState({
-  width: 0,      // mm
-  height: 0,     // mm
+    width: 0, // mm
+    height: 0, // mm
     rotation: 0,
     cornerRadius: 0,
-  thickness: 2,  // mm
+    thickness: 2, // mm
     fill: false,
     cut: false,
   });
@@ -31,9 +32,22 @@ const ShapeProperties = ({
 
   // Unit conversion (96 DPI)
   const PX_PER_MM = 96 / 25.4;
-  const mmToPx = (mm) => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
-  const pxToMm = (px) => (typeof px === 'number' ? px / PX_PER_MM : 0);
+  const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
+  const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const roundMm = (mm) => Math.round((mm || 0) * 10) / 10;
+
+  // Поточний радіус кутів у мм: для Rect беремо rx з урахуванням масштабу
+  const getCornerRadiusMmForRounded = (obj) => {
+    if (obj.type === "rect") {
+      const scale = Math.min(obj.scaleX || 1, obj.scaleY || 1);
+      const rPx = (obj.rx || 0) * scale;
+      return roundMm(pxToMm(rPx));
+    }
+    // fallback
+    const scale = Math.min(obj.scaleX || 1, obj.scaleY || 1);
+    const rPx = (obj.baseCornerRadius || 0) * scale;
+    return roundMm(pxToMm(rPx));
+  };
 
   useEffect(() => {
     if (activeObject && (isOpen || shapePropertiesOpen)) {
@@ -45,10 +59,15 @@ const ShapeProperties = ({
             width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
             height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
             rotation: Math.round(activeObject.angle || 0),
-            cornerRadius: 0, // Для Path об'єктів це не застосовується напряму
+            cornerRadius:
+              activeObject.shapeType === "roundedCorners" ||
+              activeObject.type === "rect"
+                ? getCornerRadiusMmForRounded(activeObject)
+                : 0,
             thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
-            fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement // Перевіряємо чи є оранжевий колір або позначка cut
+            fill:
+              activeObject.fill !== "transparent" && activeObject.fill !== "",
+            cut: activeObject.stroke === "#FFA500" || activeObject.isCutElement, // Перевіряємо чи є оранжевий колір або позначка cut
           });
         }
       };
@@ -80,89 +99,102 @@ const ShapeProperties = ({
 
   // Додатковий useEffect для відстеження змін через canvas
   useEffect(() => {
-    if (canvas && activeObject && (isOpen || shapePropertiesOpen)) {
-      const updateProperties = () => {
-        // Перевіряємо, чи це той самий об'єкт і чи не редагуємо вручну
-        const currentActiveObject = canvas.getActiveObject();
-        if (currentActiveObject === activeObject && !isManuallyEditing) {
-          setProperties({
-            width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
-            height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
-            rotation: Math.round(activeObject.angle || 0),
-            cornerRadius: 0,
-            thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
-            fill: activeObject.fill !== 'transparent' && activeObject.fill !== '',
-            cut: activeObject.stroke === '#FFA500' || activeObject.isCutElement
-          });
-        }
-      };
+    if (!canvas || !activeObject || !(isOpen || shapePropertiesOpen)) return;
 
-      // Слухачі подій canvas
-      canvas.on("object:modified", updateProperties);
-      canvas.on("object:scaling", updateProperties);
-      canvas.on("object:rotating", updateProperties);
-      canvas.on("object:moving", updateProperties);
+    const updateProperties = () => {
+      const currentActiveObject = canvas.getActiveObject();
+      if (currentActiveObject === activeObject && !isManuallyEditing) {
+        setProperties({
+          width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
+          height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
+          rotation: Math.round(activeObject.angle || 0),
+          cornerRadius:
+            activeObject.shapeType === "roundedCorners" ||
+            activeObject.type === "rect"
+              ? getCornerRadiusMmForRounded(activeObject)
+              : 0,
+          thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+          fill: activeObject.fill !== "transparent" && activeObject.fill !== "",
+          cut: activeObject.stroke === "#FFA500" || activeObject.isCutElement,
+        });
+      }
+    };
 
-      // Реал-тайм оновлення під час трансформації
-      canvas.on("object:scaling", updateProperties);
-      canvas.on("object:rotating", updateProperties);
+    const throttledAfterRender = () => {
+      clearTimeout(throttledAfterRender._t);
+      throttledAfterRender._t = setTimeout(updateProperties, 50);
+    };
 
-      // Додаткові події для більш точного відстеження
-      canvas.on("after:render", () => {
-        const currentActiveObject = canvas.getActiveObject();
-        if (currentActiveObject === activeObject) {
-          // Обмежуємо частоту оновлень
-          clearTimeout(updateProperties.timeout);
-          updateProperties.timeout = setTimeout(updateProperties, 50);
-        }
-      });
+    canvas.on("object:modified", updateProperties);
+    canvas.on("object:scaling", updateProperties);
+    canvas.on("object:rotating", updateProperties);
+    canvas.on("object:moving", updateProperties);
+    canvas.on("after:render", throttledAfterRender);
 
-      return () => {
-        canvas.off("object:modified", updateProperties);
-        canvas.off("object:scaling", updateProperties);
-        canvas.off("object:rotating", updateProperties);
-        canvas.off("object:moving", updateProperties);
-        canvas.off("after:render", updateProperties);
-        clearTimeout(updateProperties.timeout);
-      };
-    }
-  }, [canvas, activeObject, isOpen, shapePropertiesOpen]);
+    return () => {
+      canvas.off("object:modified", updateProperties);
+      canvas.off("object:scaling", updateProperties);
+      canvas.off("object:rotating", updateProperties);
+      canvas.off("object:moving", updateProperties);
+      canvas.off("after:render", throttledAfterRender);
+      if (throttledAfterRender._t) clearTimeout(throttledAfterRender._t);
+    };
+  }, [canvas, activeObject, isOpen, shapePropertiesOpen, isManuallyEditing]);
 
+  // Оновлення властивостей активного об'єкта
   const updateProperty = (property, value) => {
-    if (!activeObject) return;
+    if (!canvas || !activeObject) return;
 
-    setIsManuallyEditing(true);
+    // Локально оновлюємо стан, щоб інпут одразу відображав нове значення
     setProperties((prev) => ({ ...prev, [property]: value }));
 
     switch (property) {
-      case "width":
-  // value is in mm -> convert to px for scaling
-  const currentWidth = activeObject.getScaledWidth(); // px
-  const targetWidthPx = mmToPx(value);
-  const widthScale = currentWidth ? (targetWidthPx / currentWidth) : 1;
-        activeObject.scaleX = activeObject.scaleX * widthScale;
+      case "width": {
+        const targetPx = Math.max(0, mmToPx(value));
+        const baseW = activeObject.width || activeObject.getScaledWidth() || 1;
+        const newScaleX = targetPx / baseW;
+        activeObject.set({ scaleX: newScaleX });
         break;
-
-      case "height":
-  // value is in mm -> convert to px for scaling
-  const currentHeight = activeObject.getScaledHeight(); // px
-  const targetHeightPx = mmToPx(value);
-  const heightScale = currentHeight ? (targetHeightPx / currentHeight) : 1;
-        activeObject.scaleY = activeObject.scaleY * heightScale;
+      }
+      case "height": {
+        const targetPx = Math.max(0, mmToPx(value));
+        const baseH =
+          activeObject.height || activeObject.getScaledHeight() || 1;
+        const newScaleY = targetPx / baseH;
+        activeObject.set({ scaleY: newScaleY });
         break;
-
-      case "rotation":
-        activeObject.set("angle", value);
+      }
+      case "rotation": {
+        activeObject.set("angle", value || 0);
         break;
-
-      case "thickness":
-  // value in mm -> px
-  activeObject.set("strokeWidth", mmToPx(value));
+      }
+      case "cornerRadius": {
+        if (
+          activeObject.type === "rect" ||
+          activeObject.shapeType === "roundedCorners"
+        ) {
+          const currentScale = Math.min(
+            activeObject.scaleX || 1,
+            activeObject.scaleY || 1
+          );
+          const rPxScaled = Math.max(0, mmToPx(value));
+          const baseRx = rPxScaled / (currentScale || 1);
+          const maxBaseRx = Math.max(
+            0,
+            Math.min(activeObject.width || 0, activeObject.height || 0) / 2 -
+              0.001
+          );
+          const clampedBaseRx = Math.max(0, Math.min(baseRx, maxBaseRx));
+          activeObject.set({ rx: clampedBaseRx, ry: clampedBaseRx });
+        }
         break;
-
-      case "fill":
+      }
+      case "thickness": {
+        activeObject.set("strokeWidth", mmToPx(value));
+        break;
+      }
+      case "fill": {
         if (value) {
-          // Заповнити фігуру кольором stroke або чорним, якщо cut активний то оранжевим
           const fillColor = properties.cut
             ? "#FFA500"
             : activeObject.stroke || "#000000";
@@ -171,27 +203,23 @@ const ShapeProperties = ({
           activeObject.set("fill", "transparent");
         }
         break;
-
-      case "cut":
+      }
+      case "cut": {
         if (value) {
-          // Заповнити контур оранжевим кольором
-          activeObject.set('stroke', '#FFA500');
-          // Додаємо тип cut елементу та блокуємо зміну розміру
+          activeObject.set("stroke", "#FFA500");
           activeObject.set({
             isCutElement: true,
-            cutType: 'manual', // Тип для мануально встановлених cut елементів
+            cutType: "manual",
             hasControls: false,
             lockScalingX: true,
             lockScalingY: true,
             lockUniScaling: true,
           });
-          // Якщо fill також активний, то fill теж оранжевий
           if (properties.fill) {
             activeObject.set("fill", "#FFA500");
           }
         } else {
-          // Повернути до звичайного чорного кольору та розблокувати
-          activeObject.set('stroke', '#000000');
+          activeObject.set("stroke", "#000000");
           activeObject.set({
             isCutElement: false,
             cutType: null,
@@ -205,11 +233,14 @@ const ShapeProperties = ({
           }
         }
         break;
+      }
+      default:
+        break;
     }
 
-    canvas.renderAll();
+    activeObject.setCoords();
+    canvas.requestRenderAll();
 
-    // Знімаємо флаг ручного редагування через невеликий таймаут
     setTimeout(() => setIsManuallyEditing(false), 100);
   };
 
@@ -236,7 +267,13 @@ const ShapeProperties = ({
     updateProperty(property, newValue);
   };
 
-  if (!isOpen || !activeObject || activeObject.type !== "path") return null;
+  if (!isOpen || !activeObject) return null;
+
+  // Визначаємо, чи активна фігура є колом
+  const isCircle =
+    activeObject?.type === "circle" ||
+    activeObject?.isCircle === true ||
+    activeObject?.shapeType === "round";
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -356,29 +393,49 @@ const ShapeProperties = ({
               </div>
             </div>
           </label>
-          <label className={styles.label}>
+          <label
+            className={styles.label}
+            style={{
+              opacity: isCircle ? 0.5 : 1,
+              cursor: isCircle ? "not-allowed" : "default",
+            }}
+          >
             Corner Radius:
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 className={styles.input}
                 value={properties.cornerRadius}
+                disabled={isCircle}
+                style={{ cursor: isCircle ? "not-allowed" : "text" }}
+                step={0.1}
                 onChange={(e) =>
-                  updateProperty("cornerRadius", parseInt(e.target.value) || 0)
+                  !isCircle &&
+                  updateProperty(
+                    "cornerRadius",
+                    Math.round((parseFloat(e.target.value) || 0) * 10) / 10
+                  )
                 }
-                onFocus={() => setIsManuallyEditing(true)}
+                onFocus={() => !isCircle && setIsManuallyEditing(true)}
                 onBlur={() =>
+                  !isCircle &&
                   setTimeout(() => setIsManuallyEditing(false), 100)
                 }
               />
-              <div className={styles.arrows}>
+              <div
+                className={styles.arrows}
+                style={{
+                  pointerEvents: isCircle ? "none" : "auto",
+                  opacity: isCircle ? 0.6 : 1,
+                }}
+              >
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue("cornerRadius")}
+                  onClick={() => !isCircle && incrementValue("cornerRadius")}
                 ></i>
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue("cornerRadius")}
+                  onClick={() => !isCircle && decrementValue("cornerRadius")}
                 ></i>
               </div>
             </div>

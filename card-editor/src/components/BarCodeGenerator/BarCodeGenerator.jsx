@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import JsBarcode from "jsbarcode";
 import * as fabric from "fabric";
@@ -6,27 +6,50 @@ import styles from "./BarCodeGenerator.module.css";
 
 const BarCodeGenerator = ({ isOpen, onClose }) => {
   const { canvas, globalColors } = useCanvasContext();
+  const dropdownRef = useRef(null);
   const [formData, setFormData] = useState({
     text: "",
     codeType: "CODE128",
   });
+
+  // Закрытие по клику вне модального окна
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        if (typeof onClose === "function") onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleOutside, true);
+    document.addEventListener("touchstart", handleOutside, true);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside, true);
+      document.removeEventListener("touchstart", handleOutside, true);
+    };
+  }, [isOpen, onClose]);
 
   const barcodeTypes = [
     { value: "CODE128", label: "Code 128" },
     { value: "CODE39", label: "Code 39" },
   ];
 
-  const generateBarCode = async ({ replace = false, createNew = false } = {}) => {
+  const generateBarCode = async ({
+    replace = false,
+    createNew = false,
+  } = {}) => {
     if (!canvas || !formData.text.trim()) {
       alert("Please enter text for the barcode");
       return;
     }
 
-    // 1. Генерація bitmap (може кинути помилку якщо формат/символи не валідні)
-    let barcodeDataURL;
+    // 1. Генерація SVG як вектор
+    let svgText;
     try {
-      const barcodeCanvas = document.createElement("canvas");
-      JsBarcode(barcodeCanvas, formData.text, {
+      const svgEl = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+      );
+      JsBarcode(svgEl, formData.text, {
         format: formData.codeType,
         width: 2,
         height: 100,
@@ -37,20 +60,25 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         background: globalColors?.backgroundColor || "#FFFFFF",
         lineColor: globalColors?.textColor || "#000000",
       });
-      barcodeDataURL = barcodeCanvas.toDataURL();
+      const serializer = new XMLSerializer();
+      svgText = serializer.serializeToString(svgEl);
     } catch (e) {
       console.error("Помилка побудови бар-коду:", e);
       alert("Не вдалося згенерувати бар-код. Перевірте текст / тип.");
       return;
     }
 
-    // 2. Завантаження в Fabric
-    const allBars = canvas.getObjects().filter(o => o.isBarCode);
+    // 2. Завантаження в Fabric як вектор
+    const allBars = canvas.getObjects().filter((o) => o.isBarCode);
     const active = canvas.getActiveObject();
-    const target = active && active.isBarCode ? active : allBars[0];
+    let target = active && active.isBarCode ? active : allBars[0];
+
+    // Якщо replace=true або є target і не просили createNew — замінюємо, інакше створюємо новий
+    const willReplace = replace || (!createNew && !!target);
+
     let preserved = {};
     let replacing = false;
-    if (replace && target) {
+    if (willReplace && target) {
       replacing = true;
       preserved = {
         left: target.left,
@@ -63,13 +91,18 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       canvas.remove(target);
     }
 
-    let img;
+    let obj;
     try {
-      img = await fabric.Image.fromURL(barcodeDataURL);
-      if (!img) throw new Error("fabric.Image.fromURL повернула null/undefined");
+      const result = await fabric.loadSVGFromString(svgText);
+      if (result?.objects?.length === 1) obj = result.objects[0];
+      else
+        obj = fabric.util.groupSVGElements(
+          result.objects || [],
+          result.options || {}
+        );
     } catch (e) {
-      console.error("Помилка створення Fabric зображення бар-коду:", e);
-      alert("Не вдалося створити зображення бар-коду");
+      console.error("Помилка створення Fabric SVG бар-коду:", e);
+      alert("Не вдалося створити вектор бар-коду");
       return;
     }
 
@@ -78,14 +111,18 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
       const offsetCount = createNew ? allBars.length : 0;
-      img.set({
-        left: preserved.left ?? (canvasWidth / 2 + (createNew && offsetCount ? 30 * offsetCount : 0)),
-        top: preserved.top ?? (canvasHeight / 2 + (createNew && offsetCount ? 30 * offsetCount : 0)),
+      obj.set({
+        left:
+          preserved.left ??
+          canvasWidth / 2 + (createNew && offsetCount ? 30 * offsetCount : 0),
+        top:
+          preserved.top ??
+          canvasHeight / 2 + (createNew && offsetCount ? 30 * offsetCount : 0),
         scaleX: preserved.scaleX ?? 1,
         scaleY: preserved.scaleY ?? 1,
         angle: preserved.angle ?? 0,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         selectable: true,
         hasControls: true,
         hasBorders: true,
@@ -93,19 +130,18 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         barCodeText: formData.text,
         barCodeType: formData.codeType,
       });
-      canvas.add(img);
-      canvas.setActiveObject(img);
+      canvas.add(obj);
+      canvas.setActiveObject(obj);
       canvas.requestRenderAll();
       if (!createNew) onClose();
     } catch (e) {
       console.error("Помилка додавання бар-коду на canvas:", e);
-      if (img && canvas.getObjects().includes(img)) canvas.remove(img);
+      if (obj && canvas.getObjects().includes(obj)) canvas.remove(obj);
       alert("Помилка розміщення бар-коду на полотні");
-    }
-    finally {
+    } finally {
       if (replacing) {
         canvas.__suspendUndoRedo = false;
-        canvas.fire('object:added');
+        canvas.fire("object:added");
       }
     }
   };
@@ -113,16 +149,21 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
   const deleteBarCode = () => {
     if (!canvas) return;
     const active = canvas.getActiveObject();
-    const target = active && active.isBarCode ? active : canvas.getObjects().find(o => o.isBarCode);
+    const target =
+      active && active.isBarCode
+        ? active
+        : canvas.getObjects().find((o) => o.isBarCode);
     if (!target) return;
     canvas.remove(target);
     canvas.requestRenderAll();
   };
-
   const duplicateBarCode = async () => {
     if (!canvas) return;
     const active = canvas.getActiveObject();
-    const target = active && active.isBarCode ? active : canvas.getObjects().find(o => o.isBarCode);
+    const target =
+      active && active.isBarCode
+        ? active
+        : canvas.getObjects().find((o) => o.isBarCode);
     if (!target) return;
     try {
       const clone = await target.clone();
@@ -137,7 +178,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       canvas.setActiveObject(clone);
       canvas.requestRenderAll();
     } catch (e) {
-      console.error('Помилка дублювання бар-коду:', e);
+      console.error("Помилка дублювання бар-коду:", e);
     }
   };
 
@@ -155,14 +196,13 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (!isOpen || !canvas) return;
     // Якщо немає жодного bar-коду – задаємо дефолтний текст і генеруємо
-    const existing = canvas.getObjects().some(o => o.isBarCode);
+    const existing = canvas.getObjects().some((o) => o.isBarCode);
     if (!existing) {
-      setFormData(prev => ({ ...prev, text: prev.text || 'ABC-abc-1234' }));
+      setFormData((prev) => ({ ...prev, text: prev.text || "ABC-abc-1234" }));
       // Викликаємо після мікротіку щоб state встиг оновитись
-      
     } else if (!formData.text) {
       // Якщо вже є баркоди, але поле порожнє – ставимо дефолт для можливості New
-      setFormData(prev => ({ ...prev, text: 'ABC-abc-1234' }));
+      setFormData((prev) => ({ ...prev, text: "ABC-abc-1234" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -171,7 +211,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
 
   return (
     <div className={styles.barGenerator}>
-      <div className={styles.dropdown}>
+      <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.dropdownHeader}>
           <div className={styles.titleWrapper}>
             <h3>Bar Code</h3>
@@ -235,8 +275,12 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
 
             <div className={styles.actions}>
               <button
-                className={`${styles.updateBtn} ${formData.text.trim() ? styles.active : ''}`}
-                onClick={formData.text.trim() ? () => generateBarCode() : undefined}
+                className={`${styles.updateBtn} ${
+                  formData.text.trim() ? styles.active : ""
+                }`}
+                onClick={
+                  formData.text.trim() ? () => generateBarCode() : undefined
+                }
               >
                 Update
               </button>
@@ -255,7 +299,11 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                     fill="#FF3B30"
                   />
                 </svg>
-                <span className={styles.actionText}>Delete<br />Bar Code</span>
+                <span className={styles.actionText}>
+                  Delete
+                  <br />
+                  Bar Code
+                </span>
               </button>
               <button className={styles.actionBtn} onClick={duplicateBarCode}>
                 <svg
@@ -296,7 +344,11 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                     strokeWidth="2"
                   />
                 </svg>
-                <span className={styles.actionText}>Duplicate<br />Bar Code</span>
+                <span className={styles.actionText}>
+                  Duplicate
+                  <br />
+                  Bar Code
+                </span>
               </button>
               <button className={styles.actionBtn} onClick={createNewBarCode}>
                 <svg
@@ -319,7 +371,11 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                     </clipPath>
                   </defs>
                 </svg>
-                <span className={styles.actionText}>New<br />Bar Code</span>
+                <span className={styles.actionText}>
+                  New
+                  <br />
+                  Bar Code
+                </span>
               </button>
             </div>
           </div>

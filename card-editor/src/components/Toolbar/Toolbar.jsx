@@ -349,6 +349,23 @@ const Toolbar = () => {
     return buildRoundedPolygonPath(pts, r);
   };
 
+  // Adaptive half-circle that turns into rectangle with arced top as height grows beyond width/2
+  const makeAdaptiveHalfCirclePath = (w, h) => {
+    // w = full width, h = total height
+    if (w <= 0 || h <= 0) return '';
+    const R = w / 2; // radius of top semicircle
+    const cpFactor = 0.45; // control point factor for Bezier approximation
+    const cp = cpFactor * R;
+    if (h <= R + 0.01) {
+      // Pure half circle (flat base at y=R)
+      // Two cubic Beziers approximation
+      return `M0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${R - cp} ${w} ${R} Z`;
+    }
+    // Extended shape: rectangle extension below y=R down to y=h
+    // Path order: start bottom-left -> up left side to base of arc -> arc -> down right side -> bottom line -> close
+    return `M0 ${h} L0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${R - cp} ${w} ${R} L${w} ${h} Z`;
+  };
+
   // Adaptive triangle (Icon7) via polygon + rectangle clipping
   const clipPolygonWithRect = (poly, width, height) => {
     // Sutherland–Hodgman clipping against rectangle [0,width]x[0,height]
@@ -594,34 +611,28 @@ const Toolbar = () => {
           break;
 
         case "halfCircle": {
-          // Справжній півкруг
-          const arcScale = Math.min(width / 100, height / 50);
+          // Статичний півкруг (базова форма 100x50) з масштабуванням
+          const baseW = 100;
+          const baseH = 50;
+          const scaleX = width / baseW;
+          const scaleY = height / baseH;
           newClipPath = new fabric.Path(
             "M0 50 C 0 22.4 22.4 0 50 0 C 77.6 0 100 22.4 100 50 Z",
             {
-              left: (width - 100 * arcScale) / 2,
-              top: (height - 50 * arcScale) / 2,
               absolutePositioned: true,
-              scaleX: arcScale,
-              scaleY: arcScale,
+              left: 0,
+              top: 0,
+              scaleX,
+              scaleY,
             }
           );
           break;
         }
 
         case "extendedHalfCircle": {
-          // Подовжений півкруг
-          const arcScale = Math.min(width / 120, height / 84);
-          newClipPath = new fabric.Path(
-            "M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333",
-            {
-              left: (width - 120 * arcScale) / 2,
-              top: (height - 84 * arcScale) / 2,
-              absolutePositioned: true,
-              scaleX: arcScale,
-              scaleY: arcScale,
-            }
-          );
+          // Адаптивна форма: від чистого півкруга (ratio 2:1) до прямокутника з дугою зверху
+          const d = makeAdaptiveHalfCirclePath(width, height);
+          newClipPath = new fabric.Path(d, { absolutePositioned: true });
           break;
         }
 
@@ -2487,28 +2498,22 @@ const Toolbar = () => {
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("extendedHalfCircle");
 
-      // Встановлюємо розміри canvas (120x84 мм для подовженого півкруга)
-      const wPxE = mmToPx(120);
-      const hPxE = mmToPx(84);
-      canvas.setDimensions({ width: wPxE, height: hPxE });
+  // Базовий стан як чистий півкруг (2:1) – потім користувач може збільшувати висоту
+  const baseWmm = 120;
+  const baseHmm = baseWmm / 2; // 60 мм
+  const wPxE = mmToPx(baseWmm);
+  const hPxE = mmToPx(baseHmm);
+  canvas.setDimensions({ width: wPxE, height: hPxE });
 
-      // Створюємо clipPath у формі подовженого півкруга
-      const clipPath = new fabric.Path(
-        "M6 54C6 65.7156 6 84 6 84H63.8574H114V54 M114 57.6129C114 27.2075 94.0836 6 59.99994 6C25.9161 6 6 28.928 6 59.3333",
-        {
-          absolutePositioned: true,
-          left: (wPxE - 120) / 2,
-          top: (hPxE - 84) / 2,
-          scaleX: Math.min(wPxE / 120, hPxE / 84),
-          scaleY: Math.min(wPxE / 120, hPxE / 84),
-        }
-      );
+  // Динамічний clipPath (адаптивна форма)
+  const d = makeAdaptiveHalfCirclePath(wPxE, hPxE);
+  const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 120, height: 84 }));
+  setSizeValues((prev) => ({ ...prev, width: baseWmm, height: baseHmm }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -2525,20 +2530,21 @@ const Toolbar = () => {
       // Встановлюємо тип поточної фігури
       setCurrentShapeType("halfCircle");
 
-      // Встановлюємо розміри canvas (100x50 мм для справжнього півкруга)
-      const wPxHC = mmToPx(100);
-      const hPxHC = mmToPx(50);
+      // Статичний півкруг (100x50 мм)
+      const baseWmm = 100;
+      const baseHmm = 50;
+      const wPxHC = mmToPx(baseWmm);
+      const hPxHC = mmToPx(baseHmm);
       canvas.setDimensions({ width: wPxHC, height: hPxHC });
 
-      // Створюємо clipPath у формі справжнього півкруга
       const clipPath = new fabric.Path(
         "M0 50 C 0 22.4 22.4 0 50 0 C 77.6 0 100 22.4 100 50 Z",
         {
           absolutePositioned: true,
-          left: (wPxHC - 100) / 2,
-          top: (hPxHC - 50) / 2,
-          scaleX: Math.min(wPxHC / 100, hPxHC / 50),
-          scaleY: Math.min(wPxHC / 100, hPxHC / 50),
+          left: 0,
+          top: 0,
+          scaleX: wPxHC / 100,
+          scaleY: hPxHC / 50,
         }
       );
 
@@ -2546,7 +2552,7 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 100, height: 50 }));
+  setSizeValues((prev) => ({ ...prev, width: baseWmm, height: baseHmm }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();

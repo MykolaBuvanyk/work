@@ -7,7 +7,7 @@ import { useCanvasContext } from "../../contexts/CanvasContext";
 import styles from "./Canvas.module.css";
 
 // Відступи в межах viewport
-const MARGIN = 20;
+const MARGIN = 40;
 const DEFAULT_DESIGN = { width: 1200, height: 800 };
 // Unit conversion (96 DPI)
 const PX_PER_MM = 96 / 25.4;

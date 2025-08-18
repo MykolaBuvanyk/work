@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import QRCode from "qrcode";
 import * as fabric from "fabric";
@@ -6,6 +6,22 @@ import styles from "./QRCodeGenerator.module.css";
 import { QrCode } from "../../assets/Icons";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
+  // Закрытие по клику вне модального окна
+  const dropdownRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        if (typeof onClose === "function") onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleOutside, true);
+    document.addEventListener("touchstart", handleOutside, true);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside, true);
+      document.removeEventListener("touchstart", handleOutside, true);
+    };
+  }, [isOpen, onClose]);
   // Типи безпеки WiFi для селектора
   const wifiSecurityTypes = [
     { value: "WPA", label: "WPA" },
@@ -33,36 +49,64 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     message: "",
   });
 
-const qrTypes = [
-  { id: "url", label: "URL (Website)" },
-  { id: "email", label: "E-MAIL" },
-  { id: "phone", label: "Call (Phone)" },
-  { id: "whatsapp", label: "WhatsApp" },
-  { id: "wifi", label: "Wi-Fi" },
-  { id: "message", label: "Message" },
-];
-
-const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
-
-// При відкритті вікна завжди активуємо URL та генеруємо дефолтний QR (якщо ще не додано або немає активного QR)
-useEffect(() => {
-  if (!isOpen) return;
-  setSelectedType('url');
-  if (canvas) {
-    const existing = canvas.getObjects()?.find(o => o.isQRCode);
-    if (!existing) {
-      generateQRCode({ auto: true, keepSelection: true, mode: 'new' });
+  // Допоміжні функції для перевірки та нормалізації URL
+  const normalizeUrl = (value) => {
+    const v = (value || "").trim();
+    if (!v) return "";
+    // якщо вже є схема (http:, https:, ftp:, mailto:, тощо) — не змінюємо
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(v)) return v;
+    return `https://${v}`;
+  };
+  const isLikelyDomain = (host) => {
+    if (!host) return false;
+    const parts = host.split(".");
+    if (parts.length < 2) return false;
+    const tld = parts[parts.length - 1];
+    // Дозволяємо літери/цифри/дефіси для підтримки punycode (xn--)
+    return /^[a-zA-Z0-9-]{2,}$/.test(tld);
+  };
+  const isValidUrlInput = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return false;
+    try {
+      const u = new URL(normalizeUrl(raw));
+      return !!u.hostname && isLikelyDomain(u.hostname);
+    } catch {
+      return false;
     }
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isOpen]);
+  };
 
+  const qrTypes = [
+    { id: "url", label: "URL (Website)" },
+    { id: "email", label: "E-MAIL" },
+    { id: "phone", label: "Call (Phone)" },
+    { id: "whatsapp", label: "WhatsApp" },
+    { id: "wifi", label: "Wi-Fi" },
+    { id: "message", label: "Message" },
+  ];
+
+  const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
+
+  // При відкритті вікна завжди активуємо URL та генеруємо дефолтний QR (якщо ще не додано або немає активного QR)
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedType("url");
+    if (canvas) {
+      const existing = canvas.getObjects()?.find((o) => o.isQRCode);
+      if (!existing) {
+        generateQRCode({ auto: true, keepSelection: true, mode: "new" });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Генерує дані для QR-коду залежно від типу
   const generateQRData = () => {
     switch (selectedType) {
       case "url":
-        return formData.url || "https://example.com";
+        return formData.url
+          ? normalizeUrl(formData.url)
+          : "https://example.com";
       case "email":
         return `mailto:${formData.email}`;
       case "phone":
@@ -83,13 +127,17 @@ useEffect(() => {
 
   // Додає QR-код на canvas (подавляємо "хибну" помилку, якщо зображення реально додалось)
   // mode: 'update' (replace target qr) | 'new' (add another)
-  const generateQRCode = async ({ auto = false, keepSelection = false, mode = 'update' } = {}) => {
+  const generateQRCode = async ({
+    auto = false,
+    keepSelection = false,
+    mode = "update",
+  } = {}) => {
     if (!canvas) return;
     const qrData = generateQRData();
-    let qrDataURL;
+    let svgText;
     try {
-      qrDataURL = await QRCode.toDataURL(qrData, {
-        width: 150,
+      svgText = await QRCode.toString(qrData, {
+        type: "svg",
         margin: 1,
         color: {
           dark: globalColors?.textColor || "#000000",
@@ -103,46 +151,57 @@ useEffect(() => {
     }
 
     // Пошук цільового QR для update
-    const allQrs = canvas.getObjects().filter(o => o.isQRCode);
+    const allQrs = canvas.getObjects().filter((o) => o.isQRCode);
     const active = canvas.getActiveObject();
     const target = active && active.isQRCode ? active : allQrs[0];
     let left, top, scaleX, scaleY, angle;
     let replacing = false;
-    if (mode === 'update' && target) {
+    if (mode === "update" && target) {
       replacing = true;
       ({ left, top, scaleX, scaleY, angle } = target);
       canvas.__suspendUndoRedo = true;
       canvas.remove(target);
     }
-    let img;
+    let obj;
     try {
-      img = await fabric.Image.fromURL(qrDataURL);
-      if (!img) throw new Error('fabric.Image.fromURL повернула null/undefined');
+      const result = await fabric.loadSVGFromString(svgText);
+      if (result?.objects?.length === 1) obj = result.objects[0];
+      else
+        obj = fabric.util.groupSVGElements(
+          result.objects || [],
+          result.options || {}
+        );
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      img.set({
-        left: left ?? (canvasWidth / 2 + (mode === 'new' && allQrs.length ? 30 * allQrs.length : 0)),
-        top: top ?? (canvasHeight / 2 + (mode === 'new' && allQrs.length ? 30 * allQrs.length : 0)),
+      obj.set({
+        left:
+          left ??
+          canvasWidth / 2 +
+            (mode === "new" && allQrs.length ? 30 * allQrs.length : 0),
+        top:
+          top ??
+          canvasHeight / 2 +
+            (mode === "new" && allQrs.length ? 30 * allQrs.length : 0),
         scaleX: scaleX ?? 1,
         scaleY: scaleY ?? 1,
         angle: angle ?? 0,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         selectable: true,
         hasControls: true,
         hasBorders: true,
         isQRCode: true,
         qrText: qrData,
       });
-      canvas.add(img);
-      if (keepSelection || !auto) canvas.setActiveObject(img);
+      canvas.add(obj);
+      if (keepSelection || !auto) canvas.setActiveObject(obj);
     } catch (e) {
-      console.error('Помилка створення нового QR:', e);
-      if (!auto) alert('Помилка створення QR-коду');
+      console.error("Помилка створення нового QR (SVG):", e);
+      if (!auto) alert("Помилка створення QR-коду");
     } finally {
       if (replacing) {
         canvas.__suspendUndoRedo = false;
-        canvas.fire('object:added'); // Один запис в історії для заміни
+        canvas.fire("object:added"); // Один запис в історії для заміни
       }
       canvas.requestRenderAll();
     }
@@ -152,7 +211,10 @@ useEffect(() => {
   const deleteQRCode = () => {
     if (!canvas) return;
     const active = canvas.getActiveObject();
-    const target = active && active.isQRCode ? active : canvas.getObjects().find(o => o.isQRCode);
+    const target =
+      active && active.isQRCode
+        ? active
+        : canvas.getObjects().find((o) => o.isQRCode);
     if (!target) return;
     canvas.remove(target);
     canvas.requestRenderAll();
@@ -162,7 +224,10 @@ useEffect(() => {
   const duplicateQRCode = async () => {
     if (!canvas) return;
     const active = canvas.getActiveObject();
-    const target = active && active.isQRCode ? active : canvas.getObjects().find(o => o.isQRCode);
+    const target =
+      active && active.isQRCode
+        ? active
+        : canvas.getObjects().find((o) => o.isQRCode);
     if (!target) return;
     try {
       const clone = await target.clone();
@@ -176,12 +241,13 @@ useEffect(() => {
       canvas.setActiveObject(clone);
       canvas.requestRenderAll();
     } catch (e) {
-      console.error('Помилка дублювання QR:', e);
+      console.error("Помилка дублювання QR:", e);
     }
   };
 
   // Створення абсолютно нового QR з поточними даними (не заміняє існуючі)
-  const createNewQRCode = () => generateQRCode({ keepSelection: true, mode: 'new' });
+  const createNewQRCode = () =>
+    generateQRCode({ keepSelection: true, mode: "new" });
 
   // Локальний стейт для показу помилки тільки після спроби сабміту (wifi)
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -202,13 +268,14 @@ useEffect(() => {
       value = formData.url;
       fieldKey = "url";
       label = "Website - Link";
-      placeholder = "https://example.com";
-      inputType = "url";
-      isValid = /^https?:\/\/.+\..+/.test(value);
+      placeholder = "example.com або https://example.com";
+      // Дозволяємо вводити без схеми; валідація через хост з TLD
+      inputType = "text";
+      isValid = isValidUrlInput(value);
       showBtn = isValid;
       showError = value && !isValid;
       if (!value) error = "X Empty field";
-      else if (!isValid) error = "X Empty field";
+      else if (!isValid) error = "X Неправильно введені дані";
     }
 
     if (typeId === "email") {
@@ -244,11 +311,14 @@ useEffect(() => {
       placeholder = "WiFi Network Name";
       inputType = "text";
       // Для WiFi перевіряємо SSID та пароль (якщо потрібен)
-      isValid = !!value && (formData.wifiSecurity === "nopass" || !!formData.wifiPassword);
+      isValid =
+        !!value &&
+        (formData.wifiSecurity === "nopass" || !!formData.wifiPassword);
       showBtn = isValid;
       showError = submitAttempted && !value;
       if (!value) error = "X Empty field";
-      else if (formData.wifiSecurity !== "nopass" && !formData.wifiPassword) error = "X Password required";
+      else if (formData.wifiSecurity !== "nopass" && !formData.wifiPassword)
+        error = "X Password required";
       extra = (
         <div>
           {formData.wifiSecurity !== "nopass" && (
@@ -267,9 +337,13 @@ useEffect(() => {
                   color: formData.wifiPassword ? "#000" : undefined,
                 }}
               />
-              {submitAttempted && formData.wifiSecurity !== "nopass" && !formData.wifiPassword && (
-                <div className={styles.formGroupError}>X Password required</div>
-              )}
+              {submitAttempted &&
+                formData.wifiSecurity !== "nopass" &&
+                !formData.wifiPassword && (
+                  <div className={styles.formGroupError}>
+                    X Password required
+                  </div>
+                )}
             </div>
           )}
           <label style={{ position: "static" }}>Security Type</label>
@@ -304,12 +378,15 @@ useEffect(() => {
       if (typeId === "wifi") {
         setSubmitAttempted(true);
         // Перевіряємо валідність для WiFi
-        if (!formData.wifiSSID || (formData.wifiSecurity !== "nopass" && !formData.wifiPassword)) {
+        if (
+          !formData.wifiSSID ||
+          (formData.wifiSecurity !== "nopass" && !formData.wifiPassword)
+        ) {
           return;
         }
       }
       // Генеруємо QR код для поточного типу
-  generateQRCode({ keepSelection: true, mode: 'update' });
+      generateQRCode({ keepSelection: true, mode: "update" });
     };
 
     // Обробник для телефону: заборонити букви
@@ -383,7 +460,7 @@ useEffect(() => {
   if (!isOpen) return null;
   return (
     <div className={styles.qrGenerator}>
-      <div className={styles.dropdown}>
+      <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.dropdownHeader}>
           <h3>QR Code</h3>
           <button className={styles.closeBtn} onClick={onClose}>

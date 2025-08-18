@@ -1,11 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import styles from "./ShapeSelector.module.css";
 
 const ShapeSelector = ({ isOpen, onClose }) => {
-  const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } = useCanvasContext();
+  const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
+    useCanvasContext();
   const [selectedShape, setSelectedShape] = useState(null);
+  const dropdownRef = useRef(null);
+
+  // Закрытие по клику вне модального окна
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        if (typeof onClose === "function") onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleOutside, true);
+    document.addEventListener("touchstart", handleOutside, true);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside, true);
+      document.removeEventListener("touchstart", handleOutside, true);
+    };
+  }, [isOpen, onClose]);
 
   const shapes = [
     { id: "rectangle", name: "Rectangle" },
@@ -28,6 +46,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   ];
 
   const addShape = (shapeType) => {
+    // Закриваємо модалку одразу після вибору фігури
+    if (typeof onClose === "function") onClose();
     if (!canvas) return;
 
     let shape = null;
@@ -37,13 +57,13 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     const baseOptions = {
       left: centerX,
       top: centerY,
-      fill: globalColors.fillColor || 'transparent',
-      stroke: globalColors.strokeColor || '#000000',
+      fill: globalColors.fillColor || "transparent",
+      stroke: globalColors.strokeColor || "#000000",
       strokeWidth: 2,
-      originX: 'center',
-      originY: 'center',
+      originX: "center",
+      originY: "center",
       strokeUniform: true, // утримує товщину контуру при масштабуванні
-      strokeLineJoin: 'round',
+      strokeLineJoin: "round",
       strokeMiterLimit: 2,
     };
 
@@ -88,11 +108,14 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "triangle":
-  shape = new fabric.Path("M59 51H2L31 2L59 51Z", baseOptions);
+        shape = new fabric.Path("M59 51H2L31 2L59 51Z", baseOptions);
         break;
 
       case "warningTriangle":
-  shape = new fabric.Path("M1 32V51.5H23.5H43V32L22 2L1 32Z", baseOptions);
+        shape = new fabric.Path(
+          "M1 32V51.5H23.5H43V32L22 2L1 32Z",
+          baseOptions
+        );
         break;
 
       case "semiround":
@@ -103,32 +126,29 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "roundTop":
-  shape = new fabric.Path("M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z", baseOptions);
+        shape = new fabric.Path(
+          "M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z",
+          baseOptions
+        );
         break;
 
       case "leftArrow":
-  shape = new fabric.Path("M56 34V10H18V3L2 22L18 41V34H56Z", baseOptions);
+        shape = new fabric.Path(
+          "M56 34V10H18V3L2 22L18 41V34H56Z",
+          baseOptions
+        );
         break;
 
       case "rightArrow":
-        shape = new fabric.Path(
-          "M1 34V10H39V3L55 22L39 41V34H1Z",
-          baseOptions
-        );
+        shape = new fabric.Path("M1 34V10H39V3L55 22L39 41V34H1Z", baseOptions);
         break;
 
       case "turnLeft":
-        shape = new fabric.Path(
-          "M14 45H43V1H13L2 23L14 45Z",
-          baseOptions
-        );
+        shape = new fabric.Path("M14 45H43V1H13L2 23L14 45Z", baseOptions);
         break;
 
       case "turnRight":
-        shape = new fabric.Path(
-          "M30 45H1V1H31L42 23L30 45Z",
-          baseOptions
-        );
+        shape = new fabric.Path("M30 45H1V1H31L42 23L30 45Z", baseOptions);
         break;
 
       case "customShape":
@@ -141,19 +161,19 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       case "line":
         shape = new fabric.Path("M0 0L100 0", {
           ...baseOptions,
-          fill: '',
+          fill: "",
           strokeWidth: 3,
-          strokeLineCap: 'round',
+          strokeLineCap: "round",
         });
         break;
 
       case "dashedLine":
         shape = new fabric.Path("M0 0L100 0", {
           ...baseOptions,
-          fill: '',
+          fill: "",
           strokeWidth: 3,
           strokeDashArray: [5, 5],
-          strokeLineCap: 'round',
+          strokeLineCap: "round",
         });
         break;
 
@@ -165,11 +185,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       canvas.add(shape);
       canvas.setActiveObject(shape);
       canvas.renderAll();
-      
+
       // Встановлюємо активний об'єкт і відкриваємо властивості
       setActiveObject(shape);
       setShapePropertiesOpen(true);
-      onClose();
     }
   };
 
@@ -460,7 +479,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div className={styles.shapeSelector}>
-          <div className={styles.dropdown}>
+          <div className={styles.dropdown} ref={dropdownRef}>
             <div className={styles.dropdownHeader}>
               <h3>Shapes</h3>
               <button className={styles.closeBtn} onClick={onClose}>

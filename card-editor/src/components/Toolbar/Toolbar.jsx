@@ -85,8 +85,9 @@ const Toolbar = () => {
   const [isIconMenuOpen, setIsIconMenuOpen] = useState(false);
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
   const [copiesCount, setCopiesCount] = useState(1);
-  const [holesDiameter, setHolesDiameter] = useState(3);
+  const [holesDiameter, setHolesDiameter] = useState(2.5);
   const [isHolesSelected, setIsHolesSelected] = useState(false);
+  const [activeHolesType, setActiveHolesType] = useState(1); // 1..7, за замовчуванням — без отворів
   // Set default selected shape on mount
   useEffect(() => {
     // Choose the default shape type, e.g., rectangle
@@ -507,6 +508,10 @@ const Toolbar = () => {
         canvas.clipPath = newClipPath;
 
         updateCanvasOutline();
+
+        // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
+        recomputeHolesAfterResize();
+
         canvas.renderAll();
         return;
       }
@@ -684,6 +689,10 @@ const Toolbar = () => {
       // Оновлюємо візуальний контур і обводки
       updateCanvasOutline();
       updateExistingBorders();
+
+      // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
+      recomputeHolesAfterResize();
+
       canvas.renderAll();
     } else if (canvas) {
       // Якщо нічого не вибрано і немає фігури - просто змінюємо розміри canvas
@@ -692,7 +701,53 @@ const Toolbar = () => {
         height: mmToPx(heightMm),
       });
       updateCanvasOutline();
+
+      // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
+      recomputeHolesAfterResize();
+
       canvas.renderAll();
+    }
+  };
+
+  // Перерахунок та перестановка отворів після зміни розміру фігури + лог поточного відступу в мм
+  const recomputeHolesAfterResize = () => {
+    if (!canvas) return;
+    if (!isHolesSelected || activeHolesType === 1) return; // коли «без отворів», нічого не робимо
+
+    // Обчислюємо відступ і логуємо його в мм
+    const offsetPx =
+      activeHolesType === 5 ? getRectHoleOffsetPx() : getHoleOffsetPx();
+    const offsetMm = pxToMm(offsetPx);
+    try {
+      console.log(
+        `Відступ отворів: ${offsetMm.toFixed(
+          2
+        )} мм (тип ${activeHolesType}, Ø ${holesDiameter} мм)`
+      );
+    } catch {}
+
+    // Переставляємо отвори відповідно до активного типу
+    switch (activeHolesType) {
+      case 2:
+        addHoleType2();
+        break;
+      case 3:
+        addHoleType3();
+        break;
+      case 4:
+        addHoleType4();
+        break;
+      case 5:
+        addHoleType5();
+        break;
+      case 6:
+        addHoleType6();
+        break;
+      case 7:
+        addHoleType7();
+        break;
+      default:
+        break;
     }
   };
 
@@ -1255,25 +1310,132 @@ const Toolbar = () => {
 
   // Функції для різних типів отворів
 
+  // Допоміжні функції для обчислення відступів отворів
+  // Отримати мін/макс габарити фігури в мм (пріоритетно з clipPath)
+  const getFigureDimsMm = () => {
+    let minMm = 0;
+    let maxMm = 0;
+    if (canvas) {
+      const cp = canvas.clipPath;
+      if (cp) {
+        try {
+          if (cp.type === "rect") {
+            const w = pxToMm(cp.width || 0);
+            const h = pxToMm(cp.height || 0);
+            minMm = Math.min(w, h);
+            maxMm = Math.max(w, h);
+          } else if (cp.type === "circle") {
+            const d = pxToMm((cp.radius || 0) * 2);
+            minMm = d;
+            maxMm = d;
+          } else if (cp.type === "ellipse") {
+            const w = pxToMm((cp.rx || 0) * 2);
+            const h = pxToMm((cp.ry || 0) * 2);
+            minMm = Math.min(w, h);
+            maxMm = Math.max(w, h);
+          } else if (cp.type === "polygon" && Array.isArray(cp.points)) {
+            const xs = cp.points.map((p) => p.x);
+            const ys = cp.points.map((p) => p.y);
+            const w = Math.max(...xs) - Math.min(...xs) || 0;
+            const h = Math.max(...ys) - Math.min(...ys) || 0;
+            const wMm = pxToMm(w);
+            const hMm = pxToMm(h);
+            minMm = Math.min(wMm, hMm);
+            maxMm = Math.max(wMm, hMm);
+          } else if (
+            typeof cp.width === "number" &&
+            typeof cp.height === "number"
+          ) {
+            const w = pxToMm(cp.width);
+            const h = pxToMm(cp.height);
+            minMm = Math.min(w, h);
+            maxMm = Math.max(w, h);
+          }
+        } catch {}
+      }
+      if (!minMm || !maxMm) {
+        const ds =
+          typeof canvas.getDesignSize === "function"
+            ? canvas.getDesignSize()
+            : null;
+        if (
+          ds &&
+          typeof ds.width === "number" &&
+          typeof ds.height === "number"
+        ) {
+          const w = pxToMm(ds.width);
+          const h = pxToMm(ds.height);
+          minMm = Math.min(w, h);
+          maxMm = Math.max(w, h);
+        } else {
+          const widthPx = canvas.getWidth?.() || 0;
+          const heightPx = canvas.getHeight?.() || 0;
+          const w = pxToMm(widthPx);
+          const h = pxToMm(heightPx);
+          minMm = Math.min(w, h);
+          maxMm = Math.max(w, h);
+        }
+      }
+    }
+    return { minMm, maxMm };
+  };
+
+  // Емпірична формула відступу (з ескізів):
+  // offsetMm = clamp(0, 7.5, 0.03 * maxSideMm + clamp(0.8, 3.2, 4.8 - 18/diameterMm))
+  const getHoleOffsetPx = () => {
+    const { maxMm } = getFigureDimsMm();
+    const d = Math.max(holesDiameter || 0, 0.1);
+    let additive = 4.8 - 18 / d; // зменшується при збільшенні діаметра
+    if (!isFinite(additive)) additive = 0;
+    additive = Math.max(0.8, Math.min(additive, 3.2));
+    const base = 0.03 * (maxMm || 0);
+    const offsetMm = Math.min(base + additive, 7.5);
+    return mmToPx(offsetMm);
+  };
+
+  // Фіксований відступ для прямокутних (квадратних) отворів — 2 мм
+  const getRectHoleOffsetPx = () => mmToPx(2);
+
   // Тип 1 - без отворів (по дефолту)
   const addHoleType1 = () => {
-    // Нічого не робимо - це тип без отворів
-    console.log("Тип 1: без отворів");
+    if (!canvas) return;
+    clearExistingHoles();
     setIsHolesSelected(false);
+    setActiveHolesType(1);
+  };
+
+  // Допоміжна: видалити всі існуючі отвори (щоб одночасно був тільки один тип)
+  const clearExistingHoles = () => {
+    if (!canvas) return;
+    const toRemove = (canvas.getObjects?.() || []).filter(
+      (o) => o.isCutElement && o.cutType === "hole"
+    );
+    toRemove.forEach((o) => canvas.remove(o));
+    canvas.requestRenderAll?.();
   };
 
   // Тип 2 - отвір по центру ширини і зверху по висоті (відступ ~4мм)
   const addHoleType2 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(2);
       const canvasWidth = canvas.getWidth();
+      const offsetPx = getHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 2, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
       const hole = new fabric.Circle({
         left: canvasWidth / 2,
-        top: mmToPx(4),
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
-        strokeWidth: 1,
+        top: offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF", // Білий фон дирки
+        stroke: "#000000", // Чорний бордер
+        strokeWidth: 1, // 1px
         originX: "center",
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
@@ -1283,9 +1445,13 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        // Статичне розміщення: заборонити вибір/переміщення мишкою
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
       canvas.add(hole);
-      canvas.setActiveObject(hole);
       canvas.renderAll();
     }
   };
@@ -1293,17 +1459,27 @@ const Toolbar = () => {
   // Тип 3 - два отвори по середині висоти, по бокам ширини (відступ 15px)
   const addHoleType3 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(3);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
+      const offsetPx = getHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 3, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
 
       // Лівий отвір
       const leftHole = new fabric.Circle({
-        left: mmToPx(4),
+        left: offsetPx,
         top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1314,15 +1490,19 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Правий отвір
       const rightHole = new fabric.Circle({
-        left: canvasWidth - mmToPx(4),
+        left: canvasWidth - offsetPx,
         top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1333,11 +1513,14 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       canvas.add(leftHole);
       canvas.add(rightHole);
-      canvas.setActiveObject(leftHole);
       canvas.renderAll();
     }
   };
@@ -1345,17 +1528,27 @@ const Toolbar = () => {
   // Тип 4 - 4 отвори по кутам (відступ 15px)
   const addHoleType4 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(4);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
+      const offsetPx = getHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 4, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
 
       // Верхній лівий
       const topLeft = new fabric.Circle({
-        left: mmToPx(4),
-        top: mmToPx(4),
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: offsetPx,
+        top: offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1366,15 +1559,19 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Верхній правий
       const topRight = new fabric.Circle({
-        left: canvasWidth - mmToPx(4),
-        top: mmToPx(4),
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: canvasWidth - offsetPx,
+        top: offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1385,15 +1582,19 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Нижній лівий
       const bottomLeft = new fabric.Circle({
-        left: mmToPx(4),
-        top: canvasHeight - mmToPx(4),
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: offsetPx,
+        top: canvasHeight - offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1404,15 +1605,19 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Нижній правий
       const bottomRight = new fabric.Circle({
-        left: canvasWidth - mmToPx(4),
-        top: canvasHeight - mmToPx(4),
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: canvasWidth - offsetPx,
+        top: canvasHeight - offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1423,13 +1628,16 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       canvas.add(topLeft);
       canvas.add(topRight);
       canvas.add(bottomLeft);
       canvas.add(bottomRight);
-      canvas.setActiveObject(topLeft);
       canvas.renderAll();
     }
   };
@@ -1437,18 +1645,28 @@ const Toolbar = () => {
   // Тип 5 - 4 прямокутні отвори по кутам (відступ 15px)
   const addHoleType5 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(5);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
+      const offsetPx = getRectHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 5, квадратні, розмір ≈ ${holesDiameter} мм)`
+        );
+      } catch {}
 
       // Верхній лівий
       const topLeft = new fabric.Rect({
-        left: mmToPx(4),
-        top: mmToPx(4),
-        width: mmToPx(holesDiameter || 3),
-        height: mmToPx(holesDiameter || 3),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: offsetPx,
+        top: offsetPx,
+        width: mmToPx(holesDiameter || 2.5),
+        height: mmToPx(holesDiameter || 2.5),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1459,16 +1677,20 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Верхній правий
       const topRight = new fabric.Rect({
-        left: canvasWidth - mmToPx(4),
-        top: mmToPx(4),
-        width: mmToPx(holesDiameter || 3),
-        height: mmToPx(holesDiameter || 3),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: canvasWidth - offsetPx,
+        top: offsetPx,
+        width: mmToPx(holesDiameter || 2.5),
+        height: mmToPx(holesDiameter || 2.5),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1479,16 +1701,20 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Нижній лівий
       const bottomLeft = new fabric.Rect({
-        left: mmToPx(4),
-        top: canvasHeight - mmToPx(4),
-        width: mmToPx(holesDiameter || 3),
-        height: mmToPx(holesDiameter || 3),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: offsetPx,
+        top: canvasHeight - offsetPx,
+        width: mmToPx(holesDiameter || 2.5),
+        height: mmToPx(holesDiameter || 2.5),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1499,16 +1725,20 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       // Нижній правий
       const bottomRight = new fabric.Rect({
-        left: canvasWidth - mmToPx(4),
-        top: canvasHeight - mmToPx(4),
-        width: mmToPx(holesDiameter || 3),
-        height: mmToPx(holesDiameter || 3),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        left: canvasWidth - offsetPx,
+        top: canvasHeight - offsetPx,
+        width: mmToPx(holesDiameter || 2.5),
+        height: mmToPx(holesDiameter || 2.5),
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1519,13 +1749,16 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       canvas.add(topLeft);
       canvas.add(topRight);
       canvas.add(bottomLeft);
       canvas.add(bottomRight);
-      canvas.setActiveObject(topLeft);
       canvas.renderAll();
     }
   };
@@ -1533,15 +1766,25 @@ const Toolbar = () => {
   // Тип 6 - отвір по середині висоти і лівого краю ширини
   const addHoleType6 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(6);
       const canvasHeight = canvas.getHeight();
+      const offsetPx = getHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 6, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
 
       const leftHole = new fabric.Circle({
-        left: mmToPx(4),
+        left: offsetPx,
         top: canvasHeight / 2,
         radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1552,10 +1795,13 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       canvas.add(leftHole);
-      canvas.setActiveObject(leftHole);
       canvas.renderAll();
     }
   };
@@ -1563,16 +1809,26 @@ const Toolbar = () => {
   // Тип 7 - отвір по середині висоти і правого краю ширини
   const addHoleType7 = () => {
     if (canvas) {
+      clearExistingHoles();
       setIsHolesSelected(true);
+      setActiveHolesType(7);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
+      const offsetPx = getHoleOffsetPx();
+      try {
+        console.log(
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(
+            2
+          )} мм (тип 7, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
 
       const rightHole = new fabric.Circle({
-        left: canvasWidth - mmToPx(4),
+        left: canvasWidth - offsetPx,
         top: canvasHeight / 2,
         radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFA500", // Оранжева заливка для Cut елементів
-        stroke: "#FF6600", // Темніший оранжевий для обводки
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -1583,10 +1839,13 @@ const Toolbar = () => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
       });
 
       canvas.add(rightHole);
-      canvas.setActiveObject(rightHole);
       canvas.renderAll();
     }
   };
@@ -3129,25 +3388,53 @@ const Toolbar = () => {
           </div>
         </div>
         <div className={styles.holes}>
-          <span onClick={addHoleType1} title="Без отворів">
+          <span
+            onClick={addHoleType1}
+            title="Без отворів"
+            className={activeHolesType === 1 ? styles.holeActive : ""}
+          >
             {Hole1}
           </span>
-          <span onClick={addHoleType2} title="Отвір зверху по центру">
+          <span
+            onClick={addHoleType2}
+            title="Отвір зверху по центру"
+            className={activeHolesType === 2 ? styles.holeActive : ""}
+          >
             {Hole2}
           </span>
-          <span onClick={addHoleType3} title="Два отвори по бокам">
+          <span
+            onClick={addHoleType3}
+            title="Два отвори по бокам"
+            className={activeHolesType === 3 ? styles.holeActive : ""}
+          >
             {Hole3}
           </span>
-          <span onClick={addHoleType4} title="4 круглі отвори по кутам">
+          <span
+            onClick={addHoleType4}
+            title="4 круглі отвори по кутам"
+            className={activeHolesType === 4 ? styles.holeActive : ""}
+          >
             {Hole4}
           </span>
-          <span onClick={addHoleType5} title="4 квадратні отвори по кутам">
+          <span
+            onClick={addHoleType5}
+            title="4 квадратні отвори по кутам"
+            className={activeHolesType === 5 ? styles.holeActive : ""}
+          >
             {Hole5}
           </span>
-          <span onClick={addHoleType6} title="Отвір зліва по центру">
+          <span
+            onClick={addHoleType6}
+            title="Отвір зліва по центру"
+            className={activeHolesType === 6 ? styles.holeActive : ""}
+          >
             {Hole6}
           </span>
-          <span onClick={addHoleType7} title="Отвір зправа по центру">
+          <span
+            onClick={addHoleType7}
+            title="Отвір зправа по центру"
+            className={activeHolesType === 7 ? styles.holeActive : ""}
+          >
             {Hole7}
           </span>
         </div>

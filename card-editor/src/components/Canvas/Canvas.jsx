@@ -60,9 +60,12 @@ const Canvas = () => {
     setCanvas(fCanvas);
 
     // Події вибору
+    const isShapeWithProps = (o) =>
+      !!o && ["path", "rect", "circle", "ellipse"].includes(o.type);
+
     const handleSelection = (e) => {
       const obj = e.selected?.[0];
-      if (obj && obj.type === "path") {
+      if (isShapeWithProps(obj)) {
         setActiveObject(obj);
         setShapePropertiesOpen(true);
       }
@@ -75,14 +78,15 @@ const Canvas = () => {
     });
 
     fCanvas.on("mouse:down", (e) => {
-      if (e.target && e.target.type === "path") {
-        setActiveObject(e.target);
+      const t = e.target;
+      if (isShapeWithProps(t)) {
+        setActiveObject(t);
         setShapePropertiesOpen(true);
       }
     });
 
     const mirrorIfPath = (e) => {
-      if (e.target && e.target.type === "path")
+      if (e.target && isShapeWithProps(e.target))
         setActiveObject({ ...e.target });
     };
     [
@@ -91,6 +95,64 @@ const Canvas = () => {
       "object:rotating",
       "object:moving",
     ].forEach((evt) => fCanvas.on(evt, mirrorIfPath));
+
+    // Автодоведення при обертанні: якщо кут майже горизонтальний або вертикальний — фіксуємо точно
+    const SNAP_THRESHOLD_DEG = 6; // збільшений поріг, щоб "липнути" виразніше
+    const normalizeDeg = (ang) => ((ang % 360) + 360) % 360;
+    const snapAngleHorizontal = (ang) => {
+      const a = normalizeDeg(ang || 0);
+      if (a < SNAP_THRESHOLD_DEG || 360 - a < SNAP_THRESHOLD_DEG) return 0;
+      if (Math.abs(a - 180) < SNAP_THRESHOLD_DEG) return 180;
+      return null;
+    };
+    const snapAngleVertical = (ang) => {
+      const a = normalizeDeg(ang || 0);
+      if (Math.abs(a - 90) < SNAP_THRESHOLD_DEG) return 90;
+      if (Math.abs(a - 270) < SNAP_THRESHOLD_DEG) return 270;
+      return null;
+    };
+    const onRotatingSnap = (e) => {
+      const t = e?.target;
+      if (!t) return;
+      const h = snapAngleHorizontal(t.angle);
+      const v = snapAngleVertical(t.angle);
+      let targetAngle = null;
+      let snappedH = false;
+      let snappedV = false;
+      if (h !== null && v !== null) {
+        const a = normalizeDeg(t.angle || 0);
+        const dh = Math.min(Math.abs(a - h), 360 - Math.abs(a - h));
+        const dv = Math.min(Math.abs(a - v), 360 - Math.abs(a - v));
+        if (dv < dh) {
+          targetAngle = v;
+          snappedV = true;
+        } else {
+          targetAngle = h;
+          snappedH = true;
+        }
+      } else if (v !== null) {
+        targetAngle = v;
+        snappedV = true;
+      } else if (h !== null) {
+        targetAngle = h;
+        snappedH = true;
+      }
+
+      if (targetAngle !== null) {
+        t.set("angle", targetAngle);
+        // Позначимо, що зараз зафіксовано — для візуального індикатора
+        t.__snappedHorizontal = snappedH;
+        t.__snappedVertical = snappedV;
+        try {
+          fCanvas.requestRenderAll();
+        } catch {}
+      } else {
+        // Скидаємо прапорці, якщо вийшли з зони автодоведення
+        if (t.__snappedHorizontal) t.__snappedHorizontal = false;
+        if (t.__snappedVertical) t.__snappedVertical = false;
+      }
+    };
+    fCanvas.on("object:rotating", onRotatingSnap);
 
     const originalSetDimensions = fCanvas.setDimensions.bind(fCanvas);
     const resizeToViewport = () => {
@@ -560,6 +622,28 @@ const Canvas = () => {
       ctx.lineWidth = OUTLINE_WIDTH_CSS / s;
       ctx.setLineDash([]);
       ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+      // Якщо об'єкт зафіксовано по горизонталі — малюємо синю пунктирну лінію по центру
+      if (active.__snappedHorizontal) {
+        const midY = (minY + maxY) / 2;
+        ctx.setLineDash([6 / s, 4 / s]);
+        ctx.strokeStyle = "rgba(0, 108, 164, 1)"; // синій індикатор
+        ctx.lineWidth = 2 / s;
+        ctx.beginPath();
+        ctx.moveTo(minX - 20 / s, midY);
+        ctx.lineTo(maxX + 20 / s, midY);
+        ctx.stroke();
+      }
+      // Якщо об'єкт зафіксовано по вертикалі — малюємо синю пунктирну лінію по центру
+      if (active.__snappedVertical) {
+        const midX = (minX + maxX) / 2;
+        ctx.setLineDash([6 / s, 4 / s]);
+        ctx.strokeStyle = "rgba(0, 108, 164, 1)"; // синій індикатор
+        ctx.lineWidth = 2 / s;
+        ctx.beginPath();
+        ctx.moveTo(midX, minY - 20 / s);
+        ctx.lineTo(midX, maxY + 20 / s);
+        ctx.stroke();
+      }
       ctx.restore();
     };
     fCanvas.on("before:render", clearTop);
@@ -586,6 +670,7 @@ const Canvas = () => {
       window.removeEventListener("resize", resizeToViewport);
       fCanvas.off("before:render", clearTop);
       fCanvas.off("after:render", drawFrame);
+      fCanvas.off("object:rotating", onRotatingSnap);
       fCanvas.off("object:added");
       fCanvas.dispose();
       if (canvasRef.current) canvasRef.current.__fabricCanvas = undefined;

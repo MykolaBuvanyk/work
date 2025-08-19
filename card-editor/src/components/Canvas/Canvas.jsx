@@ -182,6 +182,7 @@ const Canvas = () => {
       scaleRef.current = scaleToFit;
       fCanvas.calcOffset();
       fCanvas.renderAll();
+  try { fCanvas.fire('display:scale', { scale: scaleToFit }); } catch {}
     };
 
     fCanvas.setDimensions = (dimensions, options) => {

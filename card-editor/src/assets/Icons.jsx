@@ -855,7 +855,7 @@ export const Hole1 = (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect y="0.378662" width="38.3689" height="38.3689" rx="4" fill="white" />
+    <rect y="0.378662" width="39" height="39" rx="4" fill="white" />
     <rect
       x="0.5"
       y="0.878662"
@@ -879,8 +879,8 @@ export const Hole2 = (
     <rect
       x="0.271973"
       y="0.378662"
-      width="38.3689"
-      height="38.3689"
+      width="39"
+      height="39"
       rx="4"
       fill="white"
     />
@@ -906,15 +906,15 @@ export const Hole3 = (
     xmlns="http://www.w3.org/2000/svg"
   >
     <rect
-      x="0.271973"
+      x="0.543945"
       y="0.378662"
-      width="38.3689"
-      height="38.3689"
+      width="39"
+      height="39"
       rx="4"
       fill="white"
     />
     <rect
-      x="0.771973"
+      x="1.04395"
       y="0.878662"
       width="37.3689"
       height="37.3689"
@@ -922,7 +922,8 @@ export const Hole3 = (
       stroke="black"
       stroke-opacity="0.5"
     />
-    <circle cx="19.772" cy="7.87866" r="3.5" fill="black" />
+    <circle cx="7.04395" cy="20.8787" r="2.5" fill="black" />
+    <circle cx="33.0439" cy="20.8787" r="2.5" fill="black" />
   </svg>
 );
 
@@ -969,8 +970,8 @@ export const Hole5 = (
     <rect
       x="0.0874023"
       y="0.378662"
-      width="38.3689"
-      height="38.3689"
+      width="39"
+      height="39"
       rx="4"
       fill="white"
     />
@@ -1033,8 +1034,8 @@ export const Hole6 = (
     <rect
       x="0.359375"
       y="38.7476"
-      width="38.3689"
-      height="38.3689"
+      width="39"
+      height="39"
       rx="4"
       transform="rotate(-90 0.359375 38.7476)"
       fill="white"
@@ -1070,8 +1071,8 @@ export const Hole7 = (
     <rect
       x="39"
       y="0.378662"
-      width="38.3689"
-      height="38.3689"
+      width="39"
+      height="39"
       rx="4"
       transform="rotate(90 39 0.378662)"
       fill="white"

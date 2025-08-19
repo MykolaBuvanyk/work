@@ -60,11 +60,23 @@ const Canvas = () => {
     setCanvas(fCanvas);
 
     // Події вибору
+    const isHole = (o) => !!o && o.isCutElement && o.cutType === "hole";
     const isShapeWithProps = (o) =>
-      !!o && ["path", "rect", "circle", "ellipse"].includes(o.type);
+      !!o &&
+      ["path", "rect", "circle", "ellipse"].includes(o.type) &&
+      !isHole(o);
 
     const handleSelection = (e) => {
       const obj = e.selected?.[0];
+      if (isHole(obj)) {
+        // Забороняємо вибір отворів і закриваємо пропертіс
+        try {
+          fCanvas.discardActiveObject();
+        } catch {}
+        setActiveObject(null);
+        setShapePropertiesOpen(false);
+        return;
+      }
       if (isShapeWithProps(obj)) {
         setActiveObject(obj);
         setShapePropertiesOpen(true);
@@ -79,6 +91,7 @@ const Canvas = () => {
 
     fCanvas.on("mouse:down", (e) => {
       const t = e.target;
+      if (isHole(t)) return; // ігноруємо кліки по отворах
       if (isShapeWithProps(t)) {
         setActiveObject(t);
         setShapePropertiesOpen(true);
@@ -95,6 +108,23 @@ const Canvas = () => {
       "object:rotating",
       "object:moving",
     ].forEach((evt) => fCanvas.on(evt, mirrorIfPath));
+
+    // Утиліта: зробити отвір статичним (неклікабельним і нерухомим)
+    const hardenHole = (o) => {
+      if (!o) return;
+      try {
+        o.set({
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          lockMovementX: true,
+          lockMovementY: true,
+        });
+      } catch {}
+    };
 
     // Автодоведення при обертанні: якщо кут майже горизонтальний або вертикальний — фіксуємо точно
     const SNAP_THRESHOLD_DEG = 6; // збільшений поріг, щоб "липнути" виразніше
@@ -583,6 +613,14 @@ const Canvas = () => {
     fCanvas.on("selection:created", (e) => {
       const o = e.selected?.[0];
       if (o) {
+        if (isHole(o)) {
+          try {
+            fCanvas.discardActiveObject();
+          } catch {}
+          setActiveObject(null);
+          setShapePropertiesOpen(false);
+          return;
+        }
         ensureActionControls(o);
         fCanvas.requestRenderAll();
       }
@@ -590,6 +628,14 @@ const Canvas = () => {
     fCanvas.on("selection:updated", (e) => {
       const o = e.selected?.[0];
       if (o) {
+        if (isHole(o)) {
+          try {
+            fCanvas.discardActiveObject();
+          } catch {}
+          setActiveObject(null);
+          setShapePropertiesOpen(false);
+          return;
+        }
         ensureActionControls(o);
         fCanvas.requestRenderAll();
       }
@@ -654,6 +700,10 @@ const Canvas = () => {
     fCanvas.on("object:added", (e) => {
       const target = e.target;
       if (!target) return;
+      if (isHole(target)) {
+        hardenHole(target);
+        return; // не робимо активним
+      }
       // Ensure text objects compute aCoords before applying controls
       if (typeof target.setCoords === "function") {
         try {
@@ -664,6 +714,20 @@ const Canvas = () => {
       if (active && active === target) {
         ensureActionControls(active);
         fCanvas.requestRenderAll();
+      }
+    });
+
+    // Блокуємо переміщення отворів навіть якщо вони якось стали активними
+    fCanvas.on("object:moving", (e) => {
+      const t = e.target;
+      if (isHole(t)) {
+        try {
+          t.set({ left: t._lastLeft ?? t.left, top: t._lastTop ?? t.top });
+        } catch {}
+        return false;
+      } else if (t) {
+        t._lastLeft = t.left;
+        t._lastTop = t.top;
       }
     });
 

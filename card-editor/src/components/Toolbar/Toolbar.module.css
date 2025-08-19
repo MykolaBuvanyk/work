@@ -57,6 +57,15 @@
   stroke: rgba(0, 108, 164, 1) !important;
 }
 
+/* Неактивна іконка (до вибору фігури) */
+.disabledIcon {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+.disabledIcon svg {
+  pointer-events: none;
+}
+
 .colors svg {
   width: 36px;
   height: 36px;

@@ -31,6 +31,7 @@ const Canvas = () => {
     setCanvas,
     setActiveObject,
     setShapePropertiesOpen,
+    isCustomShapeMode,
     globalColors,
     canvas,
   } = useCanvasContext();
@@ -79,7 +80,8 @@ const Canvas = () => {
       }
       if (isShapeWithProps(obj)) {
         setActiveObject(obj);
-        setShapePropertiesOpen(true);
+        // Не відкривати модалку Shape Properties в режимі кастомної фігури
+        if (!isCustomShapeMode) setShapePropertiesOpen(true);
       }
     };
     fCanvas.on("selection:created", handleSelection);
@@ -94,7 +96,7 @@ const Canvas = () => {
       if (isHole(t)) return; // ігноруємо кліки по отворах
       if (isShapeWithProps(t)) {
         setActiveObject(t);
-        setShapePropertiesOpen(true);
+        if (!isCustomShapeMode) setShapePropertiesOpen(true);
       }
     });
 
@@ -212,7 +214,9 @@ const Canvas = () => {
       scaleRef.current = scaleToFit;
       fCanvas.calcOffset();
       fCanvas.renderAll();
-  try { fCanvas.fire('display:scale', { scale: scaleToFit }); } catch {}
+      try {
+        fCanvas.fire("display:scale", { scale: scaleToFit });
+      } catch {}
     };
 
     fCanvas.setDimensions = (dimensions, options) => {
@@ -641,6 +645,52 @@ const Canvas = () => {
       }
     });
 
+    // Прапор масштабування для показу підказки
+    fCanvas.on("object:scaling", (e) => {
+      const t = e?.target;
+      if (!t) return;
+      t.__isScaling = true;
+      t.__wasScaling = true;
+      if (t.__scaleExpireTimer) {
+        try {
+          clearTimeout(t.__scaleExpireTimer);
+        } catch {}
+        t.__scaleExpireTimer = null;
+      }
+      t.__scaleLabelExpireAt = null;
+      try {
+        fCanvas.requestRenderAll();
+      } catch {}
+    });
+    const clearScalingFlag = (e) => {
+      const t = e?.target;
+      if (!t) return;
+      if (t.__isScaling) t.__isScaling = false;
+      // Тримати підказку ще 1 секунду після завершення тягнення
+      if (t.__wasScaling) {
+        t.__wasScaling = false;
+        t.__scaleLabelExpireAt = Date.now() + 1000;
+        if (t.__scaleExpireTimer) {
+          try {
+            clearTimeout(t.__scaleExpireTimer);
+          } catch {}
+        }
+        t.__scaleExpireTimer = setTimeout(() => {
+          try {
+            t.__scaleLabelExpireAt = null;
+          } catch {}
+          try {
+            fCanvas.requestRenderAll();
+          } catch {}
+        }, 1000);
+        try {
+          fCanvas.requestRenderAll();
+        } catch {}
+      }
+    };
+    fCanvas.on("mouse:up", clearScalingFlag);
+    fCanvas.on("object:modified", clearScalingFlag);
+
     // Top overlay: тільки рамка (фон панелі малюється як окремий control)
     const clearTop = () => {
       const ctx = fCanvas.getTopContext
@@ -691,6 +741,70 @@ const Canvas = () => {
         ctx.lineTo(midX, maxY + 20 / s);
         ctx.stroke();
       }
+
+      // Підказка розміру під час розтягування та 1 секунду після
+      const nowTs = Date.now();
+      const showSizeHint =
+        active.__isScaling ||
+        (typeof active.__scaleLabelExpireAt === "number" &&
+          nowTs < active.__scaleLabelExpireAt);
+      if (showSizeHint) {
+        const wPx = Math.max(
+          0,
+          typeof active.getScaledWidth === "function"
+            ? active.getScaledWidth()
+            : maxX - minX
+        );
+        const hPx = Math.max(
+          0,
+          typeof active.getScaledHeight === "function"
+            ? active.getScaledHeight()
+            : maxY - minY
+        );
+        const wMm = pxToMm(wPx).toFixed(1);
+        const hMm = pxToMm(hPx).toFixed(1);
+        const label = `${wMm} × ${hMm} mm`;
+
+        // Внутрішня бейджка у верхньому лівому куті рамки
+        const padX = 8 / s;
+        const padY = 5 / s;
+        const r = 4 / s;
+        ctx.font = `${14 / s}px sans-serif`;
+        ctx.textBaseline = "top";
+        ctx.textAlign = "left";
+        const textW = ctx.measureText(label).width;
+        const textH = 16 / s; // приблизна висота рядка
+        const boxW = textW + padX * 2;
+        const boxH = textH + padY * 2;
+        const x = minX + 8 / s;
+        const y = minY + 8 / s;
+
+        // скруглений прямокутник
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + boxW - r, y);
+        ctx.quadraticCurveTo(x + boxW, y, x + boxW, y + r);
+        ctx.lineTo(x + boxW, y + boxH - r);
+        ctx.quadraticCurveTo(x + boxW, y + boxH, x + boxW - r, y + boxH);
+        ctx.lineTo(x + r, y + boxH);
+        ctx.quadraticCurveTo(x, y + boxH, x, y + boxH - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(0,0,0,0.75)";
+        ctx.fill();
+        ctx.lineWidth = 1 / s;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.stroke();
+
+        // текст
+        ctx.fillStyle = "#fff";
+        // трохи обвідки для контрасту на будь-якому фоні
+        ctx.strokeStyle = "rgba(0,0,0,0.8)";
+        ctx.lineWidth = 2 / s;
+        ctx.strokeText(label, x + padX, y + padY);
+        ctx.fillText(label, x + padX, y + padY);
+      }
       ctx.restore();
     };
     fCanvas.on("before:render", clearTop);
@@ -736,6 +850,9 @@ const Canvas = () => {
       fCanvas.off("before:render", clearTop);
       fCanvas.off("after:render", drawFrame);
       fCanvas.off("object:rotating", onRotatingSnap);
+      fCanvas.off("object:scaling");
+      fCanvas.off("mouse:up");
+      fCanvas.off("object:modified");
       fCanvas.off("object:added");
       fCanvas.dispose();
       if (canvasRef.current) canvasRef.current.__fabricCanvas = undefined;

@@ -8,7 +8,7 @@ const ShapeProperties = ({
   activeShape: propActiveShape,
   onClose: propOnClose,
 }) => {
-  const { canvas, shapePropertiesOpen, setShapePropertiesOpen } =
+  const { canvas, shapePropertiesOpen, setShapePropertiesOpen, globalColors } =
     useCanvasContext();
 
   // Використовуємо пропси якщо вони передані (з ShapeSelector), інакше контекст
@@ -55,6 +55,8 @@ const ShapeProperties = ({
       const updateProperties = () => {
         // Не оновлюємо якщо користувач зараз редагує вручну
         if (!isManuallyEditing) {
+          const isManualCut =
+            !!activeObject.isCutElement || activeObject.cutType === "manual";
           setProperties({
             width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
             height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -65,9 +67,12 @@ const ShapeProperties = ({
                 ? getCornerRadiusMmForRounded(activeObject)
                 : 0,
             thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+            // При активному Cut (manual) считаем Fill выключенным в UI
             fill:
-              activeObject.fill !== "transparent" && activeObject.fill !== "",
-            cut: activeObject.stroke === "#FFA500" || activeObject.isCutElement, // Перевіряємо чи є оранжевий колір або позначка cut
+              !isManualCut &&
+              activeObject.fill !== "transparent" &&
+              activeObject.fill !== "",
+            cut: isManualCut,
           });
         }
       };
@@ -104,6 +109,8 @@ const ShapeProperties = ({
     const updateProperties = () => {
       const currentActiveObject = canvas.getActiveObject();
       if (currentActiveObject === activeObject && !isManuallyEditing) {
+        const isManualCut =
+          !!activeObject.isCutElement || activeObject.cutType === "manual";
         setProperties({
           width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
           height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -114,8 +121,11 @@ const ShapeProperties = ({
               ? getCornerRadiusMmForRounded(activeObject)
               : 0,
           thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
-          fill: activeObject.fill !== "transparent" && activeObject.fill !== "",
-          cut: activeObject.stroke === "#FFA500" || activeObject.isCutElement,
+          fill:
+            !isManualCut &&
+            activeObject.fill !== "transparent" &&
+            activeObject.fill !== "",
+          cut: isManualCut,
         });
       }
     };
@@ -144,6 +154,16 @@ const ShapeProperties = ({
   // Оновлення властивостей активного об'єкта
   const updateProperty = (property, value) => {
     if (!canvas || !activeObject) return;
+
+    // Забороняємо зміну Fill, коли активний Cut (manual)
+    if (
+      property === "fill" &&
+      (properties.cut ||
+        activeObject.isCutElement ||
+        activeObject.cutType === "manual")
+    ) {
+      return;
+    }
 
     // Локально оновлюємо стан, щоб інпут одразу відображав нове значення
     setProperties((prev) => ({ ...prev, [property]: value }));
@@ -195,9 +215,10 @@ const ShapeProperties = ({
       }
       case "fill": {
         if (value) {
+          const themeStroke = globalColors?.textColor || "#000000";
           const fillColor = properties.cut
             ? "#FFA500"
-            : activeObject.stroke || "#000000";
+            : activeObject.stroke || themeStroke;
           activeObject.set("fill", fillColor);
         } else {
           activeObject.set("fill", "transparent");
@@ -205,8 +226,12 @@ const ShapeProperties = ({
         break;
       }
       case "cut": {
+        const themeStroke = globalColors?.textColor || "#000000";
+        const ORANGE = "#FFA500";
         if (value) {
-          activeObject.set("stroke", "#FFA500");
+          // Cut ON: имитация выреза — белая заливка, бордер цвета темы
+          // Бордер должен быть оранжевым, как раньше
+          activeObject.set("stroke", ORANGE);
           activeObject.set({
             isCutElement: true,
             cutType: "manual",
@@ -215,11 +240,10 @@ const ShapeProperties = ({
             lockScalingY: true,
             lockUniScaling: true,
           });
-          if (properties.fill) {
-            activeObject.set("fill", "#FFA500");
-          }
+          activeObject.set("fill", "#FFFFFF");
         } else {
-          activeObject.set("stroke", "#000000");
+          // Cut OFF: вернуть бордер темы, заливку согласно флагу Fill
+          activeObject.set("stroke", themeStroke);
           activeObject.set({
             isCutElement: false,
             cutType: null,
@@ -228,9 +252,10 @@ const ShapeProperties = ({
             lockScalingY: false,
             lockUniScaling: false,
           });
-          if (properties.fill) {
-            activeObject.set("fill", "#000000");
-          }
+          activeObject.set(
+            "fill",
+            properties.fill ? themeStroke : "transparent"
+          );
         }
         break;
       }

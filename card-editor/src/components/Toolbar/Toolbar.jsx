@@ -67,7 +67,13 @@ let InnerStrokeEllipseClass = null;
 let InnerStrokePolygonClass = null;
 
 const Toolbar = () => {
-  const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
+  const {
+    canvas,
+    globalColors,
+    updateGlobalColors,
+    isCustomShapeMode,
+    setIsCustomShapeMode,
+  } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
   const mmToPx = (mm) => (typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0);
@@ -96,6 +102,13 @@ const Toolbar = () => {
   const [isHolesSelected, setIsHolesSelected] = useState(false);
   const [activeHolesType, setActiveHolesType] = useState(1); // 1..7, за замовчуванням — без отворів
   const [selectedColorIndex, setSelectedColorIndex] = useState(0); // Індекс обраного кольору (0 - перший колір за замовчуванням)
+  // Користувач вибрав фігуру вручну (для розблокування останньої іконки в блоці 1)
+  const [hasUserPickedShape, setHasUserPickedShape] = useState(false);
+  // Режим кастомної фігури (редагування вершин) — тепер у контексті
+  const anchorsRef = useRef([]); // масив fabric.Circle для вершин
+  const customPointsRef = useRef(null); // поточні точки полігона в px
+  const lastValidPointsRef = useRef(null); // останні валідні точки
+  const initialOrientationRef = useRef(0); // початковий знак орієнтації
   // Set default selected shape on mount
   useEffect(() => {
     // Choose the default shape type, e.g., rectangle
@@ -124,6 +137,376 @@ const Toolbar = () => {
   const addShape = () => {
     setIsShapeOpen(true);
   };
+
+  // Обгортка для кліків по фігурах: виклик функції та фіксація вибору користувача
+  const withShapePick = (fn) => () => {
+    fn();
+    setHasUserPickedShape(true);
+    // При виборі нової фігури — виходимо з режиму кастомної фігури
+    if (isCustomShapeMode) exitCustomShapeMode();
+  };
+
+  // ======= Custom Shape (vertex editing) =======
+  const supportsCustomShape = (type) => {
+    // Підтримуємо лише фігури з кутами
+    const supported = new Set([
+      "rectangle",
+      "hexagon",
+      "octagon",
+      "triangle",
+      "arrowLeft",
+      "arrowRight",
+      "flag",
+      // "diamond", // якщо використовується
+    ]);
+    return supported.has(type);
+  };
+
+  const getCanvasSizePx = () => {
+    if (!canvas) return { width: 0, height: 0 };
+    const zoom = typeof canvas.getZoom === "function" ? canvas.getZoom() : 1;
+    return {
+      width: Math.round(canvas.getWidth() / (zoom || 1)),
+      height: Math.round(canvas.getHeight() / (zoom || 1)),
+    };
+  };
+
+  const getBasePointsForCurrentShape = () => {
+    if (!canvas) return [];
+    const { width: w, height: h } = getCanvasSizePx();
+    switch (currentShapeType) {
+      case "rectangle":
+        return [
+          { x: 0, y: 0 },
+          { x: w, y: 0 },
+          { x: w, y: h },
+          { x: 0, y: h },
+        ];
+      case "hexagon":
+        return [
+          { x: w * 0.25, y: 0 },
+          { x: w * 0.75, y: 0 },
+          { x: w, y: h * 0.5 },
+          { x: w * 0.75, y: h },
+          { x: w * 0.25, y: h },
+          { x: 0, y: h * 0.5 },
+        ];
+      case "octagon":
+        return [
+          { x: w * 0.3, y: 0 },
+          { x: w * 0.7, y: 0 },
+          { x: w, y: h * 0.3 },
+          { x: w, y: h * 0.7 },
+          { x: w * 0.7, y: h },
+          { x: w * 0.3, y: h },
+          { x: 0, y: h * 0.7 },
+          { x: 0, y: h * 0.3 },
+        ];
+      case "triangle":
+        return [
+          { x: w / 2, y: 0 },
+          { x: w, y: h },
+          { x: 0, y: h },
+        ];
+      case "adaptiveTriangle":
+        return getAdaptiveTrianglePoints(w, h);
+      case "arrowLeft":
+        return [
+          { x: 0, y: h * 0.5625 },
+          { x: w * 0.25, y: h * 0.1875 },
+          { x: w * 0.25, y: h * 0.375 },
+          { x: w, y: h * 0.375 },
+          { x: w, y: h * 0.75 },
+          { x: w * 0.25, y: h * 0.75 },
+          { x: w * 0.25, y: h * 0.9375 },
+        ];
+      case "arrowRight":
+        return [
+          { x: w, y: h * 0.5625 },
+          { x: w * 0.75, y: h * 0.1875 },
+          { x: w * 0.75, y: h * 0.375 },
+          { x: 0, y: h * 0.375 },
+          { x: 0, y: h * 0.75 },
+          { x: w * 0.75, y: h * 0.75 },
+          { x: w * 0.75, y: h * 0.9375 },
+        ];
+      case "flag":
+        return [
+          { x: 0, y: h * 0.4 },
+          { x: 0, y: h * 0.8 },
+          { x: w * 0.25, y: h * 0.7 },
+          { x: w * 0.5, y: h * 0.85 },
+          { x: w * 0.733, y: h * 0.7 },
+          { x: w * 0.733, y: h * 0.4 },
+          { x: w * 0.5, y: h * 0.35 },
+          { x: w * 0.292, y: 0 },
+          { x: 0, y: h * 0.4 },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const clampPoint = (p, w, h) => ({
+    x: Math.max(0, Math.min(w, p.x)),
+    y: Math.max(0, Math.min(h, p.y)),
+  });
+
+  const rebuildClipPathFromPoints = () => {
+    if (!canvas || !customPointsRef.current) return;
+    const { width: w, height: h } = getCanvasSizePx();
+    // гарантуємо межі
+    customPointsRef.current = customPointsRef.current.map((pt) =>
+      clampPoint(pt, w, h)
+    );
+    const rPx = isCustomShapeMode ? 0 : mmToPx(sizeValues.cornerRadius || 0);
+    const d = buildRoundedPolygonPath(customPointsRef.current, rPx);
+    const newCP = new fabric.Path(d, { absolutePositioned: true });
+    canvas.clipPath = newCP;
+    updateCanvasOutline();
+    updateExistingBorders();
+    // оновити отвори, якщо увімкнені
+    if (isHolesSelected && activeHolesType !== 1) {
+      recomputeHolesAfterResize();
+    }
+    canvas.renderAll();
+  };
+
+  const toDegrees = (rad) => (rad * 180) / Math.PI;
+  const angleAtVertex = (pts, i) => {
+    const n = pts.length;
+    if (n < 3) return 180;
+    const prev = pts[(i - 1 + n) % n];
+    const cur = pts[i];
+    const next = pts[(i + 1) % n];
+    const ux = prev.x - cur.x,
+      uy = prev.y - cur.y;
+    const vx = next.x - cur.x,
+      vy = next.y - cur.y;
+    const nu = Math.hypot(ux, uy) || 1;
+    const nv = Math.hypot(vx, vy) || 1;
+    const dot = (ux * vx + uy * vy) / (nu * nv);
+    const c = Math.max(-1, Math.min(1, dot));
+    return toDegrees(Math.acos(c));
+  };
+
+  const edgeLen = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const isAnglesOkAround = (pts, i, minAngleDeg) => {
+    const n = pts.length;
+    const idxs = [i, (i - 1 + n) % n, (i + 1) % n];
+    return idxs.every((k) => angleAtVertex(pts, k) >= minAngleDeg);
+  };
+
+  const isValidPolygonAtIndex = (pts, i, minAngle = 5.25, minEdge = 4) => {
+    const sameOrientation =
+      Math.sign(polygonSignedArea(pts) || 0) ===
+      Math.sign(initialOrientationRef.current || 0);
+    if (!sameOrientation) return false;
+    if (violatesSelfIntersection(pts, i)) return false;
+    const prevIdx = (i - 1 + pts.length) % pts.length;
+    const nextIdx = (i + 1) % pts.length;
+    if (edgeLen(pts[prevIdx], pts[i]) < minEdge) return false;
+    if (edgeLen(pts[i], pts[nextIdx]) < minEdge) return false;
+    if (!isAnglesOkAround(pts, i, minAngle)) return false;
+    return true;
+  };
+
+  const stepToValidPoint = (prev, cand, i) => {
+    const ptsBase = customPointsRef.current?.slice();
+    if (!ptsBase) return prev;
+    const dx = cand.x - prev.x;
+    const dy = cand.y - prev.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist === 0) return prev;
+    const step = 1; // px
+    const steps = Math.min(2000, Math.ceil(dist / step));
+    let best = { ...prev };
+    for (let s = 1; s <= steps; s++) {
+      const t = s / steps;
+      const p = { x: prev.x + dx * t, y: prev.y + dy * t };
+      const pts = ptsBase.slice();
+      pts[i] = p;
+      if (!isValidPolygonAtIndex(pts, i)) break;
+      best = p;
+    }
+    return best;
+  };
+
+  const polygonSignedArea = (pts) => {
+    let s = 0;
+    for (let i = 0, n = pts.length; i < n; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % n];
+      s += a.x * b.y - b.x * a.y;
+    }
+    return s / 2;
+  };
+
+  // Перевірка перетину відрізків (виключаючи сусідні ребра)
+  const segIntersect = (a, b, c, d) => {
+    const cross = (p, q, r) =>
+      (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+    const onSeg = (p, q, r) =>
+      Math.min(p.x, r.x) <= q.x &&
+      q.x <= Math.max(p.x, r.x) &&
+      Math.min(p.y, r.y) <= q.y &&
+      q.y <= Math.max(p.y, r.y);
+    const d1 = cross(a, b, c);
+    const d2 = cross(a, b, d);
+    const d3 = cross(c, d, a);
+    const d4 = cross(c, d, b);
+    if (
+      ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+      ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))
+    )
+      return true;
+    if (d1 === 0 && onSeg(a, c, b)) return true;
+    if (d2 === 0 && onSeg(a, d, b)) return true;
+    if (d3 === 0 && onSeg(c, a, d)) return true;
+    if (d4 === 0 && onSeg(c, b, d)) return true;
+    return false;
+  };
+
+  const violatesSelfIntersection = (pts, movedIndex) => {
+    const n = pts.length;
+    if (n < 4) return false;
+    // перевіряємо два ребра з movedIndex: (i-1,i) і (i,i+1)
+    const i = movedIndex;
+    const e1a = pts[(i - 1 + n) % n];
+    const e1b = pts[i];
+    const e2a = pts[i];
+    const e2b = pts[(i + 1) % n];
+    for (let j = 0; j < n; j++) {
+      const a = pts[j];
+      const b = pts[(j + 1) % n];
+      // пропускаємо суміжні ребра і те ж саме ребро
+      const skip =
+        j === i ||
+        (j + 1) % n === i ||
+        j === (i - 1 + n) % n ||
+        (j + 1) % n === (i - 1 + n) % n ||
+        j === (i + 1) % n ||
+        (j + 1) % n === (i + 1) % n;
+      if (skip) continue;
+      if (segIntersect(e1a, e1b, a, b) || segIntersect(e2a, e2b, a, b))
+        return true;
+    }
+    return false;
+  };
+
+  const removeAnchors = () => {
+    if (!canvas) return;
+    anchorsRef.current.forEach((a) => canvas.remove(a));
+    anchorsRef.current = [];
+  };
+
+  const positionAnchors = () => {
+    if (!canvas || !customPointsRef.current) return;
+    anchorsRef.current.forEach((a, i) => {
+      const pt = customPointsRef.current[i];
+      a.set({ left: pt.x, top: pt.y });
+      a.setCoords();
+    });
+  };
+
+  const createAnchors = () => {
+    if (!canvas || !customPointsRef.current) return;
+    removeAnchors();
+    const anchors = customPointsRef.current.map((pt, i) => {
+      const c = new fabric.Circle({
+        left: pt.x,
+        top: pt.y,
+        radius: 8,
+        fill: "#ffffff",
+        stroke: "#006CA4",
+        strokeWidth: 3,
+        shadow: new fabric.Shadow({
+          color: "#79b8df",
+          blur: 8,
+          offsetX: 0,
+          offsetY: 0,
+        }),
+        originX: "center",
+        originY: "center",
+        hasControls: false,
+        hasBorders: false,
+        hoverCursor: "grab",
+        name: "vertex",
+        vertexIndex: i,
+        excludeFromExport: true,
+        selectable: true,
+        evented: true,
+      });
+      c.on("mousedown", () => {
+        c.set({ hoverCursor: "grabbing" });
+      });
+      c.on("mouseup", () => {
+        c.set({ hoverCursor: "grab" });
+      });
+      c.on("moving", () => {
+        const { width: w, height: h } = getCanvasSizePx();
+        // кламп центру якоря в межах полотна
+        const candidate = {
+          x: Math.max(0, Math.min(w, c.left)),
+          y: Math.max(0, Math.min(h, c.top)),
+        };
+        const pts = customPointsRef.current.slice();
+        const prevValid = lastValidPointsRef.current?.[i] || pts[i];
+
+        // знайти найближчу валідну точку на відрізку prev->candidate
+        const best = stepToValidPoint(prevValid, candidate, i);
+        c.set({ left: best.x, top: best.y });
+        c.setCoords();
+
+        // якщо точка не змінилась – оновлюємо лише візуально якір
+        customPointsRef.current[i] = { ...best };
+        if (!lastValidPointsRef.current)
+          lastValidPointsRef.current = pts.slice();
+        lastValidPointsRef.current[i] = { ...best };
+        rebuildClipPathFromPoints();
+      });
+      return c;
+    });
+    anchors.forEach((a) => canvas.add(a));
+    anchorsRef.current = anchors;
+    anchors.forEach((a) => canvas.bringToFront(a));
+    canvas.renderAll();
+  };
+
+  const exitCustomShapeMode = () => {
+    setIsCustomShapeMode(false);
+    removeAnchors();
+    customPointsRef.current = null;
+    lastValidPointsRef.current = null;
+    canvas && canvas.renderAll();
+  };
+
+  const enterCustomShapeMode = () => {
+    if (!canvas || !supportsCustomShape(currentShapeType)) return;
+    // Ініціалізуємо точки від базової форми
+    const pts = getBasePointsForCurrentShape();
+    if (!pts || !pts.length) return;
+    customPointsRef.current = pts.map((p) => ({ x: p.x, y: p.y }));
+    lastValidPointsRef.current = customPointsRef.current.map((p) => ({ ...p }));
+    initialOrientationRef.current = polygonSignedArea(customPointsRef.current);
+    // Закриваємо модалку пропертей, якщо вона відкрита
+    try {
+      setIsShapePropertiesOpen && setIsShapePropertiesOpen(false);
+    } catch {}
+    setIsCustomShapeMode(true);
+    createAnchors();
+  };
+
+  const toggleCustomShapeMode = () => {
+    if (isCustomShapeMode) exitCustomShapeMode();
+    else enterCustomShapeMode();
+  };
+
+  // Якщо змінюється тип фігури — виходимо з режиму кастомної фігури
+  useEffect(() => {
+    if (isCustomShapeMode) exitCustomShapeMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentShapeType]);
 
   // Preserve current theme background when clearing/changing shape
   const clearCanvasPreserveTheme = () => {
@@ -155,8 +538,12 @@ const Toolbar = () => {
         }; // px
       };
 
+      // (Видалено mouse:down: заважав drag якорів)
+
       canvas.on("selection:created", () => {
         const obj = canvas.getActiveObject();
+        // Якщо клік по якорю кастомної фігури — ігноруємо будь-які проперті
+        if (obj && obj.name === "vertex") return;
         setActiveObject(obj);
         if (obj) {
           const wPx = Math.round(obj.width * obj.scaleX);
@@ -170,6 +557,7 @@ const Toolbar = () => {
       });
       canvas.on("selection:updated", () => {
         const obj = canvas.getActiveObject();
+        if (obj && obj.name === "vertex") return;
         setActiveObject(obj);
         if (obj) {
           const wPx = Math.round(obj.width * obj.scaleX);
@@ -212,9 +600,20 @@ const Toolbar = () => {
         height: Number(pxToMm(sz.height).toFixed(1)),
         cornerRadius: 0,
       });
+      // Блокуємо відкриття пропертей по dblclick на якорі
+      const onDblClick = (opt) => {
+        const t = opt?.target;
+        if (t && t.name === "vertex") {
+          if (isShapePropertiesOpen) setIsShapePropertiesOpen(false);
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+        }
+      };
+      canvas.on("mouse:dblclick", onDblClick);
     }
     return () => {
       if (canvas) {
+        canvas.off("mouse:dblclick");
         canvas.off("selection:created");
         canvas.off("selection:updated");
         canvas.off("selection:cleared");
@@ -367,18 +766,22 @@ const Toolbar = () => {
   // Adaptive half-circle that turns into rectangle with arced top as height grows beyond width/2
   const makeAdaptiveHalfCirclePath = (w, h) => {
     // w = full width, h = total height
-    if (w <= 0 || h <= 0) return '';
+    if (w <= 0 || h <= 0) return "";
     const R = w / 2; // radius of top semicircle
     const cpFactor = 0.45; // control point factor for Bezier approximation
     const cp = cpFactor * R;
     if (h <= R + 0.01) {
       // Pure half circle (flat base at y=R)
       // Two cubic Beziers approximation
-      return `M0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${R - cp} ${w} ${R} Z`;
+      return `M0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${
+        R - cp
+      } ${w} ${R} Z`;
     }
     // Extended shape: rectangle extension below y=R down to y=h
     // Path order: start bottom-left -> up left side to base of arc -> arc -> down right side -> bottom line -> close
-    return `M0 ${h} L0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${R - cp} ${w} ${R} L${w} ${h} Z`;
+    return `M0 ${h} L0 ${R} C0 ${R - cp} ${cp} 0 ${R} 0 C${w - cp} 0 ${w} ${
+      R - cp
+    } ${w} ${R} L${w} ${h} Z`;
   };
 
   const makeHalfCirclePolygonPoints = (w, h, segments = 40) => {
@@ -939,6 +1342,13 @@ const Toolbar = () => {
         break;
     }
   };
+
+  // При зміні діаметра — оновлюємо розміщення і розмір отворів
+  useEffect(() => {
+    if (!canvas) return;
+    if (!isHolesSelected || activeHolesType === 1) return;
+    recomputeHolesAfterResize();
+  }, [holesDiameter, canvas, isHolesSelected, activeHolesType]);
 
   // Функція для оновлення візуального контуру canvas
   const updateCanvasOutline = () => {
@@ -1751,12 +2161,15 @@ const Toolbar = () => {
       backgroundType,
     });
 
-    // Змінюємо колір всіх об'єктів на canvas (крім Cut елементів)
+    // Змінюємо колір всіх об'єктів на canvas, з урахуванням manual Cut
     const objects = canvas.getObjects();
 
     objects.forEach((obj) => {
-      // Пропускаємо об'єкти, які позначені як Cut елементи
-      if (obj.isCutElement) return;
+      // Cut елементи (manual): stroke = ORANGE, fill = білий (зберігаємо як раніше)
+      if (obj.isCutElement && obj.cutType === "manual") {
+        obj.set({ stroke: "#FFA500", fill: "#FFFFFF" });
+        return;
+      }
 
       if (obj.type === "i-text" || obj.type === "text") {
         obj.set({ fill: textColor });
@@ -3778,21 +4191,40 @@ const Toolbar = () => {
         </div>
         <div className={styles.icons}>
           <h3>Shape</h3>
-          <span onClick={addRectangle}>{Icon0}</span>
-          <span onClick={addCircle}>{Icon1}</span>
-          <span onClick={addEllipse}>{Icon2}</span>
-          <span onClick={addLock}>{Icon3}</span>
-          <span onClick={addCircleWithLine}>{Icon4}</span>
-          <span onClick={addCircleWithCross}>{Icon5}</span>
-          <span onClick={addAdaptiveTriangle}>{Icon6}</span>
-          <span onClick={addHalfCircle}>{Icon7}</span>
-          <span onClick={addExtendedHalfCircle}>{Icon8}</span>
-          <span onClick={addHexagon}>{Icon9}</span>
-          <span onClick={addOctagon}>{Icon10}</span>
-          <span onClick={addTriangleUp}>{Icon11}</span>
-          <span onClick={addArrowLeft}>{Icon12}</span>
-          <span onClick={addArrowRight}>{Icon13}</span>
-          <span onClick={addFlag}>{Icon14}</span>
+          <span onClick={withShapePick(addRectangle)}>{Icon0}</span>
+          <span onClick={withShapePick(addCircle)}>{Icon1}</span>
+          <span onClick={withShapePick(addEllipse)}>{Icon2}</span>
+          <span onClick={withShapePick(addLock)}>{Icon3}</span>
+          <span onClick={withShapePick(addCircleWithLine)}>{Icon4}</span>
+          <span onClick={withShapePick(addCircleWithCross)}>{Icon5}</span>
+          <span onClick={withShapePick(addAdaptiveTriangle)}>{Icon6}</span>
+          <span onClick={withShapePick(addHalfCircle)}>{Icon7}</span>
+          <span onClick={withShapePick(addExtendedHalfCircle)}>{Icon8}</span>
+          <span onClick={withShapePick(addHexagon)}>{Icon9}</span>
+          <span onClick={withShapePick(addOctagon)}>{Icon10}</span>
+          <span onClick={withShapePick(addTriangleUp)}>{Icon11}</span>
+          <span onClick={withShapePick(addArrowLeft)}>{Icon12}</span>
+          <span onClick={withShapePick(addArrowRight)}>{Icon13}</span>
+          {(() => {
+            const disabled =
+              !hasUserPickedShape || !supportsCustomShape(currentShapeType);
+            const title = disabled
+              ? !hasUserPickedShape
+                ? "Спочатку виберіть форму"
+                : "Недоступно для цієї фігури"
+              : isCustomShapeMode
+              ? "Вийти з Custom Shape"
+              : "Custom Shape";
+            return (
+              <span
+                onClick={disabled ? undefined : toggleCustomShapeMode}
+                className={disabled ? styles.disabledIcon : ""}
+                title={title}
+              >
+                {Icon14}
+              </span>
+            );
+          })()}
         </div>
       </div>
       {/* 2. Size */}
@@ -4123,7 +4555,7 @@ const Toolbar = () => {
             />
           </span>
         </div>
-        <ShapeProperties />
+        {!isCustomShapeMode && <ShapeProperties />}
       </div>
       {/* 5. Elements & Tools */}
       <div className={`${styles.section} ${styles.colorSection}`}>
@@ -4232,25 +4664,33 @@ const Toolbar = () => {
                   <div className={styles.inputGroup}>
                     <input
                       type="number"
-                      min={1}
+                      min={2.5}
+                      max={10}
+                      step={0.5}
                       value={holesDiameter}
                       onChange={(e) => {
-                        const val = Math.max(
-                          1,
-                          parseFloat(e.target.value) || 1
-                        );
+                        const raw = parseFloat(e.target.value);
+                        const val = isNaN(raw)
+                          ? 2.5
+                          : Math.max(2.5, Math.min(10, raw));
                         setHolesDiameter(val);
                       }}
                     />
                     <div className={styles.arrows}>
                       <i
                         className="fa-solid fa-chevron-up"
-                        onClick={() => setHolesDiameter((prev) => prev + 1)}
+                        onClick={() =>
+                          setHolesDiameter((prev) =>
+                            Math.min(10, Number((prev + 0.5).toFixed(1)))
+                          )
+                        }
                       />
                       <i
                         className="fa-solid fa-chevron-down"
                         onClick={() =>
-                          setHolesDiameter((prev) => (prev > 1 ? prev - 1 : 1))
+                          setHolesDiameter((prev) =>
+                            Math.max(2.5, Number((prev - 0.5).toFixed(1)))
+                          )
                         }
                       />
                     </div>

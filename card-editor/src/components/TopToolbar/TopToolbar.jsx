@@ -6,6 +6,7 @@ import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
 import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
+import PreviewModal from "../PreviewModal/PreviewModal";
 
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -14,6 +15,7 @@ const TopToolbar = ({ className }) => {
   const [zoom, setZoom] = useState(100); // user zoom (fabric zoom)
   const [displayScale, setDisplayScale] = useState(100); // actual viewport scale (auto-fit) relative to design size
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
+  const [isPreviewOpen, setPreviewOpen] = useState(false);
   
   const handleDelete = () => {
     if (!canvas) return;
@@ -187,7 +189,7 @@ const TopToolbar = ({ className }) => {
               Templates
             </li>
           </ul>
-          <div className={styles.topToolbarEL}>
+          <div className={styles.topToolbarEL} onClick={() => setPreviewOpen(true)} style={{cursor:'pointer'}}>
             <svg
               width="24"
               height="24"
@@ -485,6 +487,9 @@ const TopToolbar = ({ className }) => {
       {/* Додати модалку */}
       {isSaveAsModalOpen && (
         <SaveAsModal onClose={() => setSaveAsModalOpen(false)} />
+      )}
+      {isPreviewOpen && (
+        <PreviewModal canvas={canvas} onClose={() => setPreviewOpen(false)} />
       )}
     </div>
   );

@@ -169,7 +169,7 @@ export const Icon14 = (
   </svg>
 );
 
-export const A1 = (
+export const A1 = (props) => (
   <svg
     width="36"
     height="36"
@@ -184,8 +184,9 @@ export const A1 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 26.3628H9.59659L15.8778 8.90825H18.9205L25.2017 26.3628H22.4062L17.4716 12.0787H17.3352L12.392 26.3628ZM12.8608 19.5276H21.929V21.7435H12.8608V19.5276Z"
@@ -194,7 +195,7 @@ export const A1 = (
   </svg>
 );
 
-export const A2 = (
+export const A2 = (props) => (
   <svg
     width="36"
     height="36"
@@ -209,8 +210,9 @@ export const A2 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
@@ -219,39 +221,33 @@ export const A2 = (
   </svg>
 );
 
-export const A3 = (
-  <svg
-    width="39"
-    height="39"
-    viewBox="0 0 39 39"
+export const A3 = (props) => (
+    <svg
+    width="36"
+    height="36"
+    viewBox="0 0 36 36"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
+    <rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white" />
     <rect
-      x="2"
-      y="2.34326"
-      width="35.1323"
-      height="35.1323"
-      rx="4"
-      fill="white"
-    />
-    <rect
-      x="2"
-      y="2.34326"
-      width="35.1323"
-      height="35.1323"
-      rx="4"
-      stroke="#006CA4"
-      strokeWidth="3"
+      x="0.5"
+      y="0.843262"
+      width="34.1323"
+      height="34.1323"
+      rx="3.5"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
-      d="M14.392 27.3433H11.5966L17.8778 9.88872H20.9205L27.2017 27.3433H24.4062L19.4716 13.0592H19.3352L14.392 27.3433ZM14.8608 20.508H23.929V22.7239H14.8608V20.508Z"
+      d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
       fill="#FE0000"
     />
   </svg>
 );
 
-export const A4 = (
+export const A4 = (props) => (
   <svg
     width="36"
     height="36"
@@ -266,8 +262,9 @@ export const A4 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
@@ -276,7 +273,7 @@ export const A4 = (
   </svg>
 );
 
-export const A5 = (
+export const A5 = (props) => (
   <svg
     width="36"
     height="36"
@@ -291,8 +288,9 @@ export const A5 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
@@ -301,7 +299,7 @@ export const A5 = (
   </svg>
 );
 
-export const A6 = (
+export const A6 = (props) => (
   <svg
     width="36"
     height="36"
@@ -316,8 +314,9 @@ export const A6 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
@@ -326,7 +325,7 @@ export const A6 = (
   </svg>
 );
 
-export const A7 = (
+export const A7 = (props) => (
   <svg
     width="36"
     height="36"
@@ -341,8 +340,9 @@ export const A7 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z"
@@ -351,7 +351,7 @@ export const A7 = (
   </svg>
 );
 
-export const A8 = (
+export const A8 = (props) => (
   <svg
     width="36"
     height="37"
@@ -366,8 +366,9 @@ export const A8 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.8806H9.59659L15.8778 8.42607H18.9205L25.2017 25.8806H22.4062L17.4716 11.5965H17.3352L12.392 25.8806ZM12.8608 19.0454H21.929V21.2613H12.8608V19.0454Z"
@@ -376,7 +377,7 @@ export const A8 = (
   </svg>
 );
 
-export const A9 = (
+export const A9 = (props) => (
   <svg
     width="36"
     height="36"
@@ -396,8 +397,9 @@ export const A9 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z"
@@ -420,7 +422,7 @@ export const A9 = (
   </svg>
 );
 
-export const A10 = (
+export const A10 = (props) => (
   <svg
     width="36"
     height="36"
@@ -435,8 +437,9 @@ export const A10 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z"
@@ -445,7 +448,7 @@ export const A10 = (
   </svg>
 );
 
-export const A11 = (
+export const A11 = (props) => (
   <svg
     width="36"
     height="36"
@@ -460,8 +463,9 @@ export const A11 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.2166H9.59659L15.8778 7.76201H18.9205L25.2017 25.2166H22.4062L17.4716 10.9325H17.3352L12.392 25.2166ZM12.8608 18.3813H21.929V20.5972H12.8608V18.3813Z"
@@ -470,7 +474,7 @@ export const A11 = (
   </svg>
 );
 
-export const A12 = (
+export const A12 = (props) => (
   <svg
     width="36"
     height="36"
@@ -485,8 +489,9 @@ export const A12 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.2166H9.59659L15.8778 7.76201H18.9205L25.2017 25.2166H22.4062L17.4716 10.9325H17.3352L12.392 25.2166ZM12.8608 18.3813H21.929V20.5972H12.8608V18.3813Z"
@@ -495,7 +500,7 @@ export const A12 = (
   </svg>
 );
 
-export const A13 = (
+export const A13 = (props) => (
   <svg
     width="36"
     height="36"
@@ -511,8 +516,9 @@ export const A13 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z"
@@ -538,7 +544,7 @@ export const A13 = (
   </svg>
 );
 
-export const A14 = (
+export const A14 = (props) => (
   <svg
     width="36"
     height="36"
@@ -560,8 +566,9 @@ export const A14 = (
       width="34.1323"
       height="34.1323"
       rx="3.5"
-      stroke="black"
-      strokeOpacity="0.29"
+      stroke={props?.borderColor || "black"}
+      strokeOpacity={props?.borderOpacity || "0.29"}
+      strokeWidth={props?.strokeWidth || "1"}
     />
     <path
       d="M12.392 25.2949H9.59659L15.8778 7.84038H18.9205L25.2017 25.2949H22.4062L17.4716 11.0108H17.3352L12.392 25.2949ZM12.8608 18.4597H21.929V20.6756H12.8608V18.4597Z"

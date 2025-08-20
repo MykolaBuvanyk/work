@@ -31,6 +31,7 @@ const Canvas = () => {
     setCanvas,
     setActiveObject,
     setShapePropertiesOpen,
+    isCustomShapeMode,
     globalColors,
     canvas,
   } = useCanvasContext();
@@ -79,7 +80,8 @@ const Canvas = () => {
       }
       if (isShapeWithProps(obj)) {
         setActiveObject(obj);
-        setShapePropertiesOpen(true);
+        // Не відкривати модалку Shape Properties в режимі кастомної фігури
+        if (!isCustomShapeMode) setShapePropertiesOpen(true);
       }
     };
     fCanvas.on("selection:created", handleSelection);
@@ -94,7 +96,7 @@ const Canvas = () => {
       if (isHole(t)) return; // ігноруємо кліки по отворах
       if (isShapeWithProps(t)) {
         setActiveObject(t);
-        setShapePropertiesOpen(true);
+        if (!isCustomShapeMode) setShapePropertiesOpen(true);
       }
     });
 

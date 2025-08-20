@@ -60,7 +60,13 @@ import {
 } from "../../assets/Icons";
 
 const Toolbar = () => {
-  const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
+  const {
+    canvas,
+    globalColors,
+    updateGlobalColors,
+    isCustomShapeMode,
+    setIsCustomShapeMode,
+  } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
@@ -90,8 +96,7 @@ const Toolbar = () => {
   const [activeHolesType, setActiveHolesType] = useState(1); // 1..7, за замовчуванням — без отворів
   // Користувач вибрав фігуру вручну (для розблокування останньої іконки в блоці 1)
   const [hasUserPickedShape, setHasUserPickedShape] = useState(false);
-  // Режим кастомної фігури (редагування вершин)
-  const [isCustomShapeMode, setIsCustomShapeMode] = useState(false);
+  // Режим кастомної фігури (редагування вершин) — тепер у контексті
   const anchorsRef = useRef([]); // масив fabric.Circle для вершин
   const customPointsRef = useRef(null); // поточні точки полігона в px
   const lastValidPointsRef = useRef(null); // останні валідні точки
@@ -476,6 +481,10 @@ const Toolbar = () => {
     customPointsRef.current = pts.map((p) => ({ x: p.x, y: p.y }));
     lastValidPointsRef.current = customPointsRef.current.map((p) => ({ ...p }));
     initialOrientationRef.current = polygonSignedArea(customPointsRef.current);
+    // Закриваємо модалку пропертей, якщо вона відкрита
+    try {
+      setIsShapePropertiesOpen && setIsShapePropertiesOpen(false);
+    } catch {}
     setIsCustomShapeMode(true);
     createAnchors();
   };
@@ -1383,12 +1392,15 @@ const Toolbar = () => {
       backgroundType,
     });
 
-    // Змінюємо колір всіх об'єктів на canvas (крім Cut елементів)
+    // Змінюємо колір всіх об'єктів на canvas, з урахуванням manual Cut
     const objects = canvas.getObjects();
 
     objects.forEach((obj) => {
-      // Пропускаємо об'єкти, які позначені як Cut елементи
-      if (obj.isCutElement) return;
+      // Cut елементи (manual): stroke = ORANGE, fill = білий (зберігаємо як раніше)
+      if (obj.isCutElement && obj.cutType === "manual") {
+        obj.set({ stroke: "#FFA500", fill: "#FFFFFF" });
+        return;
+      }
 
       if (obj.type === "i-text" || obj.type === "text") {
         obj.set({ fill: textColor });
@@ -3675,7 +3687,7 @@ const Toolbar = () => {
             {A14}
           </span>
         </div>
-        <ShapeProperties />
+        {!isCustomShapeMode && <ShapeProperties />}
       </div>
       {/* 5. Elements & Tools */}
       <div className={`${styles.section} ${styles.colorSection}`}>

@@ -76,7 +76,8 @@ const Toolbar = () => {
   } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
-  const mmToPx = (mm) => (typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0);
+  const mmToPx = (mm) =>
+    typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
   const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
@@ -987,11 +988,17 @@ const Toolbar = () => {
         updateCanvasOutline();
 
         // Якщо вже був внутрішній бордер для adaptiveTriangle – перебудувати
-        const existingAdaptive = canvas.getObjects().find(o => o.isAdaptiveTriangleInnerBorder);
+        const existingAdaptive = canvas
+          .getObjects()
+          .find((o) => o.isAdaptiveTriangleInnerBorder);
         if (existingAdaptive) {
           let thicknessMm = 1;
-          if (existingAdaptive.innerStrokeWidth) thicknessMm = round1(pxToMm(existingAdaptive.innerStrokeWidth));
-          applyAdaptiveTriangleInnerBorder({ thicknessMm, color: existingAdaptive.stroke || '#000' });
+          if (existingAdaptive.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existingAdaptive.innerStrokeWidth));
+          applyAdaptiveTriangleInnerBorder({
+            thicknessMm,
+            color: existingAdaptive.stroke || "#000",
+          });
         }
 
         // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
@@ -1054,15 +1061,15 @@ const Toolbar = () => {
         case "lock": {
           // Rebuild polygon with baked scaling (no scaleX/scaleY) for consistent stroke thickness
           const src = lockPolygonPoints; // original points
-          const minX = Math.min(...src.map(p => p.x));
-          const minY = Math.min(...src.map(p => p.y));
-          const norm = src.map(p => ({ x: p.x - minX, y: p.y - minY }));
-          const origW = Math.max(...norm.map(p => p.x));
-          const origH = Math.max(...norm.map(p => p.y));
+          const minX = Math.min(...src.map((p) => p.x));
+          const minY = Math.min(...src.map((p) => p.y));
+          const norm = src.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+          const origW = Math.max(...norm.map((p) => p.x));
+          const origH = Math.max(...norm.map((p) => p.y));
           const shapeScaleFactor = 0.99; // match addLock
           const sx = (width / origW) * shapeScaleFactor;
           const sy = (height / origH) * shapeScaleFactor;
-          const scaled = norm.map(p => ({ x: p.x * sx, y: p.y * sy }));
+          const scaled = norm.map((p) => ({ x: p.x * sx, y: p.y * sy }));
           const polyW = origW * sx;
           const polyH = origH * sy;
           newClipPath = new fabric.Polygon(scaled, {
@@ -1141,7 +1148,8 @@ const Toolbar = () => {
 
         case "diamond":
           newClipPath = new fabric.Path(
-            `M${width * 0.5} 0L${width} ${height * 0.5}L${width * 0.5
+            `M${width * 0.5} 0L${width} ${height * 0.5}L${
+              width * 0.5
             } ${height}L0 ${height * 0.5}Z`,
             { absolutePositioned: true }
           );
@@ -1161,89 +1169,157 @@ const Toolbar = () => {
       updateExistingBorders();
 
       // Reapply inner border for current shape if it already exists
-      if (currentShapeType === 'rectangle') {
-        const existing = canvas.getObjects().find(o => o.isRectangleInnerBorder);
+      if (currentShapeType === "rectangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isRectangleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyRectangleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyRectangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'circle') {
-        const existing = canvas.getObjects().find(o => o.isCircleInnerBorder);
+      } else if (currentShapeType === "circle") {
+        const existing = canvas.getObjects().find((o) => o.isCircleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyCircleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'ellipse') {
-        const existing = canvas.getObjects().find(o => o.isEllipseInnerBorder);
+      } else if (currentShapeType === "ellipse") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isEllipseInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyEllipseInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyEllipseInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'halfCircle') {
-        const existing = canvas.getObjects().find(o => o.isHalfCircleInnerBorder);
+      } else if (currentShapeType === "halfCircle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isHalfCircleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyHalfCircleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyHalfCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'extendedHalfCircle') {
-        const existing = canvas.getObjects().find(o => o.isExtendedHalfCircleInnerBorder);
+      } else if (currentShapeType === "extendedHalfCircle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isExtendedHalfCircleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyExtendedHalfCircleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyExtendedHalfCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'hexagon') {
-        const existing = canvas.getObjects().find(o => o.isHexagonInnerBorder);
+      } else if (currentShapeType === "hexagon") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isHexagonInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyHexagonInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyHexagonInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'octagon') {
-        const existing = canvas.getObjects().find(o => o.isOctagonInnerBorder);
+      } else if (currentShapeType === "octagon") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isOctagonInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyOctagonInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyOctagonInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'triangle') {
-        const existing = canvas.getObjects().find(o => o.isTriangleInnerBorder);
+      } else if (currentShapeType === "triangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isTriangleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyTriangleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyTriangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'arrowLeft') {
-        const existing = canvas.getObjects().find(o => o.isArrowLeftInnerBorder);
+      } else if (currentShapeType === "arrowLeft") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isArrowLeftInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyArrowLeftInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyArrowLeftInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'arrowRight') {
-        const existing = canvas.getObjects().find(o => o.isArrowRightInnerBorder);
+      } else if (currentShapeType === "arrowRight") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isArrowRightInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyArrowRightInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyArrowRightInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'adaptiveTriangle') {
-        const existing = canvas.getObjects().find(o => o.isAdaptiveTriangleInnerBorder);
+      } else if (currentShapeType === "adaptiveTriangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isAdaptiveTriangleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyAdaptiveTriangleInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyAdaptiveTriangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
-      } else if (currentShapeType === 'lock') {
-        const existing = canvas.getObjects().find(o => o.isLockInnerBorder);
+      } else if (currentShapeType === "lock") {
+        const existing = canvas.getObjects().find((o) => o.isLockInnerBorder);
         if (existing) {
           let thicknessMm = 1;
-          if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyLockInnerBorder({ thicknessMm, color: existing.stroke || '#000' });
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyLockInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
         }
       }
 
@@ -1272,14 +1348,14 @@ const Toolbar = () => {
     if (!isHolesSelected || activeHolesType === 1) return; // коли «без отворів», нічого не робимо
 
     // Спеціальна логіка для замка
-    if (currentShapeType === 'lock') {
+    if (currentShapeType === "lock") {
       clearExistingHoles();
       const heightMm = pxToMm(canvas.height);
       const lockHoleDiameter = heightMm * 0.22;
       const lockHoleRadius = lockHoleDiameter / 2;
       // Позиція 10% від верху + радіус (щоб центр кола був на правильній відстані)
-      const lockHoleOffsetFromTop = heightMm * 0.10 + lockHoleRadius;
-      
+      const lockHoleOffsetFromTop = heightMm * 0.1 + lockHoleRadius;
+
       const hole = new fabric.Circle({
         left: canvas.width / 2, // по центру ширини
         top: mmToPx(lockHoleOffsetFromTop), // 10% від верху + радіус
@@ -1316,7 +1392,7 @@ const Toolbar = () => {
           2
         )} мм (тип ${activeHolesType}, Ø ${holesDiameter} мм)`
       );
-    } catch { }
+    } catch {}
 
     // Переставляємо отвори відповідно до активного типу
     switch (activeHolesType) {
@@ -1384,7 +1460,7 @@ const Toolbar = () => {
         const sx = cp.scaleX || 1;
         const sy = cp.scaleY || 1;
         if (sx !== 1 || sy !== 1) {
-          const flatPts = cp.points.map(p => ({ x: p.x * sx, y: p.y * sy }));
+          const flatPts = cp.points.map((p) => ({ x: p.x * sx, y: p.y * sy }));
           outlineShape = new fabric.Polygon(flatPts, {
             left: cp.left,
             top: cp.top,
@@ -1419,49 +1495,69 @@ const Toolbar = () => {
   const updateExistingBorders = () => {
     if (!canvas) return;
     // Зчитуємо поточні параметри вже доданого бордера (товщина/колір)
-    const existing = canvas.getObjects().find(o => o.isRectangleInnerBorder || o.isCircleInnerBorder || o.isEllipseInnerBorder || o.isHalfCircleInnerBorder || o.isExtendedHalfCircleInnerBorder || o.isHexagonInnerBorder || o.isOctagonInnerBorder || o.isTriangleInnerBorder || o.isArrowLeftInnerBorder || o.isArrowRightInnerBorder || o.isAdaptiveTriangleInnerBorder || o.isLockInnerBorder);
+    const existing = canvas
+      .getObjects()
+      .find(
+        (o) =>
+          o.isRectangleInnerBorder ||
+          o.isCircleInnerBorder ||
+          o.isEllipseInnerBorder ||
+          o.isHalfCircleInnerBorder ||
+          o.isExtendedHalfCircleInnerBorder ||
+          o.isHexagonInnerBorder ||
+          o.isOctagonInnerBorder ||
+          o.isTriangleInnerBorder ||
+          o.isArrowLeftInnerBorder ||
+          o.isArrowRightInnerBorder ||
+          o.isAdaptiveTriangleInnerBorder ||
+          o.isLockInnerBorder
+      );
     if (!existing) return; // немає що перебудовувати
     let thicknessMm = 1;
-    if (existing.innerStrokeWidth) thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-    const color = existing.stroke || '#000';
+    if (existing.innerStrokeWidth)
+      thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+    const color = existing.stroke || "#000";
     // Видаляємо всі borderShape
-    canvas.getObjects().filter(o => o.isBorderShape).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isBorderShape)
+      .forEach((o) => canvas.remove(o));
     // Перебудова згідно поточного типу
     switch (currentShapeType) {
-      case 'rectangle':
+      case "rectangle":
         applyRectangleInnerBorder({ thicknessMm, color });
         break;
-      case 'circle':
+      case "circle":
         applyCircleInnerBorder({ thicknessMm, color });
         break;
-      case 'ellipse':
+      case "ellipse":
         applyEllipseInnerBorder({ thicknessMm, color });
         break;
-      case 'halfCircle':
+      case "halfCircle":
         applyHalfCircleInnerBorder({ thicknessMm, color });
         break;
-      case 'extendedHalfCircle':
+      case "extendedHalfCircle":
         applyExtendedHalfCircleInnerBorder({ thicknessMm, color });
         break;
-      case 'hexagon':
+      case "hexagon":
         applyHexagonInnerBorder({ thicknessMm, color });
         break;
-      case 'octagon':
+      case "octagon":
         applyOctagonInnerBorder({ thicknessMm, color });
         break;
-      case 'triangle':
+      case "triangle":
         applyTriangleInnerBorder({ thicknessMm, color });
         break;
-      case 'arrowLeft':
+      case "arrowLeft":
         applyArrowLeftInnerBorder({ thicknessMm, color });
         break;
-      case 'arrowRight':
+      case "arrowRight":
         applyArrowRightInnerBorder({ thicknessMm, color });
         break;
-      case 'adaptiveTriangle':
+      case "adaptiveTriangle":
         applyAdaptiveTriangleInnerBorder({ thicknessMm, color });
         break;
-      case 'lock':
+      case "lock":
         applyLockInnerBorder({ thicknessMm, color });
         break;
       default:
@@ -1472,23 +1568,33 @@ const Toolbar = () => {
   // --- Inner border (shape border) infrastructure ---
   // Custom rect with inner stroke rendering (visible stroke fully inside bounds)
   const ensureInnerStrokeClasses = () => {
-    if (InnerStrokeRectClass && InnerStrokeCircleClass && InnerStrokeEllipseClass && InnerStrokePolygonClass) return;
+    if (
+      InnerStrokeRectClass &&
+      InnerStrokeCircleClass &&
+      InnerStrokeEllipseClass &&
+      InnerStrokePolygonClass
+    )
+      return;
     class InnerStrokeRect extends fabric.Rect {
-      static type = 'innerStrokeRect';
+      static type = "innerStrokeRect";
       constructor(options = {}) {
         super(options);
-        this.type = 'innerStrokeRect';
+        this.type = "innerStrokeRect";
         this.innerStrokeWidth = options.innerStrokeWidth || 1;
       }
       _render(ctx) {
         const strokeColor = this.stroke;
         const innerW = this.innerStrokeWidth;
         const fillColor = this.fill;
-        const w = this.width; const h = this.height;
-        const rx = this.rx || 0; const ry = this.ry || rx;
-        const x = -w / 2, y = -h / 2;
+        const w = this.width;
+        const h = this.height;
+        const rx = this.rx || 0;
+        const ry = this.ry || rx;
+        const x = -w / 2,
+          y = -h / 2;
         const drawRounded = () => {
-          const rxl = Math.min(rx, w / 2), ryl = Math.min(ry, h / 2);
+          const rxl = Math.min(rx, w / 2),
+            ryl = Math.min(ry, h / 2);
           ctx.moveTo(x + rxl, y);
           ctx.lineTo(x + w - rxl, y);
           ctx.quadraticCurveTo(x + w, y, x + w, y + ryl);
@@ -1502,7 +1608,8 @@ const Toolbar = () => {
         // Fill
         ctx.save();
         ctx.beginPath();
-        if (rx > 0 || ry > 0) drawRounded(); else ctx.rect(x, y, w, h);
+        if (rx > 0 || ry > 0) drawRounded();
+        else ctx.rect(x, y, w, h);
         if (fillColor) {
           ctx.fillStyle = fillColor;
           ctx.fill();
@@ -1513,59 +1620,168 @@ const Toolbar = () => {
           ctx.clip();
           ctx.lineWidth = innerW * 2;
           ctx.strokeStyle = strokeColor;
-          ctx.lineJoin = this.strokeLineJoin || 'miter';
-          ctx.lineCap = this.strokeLineCap || 'butt';
+          ctx.lineJoin = this.strokeLineJoin || "miter";
+          ctx.lineCap = this.strokeLineCap || "butt";
           ctx.miterLimit = this.strokeMiterLimit || 4;
           ctx.beginPath();
-          if (rx > 0 || ry > 0) drawRounded(); else ctx.rect(x, y, w, h);
+          if (rx > 0 || ry > 0) drawRounded();
+          else ctx.rect(x, y, w, h);
           ctx.stroke();
           ctx.restore();
         }
         ctx.restore();
       }
-      toObject(additional = []) { return { ...super.toObject(additional), innerStrokeWidth: this.innerStrokeWidth }; }
-      static fromObject(object, callback) { callback && callback(new InnerStrokeRect(object)); }
+      toObject(additional = []) {
+        return {
+          ...super.toObject(additional),
+          innerStrokeWidth: this.innerStrokeWidth,
+        };
+      }
+      static fromObject(object, callback) {
+        callback && callback(new InnerStrokeRect(object));
+      }
     }
     class InnerStrokeCircle extends fabric.Circle {
-      static type = 'innerStrokeCircle';
-      constructor(options = {}) { super(options); this.type = 'innerStrokeCircle'; this.innerStrokeWidth = options.innerStrokeWidth || 1; }
-      _render(ctx) {
-        const strokeColor = this.stroke, innerW = this.innerStrokeWidth, fillColor = this.fill, r = this.radius; ctx.save(); ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); } if (strokeColor && innerW) { ctx.save(); ctx.clip(); ctx.lineWidth = innerW * 2; ctx.strokeStyle = strokeColor; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } ctx.restore();
+      static type = "innerStrokeCircle";
+      constructor(options = {}) {
+        super(options);
+        this.type = "innerStrokeCircle";
+        this.innerStrokeWidth = options.innerStrokeWidth || 1;
       }
-      toObject(a = []) { return { ...super.toObject(a), innerStrokeWidth: this.innerStrokeWidth }; }
-      static fromObject(o, cb) { cb && cb(new InnerStrokeCircle(o)); }
-    }
-    class InnerStrokeEllipse extends fabric.Ellipse {
-      static type = 'innerStrokeEllipse';
-      constructor(options = {}) { super(options); this.type = 'innerStrokeEllipse'; this.innerStrokeWidth = options.innerStrokeWidth || 1; }
       _render(ctx) {
-        const strokeColor = this.stroke, innerW = this.innerStrokeWidth, fillColor = this.fill, rx = this.rx, ry = this.ry; ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); } if (strokeColor && innerW) { ctx.save(); ctx.clip(); ctx.lineWidth = innerW * 2; ctx.strokeStyle = strokeColor; ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); } ctx.restore();
-      }
-      toObject(a = []) { return { ...super.toObject(a), innerStrokeWidth: this.innerStrokeWidth }; }
-      static fromObject(o, cb) { cb && cb(new InnerStrokeEllipse(o)); }
-    }
-    class InnerStrokePolygon extends fabric.Polygon {
-      static type = 'innerStrokePolygon';
-      constructor(points = [], options = {}) { super(points, options); this.type = 'innerStrokePolygon'; this.innerStrokeWidth = options.innerStrokeWidth || 1; }
-      _render(ctx) {
-        if (!this.points || !this.points.length) return;
-        const strokeColor = this.stroke, innerW = this.innerStrokeWidth, fillColor = this.fill;
+        const strokeColor = this.stroke,
+          innerW = this.innerStrokeWidth,
+          fillColor = this.fill,
+          r = this.radius;
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(this.points[0].x - this.pathOffset.x, this.points[0].y - this.pathOffset.y);
-        for (let i = 1; i < this.points.length; i++) ctx.lineTo(this.points[i].x - this.pathOffset.x, this.points[i].y - this.pathOffset.y);
-        ctx.closePath();
-        if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        if (fillColor) {
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+        }
         if (strokeColor && innerW) {
-          ctx.save(); ctx.clip(); ctx.lineWidth = innerW * 2; ctx.strokeStyle = strokeColor; ctx.beginPath();
-          ctx.moveTo(this.points[0].x - this.pathOffset.x, this.points[0].y - this.pathOffset.y);
-          for (let i = 1; i < this.points.length; i++) ctx.lineTo(this.points[i].x - this.pathOffset.x, this.points[i].y - this.pathOffset.y);
-          ctx.closePath(); ctx.stroke(); ctx.restore();
+          ctx.save();
+          ctx.clip();
+          ctx.lineWidth = innerW * 2;
+          ctx.strokeStyle = strokeColor;
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
         }
         ctx.restore();
       }
-      toObject(a = []) { return { ...super.toObject(a), innerStrokeWidth: this.innerStrokeWidth }; }
-      static fromObject(o, cb) { cb && cb(new InnerStrokePolygon(o.points, o)); }
+      toObject(a = []) {
+        return {
+          ...super.toObject(a),
+          innerStrokeWidth: this.innerStrokeWidth,
+        };
+      }
+      static fromObject(o, cb) {
+        cb && cb(new InnerStrokeCircle(o));
+      }
+    }
+    class InnerStrokeEllipse extends fabric.Ellipse {
+      static type = "innerStrokeEllipse";
+      constructor(options = {}) {
+        super(options);
+        this.type = "innerStrokeEllipse";
+        this.innerStrokeWidth = options.innerStrokeWidth || 1;
+      }
+      _render(ctx) {
+        const strokeColor = this.stroke,
+          innerW = this.innerStrokeWidth,
+          fillColor = this.fill,
+          rx = this.rx,
+          ry = this.ry;
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+        if (fillColor) {
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+        }
+        if (strokeColor && innerW) {
+          ctx.save();
+          ctx.clip();
+          ctx.lineWidth = innerW * 2;
+          ctx.strokeStyle = strokeColor;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      toObject(a = []) {
+        return {
+          ...super.toObject(a),
+          innerStrokeWidth: this.innerStrokeWidth,
+        };
+      }
+      static fromObject(o, cb) {
+        cb && cb(new InnerStrokeEllipse(o));
+      }
+    }
+    class InnerStrokePolygon extends fabric.Polygon {
+      static type = "innerStrokePolygon";
+      constructor(points = [], options = {}) {
+        super(points, options);
+        this.type = "innerStrokePolygon";
+        this.innerStrokeWidth = options.innerStrokeWidth || 1;
+      }
+      _render(ctx) {
+        if (!this.points || !this.points.length) return;
+        const strokeColor = this.stroke,
+          innerW = this.innerStrokeWidth,
+          fillColor = this.fill;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(
+          this.points[0].x - this.pathOffset.x,
+          this.points[0].y - this.pathOffset.y
+        );
+        for (let i = 1; i < this.points.length; i++)
+          ctx.lineTo(
+            this.points[i].x - this.pathOffset.x,
+            this.points[i].y - this.pathOffset.y
+          );
+        ctx.closePath();
+        if (fillColor) {
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+        }
+        if (strokeColor && innerW) {
+          ctx.save();
+          ctx.clip();
+          ctx.lineWidth = innerW * 2;
+          ctx.strokeStyle = strokeColor;
+          ctx.beginPath();
+          ctx.moveTo(
+            this.points[0].x - this.pathOffset.x,
+            this.points[0].y - this.pathOffset.y
+          );
+          for (let i = 1; i < this.points.length; i++)
+            ctx.lineTo(
+              this.points[i].x - this.pathOffset.x,
+              this.points[i].y - this.pathOffset.y
+            );
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      toObject(a = []) {
+        return {
+          ...super.toObject(a),
+          innerStrokeWidth: this.innerStrokeWidth,
+        };
+      }
+      static fromObject(o, cb) {
+        cb && cb(new InnerStrokePolygon(o.points, o));
+      }
     }
     InnerStrokeRectClass = InnerStrokeRect;
     InnerStrokeCircleClass = InnerStrokeCircle;
@@ -1575,16 +1791,19 @@ const Toolbar = () => {
 
   // Add / update inner border for rectangle current shape
   const applyRectangleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'rectangle') return;
+    if (!canvas || currentShapeType !== "rectangle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1; // visible thickness in mm
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing rectangle border shapes
-    canvas.getObjects().filter(o => o.isRectangleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isRectangleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     // derive dimensions from clipPath
     const cp = canvas.clipPath;
-    if (!cp || cp.type !== 'rect') return;
+    if (!cp || cp.type !== "rect") return;
     const RectClass = InnerStrokeRectClass; // ensured above
     const rect = new RectClass({
       left: cp.left + cp.width / 2,
@@ -1593,9 +1812,9 @@ const Toolbar = () => {
       height: cp.height,
       rx: cp.rx || 0,
       ry: cp.ry || 0,
-      originX: 'center',
-      originY: 'center',
-      fill: 'transparent',
+      originX: "center",
+      originY: "center",
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1606,30 +1825,33 @@ const Toolbar = () => {
     });
     canvas.add(rect);
     // Remove existing outline if present (border replaces it)
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   // Add / update inner border for lock shape
   const applyLockInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'lock') return;
+    if (!canvas || currentShapeType !== "lock") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing
-    canvas.getObjects().filter(o => o.isLockInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isLockInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
-    if (!cp || cp.type !== 'polygon') return;
+    if (!cp || cp.type !== "polygon") return;
     const PolyClass = InnerStrokePolygonClass;
     // clone points
-    const pts = cp.points.map(p => ({ x: p.x, y: p.y }));
+    const pts = cp.points.map((p) => ({ x: p.x, y: p.y }));
     const poly = new PolyClass(pts, {
       left: cp.left,
       top: cp.top,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1645,21 +1867,24 @@ const Toolbar = () => {
   };
 
   const applyCircleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'circle') return;
+    if (!canvas || currentShapeType !== "circle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isCircleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isCircleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
-    if (!cp || cp.type !== 'circle') return;
+    if (!cp || cp.type !== "circle") return;
     const circle = new InnerStrokeCircleClass({
       left: cp.left,
       top: cp.top,
-      originX: cp.originX || 'center',
-      originY: cp.originY || 'center',
+      originX: cp.originX || "center",
+      originY: cp.originY || "center",
       radius: cp.radius,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1669,28 +1894,31 @@ const Toolbar = () => {
       isCircleInnerBorder: true,
     });
     canvas.add(circle);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyEllipseInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'ellipse') return;
+    if (!canvas || currentShapeType !== "ellipse") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isEllipseInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isEllipseInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
-    if (!cp || cp.type !== 'ellipse') return;
+    if (!cp || cp.type !== "ellipse") return;
     const ellipse = new InnerStrokeEllipseClass({
       left: cp.left,
       top: cp.top,
-      originX: cp.originX || 'center',
-      originY: cp.originY || 'center',
+      originX: cp.originX || "center",
+      originY: cp.originY || "center",
       rx: cp.rx,
       ry: cp.ry,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1700,29 +1928,33 @@ const Toolbar = () => {
       isEllipseInnerBorder: true,
     });
     canvas.add(ellipse);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   // Half-circle inner border (using polygon approximation of arc)
   const applyHalfCircleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'halfCircle') return;
+    if (!canvas || currentShapeType !== "halfCircle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isHalfCircleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isHalfCircleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
     if (!cp) return;
     let points;
-    if (cp.type === 'polygon') points = cp.points.map(p => ({ x: p.x, y: p.y }));
+    if (cp.type === "polygon")
+      points = cp.points.map((p) => ({ x: p.x, y: p.y }));
     else points = makeHalfCirclePolygonPoints(canvas.width, canvas.height);
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1732,28 +1964,33 @@ const Toolbar = () => {
       isHalfCircleInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyExtendedHalfCircleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'extendedHalfCircle') return;
+    if (!canvas || currentShapeType !== "extendedHalfCircle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isExtendedHalfCircleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isExtendedHalfCircleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
     if (!cp) return;
     let points;
-    if (cp.type === 'polygon') points = cp.points.map(p => ({ x: p.x, y: p.y }));
-    else points = makeAdaptiveHalfCirclePolygonPoints(canvas.width, canvas.height);
+    if (cp.type === "polygon")
+      points = cp.points.map((p) => ({ x: p.x, y: p.y }));
+    else
+      points = makeAdaptiveHalfCirclePolygonPoints(canvas.width, canvas.height);
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1763,7 +2000,7 @@ const Toolbar = () => {
       isExtendedHalfCircleInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -1772,18 +2009,22 @@ const Toolbar = () => {
   const sampleRoundedPolygon = (basePts, r, segments) => {
     // basePts: original corner points in order, r: corner radius (px), segments: samples along each corner curve
     const n = basePts.length;
-    if (!r || r <= 0) return basePts.map(p => ({ x: p.x, y: p.y }));
+    if (!r || r <= 0) return basePts.map((p) => ({ x: p.x, y: p.y }));
     const pts = [];
     for (let i = 0; i < n; i++) {
       const prev = basePts[(i - 1 + n) % n];
       const curr = basePts[i];
       const next = basePts[(i + 1) % n];
-      const v1x = curr.x - prev.x, v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x, v2y = next.y - curr.y;
+      const v1x = curr.x - prev.x,
+        v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x,
+        v2y = next.y - curr.y;
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1, u1y = v1y / len1;
-      const u2x = v2x / len2, u2y = v2y / len2;
+      const u1x = v1x / len1,
+        u1y = v1y / len1;
+      const u2x = v2x / len2,
+        u2y = v2y / len2;
       const rClamped = Math.min(r, len1 / 2, len2 / 2);
       const p1x = curr.x - u1x * rClamped;
       const p1y = curr.y - u1y * rClamped;
@@ -1794,8 +2035,14 @@ const Toolbar = () => {
       for (let s = 1; s < segments; s++) {
         const t = s / segments;
         const oneMinusT = 1 - t;
-        const bx = oneMinusT * oneMinusT * p1x + 2 * oneMinusT * t * curr.x + t * t * p2x;
-        const by = oneMinusT * oneMinusT * p1y + 2 * oneMinusT * t * curr.y + t * t * p2y;
+        const bx =
+          oneMinusT * oneMinusT * p1x +
+          2 * oneMinusT * t * curr.x +
+          t * t * p2x;
+        const by =
+          oneMinusT * oneMinusT * p1y +
+          2 * oneMinusT * t * curr.y +
+          t * t * p2y;
         pts.push({ x: bx, y: by });
       }
       pts.push({ x: p2x, y: p2y });
@@ -1830,19 +2077,26 @@ const Toolbar = () => {
   };
 
   const applyHexagonInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'hexagon') return;
+    if (!canvas || currentShapeType !== "hexagon") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isHexagonInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isHexagonInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const points = makeRoundedHexagonPolygonPoints(canvas.width, canvas.height, rPx);
+    const points = makeRoundedHexagonPolygonPoints(
+      canvas.width,
+      canvas.height,
+      rPx
+    );
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1852,25 +2106,32 @@ const Toolbar = () => {
       isHexagonInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyOctagonInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'octagon') return;
+    if (!canvas || currentShapeType !== "octagon") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isOctagonInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isOctagonInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const points = makeRoundedOctagonPolygonPoints(canvas.width, canvas.height, rPx);
+    const points = makeRoundedOctagonPolygonPoints(
+      canvas.width,
+      canvas.height,
+      rPx
+    );
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1880,18 +2141,21 @@ const Toolbar = () => {
       isOctagonInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyTriangleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'triangle') return;
+    if (!canvas || currentShapeType !== "triangle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isTriangleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isTriangleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     // build rounded triangle polygon approximation
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
     const base = [
@@ -1904,7 +2168,7 @@ const Toolbar = () => {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1914,18 +2178,21 @@ const Toolbar = () => {
       isTriangleInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyArrowLeftInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'arrowLeft') return;
+    if (!canvas || currentShapeType !== "arrowLeft") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isArrowLeftInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isArrowLeftInnerBorder)
+      .forEach((o) => canvas.remove(o));
     // Recreate path then sample its base polygon (approx corners defined in path generator before rounding)
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
     const base = [
@@ -1938,13 +2205,13 @@ const Toolbar = () => {
       { x: canvas.width * 0.25, y: canvas.height * 0.9375 },
     ];
     const minY = base.reduce((m, p) => Math.min(m, p.y), Infinity);
-    const shifted = base.map(p => ({ x: p.x, y: p.y - minY }));
+    const shifted = base.map((p) => ({ x: p.x, y: p.y - minY }));
     const points = sampleRoundedPolygon(shifted, rPx, 4);
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: minY,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1954,18 +2221,21 @@ const Toolbar = () => {
       isArrowLeftInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyArrowRightInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'arrowRight') return;
+    if (!canvas || currentShapeType !== "arrowRight") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isArrowRightInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isArrowRightInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
     const base = [
       { x: 0, y: canvas.height * 0.375 },
@@ -1977,13 +2247,13 @@ const Toolbar = () => {
       { x: 0, y: canvas.height * 0.75 },
     ];
     const minY = base.reduce((m, p) => Math.min(m, p.y), Infinity);
-    const shifted = base.map(p => ({ x: p.x, y: p.y - minY }));
+    const shifted = base.map((p) => ({ x: p.x, y: p.y - minY }));
     const points = sampleRoundedPolygon(shifted, rPx, 4);
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: minY,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -1993,18 +2263,21 @@ const Toolbar = () => {
       isArrowRightInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   const applyAdaptiveTriangleInnerBorder = (opts = {}) => {
-    if (!canvas || currentShapeType !== 'adaptiveTriangle') return;
+    if (!canvas || currentShapeType !== "adaptiveTriangle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas.getObjects().filter(o => o.isAdaptiveTriangleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isAdaptiveTriangleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const pts = getAdaptiveTrianglePoints(canvas.width, canvas.height);
     // We can optionally round corners using existing sampleRoundedPolygon; treat pts as base polygon
     const rPx = mmToPx(sizeValues.cornerRadius || 0);
@@ -2013,7 +2286,7 @@ const Toolbar = () => {
       left: 0,
       top: 0,
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -2023,7 +2296,7 @@ const Toolbar = () => {
       isAdaptiveTriangleInnerBorder: true,
     });
     canvas.add(poly);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -2224,6 +2497,19 @@ const Toolbar = () => {
       });
       canvas.add(text);
       canvas.setActiveObject(text);
+      try {
+        if (typeof text.enterEditing === "function") text.enterEditing();
+        const len = (text.text || "").length;
+        if (typeof text.setSelectionStart === "function")
+          text.setSelectionStart(len);
+        if (typeof text.setSelectionEnd === "function")
+          text.setSelectionEnd(len);
+        if (
+          text.hiddenTextarea &&
+          typeof text.hiddenTextarea.focus === "function"
+        )
+          text.hiddenTextarea.focus();
+      } catch {}
       canvas.renderAll();
     }
   };
@@ -2437,16 +2723,33 @@ const Toolbar = () => {
   const addBorder = () => {
     if (!canvas) return;
     // 1. Remove temporary outline so visual state is clean
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
 
     // 2. Detect current figure type (via state or clipPath)
     const shapeType = currentShapeType; // fallback could inspect canvas.clipPath.type
 
     // 3. If border already exists -> toggle off (remove it) for now
-    const existing = canvas.getObjects().filter(o => o.isBorderShape || o.isRectangleInnerBorder || o.isCircleInnerBorder || o.isEllipseInnerBorder || o.isHalfCircleInnerBorder || o.isExtendedHalfCircleInnerBorder || o.isHexagonInnerBorder || o.isOctagonInnerBorder || o.isTriangleInnerBorder || o.isArrowLeftInnerBorder || o.isArrowRightInnerBorder || o.isAdaptiveTriangleInnerBorder || o.isLockInnerBorder);
+    const existing = canvas
+      .getObjects()
+      .filter(
+        (o) =>
+          o.isBorderShape ||
+          o.isRectangleInnerBorder ||
+          o.isCircleInnerBorder ||
+          o.isEllipseInnerBorder ||
+          o.isHalfCircleInnerBorder ||
+          o.isExtendedHalfCircleInnerBorder ||
+          o.isHexagonInnerBorder ||
+          o.isOctagonInnerBorder ||
+          o.isTriangleInnerBorder ||
+          o.isArrowLeftInnerBorder ||
+          o.isArrowRightInnerBorder ||
+          o.isAdaptiveTriangleInnerBorder ||
+          o.isLockInnerBorder
+      );
     if (existing.length) {
-      existing.forEach(o => canvas.remove(o));
+      existing.forEach((o) => canvas.remove(o));
       // After removing, restore thin outline
       updateCanvasOutline();
       canvas.requestRenderAll();
@@ -2454,32 +2757,32 @@ const Toolbar = () => {
     }
 
     // 4. Apply baseline inner border depending on shape type
-    if (shapeType === 'rectangle') {
-      applyRectangleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'circle') {
-      applyCircleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'ellipse') {
-      applyEllipseInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'halfCircle') {
-      applyHalfCircleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'extendedHalfCircle') {
-      applyExtendedHalfCircleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'hexagon') {
-      applyHexagonInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'octagon') {
-      applyOctagonInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'triangle') {
-      applyTriangleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'arrowLeft') {
-      applyArrowLeftInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'arrowRight') {
-      applyArrowRightInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'adaptiveTriangle') {
-      applyAdaptiveTriangleInnerBorder({ thicknessMm: 1, color: '#000' });
-    } else if (shapeType === 'lock') {
-      applyLockInnerBorder({ thicknessMm: 1, color: '#000' });
+    if (shapeType === "rectangle") {
+      applyRectangleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "circle") {
+      applyCircleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "ellipse") {
+      applyEllipseInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "halfCircle") {
+      applyHalfCircleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "extendedHalfCircle") {
+      applyExtendedHalfCircleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "hexagon") {
+      applyHexagonInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "octagon") {
+      applyOctagonInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "triangle") {
+      applyTriangleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "arrowLeft") {
+      applyArrowLeftInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "arrowRight") {
+      applyArrowRightInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "adaptiveTriangle") {
+      applyAdaptiveTriangleInnerBorder({ thicknessMm: 1, color: "#000" });
+    } else if (shapeType === "lock") {
+      applyLockInnerBorder({ thicknessMm: 1, color: "#000" });
     } else {
-      console.warn('Border placeholder: shape not yet supported', shapeType);
+      console.warn("Border placeholder: shape not yet supported", shapeType);
       updateCanvasOutline(); // keep outline if nothing added
     }
     canvas.requestRenderAll();
@@ -2533,7 +2836,7 @@ const Toolbar = () => {
             minMm = Math.min(w, h);
             maxMm = Math.max(w, h);
           }
-        } catch { }
+        } catch {}
       }
       if (!minMm || !maxMm) {
         const ds =
@@ -2610,7 +2913,7 @@ const Toolbar = () => {
             2
           )} мм (тип 2, Ø ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
       const hole = new fabric.Circle({
         left: canvasWidth / 2,
         top: offsetPx,
@@ -2653,7 +2956,7 @@ const Toolbar = () => {
             2
           )} мм (тип 3, Ø ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
 
       // Лівий отвір
       const leftHole = new fabric.Circle({
@@ -2722,7 +3025,7 @@ const Toolbar = () => {
             2
           )} мм (тип 4, Ø ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
 
       // Верхній лівий
       const topLeft = new fabric.Circle({
@@ -2839,7 +3142,7 @@ const Toolbar = () => {
             2
           )} мм (тип 5, квадратні, розмір ≈ ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
 
       // Верхній лівий
       const topLeft = new fabric.Rect({
@@ -2959,7 +3262,7 @@ const Toolbar = () => {
             2
           )} мм (тип 6, Ø ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
 
       const leftHole = new fabric.Circle({
         left: offsetPx,
@@ -3003,7 +3306,7 @@ const Toolbar = () => {
             2
           )} мм (тип 7, Ø ${holesDiameter} мм)`
         );
-      } catch { }
+      } catch {}
 
       const rightHole = new fabric.Circle({
         left: canvasWidth - offsetPx,
@@ -3400,7 +3703,7 @@ const Toolbar = () => {
 
   // Фігури (Shape Icons) - встановлюють форму canvas
   const resetCornerRadiusState = () => {
-    setSizeValues(prev => ({ ...prev, cornerRadius: 0 }));
+    setSizeValues((prev) => ({ ...prev, cornerRadius: 0 }));
   };
 
   // Icon0 - Прямокутник (задає форму canvas)
@@ -3543,7 +3846,10 @@ const Toolbar = () => {
       // Нормалізуємо точки (0,0) у верхній лівий кут
       const minX = Math.min(...rawPoints.map((p) => p.x));
       const minY = Math.min(...rawPoints.map((p) => p.y));
-      const normPoints = rawPoints.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+      const normPoints = rawPoints.map((p) => ({
+        x: p.x - minX,
+        y: p.y - minY,
+      }));
       const origWidth = Math.max(...normPoints.map((p) => p.x));
       const origHeight = Math.max(...normPoints.map((p) => p.y));
 
@@ -3551,7 +3857,10 @@ const Toolbar = () => {
       const shapeScaleFactor = 0.99;
       const sx = (wPx / origWidth) * shapeScaleFactor;
       const sy = (hPx / origHeight) * shapeScaleFactor;
-      const scaledPoints = normPoints.map(p => ({ x: p.x * sx, y: p.y * sy }));
+      const scaledPoints = normPoints.map((p) => ({
+        x: p.x * sx,
+        y: p.y * sy,
+      }));
       const polyW = origWidth * sx;
       const polyH = origHeight * sy;
       const clipPath = new fabric.Polygon(scaledPoints, {
@@ -3563,7 +3872,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: targetWidthMM, height: targetHeightMM, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: targetWidthMM,
+        height: targetHeightMM,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3572,13 +3886,13 @@ const Toolbar = () => {
       clearExistingHoles();
       setIsHolesSelected(true);
       setActiveHolesType(2); // тип 2 (один отвір по центру зверху)
-      
+
       // Діаметр отвору 22% від висоти фігури
       const lockHoleDiameter = targetHeightMM * 0.22;
       const lockHoleRadius = lockHoleDiameter / 2;
       // Позиція 10% від верху фігури + радіус (щоб центр кола був на правильній відстані)
-      const lockHoleOffsetFromTop = targetHeightMM * 0.10 + lockHoleRadius;
-      
+      const lockHoleOffsetFromTop = targetHeightMM * 0.1 + lockHoleRadius;
+
       const hole = new fabric.Circle({
         left: wPx / 2, // по центру ширини
         top: mmToPx(lockHoleOffsetFromTop), // 10% від верху + радіус
@@ -3633,7 +3947,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 100, height: 100, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 100,
+        height: 100,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3668,7 +3987,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 100, height: 100, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 100,
+        height: 100,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3704,7 +4028,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 96, height: 105, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 96,
+        height: 105,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3739,7 +4068,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: baseWmm, height: baseHmm, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: baseWmm,
+        height: baseHmm,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3771,7 +4105,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: baseWmm, height: baseHmm, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: baseWmm,
+        height: baseHmm,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3829,7 +4168,9 @@ const Toolbar = () => {
       const d = makeRoundedHexagonPath(
         mmToPx(127),
         mmToPx(114),
-        currentShapeType === 'hexagon' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "hexagon"
+          ? mmToPx(sizeValues.cornerRadius || 0)
+          : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -3837,7 +4178,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 127, height: 114, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 127,
+        height: 114,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3863,7 +4209,9 @@ const Toolbar = () => {
       const d = makeRoundedOctagonPath(
         mmToPx(100),
         mmToPx(100),
-        currentShapeType === 'octagon' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "octagon"
+          ? mmToPx(sizeValues.cornerRadius || 0)
+          : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -3871,7 +4219,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 100, height: 100, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 100,
+        height: 100,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3897,7 +4250,9 @@ const Toolbar = () => {
       const d = makeRoundedTrianglePath(
         mmToPx(100),
         mmToPx(100),
-        currentShapeType === 'triangle' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "triangle"
+          ? mmToPx(sizeValues.cornerRadius || 0)
+          : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -3905,7 +4260,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 100, height: 100, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 100,
+        height: 100,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3931,7 +4291,9 @@ const Toolbar = () => {
       const d = makeRoundedArrowLeftPath(
         mmToPx(120),
         mmToPx(80),
-        currentShapeType === 'arrowLeft' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "arrowLeft"
+          ? mmToPx(sizeValues.cornerRadius || 0)
+          : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -3939,7 +4301,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 120, height: 80, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 120,
+        height: 80,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3965,7 +4332,9 @@ const Toolbar = () => {
       const d = makeRoundedArrowRightPath(
         mmToPx(120),
         mmToPx(80),
-        currentShapeType === 'arrowRight' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "arrowRight"
+          ? mmToPx(sizeValues.cornerRadius || 0)
+          : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -3973,7 +4342,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 120, height: 80, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 120,
+        height: 80,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -3999,7 +4373,7 @@ const Toolbar = () => {
       const d = makeRoundedFlagPath(
         mmToPx(720),
         mmToPx(600),
-        currentShapeType === 'flag' ? mmToPx(sizeValues.cornerRadius || 0) : 0
+        currentShapeType === "flag" ? mmToPx(sizeValues.cornerRadius || 0) : 0
       );
       const clipPath = new fabric.Path(d, { absolutePositioned: true });
 
@@ -4007,7 +4381,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 720, height: 600, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 720,
+        height: 600,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -4032,7 +4411,9 @@ const Toolbar = () => {
       canvas.setDimensions({ width: wPxD, height: hPxD });
 
       // Створюємо clipPath у формі ромба на весь canvas
-      const dPath = `M${wPxD / 2} 0L${wPxD} ${hPxD / 2}L${wPxD / 2} ${hPxD}L0 ${hPxD / 2}Z`;
+      const dPath = `M${wPxD / 2} 0L${wPxD} ${hPxD / 2}L${wPxD / 2} ${hPxD}L0 ${
+        hPxD / 2
+      }Z`;
       const clipPath = new fabric.Path(dPath, {
         absolutePositioned: true,
       });
@@ -4041,7 +4422,12 @@ const Toolbar = () => {
       canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
-      setSizeValues((prev) => ({ ...prev, width: 600, height: 600, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: 600,
+        height: 600,
+        cornerRadius: 0,
+      }));
 
       // Оновлюємо візуальний контур canvas
       updateCanvasOutline();
@@ -4418,9 +4804,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#000000", "#FFFFFF", "solid", 0)}
             title="Чорний текст, білий фон"
           >
-            <A1 
-              borderColor={selectedColorIndex === 0 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 0 ? "1" : "0.29"} 
+            <A1
+              borderColor={
+                selectedColorIndex === 0 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 0 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 0 ? "3" : "1"}
             />
           </span>
@@ -4428,9 +4816,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#0000FF", "#FFFFFF", "solid", 1)}
             title="Синій текст, білий фон"
           >
-            <A2 
-              borderColor={selectedColorIndex === 1 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 1 ? "1" : "0.29"} 
+            <A2
+              borderColor={
+                selectedColorIndex === 1 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 1 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 1 ? "3" : "1"}
             />
           </span>
@@ -4438,9 +4828,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FF0000", "#FFFFFF", "solid", 2)}
             title="Червоний текст, білий фон"
           >
-            <A3 
-              borderColor={selectedColorIndex === 2 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 2 ? "1" : "0.29"} 
+            <A3
+              borderColor={
+                selectedColorIndex === 2 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 2 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 2 ? "3" : "1"}
             />
           </span>
@@ -4448,9 +4840,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#000000", "solid", 3)}
             title="Білий текст, чорний фон"
           >
-            <A4 
-              borderColor={selectedColorIndex === 3 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 3 ? "1" : "0.29"} 
+            <A4
+              borderColor={
+                selectedColorIndex === 3 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 3 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 3 ? "3" : "1"}
             />
           </span>
@@ -4458,9 +4852,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#0000FF", "solid", 4)}
             title="Білий текст, синій фон"
           >
-            <A5 
-              borderColor={selectedColorIndex === 4 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 4 ? "1" : "0.29"} 
+            <A5
+              borderColor={
+                selectedColorIndex === 4 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 4 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 4 ? "3" : "1"}
             />
           </span>
@@ -4468,9 +4864,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#FF0000", "solid", 5)}
             title="Білий текст, червоний фон"
           >
-            <A6 
-              borderColor={selectedColorIndex === 5 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 5 ? "1" : "0.29"} 
+            <A6
+              borderColor={
+                selectedColorIndex === 5 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 5 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 5 ? "3" : "1"}
             />
           </span>
@@ -4478,9 +4876,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#00FF00", "solid", 6)}
             title="Білий текст, зелений фон"
           >
-            <A7 
-              borderColor={selectedColorIndex === 6 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 6 ? "1" : "0.29"} 
+            <A7
+              borderColor={
+                selectedColorIndex === 6 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 6 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 6 ? "3" : "1"}
             />
           </span>
@@ -4488,19 +4888,25 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#000000", "#FFFF00", "solid", 7)}
             title="Чорний текст, жовтий фон"
           >
-            <A8 
-              borderColor={selectedColorIndex === 7 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 7 ? "1" : "0.29"} 
+            <A8
+              borderColor={
+                selectedColorIndex === 7 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 7 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 7 ? "3" : "1"}
             />
           </span>
           <span
-            onClick={() => updateColorScheme("#000000", "#F0F0F0", "gradient", 8)}
+            onClick={() =>
+              updateColorScheme("#000000", "#F0F0F0", "gradient", 8)
+            }
             title="Чорний текст, градієнт фон"
           >
-            <A9 
-              borderColor={selectedColorIndex === 8 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 8 ? "1" : "0.29"} 
+            <A9
+              borderColor={
+                selectedColorIndex === 8 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 8 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 8 ? "3" : "1"}
             />
           </span>
@@ -4508,9 +4914,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#8B4513", "solid", 9)}
             title="Білий текст, коричневий фон"
           >
-            <A10 
-              borderColor={selectedColorIndex === 9 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 9 ? "1" : "0.29"} 
+            <A10
+              borderColor={
+                selectedColorIndex === 9 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 9 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 9 ? "3" : "1"}
             />
           </span>
@@ -4518,9 +4926,11 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#FFA500", "solid", 10)}
             title="Білий текст, оранжевий фон"
           >
-            <A11 
-              borderColor={selectedColorIndex === 10 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 10 ? "1" : "0.29"} 
+            <A11
+              borderColor={
+                selectedColorIndex === 10 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 10 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 10 ? "3" : "1"}
             />
           </span>
@@ -4528,29 +4938,39 @@ const Toolbar = () => {
             onClick={() => updateColorScheme("#FFFFFF", "#808080", "solid", 11)}
             title="Білий текст, сірий фон"
           >
-            <A12 
-              borderColor={selectedColorIndex === 11 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 11 ? "1" : "0.29"} 
+            <A12
+              borderColor={
+                selectedColorIndex === 11 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 11 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 11 ? "3" : "1"}
             />
           </span>
           <span
-            onClick={() => updateColorScheme("#000000", "#D2B48C", "texture", 12)}
+            onClick={() =>
+              updateColorScheme("#000000", "#D2B48C", "texture", 12)
+            }
             title="Чорний текст, фон дерева"
           >
-            <A13 
-              borderColor={selectedColorIndex === 12 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 12 ? "1" : "0.29"} 
+            <A13
+              borderColor={
+                selectedColorIndex === 12 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 12 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 12 ? "3" : "1"}
             />
           </span>
           <span
-            onClick={() => updateColorScheme("#FFFFFF", "#36454F", "texture", 13)}
+            onClick={() =>
+              updateColorScheme("#FFFFFF", "#36454F", "texture", 13)
+            }
             title="Білий текст, карбоновий фон"
           >
-            <A14 
-              borderColor={selectedColorIndex === 13 ? "rgba(0, 108, 164, 1)" : "black"} 
-              borderOpacity={selectedColorIndex === 13 ? "1" : "0.29"} 
+            <A14
+              borderColor={
+                selectedColorIndex === 13 ? "rgba(0, 108, 164, 1)" : "black"
+              }
+              borderOpacity={selectedColorIndex === 13 ? "1" : "0.29"}
               strokeWidth={selectedColorIndex === 13 ? "3" : "1"}
             />
           </span>

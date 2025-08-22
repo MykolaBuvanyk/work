@@ -16,7 +16,7 @@ const TopToolbar = ({ className }) => {
   const [displayScale, setDisplayScale] = useState(100); // actual viewport scale (auto-fit) relative to design size
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
-  
+
   const handleDelete = () => {
     if (!canvas) return;
 
@@ -40,7 +40,10 @@ const TopToolbar = ({ className }) => {
     // work in effective scale units (displayScale * zoom/100)
     const effective = displayScale * (zoom / 100);
     const newEffective = Math.min(effective + 1, 500);
-    const newZoom = Math.min(500, Math.max(10, (newEffective / displayScale) * 100));
+    const newZoom = Math.min(
+      500,
+      Math.max(10, (newEffective / displayScale) * 100)
+    );
     setZoom(newZoom);
     canvas.setZoom(newZoom / 100);
   };
@@ -49,14 +52,17 @@ const TopToolbar = ({ className }) => {
     if (!canvas) return;
     const effective = displayScale * (zoom / 100);
     const newEffective = Math.max(effective - 1, 10);
-    const newZoom = Math.min(500, Math.max(10, (newEffective / displayScale) * 100));
+    const newZoom = Math.min(
+      500,
+      Math.max(10, (newEffective / displayScale) * 100)
+    );
     setZoom(newZoom);
     canvas.setZoom(newZoom / 100);
   };
 
   const handleZoomInputChange = (e) => {
     // Accept input like "150%" or "150"; strip non-digits
-    const digits = e.target.value.replace(/[^0-9]/g, '');
+    const digits = e.target.value.replace(/[^0-9]/g, "");
     if (!digits) return; // keep current until user types number
     const value = parseInt(digits, 10);
     if (!isNaN(value) && value >= 10 && value <= 500 && displayScale > 0) {
@@ -67,7 +73,7 @@ const TopToolbar = ({ className }) => {
   };
 
   const handleZoomInputBlur = (e) => {
-    if (e.target.value === '' || isNaN(parseInt(e.target.value, 10))) {
+    if (e.target.value === "" || isNaN(parseInt(e.target.value, 10))) {
       // reset to current effective
       if (canvas) canvas.setZoom(zoom / 100);
     }
@@ -77,7 +83,24 @@ const TopToolbar = ({ className }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Delete" || e.key === "Backspace") {
-        handleDelete();
+        // Якщо фокус в полі вводу або активний текст в режимі редагування — не видаляти
+        const tag = (e.target && e.target.tagName) || "";
+        const isFormInput = /INPUT|TEXTAREA|SELECT/.test(tag);
+        let isEditingText = false;
+        try {
+          const obj = canvas?.getActiveObject?.();
+          isEditingText = !!(
+            obj &&
+            (obj.type === "i-text" ||
+              obj.type === "textbox" ||
+              obj.type === "text") &&
+            obj.isEditing
+          );
+        } catch {}
+        if (!isFormInput && !isEditingText) {
+          e.preventDefault();
+          handleDelete();
+        }
       }
     };
 
@@ -103,10 +126,13 @@ const TopToolbar = ({ className }) => {
         setDisplayScale(Math.round(e.scale * 100));
       }
     };
-    canvas.on('display:scale', handler);
+    canvas.on("display:scale", handler);
     // Try initial computation if methods exist
     try {
-      if (typeof canvas.getCssSize === 'function' && typeof canvas.getDesignSize === 'function') {
+      if (
+        typeof canvas.getCssSize === "function" &&
+        typeof canvas.getDesignSize === "function"
+      ) {
         const css = canvas.getCssSize();
         const design = canvas.getDesignSize();
         if (css?.width && design?.width) {
@@ -114,7 +140,7 @@ const TopToolbar = ({ className }) => {
         }
       }
     } catch {}
-    return () => canvas.off('display:scale', handler);
+    return () => canvas.off("display:scale", handler);
   }, [canvas]);
   return (
     <div className={`${styles.topToolbar} ${className}`}>
@@ -189,7 +215,11 @@ const TopToolbar = ({ className }) => {
               Templates
             </li>
           </ul>
-          <div className={styles.topToolbarEL} onClick={() => setPreviewOpen(true)} style={{cursor:'pointer'}}>
+          <div
+            className={styles.topToolbarEL}
+            onClick={() => setPreviewOpen(true)}
+            style={{ cursor: "pointer" }}
+          >
             <svg
               width="24"
               height="24"
@@ -463,8 +493,13 @@ const TopToolbar = ({ className }) => {
             {(() => {
               const effectiveScale = Math.round(displayScale * (zoom / 100));
               return (
-                <div className={styles.fontSizeControl} style={{display:'flex',alignItems:'center',gap:4}}>
-                  <button className={styles.sizeButton} onClick={handleZoomOut}>-</button>
+                <div
+                  className={styles.fontSizeControl}
+                  style={{ display: "flex", alignItems: "center", gap: 4 }}
+                >
+                  <button className={styles.sizeButton} onClick={handleZoomOut}>
+                    -
+                  </button>
                   <input
                     type="text"
                     className={styles.fontSizeInput}
@@ -474,7 +509,9 @@ const TopToolbar = ({ className }) => {
                     title="Фактичний масштаб (10-500%)"
                     inputMode="numeric"
                   />
-                  <button className={styles.sizeButton} onClick={handleZoomIn}>+</button>
+                  <button className={styles.sizeButton} onClick={handleZoomIn}>
+                    +
+                  </button>
                 </div>
               );
             })()}

@@ -96,6 +96,64 @@ const Canvas = () => {
       if (isShapeWithProps(t)) {
         setActiveObject(t);
         if (!isCustomShapeMode) setShapePropertiesOpen(true);
+        return;
+      }
+      // По кліку на текст: лише активуємо (панель намалюється в selection:created/updated)
+      if (
+        t &&
+        (t.type === "i-text" || t.type === "text" || t.type === "textbox")
+      ) {
+        try {
+          // Заборонити автоперехід у редагування на одинарному кліку
+          t.__allowNextEditing = false;
+          setActiveObject(t);
+          fCanvas.setActiveObject(t);
+          // panel appears on selection events; avoid forcing controls here to prevent flicker
+        } catch {}
+      }
+    });
+
+    // Подвійний клік по тексту — увімкнути редагування
+    fCanvas.on("mouse:dblclick", (e) => {
+      const t = e.target;
+      if (
+        t &&
+        (t.type === "i-text" || t.type === "text" || t.type === "textbox")
+      ) {
+        try {
+          t.__allowNextEditing = true;
+          if (typeof t.enterEditing === "function") t.enterEditing();
+          const len = (t.text || "").length;
+          if (typeof t.setSelectionStart === "function")
+            t.setSelectionStart(len);
+          if (typeof t.setSelectionEnd === "function") t.setSelectionEnd(len);
+          if (t.hiddenTextarea && typeof t.hiddenTextarea.focus === "function")
+            t.hiddenTextarea.focus();
+          fCanvas.requestRenderAll();
+        } catch {}
+      }
+    });
+
+    // Заборона авто-редагування, якщо не дозволено (щоб панель не зникала після одинарного кліку)
+    fCanvas.on("text:editing:entered", (e) => {
+      const t = e?.target;
+      if (
+        t &&
+        (t.type === "i-text" || t.type === "text" || t.type === "textbox")
+      ) {
+        if (!t.__allowNextEditing) {
+          try {
+            if (typeof t.exitEditing === "function") t.exitEditing();
+          } catch {}
+          try {
+            fCanvas.setActiveObject(t);
+            ensureActionControls(t);
+            fCanvas.requestRenderAll();
+          } catch {}
+        } else {
+          // спожити дозвіл тільки для цього входу
+          t.__allowNextEditing = false;
+        }
       }
     });
 

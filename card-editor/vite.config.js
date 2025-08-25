@@ -8,6 +8,6 @@ export default defineConfig({
     include: ['fabric'],
   },
   server: {
-    allowedHosts: ['2b0edf83ed45.ngrok-free.app'],
+    allowedHosts: ['491a598e4f8b.ngrok-free.app'],
   },
 })

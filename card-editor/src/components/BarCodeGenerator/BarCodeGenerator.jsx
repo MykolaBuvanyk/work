@@ -12,7 +12,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     codeType: "CODE128",
   });
 
-  // Закрытие по клику вне модального окна
+  // Закриття по клику вне модального окна
   useEffect(() => {
     if (!isOpen) return;
     const handleOutside = (e) => {
@@ -56,7 +56,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         displayValue: true,
         fontSize: 14,
         textMargin: 5,
-        margin: 10,
+        margin: 0, // removed outer padding
         background: globalColors?.backgroundColor || "#FFFFFF",
         lineColor: globalColors?.textColor || "#000000",
       });

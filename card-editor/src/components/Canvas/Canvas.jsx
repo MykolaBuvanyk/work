@@ -1,7 +1,6 @@
 // (Corrupted duplicate block removed above – clean implementation below)
 import { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
-import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import styles from "./Canvas.module.css";
@@ -892,11 +891,37 @@ const Canvas = () => {
           const { left, top, scaleX, scaleY, angle, originX, originY } = o;
           let svgText;
           try {
-            svgText = await QRCode.toString(o.qrText, {
-              type: "svg",
-              margin: 1,
-              color: { dark: textColor, light: bgColor },
-            });
+            // Використовуємо qrcode-generator для повного контролю
+            const qrGenerator = (await import('qrcode-generator')).default;
+            const qr = qrGenerator(0, 'M');
+            qr.addData(o.qrText);
+            qr.make();
+            
+            const moduleCount = qr.getModuleCount();
+            const cellSize = 4;
+            const size = moduleCount * cellSize;
+            
+            // Створюємо SVG без quiet zone та мікровідступів
+            let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
+            svg += `<rect width="${size}" height="${size}" fill="${bgColor}"/>`;
+            
+            // Модулі QR коду - використовуємо один великий path
+            let pathData = '';
+            for (let row = 0; row < moduleCount; row++) {
+              for (let col = 0; col < moduleCount; col++) {
+                if (qr.isDark(row, col)) {
+                  const x = col * cellSize;
+                  const y = row * cellSize;
+                  pathData += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`;
+                }
+              }
+            }
+            
+            if (pathData) {
+              svg += `<path d="${pathData}" fill="${textColor}" fill-rule="evenodd"/>`;
+            }
+            svg += '</svg>';
+            svgText = svg;
           } catch {
             continue;
           }
@@ -949,7 +974,7 @@ const Canvas = () => {
               displayValue: true,
               fontSize: 14,
               textMargin: 5,
-              margin: 10,
+              margin: 0, // removed outer padding
               background: bgColor,
               lineColor: textColor,
             });

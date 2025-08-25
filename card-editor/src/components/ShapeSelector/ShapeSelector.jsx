@@ -62,15 +62,11 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     const centerX = (canvasW || 0) / 2;
     const centerY = (canvasH || 0) / 2;
 
-    const strokeColor =
-      (globalColors && (globalColors.textColor || globalColors.strokeColor)) ||
-      "#000000";
-
     const baseOptions = {
       left: centerX,
       top: centerY,
-      fill: "transparent",
-      stroke: strokeColor,
+      fill: globalColors.fillColor || "transparent",
+      stroke: globalColors.strokeColor || "#000000",
       strokeWidth: 2,
       originX: "center",
       originY: "center",
@@ -207,18 +203,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     if (shape) {
       // Позначаємо тип фігури для подальшої логіки UI
-      shape.set({
-        shapeType: shapeType,
-        // За замовчуванням: Fill OFF, Cut OFF, бордер = колір тексту теми
-        fill: "transparent",
-        stroke: strokeColor,
-        isCutElement: false,
-        cutType: null,
-        hasControls: true,
-        lockScalingX: false,
-        lockScalingY: false,
-        lockUniScaling: false,
-      });
+      shape.set({ shapeType: shapeType });
       if (shapeType === "round") {
         // Спеціальний прапорець для кола, навіть якщо це Path
         shape.set({ isCircle: true });

@@ -9,6 +9,14 @@ const IconMenu = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [availableIcons, setAvailableIcons] = useState({});
   const dropdownRef = useRef(null);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Закрытие по клику вне модального окна
   useEffect(() => {
@@ -224,7 +232,11 @@ const IconMenu = ({ isOpen, onClose }) => {
 
   const addIcon = async (iconName) => {
     if (!canvas) return;
-    setIsLoading(true);
+    // Закриваємо модалку одразу після вибору іконки
+    try {
+      if (typeof onClose === "function") onClose();
+    } catch {}
+    if (mountedRef.current) setIsLoading(true);
     try {
       const response = await fetch(`/src/assets/images/icon/${iconName}`);
       if (!response.ok)
@@ -232,12 +244,18 @@ const IconMenu = ({ isOpen, onClose }) => {
       const svgText = await response.text();
       try {
         const svgObject = await createSVGFromText(svgText, iconName);
+        try {
+          svgObject.set && svgObject.set({ fromIconMenu: true });
+        } catch {}
         canvas.add(svgObject);
         canvas.setActiveObject(svgObject);
         canvas.renderAll();
       } catch (svgError) {
         console.warn(`SVG error for ${iconName}:`, svgError);
         const imageObject = await createImageFromSVG(svgText, iconName);
+        try {
+          imageObject.set && imageObject.set({ fromIconMenu: true });
+        } catch {}
         canvas.add(imageObject);
         canvas.setActiveObject(imageObject);
         canvas.renderAll();
@@ -246,8 +264,7 @@ const IconMenu = ({ isOpen, onClose }) => {
       console.error(`Error loading ${iconName}:`, error);
       createPlaceholder(iconName);
     } finally {
-      setIsLoading(false);
-      onClose(); // Використовуємо пропс onClose замість setIsOpen(false)
+      if (mountedRef.current) setIsLoading(false);
     }
   };
 
@@ -287,6 +304,9 @@ const IconMenu = ({ isOpen, onClose }) => {
       originX: "center",
       originY: "center",
     });
+    try {
+      group.set && group.set({ fromIconMenu: true });
+    } catch {}
 
     canvas.add(group);
     canvas.setActiveObject(group);

@@ -67,6 +67,9 @@ const Canvas = () => {
       ["path", "rect", "circle", "ellipse"].includes(o.type) &&
       !isHole(o);
 
+    const isFromIconMenu = (o) =>
+      !!o &&
+      (o.fromIconMenu === true || (o.data && o.data.fromIconMenu === true));
     const handleSelection = (e) => {
       const obj = e.selected?.[0];
       if (isHole(obj)) {
@@ -78,10 +81,17 @@ const Canvas = () => {
         setShapePropertiesOpen(false);
         return;
       }
+      // IconMenu elements: never open Shape Properties
+      if (obj && isFromIconMenu(obj)) {
+        setActiveObject(obj);
+        setShapePropertiesOpen(false);
+        return;
+      }
       if (isShapeWithProps(obj)) {
         setActiveObject(obj);
-        // Не відкривати модалку Shape Properties в режимі кастомної фігури
-        if (!isCustomShapeMode) setShapePropertiesOpen(true);
+        // Не відкривати модалку Shape Properties в режимі кастомної фігури та для іконок з IconMenu
+        if (!isCustomShapeMode && !isFromIconMenu(obj))
+          setShapePropertiesOpen(true);
       }
     };
     fCanvas.on("selection:created", handleSelection);
@@ -94,9 +104,16 @@ const Canvas = () => {
     fCanvas.on("mouse:down", (e) => {
       const t = e.target;
       if (isHole(t)) return; // ігноруємо кліки по отворах
+      // IconMenu elements: активуємо без відкриття Shape Properties
+      if (t && isFromIconMenu(t)) {
+        setActiveObject(t);
+        setShapePropertiesOpen(false);
+        return;
+      }
       if (isShapeWithProps(t)) {
         setActiveObject(t);
-        if (!isCustomShapeMode) setShapePropertiesOpen(true);
+        if (!isCustomShapeMode && !isFromIconMenu(t))
+          setShapePropertiesOpen(true);
         return;
       }
       // По кліку на текст: лише активуємо (панель намалюється в selection:created/updated)
@@ -428,15 +445,88 @@ const Canvas = () => {
         },
       });
 
-    const duplicateHandler = (evt, transform) => {
-      const target = transform.target;
+    const duplicateHandler = async (evt, transform) => {
+      const target = transform?.target;
       if (!target) return true;
-      target.clone((cloned) => {
-        cloned.set({ left: target.left + 10, top: target.top + 10 });
+      try {
+        const cloned = await target.clone();
+        // Preserve IconMenu flag so modal stays closed for clones
+        try {
+          const isFromIcon =
+            target.fromIconMenu === true ||
+            (target.data && target.data.fromIconMenu === true);
+          if (isFromIcon) {
+            cloned.fromIconMenu = true;
+            if (!cloned.data) cloned.data = {};
+            cloned.data.fromIconMenu = true;
+          }
+        } catch {}
+        const nextLeft = (target.left || 0) + 10;
+        const nextTop = (target.top || 0) + 10;
+        cloned.set({ left: nextLeft, top: nextTop });
+        if (typeof cloned.setCoords === "function") {
+          try {
+            cloned.setCoords();
+          } catch {}
+        }
         fCanvas.add(cloned);
         fCanvas.setActiveObject(cloned);
+        try {
+          ensureActionControls(cloned);
+        } catch {}
+        try {
+          if (
+            cloned.fromIconMenu === true ||
+            (cloned.data && cloned.data.fromIconMenu === true)
+          ) {
+            setShapePropertiesOpen(false);
+          }
+        } catch {}
         fCanvas.requestRenderAll();
-      });
+      } catch {}
+      return true;
+    };
+    // Копіювання без буфера обміну: додає такий самий елемент зі зміщенням +10 вправо і -10 вгору
+    const copyHandler = async (evt, transform) => {
+      const target = transform?.target;
+      if (!target) return true;
+      try {
+        const cloned = await target.clone();
+        // Preserve IconMenu flag so modal stays closed for clones
+        try {
+          const isFromIcon =
+            target.fromIconMenu === true ||
+            (target.data && target.data.fromIconMenu === true);
+          if (isFromIcon) {
+            cloned.fromIconMenu = true;
+            if (!cloned.data) cloned.data = {};
+            cloned.data.fromIconMenu = true;
+          }
+        } catch {}
+        // Зміщення: вправо на 10, вгору на 10
+        const nextLeft = (target.left || 0) + 10;
+        const nextTop = (target.top || 0) - 10;
+        cloned.set({ left: nextLeft, top: nextTop });
+        if (typeof cloned.setCoords === "function") {
+          try {
+            cloned.setCoords();
+          } catch {}
+        }
+        fCanvas.add(cloned);
+        fCanvas.setActiveObject(cloned);
+        try {
+          ensureActionControls(cloned);
+        } catch {}
+        try {
+          if (
+            cloned.fromIconMenu === true ||
+            (cloned.data && cloned.data.fromIconMenu === true)
+          ) {
+            setShapePropertiesOpen(false);
+          }
+        } catch {}
+        fCanvas.requestRenderAll();
+      } catch {}
       return true;
     };
     const deleteHandler = (evt, transform) => {
@@ -445,6 +535,69 @@ const Canvas = () => {
       fCanvas.remove(t);
       fCanvas.discardActiveObject();
       fCanvas.requestRenderAll();
+      return true;
+    };
+    // Центрування: по вертикалі (Y) та по горизонталі (X) відносно зовнішньої фігури (дизайн-області)
+    const centerVerticallyHandler = (evt, transform) => {
+      const t = transform?.target;
+      if (!t) return true;
+      try {
+        const { height: H } = designRef.current || {};
+        const currentCenter = t.getCenterPoint();
+        const newCenter = new fabric.Point(
+          currentCenter.x,
+          (H || fCanvas.getHeight()) / 2
+        );
+        t.setPositionByOrigin(newCenter, "center", "center");
+        t.setCoords();
+        // Flash horizontal dashed guide for 1s (centering along Y)
+        try {
+          t.__centerFlashHExpireAt = Date.now() + 1000;
+          if (t.__centerFlashHTimer) {
+            clearTimeout(t.__centerFlashHTimer);
+          }
+          t.__centerFlashHTimer = setTimeout(() => {
+            try {
+              t.__centerFlashHExpireAt = null;
+            } catch {}
+            try {
+              fCanvas.requestRenderAll();
+            } catch {}
+          }, 1000);
+        } catch {}
+        fCanvas.requestRenderAll();
+      } catch {}
+      return true;
+    };
+    const centerHorizontallyHandler = (evt, transform) => {
+      const t = transform?.target;
+      if (!t) return true;
+      try {
+        const { width: W } = designRef.current || {};
+        const currentCenter = t.getCenterPoint();
+        const newCenter = new fabric.Point(
+          (W || fCanvas.getWidth()) / 2,
+          currentCenter.y
+        );
+        t.setPositionByOrigin(newCenter, "center", "center");
+        t.setCoords();
+        // Flash vertical dashed guide for 1s (centering along X)
+        try {
+          t.__centerFlashVExpireAt = Date.now() + 1000;
+          if (t.__centerFlashVTimer) {
+            clearTimeout(t.__centerFlashVTimer);
+          }
+          t.__centerFlashVTimer = setTimeout(() => {
+            try {
+              t.__centerFlashVExpireAt = null;
+            } catch {}
+            try {
+              fCanvas.requestRenderAll();
+            } catch {}
+          }, 1000);
+        } catch {}
+        fCanvas.requestRenderAll();
+      } catch {}
       return true;
     };
     const ensureActionControls = (obj) => {
@@ -599,24 +752,24 @@ const Canvas = () => {
         {
           key: "a",
           render: aIconRenderer,
-          handler: () => {},
-          cursor: "default",
+          handler: copyHandler,
+          cursor: "pointer",
           w: 24,
           h: 24,
         },
         {
           key: "b",
           render: bIconRenderer,
-          handler: () => {},
-          cursor: "default",
+          handler: centerHorizontallyHandler,
+          cursor: "pointer",
           w: 24,
           h: 24,
         },
         {
           key: "c",
           render: cIconRenderer,
-          handler: () => {},
-          cursor: "default",
+          handler: centerVerticallyHandler,
+          cursor: "pointer",
           w: 24,
           h: 24,
         },
@@ -624,7 +777,7 @@ const Canvas = () => {
           key: "duplicate",
           render: duplicateIconRenderer,
           handler: duplicateHandler,
-          cursor: "copy",
+          cursor: "pointer",
           w: 24,
           h: 24,
         },
@@ -800,6 +953,41 @@ const Canvas = () => {
         ctx.stroke();
       }
 
+      // Пунктирні лінії на 1 секунду після центровання — через ВСЕ полотно (дизайн-область)
+      const nowTs2 = Date.now();
+      const W =
+        (designRef.current && designRef.current.width) || fCanvas.getWidth();
+      const H =
+        (designRef.current && designRef.current.height) || fCanvas.getHeight();
+      // Горизонтальна лінія по центру полотна (Y): якщо центрували по вертикалі/Y
+      if (
+        typeof active.__centerFlashHExpireAt === "number" &&
+        nowTs2 < active.__centerFlashHExpireAt
+      ) {
+        const midY = H / 2;
+        ctx.setLineDash([6 / s, 4 / s]);
+        ctx.strokeStyle = "rgba(0, 108, 164, 1)";
+        ctx.lineWidth = 2 / s;
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(W, midY);
+        ctx.stroke();
+      }
+      // Вертикальна лінія по центру полотна (X): якщо центрували по горизонталі/X
+      if (
+        typeof active.__centerFlashVExpireAt === "number" &&
+        nowTs2 < active.__centerFlashVExpireAt
+      ) {
+        const midX = W / 2;
+        ctx.setLineDash([6 / s, 4 / s]);
+        ctx.strokeStyle = "rgba(0, 108, 164, 1)";
+        ctx.lineWidth = 2 / s;
+        ctx.beginPath();
+        ctx.moveTo(midX, 0);
+        ctx.lineTo(midX, H);
+        ctx.stroke();
+      }
+
       // Підказка розміру під час розтягування та 1 секунду після
       const nowTs = Date.now();
       const showSizeHint =
@@ -876,6 +1064,19 @@ const Canvas = () => {
         hardenHole(target);
         return; // не робимо активним
       }
+      // Якщо додано з IconMenu — одразу робимо активним та показуємо панель
+      try {
+        if (
+          target.fromIconMenu === true ||
+          (target.data && target.data.fromIconMenu === true)
+        ) {
+          fCanvas.setActiveObject(target);
+          ensureActionControls(target);
+          setShapePropertiesOpen(false);
+          fCanvas.requestRenderAll();
+          return;
+        }
+      } catch {}
       // Ensure text objects compute aCoords before applying controls
       if (typeof target.setCoords === "function") {
         try {

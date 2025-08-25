@@ -1100,13 +1100,12 @@ const Toolbar = () => {
       { x: centerX - triangleWidth / 2, y: triangleHeight },
       { x: centerX + triangleWidth / 2, y: triangleHeight },
     ];
-    const isFull =
-      triangleWidth <= width + 0.01 && triangleHeight <= height + 0.01;
-    if (isFull) return { points: triangle, isFull: true };
-    return {
-      points: clipPolygonWithRect(triangle, width, height),
-      isFull: false,
-    };
+    // Визначаємо повну форму фактом відсутності обрізання (після кліпінгу рівно 3 вершини)
+    const clipped = clipPolygonWithRect(triangle, width, height);
+    if (Array.isArray(clipped) && clipped.length === 3) {
+      return { points: triangle, isFull: true };
+    }
+    return { points: clipped, isFull: false };
   };
 
   const updateSize = (overrides = {}) => {
@@ -1160,18 +1159,28 @@ const Toolbar = () => {
 
         // Створюємо clipPath з оновленими розмірами
         const triData = getAdaptiveTriangleData(finalWidth, finalHeight);
-        let pts = triData.points;
         const rCorner = mmToPx(cornerRadiusMm || 0);
-        if (rCorner > 0) {
-          if (triData.isFull) {
-            const seg = Math.max(12, Math.min(32, Math.round(rCorner / 1.2)));
+        if (triData.isFull) {
+          // Повна фігура (3 кути): округлюємо всі 3 вершини як у звичайного трикутника, але одразу полігоном
+          let pts = triData.points;
+          if (rCorner > 0) {
+            const seg = Math.max(12, Math.min(36, Math.round(rCorner / 1.2)));
             pts = roundTriangle(pts, rCorner, seg);
-          } else {
+          }
+          canvas.clipPath = new fabric.Polygon(pts, {
+            absolutePositioned: true,
+          });
+        } else {
+          // Обрізаний варіант (5 кутів): залишаємо поточну polygon-логіку з округленням лише опуклих кутів
+          let pts = triData.points;
+          if (rCorner > 0) {
             const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
             pts = sampleRoundedPolygon(pts, rCorner, seg);
           }
+          canvas.clipPath = new fabric.Polygon(pts, {
+            absolutePositioned: true,
+          });
         }
-        canvas.clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
 
         // Оновлюємо контур
         updateCanvasOutline();
@@ -1181,11 +1190,10 @@ const Toolbar = () => {
           .getObjects()
           .find((o) => o.isAdaptiveTriangleInnerBorder);
         if (existingAdaptive) {
-          let thicknessMm = 1;
-          if (existingAdaptive.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existingAdaptive.innerStrokeWidth));
+          const thicknessPxOverride =
+            existingAdaptive.innerStrokeWidth || mmToPx(1);
           applyAdaptiveTriangleInnerBorder({
-            thicknessMm,
+            thicknessPx: thicknessPxOverride,
             color: existingAdaptive.stroke || "#000",
           });
         }
@@ -1559,7 +1567,7 @@ const Toolbar = () => {
 
       // Оновлюємо візуальний контур і обводки
       updateCanvasOutline();
-      updateExistingBorders();
+      // Бордер відновлюється окремо у викликах-обробниках після resize/radius, щоб уникати подвійної перебудови
 
       // Border reapply is handled by updateExistingBorders() above to avoid stale radius/state.
 
@@ -1893,7 +1901,11 @@ const Toolbar = () => {
         applyOctagonInnerBorder({ thicknessMm, color });
         break;
       case "triangle":
-        applyTriangleInnerBorder({ thicknessMm, color });
+        applyTriangleInnerBorder({
+          thicknessMm,
+          color,
+          cornerRadiusMm: overrides.cornerRadiusMm,
+        });
         break;
       case "arrowLeft":
         applyArrowLeftInnerBorder({
@@ -1910,7 +1922,15 @@ const Toolbar = () => {
         });
         break;
       case "adaptiveTriangle":
-        applyAdaptiveTriangleInnerBorder({ thicknessMm, color });
+        {
+          const thicknessPxOverride =
+            existing.innerStrokeWidth || mmToPx(thicknessMm);
+          applyAdaptiveTriangleInnerBorder({
+            thicknessPx: thicknessPxOverride,
+            color,
+          });
+          break;
+        }
         break;
       case "lock":
         applyLockInnerBorder({ thicknessMm, color });
@@ -2111,6 +2131,10 @@ const Toolbar = () => {
           ctx.save();
           ctx.clip();
           ctx.lineWidth = innerW * 2;
+          // Use round joins/caps to avoid apparent stroke thickening at sharp corners
+          ctx.lineJoin = this.strokeLineJoin || "round";
+          ctx.lineCap = this.strokeLineCap || "round";
+          ctx.miterLimit = this.strokeMiterLimit || 2;
           ctx.strokeStyle = strokeColor;
           ctx.beginPath();
           ctx.moveTo(
@@ -3018,21 +3042,46 @@ const Toolbar = () => {
       .getObjects()
       .filter((o) => o.isTriangleInnerBorder)
       .forEach((o) => canvas.remove(o));
-    // build rounded triangle polygon approximation
-    const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const base = [
-      { x: canvas.width / 2, y: 0 },
-      { x: canvas.width, y: canvas.height },
-      { x: 0, y: canvas.height },
-    ];
-    const points = sampleRoundedPolygon(base, rPx, 6);
-    const poly = new InnerStrokePolygonClass(points, {
-      left: 0,
-      top: 0,
+
+    // Используем тот же path, что и у clipPath, с тем же радиусом
+    const rPx = mmToPx((opts.cornerRadiusMm ?? sizeValues.cornerRadius) || 0);
+    const d = makeRoundedTrianglePath(canvas.width, canvas.height, rPx);
+    const pathToPolygonPoints = (pathD) => {
+      try {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", pathD);
+        const total = path.getTotalLength();
+        const targetCount = Math.min(1200, Math.max(90, Math.round(total / 1)));
+        const pts = [];
+        for (let i = 0; i <= targetCount; i++) {
+          const p = path.getPointAtLength((total * i) / targetCount);
+          pts.push({ x: p.x, y: p.y });
+        }
+        return pts;
+      } catch (e) {
+        return [];
+      }
+    };
+
+    const points = pathToPolygonPoints(d);
+    if (!points || points.length === 0) return;
+    const minX = Math.min(...points.map((p) => p.x));
+    const minY = Math.min(...points.map((p) => p.y));
+    const localPoints = points.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+    const poly = new InnerStrokePolygonClass(localPoints, {
+      left: minX,
+      top: minY,
+      originX: "left",
+      originY: "top",
       absolutePositioned: true,
       fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
+      strokeLineJoin: "round",
+      strokeLineCap: "round",
+      strokeMiterLimit: 2,
+      objectCaching: false,
       selectable: false,
       evented: false,
       excludeFromExport: false,
@@ -3093,6 +3142,10 @@ const Toolbar = () => {
       fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
+      strokeLineJoin: "round",
+      strokeLineCap: "round",
+      strokeMiterLimit: 2,
+      objectCaching: false,
       selectable: false,
       evented: false,
       excludeFromExport: false,
@@ -3151,6 +3204,10 @@ const Toolbar = () => {
       fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
+      strokeLineJoin: "round",
+      strokeLineCap: "round",
+      strokeMiterLimit: 2,
+      objectCaching: false,
       selectable: false,
       evented: false,
       excludeFromExport: false,
@@ -3167,39 +3224,103 @@ const Toolbar = () => {
     if (!canvas || currentShapeType !== "adaptiveTriangle") return;
     ensureInnerStrokeClasses();
     const strokeColor = opts.color || "#000";
-    const thicknessMm = opts.thicknessMm ?? 1;
-    const thicknessPx = mmToPx(thicknessMm);
+    const thicknessPx =
+      typeof opts.thicknessPx === "number"
+        ? opts.thicknessPx
+        : mmToPx(opts.thicknessMm ?? 1);
     canvas
       .getObjects()
       .filter((o) => o.isAdaptiveTriangleInnerBorder)
       .forEach((o) => canvas.remove(o));
-    const pts = getAdaptiveTrianglePoints(canvas.width, canvas.height);
-    // We can optionally round corners using existing sampleRoundedPolygon; treat pts as base polygon
-    const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    let rounded = pts;
-    if (rPx > 0) {
-      const triData = getAdaptiveTriangleData(canvas.width, canvas.height);
-      if (triData.isFull) {
-        const seg = Math.max(12, Math.min(32, Math.round(rPx / 1.2)));
-        rounded = roundTriangle(triData.points, rPx, seg);
-      } else {
-        const seg = Math.max(8, Math.min(24, Math.round(rPx / 2)));
-        rounded = sampleRoundedPolygon(pts, rPx, seg);
-      }
+    const cp = canvas.clipPath;
+    let poly;
+    if (cp && cp.type === "polygon" && Array.isArray(cp.points)) {
+      // Копируем точки из clipPath, снимаем scale и переводим в локальные координаты bbox
+      const sx = cp.scaleX || 1;
+      const sy = cp.scaleY || 1;
+      const flatPts = cp.points.map((p) => ({ x: p.x * sx, y: p.y * sy }));
+      const minX = Math.min(...flatPts.map((p) => p.x));
+      const minY = Math.min(...flatPts.map((p) => p.y));
+      const localPts = flatPts.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+      poly = new InnerStrokePolygonClass(localPts, {
+        left: minX,
+        top: minY,
+        originX: "left",
+        originY: "top",
+        absolutePositioned: true,
+        fill: "transparent",
+        stroke: strokeColor,
+        innerStrokeWidth: thicknessPx,
+        strokeUniform: true,
+        strokeLineJoin: "round",
+        strokeLineCap: "round",
+        strokeMiterLimit: 2,
+        objectCaching: false,
+        selectable: false,
+        evented: false,
+        excludeFromExport: false,
+      });
+    } else if (cp && cp.type === "path" && cp.path) {
+      // Теоретично повний режим міг бути path у старих сесіях; перебудуємо точки з поточного clipPath path
+      const svgNS = "http://www.w3.org/2000/svg";
+      try {
+        const pathEl = document.createElementNS(svgNS, "path");
+        const pathObj = new fabric.Path(cp.path, { left: 0, top: 0 });
+        const d = pathObj.toPathData
+          ? pathObj.toPathData()
+          : pathObj.toSVG?.() || "";
+        pathEl.setAttribute("d", d);
+        const total = pathEl.getTotalLength();
+        const target = Math.min(1200, Math.max(90, Math.round(total / 1)));
+        const pts = [];
+        for (let i = 0; i <= target; i++) {
+          const p = pathEl.getPointAtLength((total * i) / target);
+          pts.push({ x: p.x, y: p.y });
+        }
+        const minX = Math.min(...pts.map((p) => p.x));
+        const minY = Math.min(...pts.map((p) => p.y));
+        const localPts = pts.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+        poly = new InnerStrokePolygonClass(localPts, {
+          left: minX,
+          top: minY,
+          originX: "left",
+          originY: "top",
+          absolutePositioned: true,
+          fill: "transparent",
+          stroke: strokeColor,
+          innerStrokeWidth: thicknessPx,
+          strokeUniform: true,
+          strokeLineJoin: "round",
+          strokeLineCap: "round",
+          strokeMiterLimit: 2,
+          objectCaching: false,
+          selectable: false,
+          evented: false,
+          excludeFromExport: false,
+        });
+      } catch {}
+    } else {
+      // Фолбэк: пересобрать точки без округления, позиция (0,0)
+      const pts = getAdaptiveTrianglePoints(canvas.width, canvas.height);
+      poly = new InnerStrokePolygonClass(pts, {
+        left: 0,
+        top: 0,
+        absolutePositioned: true,
+        fill: "transparent",
+        stroke: strokeColor,
+        innerStrokeWidth: thicknessPx,
+        strokeUniform: true,
+        strokeLineJoin: "round",
+        strokeLineCap: "round",
+        strokeMiterLimit: 2,
+        objectCaching: false,
+        selectable: false,
+        evented: false,
+        excludeFromExport: false,
+      });
     }
-    const poly = new InnerStrokePolygonClass(rounded, {
-      left: 0,
-      top: 0,
-      absolutePositioned: true,
-      fill: "transparent",
-      stroke: strokeColor,
-      innerStrokeWidth: thicknessPx,
-      selectable: false,
-      evented: false,
-      excludeFromExport: false,
-      isBorderShape: true,
-      isAdaptiveTriangleInnerBorder: true,
-    });
+    poly.isBorderShape = true;
+    poly.isAdaptiveTriangleInnerBorder = true;
     canvas.add(poly);
     const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);

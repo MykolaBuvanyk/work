@@ -648,36 +648,67 @@ const Toolbar = () => {
 
   const buildRoundedPolygonPath = (points, radius) => {
     if (!points || points.length < 3) return "";
-    const r = clampRadiusForEdges(points, radius);
-    if (r <= 0) {
+    const n = points.length;
+
+    // Полігональна орієнтація (shoelace) для розрізнення опуклих/вгнутих кутів
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const ccw = area > 0; // істина, якщо точки відсортовані проти год. стрілки
+
+    // Глобальна «стеля» радіуса, але конкретний r обчислюємо для кожної вершини
+    const rMaxGlobal = clampRadiusForEdges(points, radius);
+
+    // Якщо радіус 0 — повертаємо звичайний багатокутник
+    if (rMaxGlobal <= 0) {
       let d0 = `M ${points[0].x} ${points[0].y}`;
-      for (let i = 1; i < points.length; i++)
-        d0 += ` L ${points[i].x} ${points[i].y}`;
+      for (let i = 1; i < n; i++) d0 += ` L ${points[i].x} ${points[i].y}`;
       d0 += " Z";
       return d0;
     }
-    const n = points.length;
+
     let d = "";
     for (let i = 0; i < n; i++) {
       const prev = points[(i - 1 + n) % n];
       const curr = points[i];
       const next = points[(i + 1) % n];
 
-      const v1x = curr.x - prev.x,
-        v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x,
-        v2y = next.y - curr.y;
+      const v1x = curr.x - prev.x;
+      const v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x;
+      const v2y = next.y - curr.y;
+
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1,
-        u1y = v1y / len1;
-      const u2x = v2x / len2,
-        u2y = v2y / len2;
+      const u1x = v1x / len1;
+      const u1y = v1y / len1;
+      const u2x = v2x / len2;
+      const u2y = v2y / len2;
 
-      const p1x = curr.x - u1x * r;
-      const p1y = curr.y - u1y * r;
-      const p2x = curr.x + u2x * r;
-      const p2y = curr.y + u2y * r;
+      // Ознака опуклого/вгнутого кута через векторний добуток
+      const cross = u1x * u2y - u1y * u2x; // >0 для повороту вліво від u1 до u2
+      const isConvex = ccw ? cross > 0 : cross < 0;
+
+      // Локальна «стеля» радіуса: не більше половини суміжних ребер
+      const rLocal = Math.max(
+        0,
+        Math.min(rMaxGlobal, len1 / 2 - 0.001, len2 / 2 - 0.001)
+      );
+
+      if (!isConvex || rLocal <= 0) {
+        // Вгнутий кут або нульовий радіус — не заокруглюємо
+        if (i === 0) d += `M ${curr.x} ${curr.y}`;
+        else d += ` L ${curr.x} ${curr.y}`;
+        continue;
+      }
+
+      const p1x = curr.x - u1x * rLocal;
+      const p1y = curr.y - u1y * rLocal;
+      const p2x = curr.x + u2x * rLocal;
+      const p2y = curr.y + u2y * rLocal;
 
       if (i === 0) d += `M ${p1x} ${p1y}`;
       else d += ` L ${p1x} ${p1y}`;
@@ -806,7 +837,7 @@ const Toolbar = () => {
   const makeAdaptiveHalfCirclePolygonPoints = (w, h, segments = 40) => {
     const Rbase = w * 0.5; // Радіус основи
     if (w <= 0 || h <= 0) return [];
-    
+
     const pts = [];
     const cx = Rbase; // Центр по X
     const baseY = h;
@@ -816,36 +847,36 @@ const Toolbar = () => {
       const H = Math.max(0.5, h); // Ефективна висота сегмента
       const Rseg = H / 2 + (w * w) / (8 * H);
       const yChord = baseY; // Хорда на базовій лінії
-      
+
       // Початкова точка (ліва частина основи)
       pts.push({ x: 0, y: baseY });
-      
+
       // Точки дуги сегмента зліва направо
       for (let i = 0; i <= segments; i++) {
         const t = i / segments; // 0..1
         const angle = Math.PI - t * Math.PI; // PI -> 0 (зліва направо)
         const x = cx + Rseg * Math.cos(angle);
         const y = yChord - Rseg * Math.sin(angle);
-        
+
         // Обмежуємо точки в межах сегмента
         if (x >= 0 && x <= w && y >= 0 && y <= baseY) {
           pts.push({ x, y });
         }
       }
-      
+
       // Кінцева точка (права частина основи)
       pts.push({ x: w, y: baseY });
     } else {
       // ---- ПІВКОЛО + ВЕРТИКАЛЬНІ СТІНКИ ----
       const sideLen = h - Rbase;
       const yTop = baseY - sideLen; // Рівень стику стінок з півколом
-      
+
       // Початок знизу зліва
       pts.push({ x: 0, y: baseY });
-      
+
       // Ліва вертикальна стінка
       pts.push({ x: 0, y: yTop });
-      
+
       // Точки півкола від лівого до правого краю
       for (let i = 0; i <= segments; i++) {
         const angle = Math.PI - (Math.PI * i) / segments; // PI -> 0
@@ -853,14 +884,14 @@ const Toolbar = () => {
         const y = yTop - Rbase * Math.sin(angle);
         pts.push({ x, y });
       }
-      
+
       // Права вертикальна стінка
       pts.push({ x: w, y: yTop });
-      
+
       // Кінець знизу справа
       pts.push({ x: w, y: baseY });
     }
-    
+
     return pts;
   };
 
@@ -873,39 +904,39 @@ const Toolbar = () => {
     const xL = 0;
     const xR = w;
 
-    let path = '';
+    let path = "";
 
     if (h <= Rbase) {
       // ---- КРУГОВИЙ СЕГМЕНТ + ЗАОКРУГЛЕНА ОСНОВА ----
       // Ефективна висота сегмента над хордою
-      const H = Math.max(0.5, h - cr); 
+      const H = Math.max(0.5, h - cr);
       const Rseg = H / 2 + (w * w) / (8 * H);
 
       const yChord = baseY - cr; // Хорда, до якої прилягає дуга
-      
+
       // Починаємо з нижньої лівої прямої ділянки основи
       path = `M ${xL + cr} ${baseY}`;
-      
+
       // Лівий нижній кут (чверть кола вгору)
       if (cr > 0) {
         path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`;
       } else {
         path += ` L ${xL} ${baseY}`;
       }
-      
+
       // Верхня дуга сегмента між (xL, yChord) та (xR, yChord)
       path += ` A ${Rseg} ${Rseg} 0 0 1 ${xR} ${yChord}`;
-      
+
       // Правий нижній кут (вниз)
       if (cr > 0) {
         path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`;
       } else {
         path += ` L ${xR} ${baseY}`;
       }
-      
+
       // Пряма основа назад до старту
       path += ` L ${xL + cr} ${baseY}`;
-      path += ' Z';
+      path += " Z";
     } else {
       // ---- ПІВКОЛО + ВЕРТИКАЛЬНІ СТІНКИ + ЗАОКРУГЛЕНА ОСНОВА ----
       const sideLen = h - Rbase;
@@ -913,7 +944,7 @@ const Toolbar = () => {
 
       // Старт знизу зліва, враховуючи заокруглення основи
       path = `M ${xL + cr} ${baseY}`;
-      
+
       // Лівий нижній кут
       if (cr > 0) {
         path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`;
@@ -939,7 +970,7 @@ const Toolbar = () => {
 
       // Пряма основа
       path += ` L ${xL + cr} ${baseY}`;
-      path += ' Z';
+      path += " Z";
     }
 
     return path;
@@ -1069,9 +1100,13 @@ const Toolbar = () => {
       { x: centerX - triangleWidth / 2, y: triangleHeight },
       { x: centerX + triangleWidth / 2, y: triangleHeight },
     ];
-    const isFull = triangleWidth <= width + 0.01 && triangleHeight <= height + 0.01;
+    const isFull =
+      triangleWidth <= width + 0.01 && triangleHeight <= height + 0.01;
     if (isFull) return { points: triangle, isFull: true };
-    return { points: clipPolygonWithRect(triangle, width, height), isFull: false };
+    return {
+      points: clipPolygonWithRect(triangle, width, height),
+      isFull: false,
+    };
   };
 
   const updateSize = (overrides = {}) => {
@@ -1128,13 +1163,13 @@ const Toolbar = () => {
         let pts = triData.points;
         const rCorner = mmToPx(cornerRadiusMm || 0);
         if (rCorner > 0) {
-            if (triData.isFull) {
-              const seg = Math.max(12, Math.min(32, Math.round(rCorner / 1.2)));
-              pts = roundTriangle(pts, rCorner, seg);
-            } else {
-              const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
-              pts = sampleRoundedPolygon(pts, rCorner, seg);
-            }
+          if (triData.isFull) {
+            const seg = Math.max(12, Math.min(32, Math.round(rCorner / 1.2)));
+            pts = roundTriangle(pts, rCorner, seg);
+          } else {
+            const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
+            pts = sampleRoundedPolygon(pts, rCorner, seg);
+          }
         }
         canvas.clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
 
@@ -1238,7 +1273,8 @@ const Toolbar = () => {
           const topSideLen = width - rightArcX; // == leftArcX
           const crTop = Math.min(baseCornerR, topSideLen, rectBottomY - chordY);
           const crBottom = baseCornerR; // bottom can use full allowed
-          const cornerSegs = crBottom > 0 ? Math.max(10, Math.round(crBottom / 2)) : 0;
+          const cornerSegs =
+            crBottom > 0 ? Math.max(10, Math.round(crBottom / 2)) : 0;
           // ---- Top-right corner ----
           if (crTop > 0) {
             // Move along top to start of arc
@@ -1246,8 +1282,12 @@ const Toolbar = () => {
             const cxTR = width - crTop;
             const cyTR = chordY + crTop;
             for (let i = 0; i <= cornerSegs; i++) {
-              const theta = (3 * Math.PI) / 2 + (Math.PI / 2) * (i / cornerSegs); // 270->360
-              pts.push({ x: cxTR + crTop * Math.cos(theta), y: cyTR + crTop * Math.sin(theta) });
+              const theta =
+                (3 * Math.PI) / 2 + (Math.PI / 2) * (i / cornerSegs); // 270->360
+              pts.push({
+                x: cxTR + crTop * Math.cos(theta),
+                y: cyTR + crTop * Math.sin(theta),
+              });
             }
           } else {
             pts.push({ x: width, y: chordY });
@@ -1259,7 +1299,10 @@ const Toolbar = () => {
             const cyBR = rectBottomY - crBottom;
             for (let i = 0; i <= cornerSegs; i++) {
               const theta = 0 + (Math.PI / 2) * (i / cornerSegs); // 0->90
-              pts.push({ x: cxBR + crBottom * Math.cos(theta), y: cyBR + crBottom * Math.sin(theta) });
+              pts.push({
+                x: cxBR + crBottom * Math.cos(theta),
+                y: cyBR + crBottom * Math.sin(theta),
+              });
             }
           } else {
             pts.push({ x: width, y: rectBottomY });
@@ -1271,7 +1314,10 @@ const Toolbar = () => {
             const cyBL = rectBottomY - crBottom;
             for (let i = 0; i <= cornerSegs; i++) {
               const theta = Math.PI / 2 + (Math.PI / 2) * (i / cornerSegs); // 90->180
-              pts.push({ x: cxBL + crBottom * Math.cos(theta), y: cyBL + crBottom * Math.sin(theta) });
+              pts.push({
+                x: cxBL + crBottom * Math.cos(theta),
+                y: cyBL + crBottom * Math.sin(theta),
+              });
             }
           } else {
             pts.push({ x: 0, y: rectBottomY });
@@ -1283,7 +1329,10 @@ const Toolbar = () => {
             const cyTL = chordY + crTop;
             for (let i = 0; i <= cornerSegs; i++) {
               const theta = Math.PI + (Math.PI / 2) * (i / cornerSegs); // 180->270
-              pts.push({ x: cxTL + crTop * Math.cos(theta), y: cyTL + crTop * Math.sin(theta) });
+              pts.push({
+                x: cxTL + crTop * Math.cos(theta),
+                y: cyTL + crTop * Math.sin(theta),
+              });
             }
             // Top edge back to start of semicircle
             pts.push({ x: leftArcX, y: chordY });
@@ -1312,28 +1361,43 @@ const Toolbar = () => {
           let pts = makeHalfCirclePolygonPoints(width, height, arcSeg);
           // 2. Apply corner fillets (still polygonal) to embed geometry of base radius
           if (cr > 0) {
-            const filletSeg = Math.max(14, Math.min(180, Math.round(Math.sqrt(cr) * 11)));
+            const filletSeg = Math.max(
+              14,
+              Math.min(180, Math.round(Math.sqrt(cr) * 11))
+            );
             pts = roundHalfCircleBaseCorners(pts, cr, filletSeg);
           }
           // 3. Uniform reparameterization along arc portion to reduce uneven spacing (micro steps)
           if (pts.length > 12) {
             // separate base line points (lowest y ~ height) from arc points (y < height)
-            const baseY = Math.max(...pts.map(p => p.y));
-            const arcPts = pts.filter(p => p.y < baseY - 0.0001);
+            const baseY = Math.max(...pts.map((p) => p.y));
+            const arcPts = pts.filter((p) => p.y < baseY - 0.0001);
             if (arcPts.length > 4) {
               // compute total length of arc polyline
-              let len = 0; for (let i = 0; i < arcPts.length - 1; i++) len += Math.hypot(arcPts[i+1].x - arcPts[i].x, arcPts[i+1].y - arcPts[i].y);
-              const targetCount = Math.min(1200, Math.max(80, Math.round(len / 1))); // ~1px spacing target (cap 1200)
+              let len = 0;
+              for (let i = 0; i < arcPts.length - 1; i++)
+                len += Math.hypot(
+                  arcPts[i + 1].x - arcPts[i].x,
+                  arcPts[i + 1].y - arcPts[i].y
+                );
+              const targetCount = Math.min(
+                1200,
+                Math.max(80, Math.round(len / 1))
+              ); // ~1px spacing target (cap 1200)
               let resampled = [];
               for (let k = 0; k <= targetCount; k++) {
                 const dTarget = (len * k) / targetCount;
                 let acc = 0;
                 for (let i = 0; i < arcPts.length - 1; i++) {
-                  const a = arcPts[i], b = arcPts[i+1];
+                  const a = arcPts[i],
+                    b = arcPts[i + 1];
                   const seg = Math.hypot(b.x - a.x, b.y - a.y);
                   if (acc + seg >= dTarget) {
                     const t = (dTarget - acc) / seg;
-                    resampled.push({ x: a.x + (b.x - a.x)*t, y: a.y + (b.y - a.y)*t });
+                    resampled.push({
+                      x: a.x + (b.x - a.x) * t,
+                      y: a.y + (b.y - a.y) * t,
+                    });
                     break;
                   }
                   acc += seg;
@@ -1347,9 +1411,16 @@ const Toolbar = () => {
                 const chaikin = (arr) => {
                   const out = [];
                   for (let i = 0; i < arr.length - 1; i++) {
-                    const p = arr[i]; const q = arr[i + 1];
-                    out.push({ x: p.x * 0.75 + q.x * 0.25, y: p.y * 0.75 + q.y * 0.25 });
-                    out.push({ x: p.x * 0.25 + q.x * 0.75, y: p.y * 0.25 + q.y * 0.75 });
+                    const p = arr[i];
+                    const q = arr[i + 1];
+                    out.push({
+                      x: p.x * 0.75 + q.x * 0.25,
+                      y: p.y * 0.75 + q.y * 0.25,
+                    });
+                    out.push({
+                      x: p.x * 0.25 + q.x * 0.75,
+                      y: p.y * 0.25 + q.y * 0.75,
+                    });
                   }
                   return out;
                 };
@@ -1358,7 +1429,8 @@ const Toolbar = () => {
                 refined = chaikin(refined);
                 if (cr > 40) refined = chaikin(refined);
                 // keep length cap
-                if (refined.length > 1500) refined = refined.filter((_,i) => i % 2 === 0);
+                if (refined.length > 1500)
+                  refined = refined.filter((_, i) => i % 2 === 0);
                 resampled = refined;
               }
               pts = [leftBase, ...resampled, rightBase];
@@ -1395,7 +1467,7 @@ const Toolbar = () => {
         case "extendedHalfCircle": {
           // Використовуємо покращену логіку з HTML реалізації
           const Rbase = width * 0.5;
-          
+
           // Обмежуємо радіус кутів для уникнення перетинів
           let cornerRadius = cr;
           if (height <= Rbase) {
@@ -1406,17 +1478,21 @@ const Toolbar = () => {
             cornerRadius = Math.min(cr, height - Rbase);
           }
           cornerRadius = Math.max(0, cornerRadius);
-          
+
           // Використовуємо аналітичну функцію для path
-          const pathString = makeExtendedHalfCircleSmoothPath(width, height, cornerRadius);
-          
+          const pathString = makeExtendedHalfCircleSmoothPath(
+            width,
+            height,
+            cornerRadius
+          );
+
           // Створюємо clipPath з path
-          newClipPath = new fabric.Path(pathString, { 
+          newClipPath = new fabric.Path(pathString, {
             absolutePositioned: true,
-            fill: 'transparent',
-            stroke: 'transparent'
+            fill: "transparent",
+            stroke: "transparent",
           });
-          
+
           break;
         }
 
@@ -1485,216 +1561,105 @@ const Toolbar = () => {
       updateCanvasOutline();
       updateExistingBorders();
 
-      // Reapply inner border for current shape if it already exists
-      if (currentShapeType === "rectangle") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isRectangleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyRectangleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-  } else if (currentShapeType === 'circle' || currentShapeType === 'circleWithLine') {
-        const existing = canvas.getObjects().find(o => o.isCircleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyCircleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "ellipse") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isEllipseInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyEllipseInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "halfCircle") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isHalfCircleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyHalfCircleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "extendedHalfCircle") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isExtendedHalfCircleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyExtendedHalfCircleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "hexagon") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isHexagonInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyHexagonInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "octagon") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isOctagonInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyOctagonInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "triangle") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isTriangleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyTriangleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "arrowLeft") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isArrowLeftInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyArrowLeftInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "arrowRight") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isArrowRightInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyArrowRightInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "adaptiveTriangle") {
-        const existing = canvas
-          .getObjects()
-          .find((o) => o.isAdaptiveTriangleInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyAdaptiveTriangleInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      } else if (currentShapeType === "lock") {
-        const existing = canvas.getObjects().find((o) => o.isLockInnerBorder);
-        if (existing) {
-          let thicknessMm = 1;
-          if (existing.innerStrokeWidth)
-            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
-          applyLockInnerBorder({
-            thicknessMm,
-            color: existing.stroke || "#000",
-          });
-        }
-      }
+      // Border reapply is handled by updateExistingBorders() above to avoid stale radius/state.
 
       // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
       recomputeHolesAfterResize();
 
       // Спеціальна адаптація внутрішніх елементів для circleWithLine після зміни розміру
-      if (currentShapeType === 'circleWithLine') {
+      if (currentShapeType === "circleWithLine") {
         const diameterPx = canvas.width; // квадрат
         // Лінія
-        const lineObj = canvas.getObjects().find(o => o.isCircleWithLineCenterLine);
+        const lineObj = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineCenterLine);
         if (lineObj) {
           const lineWidthMm = pxToMm(diameterPx) * 0.65;
-            lineObj.set({
-              width: mmToPx(lineWidthMm),
-              left: diameterPx / 2,
-              top: canvas.height / 2,
-            });
+          lineObj.set({
+            width: mmToPx(lineWidthMm),
+            left: diameterPx / 2,
+            top: canvas.height / 2,
+          });
           lineObj.setCoords();
         }
         // Тексти
-        const topText = canvas.getObjects().find(o => o.isCircleWithLineTopText);
-        const bottomText = canvas.getObjects().find(o => o.isCircleWithLineBottomText);
+        const topText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineTopText);
+        const bottomText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineBottomText);
         if (topText || bottomText) {
           // Використовуємо поточну товщину (state thickness) для перерахунку відступів
           const lineThicknessMm = thickness; // мм
           const radiusMm = pxToMm(diameterPx) / 2;
           const gapMm = (radiusMm - lineThicknessMm / 2) / 3;
           const centerY = canvas.height / 2;
-          if (topText) { topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) }); topText.setCoords(); }
-          if (bottomText) { bottomText.set({ left: diameterPx / 2, top: centerY + mmToPx(gapMm) }); bottomText.setCoords(); }
+          if (topText) {
+            topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
+            topText.setCoords();
+          }
+          if (bottomText) {
+            bottomText.set({
+              left: diameterPx / 2,
+              top: centerY + mmToPx(gapMm),
+            });
+            bottomText.setCoords();
+          }
         }
         canvas.renderAll();
-      } else if (currentShapeType === 'circleWithCross') {
+      } else if (currentShapeType === "circleWithCross") {
         const diameterPx = canvas.width;
-        const hLine = canvas.getObjects().find(o => o.isCircleWithCrossHorizontalLine);
+        const hLine = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossHorizontalLine);
         if (hLine) {
           const lineWidthMm = pxToMm(diameterPx) * 0.65;
-          hLine.set({ width: mmToPx(lineWidthMm), left: diameterPx / 2, top: canvas.height / 2 });
+          hLine.set({
+            width: mmToPx(lineWidthMm),
+            left: diameterPx / 2,
+            top: canvas.height / 2,
+          });
           hLine.setCoords();
         }
-        const vLine = canvas.getObjects().find(o => o.isCircleWithCrossVerticalLine);
+        const vLine = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossVerticalLine);
         if (vLine) {
           const vHeightMm = pxToMm(diameterPx) * 0.33;
-          vLine.set({ height: mmToPx(vHeightMm), left: diameterPx / 2, top: canvas.height / 2 });
+          vLine.set({
+            height: mmToPx(vHeightMm),
+            left: diameterPx / 2,
+            top: canvas.height / 2,
+          });
           vLine.setCoords();
         }
-        const topText = canvas.getObjects().find(o => o.isCircleWithCrossTopText);
-        const blText = canvas.getObjects().find(o => o.isCircleWithCrossBottomLeftText);
-        const brText = canvas.getObjects().find(o => o.isCircleWithCrossBottomRightText);
+        const topText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossTopText);
+        const blText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossBottomLeftText);
+        const brText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossBottomRightText);
         const radiusMm = pxToMm(diameterPx) / 2;
         const lineThicknessMm = thickness;
-  const gapMm = (radiusMm - lineThicknessMm / 2) / 3;
+        const gapMm = (radiusMm - lineThicknessMm / 2) / 3;
         const centerY = canvas.height / 2;
-        if (topText) { topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) }); topText.setCoords(); }
+        if (topText) {
+          topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
+          topText.setCoords();
+        }
         const bottomY = centerY + mmToPx(gapMm);
-        if (blText) { blText.set({ left: diameterPx * 0.35, top: bottomY }); blText.setCoords(); }
-        if (brText) { brText.set({ left: diameterPx * 0.65, top: bottomY }); brText.setCoords(); }
+        if (blText) {
+          blText.set({ left: diameterPx * 0.35, top: bottomY });
+          blText.setCoords();
+        }
+        if (brText) {
+          brText.set({ left: diameterPx * 0.65, top: bottomY });
+          brText.setCoords();
+        }
         canvas.renderAll();
       }
 
@@ -1731,13 +1696,13 @@ const Toolbar = () => {
         left: canvas.width / 2,
         top: semiCenterY,
         radius: holeRadiusPx,
-        fill: '#FFFFFF',
-        stroke: '#000000',
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         isCutElement: true,
-        cutType: 'hole',
+        cutType: "hole",
         hasControls: false,
         hasBorders: true,
         lockScalingX: true,
@@ -1852,7 +1817,7 @@ const Toolbar = () => {
       }
 
       if (outlineShape) {
-  // Більше не інсетуємо контур окремо – це робить глобальний viewport scale.
+        // Більше не інсетуємо контур окремо – це робить глобальний viewport scale.
         outlineShape.set({
           fill: "transparent",
           stroke: "#000000",
@@ -1873,10 +1838,26 @@ const Toolbar = () => {
   };
 
   // Повне перезбирання внутрішнього бордера при зміні розміру / cornerRadius
-  const updateExistingBorders = () => {
+  const updateExistingBorders = (overrides = {}) => {
     if (!canvas) return;
     // Зчитуємо поточні параметри вже доданого бордера (товщина/колір)
-  const existing = canvas.getObjects().find(o => o.isRectangleInnerBorder || o.isCircleInnerBorder || o.isEllipseInnerBorder || o.isHalfCircleInnerBorder || o.isExtendedHalfCircleInnerBorder || o.isHexagonInnerBorder || o.isOctagonInnerBorder || o.isTriangleInnerBorder || o.isArrowLeftInnerBorder || o.isArrowRightInnerBorder || o.isAdaptiveTriangleInnerBorder || o.isLockInnerBorder);
+    const existing = canvas
+      .getObjects()
+      .find(
+        (o) =>
+          o.isRectangleInnerBorder ||
+          o.isCircleInnerBorder ||
+          o.isEllipseInnerBorder ||
+          o.isHalfCircleInnerBorder ||
+          o.isExtendedHalfCircleInnerBorder ||
+          o.isHexagonInnerBorder ||
+          o.isOctagonInnerBorder ||
+          o.isTriangleInnerBorder ||
+          o.isArrowLeftInnerBorder ||
+          o.isArrowRightInnerBorder ||
+          o.isAdaptiveTriangleInnerBorder ||
+          o.isLockInnerBorder
+      );
     if (!existing) return; // немає що перебудовувати
     let thicknessMm = 1;
     if (existing.innerStrokeWidth)
@@ -1892,8 +1873,8 @@ const Toolbar = () => {
       case "rectangle":
         applyRectangleInnerBorder({ thicknessMm, color });
         break;
-      case 'circle':
-      case 'circleWithLine': // така ж логіка бордера як у звичайного кола
+      case "circle":
+      case "circleWithLine": // така ж логіка бордера як у звичайного кола
         applyCircleInnerBorder({ thicknessMm, color });
         break;
       case "ellipse":
@@ -1915,10 +1896,18 @@ const Toolbar = () => {
         applyTriangleInnerBorder({ thicknessMm, color });
         break;
       case "arrowLeft":
-        applyArrowLeftInnerBorder({ thicknessMm, color });
+        applyArrowLeftInnerBorder({
+          thicknessMm,
+          color,
+          cornerRadiusMm: overrides.cornerRadiusMm,
+        });
         break;
       case "arrowRight":
-        applyArrowRightInnerBorder({ thicknessMm, color });
+        applyArrowRightInnerBorder({
+          thicknessMm,
+          color,
+          cornerRadiusMm: overrides.cornerRadiusMm,
+        });
         break;
       case "adaptiveTriangle":
         applyAdaptiveTriangleInnerBorder({ thicknessMm, color });
@@ -2169,7 +2158,7 @@ const Toolbar = () => {
       .forEach((o) => canvas.remove(o));
     // derive dimensions from clipPath
     const cp = canvas.clipPath;
-    if (!cp || cp.type !== 'rect') return;
+    if (!cp || cp.type !== "rect") return;
     // Новий підхід: використовуємо повні розміри canvas і стандартний stroke з strokeDashOffset
     const rect = new fabric.Rect({
       left: canvas.width / 2,
@@ -2178,10 +2167,10 @@ const Toolbar = () => {
       height: canvas.height - thicknessPx,
       rx: cp.rx || 0,
       ry: cp.ry || 0,
-      originX: 'center',
-      originY: 'center',
+      originX: "center",
+      originY: "center",
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       strokeWidth: thicknessPx,
       strokeDashArray: null,
@@ -2235,7 +2224,15 @@ const Toolbar = () => {
   };
 
   const applyCircleInnerBorder = (opts = {}) => {
-    if (!canvas || !(currentShapeType === 'circle' || currentShapeType === 'circleWithLine' || currentShapeType === 'circleWithCross')) return;
+    if (
+      !canvas ||
+      !(
+        currentShapeType === "circle" ||
+        currentShapeType === "circleWithLine" ||
+        currentShapeType === "circleWithCross"
+      )
+    )
+      return;
     ensureInnerStrokeClasses();
     const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
@@ -2320,8 +2317,15 @@ const Toolbar = () => {
     else points = makeHalfCirclePolygonPoints(canvas.width, canvas.height);
     // Apply rounding of base corners if cornerRadius > 0
     const rPxCorner = mmToPx(sizeValues.cornerRadius || 0);
-    if (rPxCorner > 0 && points.length > 3 && typeof roundHalfCircleBaseCorners === 'function') {
-      const seg = Math.max(10, Math.min(160, Math.round(Math.sqrt(rPxCorner) * 10)));
+    if (
+      rPxCorner > 0 &&
+      points.length > 3 &&
+      typeof roundHalfCircleBaseCorners === "function"
+    ) {
+      const seg = Math.max(
+        10,
+        Math.min(160, Math.round(Math.sqrt(rPxCorner) * 10))
+      );
       points = roundHalfCircleBaseCorners(points, rPxCorner, seg);
     }
     const poly = new InnerStrokePolygonClass(points, {
@@ -2349,35 +2353,45 @@ const Toolbar = () => {
     const strokeColor = opts.color || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    
+
     // Видаляємо існуючі бордери
-    canvas.getObjects().filter(o => o.isExtendedHalfCircleInnerBorder).forEach(o => canvas.remove(o));
-    
+    canvas
+      .getObjects()
+      .filter((o) => o.isExtendedHalfCircleInnerBorder)
+      .forEach((o) => canvas.remove(o));
+
     const cp = canvas.clipPath;
     if (!cp) return;
-    
+
     let points;
     // Використовуємо покращену логіку генерації точок
-    if (cp.type === 'path') {
+    if (cp.type === "path") {
       // Генеруємо точки на основі поточних розмірів з урахуванням заокруглення
       const rPxCorner = mmToPx(sizeValues.cornerRadius || 0);
       const Rbase = canvas.width * 0.5;
-      
+
       // Генеруємо більше точок для точності
       const arcSeg = Math.max(40, Math.min(120, Math.round(canvas.width / 6)));
-      points = makeAdaptiveHalfCirclePolygonPoints(canvas.width, canvas.height, arcSeg);
-      
+      points = makeAdaptiveHalfCirclePolygonPoints(
+        canvas.width,
+        canvas.height,
+        arcSeg
+      );
+
       // Додаємо заокруглення кутів основи, якщо потрібно
       if (rPxCorner > 0 && points.length > 3) {
-        const seg = Math.max(6, Math.min(20, Math.round(Math.sqrt(rPxCorner) * 2)));
+        const seg = Math.max(
+          6,
+          Math.min(20, Math.round(Math.sqrt(rPxCorner) * 2))
+        );
         points = roundHalfCircleBaseCorners(points, rPxCorner, seg);
       }
-    } else if (cp.type === 'polygon') {
-      points = cp.points.map(p => ({ x: p.x, y: p.y }));
+    } else if (cp.type === "polygon") {
+      points = cp.points.map((p) => ({ x: p.x, y: p.y }));
     } else {
       points = makeAdaptiveHalfCirclePolygonPoints(canvas.width, canvas.height);
     }
-    
+
     const poly = new InnerStrokePolygonClass(points, {
       left: 0,
       top: 0,
@@ -2392,54 +2406,96 @@ const Toolbar = () => {
       isExtendedHalfCircleInnerBorder: true,
     });
     canvas.add(poly);
-    
+
     // Видаляємо контур canvas
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
 
   // --- Hexagon / Octagon inner border helpers (rounded polygon sampling) ---
   const sampleRoundedPolygon = (basePts, r, segments) => {
-    // basePts: original corner points in order, r: corner radius (px), segments: samples along each corner curve
+    // basePts: original polygon (closed CCW or CW). Round only convex corners to avoid artifacts.
     const n = basePts.length;
-    if (!r || r <= 0) return basePts.map((p) => ({ x: p.x, y: p.y }));
+    if (!r || r <= 0 || n < 3) return basePts.map((p) => ({ x: p.x, y: p.y }));
+
+    // Determine orientation
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = basePts[i];
+      const b = basePts[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const ccw = area > 0;
+
     const pts = [];
+    const seg = Math.max(4, Math.min(48, Math.round(segments || 8)));
     for (let i = 0; i < n; i++) {
       const prev = basePts[(i - 1 + n) % n];
       const curr = basePts[i];
       const next = basePts[(i + 1) % n];
-      const v1x = curr.x - prev.x,
-        v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x,
-        v2y = next.y - curr.y;
+
+      const v1x = curr.x - prev.x;
+      const v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x;
+      const v2y = next.y - curr.y;
+
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1,
-        u1y = v1y / len1;
-      const u2x = v2x / len2,
-        u2y = v2y / len2;
-      const rClamped = Math.min(r, len1 / 2, len2 / 2);
+      const u1x = v1x / len1;
+      const u1y = v1y / len1;
+      const u2x = v2x / len2;
+      const u2y = v2y / len2;
+
+      const cross = u1x * u2y - u1y * u2x; // sign to detect convexity
+      const isConvex = ccw ? cross > 0 : cross < 0;
+
+      // If concave, do not round: keep original corner
+      if (!isConvex) {
+        // avoid duplicates
+        if (
+          pts.length === 0 ||
+          Math.hypot(
+            pts[pts.length - 1].x - curr.x,
+            pts[pts.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          pts.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
+      const rClamped = Math.min(r, len1 / 2 - 0.001, len2 / 2 - 0.001);
+      if (rClamped <= 0) {
+        if (
+          pts.length === 0 ||
+          Math.hypot(
+            pts[pts.length - 1].x - curr.x,
+            pts[pts.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          pts.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
       const p1x = curr.x - u1x * rClamped;
       const p1y = curr.y - u1y * rClamped;
       const p2x = curr.x + u2x * rClamped;
       const p2y = curr.y + u2y * rClamped;
-      // Додаємо старт дуги кожного кута, уникаючи дублікату з попереднім p2
-      if (pts.length === 0 || Math.hypot(pts[pts.length - 1].x - p1x, pts[pts.length - 1].y - p1y) > 0.05) {
+
+      if (
+        pts.length === 0 ||
+        Math.hypot(pts[pts.length - 1].x - p1x, pts[pts.length - 1].y - p1y) >
+          0.01
+      ) {
         pts.push({ x: p1x, y: p1y });
       }
-      // sample interior points of quadratic curve excluding endpoints
-      for (let s = 1; s < segments; s++) {
-        const t = s / segments;
-        const oneMinusT = 1 - t;
-        const bx =
-          oneMinusT * oneMinusT * p1x +
-          2 * oneMinusT * t * curr.x +
-          t * t * p2x;
-        const by =
-          oneMinusT * oneMinusT * p1y +
-          2 * oneMinusT * t * curr.y +
-          t * t * p2y;
+      for (let s = 1; s < seg; s++) {
+        const t = s / seg;
+        const omt = 1 - t;
+        const bx = omt * omt * p1x + 2 * omt * t * curr.x + t * t * p2x;
+        const by = omt * omt * p1y + 2 * omt * t * curr.y + t * t * p2y;
         pts.push({ x: bx, y: by });
       }
       pts.push({ x: p2x, y: p2y });
@@ -2449,7 +2505,7 @@ const Toolbar = () => {
 
   // Selective rounding (only specified corner indices) – used for halfCircle base corners
   function sampleRoundedPolygonSelective(basePts, r, segments, cornerIndices) {
-    if (!r || r <= 0) return basePts.map(p => ({ x: p.x, y: p.y }));
+    if (!r || r <= 0) return basePts.map((p) => ({ x: p.x, y: p.y }));
     const n = basePts.length;
     const cornerSet = new Set(cornerIndices);
     const out = [];
@@ -2461,22 +2517,31 @@ const Toolbar = () => {
       }
       const prev = basePts[(i - 1 + n) % n];
       const next = basePts[(i + 1) % n];
-      const v1x = curr.x - prev.x, v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x, v2y = next.y - curr.y;
+      const v1x = curr.x - prev.x,
+        v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x,
+        v2y = next.y - curr.y;
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1, u1y = v1y / len1;
-      const u2x = v2x / len2, u2y = v2y / len2;
-      const rClamped = Math.min(r, len1 / 2, len2 / 2);
+      const u1x = v1x / len1,
+        u1y = v1y / len1;
+      const u2x = v2x / len2,
+        u2y = v2y / len2;
+      const rClamped = Math.min(r, len1 / 2 - 0.001, len2 / 2 - 0.001);
       const p1x = curr.x - u1x * rClamped;
       const p1y = curr.y - u1y * rClamped;
       const p2x = curr.x + u2x * rClamped;
       const p2y = curr.y + u2y * rClamped;
-      if (out.length === 0 || Math.hypot(out[out.length - 1].x - p1x, out[out.length - 1].y - p1y) > 0.05) {
+      if (
+        out.length === 0 ||
+        Math.hypot(out[out.length - 1].x - p1x, out[out.length - 1].y - p1y) >
+          0.05
+      ) {
         out.push({ x: p1x, y: p1y });
       }
-      for (let s = 1; s < segments; s++) {
-        const t = s / segments;
+      const seg = Math.max(4, Math.min(48, Math.round(segments || 8)));
+      for (let s = 1; s < seg; s++) {
+        const t = s / seg;
         const omt = 1 - t;
         const bx = omt * omt * p1x + 2 * omt * t * curr.x + t * t * p2x;
         const by = omt * omt * p1y + 2 * omt * t * curr.y + t * t * p2y;
@@ -2508,7 +2573,11 @@ const Toolbar = () => {
         const segLen = dist(a, b);
         if (acc + segLen >= d) {
           const t = (d - acc) / segLen;
-            return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, idx: i + 1 };
+          return {
+            x: a.x + (b.x - a.x) * t,
+            y: a.y + (b.y - a.y) * t,
+            idx: i + 1,
+          };
         }
         acc += segLen;
       }
@@ -2523,7 +2592,11 @@ const Toolbar = () => {
         const segLen = dist(a, b);
         if (acc + segLen >= d) {
           const t = (d - acc) / segLen;
-          return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, idx: i - 1 };
+          return {
+            x: a.x + (b.x - a.x) * t,
+            y: a.y + (b.y - a.y) * t,
+            idx: i - 1,
+          };
         }
         acc += segLen;
       }
@@ -2537,7 +2610,12 @@ const Toolbar = () => {
     // If arc segments too short -> reduce radius
     const leftArcLen = dist(left, leftArcPoint);
     const rightArcLen = dist(right, rightArcPoint);
-    const maxAllowed = Math.min(leftArcLen, rightArcLen, width / 2 - 0.01, height - 0.01);
+    const maxAllowed = Math.min(
+      leftArcLen,
+      rightArcLen,
+      width / 2 - 0.01,
+      height - 0.01
+    );
     rTarget = clamp(rTarget, 0, maxAllowed);
     if (rTarget <= 0) return pts;
 
@@ -2548,20 +2626,37 @@ const Toolbar = () => {
     // directions
     const baseDirLeft = { x: 1, y: 0 };
     const baseDirRight = { x: -1, y: 0 };
-    const arcDirLeft = (() => { const l = dist(left, leftArcP) || 1; return { x: (leftArcP.x - left.x) / l, y: (leftArcP.y - left.y) / l }; })();
-    const arcDirRight = (() => { const l = dist(right, rightArcP) || 1; return { x: (rightArcP.x - right.x) / l, y: (rightArcP.y - right.y) / l }; })();
+    const arcDirLeft = (() => {
+      const l = dist(left, leftArcP) || 1;
+      return { x: (leftArcP.x - left.x) / l, y: (leftArcP.y - left.y) / l };
+    })();
+    const arcDirRight = (() => {
+      const l = dist(right, rightArcP) || 1;
+      return { x: (rightArcP.x - right.x) / l, y: (rightArcP.y - right.y) / l };
+    })();
 
     const pBaseLeft = { x: left.x + baseDirLeft.x * rTarget, y: left.y };
-    const pArcLeft = { x: left.x + arcDirLeft.x * rTarget, y: left.y + arcDirLeft.y * rTarget };
-    const pArcRight = { x: right.x + arcDirRight.x * rTarget, y: right.y + arcDirRight.y * rTarget };
+    const pArcLeft = {
+      x: left.x + arcDirLeft.x * rTarget,
+      y: left.y + arcDirLeft.y * rTarget,
+    };
+    const pArcRight = {
+      x: right.x + arcDirRight.x * rTarget,
+      y: right.y + arcDirRight.y * rTarget,
+    };
     const pBaseRight = { x: right.x + baseDirRight.x * rTarget, y: right.y };
 
     const out = [];
     // ---- Left fillet with tangent continuity ----
     // Approximate arc tangent at leftArcP using next point
     const arcLeftNextIdx = Math.min(leftArcP.idx + 1, n - 1);
-    let tArcLeft = { x: pts[arcLeftNextIdx].x - leftArcP.x, y: pts[arcLeftNextIdx].y - leftArcP.y };
-    let lenTL = Math.hypot(tArcLeft.x, tArcLeft.y) || 1; tArcLeft.x/=lenTL; tArcLeft.y/=lenTL;
+    let tArcLeft = {
+      x: pts[arcLeftNextIdx].x - leftArcP.x,
+      y: pts[arcLeftNextIdx].y - leftArcP.y,
+    };
+    let lenTL = Math.hypot(tArcLeft.x, tArcLeft.y) || 1;
+    tArcLeft.x /= lenTL;
+    tArcLeft.y /= lenTL;
     let cpLeft; // control point
     if (Math.abs(tArcLeft.y) > 1e-3) {
       const mu = (pArcLeft.y - pBaseLeft.y) / tArcLeft.y; // along reversed direction from arc to base horizontal line
@@ -2572,17 +2667,21 @@ const Toolbar = () => {
     }
     out.push(pBaseLeft);
     for (let s = 1; s < segments; s++) {
-      const t = s / segments; const omt = 1 - t;
+      const t = s / segments;
+      const omt = 1 - t;
       out.push({
-        x: omt * omt * pBaseLeft.x + 2 * omt * t * cpLeft.x + t * t * pArcLeft.x,
-        y: omt * omt * pBaseLeft.y + 2 * omt * t * cpLeft.y + t * t * pArcLeft.y,
+        x:
+          omt * omt * pBaseLeft.x + 2 * omt * t * cpLeft.x + t * t * pArcLeft.x,
+        y:
+          omt * omt * pBaseLeft.y + 2 * omt * t * cpLeft.y + t * t * pArcLeft.y,
       });
     }
     out.push(pArcLeft);
 
     // arc middle points (skip those within radius zone on both sides)
     // Instead of raw sampled points (які можуть бути грубими при великому радіусі) – ресемпл еліптичної дуги.
-    const startIdx = leftArcP.idx; const endIdx = rightArcP.idx;
+    const startIdx = leftArcP.idx;
+    const endIdx = rightArcP.idx;
     const cx = (left.x + right.x) / 2;
     const cy = left.y; // центр півеліпса по Y
     const rx = (right.x - left.x) / 2;
@@ -2597,24 +2696,39 @@ const Toolbar = () => {
     };
     let thetaLeft = angleFromPoint(pArcLeft); // близько до π -> 0
     let thetaRight = angleFromPoint(pArcRight);
-    if (thetaLeft < thetaRight) { const tmp = thetaLeft; thetaLeft = thetaRight; thetaRight = tmp; }
+    if (thetaLeft < thetaRight) {
+      const tmp = thetaLeft;
+      thetaLeft = thetaRight;
+      thetaRight = tmp;
+    }
     const angleSpan = thetaLeft - thetaRight;
-  const arcSamples = Math.max(40, Math.min(1200, Math.round(angleSpan * Math.max(rx, ry) * 2)));
+    const arcSamples = Math.max(
+      40,
+      Math.min(1200, Math.round(angleSpan * Math.max(rx, ry) * 2))
+    );
     for (let i = 1; i < arcSamples; i++) {
       const t = i / arcSamples;
       const theta = thetaLeft - angleSpan * t;
       const x = cx + rx * Math.cos(theta);
       const y = cy - ry * Math.sin(theta);
       // уникаємо додавання точки занадто близько до pArcLeft або pArcRight
-      if (Math.hypot(x - pArcLeft.x, y - pArcLeft.y) > 0.5 && Math.hypot(x - pArcRight.x, y - pArcRight.y) > 0.5) {
+      if (
+        Math.hypot(x - pArcLeft.x, y - pArcLeft.y) > 0.5 &&
+        Math.hypot(x - pArcRight.x, y - pArcRight.y) > 0.5
+      ) {
         out.push({ x, y });
       }
     }
 
     // ---- Right fillet with tangent continuity ----
     const arcRightPrevIdx = Math.max(rightArcP.idx - 1, 0);
-    let tArcRight = { x: rightArcP.x - pts[arcRightPrevIdx].x, y: rightArcP.y - pts[arcRightPrevIdx].y };
-    let lenTR = Math.hypot(tArcRight.x, tArcRight.y) || 1; tArcRight.x/=lenTR; tArcRight.y/=lenTR;
+    let tArcRight = {
+      x: rightArcP.x - pts[arcRightPrevIdx].x,
+      y: rightArcP.y - pts[arcRightPrevIdx].y,
+    };
+    let lenTR = Math.hypot(tArcRight.x, tArcRight.y) || 1;
+    tArcRight.x /= lenTR;
+    tArcRight.y /= lenTR;
     let cpRight; // control point
     if (Math.abs(tArcRight.y) > 1e-3) {
       const mu = (pArcRight.y - pBaseRight.y) / tArcRight.y; // distance backward to horizontal line at base
@@ -2625,10 +2739,17 @@ const Toolbar = () => {
     // Quadratic from arc to base (maintain path order left->right)
     out.push(pArcRight);
     for (let s = 1; s < segments; s++) {
-      const t = s / segments; const omt = 1 - t;
+      const t = s / segments;
+      const omt = 1 - t;
       out.push({
-        x: omt * omt * pArcRight.x + 2 * omt * t * cpRight.x + t * t * pBaseRight.x,
-        y: omt * omt * pArcRight.y + 2 * omt * t * cpRight.y + t * t * pBaseRight.y,
+        x:
+          omt * omt * pArcRight.x +
+          2 * omt * t * cpRight.x +
+          t * t * pBaseRight.x,
+        y:
+          omt * omt * pArcRight.y +
+          2 * omt * t * cpRight.y +
+          t * t * pBaseRight.y,
       });
     }
     out.push(pBaseRight);
@@ -2638,7 +2759,7 @@ const Toolbar = () => {
   // Перетворення масиву дискретних точок у гладкий шлях з квадратичними кривими.
   // ensureClosed=true додає замикання (Z).
   function pointsToQuadraticSmoothPath(pts, ensureClosed = false) {
-    if (!pts || pts.length < 2) return '';
+    if (!pts || pts.length < 2) return "";
     // Прибираємо послідовні дублі щоб уникнути Q з нульовою довжиною
     const cleaned = [pts[0]];
     for (let i = 1; i < pts.length; i++) {
@@ -2646,11 +2767,11 @@ const Toolbar = () => {
       const last = cleaned[cleaned.length - 1];
       if (Math.hypot(p.x - last.x, p.y - last.y) > 0.15) cleaned.push(p);
     }
-    if (cleaned.length < 2) return '';
+    if (cleaned.length < 2) return "";
     let d = `M ${cleaned[0].x} ${cleaned[0].y}`;
     if (cleaned.length === 2) {
       d += ` L ${cleaned[1].x} ${cleaned[1].y}`;
-      if (ensureClosed) d += ' Z';
+      if (ensureClosed) d += " Z";
       return d;
     }
     for (let i = 1; i < cleaned.length - 1; i++) {
@@ -2663,25 +2784,31 @@ const Toolbar = () => {
     // останній сегмент до фінальної точки (щоб не втрачати її)
     const last = cleaned[cleaned.length - 1];
     d += ` L ${last.x} ${last.y}`;
-    if (ensureClosed) d += ' Z';
+    if (ensureClosed) d += " Z";
     return d;
   }
 
   // Перетворення множини точок у замкнений шлях із кубічних Безьє через Catmull-Rom (tension parameter)
   function pointsToClosedCatmullRomCubicPath(pts, tension = 0.5) {
-    if (!pts || pts.length < 3) return '';
+    if (!pts || pts.length < 3) return "";
     // clean near-duplicates
     const cleaned = [pts[0]];
     for (let i = 1; i < pts.length; i++) {
-      const p = pts[i]; const last = cleaned[cleaned.length - 1];
+      const p = pts[i];
+      const last = cleaned[cleaned.length - 1];
       if (Math.hypot(p.x - last.x, p.y - last.y) > 0.2) cleaned.push(p);
     }
     // ensure last not same as first
-    if (Math.hypot(cleaned[0].x - cleaned[cleaned.length - 1].x, cleaned[0].y - cleaned[cleaned.length - 1].y) < 0.2) {
+    if (
+      Math.hypot(
+        cleaned[0].x - cleaned[cleaned.length - 1].x,
+        cleaned[0].y - cleaned[cleaned.length - 1].y
+      ) < 0.2
+    ) {
       cleaned.pop();
     }
     const n = cleaned.length;
-    if (n < 3) return '';
+    if (n < 3) return "";
     // Catmull-Rom to cubic: P0,P1,P2,P3 -> segment from P1 to P2
     const alpha = tension; // 0..1 (0 – straight lines, 0.5 – canonical, ~0.6 smoother, <0.5 tighter)
     let d = `M ${cleaned[0].x} ${cleaned[0].y}`;
@@ -2691,29 +2818,31 @@ const Toolbar = () => {
       const p2 = cleaned[(i + 1) % n];
       const p3 = cleaned[(i + 2) % n];
       // Control points
-      const c1x = p1.x + (p2.x - p0.x) * alpha / 6;
-      const c1y = p1.y + (p2.y - p0.y) * alpha / 6;
-      const c2x = p2.x - (p3.x - p1.x) * alpha / 6;
-      const c2y = p2.y - (p3.y - p1.y) * alpha / 6;
+      const c1x = p1.x + ((p2.x - p0.x) * alpha) / 6;
+      const c1y = p1.y + ((p2.y - p0.y) * alpha) / 6;
+      const c2x = p2.x - ((p3.x - p1.x) * alpha) / 6;
+      const c2y = p2.y - ((p3.y - p1.y) * alpha) / 6;
       d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
     }
-    d += ' Z';
+    d += " Z";
     return d;
   }
 
   // Open Catmull-Rom -> cubic Bezier path (no wrap-around) then close with straight line between last and first.
   // This avoids wrap-induced overshoot artifacts ("зубці") at the halfCircle base corners.
   function pointsToOpenCatmullRomCubicPath(pts, tension = 0.5) {
-    if (!pts || pts.length < 2) return '';
+    if (!pts || pts.length < 2) return "";
     // remove near duplicates
     const cleaned = [pts[0]];
     for (let i = 1; i < pts.length; i++) {
-      const p = pts[i]; const last = cleaned[cleaned.length - 1];
+      const p = pts[i];
+      const last = cleaned[cleaned.length - 1];
       if (Math.hypot(p.x - last.x, p.y - last.y) > 0.2) cleaned.push(p);
     }
-    if (cleaned.length < 2) return '';
+    if (cleaned.length < 2) return "";
     if (cleaned.length === 2) {
-      const a = cleaned[0], b = cleaned[1];
+      const a = cleaned[0],
+        b = cleaned[1];
       return `M ${a.x} ${a.y} L ${b.x} ${b.y} L ${a.x} ${a.y} Z`;
     }
     const alpha = tension;
@@ -2722,11 +2851,12 @@ const Toolbar = () => {
       const p0 = i === 0 ? cleaned[0] : cleaned[i - 1];
       const p1 = cleaned[i];
       const p2 = cleaned[i + 1];
-      const p3 = i + 2 < cleaned.length ? cleaned[i + 2] : cleaned[cleaned.length - 1];
-      const c1x = p1.x + (p2.x - p0.x) * alpha / 6;
-      const c1y = p1.y + (p2.y - p0.y) * alpha / 6;
-      const c2x = p2.x - (p3.x - p1.x) * alpha / 6;
-      const c2y = p2.y - (p3.y - p1.y) * alpha / 6;
+      const p3 =
+        i + 2 < cleaned.length ? cleaned[i + 2] : cleaned[cleaned.length - 1];
+      const c1x = p1.x + ((p2.x - p0.x) * alpha) / 6;
+      const c1y = p1.y + ((p2.y - p0.y) * alpha) / 6;
+      const c2x = p2.x - ((p3.x - p1.x) * alpha) / 6;
+      const c2y = p2.y - ((p3.y - p1.y) * alpha) / 6;
       d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
     }
     // Close with a straight base edge (assumes first & last are base endpoints for halfCircle)
@@ -2737,7 +2867,8 @@ const Toolbar = () => {
 
   // Спеціальне округлення саме для трикутника (3 точки) з плавними дугами
   const roundTriangle = (basePts, r, segments) => {
-    if (!r || r <= 0 || !Array.isArray(basePts) || basePts.length !== 3) return basePts.map(p => ({ x: p.x, y: p.y }));
+    if (!r || r <= 0 || !Array.isArray(basePts) || basePts.length !== 3)
+      return basePts.map((p) => ({ x: p.x, y: p.y }));
     const n = 3;
     const seg = Math.max(4, segments || 12);
     const out = [];
@@ -2745,18 +2876,28 @@ const Toolbar = () => {
       const prev = basePts[(i - 1 + n) % n];
       const curr = basePts[i];
       const next = basePts[(i + 1) % n];
-      const v1x = curr.x - prev.x, v1y = curr.y - prev.y;
-      const v2x = next.x - curr.x, v2y = next.y - curr.y;
+      const v1x = curr.x - prev.x,
+        v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x,
+        v2y = next.y - curr.y;
       const len1 = Math.hypot(v1x, v1y) || 1;
       const len2 = Math.hypot(v2x, v2y) || 1;
-      const u1x = v1x / len1, u1y = v1y / len1;
-      const u2x = v2x / len2, u2y = v2y / len2;
+      const u1x = v1x / len1,
+        u1y = v1y / len1;
+      const u2x = v2x / len2,
+        u2y = v2y / len2;
       const rClamped = Math.min(r, len1 / 2, len2 / 2);
       const startX = curr.x - u1x * rClamped;
       const startY = curr.y - u1y * rClamped;
       const endX = curr.x + u2x * rClamped;
       const endY = curr.y + u2y * rClamped;
-      if (out.length === 0 || Math.hypot(out[out.length - 1].x - startX, out[out.length - 1].y - startY) > 0.05) {
+      if (
+        out.length === 0 ||
+        Math.hypot(
+          out[out.length - 1].x - startX,
+          out[out.length - 1].y - startY
+        ) > 0.05
+      ) {
         out.push({ x: startX, y: startY });
       }
       for (let s = 1; s <= seg; s++) {
@@ -2914,23 +3055,40 @@ const Toolbar = () => {
       .getObjects()
       .filter((o) => o.isArrowLeftInnerBorder)
       .forEach((o) => canvas.remove(o));
-    // Recreate path then sample its base polygon (approx corners defined in path generator before rounding)
-    const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const base = [
-      { x: 0, y: canvas.height * 0.5625 },
-      { x: canvas.width * 0.25, y: canvas.height * 0.1875 },
-      { x: canvas.width * 0.25, y: canvas.height * 0.375 },
-      { x: canvas.width, y: canvas.height * 0.375 },
-      { x: canvas.width, y: canvas.height * 0.75 },
-      { x: canvas.width * 0.25, y: canvas.height * 0.75 },
-      { x: canvas.width * 0.25, y: canvas.height * 0.9375 },
-    ];
-    const minY = base.reduce((m, p) => Math.min(m, p.y), Infinity);
-    const shifted = base.map((p) => ({ x: p.x, y: p.y - minY }));
-    const points = sampleRoundedPolygon(shifted, rPx, 4);
-    const poly = new InnerStrokePolygonClass(points, {
-      left: 0,
+    // Строим точный path clipPath и дискретизируем его в полигоны (без сдвигов и нормализаций)
+    const rPx = mmToPx((opts.cornerRadiusMm ?? sizeValues.cornerRadius) || 0);
+    const d = makeRoundedArrowLeftPath(canvas.width, canvas.height, rPx);
+    const pathToPolygonPoints = (pathD) => {
+      try {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", pathD);
+        const total = path.getTotalLength();
+        const targetCount = Math.min(
+          1600,
+          Math.max(120, Math.round(total / 1))
+        );
+        const pts = [];
+        for (let i = 0; i <= targetCount; i++) {
+          const p = path.getPointAtLength((total * i) / targetCount);
+          pts.push({ x: p.x, y: p.y });
+        }
+        return pts;
+      } catch (e) {
+        // Фолбэк: вернём пустой массив, чтобы не падать
+        return [];
+      }
+    };
+    const points = pathToPolygonPoints(d);
+    if (!points || points.length === 0) return;
+    const minX = Math.min(...points.map((p) => p.x));
+    const minY = Math.min(...points.map((p) => p.y));
+    const localPoints = points.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+    const poly = new InnerStrokePolygonClass(localPoints, {
+      left: minX,
       top: minY,
+      originX: "left",
+      originY: "top",
       absolutePositioned: true,
       fill: "transparent",
       stroke: strokeColor,
@@ -2957,22 +3115,38 @@ const Toolbar = () => {
       .getObjects()
       .filter((o) => o.isArrowRightInnerBorder)
       .forEach((o) => canvas.remove(o));
-    const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const base = [
-      { x: 0, y: canvas.height * 0.375 },
-      { x: canvas.width * 0.75, y: canvas.height * 0.375 },
-      { x: canvas.width * 0.75, y: canvas.height * 0.1875 },
-      { x: canvas.width, y: canvas.height * 0.5625 },
-      { x: canvas.width * 0.75, y: canvas.height * 0.9375 },
-      { x: canvas.width * 0.75, y: canvas.height * 0.75 },
-      { x: 0, y: canvas.height * 0.75 },
-    ];
-    const minY = base.reduce((m, p) => Math.min(m, p.y), Infinity);
-    const shifted = base.map((p) => ({ x: p.x, y: p.y - minY }));
-    const points = sampleRoundedPolygon(shifted, rPx, 4);
-    const poly = new InnerStrokePolygonClass(points, {
-      left: 0,
+    const rPx = mmToPx((opts.cornerRadiusMm ?? sizeValues.cornerRadius) || 0);
+    const d = makeRoundedArrowRightPath(canvas.width, canvas.height, rPx);
+    const pathToPolygonPoints = (pathD) => {
+      try {
+        const svgNS = "http://www.w3.org/2000/svg";
+        const path = document.createElementNS(svgNS, "path");
+        path.setAttribute("d", pathD);
+        const total = path.getTotalLength();
+        const targetCount = Math.min(
+          1600,
+          Math.max(120, Math.round(total / 1))
+        );
+        const pts = [];
+        for (let i = 0; i <= targetCount; i++) {
+          const p = path.getPointAtLength((total * i) / targetCount);
+          pts.push({ x: p.x, y: p.y });
+        }
+        return pts;
+      } catch (e) {
+        return [];
+      }
+    };
+    const points = pathToPolygonPoints(d);
+    if (!points || points.length === 0) return;
+    const minX = Math.min(...points.map((p) => p.x));
+    const minY = Math.min(...points.map((p) => p.y));
+    const localPoints = points.map((p) => ({ x: p.x - minX, y: p.y - minY }));
+    const poly = new InnerStrokePolygonClass(localPoints, {
+      left: minX,
       top: minY,
+      originX: "left",
+      originY: "top",
       absolutePositioned: true,
       fill: "transparent",
       stroke: strokeColor,
@@ -3042,61 +3216,92 @@ const Toolbar = () => {
     }
     // Якщо вже додано внутрішній бордер – оновлюємо його товщину без потреби вимикати/вмикати
     if (canvas) {
-      if (currentShapeType === 'circleWithLine') {
-        const lineObj = canvas.getObjects().find(o => o.isCircleWithLineCenterLine);
+      if (currentShapeType === "circleWithLine") {
+        const lineObj = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineCenterLine);
         if (lineObj) {
           lineObj.set({ height: mmToPx(value) });
           lineObj.setCoords();
         }
       }
-      if (currentShapeType === 'circleWithCross') {
-        const hLine = canvas.getObjects().find(o => o.isCircleWithCrossHorizontalLine);
-        if (hLine) { hLine.set({ height: mmToPx(value) }); hLine.setCoords(); }
-        const vLine = canvas.getObjects().find(o => o.isCircleWithCrossVerticalLine);
-        if (vLine) { vLine.set({ width: mmToPx(value) }); vLine.setCoords(); }
+      if (currentShapeType === "circleWithCross") {
+        const hLine = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossHorizontalLine);
+        if (hLine) {
+          hLine.set({ height: mmToPx(value) });
+          hLine.setCoords();
+        }
+        const vLine = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossVerticalLine);
+        if (vLine) {
+          vLine.set({ width: mmToPx(value) });
+          vLine.setCoords();
+        }
       }
-    const existing = canvas.getObjects().find(o => o.isRectangleInnerBorder || o.isCircleInnerBorder || o.isEllipseInnerBorder || o.isHalfCircleInnerBorder || o.isExtendedHalfCircleInnerBorder || o.isHexagonInnerBorder || o.isOctagonInnerBorder || o.isTriangleInnerBorder || o.isArrowLeftInnerBorder || o.isArrowRightInnerBorder || o.isAdaptiveTriangleInnerBorder || o.isLockInnerBorder);
+      const existing = canvas
+        .getObjects()
+        .find(
+          (o) =>
+            o.isRectangleInnerBorder ||
+            o.isCircleInnerBorder ||
+            o.isEllipseInnerBorder ||
+            o.isHalfCircleInnerBorder ||
+            o.isExtendedHalfCircleInnerBorder ||
+            o.isHexagonInnerBorder ||
+            o.isOctagonInnerBorder ||
+            o.isTriangleInnerBorder ||
+            o.isArrowLeftInnerBorder ||
+            o.isArrowRightInnerBorder ||
+            o.isAdaptiveTriangleInnerBorder ||
+            o.isLockInnerBorder
+        );
       if (existing) {
-        const color = existing.stroke || '#000';
+        const color = existing.stroke || "#000";
         // Видаляємо усі попередні borderShape
-        canvas.getObjects().filter(o => o.isBorderShape).forEach(o => canvas.remove(o));
+        canvas
+          .getObjects()
+          .filter((o) => o.isBorderShape)
+          .forEach((o) => canvas.remove(o));
         // Перебудовуємо для поточної фігури з новою товщиною
         switch (currentShapeType) {
-          case 'rectangle':
+          case "rectangle":
             applyRectangleInnerBorder({ thicknessMm: value, color });
             break;
-      case 'circle':
-      case 'circleWithLine': // така ж логіка бордера як у звичайного кола
+          case "circle":
+          case "circleWithLine": // така ж логіка бордера як у звичайного кола
             applyCircleInnerBorder({ thicknessMm: value, color });
             break;
-          case 'ellipse':
+          case "ellipse":
             applyEllipseInnerBorder({ thicknessMm: value, color });
             break;
-          case 'halfCircle':
+          case "halfCircle":
             applyHalfCircleInnerBorder({ thicknessMm: value, color });
             break;
-          case 'extendedHalfCircle':
+          case "extendedHalfCircle":
             applyExtendedHalfCircleInnerBorder({ thicknessMm: value, color });
             break;
-          case 'hexagon':
+          case "hexagon":
             applyHexagonInnerBorder({ thicknessMm: value, color });
             break;
-          case 'octagon':
+          case "octagon":
             applyOctagonInnerBorder({ thicknessMm: value, color });
             break;
-          case 'triangle':
+          case "triangle":
             applyTriangleInnerBorder({ thicknessMm: value, color });
             break;
-          case 'arrowLeft':
+          case "arrowLeft":
             applyArrowLeftInnerBorder({ thicknessMm: value, color });
             break;
-          case 'arrowRight':
+          case "arrowRight":
             applyArrowRightInnerBorder({ thicknessMm: value, color });
             break;
-          case 'adaptiveTriangle':
+          case "adaptiveTriangle":
             applyAdaptiveTriangleInnerBorder({ thicknessMm: value, color });
             break;
-          case 'lock':
+          case "lock":
             applyLockInnerBorder({ thicknessMm: value, color });
             break;
           default:
@@ -3104,30 +3309,58 @@ const Toolbar = () => {
         }
       }
       // Також оновлюємо позицію текстів у circleWithLine при зміні товщини
-      if (currentShapeType === 'circleWithLine') {
+      if (currentShapeType === "circleWithLine") {
         const diameterPx = canvas.width;
-        const topText = canvas.getObjects().find(o => o.isCircleWithLineTopText);
-        const bottomText = canvas.getObjects().find(o => o.isCircleWithLineBottomText);
+        const topText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineTopText);
+        const bottomText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithLineBottomText);
         if (topText || bottomText) {
           const radiusMm = pxToMm(diameterPx) / 2;
-            const gapMm = (radiusMm - value / 2) / 3; // value у мм (зменшений відступ)
+          const gapMm = (radiusMm - value / 2) / 3; // value у мм (зменшений відступ)
           const centerY = canvas.height / 2;
-          if (topText) { topText.set({ top: centerY - mmToPx(gapMm), left: diameterPx / 2 }); topText.setCoords(); }
-          if (bottomText) { bottomText.set({ top: centerY + mmToPx(gapMm), left: diameterPx / 2 }); bottomText.setCoords(); }
+          if (topText) {
+            topText.set({ top: centerY - mmToPx(gapMm), left: diameterPx / 2 });
+            topText.setCoords();
+          }
+          if (bottomText) {
+            bottomText.set({
+              top: centerY + mmToPx(gapMm),
+              left: diameterPx / 2,
+            });
+            bottomText.setCoords();
+          }
         }
-      } else if (currentShapeType === 'circleWithCross') {
+      } else if (currentShapeType === "circleWithCross") {
         const diameterPx = canvas.width;
-        const topText = canvas.getObjects().find(o => o.isCircleWithCrossTopText);
-        const blText = canvas.getObjects().find(o => o.isCircleWithCrossBottomLeftText);
-        const brText = canvas.getObjects().find(o => o.isCircleWithCrossBottomRightText);
+        const topText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossTopText);
+        const blText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossBottomLeftText);
+        const brText = canvas
+          .getObjects()
+          .find((o) => o.isCircleWithCrossBottomRightText);
         if (topText || blText || brText) {
           const radiusMm = pxToMm(diameterPx) / 2;
           const gapMm = (radiusMm - value / 2) / 3; // зменшений відступ
           const centerY = canvas.height / 2;
           const bottomY = centerY + mmToPx(gapMm);
-          if (topText) { topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) }); topText.setCoords(); }
-          if (blText) { blText.set({ left: diameterPx * 0.35, top: bottomY }); blText.setCoords(); }
-          if (brText) { brText.set({ left: diameterPx * 0.65, top: bottomY }); brText.setCoords(); }
+          if (topText) {
+            topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
+            topText.setCoords();
+          }
+          if (blText) {
+            blText.set({ left: diameterPx * 0.35, top: bottomY });
+            blText.setCoords();
+          }
+          if (brText) {
+            brText.set({ left: diameterPx * 0.65, top: bottomY });
+            brText.setCoords();
+          }
         }
       }
       canvas.renderAll();
@@ -3151,23 +3384,23 @@ const Toolbar = () => {
   ) => {
     try {
       // Імпортуємо qrcode-generator на льоту
-      const qrGenerator = (await import('qrcode-generator')).default;
-      
+      const qrGenerator = (await import("qrcode-generator")).default;
+
       // Генеруємо QR код з новою бібліотекою
-      const qr = qrGenerator(0, 'M');
+      const qr = qrGenerator(0, "M");
       qr.addData(text);
       qr.make();
-      
+
       const moduleCount = qr.getModuleCount();
       const cellSize = 4;
       const size = moduleCount * cellSize;
-      
+
       // Створюємо SVG без quiet zone та мікровідступів
       let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
       svg += `<rect width="${size}" height="${size}" fill="${backgroundColor}"/>`;
-      
+
       // Модулі QR коду - використовуємо один великий path
-      let pathData = '';
+      let pathData = "";
       for (let row = 0; row < moduleCount; row++) {
         for (let col = 0; col < moduleCount; col++) {
           if (qr.isDark(row, col)) {
@@ -3177,11 +3410,11 @@ const Toolbar = () => {
           }
         }
       }
-      
+
       if (pathData) {
         svg += `<path d="${pathData}" fill="${foregroundColor}" fill-rule="evenodd"/>`;
       }
-      svg += '</svg>';
+      svg += "</svg>";
 
       // Завантажуємо SVG в Fabric
       const result = await fabric.loadSVGFromString(svg);
@@ -3189,7 +3422,10 @@ const Toolbar = () => {
       if (result?.objects?.length === 1) {
         newObj = result.objects[0];
       } else {
-        newObj = fabric.util.groupSVGElements(result.objects || [], result.options || {});
+        newObj = fabric.util.groupSVGElements(
+          result.objects || [],
+          result.options || {}
+        );
       }
 
       // Зберігаємо властивості оригінального об'єкта
@@ -3612,30 +3848,40 @@ const Toolbar = () => {
     }
 
     // 4. Apply baseline inner border depending on shape type
-    if (shapeType === 'rectangle') {
-  applyRectangleInnerBorder({ thicknessMm: thickness, color: '#000' });
-  } else if (shapeType === 'circle' || shapeType === 'circleWithLine' || shapeType === 'circleWithCross') {
-  applyCircleInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'ellipse') {
-  applyEllipseInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'halfCircle') {
-  applyHalfCircleInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'extendedHalfCircle') {
-  applyExtendedHalfCircleInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'hexagon') {
-  applyHexagonInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'octagon') {
-  applyOctagonInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'triangle') {
-  applyTriangleInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'arrowLeft') {
-  applyArrowLeftInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'arrowRight') {
-  applyArrowRightInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'adaptiveTriangle') {
-  applyAdaptiveTriangleInnerBorder({ thicknessMm: thickness, color: '#000' });
-    } else if (shapeType === 'lock') {
-  applyLockInnerBorder({ thicknessMm: thickness, color: '#000' });
+    if (shapeType === "rectangle") {
+      applyRectangleInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (
+      shapeType === "circle" ||
+      shapeType === "circleWithLine" ||
+      shapeType === "circleWithCross"
+    ) {
+      applyCircleInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "ellipse") {
+      applyEllipseInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "halfCircle") {
+      applyHalfCircleInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "extendedHalfCircle") {
+      applyExtendedHalfCircleInnerBorder({
+        thicknessMm: thickness,
+        color: "#000",
+      });
+    } else if (shapeType === "hexagon") {
+      applyHexagonInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "octagon") {
+      applyOctagonInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "triangle") {
+      applyTriangleInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "arrowLeft") {
+      applyArrowLeftInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "arrowRight") {
+      applyArrowRightInnerBorder({ thicknessMm: thickness, color: "#000" });
+    } else if (shapeType === "adaptiveTriangle") {
+      applyAdaptiveTriangleInnerBorder({
+        thicknessMm: thickness,
+        color: "#000",
+      });
+    } else if (shapeType === "lock") {
+      applyLockInnerBorder({ thicknessMm: thickness, color: "#000" });
     } else {
       console.warn("Border placeholder: shape not yet supported", shapeType);
       updateCanvasOutline(); // keep outline if nothing added
@@ -4710,7 +4956,8 @@ const Toolbar = () => {
         // Ліва точка хорди
         pts.push({ x: leftArcX, y: rectTopY });
         const steps = 60; // smoother semicircle sampling
-        for (let i = 1; i < steps - 1; i++) { // внутрішні точки дуги
+        for (let i = 1; i < steps - 1; i++) {
+          // внутрішні точки дуги
           const t = i / (steps - 1); // 0..1
           const angle = Math.PI + Math.PI * t; // π .. 2π
           const x = cx + radiusX * Math.cos(angle);
@@ -4720,11 +4967,16 @@ const Toolbar = () => {
         // Права точка хорди
         pts.push({ x: rightArcX, y: rectTopY });
         const cornerRadiusPx = mmToPx(sizeValues.cornerRadius || 0);
-        const baseCr = Math.min(cornerRadiusPx, (rectBottomY - rectTopY), wPx / 2);
+        const baseCr = Math.min(
+          cornerRadiusPx,
+          rectBottomY - rectTopY,
+          wPx / 2
+        );
         const topSideLen = wPx - rightArcX; // від правого краю дуги до правого краю прямокутника
         const crTop = Math.min(baseCr, topSideLen);
         const crBottom = baseCr;
-        const cornerSegs = baseCr > 0 ? Math.max(10, Math.round(baseCr / 2)) : 0;
+        const cornerSegs =
+          baseCr > 0 ? Math.max(10, Math.round(baseCr / 2)) : 0;
         // ---- Top-right corner ----
         if (crTop > 0) {
           pts.push({ x: wPx - crTop, y: rectTopY });
@@ -4732,7 +4984,10 @@ const Toolbar = () => {
           const cyTR = rectTopY + crTop;
           for (let i = 0; i <= cornerSegs; i++) {
             const theta = (3 * Math.PI) / 2 + (Math.PI / 2) * (i / cornerSegs); // 270->360°
-            pts.push({ x: cxTR + crTop * Math.cos(theta), y: cyTR + crTop * Math.sin(theta) });
+            pts.push({
+              x: cxTR + crTop * Math.cos(theta),
+              y: cyTR + crTop * Math.sin(theta),
+            });
           }
         } else {
           pts.push({ x: wPx, y: rectTopY });
@@ -4744,7 +4999,10 @@ const Toolbar = () => {
           const cyBR = rectBottomY - crBottom;
           for (let i = 0; i <= cornerSegs; i++) {
             const theta = 0 + (Math.PI / 2) * (i / cornerSegs); // 0->90°
-            pts.push({ x: cxBR + crBottom * Math.cos(theta), y: cyBR + crBottom * Math.sin(theta) });
+            pts.push({
+              x: cxBR + crBottom * Math.cos(theta),
+              y: cyBR + crBottom * Math.sin(theta),
+            });
           }
         } else {
           pts.push({ x: wPx, y: rectBottomY });
@@ -4756,7 +5014,10 @@ const Toolbar = () => {
           const cyBL = rectBottomY - crBottom;
           for (let i = 0; i <= cornerSegs; i++) {
             const theta = Math.PI / 2 + (Math.PI / 2) * (i / cornerSegs); // 90->180°
-            pts.push({ x: cxBL + crBottom * Math.cos(theta), y: cyBL + crBottom * Math.sin(theta) });
+            pts.push({
+              x: cxBL + crBottom * Math.cos(theta),
+              y: cyBL + crBottom * Math.sin(theta),
+            });
           }
         } else {
           pts.push({ x: 0, y: rectBottomY });
@@ -4768,7 +5029,10 @@ const Toolbar = () => {
           const cyTL = rectTopY + crTop;
           for (let i = 0; i <= cornerSegs; i++) {
             const theta = Math.PI + (Math.PI / 2) * (i / cornerSegs); // 180->270°
-            pts.push({ x: cxTL + crTop * Math.cos(theta), y: cyTL + crTop * Math.sin(theta) });
+            pts.push({
+              x: cxTL + crTop * Math.cos(theta),
+              y: cyTL + crTop * Math.sin(theta),
+            });
           }
           // Повертаємось до початку півкола
           pts.push({ x: leftArcX, y: rectTopY });
@@ -4778,11 +5042,18 @@ const Toolbar = () => {
         return pts;
       };
 
-      const clipPath = new fabric.Polygon(buildLockPoints(), { absolutePositioned: true });
+      const clipPath = new fabric.Polygon(buildLockPoints(), {
+        absolutePositioned: true,
+      });
       canvas.clipPath = clipPath;
 
       // Оновлюємо state розмірів
-      setSizeValues(prev => ({ ...prev, width: widthMM, height: totalHeightMM, cornerRadius: 0 }));
+      setSizeValues((prev) => ({
+        ...prev,
+        width: widthMM,
+        height: totalHeightMM,
+        cornerRadius: 0,
+      }));
 
       updateCanvasOutline();
       canvas.renderAll();
@@ -4799,13 +5070,13 @@ const Toolbar = () => {
         left: wPx / 2,
         top: semiCenterY,
         radius: holeRadiusPx,
-        fill: '#FFFFFF',
-        stroke: '#000000',
+        fill: "#FFFFFF",
+        stroke: "#000000",
         strokeWidth: 1,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         isCutElement: true,
-        cutType: 'hole',
+        cutType: "hole",
         hasControls: false,
         hasBorders: true,
         lockScalingX: true,
@@ -4864,11 +5135,11 @@ const Toolbar = () => {
       const centerLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         width: mmToPx(lineWidthMm),
         height: mmToPx(lineThicknessMm),
-        fill: globalColors?.textColor || '#000',
+        fill: globalColors?.textColor || "#000",
         selectable: false,
         evented: false,
         hasControls: false,
@@ -4880,20 +5151,30 @@ const Toolbar = () => {
 
       // Заготовки тексту над і під лінією
       const radiusMm = diameterMm / 2;
-  const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
-      const topY = (mmToPx(100) / 2) - mmToPx(gapMm);
-      const bottomY = (mmToPx(100) / 2) + mmToPx(gapMm);
+      const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
+      const topY = mmToPx(100) / 2 - mmToPx(gapMm);
+      const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
       const commonText = {
         fontSize: 18,
-        fontFamily: 'Arial',
-        fill: globalColors?.textColor || '#000',
-        originX: 'center',
-        originY: 'center',
+        fontFamily: "Arial",
+        fill: globalColors?.textColor || "#000",
+        originX: "center",
+        originY: "center",
         selectable: true,
         editable: true,
       };
-      const topText = new fabric.IText('TEXT TOP', { left: mmToPx(100)/2, top: topY, ...commonText, isCircleWithLineTopText: true });
-      const bottomText = new fabric.IText('TEXT BOTTOM', { left: mmToPx(100)/2, top: bottomY, ...commonText, isCircleWithLineBottomText: true });
+      const topText = new fabric.IText("TEXT TOP", {
+        left: mmToPx(100) / 2,
+        top: topY,
+        ...commonText,
+        isCircleWithLineTopText: true,
+      });
+      const bottomText = new fabric.IText("TEXT BOTTOM", {
+        left: mmToPx(100) / 2,
+        top: bottomY,
+        ...commonText,
+        isCircleWithLineBottomText: true,
+      });
       canvas.add(topText, bottomText);
       canvas.sendObjectToBack(centerLine);
 
@@ -4943,11 +5224,11 @@ const Toolbar = () => {
       const hLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         width: mmToPx(lineWidthMm),
         height: mmToPx(lineThicknessMm),
-        fill: globalColors?.textColor || '#000',
+        fill: globalColors?.textColor || "#000",
         selectable: false,
         evented: false,
         hasControls: false,
@@ -4961,11 +5242,11 @@ const Toolbar = () => {
       const vLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2, // верх вертикальної лінії у центрі
-        originX: 'center',
-        originY: 'top',
+        originX: "center",
+        originY: "top",
         width: mmToPx(lineThicknessMm),
         height: mmToPx(vHeightMm),
-        fill: globalColors?.textColor || '#000',
+        fill: globalColors?.textColor || "#000",
         selectable: false,
         evented: false,
         hasControls: false,
@@ -4976,21 +5257,36 @@ const Toolbar = () => {
       canvas.add(vLine);
       // Тексти: top center, bottom left, bottom right
       const radiusMm = diameterMm / 2;
-  const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
-      const topY = (mmToPx(100) / 2) - mmToPx(gapMm);
-      const bottomY = (mmToPx(100) / 2) + mmToPx(gapMm);
+      const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
+      const topY = mmToPx(100) / 2 - mmToPx(gapMm);
+      const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
       const commonText = {
         fontSize: 18,
-        fontFamily: 'Arial',
-        fill: globalColors?.textColor || '#000',
-        originX: 'center',
-        originY: 'center',
+        fontFamily: "Arial",
+        fill: globalColors?.textColor || "#000",
+        originX: "center",
+        originY: "center",
         selectable: true,
         editable: true,
       };
-      const topText = new fabric.IText('TEXT TOP', { left: mmToPx(100)/2, top: topY, ...commonText, isCircleWithCrossTopText: true });
-      const bottomLeftText = new fabric.IText('TEXT L', { left: mmToPx(100)*0.35, top: bottomY, ...commonText, isCircleWithCrossBottomLeftText: true });
-      const bottomRightText = new fabric.IText('TEXT R', { left: mmToPx(100)*0.65, top: bottomY, ...commonText, isCircleWithCrossBottomRightText: true });
+      const topText = new fabric.IText("TEXT TOP", {
+        left: mmToPx(100) / 2,
+        top: topY,
+        ...commonText,
+        isCircleWithCrossTopText: true,
+      });
+      const bottomLeftText = new fabric.IText("TEXT L", {
+        left: mmToPx(100) * 0.35,
+        top: bottomY,
+        ...commonText,
+        isCircleWithCrossBottomLeftText: true,
+      });
+      const bottomRightText = new fabric.IText("TEXT R", {
+        left: mmToPx(100) * 0.65,
+        top: bottomY,
+        ...commonText,
+        isCircleWithCrossBottomRightText: true,
+      });
       canvas.add(topText, bottomLeftText, bottomRightText);
       canvas.sendObjectToBack(hLine);
       canvas.sendObjectToBack(vLine);
@@ -5459,6 +5755,31 @@ const Toolbar = () => {
 
     // Apply immediately without relying on async state
     if (activeObject && canvas) {
+      // Якщо редагуємо радіус кутів для фігур, які будуються через clipPath (напр., стрілки),
+      // то спочатку перебудовуємо саму фігуру (clipPath), а потім – бордер.
+      if (key === "cornerRadius") {
+        const clipPathDriven =
+          currentShapeType === "arrowLeft" ||
+          currentShapeType === "arrowRight" ||
+          currentShapeType === "hexagon" ||
+          currentShapeType === "octagon" ||
+          currentShapeType === "triangle" ||
+          currentShapeType === "adaptiveTriangle" ||
+          currentShapeType === "halfCircle" ||
+          currentShapeType === "extendedHalfCircle" ||
+          currentShapeType === "lock" ||
+          currentShapeType === "flag" ||
+          currentShapeType === "diamond";
+        if (clipPathDriven) {
+          updateSize({
+            widthMm: round1(next.width),
+            heightMm: round1(next.height),
+            cornerRadiusMm: round1(next.cornerRadius),
+          });
+          updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
+          return;
+        }
+      }
       const currentLeft = activeObject.left;
       const currentTop = activeObject.top;
 
@@ -5509,6 +5830,10 @@ const Toolbar = () => {
         heightMm: round1(next.height),
         cornerRadiusMm: round1(next.cornerRadius),
       });
+      // Якщо змінювали саме радіус і є бордер — перебудувати його після оновлення clipPath
+      if (key === "cornerRadius") {
+        updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
+      }
     }
   };
 
@@ -5521,6 +5846,35 @@ const Toolbar = () => {
 
       // Apply immediately using explicit values
       if (activeObject && canvas) {
+        if (key === "cornerRadius") {
+          const clipPathDriven =
+            currentShapeType === "arrowLeft" ||
+            currentShapeType === "arrowRight" ||
+            currentShapeType === "hexagon" ||
+            currentShapeType === "octagon" ||
+            currentShapeType === "triangle" ||
+            currentShapeType === "adaptiveTriangle" ||
+            currentShapeType === "halfCircle" ||
+            currentShapeType === "extendedHalfCircle" ||
+            currentShapeType === "lock" ||
+            currentShapeType === "flag" ||
+            currentShapeType === "diamond";
+          if (clipPathDriven) {
+            updateSize({
+              widthMm: round1(key === "width" ? newValue : updated.width),
+              heightMm: round1(key === "height" ? newValue : updated.height),
+              cornerRadiusMm: round1(
+                key === "cornerRadius" ? newValue : updated.cornerRadius
+              ),
+            });
+            updateExistingBorders({
+              cornerRadiusMm: round1(
+                key === "cornerRadius" ? newValue : updated.cornerRadius
+              ),
+            });
+            return updated;
+          }
+        }
         const currentLeft = activeObject.left;
         const currentTop = activeObject.top;
 
@@ -5570,6 +5924,13 @@ const Toolbar = () => {
             key === "cornerRadius" ? newValue : updated.cornerRadius
           ),
         });
+        if (key === "cornerRadius") {
+          updateExistingBorders({
+            cornerRadiusMm: round1(
+              key === "cornerRadius" ? newValue : updated.cornerRadius
+            ),
+          });
+        }
       }
 
       return updated;

@@ -14,6 +14,7 @@ import IconMenu from "../IconMenu/IconMenu";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
 import {
+  // Shape palette icons
   Icon0,
   Icon1,
   Icon2,
@@ -29,6 +30,7 @@ import {
   Icon12,
   Icon13,
   Icon14,
+  // Color preview icons
   A1,
   A2,
   A3,
@@ -43,6 +45,7 @@ import {
   A12,
   A13,
   A14,
+  // Toolbar glyphs
   Image,
   Upload,
   Shape,
@@ -1080,9 +1083,11 @@ const Toolbar = () => {
 
   // Повертає { points, isFull } де points – або повна форма трикутника, або обрізаний полігон
   const getAdaptiveTriangleData = (width, height) => {
+    // 3 vs 5 визначаємо відносно 190/165, щоб зона між 180/165 і 190/165 залишалась 5-кутною
+    // (вона потрібна для переходу типу заокруглення при порозі 180/165)
     const refW = 190;
     const refH = 165;
-    const refRatio = refW / refH;
+    const refRatio = refW / refH; // ~1.1515 (190/165)
     const currentRatio = width / height;
     let triangleWidth, triangleHeight;
     if (currentRatio > refRatio) {
@@ -1100,11 +1105,21 @@ const Toolbar = () => {
       { x: centerX - triangleWidth / 2, y: triangleHeight },
       { x: centerX + triangleWidth / 2, y: triangleHeight },
     ];
-    // Визначаємо повну форму фактом відсутності обрізання (після кліпінгу рівно 3 вершини)
-    const clipped = clipPolygonWithRect(triangle, width, height);
-    if (Array.isArray(clipped) && clipped.length === 3) {
+    // Визначаємо 3 vs 5 кутів за співвідношенням ширина/висота відносно 190/165
+    const ratioTol = 0.003; // невеликий допуск на округлення
+    const isFull = currentRatio >= refRatio - ratioTol;
+    console.log("[adaptiveTriangle] getAdaptiveTriangleData ratio:", {
+      width,
+      height,
+      currentRatio,
+      refRatio,
+      isFull,
+    });
+    if (isFull) {
       return { points: triangle, isFull: true };
     }
+    // 5-кутник: реальний кліпінг
+    const clipped = clipPolygonWithRect(triangle, width, height);
     return { points: clipped, isFull: false };
   };
 
@@ -1159,23 +1174,81 @@ const Toolbar = () => {
 
         // Створюємо clipPath з оновленими розмірами
         const triData = getAdaptiveTriangleData(finalWidth, finalHeight);
+        console.log(
+          "[adaptiveTriangle] updateSize: isFull=",
+          triData.isFull,
+          "points=",
+          triData.points?.length
+        );
         const rCorner = mmToPx(cornerRadiusMm || 0);
         if (triData.isFull) {
-          // Повна фігура (3 кути): округлюємо всі 3 вершини як у звичайного трикутника, але одразу полігоном
-          let pts = triData.points;
-          if (rCorner > 0) {
-            const seg = Math.max(12, Math.min(36, Math.round(rCorner / 1.2)));
-            pts = roundTriangle(pts, rCorner, seg);
-          }
-          canvas.clipPath = new fabric.Polygon(pts, {
-            absolutePositioned: true,
-          });
+          // Повна фігура (3 кути): поводимось як звичайний трикутник — clipPath як path
+          const d = makeRoundedTrianglePath(finalWidth, finalHeight, rCorner);
+          canvas.clipPath = new fabric.Path(d, { absolutePositioned: true });
         } else {
-          // Обрізаний варіант (5 кутів): залишаємо поточну polygon-логіку з округленням лише опуклих кутів
+          // Обрізаний варіант (5 кутів)
           let pts = triData.points;
+          const currRatio = finalWidth / finalHeight;
+          const roundThreshold = 180 / 165; // поріг стилю заокруглення
+          const ratioTol = 0.003;
+          // Вище або на порозі — трикутне заокруглення; нижче — 5-кутна логіка
+          const roundAsTriangle = currRatio >= roundThreshold - ratioTol;
           if (rCorner > 0) {
-            const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
-            pts = sampleRoundedPolygon(pts, rCorner, seg);
+            if (roundAsTriangle) {
+              // Вище/на порозі — візуально як трикутник: будуємо округлений трикутник і кліпимо в прямокутник
+              const d = makeRoundedTrianglePath(
+                finalWidth,
+                finalHeight,
+                rCorner
+              );
+              try {
+                const svgNS = "http://www.w3.org/2000/svg";
+                const path = document.createElementNS(svgNS, "path");
+                path.setAttribute("d", d);
+                const total = path.getTotalLength();
+                const target = Math.min(1400, Math.max(160, Math.round(total)));
+                const triRoundedPts = [];
+                for (let i = 0; i <= target; i++) {
+                  const p = path.getPointAtLength((total * i) / target);
+                  triRoundedPts.push({ x: p.x, y: p.y });
+                }
+                pts = clipPolygonWithRect(
+                  triRoundedPts,
+                  finalWidth,
+                  finalHeight
+                );
+              } catch (e) {
+                // fallback до 5-кутної логіки
+                const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
+                const weights = getAdaptivePentagonCornerWeights(
+                  pts,
+                  finalWidth,
+                  finalHeight,
+                  cornerRadiusMm
+                );
+                pts = sampleRoundedPolygonPerCornerFlexible(
+                  pts,
+                  rCorner,
+                  seg,
+                  weights
+                );
+              }
+            } else {
+              // Нижче порогу — існуюча логіка 5-кутника
+              const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
+              const weights = getAdaptivePentagonCornerWeights(
+                pts,
+                finalWidth,
+                finalHeight,
+                cornerRadiusMm
+              );
+              pts = sampleRoundedPolygonPerCornerFlexible(
+                pts,
+                rCorner,
+                seg,
+                weights
+              );
+            }
           }
           canvas.clipPath = new fabric.Polygon(pts, {
             absolutePositioned: true,
@@ -1260,23 +1333,32 @@ const Toolbar = () => {
           const radiusPx = mmToPx(8);
           const chordY = radiusPx;
           const halfWidthPx = mmToPx(16) / 2; // 8мм
-          const cx = width / 2;
-          const leftArcX = cx - halfWidthPx;
-          const rightArcX = cx + halfWidthPx;
-          const rectBottomY = height;
-          const pts = [];
-          pts.push({ x: leftArcX, y: chordY });
-          const semiSteps = 60; // smoother semicircle
-          for (let i = 1; i < semiSteps - 1; i++) {
-            const t = i / (semiSteps - 1);
-            const angle = Math.PI + Math.PI * t; // π..2π
-            pts.push({
-              x: cx + halfWidthPx * Math.cos(angle),
-              y: chordY + radiusPx * Math.sin(angle),
-            });
+          const centerX = width / 2;
+          const triangle = [
+            { x: centerX, y: 0 },
+            { x: centerX - triangleWidth / 2, y: triangleHeight },
+            { x: centerX + triangleWidth / 2, y: triangleHeight },
+          ];
+
+          // Повний трикутник, якщо повністю вміщується в прямокутник (дозволяємо дотик до меж)
+          const eps = 0.01;
+          const fitsInside =
+            triangleWidth <= width + eps && triangleHeight <= height + eps;
+          if (fitsInside) {
+            console.log(
+              "[adaptiveTriangle] getAdaptiveTriangleData: fitsInside=true -> isFull=true"
+            );
+            return { points: triangle, isFull: true };
           }
-          pts.push({ x: rightArcX, y: chordY });
-          const baseCornerR = Math.min(cr, rectBottomY - chordY, width / 2);
+
+          // Інакше — реальний кліпінг і 5-кутник
+          const clipped = clipPolygonWithRect(triangle, width, height);
+          const vCount = Array.isArray(clipped) ? clipped.length : 0;
+          console.log(
+            "[adaptiveTriangle] getAdaptiveTriangleData: fitsInside=false -> vertexCount=",
+            vCount
+          );
+          return { points: clipped, isFull: false };
           // Top horizontal segment length on each side of semicircle
           const topSideLen = width - rightArcX; // == leftArcX
           const crTop = Math.min(baseCornerR, topSideLen, rectBottomY - chordY);
@@ -2527,6 +2609,293 @@ const Toolbar = () => {
     return pts;
   };
 
+  // Per-corner rounding with weights: r_i = r * weights[i] (still clamped by adjacent edge lengths)
+  const sampleRoundedPolygonPerCorner = (basePts, r, segments, weights) => {
+    const n = basePts.length;
+    if (!r || r <= 0 || n < 3) return basePts.map((p) => ({ x: p.x, y: p.y }));
+    const w =
+      Array.isArray(weights) && weights.length === n
+        ? weights
+        : new Array(n).fill(1);
+
+    // Determine orientation
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = basePts[i];
+      const b = basePts[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const ccw = area > 0;
+
+    const pts = [];
+    const seg = Math.max(4, Math.min(48, Math.round(segments || 8)));
+    for (let i = 0; i < n; i++) {
+      const prev = basePts[(i - 1 + n) % n];
+      const curr = basePts[i];
+      const next = basePts[(i + 1) % n];
+
+      const v1x = curr.x - prev.x;
+      const v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x;
+      const v2y = next.y - curr.y;
+
+      const len1 = Math.hypot(v1x, v1y) || 1;
+      const len2 = Math.hypot(v2x, v2y) || 1;
+      const u1x = v1x / len1;
+      const u1y = v1y / len1;
+      const u2x = v2x / len2;
+      const u2y = v2y / len2;
+
+      const cross = u1x * u2y - u1y * u2x;
+      const isConvex = ccw ? cross > 0 : cross < 0;
+
+      if (!isConvex) {
+        if (
+          pts.length === 0 ||
+          Math.hypot(
+            pts[pts.length - 1].x - curr.x,
+            pts[pts.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          pts.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
+      const rCorner = Math.max(0, r * (w[i] ?? 1));
+      const rClamped = Math.min(rCorner, len1 / 2 - 0.001, len2 / 2 - 0.001);
+      if (rClamped <= 0) {
+        if (
+          pts.length === 0 ||
+          Math.hypot(
+            pts[pts.length - 1].x - curr.x,
+            pts[pts.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          pts.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
+      const p1x = curr.x - u1x * rClamped;
+      const p1y = curr.y - u1y * rClamped;
+      const p2x = curr.x + u2x * rClamped;
+      const p2y = curr.y + u2y * rClamped;
+
+      if (
+        pts.length === 0 ||
+        Math.hypot(pts[pts.length - 1].x - p1x, pts[pts.length - 1].y - p1y) >
+          0.01
+      ) {
+        pts.push({ x: p1x, y: p1y });
+      }
+      for (let s = 1; s < seg; s++) {
+        const t = s / seg;
+        const omt = 1 - t;
+        const bx = omt * omt * p1x + 2 * omt * t * curr.x + t * t * p2x;
+        const by = omt * omt * p1y + 2 * omt * t * curr.y + t * t * p2y;
+        pts.push({ x: bx, y: by });
+      }
+      pts.push({ x: p2x, y: p2y });
+    }
+    return pts;
+  };
+
+  // Walk along polyline from vertex index i, direction dir (-1 prev, +1 next), accumulating distance
+  function walkAlongPolyline(basePts, i, dir, distance, maxSteps = 3) {
+    const n = basePts.length;
+    let remaining = Math.max(0, distance);
+    let from = basePts[i];
+    let steps = 0;
+    let j = (i + dir + n) % n;
+    while (steps < maxSteps) {
+      const to = basePts[j];
+      const segLen = Math.hypot(to.x - from.x, to.y - from.y) || 0;
+      if (remaining <= segLen) {
+        const t = segLen > 0 ? remaining / segLen : 0;
+        return {
+          x: from.x + (to.x - from.x) * t,
+          y: from.y + (to.y - from.y) * t,
+        };
+      }
+      remaining -= segLen;
+      from = to;
+      j = (j + dir + n) % n;
+      steps++;
+    }
+    return { x: from.x, y: from.y };
+  }
+
+  // Flexible per-corner rounding: for non-top corners, walk across multiple edges so radius keeps growing
+  function sampleRoundedPolygonPerCornerFlexible(
+    basePts,
+    r,
+    segments,
+    weights
+  ) {
+    const n = basePts.length;
+    if (!r || r <= 0 || n < 3) return basePts.map((p) => ({ x: p.x, y: p.y }));
+    // Find top index (min Y)
+    let topIdx = 0;
+    let minY = Infinity;
+    for (let i = 0; i < n; i++) {
+      if (basePts[i].y < minY) {
+        minY = basePts[i].y;
+        topIdx = i;
+      }
+    }
+    const w =
+      Array.isArray(weights) && weights.length === n
+        ? weights
+        : new Array(n).fill(1);
+    // orientation for convexity test
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = basePts[i];
+      const b = basePts[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const ccw = area > 0;
+    const out = [];
+    const seg = Math.max(8, Math.min(64, Math.round(segments || 12)));
+    for (let i = 0; i < n; i++) {
+      const prev = basePts[(i - 1 + n) % n];
+      const curr = basePts[i];
+      const next = basePts[(i + 1) % n];
+
+      const v1x = curr.x - prev.x,
+        v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x,
+        v2y = next.y - curr.y;
+      const len1 = Math.hypot(v1x, v1y) || 1;
+      const len2 = Math.hypot(v2x, v2y) || 1;
+      const u1x = v1x / len1,
+        u1y = v1y / len1;
+      const u2x = v2x / len2,
+        u2y = v2y / len2;
+      const cross = u1x * u2y - u1y * u2x;
+      const isConvex = ccw ? cross > 0 : cross < 0;
+      if (!isConvex) {
+        if (
+          out.length === 0 ||
+          Math.hypot(
+            out[out.length - 1].x - curr.x,
+            out[out.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          out.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
+      const rTarget = Math.max(0, r * (w[i] ?? 1));
+      if (rTarget <= 0.001) {
+        if (
+          out.length === 0 ||
+          Math.hypot(
+            out[out.length - 1].x - curr.x,
+            out[out.length - 1].y - curr.y
+          ) > 0.01
+        ) {
+          out.push({ x: curr.x, y: curr.y });
+        }
+        continue;
+      }
+
+      let p1, p2;
+      if (i === topIdx) {
+        // верхній кут – залишаємо стару стабільну схему з локальним клампом
+        const rClamp = Math.min(rTarget, len1 / 2 - 0.001, len2 / 2 - 0.001);
+        p1 = { x: curr.x - u1x * rClamp, y: curr.y - u1y * rClamp };
+        p2 = { x: curr.x + u2x * rClamp, y: curr.y + u2y * rClamp };
+      } else {
+        // інші кути – не виходимо за межі сусідніх ребер (щоб не було "листків")
+        const rPrev = Math.min(rTarget, len1 * 0.48);
+        const rNext = Math.min(rTarget, len2 * 0.48);
+        const rUse = Math.max(0.001, Math.min(rPrev, rNext));
+        p1 = { x: curr.x - u1x * rUse, y: curr.y - u1y * rUse };
+        p2 = { x: curr.x + u2x * rUse, y: curr.y + u2y * rUse };
+      }
+
+      if (
+        out.length === 0 ||
+        Math.hypot(out[out.length - 1].x - p1.x, out[out.length - 1].y - p1.y) >
+          0.01
+      ) {
+        out.push(p1);
+      }
+      for (let s = 1; s < seg; s++) {
+        const t = s / seg;
+        const omt = 1 - t;
+        const bx = omt * omt * p1.x + 2 * omt * t * curr.x + t * t * p2.x;
+        const by = omt * omt * p1.y + 2 * omt * t * curr.y + t * t * p2.y;
+        if (
+          Math.hypot(bx - p1.x, by - p1.y) > 0.005 &&
+          Math.hypot(bx - p2.x, by - p2.y) > 0.005
+        ) {
+          out.push({ x: bx, y: by });
+        }
+      }
+      if (
+        Math.hypot(out[out.length - 1].x - p2.x, out[out.length - 1].y - p2.y) >
+        0.005
+      ) {
+        out.push(p2);
+      }
+    }
+    return out;
+  }
+
+  // Build weights for adaptiveTriangle pentagon: keep TOP=1.0, reduce JUNCTIONS a bit, BOTTOM corners slightly.
+  function getAdaptivePentagonCornerWeights(
+    basePts,
+    width,
+    height,
+    cornerRadiusMm
+  ) {
+    const n = basePts.length;
+    const weights = new Array(n).fill(0.85);
+    if (n < 5) return weights; // fallback
+    // Top = minimal y
+    let topIdx = 0;
+    let minY = Infinity;
+    for (let i = 0; i < n; i++) {
+      if (basePts[i].y < minY) {
+        minY = basePts[i].y;
+        topIdx = i;
+      }
+    }
+    weights[topIdx] = 1.0;
+
+    const eps = Math.max(1, Math.min(width, height) * 0.002);
+    // bottom-level vertices (near canvas bottom)
+    const bottomish = [];
+    for (let i = 0; i < n; i++) {
+      if (Math.abs(basePts[i].y - height) <= eps) bottomish.push(i);
+    }
+    // scale down others when radius is large (beyond ~31mm user threshold)
+    const mm = Number(cornerRadiusMm) || 0;
+    const scaleLarge = mm > 31 ? Math.max(0.6, 31 / mm) : 1;
+
+    // identify bottom corners (near x=0 and x=width)
+    let leftBottomIdx = -1;
+    let rightBottomIdx = -1;
+    for (const i of bottomish) {
+      if (Math.abs(basePts[i].x - 0) <= eps) leftBottomIdx = i;
+      if (Math.abs(basePts[i].x - width) <= eps) rightBottomIdx = i;
+    }
+    if (leftBottomIdx >= 0) weights[leftBottomIdx] = 0.8 * scaleLarge;
+    if (rightBottomIdx >= 0) weights[rightBottomIdx] = 0.8 * scaleLarge;
+
+    // junctions: bottomish but not bottom corners
+    for (const i of bottomish) {
+      if (i !== leftBottomIdx && i !== rightBottomIdx) {
+        weights[i] = 0.65 * scaleLarge;
+      }
+    }
+    return weights;
+  }
+
   // Selective rounding (only specified corner indices) – used for halfCircle base corners
   function sampleRoundedPolygonSelective(basePts, r, segments, cornerIndices) {
     if (!r || r <= 0) return basePts.map((p) => ({ x: p.x, y: p.y }));
@@ -3235,6 +3604,8 @@ const Toolbar = () => {
     const cp = canvas.clipPath;
     let poly;
     if (cp && cp.type === "polygon" && Array.isArray(cp.points)) {
+      console.log("[adaptiveTriangle] innerBorder mode: polygon (5 corners)");
+      // 5-кутний режим (polygon): копіюємо точки і малюємо внутрішній полігон-бордер
       // Копируем точки из clipPath, снимаем scale и переводим в локальные координаты bbox
       const sx = cp.scaleX || 1;
       const sy = cp.scaleY || 1;
@@ -3261,7 +3632,8 @@ const Toolbar = () => {
         excludeFromExport: false,
       });
     } else if (cp && cp.type === "path" && cp.path) {
-      // Теоретично повний режим міг бути path у старих сесіях; перебудуємо точки з поточного clipPath path
+      console.log("[adaptiveTriangle] innerBorder mode: path (3 corners)");
+      // 3-кутний режим (path): будуємо бордер як для звичайного трикутника, сэмплюючи current path
       const svgNS = "http://www.w3.org/2000/svg";
       try {
         const pathEl = document.createElementNS(svgNS, "path");
@@ -5550,21 +5922,85 @@ const Toolbar = () => {
 
       // Побудова адаптивного трикутника та обрізання по краях
       const triData = getAdaptiveTriangleData(mmToPx(width), mmToPx(height));
-      let pts = triData.points;
+      console.log(
+        "[adaptiveTriangle] addAdaptiveTriangle: isFull=",
+        triData.isFull,
+        "points=",
+        triData.points?.length
+      );
       const rCorner = mmToPx(sizeValues.cornerRadius || 0);
-      if (rCorner > 0) {
-        if (triData.isFull) {
-          const seg = Math.max(12, Math.min(32, Math.round(rCorner / 1.2)));
-          pts = roundTriangle(pts, rCorner, seg);
-        } else {
-          const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
-          pts = sampleRoundedPolygon(pts, rCorner, seg);
+      if (triData.isFull) {
+        const d = makeRoundedTrianglePath(
+          mmToPx(width),
+          mmToPx(height),
+          rCorner
+        );
+        canvas.clipPath = new fabric.Path(d, { absolutePositioned: true });
+      } else {
+        const currRatio = mmToPx(width) / mmToPx(height);
+        const roundThreshold = 180 / 165; // поріг стилю заокруглення
+        const ratioTol = 0.003;
+        // Вище або на порозі — трикутне заокруглення; нижче — 5-кутна логіка
+        const roundAsTriangle = currRatio >= roundThreshold - ratioTol;
+        let pts = triData.points;
+        if (rCorner > 0) {
+          if (roundAsTriangle) {
+            // нижче порогу — візуально трикутне заокруглення (кліп округленого трикутника)
+            const d = makeRoundedTrianglePath(
+              mmToPx(width),
+              mmToPx(height),
+              rCorner
+            );
+            try {
+              const svgNS = "http://www.w3.org/2000/svg";
+              const path = document.createElementNS(svgNS, "path");
+              path.setAttribute("d", d);
+              const total = path.getTotalLength();
+              const target = Math.min(1400, Math.max(160, Math.round(total)));
+              const triRoundedPts = [];
+              for (let i = 0; i <= target; i++) {
+                const p = path.getPointAtLength((total * i) / target);
+                triRoundedPts.push({ x: p.x, y: p.y });
+              }
+              pts = clipPolygonWithRect(
+                triRoundedPts,
+                mmToPx(width),
+                mmToPx(height)
+              );
+            } catch (e) {
+              const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
+              const weights = getAdaptivePentagonCornerWeights(
+                pts,
+                mmToPx(width),
+                mmToPx(height),
+                sizeValues.cornerRadius || 0
+              );
+              pts = sampleRoundedPolygonPerCornerFlexible(
+                pts,
+                rCorner,
+                seg,
+                weights
+              );
+            }
+          } else {
+            const seg = Math.max(8, Math.min(24, Math.round(rCorner / 2)));
+            const weights = getAdaptivePentagonCornerWeights(
+              pts,
+              mmToPx(width),
+              mmToPx(height),
+              sizeValues.cornerRadius || 0
+            );
+            pts = sampleRoundedPolygonPerCornerFlexible(
+              pts,
+              rCorner,
+              seg,
+              weights
+            );
+          }
         }
+        const clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
+        canvas.clipPath = clipPath;
       }
-      const clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
-
-      // Встановлюємо clipPath для canvas
-      canvas.clipPath = clipPath;
 
       // Оновлюємо розміри в state
       setSizeValues((prev) => ({ ...prev, width, height, cornerRadius: 0 }));

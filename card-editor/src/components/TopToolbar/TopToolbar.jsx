@@ -12,8 +12,9 @@ const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
   const { canvas } = useCanvasContext();
-  const [zoom, setZoom] = useState(100); // user zoom (fabric zoom)
-  const [displayScale, setDisplayScale] = useState(100); // actual viewport scale (auto-fit) relative to design size
+  const [zoom, setZoom] = useState(100); // legacy fabric zoom (kept for compatibility)
+  const [displayScale, setDisplayScale] = useState(100); // viewport scale (auto-fit or CSS scaling) relative to design size
+  const [zoomInput, setZoomInput] = useState("100"); // editable input string
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
 
@@ -37,45 +38,74 @@ const TopToolbar = ({ className }) => {
 
   const handleZoomIn = () => {
     if (!canvas) return;
-    // work in effective scale units (displayScale * zoom/100)
-    const effective = displayScale * (zoom / 100);
-    const newEffective = Math.min(effective + 1, 500);
-    const newZoom = Math.min(
-      500,
-      Math.max(10, (newEffective / displayScale) * 100)
-    );
-    setZoom(newZoom);
-    canvas.setZoom(newZoom / 100);
+    // Work in effective scale units; apply via CSS scaling API
+    const effective = Math.round(displayScale);
+    const dynamicMax = typeof canvas.getMaxDisplayScalePercent === "function"
+      ? canvas.getMaxDisplayScalePercent()
+      : 500;
+    const next = Math.min(effective + 1, dynamicMax);
+    const applied = typeof canvas.setDisplayScale === "function"
+      ? canvas.setDisplayScale(next)
+      : next;
+    setZoomInput(String(applied));
   };
 
   const handleZoomOut = () => {
     if (!canvas) return;
-    const effective = displayScale * (zoom / 100);
-    const newEffective = Math.max(effective - 1, 10);
-    const newZoom = Math.min(
-      500,
-      Math.max(10, (newEffective / displayScale) * 100)
-    );
-    setZoom(newZoom);
-    canvas.setZoom(newZoom / 100);
+  const effective = Math.round(displayScale);
+  const next = Math.max(effective - 1, 30);
+    const applied = typeof canvas.setDisplayScale === "function"
+      ? canvas.setDisplayScale(next)
+      : next;
+    setZoomInput(String(applied));
   };
 
   const handleZoomInputChange = (e) => {
-    // Accept input like "150%" or "150"; strip non-digits
-    const digits = e.target.value.replace(/[^0-9]/g, "");
-    if (!digits) return; // keep current until user types number
-    const value = parseInt(digits, 10);
-    if (!isNaN(value) && value >= 10 && value <= 500 && displayScale > 0) {
-      const newZoom = Math.min(500, Math.max(10, (value / displayScale) * 100));
-      setZoom(newZoom);
-      if (canvas) canvas.setZoom(newZoom / 100);
+    // Allow typing but soft-clamp live to [30, dynamicMax] to avoid huge jumps
+    const raw = e.target.value;
+    const digits = (raw || "").replace(/[^0-9]/g, "");
+    if (digits === "") {
+      setZoomInput("");
+      return;
+    }
+    let value = parseInt(digits, 10);
+    const dynamicMax = canvas && typeof canvas.getMaxDisplayScalePercent === "function"
+      ? canvas.getMaxDisplayScalePercent()
+      : 500;
+    if (isNaN(value)) value = Math.round(displayScale);
+    value = Math.min(dynamicMax, Math.max(30, value));
+    setZoomInput(String(value));
+  };
+
+  const commitZoomInput = () => {
+    const digits = (zoomInput || "").replace(/[^0-9]/g, "");
+    if (!digits) {
+      setZoomInput(String(Math.round(displayScale)));
+      return;
+    }
+    let value = parseInt(digits, 10);
+    if (isNaN(value)) value = Math.round(displayScale);
+    const dynamicMax = canvas && typeof canvas.getMaxDisplayScalePercent === "function"
+      ? canvas.getMaxDisplayScalePercent()
+      : 500;
+    value = Math.min(dynamicMax, Math.max(30, value));
+    if (canvas && typeof canvas.setDisplayScale === "function") {
+      const applied = canvas.setDisplayScale(value);
+      setZoomInput(String(applied));
+    } else {
+      setZoomInput(String(value));
     }
   };
 
-  const handleZoomInputBlur = (e) => {
-    if (e.target.value === "" || isNaN(parseInt(e.target.value, 10))) {
-      // reset to current effective
-      if (canvas) canvas.setZoom(zoom / 100);
+  const handleZoomInputBlur = () => {
+    commitZoomInput();
+  };
+
+  const handleZoomInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitZoomInput();
+      e.currentTarget.blur();
     }
   };
 
@@ -123,7 +153,9 @@ const TopToolbar = ({ className }) => {
     if (!canvas) return;
     const handler = (e) => {
       if (e?.scale) {
-        setDisplayScale(Math.round(e.scale * 100));
+  const pct = Math.round(e.scale * 100);
+  setDisplayScale(pct);
+  setZoomInput(String(pct));
       }
     };
     canvas.on("display:scale", handler);
@@ -136,7 +168,9 @@ const TopToolbar = ({ className }) => {
         const css = canvas.getCssSize();
         const design = canvas.getDesignSize();
         if (css?.width && design?.width) {
-          setDisplayScale(Math.round((css.width / design.width) * 100));
+          const pct = Math.round((css.width / design.width) * 100);
+          setDisplayScale(pct);
+          setZoomInput(String(pct));
         }
       }
     } catch {}
@@ -490,31 +524,26 @@ const TopToolbar = ({ className }) => {
             Redo
           </div>
           <div className={styles.topToolbarEL}>
-            {(() => {
-              const effectiveScale = Math.round(displayScale * (zoom / 100));
-              return (
-                <div
-                  className={styles.fontSizeControl}
-                  style={{ display: "flex", alignItems: "center", gap: 4 }}
-                >
-                  <button className={styles.sizeButton} onClick={handleZoomOut}>
-                    -
-                  </button>
-                  <input
-                    type="text"
-                    className={styles.fontSizeInput}
-                    value={`${effectiveScale} %`}
-                    onChange={handleZoomInputChange}
-                    onBlur={handleZoomInputBlur}
-                    title="Фактичний масштаб (10-500%)"
-                    inputMode="numeric"
-                  />
-                  <button className={styles.sizeButton} onClick={handleZoomIn}>
-                    +
-                  </button>
-                </div>
-              );
-            })()}
+            <div className={styles.fontSizeControl}>
+              <button className={styles.sizeButton} onClick={handleZoomOut}>
+                -
+              </button>
+              <input
+                type="text"
+                className={styles.fontSizeInput}
+                value={zoomInput}
+                onChange={handleZoomInputChange}
+                onBlur={handleZoomInputBlur}
+                onKeyDown={handleZoomInputKeyDown}
+                title="Масштаб відносно макету, % (10–500)"
+                inputMode="numeric"
+                placeholder="100"
+              />
+              <span className={styles.fontSizePercent}>%</span>
+              <button className={styles.sizeButton} onClick={handleZoomIn}>
+                +
+              </button>
+            </div>
           </div>
         </div>
       </div>

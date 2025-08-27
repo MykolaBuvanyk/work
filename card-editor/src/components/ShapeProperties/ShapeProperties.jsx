@@ -155,6 +155,28 @@ const ShapeProperties = ({
   const updateProperty = (property, value) => {
     if (!canvas || !activeObject) return;
 
+    // Допоміжні прапорці
+    const isArrow =
+      activeObject?.shapeType === "leftArrow" ||
+      activeObject?.shapeType === "rightArrow";
+
+    // Хелпер: зберегти центр об'єкта (використовуємо для стрілок, щоб бордер не зсувало)
+    const holdCenterIfArrow = (applyChange) => {
+      if (!isArrow) {
+        applyChange();
+        return;
+      }
+      const center = activeObject.getCenterPoint
+        ? activeObject.getCenterPoint()
+        : { x: activeObject.left, y: activeObject.top };
+      applyChange();
+      if (activeObject.setPositionByOrigin) {
+        activeObject.setPositionByOrigin(center, "center", "center");
+      } else {
+        activeObject.set({ left: center.x, top: center.y });
+      }
+    };
+
     // Забороняємо зміну Fill, коли активний Cut (manual)
     if (
       property === "fill" &&
@@ -173,7 +195,9 @@ const ShapeProperties = ({
         const targetPx = Math.max(0, mmToPx(value));
         const baseW = activeObject.width || activeObject.getScaledWidth() || 1;
         const newScaleX = targetPx / baseW;
-        activeObject.set({ scaleX: newScaleX });
+        holdCenterIfArrow(() => {
+          activeObject.set({ scaleX: newScaleX });
+        });
         break;
       }
       case "height": {
@@ -181,11 +205,15 @@ const ShapeProperties = ({
         const baseH =
           activeObject.height || activeObject.getScaledHeight() || 1;
         const newScaleY = targetPx / baseH;
-        activeObject.set({ scaleY: newScaleY });
+        holdCenterIfArrow(() => {
+          activeObject.set({ scaleY: newScaleY });
+        });
         break;
       }
       case "rotation": {
-        activeObject.set("angle", value || 0);
+        holdCenterIfArrow(() => {
+          activeObject.set("angle", value || 0);
+        });
         break;
       }
       case "cornerRadius": {
@@ -193,70 +221,78 @@ const ShapeProperties = ({
           activeObject.type === "rect" ||
           activeObject.shapeType === "roundedCorners"
         ) {
-          const currentScale = Math.min(
-            activeObject.scaleX || 1,
-            activeObject.scaleY || 1
-          );
-          const rPxScaled = Math.max(0, mmToPx(value));
-          const baseRx = rPxScaled / (currentScale || 1);
-          const maxBaseRx = Math.max(
-            0,
-            Math.min(activeObject.width || 0, activeObject.height || 0) / 2 -
-              0.001
-          );
-          const clampedBaseRx = Math.max(0, Math.min(baseRx, maxBaseRx));
-          activeObject.set({ rx: clampedBaseRx, ry: clampedBaseRx });
+          holdCenterIfArrow(() => {
+            const currentScale = Math.min(
+              activeObject.scaleX || 1,
+              activeObject.scaleY || 1
+            );
+            const rPxScaled = Math.max(0, mmToPx(value));
+            const baseRx = rPxScaled / (currentScale || 1);
+            const maxBaseRx = Math.max(
+              0,
+              Math.min(activeObject.width || 0, activeObject.height || 0) / 2 -
+                0.001
+            );
+            const clampedBaseRx = Math.max(0, Math.min(baseRx, maxBaseRx));
+            activeObject.set({ rx: clampedBaseRx, ry: clampedBaseRx });
+          });
         }
         break;
       }
       case "thickness": {
-        activeObject.set("strokeWidth", mmToPx(value));
+        holdCenterIfArrow(() => {
+          activeObject.set("strokeWidth", mmToPx(value));
+        });
         break;
       }
       case "fill": {
-        if (value) {
-          const themeStroke = globalColors?.textColor || "#000000";
-          const fillColor = properties.cut
-            ? "#FFA500"
-            : activeObject.stroke || themeStroke;
-          activeObject.set("fill", fillColor);
-        } else {
-          activeObject.set("fill", "transparent");
-        }
+        holdCenterIfArrow(() => {
+          if (value) {
+            const themeStroke = globalColors?.textColor || "#000000";
+            const fillColor = properties.cut
+              ? "#FFA500"
+              : activeObject.stroke || themeStroke;
+            activeObject.set("fill", fillColor);
+          } else {
+            activeObject.set("fill", "transparent");
+          }
+        });
         break;
       }
       case "cut": {
         const themeStroke = globalColors?.textColor || "#000000";
         const ORANGE = "#FFA500";
-        if (value) {
-          // Cut ON: имитация выреза — белая заливка, бордер цвета темы
-          // Бордер должен быть оранжевым, как раньше
-          activeObject.set("stroke", ORANGE);
-          activeObject.set({
-            isCutElement: true,
-            cutType: "manual",
-            hasControls: false,
-            lockScalingX: true,
-            lockScalingY: true,
-            lockUniScaling: true,
-          });
-          activeObject.set("fill", "#FFFFFF");
-        } else {
-          // Cut OFF: вернуть бордер темы, заливку согласно флагу Fill
-          activeObject.set("stroke", themeStroke);
-          activeObject.set({
-            isCutElement: false,
-            cutType: null,
-            hasControls: true,
-            lockScalingX: false,
-            lockScalingY: false,
-            lockUniScaling: false,
-          });
-          activeObject.set(
-            "fill",
-            properties.fill ? themeStroke : "transparent"
-          );
-        }
+        holdCenterIfArrow(() => {
+          if (value) {
+            // Cut ON: имитация выреза — белая заливка, бордер цвета темы
+            // Бордер должен быть оранжевым, как раньше
+            activeObject.set("stroke", ORANGE);
+            activeObject.set({
+              isCutElement: true,
+              cutType: "manual",
+              hasControls: false,
+              lockScalingX: true,
+              lockScalingY: true,
+              lockUniScaling: true,
+            });
+            activeObject.set("fill", "#FFFFFF");
+          } else {
+            // Cut OFF: вернуть бордер темы, заливку согласно флагу Fill
+            activeObject.set("stroke", themeStroke);
+            activeObject.set({
+              isCutElement: false,
+              cutType: null,
+              hasControls: true,
+              lockScalingX: false,
+              lockScalingY: false,
+              lockUniScaling: false,
+            });
+            activeObject.set(
+              "fill",
+              properties.fill ? themeStroke : "transparent"
+            );
+          }
+        });
         break;
       }
       default:
@@ -299,6 +335,11 @@ const ShapeProperties = ({
     activeObject?.type === "circle" ||
     activeObject?.isCircle === true ||
     activeObject?.shapeType === "round";
+
+  // Чи підтримує поточна фігура радіус кутів
+  const supportsCornerRadius =
+    activeObject?.type === "rect" ||
+    activeObject?.shapeType === "roundedCorners";
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -421,8 +462,9 @@ const ShapeProperties = ({
           <label
             className={styles.label}
             style={{
-              opacity: isCircle ? 0.5 : 1,
-              cursor: isCircle ? "not-allowed" : "default",
+              opacity: isCircle || !supportsCornerRadius ? 0.5 : 1,
+              cursor:
+                isCircle || !supportsCornerRadius ? "not-allowed" : "default",
             }}
           >
             Corner Radius:
@@ -431,36 +473,54 @@ const ShapeProperties = ({
                 type="number"
                 className={styles.input}
                 value={properties.cornerRadius}
-                disabled={isCircle}
-                style={{ cursor: isCircle ? "not-allowed" : "text" }}
+                disabled={isCircle || !supportsCornerRadius}
+                style={{
+                  cursor:
+                    isCircle || !supportsCornerRadius ? "not-allowed" : "text",
+                }}
                 step={0.1}
                 onChange={(e) =>
                   !isCircle &&
+                  supportsCornerRadius &&
                   updateProperty(
                     "cornerRadius",
                     Math.round((parseFloat(e.target.value) || 0) * 10) / 10
                   )
                 }
-                onFocus={() => !isCircle && setIsManuallyEditing(true)}
+                onFocus={() =>
+                  !isCircle &&
+                  supportsCornerRadius &&
+                  setIsManuallyEditing(true)
+                }
                 onBlur={() =>
                   !isCircle &&
+                  supportsCornerRadius &&
                   setTimeout(() => setIsManuallyEditing(false), 100)
                 }
               />
               <div
                 className={styles.arrows}
                 style={{
-                  pointerEvents: isCircle ? "none" : "auto",
-                  opacity: isCircle ? 0.6 : 1,
+                  pointerEvents:
+                    isCircle || !supportsCornerRadius ? "none" : "auto",
+                  opacity: isCircle || !supportsCornerRadius ? 0.6 : 1,
                 }}
               >
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => !isCircle && incrementValue("cornerRadius")}
+                  onClick={() =>
+                    !isCircle &&
+                    supportsCornerRadius &&
+                    incrementValue("cornerRadius")
+                  }
                 ></i>
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => !isCircle && decrementValue("cornerRadius")}
+                  onClick={() =>
+                    !isCircle &&
+                    supportsCornerRadius &&
+                    decrementValue("cornerRadius")
+                  }
                 ></i>
               </div>
             </div>

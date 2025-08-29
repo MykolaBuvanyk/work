@@ -22,7 +22,7 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 15px;
+  gap: 10px;
   /* Установлен фиксированный gap между элементами */
   padding: 0;
 }
@@ -80,6 +80,7 @@
   border-radius: 10px;
   display: flex;
   align-items: center;
+  height: 29px;
   padding: 0;
   overflow: hidden;
   width: fit-content;
@@ -87,13 +88,17 @@
 
 .sizeButton {
   background-color: transparent;
-  padding: 0 5px;
+  padding: 0 8px;
   color: rgba(0, 108, 164, 1);
   border: none;
   cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 29px;
+  line-height: 29px;
+  min-width: 29px;
+  font-size: 16px;
 }
 
 .sizeButton:hover,
@@ -101,18 +106,34 @@
 .sizeButton:active {
   border: none;
   background-color: transparent;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Ensure no focus/active outlines inside fontSizeControl */
+.fontSizeControl .sizeButton:focus,
+.fontSizeControl .sizeButton:focus-visible,
+.fontSizeControl .sizeButton:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.sizeButton {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fontSizeInput {
   background-color: rgba(218, 218, 218, 1) !important;
   border: none;
   color: #000 !important;
-  padding: 2px 5px;
+  padding: 0 6px;
+  padding-right: 0;
   width: 40px;
   text-align: center;
   border-radius: 0;
-  height: 22px;
-  width: 50px;
+  height: 29px;
+  line-height: 29px;
+  /* width: 50px; */
 }
 
 .fontSizeInput::-webkit-inner-spin-button,
@@ -126,6 +147,13 @@
   appearance: textfield;
 }
 
+.fontSizeInput:focus,
+.fontSizeInput:focus-visible,
+.fontSizeInput:active {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
 .disabled {
   opacity: 0.5;
   cursor: not-allowed !important;
@@ -134,4 +162,19 @@
 
 .disabled:hover {
   cursor: not-allowed !important;
+}
+
+/* Percent badge: same look as input, no extra gap */
+.fontSizePercent {
+  background-color: rgba(218, 218, 218, 1);
+  height: 29px;
+  line-height: 29px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  padding-left: 0;
+  color: #000;
+  user-select: none;
+  border-left: 1px solid rgba(125, 125, 125, 0);
 }

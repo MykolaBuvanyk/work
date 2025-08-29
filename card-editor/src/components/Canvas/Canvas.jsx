@@ -293,6 +293,70 @@ const Canvas = () => {
       } catch {}
     };
 
+    // Helper: compute max display scale percent allowed so canvas fits inside viewport - 10px
+    fCanvas.getMaxDisplayScalePercent = () => {
+      try {
+        const vp = viewportRef.current;
+        const { width: baseW, height: baseH } = designRef.current || {};
+        if (!vp || !baseW || !baseH) return 500;
+  const vw = Math.max(0, vp.clientWidth - 30);
+  const vh = Math.max(0, vp.clientHeight - 30);
+        const maxFactor = Math.max(0.01, Math.min(vw / baseW, vh / baseH));
+        return Math.max(1, Math.floor(maxFactor * 100));
+      } catch {
+        return 500;
+      }
+    };
+
+    // Public API: set display scale (percent) by resizing CSS box, not fabric zoom
+    // Clamps to [30%, dynamicMax%]; preserves design pixels and resets fabric zoom to 1
+    fCanvas.setDisplayScale = (percent) => {
+      const { width: baseW, height: baseH } = designRef.current;
+      const requested = Math.round(Number(percent) || 0);
+      const vp = viewportRef.current;
+      // Compute strict viewport-based max factor
+      let vw = 0,
+        vh = 0;
+      if (vp) {
+        vw = Math.max(0, vp.clientWidth - 30);
+        vh = Math.max(0, vp.clientHeight - 30);
+      }
+      const maxFactorView = baseW && baseH ? Math.min(vw / baseW, vh / baseH) : 5;
+      const minFactor = 0.3; // 30%
+      const reqFactor = (requested || 0) / 100;
+      const factor = Math.max(minFactor, Math.min(maxFactorView, reqFactor || 0));
+      const clamped = Math.round(factor * 100);
+  const cssW = Math.max(1, Math.round(baseW * factor));
+  const cssH = Math.max(1, Math.round(baseH * factor));
+
+      // Adjust effective retina scaling similarly to auto-fit
+      const dpr = window.devicePixelRatio || 1;
+  const maxBoost = 4;
+  const boost = Math.min(Math.max(1, factor), maxBoost);
+      const effectiveRetina = dpr * boost;
+      fCanvas.getRetinaScaling = () => effectiveRetina;
+
+      // Keep internal canvas size at design pixels; scale visually via CSS box
+      resizingRef.current = true;
+      originalSetDimensions({ width: baseW, height: baseH });
+      resizingRef.current = false;
+      fCanvas.setZoom(1);
+      fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
+
+      // Update state + notify listeners
+      setDisplayWidth(baseW);
+      setDisplayHeight(baseH);
+      setCssHeight(cssH);
+      setScale(factor);
+      scaleRef.current = factor;
+      fCanvas.calcOffset();
+      fCanvas.renderAll();
+      try {
+        fCanvas.fire("display:scale", { scale: factor });
+      } catch {}
+      return clamped;
+    };
+
     fCanvas.setDimensions = (dimensions, options) => {
       const result = originalSetDimensions(dimensions, options);
       if (options && options.cssOnly) return result;

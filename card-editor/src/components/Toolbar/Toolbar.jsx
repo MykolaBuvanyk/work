@@ -67,6 +67,7 @@ let InnerStrokeRectClass = null;
 let InnerStrokeCircleClass = null;
 let InnerStrokeEllipseClass = null;
 let InnerStrokePolygonClass = null;
+let InnerStrokePathClass = null; // for path-based shapes (hexagon/octagon etc.)
 
 const Toolbar = () => {
   const {
@@ -915,70 +916,122 @@ const Toolbar = () => {
     let path = "";
 
     if (h <= Rbase) {
-      // ---- КРУГОВИЙ СЕГМЕНТ + ЗАОКРУГЛЕНА ОСНОВА ----
-      // Ефективна висота сегмента над хордою
-      const H = Math.max(0.5, h - cr);
-      const Rseg = H / 2 + (w * w) / (8 * H);
-
-      const yChord = baseY - cr; // Хорда, до якої прилягає дуга
-
-      // Починаємо з нижньої лівої прямої ділянки основи
+      // Використовуємо точну логіку звичайного півкола: дуга кола радіуса Rbase з філе на основі
       path = `M ${xL + cr} ${baseY}`;
-
-      // Лівий нижній кут (чверть кола вгору)
-      if (cr > 0) {
-        path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`;
-      } else {
-        path += ` L ${xL} ${baseY}`;
-      }
-
-      // Верхня дуга сегмента між (xL, yChord) та (xR, yChord)
-      path += ` A ${Rseg} ${Rseg} 0 0 1 ${xR} ${yChord}`;
-
-      // Правий нижній кут (вниз)
-      if (cr > 0) {
-        path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`;
-      } else {
-        path += ` L ${xR} ${baseY}`;
-      }
-
-      // Пряма основа назад до старту
-      path += ` L ${xL + cr} ${baseY}`;
-      path += " Z";
+      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`; else path += ` L ${xL} ${baseY}`;
+      // верхня дуга ідеальної півокружності між (0,baseY) і (w,baseY)
+      path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${baseY - cr}`;
+      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+      path += ` L ${xL + cr} ${baseY} Z`;
     } else {
-      // ---- ПІВКОЛО + ВЕРТИКАЛЬНІ СТІНКИ + ЗАОКРУГЛЕНА ОСНОВА ----
-      const sideLen = h - Rbase;
-      const yTop = baseY - sideLen; // Рівень стику стінок з півколом
+      // ---- ВИСОКИЙ ВАРІАНТ: ПІВКОЛО + ВЕРТИКАЛЬНІ СТІНКИ + ЗАОКРУГЛЕНА ОСНОВА ----
+  const sideLen = h - Rbase;
+  const yTop = baseY - sideLen; // рівень дотику вертикальних стінок з півколом
+  const r = cr;
+  const yJoin = baseY - r; // верх точки заокруглення на боковій стінці
+  // Розширена логіка: починаємо "з'їдати" стінки трохи раніше (коли r покриває >=60% їх висоти)
+  const eatsWalls = r >= sideLen * 0.6; // раніше було тільки коли r > sideLen
 
-      // Старт знизу зліва, враховуючи заокруглення основи
-      path = `M ${xL + cr} ${baseY}`;
+      // Початок (ліва нижня точка із урахуванням радіуса)
+      path = `M ${xL + r} ${baseY}`;
 
-      // Лівий нижній кут
-      if (cr > 0) {
-        path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`;
+      if (!eatsWalls) {
+        // Звичайний випадок: радіус не доходить до верху стінки
+        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`; else path += ` L ${xL} ${baseY}`;
+        // Ліва вертикальна
+        path += ` L ${xL} ${yTop}`;
+        // Верхня півкола (повна)
+        path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${yTop}`;
+        // Права вертикальна вниз до початку нижнього скруглення
+        path += ` L ${xR} ${baseY - r}`;
+        // Правий нижній кут
+        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+        // Закриття основи
+        path += ` L ${xL + r} ${baseY} Z`;
       } else {
-        path += ` L ${xL} ${baseY}`;
+        // Радіус більший за висоту вертикальних стінок: прибираємо стінки, робимо плавний перехід одразу в дугу
+        // Точне обчислення точки дотику (перетину) між кутовим колом (r) та верхнім півколом (Rbase) – забезпечує C1 (тангенційну) без Q
+        const C1x = r;              // центр лівого кутового кола
+        const C1y = baseY - r;
+        const C2x = cx;             // центр верхнього півкола
+        const C2y = yTop;           // ( = Rbase )
+        const dx = C2x - C1x;
+        const dy = C2y - C1y;
+        const dist = Math.hypot(dx, dy);
+        // Якщо кола не перетинаються (патологія) – fallback на попередню логіку вертикалі
+        if (dist < 1e-6 || dist > r + Rbase || dist < Math.abs(Rbase - r)) {
+          // деградація: поводимось як звичайний випадок
+          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`; else path += ` L ${xL} ${baseY}`;
+          path += ` L ${xL} ${yTop}`;
+          path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${yTop}`;
+          path += ` L ${xR} ${baseY - r}`;
+          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+          path += ` L ${xL + r} ${baseY} Z`;
+        } else {
+          // Замість жорсткого стику будуємо згладжений контур через дискретизацію і Catmull-Rom
+          const pts = [];
+          // Формула перетину двох кіл (для визначення кута переходу)
+          const a = (r * r - Rbase * Rbase + dist * dist) / (2 * dist);
+          const hLenSq = r * r - a * a;
+          const hLen = hLenSq > 0 ? Math.sqrt(hLenSq) : 0;
+          const x2 = C1x + (a * dx) / dist;
+          const y2 = C1y + (a * dy) / dist;
+          const rxp = (-dy * (hLen / dist));
+          const ryp = (dx * (hLen / dist));
+          let ixLeft = x2 + rxp;
+          let iyLeft = y2 + ryp; // верхня точка лівого стику
+          if (iyLeft > baseY - 0.01) iyLeft = baseY - 0.01;
+          const ixRight = w - ixLeft;
+          const iyRight = iyLeft;
+          // Кути на лівому кутовому колі (центр C1) від нижньої точки (θ=π/2) до точки стику
+          const angleLeftCorner = Math.atan2(iyLeft - C1y, ixLeft - C1x); // ~ між 0 і -π/2
+          const startCornerAngle = Math.PI / 2;
+          const cornerSteps = Math.max(8, Math.min(50, Math.round((startCornerAngle - angleLeftCorner) * r / 6))); // більше точок для плавності
+          for (let i = 0; i <= cornerSteps; i++) {
+            const t = i / cornerSteps;
+            const ang = startCornerAngle + (angleLeftCorner - startCornerAngle) * t;
+            pts.push({ x: C1x + r * Math.cos(ang), y: C1y + r * Math.sin(ang) });
+          }
+          // Вгорі (укорочена частина півкола) – від лівої точки стику до правої
+          const angleLeftTop = Math.acos((ixLeft - cx) / Rbase); // ∈ (0,π)
+          const angleRightTop = Math.PI - angleLeftTop;
+          const topSteps = Math.max(14, Math.min(100, Math.round((angleLeftTop - angleRightTop) * Rbase / 5)));
+          for (let i = 1; i <= topSteps; i++) { // починаємо з 1 щоб не дублювати ixLeft
+            const t = i / topSteps;
+            const ang = angleLeftTop - (angleLeftTop - angleRightTop) * t; // зменшуємо до правої
+            pts.push({ x: cx + Rbase * Math.cos(ang), y: yTop - Rbase * Math.sin(ang) });
+          }
+          // Правий кутовий сегмент (дзеркально) – від точки стику до нижньої правої точки
+          const C3x = w - r;
+          const C3y = baseY - r;
+          const angleRightCorner = Math.atan2(iyRight - C3y, ixRight - C3x); // від'ємний
+          const endCornerAngle = Math.PI / 2; // нижня точка (w-r, h)
+           const cornerStepsR = cornerSteps;
+          for (let i = 1; i <= cornerStepsR; i++) { // стартуємо з 1 щоб не дублювати ixRight
+            const t = i / cornerStepsR;
+            const ang = angleRightCorner + (endCornerAngle - angleRightCorner) * t;
+            pts.push({ x: C3x + r * Math.cos(ang), y: C3y + r * Math.sin(ang) });
+          }
+          // Тепер будуємо плавний відкритий Catmull-Rom та закриваємо по основі
+          // Додаткове згладжування перед побудовою
+          const smoothIters = 2;
+          for (let si=0; si<smoothIters; si++) {
+            for (let i=1; i<pts.length-1; i++) {
+              const a = pts[i-1], b = pts[i], c = pts[i+1];
+              b.x = (a.x + 2*b.x + c.x)/4;
+              b.y = (a.y + 2*b.y + c.y)/4;
+            }
+          }
+          // Адаптивна напруга: чим більший r відносно sideLen, тим вища (до 0.9)
+          const tStrength = (()=>{
+            if (sideLen <= 0) return 0.9;
+            const k = Math.min(1, Math.max(0, (r - sideLen*0.6)/(sideLen*0.4))); // 0 при 0.6, 1 при >=1.0
+            // return 0.68 + 0.22 * k; // 0.68..0.9
+            return 0.98;
+          })();
+          path = pointsToOpenCatmullRomCubicPath(pts, tStrength);
+        }
       }
-
-      // Ліва вертикальна стінка
-      path += ` L ${xL} ${yTop}`;
-
-      // Верхня півкола
-      path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${yTop}`;
-
-      // Права вертикальна стінка
-      path += ` L ${xR} ${baseY - cr}`;
-
-      // Правий нижній кут
-      if (cr > 0) {
-        path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`;
-      } else {
-        path += ` L ${xR} ${baseY}`;
-      }
-
-      // Пряма основа
-      path += ` L ${xL + cr} ${baseY}`;
-      path += " Z";
     }
 
     return path;
@@ -1562,32 +1615,73 @@ const Toolbar = () => {
         case "extendedHalfCircle": {
           // Використовуємо покращену логіку з HTML реалізації
           const Rbase = width * 0.5;
-
-          // Обмежуємо радіус кутів для уникнення перетинів
-          let cornerRadius = cr;
+          
           if (height <= Rbase) {
-            // Круговий сегмент: cr має бути < height, інакше дуга вироджується
-            cornerRadius = Math.min(cr, height - 1);
+            // 1:1 використання пайплайну звичайного півкола (округлення + ресемпл + Catmull-Rom)
+            const arcSeg = Math.max(48, Math.min(220, Math.round(width / 4)));
+            let pts = makeHalfCirclePolygonPoints(width, height, arcSeg);
+            if (cr > 0) {
+              const filletSeg = Math.max(14, Math.min(180, Math.round(Math.sqrt(cr) * 11)));
+              pts = roundHalfCircleBaseCorners(pts, cr, filletSeg);
+            }
+            if (pts.length > 12) {
+              const baseY = Math.max(...pts.map(p => p.y));
+              const arcPts = pts.filter(p => p.y < baseY - 0.0001);
+              if (arcPts.length > 4) {
+                let len = 0; for (let i = 0; i < arcPts.length - 1; i++) len += Math.hypot(arcPts[i+1].x - arcPts[i].x, arcPts[i+1].y - arcPts[i].y);
+                const targetCount = Math.min(1200, Math.max(80, Math.round(len / 1)));
+                let resampled = [];
+                for (let k = 0; k <= targetCount; k++) {
+                  const dTarget = (len * k) / targetCount;
+                  let acc = 0;
+                  for (let i = 0; i < arcPts.length - 1; i++) {
+                    const a = arcPts[i], b = arcPts[i+1];
+                    const seg = Math.hypot(b.x - a.x, b.y - a.y);
+                    if (acc + seg >= dTarget) {
+                      const t = (dTarget - acc) / seg;
+                      resampled.push({ x: a.x + (b.x - a.x)*t, y: a.y + (b.y - a.y)*t });
+                      break;
+                    }
+                    acc += seg;
+                  }
+                }
+                const leftBase = pts[0];
+                const rightBase = pts[pts.length - 1];
+                if (cr > 25) {
+                  const chaikin = (arr) => {
+                    const out = [];
+                    for (let i = 0; i < arr.length - 1; i++) {
+                      const p = arr[i]; const q = arr[i + 1];
+                      out.push({ x: p.x * 0.75 + q.x * 0.25, y: p.y * 0.75 + q.y * 0.25 });
+                      out.push({ x: p.x * 0.25 + q.x * 0.75, y: p.y * 0.25 + q.y * 0.75 });
+                    }
+                    return out;
+                  };
+                  let refined = resampled;
+                  refined = chaikin(refined);
+                  if (cr > 40) refined = chaikin(refined);
+                  if (refined.length > 1500) refined = refined.filter((_,i) => i % 2 === 0);
+                  resampled = refined;
+                }
+                pts = [leftBase, ...resampled, rightBase];
+              }
+            }
+            const tension = (() => {
+              if (cr <= 0) return 0.5;
+              if (cr < width * 0.15) return 0.55;
+              if (cr < width * 0.3) return 0.6;
+              if (cr < width * 0.45) return 0.56;
+              return 0.5;
+            })();
+            const d = pointsToOpenCatmullRomCubicPath(pts, tension);
+            newClipPath = new fabric.Path(d, { absolutePositioned: true });
           } else {
-            // Високий: cr не більший за довжину стінки
-            cornerRadius = Math.min(cr, height - Rbase);
+            // Високий варіант – наша спеціальна плавна логіка
+            const cornerRadius = Math.max(0, Math.min(cr, height - 1));
+            const pathString = makeExtendedHalfCircleSmoothPath(width, height, cornerRadius);
+            newClipPath = new fabric.Path(pathString, { absolutePositioned: true, fill: 'transparent', stroke: 'transparent' });
           }
-          cornerRadius = Math.max(0, cornerRadius);
-
-          // Використовуємо аналітичну функцію для path
-          const pathString = makeExtendedHalfCircleSmoothPath(
-            width,
-            height,
-            cornerRadius
-          );
-
-          // Створюємо clipPath з path
-          newClipPath = new fabric.Path(pathString, {
-            absolutePositioned: true,
-            fill: "transparent",
-            stroke: "transparent",
-          });
-
+          
           break;
         }
 
@@ -1656,7 +1750,163 @@ const Toolbar = () => {
       updateCanvasOutline();
       // Бордер відновлюється окремо у викликах-обробниках після resize/radius, щоб уникати подвійної перебудови
 
-      // Border reapply is handled by updateExistingBorders() above to avoid stale radius/state.
+      // Reapply inner border for current shape if it already exists
+      if (currentShapeType === "rectangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isRectangleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth) {
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          } else if (existing.strokeWidth) {
+            thicknessMm = round1(pxToMm(existing.strokeWidth));
+          }
+          applyRectangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+  } else if (currentShapeType === 'circle' || currentShapeType === 'circleWithLine') {
+        const existing = canvas.getObjects().find(o => o.isCircleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "ellipse") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isEllipseInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyEllipseInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "halfCircle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isHalfCircleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyHalfCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "extendedHalfCircle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isExtendedHalfCircleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyExtendedHalfCircleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "hexagon") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isHexagonInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyHexagonInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "octagon") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isOctagonInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyOctagonInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "triangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isTriangleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyTriangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "arrowLeft") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isArrowLeftInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyArrowLeftInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "arrowRight") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isArrowRightInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyArrowRightInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "adaptiveTriangle") {
+        const existing = canvas
+          .getObjects()
+          .find((o) => o.isAdaptiveTriangleInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyAdaptiveTriangleInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      } else if (currentShapeType === "lock") {
+        const existing = canvas.getObjects().find((o) => o.isLockInnerBorder);
+        if (existing) {
+          let thicknessMm = 1;
+          if (existing.innerStrokeWidth)
+            thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+          applyLockInnerBorder({
+            thicknessMm,
+            color: existing.stroke || "#000",
+          });
+        }
+      }
 
       // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
       recomputeHolesAfterResize();
@@ -1955,8 +2205,12 @@ const Toolbar = () => {
       );
     if (!existing) return; // немає що перебудовувати
     let thicknessMm = 1;
-    if (existing.innerStrokeWidth)
+    if (existing.innerStrokeWidth) {
       thicknessMm = round1(pxToMm(existing.innerStrokeWidth));
+    } else if (existing.strokeWidth) {
+      // fallback for rectangle borders created before innerStrokeWidth was stored
+      thicknessMm = round1(pxToMm(existing.strokeWidth));
+    }
     const color = existing.stroke || "#000";
     // Видаляємо всі borderShape
     canvas
@@ -2034,7 +2288,8 @@ const Toolbar = () => {
       InnerStrokeRectClass &&
       InnerStrokeCircleClass &&
       InnerStrokeEllipseClass &&
-      InnerStrokePolygonClass
+  InnerStrokePolygonClass &&
+  InnerStrokePathClass
     )
       return;
     class InnerStrokeRect extends fabric.Rect {
@@ -2186,7 +2441,7 @@ const Toolbar = () => {
         cb && cb(new InnerStrokeEllipse(o));
       }
     }
-    class InnerStrokePolygon extends fabric.Polygon {
+  class InnerStrokePolygon extends fabric.Polygon {
       static type = "innerStrokePolygon";
       constructor(points = [], options = {}) {
         super(points, options);
@@ -2249,10 +2504,53 @@ const Toolbar = () => {
         cb && cb(new InnerStrokePolygon(o.points, o));
       }
     }
+    class InnerStrokePath extends fabric.Path {
+      static type = "innerStrokePath";
+      constructor(path, options = {}) {
+        super(path, options);
+        this.type = "innerStrokePath";
+        this.innerStrokeWidth = options.innerStrokeWidth || 1;
+      }
+      _render(ctx) {
+        if (!this.path) return;
+        const strokeColor = this.stroke,
+          innerW = this.innerStrokeWidth,
+          fillColor = this.fill;
+        ctx.save();
+        ctx.beginPath();
+        // use fabric internal to draw commands
+        fabric.Path.prototype._renderPathCommands.call(this, ctx);
+        if (fillColor && fillColor !== 'transparent') {
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+        }
+        if (strokeColor && innerW) {
+          ctx.save();
+            ctx.clip();
+            ctx.lineWidth = innerW * 2;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineJoin = this.strokeLineJoin || 'miter';
+            ctx.lineCap = this.strokeLineCap || 'butt';
+            ctx.miterLimit = this.strokeMiterLimit || 4;
+            ctx.beginPath();
+            fabric.Path.prototype._renderPathCommands.call(this, ctx);
+            ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+      toObject(a = []) {
+        return { ...super.toObject(a), innerStrokeWidth: this.innerStrokeWidth };
+      }
+      static fromObject(o, cb) {
+        cb && cb(new InnerStrokePath(o.path, o));
+      }
+    }
     InnerStrokeRectClass = InnerStrokeRect;
     InnerStrokeCircleClass = InnerStrokeCircle;
     InnerStrokeEllipseClass = InnerStrokeEllipse;
     InnerStrokePolygonClass = InnerStrokePolygon;
+    InnerStrokePathClass = InnerStrokePath;
   };
 
   // Add / update inner border for rectangle current shape
@@ -2284,6 +2582,8 @@ const Toolbar = () => {
       fill: "transparent",
       stroke: strokeColor,
       strokeWidth: thicknessPx,
+  // store visible thickness in the same property used by other inner-stroke shapes
+  innerStrokeWidth: thicknessPx,
       strokeDashArray: null,
       selectable: false,
       evented: false,
@@ -2461,53 +2761,41 @@ const Toolbar = () => {
   const applyExtendedHalfCircleInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "extendedHalfCircle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || '#000';
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-
-    // Видаляємо існуючі бордери
-    canvas
-      .getObjects()
-      .filter((o) => o.isExtendedHalfCircleInnerBorder)
-      .forEach((o) => canvas.remove(o));
-
+    // remove existing
+    canvas.getObjects().filter(o => o.isExtendedHalfCircleInnerBorder).forEach(o => canvas.remove(o));
     const cp = canvas.clipPath;
-    if (!cp) return;
-
-    let points;
-    // Використовуємо покращену логіку генерації точок
-    if (cp.type === "path") {
-      // Генеруємо точки на основі поточних розмірів з урахуванням заокруглення
-      const rPxCorner = mmToPx(sizeValues.cornerRadius || 0);
-      const Rbase = canvas.width * 0.5;
-
-      // Генеруємо більше точок для точності
-      const arcSeg = Math.max(40, Math.min(120, Math.round(canvas.width / 6)));
-      points = makeAdaptiveHalfCirclePolygonPoints(
-        canvas.width,
-        canvas.height,
-        arcSeg
-      );
-
-      // Додаємо заокруглення кутів основи, якщо потрібно
-      if (rPxCorner > 0 && points.length > 3) {
-        const seg = Math.max(
-          6,
-          Math.min(20, Math.round(Math.sqrt(rPxCorner) * 2))
-        );
-        points = roundHalfCircleBaseCorners(points, rPxCorner, seg);
-      }
-    } else if (cp.type === "polygon") {
-      points = cp.points.map((p) => ({ x: p.x, y: p.y }));
+    if (!cp) return; // nothing to align
+    // Ensure clipPath is path; if polygon, rebuild as path once for consistency
+    let pathData;
+    if (cp.type === 'path' && cp.path) {
+      pathData = cp.path.map(cmd => cmd.slice());
+    } else if (cp.type === 'polygon') {
+      // Convert polygon points to path (move + lines + close)
+      const pts = cp.points;
+      if (!pts || !pts.length) return;
+      let d = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i=1;i<pts.length;i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+      d += ' Z';
+      pathData = d; // let fabric parse string
+      // Replace clipPath with path so future updates reuse identical structure
+      const newCp = new fabric.Path(d, { absolutePositioned: true });
+      canvas.clipPath = newCp;
+      canvas.renderAll();
     } else {
-      points = makeAdaptiveHalfCirclePolygonPoints(canvas.width, canvas.height);
+      // fallback regenerate from analytic path function
+      const rPxCorner = mmToPx(sizeValues.cornerRadius || 0);
+      pathData = makeExtendedHalfCircleSmoothPath(canvas.width, canvas.height, rPxCorner);
     }
-
-    const poly = new InnerStrokePolygonClass(points, {
-      left: 0,
-      top: 0,
+    const border = new InnerStrokePathClass(pathData, {
+      left: cp.left ?? 0,
+      top: cp.top ?? 0,
+      originX: cp.originX ?? 'center',
+      originY: cp.originY ?? 'center',
       absolutePositioned: true,
-      fill: "transparent",
+      fill: 'transparent',
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -2516,10 +2804,12 @@ const Toolbar = () => {
       isBorderShape: true,
       isExtendedHalfCircleInnerBorder: true,
     });
-    canvas.add(poly);
-
-    // Видаляємо контур canvas
-    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
+    if (cp.pathOffset && border.pathOffset) {
+      border.pathOffset.x = cp.pathOffset.x;
+      border.pathOffset.y = cp.pathOffset.y;
+    }
+    canvas.add(border);
+    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -3339,24 +3629,30 @@ const Toolbar = () => {
   const applyHexagonInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "hexagon") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || '#000';
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
-    canvas
-      .getObjects()
-      .filter((o) => o.isHexagonInnerBorder)
-      .forEach((o) => canvas.remove(o));
-    const rPx = mmToPx(sizeValues.cornerRadius || 0);
-    const points = makeRoundedHexagonPolygonPoints(
-      canvas.width,
-      canvas.height,
-      rPx
-    );
-    const poly = new InnerStrokePolygonClass(points, {
-      left: 0,
-      top: 0,
+    // remove existing
+    canvas.getObjects().filter(o => o.isHexagonInnerBorder).forEach(o => canvas.remove(o));
+    const cp = canvas.clipPath;
+    if (!cp) return; // nothing to align to
+    // Clone path data EXACTLY so bounds/origin/pathOffset match; avoid regenerating (no recompute, no drift)
+    let pathData = null;
+    if (cp.type === 'path' && cp.path) {
+      pathData = cp.path.map(cmd => cmd.slice()); // deep copy commands
+    } else {
+      // fallback: regenerate (shouldn't happen for hexagon but keeps function safe)
+      const rPx = mmToPx(sizeValues.cornerRadius || 0);
+      const pathStr = makeRoundedHexagonPath(canvas.width, canvas.height, rPx);
+      pathData = pathStr; // fabric.Path can take string
+    }
+    const border = new InnerStrokePathClass(pathData, {
+      left: cp.left ?? 0,
+      top: cp.top ?? 0,
+      originX: cp.originX ?? 'center',
+      originY: cp.originY ?? 'center',
       absolutePositioned: true,
-      fill: "transparent",
+      fill: 'transparent',
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -3365,8 +3661,13 @@ const Toolbar = () => {
       isBorderShape: true,
       isHexagonInnerBorder: true,
     });
-    canvas.add(poly);
-    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
+    // Ensure pathOffset identical (prevents positional shift when radius changes)
+    if (cp.pathOffset && border.pathOffset) {
+      border.pathOffset.x = cp.pathOffset.x;
+      border.pathOffset.y = cp.pathOffset.y;
+    }
+    canvas.add(border);
+    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -5880,9 +6181,9 @@ const Toolbar = () => {
       const hPxE = mmToPx(baseHmm);
       canvas.setDimensions({ width: wPxE, height: hPxE });
 
-      // Динамічний clipPath (адаптивна форма) як polygon
-      const pts = makeAdaptiveHalfCirclePolygonPoints(wPxE, hPxE);
-      const clipPath = new fabric.Polygon(pts, { absolutePositioned: true });
+  // Використовуємо аналітичний path одразу (стабільні координати для border cloning)
+  const pathStr = makeExtendedHalfCircleSmoothPath(wPxE, hPxE, 0);
+  const clipPath = new fabric.Path(pathStr, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;

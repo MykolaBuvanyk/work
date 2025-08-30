@@ -80,7 +80,24 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     const createPath = (d, opts) => {
       try {
-        return new fabric.Path(d, opts);
+        // Гарантуємо, що left/top завжди є (fabric.Path може ігнорувати їх, якщо не передані явно)
+        const safeOpts = {
+          left: opts?.left ?? centerX,
+          top: opts?.top ?? centerY,
+          ...opts,
+        };
+        const path = new fabric.Path(d, safeOpts);
+        // Додатково гарантуємо, що x/y існують для control points (деякі fabric версії це вимагають)
+        if (typeof path.x !== "number") path.x = safeOpts.left;
+        if (typeof path.y !== "number") path.y = safeOpts.top;
+        // Додатково: якщо path.path не визначено або порожнє — не додавати shape
+        if (!Array.isArray(path.path) || path.path.length === 0) return null;
+        // Додатково: явно встановлюємо width/height, якщо вони не визначені
+        if (typeof path.width !== "number" || isNaN(path.width))
+          path.width = safeOpts.width || 52;
+        if (typeof path.height !== "number" || isNaN(path.height))
+          path.height = safeOpts.height || 52;
+        return path;
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Failed to create Path for", shapeType, err);
@@ -234,6 +251,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
       shape.set({ hasBorders: true, hasControls: true, selectable: true });
       canvas.add(shape);
+      if (typeof shape.setCoords === "function") shape.setCoords();
       canvas.setActiveObject(shape);
       if (shape.bringToFront) shape.bringToFront();
       canvas.requestRenderAll();
@@ -246,6 +264,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         if (!canvas) return;
         canvas.setActiveObject(shape);
         if (shape.bringToFront) shape.bringToFront();
+        if (typeof shape.setCoords === "function") shape.setCoords();
         canvas.requestRenderAll();
       }, 0);
     }

@@ -23,89 +23,104 @@ const TextList = () => {
     try {
       // Список файлів шрифтів з папки fonts
       const fontFiles = [
-        { file: 'AbrilFatface-Regular.ttf', name: 'Abril Fatface' },
-        { file: 'AlfaSlabOne-Regular.ttf', name: 'Alfa Slab One' },
-        { file: 'ArialMT.ttf', name: 'Arial' },
-        { file: 'Arial-BoldMT.ttf', name: 'Arial Bold' },
-        { file: 'Arial-ItalicMT.ttf', name: 'Arial Italic' },
-        { file: 'Arial-BoldItalicMT.ttf', name: 'Arial Bold Italic' },
-        { file: 'ArialNarrow.ttf', name: 'Arial Narrow' },
-        { file: 'ArialNarrow-Bold.ttf', name: 'Arial Narrow Bold' },
-        { file: 'Audiowide-Regular.ttf', name: 'Audiowide' },
-        { file: 'Baloo-Regular.ttf', name: 'Baloo' },
-        { file: 'Baloo2-Regular.ttf', name: 'Baloo 2' },
-        { file: 'Baloo2-Bold.ttf', name: 'Baloo 2 Bold' },
-        { file: 'Baloo2-Medium.ttf', name: 'Baloo 2 Medium' },
-        { file: 'BreeSerif-Regular.ttf', name: 'Bree Serif' },
-        { file: 'ComicSansMS.ttf', name: 'Comic Sans MS' },
-        { file: 'ComicSansMS-Bold.ttf', name: 'Comic Sans MS Bold' },
-        { file: 'ComicSansMS-BoldItalic.ttf', name: 'Comic Sans MS Bold Italic' },
-        { file: 'Courgette-Regular.ttf', name: 'Courgette' },
-        { file: 'DancingScript-Bold.ttf', name: 'Dancing Script Bold' },
-        { file: 'Daniel-Bold.ttf', name: 'Daniel Bold' },
-        { file: 'DIN1451Engschrift.ttf', name: 'DIN 1451 Engschrift' },
-        { file: 'DIN1451Mittelschrift.ttf', name: 'DIN 1451 Mittelschrift' },
-        { file: 'exmouth_.ttf', name: 'Exmouth' },
-        { file: 'Exo2-Regular.ttf', name: 'Exo 2' },
-        { file: 'Exo2-Bold.ttf', name: 'Exo 2 Bold' },
-        { file: 'Exo2-Medium.ttf', name: 'Exo 2 Medium' },
-        { file: 'Exo2-BoldItalic.ttf', name: 'Exo 2 Bold Italic' },
-        { file: 'Exo2-MediumItalic.ttf', name: 'Exo 2 Medium Italic' },
-        { file: 'Gotham-Medium.ttf', name: 'Gotham Medium' },
-        { file: 'Gotham-Bold.ttf', name: 'Gotham Bold' },
-        { file: 'Gotham-MediumItalic.ttf', name: 'Gotham Medium Italic' },
-        { file: 'Gotham-BoldItalic.ttf', name: 'Gotham Bold Italic' },
-        { file: 'GreatVibes-Regular.ttf', name: 'Great Vibes' },
-        { file: 'Handlee-Regular.ttf', name: 'Handlee' },
-        { file: 'ImpactLTStd.ttf', name: 'Impact' },
-        { file: 'Inter-Regular.ttf', name: 'Inter' },
-        { file: 'Inter-Bold.ttf', name: 'Inter Bold' },
-        { file: 'Inter-Italic.ttf', name: 'Inter Italic' },
-        { file: 'Inter-ExtraBoldItalic.ttf', name: 'Inter Extra Bold Italic' },
-        { file: 'Kalam-Regular.ttf', name: 'Kalam' },
-        { file: 'Kalam-Bold.ttf', name: 'Kalam Bold' },
-        { file: 'KeaniaOne-Regular.ttf', name: 'Keania One' },
-        { file: 'Lobster-Regular.ttf', name: 'Lobster' },
-        { file: 'Merriweather-Regular.ttf', name: 'Merriweather' },
-        { file: 'Merriweather-BoldItalic.ttf', name: 'Merriweather Bold Italic' },
-        { file: 'Merriweather-BlackItalic.ttf', name: 'Merriweather Black Italic' },
-        { file: 'Oswald-Regular.ttf', name: 'Oswald' },
-        { file: 'Oswald-Bold.ttf', name: 'Oswald Bold' },
-        { file: 'Pacifico-Regular.ttf', name: 'Pacifico' },
-        { file: 'PatuaOne-Regular.ttf', name: 'Patua One' },
-        { file: 'Roboto-Regular.ttf', name: 'Roboto' },
-        { file: 'Roboto-Bold.ttf', name: 'Roboto Bold' },
-        { file: 'Roboto-Italic.ttf', name: 'Roboto Italic' },
-        { file: 'Roboto-BoldItalic.ttf', name: 'Roboto Bold Italic' },
-        { file: 'Rubik-Regular.ttf', name: 'Rubik' },
-        { file: 'Rubik-Bold.ttf', name: 'Rubik Bold' },
-        { file: 'Rubik-BoldItalic.ttf', name: 'Rubik Bold Italic' },
-        { file: 'Sacramento-Regular.ttf', name: 'Sacramento' },
-        { file: 'Satisfy-Regular.ttf', name: 'Satisfy' },
-        { file: 'StardosStencil-Regular.ttf', name: 'Stardos Stencil' },
-        { file: 'StardosStencil-Bold.ttf', name: 'Stardos Stencil Bold' },
-        { file: 'Teko-Regular.ttf', name: 'Teko' },
-        { file: 'Teko-SemiBold.ttf', name: 'Teko SemiBold' },
-        { file: 'Teko-Bold.ttf', name: 'Teko Bold' },
-        { file: 'TimesNewRomanMTStd.ttf', name: 'Times New Roman' },
-        { file: 'TimesNewRomanMTStd-Bold.ttf', name: 'Times New Roman Bold' },
-        { file: 'TimesNewRomanMTStd-Italic.ttf', name: 'Times New Roman Italic' },
-        { file: 'TimesNewRomanMTStd-BoldIt.ttf', name: 'Times New Roman Bold Italic' },
-        { file: 'VT323-Regular.ttf', name: 'VT323' },
+        { file: "AbrilFatface-Regular.ttf", name: "Abril Fatface" },
+        { file: "AlfaSlabOne-Regular.ttf", name: "Alfa Slab One" },
+        { file: "ArialMT.ttf", name: "Arial" },
+        { file: "Arial-BoldMT.ttf", name: "Arial Bold" },
+        { file: "Arial-ItalicMT.ttf", name: "Arial Italic" },
+        { file: "Arial-BoldItalicMT.ttf", name: "Arial Bold Italic" },
+        { file: "ArialNarrow.ttf", name: "Arial Narrow" },
+        { file: "ArialNarrow-Bold.ttf", name: "Arial Narrow Bold" },
+        { file: "Audiowide-Regular.ttf", name: "Audiowide" },
+        { file: "Baloo-Regular.ttf", name: "Baloo" },
+        { file: "Baloo2-Regular.ttf", name: "Baloo 2" },
+        { file: "Baloo2-Bold.ttf", name: "Baloo 2 Bold" },
+        { file: "Baloo2-Medium.ttf", name: "Baloo 2 Medium" },
+        { file: "BreeSerif-Regular.ttf", name: "Bree Serif" },
+        { file: "ComicSansMS.ttf", name: "Comic Sans MS" },
+        { file: "ComicSansMS-Bold.ttf", name: "Comic Sans MS Bold" },
+        {
+          file: "ComicSansMS-BoldItalic.ttf",
+          name: "Comic Sans MS Bold Italic",
+        },
+        { file: "Courgette-Regular.ttf", name: "Courgette" },
+        { file: "DancingScript-Bold.ttf", name: "Dancing Script Bold" },
+        { file: "Daniel-Bold.ttf", name: "Daniel Bold" },
+        { file: "DIN1451Engschrift.ttf", name: "DIN 1451 Engschrift" },
+        { file: "DIN1451Mittelschrift.ttf", name: "DIN 1451 Mittelschrift" },
+        { file: "exmouth_.ttf", name: "Exmouth" },
+        { file: "Exo2-Regular.ttf", name: "Exo 2" },
+        { file: "Exo2-Bold.ttf", name: "Exo 2 Bold" },
+        { file: "Exo2-Medium.ttf", name: "Exo 2 Medium" },
+        { file: "Exo2-BoldItalic.ttf", name: "Exo 2 Bold Italic" },
+        { file: "Exo2-MediumItalic.ttf", name: "Exo 2 Medium Italic" },
+        { file: "Gotham-Medium.ttf", name: "Gotham Medium" },
+        { file: "Gotham-Bold.ttf", name: "Gotham Bold" },
+        { file: "Gotham-MediumItalic.ttf", name: "Gotham Medium Italic" },
+        { file: "Gotham-BoldItalic.ttf", name: "Gotham Bold Italic" },
+        { file: "GreatVibes-Regular.ttf", name: "Great Vibes" },
+        { file: "Handlee-Regular.ttf", name: "Handlee" },
+        { file: "ImpactLTStd.ttf", name: "Impact" },
+        { file: "Inter-Regular.ttf", name: "Inter" },
+        { file: "Inter-Bold.ttf", name: "Inter Bold" },
+        { file: "Inter-Italic.ttf", name: "Inter Italic" },
+        { file: "Inter-ExtraBoldItalic.ttf", name: "Inter Extra Bold Italic" },
+        { file: "Kalam-Regular.ttf", name: "Kalam" },
+        { file: "Kalam-Bold.ttf", name: "Kalam Bold" },
+        { file: "KeaniaOne-Regular.ttf", name: "Keania One" },
+        { file: "Lobster-Regular.ttf", name: "Lobster" },
+        { file: "Merriweather-Regular.ttf", name: "Merriweather" },
+        {
+          file: "Merriweather-BoldItalic.ttf",
+          name: "Merriweather Bold Italic",
+        },
+        {
+          file: "Merriweather-BlackItalic.ttf",
+          name: "Merriweather Black Italic",
+        },
+        { file: "Oswald-Regular.ttf", name: "Oswald" },
+        { file: "Oswald-Bold.ttf", name: "Oswald Bold" },
+        { file: "Pacifico-Regular.ttf", name: "Pacifico" },
+        { file: "PatuaOne-Regular.ttf", name: "Patua One" },
+        { file: "Roboto-Regular.ttf", name: "Roboto" },
+        { file: "Roboto-Bold.ttf", name: "Roboto Bold" },
+        { file: "Roboto-Italic.ttf", name: "Roboto Italic" },
+        { file: "Roboto-BoldItalic.ttf", name: "Roboto Bold Italic" },
+        { file: "Rubik-Regular.ttf", name: "Rubik" },
+        { file: "Rubik-Bold.ttf", name: "Rubik Bold" },
+        { file: "Rubik-BoldItalic.ttf", name: "Rubik Bold Italic" },
+        { file: "Sacramento-Regular.ttf", name: "Sacramento" },
+        { file: "Satisfy-Regular.ttf", name: "Satisfy" },
+        { file: "StardosStencil-Regular.ttf", name: "Stardos Stencil" },
+        { file: "StardosStencil-Bold.ttf", name: "Stardos Stencil Bold" },
+        { file: "Teko-Regular.ttf", name: "Teko" },
+        { file: "Teko-SemiBold.ttf", name: "Teko SemiBold" },
+        { file: "Teko-Bold.ttf", name: "Teko Bold" },
+        { file: "TimesNewRomanMTStd.ttf", name: "Times New Roman" },
+        { file: "TimesNewRomanMTStd-Bold.ttf", name: "Times New Roman Bold" },
+        {
+          file: "TimesNewRomanMTStd-Italic.ttf",
+          name: "Times New Roman Italic",
+        },
+        {
+          file: "TimesNewRomanMTStd-BoldIt.ttf",
+          name: "Times New Roman Bold Italic",
+        },
+        { file: "VT323-Regular.ttf", name: "VT323" },
       ];
 
       // Базові системні шрифти
       const systemFonts = [
-        { name: 'Arial', value: 'Arial' },
-        { name: 'Helvetica', value: 'Helvetica' },
-        { name: 'Georgia', value: 'Georgia' },
-        { name: 'Verdana', value: 'Verdana' },
-        { name: 'Courier New', value: 'Courier New' },
+        { name: "Arial", value: "Arial" },
+        { name: "Helvetica", value: "Helvetica" },
+        { name: "Georgia", value: "Georgia" },
+        { name: "Verdana", value: "Verdana" },
+        { name: "Courier New", value: "Courier New" },
       ];
 
       // Завантажуємо кастомні шрифти
       const loadedFonts = [];
-      
+
       for (const font of fontFiles) {
         try {
           // Спробуємо кілька можливих шляхів
@@ -113,17 +128,21 @@ const TextList = () => {
             `/src/assets/fonts/${font.file}`,
             `./src/assets/fonts/${font.file}`,
             `../assets/fonts/${font.file}`,
-            `../../assets/fonts/${font.file}`
+            `../../assets/fonts/${font.file}`,
           ];
-          
+
           let fontLoaded = false;
-          
+
           for (const path of possiblePaths) {
             try {
               const fontFace = new FontFace(font.name, `url(${path})`);
               await fontFace.load();
               document.fonts.add(fontFace);
-              loadedFonts.push({ name: font.name, value: font.name, loaded: true });
+              loadedFonts.push({
+                name: font.name,
+                value: font.name,
+                loaded: true,
+              });
               fontLoaded = true;
               break;
             } catch (error) {
@@ -131,9 +150,11 @@ const TextList = () => {
               continue;
             }
           }
-          
+
           if (!fontLoaded) {
-            console.warn(`Не вдалося завантажити шрифт ${font.name} з жодного шляху`);
+            console.warn(
+              `Не вдалося завантажити шрифт ${font.name} з жодного шляху`
+            );
           }
         } catch (error) {
           console.warn(`Помилка завантаження шрифту ${font.name}:`, error);
@@ -142,19 +163,19 @@ const TextList = () => {
 
       // Об'єднуємо системні та завантажені шрифти
       const allFonts = [...systemFonts, ...loadedFonts];
-      
+
       setAvailableFonts(allFonts);
       console.log(`Завантажено ${loadedFonts.length} кастомних шрифтів`);
     } catch (error) {
-      console.error('Помилка завантаження шрифтів:', error);
+      console.error("Помилка завантаження шрифтів:", error);
       // Fallback до базових шрифтів
       setAvailableFonts([
-        { name: 'Arial', value: 'Arial' },
-        { name: 'Times New Roman', value: 'Times New Roman' },
-        { name: 'Courier New', value: 'Courier New' },
-        { name: 'Helvetica', value: 'Helvetica' },
-        { name: 'Georgia', value: 'Georgia' },
-        { name: 'Verdana', value: 'Verdana' },
+        { name: "Arial", value: "Arial" },
+        { name: "Times New Roman", value: "Times New Roman" },
+        { name: "Courier New", value: "Courier New" },
+        { name: "Helvetica", value: "Helvetica" },
+        { name: "Georgia", value: "Georgia" },
+        { name: "Verdana", value: "Verdana" },
       ]);
     }
   };
@@ -170,9 +191,7 @@ const TextList = () => {
       const allObjects = canvas.getObjects();
       const textObjects = allObjects.filter(
         (obj) =>
-          obj.type === "i-text" ||
-          obj.type === "text" ||
-          obj.type === "textbox"
+          obj.type === "i-text" || obj.type === "text" || obj.type === "textbox"
       );
 
       const textList = textObjects.map((obj) => ({
@@ -242,8 +261,8 @@ const TextList = () => {
       const text = new fabric.IText(newTextValue || "Новий текст", {
         left: canvasWidth / 2,
         top: canvasHeight / 2,
-        originX: 'center',
-        originY: 'center',
+        originX: "center",
+        originY: "center",
         // default ~5 mm
         fontSize: mmToPx(5),
         fontFamily: "Arial",
@@ -255,15 +274,14 @@ const TextList = () => {
       });
 
       canvas.add(text);
-      // Compute coordinates and let Fabric finish layout before making it active
-      if (typeof text.setCoords === 'function') {
-        text.setCoords();
-      }
+      // Гарантуємо валідність координат після додавання
+      if (typeof text.setCoords === "function") text.setCoords();
+      canvas.setActiveObject(text);
+      canvas.requestRenderAll();
+      if (typeof text.setCoords === "function") text.setCoords();
       requestAnimationFrame(() => {
         try {
-          if (typeof text.setCoords === 'function') text.setCoords();
-          canvas.setActiveObject(text);
-          canvas.requestRenderAll();
+          if (typeof text.setCoords === "function") text.setCoords();
         } catch {}
       });
 
@@ -297,7 +315,10 @@ const TextList = () => {
   const changeFontSize = (sizeMm) => {
     const activeText = getActiveText();
     if (activeText) {
-      const clamped = Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM, parseFloat(sizeMm) || MIN_FONT_MM));
+      const clamped = Math.max(
+        MIN_FONT_MM,
+        Math.min(MAX_FONT_MM, parseFloat(sizeMm) || MIN_FONT_MM)
+      );
       activeText.set("fontSize", mmToPx(clamped));
       canvas.renderAll();
     }
@@ -408,7 +429,7 @@ const TextList = () => {
     { symbol: "ψ", name: "Псі" },
     { symbol: "ω", name: "Омега мала" },
     { symbol: "Α", name: "Альфа велика" },
-    { symbol: "Β",   name: "Бета велика" },
+    { symbol: "Β", name: "Бета велика" },
     { symbol: "Γ", name: "Гамма велика" },
     { symbol: "Δ", name: "Дельта велика" },
     { symbol: "Θ", name: "Тета велика" },
@@ -481,7 +502,9 @@ const TextList = () => {
   // Отримання активного тексту для відображення його параметрів
   const activeText = getActiveText();
   // Display current font size in mm
-  const currentFontSize = activeText ? pxToMm(activeText.fontSize || 20) : pxToMm(20);
+  const currentFontSize = activeText
+    ? pxToMm(activeText.fontSize || 20)
+    : pxToMm(20);
   const currentFontFamily = activeText?.fontFamily || "Arial";
   const currentFontWeight = activeText?.fontWeight || "normal";
   const currentFontStyle = activeText?.fontStyle || "normal";
@@ -495,8 +518,9 @@ const TextList = () => {
         {texts.map((text, index) => (
           <div
             key={text.id}
-            className={`${styles.textItem} ${activeText?.id === text.id ? styles.selected : ""
-              }`}
+            className={`${styles.textItem} ${
+              activeText?.id === text.id ? styles.selected : ""
+            }`}
             onClick={() => handleTextSelect(text)}
           >
             <div className={styles.textNumber}>{index + 1}.</div>
@@ -524,7 +548,10 @@ const TextList = () => {
                         currentText?.object &&
                         pxToMm(currentText.object.fontSize) > MIN_FONT_MM
                       ) {
-                        const nextMm = Math.max(MIN_FONT_MM, pxToMm(currentText.object.fontSize) - 1);
+                        const nextMm = Math.max(
+                          MIN_FONT_MM,
+                          pxToMm(currentText.object.fontSize) - 1
+                        );
                         currentText.object.set("fontSize", mmToPx(nextMm));
                         canvas.renderAll();
                         forceUpdate();
@@ -536,10 +563,17 @@ const TextList = () => {
                   </button>
                   <input
                     type="number"
-                    value={text.object ? Number(pxToMm(text.object.fontSize || 20).toFixed(1)) : Number(pxToMm(20).toFixed(1))}
+                    value={
+                      text.object
+                        ? Number(pxToMm(text.object.fontSize || 20).toFixed(1))
+                        : Number(pxToMm(20).toFixed(1))
+                    }
                     onChange={(e) => {
                       const mm = parseFloat(e.target.value);
-                      const newSize = Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM, isNaN(mm) ? MIN_FONT_MM : mm));
+                      const newSize = Math.max(
+                        MIN_FONT_MM,
+                        Math.min(MAX_FONT_MM, isNaN(mm) ? MIN_FONT_MM : mm)
+                      );
                       if (text.object) {
                         text.object.set("fontSize", mmToPx(newSize));
                         canvas.renderAll();
@@ -560,7 +594,10 @@ const TextList = () => {
                         currentText?.object &&
                         pxToMm(currentText.object.fontSize) < MAX_FONT_MM
                       ) {
-                        const nextMm = Math.min(MAX_FONT_MM, pxToMm(currentText.object.fontSize) + 1);
+                        const nextMm = Math.min(
+                          MAX_FONT_MM,
+                          pxToMm(currentText.object.fontSize) + 1
+                        );
                         currentText.object.set("fontSize", mmToPx(nextMm));
                         canvas.renderAll();
                         forceUpdate();
@@ -584,8 +621,8 @@ const TextList = () => {
                   style={{ fontFamily: text.object?.fontFamily || "Arial" }}
                 >
                   {availableFonts.map((font) => (
-                    <option 
-                      key={font.value} 
+                    <option
+                      key={font.value}
                       value={font.value}
                       style={{ fontFamily: font.value }}
                     >
@@ -605,8 +642,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${text.object?.fontWeight === "bold" ? styles.active : ""
-                      }`}
+                    className={`${styles.formatButton} ${
+                      text.object?.fontWeight === "bold" ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="14"
@@ -632,8 +670,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${text.object?.fontStyle === "italic" ? styles.active : ""
-                      }`}
+                    className={`${styles.formatButton} ${
+                      text.object?.fontStyle === "italic" ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="16"
@@ -657,8 +696,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.formatButton} ${text.object?.underline ? styles.active : ""
-                      }`}
+                    className={`${styles.formatButton} ${
+                      text.object?.underline ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="19"
@@ -693,8 +733,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${text.object?.textAlign === "left" ? styles.active : ""
-                      }`}
+                    className={`${styles.alignButton} ${
+                      text.object?.textAlign === "left" ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="16"
@@ -729,8 +770,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${text.object?.textAlign === "center" ? styles.active : ""
-                      }`}
+                    className={`${styles.alignButton} ${
+                      text.object?.textAlign === "center" ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="16"
@@ -765,8 +807,9 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${text.object?.textAlign === "right" ? styles.active : ""
-                      }`}
+                    className={`${styles.alignButton} ${
+                      text.object?.textAlign === "right" ? styles.active : ""
+                    }`}
                   >
                     <svg
                       width="16"
@@ -792,9 +835,7 @@ const TextList = () => {
                         fill="#2D264B"
                       />
                     </svg>
-
                   </button>
-
                 </div>
                 {/* TODO: буваник перестарався */}
                 {/* <input
@@ -907,7 +948,7 @@ const TextList = () => {
             value={newTextValue}
             onChange={(e) => setNewTextValue(e.target.value)}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 addText();
               }
             }}

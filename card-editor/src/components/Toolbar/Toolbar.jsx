@@ -124,13 +124,18 @@ const Toolbar = () => {
     }
   }, [canvas]);
 
-  // Визначаємо, чи наразі вибране коло (для відключення Corner radius)
+  // Corner radius вимикаємо для кола та простих стрілок (left/right)
   const isCircleSelected =
     (activeObject &&
-      (activeObject.type === "circle" || activeObject.isCircle)) ||
+      (activeObject.type === "circle" ||
+        activeObject.isCircle ||
+        activeObject.shapeType === "leftArrow" ||
+        activeObject.shapeType === "rightArrow")) ||
     currentShapeType === "circle" ||
     currentShapeType === "circleWithLine" ||
-    currentShapeType === "circleWithCross";
+    currentShapeType === "circleWithCross" ||
+    currentShapeType === "leftArrow" ||
+    currentShapeType === "rightArrow";
   const addQrCode = () => {
     setIsQrOpen(true);
   };
@@ -3714,9 +3719,7 @@ const Toolbar = () => {
       .filter((o) => o.isTriangleInnerBorder)
       .forEach((o) => canvas.remove(o));
 
-    // Используем тот же path, что и у clipPath, с тем же радиусом
-    const rPx = mmToPx((opts.cornerRadiusMm ?? sizeValues.cornerRadius) || 0);
-    const d = makeRoundedTrianglePath(canvas.width, canvas.height, rPx);
+    // Предпочтительно сэмплируем текущий clipPath, чтобы совпадение было 1:1
     const pathToPolygonPoints = (pathD) => {
       try {
         const svgNS = "http://www.w3.org/2000/svg";
@@ -3734,9 +3737,29 @@ const Toolbar = () => {
         return [];
       }
     };
-
-    const points = pathToPolygonPoints(d);
-    if (!points || points.length === 0) return;
+    let points = [];
+    const cp = canvas.clipPath;
+    if (cp && cp.type === "path" && cp.path) {
+      try {
+        const pathObj = new fabric.Path(cp.path, { left: 0, top: 0 });
+        const dStr = pathObj.toPathData
+          ? pathObj.toPathData()
+          : pathObj.toSVG?.() || "";
+        if (dStr) points = pathToPolygonPoints(dStr);
+      } catch {}
+    }
+    // Фолбэк: пересобираем d аналогично clipPath-генератору
+    if (!points || points.length === 0) {
+      const rPx = mmToPx((opts.cornerRadiusMm ?? sizeValues.cornerRadius) || 0);
+      const d = makeRoundedTrianglePath(canvas.width, canvas.height, rPx);
+      points = pathToPolygonPoints(d);
+    }
+    if (!points || points.length === 0) {
+      // Не удалось построить внутренний бордер — вернём тонкий контур, чтобы фигура не выглядела «прозорою»
+      updateCanvasOutline();
+      canvas.renderAll();
+      return;
+    }
     const minX = Math.min(...points.map((p) => p.x));
     const minY = Math.min(...points.map((p) => p.y));
     const localPoints = points.map((p) => ({ x: p.x - minX, y: p.y - minY }));
@@ -3749,6 +3772,7 @@ const Toolbar = () => {
       fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
+      strokeUniform: true,
       strokeLineJoin: "round",
       strokeLineCap: "round",
       strokeMiterLimit: 2,
@@ -3760,6 +3784,7 @@ const Toolbar = () => {
       isTriangleInnerBorder: true,
     });
     canvas.add(poly);
+    canvas.bringToFront(poly);
     const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
@@ -4640,9 +4665,14 @@ const Toolbar = () => {
   // Border button handler (clean skeleton). Logic will be extended per shape.
   const addBorder = () => {
     if (!canvas) return;
-    // 1. Remove temporary outline so visual state is clean
-    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
-    if (outline) canvas.remove(outline);
+    // Ensure canvas has a visible background so the shape doesn't look transparent when outline is removed
+    const currentBg = canvas.backgroundColor || canvas.get("backgroundColor");
+    if (!currentBg || currentBg === "transparent") {
+      const fallbackBg =
+        (globalColors && globalColors.backgroundColor) || "#FFFFFF";
+      canvas.set("backgroundColor", fallbackBg);
+    }
+    // Не удаляем контур заранее — уберём его после успешного добавления бордера
 
     // 2. Detect current figure type (via state or clipPath)
     const shapeType = currentShapeType; // fallback could inspect canvas.clipPath.type
@@ -4713,6 +4743,10 @@ const Toolbar = () => {
       console.warn("Border placeholder: shape not yet supported", shapeType);
       updateCanvasOutline(); // keep outline if nothing added
     }
+    // Если бордер добавлен, удалим контур; иначе оставим
+    const outlineAfter = canvas.getObjects().find((o) => o.isCanvasOutline);
+    const hasBorderNow = canvas.getObjects().some((o) => o.isBorderShape);
+    if (hasBorderNow && outlineAfter) canvas.remove(outlineAfter);
     canvas.requestRenderAll();
   };
 

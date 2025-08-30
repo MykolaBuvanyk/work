@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import styles from "./ShapeSelector.module.css";
+import {
+  /* ...existing code... */ makeRoundedSemiRoundPath,
+} from "../ShapeProperties/ShapeProperties";
 
 const ShapeSelector = ({ isOpen, onClose }) => {
   const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
@@ -77,7 +80,24 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     const createPath = (d, opts) => {
       try {
-        return new fabric.Path(d, opts);
+        // Гарантуємо, що left/top завжди є (fabric.Path може ігнорувати їх, якщо не передані явно)
+        const safeOpts = {
+          left: opts?.left ?? centerX,
+          top: opts?.top ?? centerY,
+          ...opts,
+        };
+        const path = new fabric.Path(d, safeOpts);
+        // Додатково гарантуємо, що x/y існують для control points (деякі fabric версії це вимагають)
+        if (typeof path.x !== "number") path.x = safeOpts.left;
+        if (typeof path.y !== "number") path.y = safeOpts.top;
+        // Додатково: якщо path.path не визначено або порожнє — не додавати shape
+        if (!Array.isArray(path.path) || path.path.length === 0) return null;
+        // Додатково: явно встановлюємо width/height, якщо вони не визначені
+        if (typeof path.width !== "number" || isNaN(path.width))
+          path.width = safeOpts.width || 52;
+        if (typeof path.height !== "number" || isNaN(path.height))
+          path.height = safeOpts.height || 52;
+        return path;
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("Failed to create Path for", shapeType, err);
@@ -142,10 +162,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
       case "semiround":
         // Семикруг: безопасный путь без експонентиальной нотации
-        shape = createPath(
-          "M0 28.5 C0 12.76 12.76 0 28.5 0 C44.24 0 57 12.76 57 28.5 L57 28.5 H0 Z",
-          baseOptions
-        );
+        // Используем тот же builder, что и в ShapeProperties (Corner Radius = 0)
+        const size = 57;
+        const d = makeRoundedSemiRoundPath(size, size, 0);
+        shape = createPath(d, { ...baseOptions, width: size, height: size });
         break;
 
       case "roundTop":
@@ -208,13 +228,45 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         // Спеціальний прапорець для кола, навіть якщо це Path
         shape.set({ isCircle: true });
       }
+
+      // Ініціалізуємо Corner Radius для підтримуваних path-фігур
+      const pathShapesWithCornerRadius = [
+        "hexagon",
+        "octagon",
+        "triangle",
+        "warningTriangle",
+        "semiround",
+        "roundTop",
+        "turnLeft",
+        "turnRight",
+      ];
+      if (pathShapesWithCornerRadius.includes(shapeType)) {
+        shape.set({
+          displayCornerRadiusMm: 0,
+          cornerRadiusMm: 0,
+          baseCornerRadius: 0,
+        });
+      }
+
+      // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
+      shape.set({ hasBorders: true, hasControls: true, selectable: true });
       canvas.add(shape);
+      if (typeof shape.setCoords === "function") shape.setCoords();
       canvas.setActiveObject(shape);
-      canvas.renderAll();
+      if (shape.bringToFront) shape.bringToFront();
+      canvas.requestRenderAll();
 
       // Встановлюємо активний об'єкт і відкриваємо властивості
       setActiveObject(shape);
       setShapePropertiesOpen(true);
+      // Повторно активуємо після циклу подій, щоб не згубити виділення при закритті модалки
+      setTimeout(() => {
+        if (!canvas) return;
+        canvas.setActiveObject(shape);
+        if (shape.bringToFront) shape.bringToFront();
+        if (typeof shape.setCoords === "function") shape.setCoords();
+        canvas.requestRenderAll();
+      }, 0);
     }
   };
 

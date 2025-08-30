@@ -16,6 +16,8 @@
     "imagetracerjs": "^1.2.6",
     "jsbarcode": "^3.12.1",
     "paper": "^0.12.18",
+    "potrace": "^2.1.8",
+    "potrace-wasm": "^1.0.4",
     "qrcode": "^1.5.4",
     "qrcode-generator": "^2.0.4",
     "react": "^19.1.0",

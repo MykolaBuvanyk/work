@@ -13,6 +13,7 @@ import CutSelector from "../CutSelector/CutSelector";
 import IconMenu from "../IconMenu/IconMenu";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
+import { vectorizeDataURLToSVG } from "../../utils/vectorizeImage";
 import {
   // Shape palette icons
   Icon0,
@@ -4428,7 +4429,8 @@ const Toolbar = () => {
       }
 
       const reader = new FileReader();
-      reader.onload = async (event) => {
+  reader.onload = async (event) => {
+        let addedOk = false; // track if we successfully added any object
         try {
           // Перевіряємо чи це SVG файл
           if (
@@ -4519,6 +4521,7 @@ const Toolbar = () => {
               canvas.add(svgObject);
               canvas.setActiveObject(svgObject);
               canvas.renderAll();
+              addedOk = true;
             } catch (svgError) {
               console.warn(
                 "Не вдалося завантажити як SVG, спробуємо як зображення:",
@@ -4556,46 +4559,76 @@ const Toolbar = () => {
               canvas.add(img);
               canvas.setActiveObject(img);
               canvas.renderAll();
+              addedOk = true;
             }
           } else {
-            // Обробляємо звичайні растрові зображення
-            const img = await fabric.FabricImage.fromURL(event.target.result, {
-              crossOrigin: "anonymous",
-            });
+            // Растрове зображення -> Векторизація в SVG і додавання на полотно
+            try {
+              const threshold = 120; // базове значення, можна винести у UI в майбутньому
+              const svgString = await vectorizeDataURLToSVG(event.target.result, {
+                threshold,
+                autoThreshold: true,
+                autoInvert: true,
+                // precision reductions (can tune later in UI)
+                pathomit: 20,
+                maxSize: 240,
+                simplifyTolerance: 2.5,
+                pointStep: 2,
+                quantize: 1,
+                roundDecimals: 0,
+                // holes handling
+                fillRule: "evenodd",
+                combineToSinglePath: true,
+                invert: undefined,
+                scale: 2,
+                fillColor: globalColors?.strokeColor || "#000",
+              });
 
-            // Масштабуємо зображення, якщо воно занадто велике
-            const maxWidth = 300;
-            const maxHeight = 300;
+              const result = await fabric.loadSVGFromString(svgString);
+              const obj =
+                result.objects.length === 1
+                  ? result.objects[0]
+                  : fabric.util.groupSVGElements(result.objects, result.options);
 
-            if (img.width > maxWidth || img.height > maxHeight) {
-              const scale = Math.min(
-                maxWidth / img.width,
-                maxHeight / img.height
-              );
-              img.scale(scale);
+              // Центруємо і масштабуємо
+              const bounds = obj.getBoundingRect
+                ? obj.getBoundingRect()
+                : { width: 100, height: 100 };
+              const maxWidth = 300;
+              const maxHeight = 300;
+              if (bounds.width > maxWidth || bounds.height > maxHeight) {
+                const s = Math.min(maxWidth / bounds.width, maxHeight / bounds.height);
+                obj.scale(s);
+              }
+
+              obj.set({
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                originX: "center",
+                originY: "center",
+                selectable: true,
+                hasControls: true,
+                hasBorders: true,
+              });
+
+              canvas.add(obj);
+              canvas.setActiveObject(obj);
+              canvas.renderAll();
+              addedOk = true;
+            } catch (vecErr) {
+              console.warn('Vectorization failed; skip adding raster:', vecErr);
+              // За новою логікою — нічого не додаємо, якщо не вдалося створити вектор
+              return;
             }
-
-            img.set({
-              left: canvas.width / 2,
-              top: canvas.height / 2,
-              originX: "center",
-              originY: "center",
-              selectable: true,
-              hasControls: true,
-              hasBorders: true,
-            });
-
-            canvas.add(img);
-            canvas.setActiveObject(img);
-            canvas.renderAll();
           }
         } catch (error) {
           console.error("Помилка завантаження зображення:", error);
-          alert("Помилка завантаження зображення");
+          // Прибираємо сповіщення про помилку за новою логікою
         }
       };
       reader.onerror = () => {
-        alert("Помилка завантаження файлу");
+        // Без сповіщень — просто лог
+        console.error("Помилка завантаження файлу");
       };
       reader.readAsDataURL(file);
     }
@@ -6604,12 +6637,25 @@ const Toolbar = () => {
     const value = round1(clamped);
 
     // Compute next mm values synchronously
-    const next = {
+    let next = {
       width: key === "width" ? value : sizeValues.width,
       height: key === "height" ? value : sizeValues.height,
       cornerRadius: key === "cornerRadius" ? value : sizeValues.cornerRadius,
     };
-    setSizeValues((prev) => ({ ...prev, [key]: value }));
+
+    // For circle-based shapes, keep 1:1 aspect by mirroring the changed side
+    const isCircleFamily =
+      currentShapeType === "circle" ||
+      currentShapeType === "circleWithLine" ||
+      currentShapeType === "circleWithCross";
+    if (isCircleFamily && (key === "width" || key === "height")) {
+      // Make it square using the edited dimension
+      const side = value;
+      next = { ...next, width: side, height: side };
+      setSizeValues((prev) => ({ ...prev, width: side, height: side }));
+    } else {
+      setSizeValues((prev) => ({ ...prev, [key]: value }));
+    }
 
     // Apply immediately without relying on async state
     if (activeObject && canvas) {
@@ -6700,10 +6746,20 @@ const Toolbar = () => {
       const cur = parseFloat(String(prev[key]).replace(",", ".")) || 0;
       const nextVal = Math.max(0, Math.min(max, cur + delta));
       const newValue = round1(nextVal);
-      const updated = { ...prev, [key]: newValue };
+      let updated = { ...prev, [key]: newValue };
+
+      // Enforce square for circle family shapes via arrows too
+      const isCircleFamily =
+        currentShapeType === "circle" ||
+        currentShapeType === "circleWithLine" ||
+        currentShapeType === "circleWithCross";
+      if (isCircleFamily && (key === "width" || key === "height")) {
+        const side = newValue;
+        updated = { ...updated, width: side, height: side };
+      }
 
       // Apply immediately using explicit values
-      if (activeObject && canvas) {
+  if (activeObject && canvas) {
         if (key === "cornerRadius") {
           const clipPathDriven =
             currentShapeType === "arrowLeft" ||
@@ -6738,11 +6794,11 @@ const Toolbar = () => {
 
         if (activeObject.type === "circle") {
           const originalRadius = activeObject.radius;
-          const scaleX = mmToPx(updated.width) / (originalRadius * 2);
-          const scaleY = mmToPx(updated.height) / (originalRadius * 2);
+          const targetSide = isCircleFamily ? updated.width : updated.width; // width===height if isCircleFamily
+          const scale = mmToPx(targetSide) / (originalRadius * 2);
           activeObject.set({
-            scaleX,
-            scaleY,
+            scaleX: scale,
+            scaleY: scale,
             left: currentLeft,
             top: currentTop,
           });
@@ -6776,11 +6832,9 @@ const Toolbar = () => {
         canvas.renderAll();
       } else if (canvas) {
         updateSize({
-          widthMm: round1(key === "width" ? newValue : updated.width),
-          heightMm: round1(key === "height" ? newValue : updated.height),
-          cornerRadiusMm: round1(
-            key === "cornerRadius" ? newValue : updated.cornerRadius
-          ),
+          widthMm: round1(updated.width),
+          heightMm: round1(updated.height),
+          cornerRadiusMm: round1(updated.cornerRadius),
         });
         if (key === "cornerRadius") {
           updateExistingBorders({

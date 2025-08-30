@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "paper": "^0.12.18"
+    "paper": "^0.12.18",
+    "potrace": "^2.1.8"
   }
 }

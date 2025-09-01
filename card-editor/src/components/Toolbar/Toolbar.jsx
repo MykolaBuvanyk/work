@@ -126,11 +126,6 @@ const Toolbar = () => {
 
   // Corner radius вимикаємо для кола та простих стрілок (left/right)
   const isCircleSelected =
-    (activeObject &&
-      (activeObject.type === "circle" ||
-        activeObject.isCircle ||
-        activeObject.shapeType === "leftArrow" ||
-        activeObject.shapeType === "rightArrow")) ||
     currentShapeType === "circle" ||
     currentShapeType === "circleWithLine" ||
     currentShapeType === "circleWithCross" ||
@@ -552,32 +547,14 @@ const Toolbar = () => {
 
       canvas.on("selection:created", () => {
         const obj = canvas.getActiveObject();
-        // Якщо клік по якорю кастомної фігури — ігноруємо будь-які проперті
-        if (obj && obj.name === "vertex") return;
+        if (obj && obj.name === "vertex") return; // ignore vertex anchors
         setActiveObject(obj);
-        if (obj) {
-          const wPx = Math.round(obj.width * obj.scaleX);
-          const hPx = Math.round(obj.height * obj.scaleY);
-          setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)),
-          });
-        }
+        // Пункти 2 і 3 не залежать від вибору об'єктів — не змінюємо sizeValues
       });
       canvas.on("selection:updated", () => {
         const obj = canvas.getActiveObject();
         if (obj && obj.name === "vertex") return;
         setActiveObject(obj);
-        if (obj) {
-          const wPx = Math.round(obj.width * obj.scaleX);
-          const hPx = Math.round(obj.height * obj.scaleY);
-          setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)),
-          });
-        }
       });
       canvas.on("selection:cleared", () => {
         setActiveObject(null);
@@ -590,17 +567,7 @@ const Toolbar = () => {
         });
       });
       canvas.on("object:modified", () => {
-        const obj = canvas.getActiveObject();
-        if (obj && !obj.isCutElement) {
-          // Ігноруємо cut елементи
-          const wPx = Math.round(obj.width * obj.scaleX);
-          const hPx = Math.round(obj.height * obj.scaleY);
-          setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)) || 0,
-          });
-        }
+        // Не підлаштовуємо поля розмірів під модифікації випадкових об'єктів
       });
 
       // Ініціалізуємо початкові значення розмірів canvas
@@ -919,26 +886,29 @@ const Toolbar = () => {
     if (h <= Rbase) {
       // Використовуємо точну логіку звичайного півкола: дуга кола радіуса Rbase з філе на основі
       path = `M ${xL + cr} ${baseY}`;
-      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`; else path += ` L ${xL} ${baseY}`;
+      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xL} ${baseY - cr}`;
+      else path += ` L ${xL} ${baseY}`;
       // верхня дуга ідеальної півокружності між (0,baseY) і (w,baseY)
       path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${baseY - cr}`;
-      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+      if (cr > 0) path += ` A ${cr} ${cr} 0 0 1 ${xR - cr} ${baseY}`;
+      else path += ` L ${xR} ${baseY}`;
       path += ` L ${xL + cr} ${baseY} Z`;
     } else {
       // ---- ВИСОКИЙ ВАРІАНТ: ПІВКОЛО + ВЕРТИКАЛЬНІ СТІНКИ + ЗАОКРУГЛЕНА ОСНОВА ----
-  const sideLen = h - Rbase;
-  const yTop = baseY - sideLen; // рівень дотику вертикальних стінок з півколом
-  const r = cr;
-  const yJoin = baseY - r; // верх точки заокруглення на боковій стінці
-  // Розширена логіка: починаємо "з'їдати" стінки трохи раніше (коли r покриває >=60% їх висоти)
-  const eatsWalls = r >= sideLen * 0.6; // раніше було тільки коли r > sideLen
+      const sideLen = h - Rbase;
+      const yTop = baseY - sideLen; // рівень дотику вертикальних стінок з півколом
+      const r = cr;
+      const yJoin = baseY - r; // верх точки заокруглення на боковій стінці
+      // Розширена логіка: починаємо "з'їдати" стінки трохи раніше (коли r покриває >=60% їх висоти)
+      const eatsWalls = r >= sideLen * 0.6; // раніше було тільки коли r > sideLen
 
       // Початок (ліва нижня точка із урахуванням радіуса)
       path = `M ${xL + r} ${baseY}`;
 
       if (!eatsWalls) {
         // Звичайний випадок: радіус не доходить до верху стінки
-        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`; else path += ` L ${xL} ${baseY}`;
+        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`;
+        else path += ` L ${xL} ${baseY}`;
         // Ліва вертикальна
         path += ` L ${xL} ${yTop}`;
         // Верхня півкола (повна)
@@ -946,27 +916,30 @@ const Toolbar = () => {
         // Права вертикальна вниз до початку нижнього скруглення
         path += ` L ${xR} ${baseY - r}`;
         // Правий нижній кут
-        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+        if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`;
+        else path += ` L ${xR} ${baseY}`;
         // Закриття основи
         path += ` L ${xL + r} ${baseY} Z`;
       } else {
         // Радіус більший за висоту вертикальних стінок: прибираємо стінки, робимо плавний перехід одразу в дугу
         // Точне обчислення точки дотику (перетину) між кутовим колом (r) та верхнім півколом (Rbase) – забезпечує C1 (тангенційну) без Q
-        const C1x = r;              // центр лівого кутового кола
+        const C1x = r; // центр лівого кутового кола
         const C1y = baseY - r;
-        const C2x = cx;             // центр верхнього півкола
-        const C2y = yTop;           // ( = Rbase )
+        const C2x = cx; // центр верхнього півкола
+        const C2y = yTop; // ( = Rbase )
         const dx = C2x - C1x;
         const dy = C2y - C1y;
         const dist = Math.hypot(dx, dy);
         // Якщо кола не перетинаються (патологія) – fallback на попередню логіку вертикалі
         if (dist < 1e-6 || dist > r + Rbase || dist < Math.abs(Rbase - r)) {
           // деградація: поводимось як звичайний випадок
-          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`; else path += ` L ${xL} ${baseY}`;
+          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xL} ${baseY - r}`;
+          else path += ` L ${xL} ${baseY}`;
           path += ` L ${xL} ${yTop}`;
           path += ` A ${Rbase} ${Rbase} 0 0 1 ${xR} ${yTop}`;
           path += ` L ${xR} ${baseY - r}`;
-          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`; else path += ` L ${xR} ${baseY}`;
+          if (r > 0) path += ` A ${r} ${r} 0 0 1 ${xR - r} ${baseY}`;
+          else path += ` L ${xR} ${baseY}`;
           path += ` L ${xL + r} ${baseY} Z`;
         } else {
           // Замість жорсткого стику будуємо згладжений контур через дискретизацію і Catmull-Rom
@@ -977,8 +950,8 @@ const Toolbar = () => {
           const hLen = hLenSq > 0 ? Math.sqrt(hLenSq) : 0;
           const x2 = C1x + (a * dx) / dist;
           const y2 = C1y + (a * dy) / dist;
-          const rxp = (-dy * (hLen / dist));
-          const ryp = (dx * (hLen / dist));
+          const rxp = -dy * (hLen / dist);
+          const ryp = dx * (hLen / dist);
           let ixLeft = x2 + rxp;
           let iyLeft = y2 + ryp; // верхня точка лівого стику
           if (iyLeft > baseY - 0.01) iyLeft = baseY - 0.01;
@@ -987,46 +960,76 @@ const Toolbar = () => {
           // Кути на лівому кутовому колі (центр C1) від нижньої точки (θ=π/2) до точки стику
           const angleLeftCorner = Math.atan2(iyLeft - C1y, ixLeft - C1x); // ~ між 0 і -π/2
           const startCornerAngle = Math.PI / 2;
-          const cornerSteps = Math.max(8, Math.min(50, Math.round((startCornerAngle - angleLeftCorner) * r / 6))); // більше точок для плавності
+          const cornerSteps = Math.max(
+            8,
+            Math.min(
+              50,
+              Math.round(((startCornerAngle - angleLeftCorner) * r) / 6)
+            )
+          ); // більше точок для плавності
           for (let i = 0; i <= cornerSteps; i++) {
             const t = i / cornerSteps;
-            const ang = startCornerAngle + (angleLeftCorner - startCornerAngle) * t;
-            pts.push({ x: C1x + r * Math.cos(ang), y: C1y + r * Math.sin(ang) });
+            const ang =
+              startCornerAngle + (angleLeftCorner - startCornerAngle) * t;
+            pts.push({
+              x: C1x + r * Math.cos(ang),
+              y: C1y + r * Math.sin(ang),
+            });
           }
           // Вгорі (укорочена частина півкола) – від лівої точки стику до правої
           const angleLeftTop = Math.acos((ixLeft - cx) / Rbase); // ∈ (0,π)
           const angleRightTop = Math.PI - angleLeftTop;
-          const topSteps = Math.max(14, Math.min(100, Math.round((angleLeftTop - angleRightTop) * Rbase / 5)));
-          for (let i = 1; i <= topSteps; i++) { // починаємо з 1 щоб не дублювати ixLeft
+          const topSteps = Math.max(
+            14,
+            Math.min(
+              100,
+              Math.round(((angleLeftTop - angleRightTop) * Rbase) / 5)
+            )
+          );
+          for (let i = 1; i <= topSteps; i++) {
+            // починаємо з 1 щоб не дублювати ixLeft
             const t = i / topSteps;
             const ang = angleLeftTop - (angleLeftTop - angleRightTop) * t; // зменшуємо до правої
-            pts.push({ x: cx + Rbase * Math.cos(ang), y: yTop - Rbase * Math.sin(ang) });
+            pts.push({
+              x: cx + Rbase * Math.cos(ang),
+              y: yTop - Rbase * Math.sin(ang),
+            });
           }
           // Правий кутовий сегмент (дзеркально) – від точки стику до нижньої правої точки
           const C3x = w - r;
           const C3y = baseY - r;
           const angleRightCorner = Math.atan2(iyRight - C3y, ixRight - C3x); // від'ємний
           const endCornerAngle = Math.PI / 2; // нижня точка (w-r, h)
-           const cornerStepsR = cornerSteps;
-          for (let i = 1; i <= cornerStepsR; i++) { // стартуємо з 1 щоб не дублювати ixRight
+          const cornerStepsR = cornerSteps;
+          for (let i = 1; i <= cornerStepsR; i++) {
+            // стартуємо з 1 щоб не дублювати ixRight
             const t = i / cornerStepsR;
-            const ang = angleRightCorner + (endCornerAngle - angleRightCorner) * t;
-            pts.push({ x: C3x + r * Math.cos(ang), y: C3y + r * Math.sin(ang) });
+            const ang =
+              angleRightCorner + (endCornerAngle - angleRightCorner) * t;
+            pts.push({
+              x: C3x + r * Math.cos(ang),
+              y: C3y + r * Math.sin(ang),
+            });
           }
           // Тепер будуємо плавний відкритий Catmull-Rom та закриваємо по основі
           // Додаткове згладжування перед побудовою
           const smoothIters = 2;
-          for (let si=0; si<smoothIters; si++) {
-            for (let i=1; i<pts.length-1; i++) {
-              const a = pts[i-1], b = pts[i], c = pts[i+1];
-              b.x = (a.x + 2*b.x + c.x)/4;
-              b.y = (a.y + 2*b.y + c.y)/4;
+          for (let si = 0; si < smoothIters; si++) {
+            for (let i = 1; i < pts.length - 1; i++) {
+              const a = pts[i - 1],
+                b = pts[i],
+                c = pts[i + 1];
+              b.x = (a.x + 2 * b.x + c.x) / 4;
+              b.y = (a.y + 2 * b.y + c.y) / 4;
             }
           }
           // Адаптивна напруга: чим більший r відносно sideLen, тим вища (до 0.9)
-          const tStrength = (()=>{
+          const tStrength = (() => {
             if (sideLen <= 0) return 0.9;
-            const k = Math.min(1, Math.max(0, (r - sideLen*0.6)/(sideLen*0.4))); // 0 при 0.6, 1 при >=1.0
+            const k = Math.min(
+              1,
+              Math.max(0, (r - sideLen * 0.6) / (sideLen * 0.4))
+            ); // 0 при 0.6, 1 при >=1.0
             // return 0.68 + 0.22 * k; // 0.68..0.9
             return 0.98;
           })();
@@ -1188,21 +1191,8 @@ const Toolbar = () => {
     const heightMm = overrides.heightMm ?? sizeValues.height;
     const cornerRadiusMm = overrides.cornerRadiusMm ?? sizeValues.cornerRadius;
 
-    if (activeObject) {
-      // Якщо вибрано об'єкт - змінюємо його розміри
-      const wPx = mmToPx(widthMm);
-      const hPx = mmToPx(heightMm);
-      const rPx = mmToPx(cornerRadiusMm);
-      activeObject.set({
-        width: wPx,
-        height: hPx,
-        rx: rPx,
-        ry: rPx,
-      });
-      activeObject.scaleToWidth(wPx);
-      activeObject.scaleToHeight(hPx);
-      canvas.renderAll();
-    } else if (canvas && currentShapeType) {
+    // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
+    if (canvas && currentShapeType) {
       // Спеціальна обробка для адаптивного трикутника
       if (currentShapeType === "adaptiveTriangle") {
         const refW = mmToPx(190);
@@ -1616,31 +1606,46 @@ const Toolbar = () => {
         case "extendedHalfCircle": {
           // Використовуємо покращену логіку з HTML реалізації
           const Rbase = width * 0.5;
-          
+
           if (height <= Rbase) {
             // 1:1 використання пайплайну звичайного півкола (округлення + ресемпл + Catmull-Rom)
             const arcSeg = Math.max(48, Math.min(220, Math.round(width / 4)));
             let pts = makeHalfCirclePolygonPoints(width, height, arcSeg);
             if (cr > 0) {
-              const filletSeg = Math.max(14, Math.min(180, Math.round(Math.sqrt(cr) * 11)));
+              const filletSeg = Math.max(
+                14,
+                Math.min(180, Math.round(Math.sqrt(cr) * 11))
+              );
               pts = roundHalfCircleBaseCorners(pts, cr, filletSeg);
             }
             if (pts.length > 12) {
-              const baseY = Math.max(...pts.map(p => p.y));
-              const arcPts = pts.filter(p => p.y < baseY - 0.0001);
+              const baseY = Math.max(...pts.map((p) => p.y));
+              const arcPts = pts.filter((p) => p.y < baseY - 0.0001);
               if (arcPts.length > 4) {
-                let len = 0; for (let i = 0; i < arcPts.length - 1; i++) len += Math.hypot(arcPts[i+1].x - arcPts[i].x, arcPts[i+1].y - arcPts[i].y);
-                const targetCount = Math.min(1200, Math.max(80, Math.round(len / 1)));
+                let len = 0;
+                for (let i = 0; i < arcPts.length - 1; i++)
+                  len += Math.hypot(
+                    arcPts[i + 1].x - arcPts[i].x,
+                    arcPts[i + 1].y - arcPts[i].y
+                  );
+                const targetCount = Math.min(
+                  1200,
+                  Math.max(80, Math.round(len / 1))
+                );
                 let resampled = [];
                 for (let k = 0; k <= targetCount; k++) {
                   const dTarget = (len * k) / targetCount;
                   let acc = 0;
                   for (let i = 0; i < arcPts.length - 1; i++) {
-                    const a = arcPts[i], b = arcPts[i+1];
+                    const a = arcPts[i],
+                      b = arcPts[i + 1];
                     const seg = Math.hypot(b.x - a.x, b.y - a.y);
                     if (acc + seg >= dTarget) {
                       const t = (dTarget - acc) / seg;
-                      resampled.push({ x: a.x + (b.x - a.x)*t, y: a.y + (b.y - a.y)*t });
+                      resampled.push({
+                        x: a.x + (b.x - a.x) * t,
+                        y: a.y + (b.y - a.y) * t,
+                      });
                       break;
                     }
                     acc += seg;
@@ -1652,16 +1657,24 @@ const Toolbar = () => {
                   const chaikin = (arr) => {
                     const out = [];
                     for (let i = 0; i < arr.length - 1; i++) {
-                      const p = arr[i]; const q = arr[i + 1];
-                      out.push({ x: p.x * 0.75 + q.x * 0.25, y: p.y * 0.75 + q.y * 0.25 });
-                      out.push({ x: p.x * 0.25 + q.x * 0.75, y: p.y * 0.25 + q.y * 0.75 });
+                      const p = arr[i];
+                      const q = arr[i + 1];
+                      out.push({
+                        x: p.x * 0.75 + q.x * 0.25,
+                        y: p.y * 0.75 + q.y * 0.25,
+                      });
+                      out.push({
+                        x: p.x * 0.25 + q.x * 0.75,
+                        y: p.y * 0.25 + q.y * 0.75,
+                      });
                     }
                     return out;
                   };
                   let refined = resampled;
                   refined = chaikin(refined);
                   if (cr > 40) refined = chaikin(refined);
-                  if (refined.length > 1500) refined = refined.filter((_,i) => i % 2 === 0);
+                  if (refined.length > 1500)
+                    refined = refined.filter((_, i) => i % 2 === 0);
                   resampled = refined;
                 }
                 pts = [leftBase, ...resampled, rightBase];
@@ -1679,10 +1692,18 @@ const Toolbar = () => {
           } else {
             // Високий варіант – наша спеціальна плавна логіка
             const cornerRadius = Math.max(0, Math.min(cr, height - 1));
-            const pathString = makeExtendedHalfCircleSmoothPath(width, height, cornerRadius);
-            newClipPath = new fabric.Path(pathString, { absolutePositioned: true, fill: 'transparent', stroke: 'transparent' });
+            const pathString = makeExtendedHalfCircleSmoothPath(
+              width,
+              height,
+              cornerRadius
+            );
+            newClipPath = new fabric.Path(pathString, {
+              absolutePositioned: true,
+              fill: "transparent",
+              stroke: "transparent",
+            });
           }
-          
+
           break;
         }
 
@@ -1768,8 +1789,11 @@ const Toolbar = () => {
             color: existing.stroke || "#000",
           });
         }
-  } else if (currentShapeType === 'circle' || currentShapeType === 'circleWithLine') {
-        const existing = canvas.getObjects().find(o => o.isCircleInnerBorder);
+      } else if (
+        currentShapeType === "circle" ||
+        currentShapeType === "circleWithLine"
+      ) {
+        const existing = canvas.getObjects().find((o) => o.isCircleInnerBorder);
         if (existing) {
           let thicknessMm = 1;
           if (existing.innerStrokeWidth)
@@ -2166,7 +2190,7 @@ const Toolbar = () => {
         // Більше не інсетуємо контур окремо – це робить глобальний viewport scale.
         outlineShape.set({
           fill: "transparent",
-          stroke: "#000000",
+          stroke: globalColors?.textColor || "#000000",
           strokeWidth: 1,
           strokeDashArray: null,
           selectable: false,
@@ -2289,8 +2313,8 @@ const Toolbar = () => {
       InnerStrokeRectClass &&
       InnerStrokeCircleClass &&
       InnerStrokeEllipseClass &&
-  InnerStrokePolygonClass &&
-  InnerStrokePathClass
+      InnerStrokePolygonClass &&
+      InnerStrokePathClass
     )
       return;
     class InnerStrokeRect extends fabric.Rect {
@@ -2442,7 +2466,7 @@ const Toolbar = () => {
         cb && cb(new InnerStrokeEllipse(o));
       }
     }
-  class InnerStrokePolygon extends fabric.Polygon {
+    class InnerStrokePolygon extends fabric.Polygon {
       static type = "innerStrokePolygon";
       constructor(points = [], options = {}) {
         super(points, options);
@@ -2521,27 +2545,30 @@ const Toolbar = () => {
         ctx.beginPath();
         // use fabric internal to draw commands
         fabric.Path.prototype._renderPathCommands.call(this, ctx);
-        if (fillColor && fillColor !== 'transparent') {
+        if (fillColor && fillColor !== "transparent") {
           ctx.fillStyle = fillColor;
           ctx.fill();
         }
         if (strokeColor && innerW) {
           ctx.save();
-            ctx.clip();
-            ctx.lineWidth = innerW * 2;
-            ctx.strokeStyle = strokeColor;
-            ctx.lineJoin = this.strokeLineJoin || 'miter';
-            ctx.lineCap = this.strokeLineCap || 'butt';
-            ctx.miterLimit = this.strokeMiterLimit || 4;
-            ctx.beginPath();
-            fabric.Path.prototype._renderPathCommands.call(this, ctx);
-            ctx.stroke();
+          ctx.clip();
+          ctx.lineWidth = innerW * 2;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineJoin = this.strokeLineJoin || "miter";
+          ctx.lineCap = this.strokeLineCap || "butt";
+          ctx.miterLimit = this.strokeMiterLimit || 4;
+          ctx.beginPath();
+          fabric.Path.prototype._renderPathCommands.call(this, ctx);
+          ctx.stroke();
           ctx.restore();
         }
         ctx.restore();
       }
       toObject(a = []) {
-        return { ...super.toObject(a), innerStrokeWidth: this.innerStrokeWidth };
+        return {
+          ...super.toObject(a),
+          innerStrokeWidth: this.innerStrokeWidth,
+        };
       }
       static fromObject(o, cb) {
         cb && cb(new InnerStrokePath(o.path, o));
@@ -2558,7 +2585,7 @@ const Toolbar = () => {
   const applyRectangleInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "rectangle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1; // visible thickness in mm
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing rectangle border shapes
@@ -2583,8 +2610,8 @@ const Toolbar = () => {
       fill: "transparent",
       stroke: strokeColor,
       strokeWidth: thicknessPx,
-  // store visible thickness in the same property used by other inner-stroke shapes
-  innerStrokeWidth: thicknessPx,
+      // store visible thickness in the same property used by other inner-stroke shapes
+      innerStrokeWidth: thicknessPx,
       strokeDashArray: null,
       selectable: false,
       evented: false,
@@ -2603,7 +2630,7 @@ const Toolbar = () => {
   const applyLockInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "lock") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing
@@ -2646,7 +2673,7 @@ const Toolbar = () => {
     )
       return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     canvas
@@ -2679,7 +2706,7 @@ const Toolbar = () => {
   const applyEllipseInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "ellipse") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     canvas
@@ -2714,7 +2741,7 @@ const Toolbar = () => {
   const applyHalfCircleInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "halfCircle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     canvas
@@ -2762,24 +2789,27 @@ const Toolbar = () => {
   const applyExtendedHalfCircleInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "extendedHalfCircle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing
-    canvas.getObjects().filter(o => o.isExtendedHalfCircleInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isExtendedHalfCircleInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
     if (!cp) return; // nothing to align
     // Ensure clipPath is path; if polygon, rebuild as path once for consistency
     let pathData;
-    if (cp.type === 'path' && cp.path) {
-      pathData = cp.path.map(cmd => cmd.slice());
-    } else if (cp.type === 'polygon') {
+    if (cp.type === "path" && cp.path) {
+      pathData = cp.path.map((cmd) => cmd.slice());
+    } else if (cp.type === "polygon") {
       // Convert polygon points to path (move + lines + close)
       const pts = cp.points;
       if (!pts || !pts.length) return;
       let d = `M ${pts[0].x} ${pts[0].y}`;
-      for (let i=1;i<pts.length;i++) d += ` L ${pts[i].x} ${pts[i].y}`;
-      d += ' Z';
+      for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
+      d += " Z";
       pathData = d; // let fabric parse string
       // Replace clipPath with path so future updates reuse identical structure
       const newCp = new fabric.Path(d, { absolutePositioned: true });
@@ -2788,15 +2818,19 @@ const Toolbar = () => {
     } else {
       // fallback regenerate from analytic path function
       const rPxCorner = mmToPx(sizeValues.cornerRadius || 0);
-      pathData = makeExtendedHalfCircleSmoothPath(canvas.width, canvas.height, rPxCorner);
+      pathData = makeExtendedHalfCircleSmoothPath(
+        canvas.width,
+        canvas.height,
+        rPxCorner
+      );
     }
     const border = new InnerStrokePathClass(pathData, {
       left: cp.left ?? 0,
       top: cp.top ?? 0,
-      originX: cp.originX ?? 'center',
-      originY: cp.originY ?? 'center',
+      originX: cp.originX ?? "center",
+      originY: cp.originY ?? "center",
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -2810,7 +2844,7 @@ const Toolbar = () => {
       border.pathOffset.y = cp.pathOffset.y;
     }
     canvas.add(border);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -3630,17 +3664,20 @@ const Toolbar = () => {
   const applyHexagonInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "hexagon") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || '#000';
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     // remove existing
-    canvas.getObjects().filter(o => o.isHexagonInnerBorder).forEach(o => canvas.remove(o));
+    canvas
+      .getObjects()
+      .filter((o) => o.isHexagonInnerBorder)
+      .forEach((o) => canvas.remove(o));
     const cp = canvas.clipPath;
     if (!cp) return; // nothing to align to
     // Clone path data EXACTLY so bounds/origin/pathOffset match; avoid regenerating (no recompute, no drift)
     let pathData = null;
-    if (cp.type === 'path' && cp.path) {
-      pathData = cp.path.map(cmd => cmd.slice()); // deep copy commands
+    if (cp.type === "path" && cp.path) {
+      pathData = cp.path.map((cmd) => cmd.slice()); // deep copy commands
     } else {
       // fallback: regenerate (shouldn't happen for hexagon but keeps function safe)
       const rPx = mmToPx(sizeValues.cornerRadius || 0);
@@ -3650,10 +3687,10 @@ const Toolbar = () => {
     const border = new InnerStrokePathClass(pathData, {
       left: cp.left ?? 0,
       top: cp.top ?? 0,
-      originX: cp.originX ?? 'center',
-      originY: cp.originY ?? 'center',
+      originX: cp.originX ?? "center",
+      originY: cp.originY ?? "center",
       absolutePositioned: true,
-      fill: 'transparent',
+      fill: "transparent",
       stroke: strokeColor,
       innerStrokeWidth: thicknessPx,
       selectable: false,
@@ -3668,7 +3705,7 @@ const Toolbar = () => {
       border.pathOffset.y = cp.pathOffset.y;
     }
     canvas.add(border);
-    const outline = canvas.getObjects().find(o => o.isCanvasOutline);
+    const outline = canvas.getObjects().find((o) => o.isCanvasOutline);
     if (outline) canvas.remove(outline);
     canvas.renderAll();
   };
@@ -3676,7 +3713,7 @@ const Toolbar = () => {
   const applyOctagonInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "octagon") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     canvas
@@ -3711,7 +3748,7 @@ const Toolbar = () => {
   const applyTriangleInnerBorder = (opts = {}) => {
     if (!canvas || currentShapeType !== "triangle") return;
     ensureInnerStrokeClasses();
-    const strokeColor = opts.color || "#000";
+    const strokeColor = opts.color || globalColors?.textColor || "#000";
     const thicknessMm = opts.thicknessMm ?? 1;
     const thicknessPx = mmToPx(thicknessMm);
     canvas
@@ -4028,12 +4065,7 @@ const Toolbar = () => {
 
   // Оновлення товщини обводки
   const updateThickness = (value) => {
-    if (activeObject) {
-      activeObject.set({ strokeWidth: mmToPx(value) });
-      if (isAdhesiveTape) {
-        activeObject.set({ stroke: "#888" });
-      }
-    }
+    // Пункт 3 (товщина) стосується лише внутрішніх бордерів/елементів картки, не змінює активні об'єкти
     // Якщо вже додано внутрішній бордер – оновлюємо його товщину без потреби вимикати/вмикати
     if (canvas) {
       if (currentShapeType === "circleWithLine") {
@@ -4079,7 +4111,7 @@ const Toolbar = () => {
             o.isLockInnerBorder
         );
       if (existing) {
-        const color = existing.stroke || "#000";
+        const color = existing.stroke || globalColors?.textColor || "#000";
         // Видаляємо усі попередні borderShape
         canvas
           .getObjects()
@@ -4454,7 +4486,7 @@ const Toolbar = () => {
       }
 
       const reader = new FileReader();
-  reader.onload = async (event) => {
+      reader.onload = async (event) => {
         let addedOk = false; // track if we successfully added any object
         try {
           // Перевіряємо чи це SVG файл
@@ -4544,8 +4576,27 @@ const Toolbar = () => {
               });
 
               canvas.add(svgObject);
-              canvas.setActiveObject(svgObject);
-              canvas.renderAll();
+              try {
+                if (typeof svgObject.setCoords === "function")
+                  svgObject.setCoords();
+              } catch {}
+              try {
+                canvas.setActiveObject(svgObject);
+              } catch {}
+              try {
+                canvas.requestRenderAll();
+              } catch {}
+              try {
+                requestAnimationFrame(() => {
+                  try {
+                    if (!canvas || !svgObject) return;
+                    canvas.setActiveObject(svgObject);
+                    if (typeof svgObject.setCoords === "function")
+                      svgObject.setCoords();
+                    canvas.requestRenderAll();
+                  } catch {}
+                });
+              } catch {}
               addedOk = true;
             } catch (svgError) {
               console.warn(
@@ -4582,38 +4633,61 @@ const Toolbar = () => {
               });
 
               canvas.add(img);
-              canvas.setActiveObject(img);
-              canvas.renderAll();
+              try {
+                if (typeof img.setCoords === "function") img.setCoords();
+              } catch {}
+              try {
+                canvas.setActiveObject(img);
+              } catch {}
+              try {
+                canvas.requestRenderAll();
+              } catch {}
+              try {
+                requestAnimationFrame(() => {
+                  try {
+                    if (!canvas || !img) return;
+                    canvas.setActiveObject(img);
+                    if (typeof img.setCoords === "function") img.setCoords();
+                    canvas.requestRenderAll();
+                  } catch {}
+                });
+              } catch {}
               addedOk = true;
             }
           } else {
             // Растрове зображення -> Векторизація в SVG і додавання на полотно
             try {
               const threshold = 120; // базове значення, можна винести у UI в майбутньому
-              const svgString = await vectorizeDataURLToSVG(event.target.result, {
-                threshold,
-                autoThreshold: true,
-                autoInvert: true,
-                // precision reductions (can tune later in UI)
-                pathomit: 20,
-                maxSize: 240,
-                simplifyTolerance: 2.5,
-                pointStep: 2,
-                quantize: 1,
-                roundDecimals: 0,
-                // holes handling
-                fillRule: "evenodd",
-                combineToSinglePath: true,
-                invert: undefined,
-                scale: 2,
-                fillColor: globalColors?.strokeColor || "#000",
-              });
+              const svgString = await vectorizeDataURLToSVG(
+                event.target.result,
+                {
+                  threshold,
+                  autoThreshold: true,
+                  autoInvert: true,
+                  // precision reductions (can tune later in UI)
+                  pathomit: 20,
+                  maxSize: 240,
+                  simplifyTolerance: 2.5,
+                  pointStep: 2,
+                  quantize: 1,
+                  roundDecimals: 0,
+                  // holes handling
+                  fillRule: "evenodd",
+                  combineToSinglePath: true,
+                  invert: undefined,
+                  scale: 2,
+                  fillColor: globalColors?.strokeColor || "#000",
+                }
+              );
 
               const result = await fabric.loadSVGFromString(svgString);
               const obj =
                 result.objects.length === 1
                   ? result.objects[0]
-                  : fabric.util.groupSVGElements(result.objects, result.options);
+                  : fabric.util.groupSVGElements(
+                      result.objects,
+                      result.options
+                    );
 
               // Центруємо і масштабуємо
               const bounds = obj.getBoundingRect
@@ -4622,7 +4696,10 @@ const Toolbar = () => {
               const maxWidth = 300;
               const maxHeight = 300;
               if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const s = Math.min(maxWidth / bounds.width, maxHeight / bounds.height);
+                const s = Math.min(
+                  maxWidth / bounds.width,
+                  maxHeight / bounds.height
+                );
                 obj.scale(s);
               }
 
@@ -4637,11 +4714,28 @@ const Toolbar = () => {
               });
 
               canvas.add(obj);
-              canvas.setActiveObject(obj);
-              canvas.renderAll();
+              try {
+                if (typeof obj.setCoords === "function") obj.setCoords();
+              } catch {}
+              try {
+                canvas.setActiveObject(obj);
+              } catch {}
+              try {
+                canvas.requestRenderAll();
+              } catch {}
+              try {
+                requestAnimationFrame(() => {
+                  try {
+                    if (!canvas || !obj) return;
+                    canvas.setActiveObject(obj);
+                    if (typeof obj.setCoords === "function") obj.setCoords();
+                    canvas.requestRenderAll();
+                  } catch {}
+                });
+              } catch {}
               addedOk = true;
             } catch (vecErr) {
-              console.warn('Vectorization failed; skip adding raster:', vecErr);
+              console.warn("Vectorization failed; skip adding raster:", vecErr);
               // За новою логікою — нічого не додаємо, якщо не вдалося створити вектор
               return;
             }
@@ -4705,40 +4799,68 @@ const Toolbar = () => {
     }
 
     // 4. Apply baseline inner border depending on shape type
+    const themeBorderColor = (globalColors && globalColors.textColor) || "#000";
     if (shapeType === "rectangle") {
-      applyRectangleInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyRectangleInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (
       shapeType === "circle" ||
       shapeType === "circleWithLine" ||
       shapeType === "circleWithCross"
     ) {
-      applyCircleInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyCircleInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "ellipse") {
-      applyEllipseInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyEllipseInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "halfCircle") {
-      applyHalfCircleInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyHalfCircleInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "extendedHalfCircle") {
       applyExtendedHalfCircleInnerBorder({
         thicknessMm: thickness,
-        color: "#000",
+        color: themeBorderColor,
       });
     } else if (shapeType === "hexagon") {
-      applyHexagonInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyHexagonInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "octagon") {
-      applyOctagonInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyOctagonInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "triangle") {
-      applyTriangleInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyTriangleInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "arrowLeft") {
-      applyArrowLeftInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyArrowLeftInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "arrowRight") {
-      applyArrowRightInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyArrowRightInnerBorder({
+        thicknessMm: thickness,
+        color: themeBorderColor,
+      });
     } else if (shapeType === "adaptiveTriangle") {
       applyAdaptiveTriangleInnerBorder({
         thicknessMm: thickness,
-        color: "#000",
+        color: themeBorderColor,
       });
     } else if (shapeType === "lock") {
-      applyLockInnerBorder({ thicknessMm: thickness, color: "#000" });
+      applyLockInnerBorder({ thicknessMm: thickness, color: themeBorderColor });
     } else {
       console.warn("Border placeholder: shape not yet supported", shapeType);
       updateCanvasOutline(); // keep outline if nothing added
@@ -4859,6 +4981,13 @@ const Toolbar = () => {
     );
     toRemove.forEach((o) => canvas.remove(o));
     canvas.requestRenderAll?.();
+  };
+
+  // Скинути отвори до стану "No holes" і підсвітити першу іконку
+  const resetHolesToNone = () => {
+    clearExistingHoles();
+    setIsHolesSelected(false);
+    setActiveHolesType(1);
   };
 
   // Тип 2 - отвір по центру ширини і зверху по висоті (відступ ~4мм)
@@ -5704,6 +5833,9 @@ const Toolbar = () => {
       // Initial inner border removed; will be added only when user presses border button
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -5743,6 +5875,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -5782,6 +5917,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -5919,37 +6057,8 @@ const Toolbar = () => {
       updateCanvasOutline();
       canvas.renderAll();
 
-      // Автоматично додаємо отвір у центрі півкола (тип 1 логічно замінюємо кастомним)
-      clearExistingHoles();
-      setIsHolesSelected(true);
-      setActiveHolesType(2); // використовуємо тип 2 як маркер активності
-      const radiusPx = mmToPx(8); // радіус півкола
-      const chordY = radiusPx; // y хорди / верх прямокутника
-      const semiCenterY = chordY - radiusPx / 2; // геометричний центр області півкола (середина по висоті дуги)
-      const holeRadiusPx = mmToPx((holesDiameter || 2.5) / 2);
-      const hole = new fabric.Circle({
-        left: wPx / 2,
-        top: semiCenterY,
-        radius: holeRadiusPx,
-        fill: "#FFFFFF",
-        stroke: "#000000",
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true,
-        cutType: "hole",
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      });
-      canvas.add(hole);
-      canvas.renderAll();
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6040,6 +6149,9 @@ const Toolbar = () => {
       canvas.sendObjectToBack(centerLine);
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6152,6 +6264,9 @@ const Toolbar = () => {
       canvas.sendObjectToBack(hLine);
       canvas.sendObjectToBack(vLine);
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6193,6 +6308,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6214,9 +6332,9 @@ const Toolbar = () => {
       const hPxE = mmToPx(baseHmm);
       canvas.setDimensions({ width: wPxE, height: hPxE });
 
-  // Використовуємо аналітичний path одразу (стабільні координати для border cloning)
-  const pathStr = makeExtendedHalfCircleSmoothPath(wPxE, hPxE, 0);
-  const clipPath = new fabric.Path(pathStr, { absolutePositioned: true });
+      // Використовуємо аналітичний path одразу (стабільні координати для border cloning)
+      const pathStr = makeExtendedHalfCircleSmoothPath(wPxE, hPxE, 0);
+      const clipPath = new fabric.Path(pathStr, { absolutePositioned: true });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
@@ -6233,6 +6351,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6270,6 +6391,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6377,6 +6501,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6418,6 +6545,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6459,6 +6589,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6500,6 +6633,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6541,6 +6677,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6582,6 +6721,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6621,6 +6763,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
 
@@ -6662,6 +6807,9 @@ const Toolbar = () => {
       updateCanvasOutline();
 
       canvas.renderAll();
+
+      // Скидаємо отвори до No holes
+      resetHolesToNone();
     }
   };
   const handleInputChange = (key, max, rawValue) => {
@@ -6691,77 +6839,8 @@ const Toolbar = () => {
       setSizeValues((prev) => ({ ...prev, [key]: value }));
     }
 
-    // Apply immediately without relying on async state
-    if (activeObject && canvas) {
-      // Якщо редагуємо радіус кутів для фігур, які будуються через clipPath (напр., стрілки),
-      // то спочатку перебудовуємо саму фігуру (clipPath), а потім – бордер.
-      if (key === "cornerRadius") {
-        const clipPathDriven =
-          currentShapeType === "arrowLeft" ||
-          currentShapeType === "arrowRight" ||
-          currentShapeType === "hexagon" ||
-          currentShapeType === "octagon" ||
-          currentShapeType === "triangle" ||
-          currentShapeType === "adaptiveTriangle" ||
-          currentShapeType === "halfCircle" ||
-          currentShapeType === "extendedHalfCircle" ||
-          currentShapeType === "lock" ||
-          currentShapeType === "flag" ||
-          currentShapeType === "diamond";
-        if (clipPathDriven) {
-          updateSize({
-            widthMm: round1(next.width),
-            heightMm: round1(next.height),
-            cornerRadiusMm: round1(next.cornerRadius),
-          });
-          updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
-          return;
-        }
-      }
-      const currentLeft = activeObject.left;
-      const currentTop = activeObject.top;
-
-      if (activeObject.type === "circle") {
-        const originalRadius = activeObject.radius;
-        const targetWpx = mmToPx(round1(next.width));
-        const targetHpx = mmToPx(round1(next.height));
-        const scaleX = targetWpx / (originalRadius * 2);
-        const scaleY = targetHpx / (originalRadius * 2);
-        activeObject.set({
-          scaleX,
-          scaleY,
-          left: currentLeft,
-          top: currentTop,
-        });
-      } else if (activeObject.type === "ellipse") {
-        const originalRx = activeObject.rx;
-        const originalRy = activeObject.ry;
-        if (key === "width") {
-          const scaleX = mmToPx(value) / (originalRx * 2);
-          activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-        } else if (key === "height") {
-          const scaleY = mmToPx(value) / (originalRy * 2);
-          activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-        } else if (key === "cornerRadius") {
-          const rPx = mmToPx(value);
-          activeObject.set({ rx: rPx, ry: rPx });
-        }
-      } else {
-        const originalWidth = activeObject.width;
-        const originalHeight = activeObject.height;
-        if (key === "width") {
-          const scaleX = mmToPx(value) / originalWidth;
-          activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-        } else if (key === "height") {
-          const scaleY = mmToPx(value) / originalHeight;
-          activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-        } else if (key === "cornerRadius") {
-          const rPx = mmToPx(value);
-          activeObject.set({ rx: rPx, ry: rPx });
-        }
-      }
-      canvas.renderAll();
-    } else if (canvas) {
+    // Параметри розміру застосовуємо лише до canvas/clipPath
+    if (canvas) {
       // Update canvas/clipPath using explicit overrides to avoid one-step lag
       updateSize({
         widthMm: round1(next.width),
@@ -6792,79 +6871,8 @@ const Toolbar = () => {
         updated = { ...updated, width: side, height: side };
       }
 
-      // Apply immediately using explicit values
-  if (activeObject && canvas) {
-        if (key === "cornerRadius") {
-          const clipPathDriven =
-            currentShapeType === "arrowLeft" ||
-            currentShapeType === "arrowRight" ||
-            currentShapeType === "hexagon" ||
-            currentShapeType === "octagon" ||
-            currentShapeType === "triangle" ||
-            currentShapeType === "adaptiveTriangle" ||
-            currentShapeType === "halfCircle" ||
-            currentShapeType === "extendedHalfCircle" ||
-            currentShapeType === "lock" ||
-            currentShapeType === "flag" ||
-            currentShapeType === "diamond";
-          if (clipPathDriven) {
-            updateSize({
-              widthMm: round1(key === "width" ? newValue : updated.width),
-              heightMm: round1(key === "height" ? newValue : updated.height),
-              cornerRadiusMm: round1(
-                key === "cornerRadius" ? newValue : updated.cornerRadius
-              ),
-            });
-            updateExistingBorders({
-              cornerRadiusMm: round1(
-                key === "cornerRadius" ? newValue : updated.cornerRadius
-              ),
-            });
-            return updated;
-          }
-        }
-        const currentLeft = activeObject.left;
-        const currentTop = activeObject.top;
-
-        if (activeObject.type === "circle") {
-          const originalRadius = activeObject.radius;
-          const targetSide = isCircleFamily ? updated.width : updated.width; // width===height if isCircleFamily
-          const scale = mmToPx(targetSide) / (originalRadius * 2);
-          activeObject.set({
-            scaleX: scale,
-            scaleY: scale,
-            left: currentLeft,
-            top: currentTop,
-          });
-        } else if (activeObject.type === "ellipse") {
-          const originalRx = activeObject.rx;
-          const originalRy = activeObject.ry;
-          if (key === "width") {
-            const scaleX = mmToPx(newValue) / (originalRx * 2);
-            activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-          } else if (key === "height") {
-            const scaleY = mmToPx(newValue) / (originalRy * 2);
-            activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-          } else if (key === "cornerRadius") {
-            const rPx = mmToPx(newValue);
-            activeObject.set({ rx: rPx, ry: rPx });
-          }
-        } else {
-          const originalWidth = activeObject.width;
-          const originalHeight = activeObject.height;
-          if (key === "width") {
-            const scaleX = mmToPx(newValue) / originalWidth;
-            activeObject.set({ scaleX, left: currentLeft, top: currentTop });
-          } else if (key === "height") {
-            const scaleY = mmToPx(newValue) / originalHeight;
-            activeObject.set({ scaleY, left: currentLeft, top: currentTop });
-          } else if (key === "cornerRadius") {
-            const rPx = mmToPx(newValue);
-            activeObject.set({ rx: rPx, ry: rPx });
-          }
-        }
-        canvas.renderAll();
-      } else if (canvas) {
+      // Параметри розміру застосовуємо лише до canvas/clipPath
+      if (canvas) {
         updateSize({
           widthMm: round1(updated.width),
           heightMm: round1(updated.height),
@@ -6941,25 +6949,17 @@ const Toolbar = () => {
                 type="number"
                 value={sizeValues.width}
                 onChange={(e) =>
-                  handleInputChange(
-                    "width",
-                    activeObject ? 300 : 1200,
-                    e.target.value
-                  )
+                  handleInputChange("width", 1200, e.target.value)
                 }
               />
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() =>
-                    changeValue("width", 1, activeObject ? 300 : 1200)
-                  }
+                  onClick={() => changeValue("width", 1, 1200)}
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() =>
-                    changeValue("width", -1, activeObject ? 300 : 1200)
-                  }
+                  onClick={() => changeValue("width", -1, 1200)}
                 />
               </div>
             </div>
@@ -7018,25 +7018,17 @@ const Toolbar = () => {
                 type="number"
                 value={sizeValues.height}
                 onChange={(e) =>
-                  handleInputChange(
-                    "height",
-                    activeObject ? 300 : 1200,
-                    e.target.value
-                  )
+                  handleInputChange("height", 1200, e.target.value)
                 }
               />
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() =>
-                    changeValue("height", 1, activeObject ? 300 : 1200)
-                  }
+                  onClick={() => changeValue("height", 1, 1200)}
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() =>
-                    changeValue("height", -1, activeObject ? 300 : 1200)
-                  }
+                  onClick={() => changeValue("height", -1, 1200)}
                 />
               </div>
             </div>

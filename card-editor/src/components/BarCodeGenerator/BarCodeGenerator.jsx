@@ -53,7 +53,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         format: formData.codeType,
         width: 2,
         height: 100,
-        displayValue: true,
+        displayValue: false,
         fontSize: 14,
         textMargin: 5,
         margin: 0, // removed outer padding
@@ -131,8 +131,27 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         barCodeType: formData.codeType,
       });
       canvas.add(obj);
-      canvas.setActiveObject(obj);
-      canvas.requestRenderAll();
+      // Стабілізуємо координати та активуємо перед відмальовкою
+      try {
+        if (typeof obj.setCoords === "function") obj.setCoords();
+      } catch {}
+      try {
+        canvas.setActiveObject(obj);
+      } catch {}
+      try {
+        canvas.requestRenderAll();
+      } catch {}
+      // Додаткове оновлення у наступному кадрі (особливо важливо для SVG/Group)
+      try {
+        requestAnimationFrame(() => {
+          try {
+            if (!canvas || !obj) return;
+            canvas.setActiveObject(obj);
+            if (typeof obj.setCoords === "function") obj.setCoords();
+            canvas.requestRenderAll();
+          } catch {}
+        });
+      } catch {}
       if (!createNew) onClose();
     } catch (e) {
       console.error("Помилка додавання бар-коду на canvas:", e);
@@ -175,8 +194,25 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         barCodeType: target.barCodeType,
       });
       canvas.add(clone);
-      canvas.setActiveObject(clone);
-      canvas.requestRenderAll();
+      try {
+        if (typeof clone.setCoords === "function") clone.setCoords();
+      } catch {}
+      try {
+        canvas.setActiveObject(clone);
+      } catch {}
+      try {
+        canvas.requestRenderAll();
+      } catch {}
+      try {
+        requestAnimationFrame(() => {
+          try {
+            if (!canvas || !clone) return;
+            canvas.setActiveObject(clone);
+            if (typeof clone.setCoords === "function") clone.setCoords();
+            canvas.requestRenderAll();
+          } catch {}
+        });
+      } catch {}
     } catch (e) {
       console.error("Помилка дублювання бар-коду:", e);
     }

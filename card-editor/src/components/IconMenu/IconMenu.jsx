@@ -248,8 +248,26 @@ const IconMenu = ({ isOpen, onClose }) => {
           svgObject.set && svgObject.set({ fromIconMenu: true });
         } catch {}
         canvas.add(svgObject);
-        canvas.setActiveObject(svgObject);
-        canvas.renderAll();
+        try {
+          if (typeof svgObject.setCoords === "function") svgObject.setCoords();
+        } catch {}
+        try {
+          canvas.setActiveObject(svgObject);
+        } catch {}
+        try {
+          canvas.requestRenderAll();
+        } catch {}
+        try {
+          requestAnimationFrame(() => {
+            try {
+              if (!canvas || !svgObject) return;
+              canvas.setActiveObject(svgObject);
+              if (typeof svgObject.setCoords === "function")
+                svgObject.setCoords();
+              canvas.requestRenderAll();
+            } catch {}
+          });
+        } catch {}
       } catch (svgError) {
         console.warn(`SVG error for ${iconName}:`, svgError);
         const imageObject = await createImageFromSVG(svgText, iconName);
@@ -257,8 +275,27 @@ const IconMenu = ({ isOpen, onClose }) => {
           imageObject.set && imageObject.set({ fromIconMenu: true });
         } catch {}
         canvas.add(imageObject);
-        canvas.setActiveObject(imageObject);
-        canvas.renderAll();
+        try {
+          if (typeof imageObject.setCoords === "function")
+            imageObject.setCoords();
+        } catch {}
+        try {
+          canvas.setActiveObject(imageObject);
+        } catch {}
+        try {
+          canvas.requestRenderAll();
+        } catch {}
+        try {
+          requestAnimationFrame(() => {
+            try {
+              if (!canvas || !imageObject) return;
+              canvas.setActiveObject(imageObject);
+              if (typeof imageObject.setCoords === "function")
+                imageObject.setCoords();
+              canvas.requestRenderAll();
+            } catch {}
+          });
+        } catch {}
       }
     } catch (error) {
       console.error(`Error loading ${iconName}:`, error);

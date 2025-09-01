@@ -187,6 +187,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -215,6 +217,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -243,6 +247,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -271,6 +277,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -299,6 +307,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -327,6 +337,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -355,6 +367,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockScalingX: true,
           lockScalingY: true,
           lockUniScaling: true,
+          isCutElement: true,
+          cutType: "shape",
         }
       );
       canvas.add(path);
@@ -380,6 +394,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
       });
       canvas.add(circle);
       canvas.setActiveObject(circle);
@@ -404,6 +420,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
       });
       canvas.add(circle);
       canvas.setActiveObject(circle);
@@ -428,6 +446,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
       });
       canvas.add(circle);
       canvas.setActiveObject(circle);
@@ -452,6 +472,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
       });
       canvas.add(circle);
       canvas.setActiveObject(circle);
@@ -476,6 +498,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockScalingX: true,
         lockScalingY: true,
         lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
       });
       canvas.add(circle);
       canvas.setActiveObject(circle);
@@ -485,8 +509,19 @@ const CutSelector = ({ isOpen, onClose }) => {
   };
 
   // Функція для рендерингу іконки
+  // Закриваємо модалку одразу при кліку, потім виконуємо додавання на canvas
   const renderCutIcon = (svgIcon, onClick, title) => (
-    <div className={styles.cutOption} onClick={onClick} title={title}>
+    <div
+      className={styles.cutOption}
+      onClick={() => {
+        try {
+          if (typeof onClose === "function") onClose();
+        } finally {
+          if (typeof onClick === "function") onClick();
+        }
+      }}
+      title={title}
+    >
       {svgIcon}
     </div>
   );

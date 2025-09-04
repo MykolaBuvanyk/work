@@ -24,81 +24,45 @@ const OUTLINE_WIDTH_CSS = 2;
 
 const Canvas = () => {
   const canvasRef = useRef(null);
+  const shadowHostRef = useRef(null);
+  const outlineHostRef = useRef(null);
   const viewportRef = useRef(null);
   const designRef = useRef(DEFAULT_DESIGN);
-  const {
-    setCanvas,
-    setActiveObject,
-    setShapePropertiesOpen,
-    isCustomShapeMode,
-    globalColors,
-    canvas,
-  } = useCanvasContext();
-  const resizingRef = useRef(false);
-  const scaleRef = useRef(1);
+  const { setCanvas, setActiveObject, setShapePropertiesOpen, isCustomShapeMode, globalColors, canvas } = useCanvasContext();
 
+  // Local UI state for labels and CSS box
   const [displayWidth, setDisplayWidth] = useState(DEFAULT_DESIGN.width);
   const [displayHeight, setDisplayHeight] = useState(DEFAULT_DESIGN.height);
   const [cssHeight, setCssHeight] = useState(DEFAULT_DESIGN.height);
   const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  const resizingRef = useRef(false);
 
+  // Main Fabric canvas lifecycle
   useEffect(() => {
     // Guard від подвійної ініціалізації
     if (canvasRef.current && canvasRef.current.__fabricCanvas) {
       try {
         canvasRef.current.__fabricCanvas.dispose();
       } catch {}
-      canvasRef.current.__fabricCanvas = undefined;
     }
 
     const fCanvas = new fabric.Canvas(canvasRef.current, {
       backgroundColor: "#f5f5f5",
       selection: true,
-      enableRetinaScaling: true,
     });
     if (canvasRef.current) canvasRef.current.__fabricCanvas = fCanvas;
     setCanvas(fCanvas);
 
-    // Події вибору
-    const isHole = (o) => !!o && o.isCutElement && o.cutType === "hole";
-    const isShapeWithProps = (o) =>
-      !!o &&
-      ["path", "rect", "circle", "ellipse"].includes(o.type) &&
-      !isHole(o);
-
+    // Helpers used across handlers
+    const isTextObject = (o) =>
+      !!(
+        o && (o.type === "i-text" || o.type === "text" || o.type === "textbox")
+      );
     const isFromIconMenu = (o) =>
-      !!o &&
-      (o.fromIconMenu === true || (o.data && o.data.fromIconMenu === true));
-    const handleSelection = (e) => {
-      const obj = e.selected?.[0];
-      if (isHole(obj)) {
-        // Забороняємо вибір отворів і закриваємо пропертіс
-        try {
-          fCanvas.discardActiveObject();
-        } catch {}
-        setActiveObject(null);
-        setShapePropertiesOpen(false);
-        return;
-      }
-      // IconMenu elements: never open Shape Properties
-      if (obj && isFromIconMenu(obj)) {
-        setActiveObject(obj);
-        setShapePropertiesOpen(false);
-        return;
-      }
-      if (isShapeWithProps(obj)) {
-        setActiveObject(obj);
-        // Не відкривати модалку Shape Properties в режимі кастомної фігури та для іконок з IconMenu
-        if (!isCustomShapeMode && !isFromIconMenu(obj))
-          setShapePropertiesOpen(true);
-      }
-    };
-    fCanvas.on("selection:created", handleSelection);
-    fCanvas.on("selection:updated", handleSelection);
-    fCanvas.on("selection:cleared", () => {
-      setActiveObject(null);
-      setShapePropertiesOpen(false);
-    });
+      !!(o && (o.fromIconMenu === true || (o.data && o.data.fromIconMenu)));
+    const isHole = (o) => !!(o && (o.isHole || (o.data && o.data.isHole)));
+    const isShapeWithProps = (o) => !!(o && !isTextObject(o) && !isHole(o));
 
     fCanvas.on("mouse:down", (e) => {
       const t = e.target;
@@ -268,11 +232,17 @@ const Canvas = () => {
       const availW = Math.max(0, viewportRef.current.clientWidth - 2 * MARGIN);
       const availH = Math.max(0, viewportRef.current.clientHeight - 2 * MARGIN);
       const scaleToFit = Math.min(availW / baseW, availH / baseH) || 1;
-      const cssW = Math.max(1, Math.round(baseW * scaleToFit));
-      const cssH = Math.max(1, Math.round(baseH * scaleToFit));
-      const maxBoost = 4;
-      const boost = Math.min(Math.max(1, scaleToFit), maxBoost);
-      const effectiveRetina = dpr * boost;
+  const cssW = Math.max(1, baseW * scaleToFit);
+  const cssH = Math.max(1, baseH * scaleToFit);
+  // Make backing store match CSS scale so it stays crisp at any size.
+  // Desired backing pixel ratio should be dpr * scaleToFit.
+  // Add a safety cap to avoid extremely large canvases.
+  const MAX_BACKING_PX = 8192; // per side safety cap
+  const desiredRetina = dpr * scaleToFit;
+  const maxRetinaByW = baseW > 0 ? MAX_BACKING_PX / baseW : desiredRetina;
+  const maxRetinaByH = baseH > 0 ? MAX_BACKING_PX / baseH : desiredRetina;
+  const boosted = Math.min(desiredRetina, maxRetinaByW, maxRetinaByH);
+  const effectiveRetina = Math.max(dpr, boosted);
       fCanvas.getRetinaScaling = () => effectiveRetina;
       resizingRef.current = true;
       originalSetDimensions({ width: baseW, height: baseH });
@@ -291,6 +261,7 @@ const Canvas = () => {
       try {
         fCanvas.fire("display:scale", { scale: scaleToFit });
       } catch {}
+  try { syncShadowHost(); } catch {}
     };
 
     // Helper: compute max display scale percent allowed so canvas fits inside viewport - 10px
@@ -325,15 +296,20 @@ const Canvas = () => {
       const minFactor = 0.3; // 30%
       const reqFactor = (requested || 0) / 100;
       const factor = Math.max(minFactor, Math.min(maxFactorView, reqFactor || 0));
-      const clamped = Math.round(factor * 100);
-  const cssW = Math.max(1, Math.round(baseW * factor));
-  const cssH = Math.max(1, Math.round(baseH * factor));
+  const clamped = Math.round(factor * 100);
+  const cssW = Math.max(1, baseW * factor);
+  const cssH = Math.max(1, baseH * factor);
 
-      // Adjust effective retina scaling similarly to auto-fit
-      const dpr = window.devicePixelRatio || 1;
-  const maxBoost = 4;
-  const boost = Math.min(Math.max(1, factor), maxBoost);
-      const effectiveRetina = dpr * boost;
+  // Make backing store match CSS scale so it stays crisp at any size.
+  // Desired backing pixel ratio should be dpr * factor.
+  // Add a safety cap to avoid extremely large canvases.
+  const dpr = window.devicePixelRatio || 1;
+  const MAX_BACKING_PX = 8192; // per side safety cap
+  const desiredRetina = dpr * factor;
+  const maxRetinaByW = baseW > 0 ? MAX_BACKING_PX / baseW : desiredRetina;
+  const maxRetinaByH = baseH > 0 ? MAX_BACKING_PX / baseH : desiredRetina;
+  const boosted = Math.min(desiredRetina, maxRetinaByW, maxRetinaByH);
+  const effectiveRetina = Math.max(dpr, boosted);
       fCanvas.getRetinaScaling = () => effectiveRetina;
 
       // Keep internal canvas size at design pixels; scale visually via CSS box
@@ -354,6 +330,7 @@ const Canvas = () => {
       try {
         fCanvas.fire("display:scale", { scale: factor });
       } catch {}
+  try { syncShadowHost(); } catch {}
       return clamped;
     };
 
@@ -381,6 +358,7 @@ const Canvas = () => {
 
     resizeToViewport();
     window.addEventListener("resize", resizeToViewport);
+  try { syncShadowHost(); } catch {}
 
     // Рендерери контролів
     const makeTextBadgeRenderer = (symbol) => (ctx, left, top) => {
@@ -973,6 +951,319 @@ const Canvas = () => {
       if (!ctx) return;
       ctx.clearRect(0, 0, fCanvas.getWidth(), fCanvas.getHeight());
     };
+    // Draw a drop shadow outside the artboard (clipPath) on the top canvas so it isn't clipped
+    const drawArtboardShadow = () => {
+      const cp = fCanvas.clipPath;
+      const ctx = fCanvas.getTopContext
+        ? fCanvas.getTopContext()
+        : fCanvas.contextTop;
+      if (!ctx || !cp) return;
+
+      const s = scaleRef.current || 1; // CSS scale factor
+      const blurCss = 24; // desired blur in CSS px
+      const offsetCssX = 0;
+      const offsetCssY = 8;
+      const blur = Math.max(0, blurCss / s);
+      const offX = offsetCssX / s;
+      const offY = offsetCssY / s;
+
+      // Helper to draw rounded rect path
+      const drawRoundedRect = (x, y, w, h, rx = 0, ry = 0) => {
+        const rr = Math.max(0, Math.min(rx || 0, w / 2));
+        const ry2 = Math.max(0, Math.min(ry || rr, h / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.lineTo(x + w - rr, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + ry2);
+        ctx.lineTo(x + w, y + h - ry2);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+        ctx.lineTo(x + rr, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - ry2);
+        ctx.lineTo(x, y + ry2);
+        ctx.quadraticCurveTo(x, y, x + rr, y);
+        ctx.closePath();
+      };
+
+      // First pass: draw shape with shadow, then punch out fill so only the halo remains
+      ctx.save();
+      try {
+        ctx.shadowColor = "rgba(0,0,0,0.25)";
+        ctx.shadowBlur = blur;
+        ctx.shadowOffsetX = offX;
+        ctx.shadowOffsetY = offY;
+        ctx.fillStyle = "rgba(0,0,0,1)"; // temporary
+
+        let drew = false;
+        if (cp.type === "rect") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const x = cp.left || 0;
+          const y = cp.top || 0;
+          const w = (cp.width || 0) * sx;
+          const h = (cp.height || 0) * sy;
+          const rx = cp.rx || 0,
+            ry = cp.ry || rx;
+          drawRoundedRect(x, y, w, h, rx, ry);
+          ctx.fill();
+          drew = true;
+        } else if (cp.type === "circle") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const r = cp.radius || 0;
+          const w = r * 2 * sx;
+          const h = r * 2 * sy;
+          const cx = (cp.left || 0) + w / 2;
+          const cy = (cp.top || 0) + h / 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, Math.max(0.01, w / 2), Math.max(0.01, h / 2), 0, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+          drew = true;
+        } else if (cp.type === "ellipse") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const rx = (cp.rx || 0) * sx;
+          const ry = (cp.ry || 0) * sy;
+          const cx = (cp.left || 0) + rx;
+          const cy = (cp.top || 0) + ry;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, Math.max(0.01, rx), Math.max(0.01, ry), 0, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+          drew = true;
+        } else if (cp.type === "polygon" && Array.isArray(cp.points)) {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const pts = cp.points;
+          if (pts.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo((cp.left || 0) + pts[0].x * sx, (cp.top || 0) + pts[0].y * sy);
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo((cp.left || 0) + pts[i].x * sx, (cp.top || 0) + pts[i].y * sy);
+            }
+            ctx.closePath();
+            ctx.fill();
+            drew = true;
+          }
+        } else if (cp.type === "path") {
+          try {
+            const svg = typeof cp.toSVG === "function" ? cp.toSVG() : "";
+            const match = svg && svg.match(/ d=\"([^\"]+)\"/);
+            if (match && match[1]) {
+              const p2 = new Path2D(match[1]);
+              ctx.fill(p2);
+              drew = true;
+            }
+          } catch {}
+        }
+        if (!drew) {
+          const baseW = (designRef.current && designRef.current.width) || fCanvas.getWidth();
+          const baseH = (designRef.current && designRef.current.height) || fCanvas.getHeight();
+          drawRoundedRect(0, 0, baseW, baseH, 0, 0);
+          ctx.fill();
+        }
+
+        // Punch out inner fill: keep only the halo
+        ctx.shadowColor = "rgba(0,0,0,0)";
+        ctx.shadowBlur = 0;
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.fillStyle = "rgba(0,0,0,1)";
+
+        if (cp.type === "rect") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const x = cp.left || 0;
+          const y = cp.top || 0;
+          const w = (cp.width || 0) * sx;
+          const h = (cp.height || 0) * sy;
+          const rx = cp.rx || 0,
+            ry = cp.ry || rx;
+          drawRoundedRect(x, y, w, h, rx, ry);
+          ctx.fill();
+        } else if (cp.type === "circle") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const r = cp.radius || 0;
+          const w = r * 2 * sx;
+          const h = r * 2 * sy;
+          const cx = (cp.left || 0) + w / 2;
+          const cy = (cp.top || 0) + h / 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, Math.max(0.01, w / 2), Math.max(0.01, h / 2), 0, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+        } else if (cp.type === "ellipse") {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const rx = (cp.rx || 0) * sx;
+          const ry = (cp.ry || 0) * sy;
+          const cx = (cp.left || 0) + rx;
+          const cy = (cp.top || 0) + ry;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, Math.max(0.01, rx), Math.max(0.01, ry), 0, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+        } else if (cp.type === "polygon" && Array.isArray(cp.points)) {
+          const sx = cp.scaleX || 1,
+            sy = cp.scaleY || 1;
+          const pts = cp.points;
+          if (pts.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo((cp.left || 0) + pts[0].x * sx, (cp.top || 0) + pts[0].y * sy);
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo((cp.left || 0) + pts[i].x * sx, (cp.top || 0) + pts[i].y * sy);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+        } else if (cp.type === "path") {
+          try {
+            const svg2 = typeof cp.toSVG === "function" ? cp.toSVG() : "";
+            const match2 = svg2 && svg2.match(/ d=\"([^\"]+)\"/);
+            if (match2 && match2[1]) {
+              const p22 = new Path2D(match2[1]);
+              ctx.fill(p22);
+            }
+          } catch {}
+        } else {
+          const baseW = (designRef.current && designRef.current.width) || fCanvas.getWidth();
+          const baseH = (designRef.current && designRef.current.height) || fCanvas.getHeight();
+          drawRoundedRect(0, 0, baseW, baseH, 0, 0);
+          ctx.fill();
+        }
+      } finally {
+        ctx.restore();
+        // Reset comp op to default for following overlays
+        ctx.globalCompositeOperation = "source-over";
+      }
+    };
+    // DOM shadow host sync: keep same size/pos as Fabric CSS box and render an SVG shadow for clipPath
+    const syncShadowHost = () => {
+      const shadowHost = shadowHostRef.current;
+      const outlineHost = outlineHostRef.current;
+      const el = canvasRef.current;
+      if (!el) return;
+      try {
+        // CSS-computed sizes/position
+        const wrapper = (shadowHost || outlineHost)?.parentElement;
+        const canvasRect = el.getBoundingClientRect();
+        const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : { left: 0, top: 0 };
+  const cssWpx = Math.max(0, canvasRect.width);
+  const cssHpx = Math.max(0, canvasRect.height);
+        const cp = fCanvas.clipPath;
+        const ds = typeof fCanvas.getDesignSize === "function" ? fCanvas.getDesignSize() : null;
+        const baseW = (ds && ds.width) || fCanvas.getWidth();
+        const baseH = (ds && ds.height) || fCanvas.getHeight();
+        const s = baseW ? cssWpx / baseW : 1;
+
+        // Shadow style in CSS pixels
+        const blurCss = 24;
+        const offsetCssY = 8;
+        const shadowColor = "rgba(0,0,0,0.25)";
+
+        // Host size/position: match canvas box exactly and follow its position
+  const hostLeft = canvasRect.left - (wrapperRect.left || 0);
+  const hostTop = canvasRect.top - (wrapperRect.top || 0);
+        if (shadowHost) {
+          shadowHost.style.width = `${cssWpx}px`;
+          shadowHost.style.height = `${cssHpx}px`;
+          shadowHost.style.left = `${hostLeft}px`;
+          shadowHost.style.top = `${hostTop}px`;
+        }
+        if (outlineHost) {
+          // Fixed visible outline thickness (2 CSS px)
+          const strokeCss = 2;
+          const pad = strokeCss / 2;
+          outlineHost.style.width = `${cssWpx + strokeCss}px`;
+          outlineHost.style.height = `${cssHpx + strokeCss}px`;
+          outlineHost.style.left = `${hostLeft - pad}px`;
+          outlineHost.style.top = `${hostTop - pad}px`;
+        }
+
+        // Render shadow SVG matching clipPath geometry in CSS pixels
+        // Keep SVG the same size as canvas but allow overflow so the halo can extend out.
+  const svgW = cssWpx;
+  const svgH = cssHpx;
+  const svgHeader = `<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="overflow: visible; shape-rendering: geometricPrecision;">`;
+        let shapePath = "";
+        if (cp && cp.type === "rect") {
+          // Build rect to exactly match the CSS canvas box; compute corner radii by ratio so they scale correctly
+          const designW = (cp.width || 0) * (cp.scaleX || 1) || baseW || 1;
+          const designH = (cp.height || 0) * (cp.scaleY || 1) || baseH || 1;
+          const rxRatio = (cp.rx || 0) / Math.max(1, (cp.width || 0));
+          const rySrc = cp.ry != null ? cp.ry : (cp.rx || 0);
+          const ryRatio = rySrc / Math.max(1, (cp.height || 0));
+          const rxCss = Math.max(0, rxRatio) * cssWpx;
+          const ryCss = Math.max(0, ryRatio) * cssHpx;
+          shapePath = `<rect x="0" y="0" width="${cssWpx}" height="${cssHpx}" rx="${rxCss}" ry="${ryCss}"/>`;
+        } else if (cp && (cp.type === "circle" || cp.type === "ellipse")) {
+          const b = typeof cp.getBoundingRect === "function" ? cp.getBoundingRect(true) : null;
+          if (b) {
+            const cx = b.left * s + (b.width * s) / 2;
+            const cy = b.top * s + (b.height * s) / 2;
+            const rx = (b.width * s) / 2;
+            const ry = (b.height * s) / 2;
+            shapePath = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`;
+          }
+        } else if (cp && cp.type === "polygon" && Array.isArray(cp.points)) {
+          // For polygon shapes (e.g., adaptive triangle clipped variant),
+          // use absolute design coordinates scaled to CSS. Do NOT add cp.left/cp.top
+          // because Fabric may shift them when corner radius changes.
+          const pts = cp.points
+            .map((p) => `${p.x * s},${p.y * s}`)
+            .join(" ");
+          shapePath = `<polygon points="${pts}"/>`;
+        } else if (cp && typeof cp.toSVG === "function") {
+          // For path shapes, scale by s and anchor at 0,0 to avoid shifts
+          try {
+            const svg = cp.toSVG();
+            const m = svg && svg.match(/ d=\"([^\"]+)\"/);
+            if (m && m[1]) {
+              const scaleX = (cp.scaleX || 1) * s;
+              const scaleY = (cp.scaleY || 1) * s;
+              shapePath = `<path d="${m[1]}" transform="matrix(${scaleX} 0 0 ${scaleY} 0 0)"/>`;
+            }
+          } catch {}
+        }
+        if (!shapePath) {
+          // fallback to full artboard rect (with padding offset)
+          shapePath = `<rect x="0" y="0" width="${cssWpx}" height="${cssHpx}"/>`;
+        }
+
+        // Build SVGs: one for shadow (under canvas), one for outline (above canvas)
+        const id = "abShadowFilter";
+        const filter = `
+          <defs>
+            <filter id="${id}" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB" primitiveUnits="userSpaceOnUse">
+              <feDropShadow dx="0" dy="${offsetCssY}" stdDeviation="${blurCss / 2}" flood-color="${shadowColor}" flood-opacity="1"/>
+            </filter>
+            <mask id="cutout" maskUnits="userSpaceOnUse">
+              <rect x="-10000" y="-10000" width="20000" height="20000" fill="white"/>
+              ${shapePath.replace(/\/>$/, ' fill="black"/>')}
+            </mask>
+          </defs>`;
+        if (shadowHost) {
+          const shadowBody = `
+            <g filter="url(#${id})" mask="url(#cutout)">
+              ${shapePath}
+            </g>`;
+          shadowHost.innerHTML = svgHeader + filter + shadowBody + "</svg>";
+        }
+        if (outlineHost) {
+          // Fixed visual 2px in CSS pixels
+          const strokeLocal = 2; // CSS px
+          const strokeColor = "#000000";
+          const pad = strokeLocal / 2; // expand host by half the stroke
+          const outlineSvgHeader = `<svg width="${cssWpx + strokeLocal}" height="${cssHpx + strokeLocal}" viewBox="0 0 ${cssWpx + strokeLocal} ${cssHpx + strokeLocal}" xmlns="http://www.w3.org/2000/svg" style="overflow: visible; shape-rendering: geometricPrecision;">`;
+          const outlineBody = `
+            <g fill="none" stroke="${strokeColor}" stroke-width="${strokeLocal}" vector-effect="non-scaling-stroke" transform="translate(${pad}, ${pad})">
+              ${shapePath}
+            </g>`;
+          outlineHost.innerHTML = outlineSvgHeader + outlineBody + "</svg>";
+        }
+      } catch {}
+    };
+
     const drawFrame = () => {
       const active = fCanvas.getActiveObject();
       const ctx = fCanvas.getTopContext
@@ -1116,8 +1407,16 @@ const Canvas = () => {
       }
       ctx.restore();
     };
-    fCanvas.on("before:render", clearTop);
+  fCanvas.on("before:render", clearTop);
+  fCanvas.on("after:render", () => {
+      try { syncShadowHost(); } catch {}
+    });
     fCanvas.on("after:render", drawFrame);
+    // Also refresh shadow when display scale changes (CSS zoom of the canvas box)
+    const onDisplayScale = () => {
+      try { syncShadowHost(); } catch {}
+    };
+    fCanvas.on("display:scale", onDisplayScale);
 
     // Забезпечити появу контролів одразу при додаванні і автоматичному виборі
     fCanvas.on("object:added", (e) => {
@@ -1170,7 +1469,8 @@ const Canvas = () => {
     return () => {
       window.removeEventListener("resize", resizeToViewport);
       fCanvas.off("before:render", clearTop);
-      fCanvas.off("after:render", drawFrame);
+  fCanvas.off("after:render", drawFrame);
+  fCanvas.off("display:scale", onDisplayScale);
       fCanvas.off("object:rotating", onRotatingSnap);
       fCanvas.off("object:scaling");
       fCanvas.off("mouse:up");
@@ -1349,15 +1649,17 @@ const Canvas = () => {
   return (
     <div className={styles.viewport} ref={viewportRef}>
       <div className={styles.canvasWrapper}>
+  <div ref={shadowHostRef} className={styles.shadowHost} />
         <canvas ref={canvasRef} className={styles.canvas} />
+        <div ref={outlineHostRef} className={styles.outlineHost} />
         <div className={styles.widthLabel}>
-          <span>{pxToMm(displayWidth).toFixed(1)} mm</span>
+          <span>{pxToMm(displayWidth).toFixed(0)} mm</span>
         </div>
         <div
           className={styles.heightLabel}
           style={{ height: `${cssHeight}px` }}
         >
-          <span>{pxToMm(displayHeight).toFixed(1)} mm</span>
+          <span>{pxToMm(displayHeight).toFixed(0)} mm</span>
         </div>
       </div>
     </div>

@@ -10,8 +10,10 @@ const PreviewModal = ({ canvas, onClose }) => {
     if (!canvas) return;
     try {
       setLoading(true);
-      canvas.renderAll();
-      const url = canvas.toDataURL({ format: "png", multiplier: 1 });
+      try { canvas.requestRenderAll(); } catch {}
+      const svg = typeof canvas.toSVG === "function" ? canvas.toSVG() : "";
+      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg || "<svg xmlns='http://www.w3.org/2000/svg'/>"
+      );
       setDataUrl(url);
     } finally {
       setLoading(false);
@@ -69,10 +71,10 @@ const PreviewModal = ({ canvas, onClose }) => {
           {dataUrl && (
             <a
               href={dataUrl}
-              download={`canvas-preview-${Date.now()}.png`}
+              download={`canvas-export-${Date.now()}.svg`}
               className={styles.downloadBtn}
             >
-              Download PNG
+              Download SVG
             </a>
           )}
         </div>

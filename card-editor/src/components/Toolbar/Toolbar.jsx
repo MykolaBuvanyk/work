@@ -83,7 +83,9 @@ const Toolbar = () => {
   const mmToPx = (mm) =>
     typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
-  // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
+  // Округлення: для пункту 2 (Size) потрібні лише цілі значення в мм
+  const round0 = (n) => Math.round(Number(n) || 0);
+  // Залишаємо також округлення до 1 знаку для інших місць, де це може бути потрібно
   const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
   const [activeObject, setActiveObject] = useState(null);
   const [sizeValues, setSizeValues] = useState({
@@ -559,9 +561,9 @@ const Toolbar = () => {
           const wPx = Math.round(obj.width * obj.scaleX);
           const hPx = Math.round(obj.height * obj.scaleY);
           setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)),
+            width: round0(pxToMm(wPx)),
+            height: round0(pxToMm(hPx)),
+            cornerRadius: round0(pxToMm(obj.rx || 0)),
           });
         }
       });
@@ -573,9 +575,9 @@ const Toolbar = () => {
           const wPx = Math.round(obj.width * obj.scaleX);
           const hPx = Math.round(obj.height * obj.scaleY);
           setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)),
+            width: round0(pxToMm(wPx)),
+            height: round0(pxToMm(hPx)),
+            cornerRadius: round0(pxToMm(obj.rx || 0)),
           });
         }
       });
@@ -584,8 +586,8 @@ const Toolbar = () => {
         // Коли нічого не вибрано, показуємо розміри canvas
         const sz = getLogicalCanvasSize();
         setSizeValues({
-          width: Number(pxToMm(sz.width).toFixed(1)),
-          height: Number(pxToMm(sz.height).toFixed(1)),
+          width: round0(pxToMm(sz.width)),
+          height: round0(pxToMm(sz.height)),
           cornerRadius: 0,
         });
       });
@@ -596,9 +598,9 @@ const Toolbar = () => {
           const wPx = Math.round(obj.width * obj.scaleX);
           const hPx = Math.round(obj.height * obj.scaleY);
           setSizeValues({
-            width: Number(pxToMm(wPx).toFixed(1)),
-            height: Number(pxToMm(hPx).toFixed(1)),
-            cornerRadius: Number(pxToMm(obj.rx || 0).toFixed(1)) || 0,
+            width: round0(pxToMm(wPx)),
+            height: round0(pxToMm(hPx)),
+            cornerRadius: round0(pxToMm(obj.rx || 0)) || 0,
           });
         }
       });
@@ -606,8 +608,8 @@ const Toolbar = () => {
       // Ініціалізуємо початкові значення розмірів canvas
       const sz = getLogicalCanvasSize();
       setSizeValues({
-        width: Number(pxToMm(sz.width).toFixed(1)),
-        height: Number(pxToMm(sz.height).toFixed(1)),
+  width: round0(pxToMm(sz.width)),
+  height: round0(pxToMm(sz.height)),
         cornerRadius: 0,
       });
       // Блокуємо відкриття пропертей по dblclick на якорі
@@ -2109,79 +2111,21 @@ const Toolbar = () => {
   }, [holesDiameter, canvas, isHolesSelected, activeHolesType]);
 
   // Функція для оновлення візуального контуру canvas
+  // Тепер контур винесено в DOM/SVG шар під canvas, тому прибираємо будь-який контур на самому полотні
   const updateCanvasOutline = () => {
     if (!canvas) return;
-
-    // Глобальний масштаб відображення (не змінює геометрію в мм, лише візуально звільняє 1-2px по правому/нижньому краю)
-    const VIEWPORT_SCALE = 0.998; // ~0.2%
-    const vt = canvas.viewportTransform || fabric.iMatrix.concat();
-    if (Math.abs(vt[0] - VIEWPORT_SCALE) > 0.0001) {
-      canvas.setViewportTransform([VIEWPORT_SCALE, 0, 0, VIEWPORT_SCALE, 0, 0]);
-    }
-
-    // Видаляємо попередній контур
+    // Видаляємо попередній контур, якщо лишився
     const existingOutline = canvas
       .getObjects()
       .find((obj) => obj.isCanvasOutline);
     if (existingOutline) {
       canvas.remove(existingOutline);
+      canvas.requestRenderAll();
     }
-
-    // Перевіряємо чи є користувацькі обводки
-    const hasBorder = canvas.getObjects().some((obj) => obj.isBorderShape);
-
-    // Додаємо контур тільки якщо немає користувацьких обводок
-    if (!hasBorder && canvas.clipPath) {
-      let outlineShape;
-      const clipPathData = { ...canvas.clipPath.toObject() };
-      // fabric попередження "Setting type has no effect" якщо передати type в options — видаляємо
-      delete clipPathData.type;
-
-      if (canvas.clipPath.type === "rect") {
-        outlineShape = new fabric.Rect(clipPathData);
-      } else if (canvas.clipPath.type === "circle") {
-        outlineShape = new fabric.Circle(clipPathData);
-      } else if (canvas.clipPath.type === "ellipse") {
-        outlineShape = new fabric.Ellipse(clipPathData);
-      } else if (canvas.clipPath.type === "path") {
-        outlineShape = new fabric.Path(canvas.clipPath.path, clipPathData);
-      } else if (canvas.clipPath.type === "polygon") {
-        // Flatten scale so stroke width is not magnified
-        const cp = canvas.clipPath;
-        const sx = cp.scaleX || 1;
-        const sy = cp.scaleY || 1;
-        if (sx !== 1 || sy !== 1) {
-          const flatPts = cp.points.map((p) => ({ x: p.x * sx, y: p.y * sy }));
-          outlineShape = new fabric.Polygon(flatPts, {
-            left: cp.left,
-            top: cp.top,
-            absolutePositioned: true,
-          });
-        } else {
-          outlineShape = new fabric.Polygon(cp.points, clipPathData);
-        }
-      }
-
-      if (outlineShape) {
-        // Більше не інсетуємо контур окремо – це робить глобальний viewport scale.
-        outlineShape.set({
-          fill: "transparent",
-          stroke: "#000000",
-          strokeWidth: 1,
-          strokeDashArray: null,
-          selectable: false,
-          evented: false,
-          excludeFromExport: true,
-          isCanvasOutline: true,
-          strokeUniform: true,
-        });
-
-        canvas.add(outlineShape);
-        // Переміщуємо контур на задній план
-        canvas.sendObjectToBack(outlineShape);
-      }
-    }
+    // Більше нічого не додаємо тут
   };
+
+  // Контур більше не малюємо на полотні — слухач масштабу не потрібен
 
   // Повне перезбирання внутрішнього бордера при зміні розміру / cornerRadius
   const updateExistingBorders = (overrides = {}) => {
@@ -6665,10 +6609,10 @@ const Toolbar = () => {
     }
   };
   const handleInputChange = (key, max, rawValue) => {
-    // Поддерживаем запятую как разделитель, затем округляем до 1 знака
+    // Підтримуємо кому, округлюємо до цілих
     const parsed = parseFloat(String(rawValue).replace(",", "."));
     const clamped = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
-    const value = round1(clamped);
+    const value = round0(clamped);
 
     // Compute next mm values synchronously
     let next = {
@@ -6710,11 +6654,11 @@ const Toolbar = () => {
           currentShapeType === "diamond";
         if (clipPathDriven) {
           updateSize({
-            widthMm: round1(next.width),
-            heightMm: round1(next.height),
-            cornerRadiusMm: round1(next.cornerRadius),
+            widthMm: round0(next.width),
+            heightMm: round0(next.height),
+            cornerRadiusMm: round0(next.cornerRadius),
           });
-          updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
+          updateExistingBorders({ cornerRadiusMm: round0(next.cornerRadius) });
           return;
         }
       }
@@ -6760,17 +6704,17 @@ const Toolbar = () => {
           activeObject.set({ rx: rPx, ry: rPx });
         }
       }
-      canvas.renderAll();
+      canvas.requestRenderAll();
     } else if (canvas) {
       // Update canvas/clipPath using explicit overrides to avoid one-step lag
       updateSize({
-        widthMm: round1(next.width),
-        heightMm: round1(next.height),
-        cornerRadiusMm: round1(next.cornerRadius),
+        widthMm: round0(next.width),
+        heightMm: round0(next.height),
+        cornerRadiusMm: round0(next.cornerRadius),
       });
       // Якщо змінювали саме радіус і є бордер — перебудувати його після оновлення clipPath
       if (key === "cornerRadius") {
-        updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
+        updateExistingBorders({ cornerRadiusMm: round0(next.cornerRadius) });
       }
     }
   };
@@ -6778,8 +6722,9 @@ const Toolbar = () => {
   const changeValue = (key, delta, max) => {
     setSizeValues((prev) => {
       const cur = parseFloat(String(prev[key]).replace(",", ".")) || 0;
+      // Крок рівно 1, результати — цілі
       const nextVal = Math.max(0, Math.min(max, cur + delta));
-      const newValue = round1(nextVal);
+      const newValue = round0(nextVal);
       let updated = { ...prev, [key]: newValue };
 
       // Enforce square for circle family shapes via arrows too
@@ -6809,14 +6754,14 @@ const Toolbar = () => {
             currentShapeType === "diamond";
           if (clipPathDriven) {
             updateSize({
-              widthMm: round1(key === "width" ? newValue : updated.width),
-              heightMm: round1(key === "height" ? newValue : updated.height),
-              cornerRadiusMm: round1(
+              widthMm: round0(key === "width" ? newValue : updated.width),
+              heightMm: round0(key === "height" ? newValue : updated.height),
+              cornerRadiusMm: round0(
                 key === "cornerRadius" ? newValue : updated.cornerRadius
               ),
             });
             updateExistingBorders({
-              cornerRadiusMm: round1(
+              cornerRadiusMm: round0(
                 key === "cornerRadius" ? newValue : updated.cornerRadius
               ),
             });
@@ -6863,16 +6808,16 @@ const Toolbar = () => {
             activeObject.set({ rx: rPx, ry: rPx });
           }
         }
-        canvas.renderAll();
+        canvas.requestRenderAll();
       } else if (canvas) {
         updateSize({
-          widthMm: round1(updated.width),
-          heightMm: round1(updated.height),
-          cornerRadiusMm: round1(updated.cornerRadius),
+          widthMm: round0(updated.width),
+          heightMm: round0(updated.height),
+          cornerRadiusMm: round0(updated.cornerRadius),
         });
         if (key === "cornerRadius") {
           updateExistingBorders({
-            cornerRadiusMm: round1(
+            cornerRadiusMm: round0(
               key === "cornerRadius" ? newValue : updated.cornerRadius
             ),
           });

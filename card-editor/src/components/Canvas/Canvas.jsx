@@ -18,8 +18,8 @@ const BOTTOM_ROTATE_GAP = 25; // від рамки до центру кнопк�
 const PANEL_BUTTON_DIAMETER = 24; // діаметр кнопки
 const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
 
-// Стиль рамки (колір оновлюємо під тему через outlineColorRef)
-const OUTLINE_COLOR = "rgba(21, 157, 255, 1)"; // fallback
+// Стиль рамки: використовуємо акцентний синій як в інших компонентах
+const OUTLINE_COLOR = "rgba(0, 108, 164, 1)"; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 
 const Canvas = () => {
@@ -41,7 +41,7 @@ const Canvas = () => {
   const [displayHeight, setDisplayHeight] = useState(DEFAULT_DESIGN.height);
   const [cssHeight, setCssHeight] = useState(DEFAULT_DESIGN.height);
   const [scale, setScale] = useState(1);
-  const outlineColorRef = useRef(globalColors?.textColor || OUTLINE_COLOR);
+  const outlineColorRef = useRef(OUTLINE_COLOR);
 
   useEffect(() => {
     // Guard від подвійної ініціалізації
@@ -662,6 +662,13 @@ const Canvas = () => {
       if (!target) return true;
       try {
         const cloned = await target.clone();
+        // preserve halfCircle base bbox for stable scaling via inputs
+        try {
+          if (target.shapeType === "halfCircle") {
+            cloned.__baseBBoxW = target.__baseBBoxW || target.width;
+            cloned.__baseBBoxH = target.__baseBBoxH || target.height;
+          }
+        } catch {}
         // Preserve IconMenu flag so modal stays closed for clones
         try {
           const isFromIcon =
@@ -891,8 +898,22 @@ const Canvas = () => {
         );
       };
 
+      // Helper: detect circle-like objects (must keep 1:1 aspect)
+      const isCircleLike = (o) =>
+        !!o &&
+        (o.isCircle === true ||
+          o.type === "circle" ||
+          o.shapeType === "round" ||
+          o.shapeType === "halfCircle");
+
       // Resize handles: skip for Cut elements (only show action panel + rotate)
       if (!obj.isCutElement) {
+        const circleLock = isCircleLike(obj);
+        if (circleLock) {
+          try {
+            obj.lockUniScaling = true; // preserve 1:1 via Fabric constraint
+          } catch {}
+        }
         // 4 кути
         obj.controls.tlc = makeDotControl(cu.scalingEqually, "nwse-resize");
         obj.controls.tlc.positionHandler = corner("lt");
@@ -902,7 +923,7 @@ const Canvas = () => {
         obj.controls.blc.positionHandler = corner("lb");
         obj.controls.brc = makeDotControl(cu.scalingEqually, "nwse-resize");
         obj.controls.brc.positionHandler = corner("rb");
-        // 4 середини
+        // 4 середини — залишаємо осьове масштабування (рівномірність забезпечимо в object:scaling)
         obj.controls.mtc = makeDotControl(cu.scalingY, "ns-resize");
         obj.controls.mtc.positionHandler = mid("x");
         obj.controls.mbc = makeDotControl(cu.scalingY, "ns-resize");
@@ -1071,10 +1092,43 @@ const Canvas = () => {
       }
     });
 
-    // Прапор масштабування для показу підказки
+    // Прапор масштабування для показу підказки + фіксація 1:1 для кіл
     fCanvas.on("object:scaling", (e) => {
       const t = e?.target;
       if (!t) return;
+      try {
+        const isCircleLike =
+          t.isCircle === true ||
+          t.type === "circle" ||
+          t.shapeType === "round" ||
+          t.shapeType === "halfCircle";
+        if (isCircleLike) {
+          const sx = Math.abs(t.scaleX || 1);
+          const sy = Math.abs(t.scaleY || 1);
+          // Вибираємо домінуючу вісь за натиснутою ручкою, щоб уникнути "стрибка" з боковими ручками
+          const corner = (e && e.transform && e.transform.corner) || "";
+          let s;
+          if (
+            corner === "ml" ||
+            corner === "mr" ||
+            corner === "mlc" ||
+            corner === "mrc"
+          ) {
+            s = sx; // тягнемо горизонтальну середину
+          } else if (
+            corner === "mt" ||
+            corner === "mb" ||
+            corner === "mtc" ||
+            corner === "mbc"
+          ) {
+            s = sy; // тягнемо вертикальну середину
+          } else {
+            s = Math.max(sx, sy); // для кутів — як було
+          }
+          t.scaleX = s;
+          t.scaleY = s;
+        }
+      } catch {}
       t.__isScaling = true;
       t.__wasScaling = true;
       if (t.__scaleExpireTimer) {
@@ -1188,7 +1242,6 @@ const Canvas = () => {
         ctx.lineTo(W, midY);
         ctx.stroke();
       }
-      // Вертикальна лінія по центру полотна (X): якщо центрували по горизонталі/X
       if (
         typeof active.__centerFlashVExpireAt === "number" &&
         nowTs2 < active.__centerFlashVExpireAt
@@ -1400,6 +1453,13 @@ const Canvas = () => {
           return;
         }
       } catch {}
+      // Для halfCircle зберігаємо базові розміри bbox при першому додаванні
+      try {
+        if (target.shapeType === "halfCircle") {
+          if (!target.__baseBBoxW) target.__baseBBoxW = target.width;
+          if (!target.__baseBBoxH) target.__baseBBoxH = target.height;
+        }
+      } catch {}
       // Ensure text objects compute aCoords before applying controls
       if (typeof target.setCoords === "function") {
         try {
@@ -1460,17 +1520,70 @@ const Canvas = () => {
     };
   }, [setCanvas, setActiveObject, setShapePropertiesOpen]);
 
-  // Оновлення кольору рамки при зміні теми (колір тексту)
+  // Оновлення кольору рамки: фіксований акцентний синій, не залежить від теми
   useEffect(() => {
-    outlineColorRef.current = globalColors?.textColor || OUTLINE_COLOR;
+    outlineColorRef.current = OUTLINE_COLOR;
     try {
       canvas && canvas.requestRenderAll();
     } catch {}
-  }, [globalColors?.textColor, canvas]);
+  }, [canvas]);
 
   useEffect(() => {
     if (!canvas) return;
-    canvas.set("backgroundColor", globalColors?.backgroundColor || "#FFFFFF");
+    const applySolid = () => {
+      canvas.set("backgroundColor", globalColors?.backgroundColor || "#FFFFFF");
+    };
+    const applyGradient = () => {
+      try {
+        const W =
+          typeof canvas.getWidth === "function"
+            ? canvas.getWidth()
+            : canvas.width || 0;
+        const H =
+          typeof canvas.getHeight === "function"
+            ? canvas.getHeight()
+            : canvas.height || 0;
+        const off = document.createElement("canvas");
+        off.width = Math.max(1, W);
+        off.height = Math.max(1, H);
+        const ctx = off.getContext("2d");
+        // Лінійний градієнт під кутом 152.22deg (як у CSS: linear-gradient(152.22deg, ...))
+        // Конвертуємо CSS-кут у напрямок у Canvas (x вправо, y вниз):
+        // 0deg у CSS — вгору; 90deg — вправо; 180deg — вниз; 270deg — вліво.
+        // Перетворення: dirX = sin(radCSS), dirY = -cos(radCSS)
+        const cssDeg = 152.22;
+        const rad = (cssDeg * Math.PI) / 180;
+        const dirX = Math.sin(rad);
+        const dirY = -Math.cos(rad);
+        const cx = W / 2;
+        const cy = H / 2;
+        // Довжина вздовж осі градієнта, щоб покрити весь прямокутник
+        const L = Math.abs(W * dirX) + Math.abs(H * dirY);
+        const x0 = cx - (dirX * L) / 2;
+        const y0 = cy - (dirY * L) / 2;
+        const x1 = cx + (dirX * L) / 2;
+        const y1 = cy + (dirY * L) / 2;
+        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+        grad.addColorStop(0.2828, "#B5B5B5");
+        grad.addColorStop(0.5241, "#F5F5F5");
+        grad.addColorStop(0.7414, "#979797");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+        const pattern = new fabric.Pattern({
+          source: off,
+          repeat: "no-repeat",
+        });
+        // У v6 можна напряму призначати Pattern як backgroundColor
+        canvas.set("backgroundColor", pattern);
+      } catch {
+        // fallback: суцільний фон
+        applySolid();
+      }
+    };
+
+    if (globalColors?.backgroundType === "gradient") applyGradient();
+    else applySolid();
+
     try {
       const active = canvas.getActiveObject?.();
       if (active && typeof active.setCoords === "function") {
@@ -1478,7 +1591,7 @@ const Canvas = () => {
       }
     } catch {}
     canvas.renderAll();
-  }, [canvas, globalColors?.backgroundColor]);
+  }, [canvas, globalColors?.backgroundColor, globalColors?.backgroundType]);
 
   // Авто-синхронізація кольорів QR/BarCode при зміні теми
   useEffect(() => {
@@ -1486,6 +1599,22 @@ const Canvas = () => {
     const textColor = globalColors?.textColor || "#000000";
     const bgColor = globalColors?.backgroundColor || "#FFFFFF";
     const objs = canvas.getObjects?.() || [];
+    // Перефарбовуємо усі об'єкти, що позначені як залежні від кольору теми
+    try {
+      const applyThemeColor = (obj) => {
+        if (!obj) return;
+        if (obj.type === "group" && typeof obj.forEachObject === "function") {
+          obj.forEachObject(applyThemeColor);
+        }
+        if (obj.useThemeColor) {
+          try {
+            obj.set({ fill: textColor, stroke: textColor });
+          } catch {}
+        }
+      };
+      objs.forEach(applyThemeColor);
+      canvas.requestRenderAll?.();
+    } catch {}
     const qrs = objs.filter((o) => o.isQRCode && o.qrText);
     const bars = objs.filter(
       (o) => o.isBarCode && o.barCodeText && o.barCodeType

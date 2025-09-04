@@ -1378,81 +1378,79 @@ const Toolbar = () => {
           break;
 
         case "lock": {
-          // Same algorithm as addLock (rectangle + top semicircle 16mm x 8mm)
-          const radiusPx = mmToPx(8);
-          const chordY = radiusPx;
-          const halfWidthPx = mmToPx(16) / 2; // 8мм
-          const centerX = width / 2;
-          const triangle = [
-            { x: centerX, y: 0 },
-            { x: centerX - triangleWidth / 2, y: triangleHeight },
-            { x: centerX + triangleWidth / 2, y: triangleHeight },
-          ];
+          // Прямокутник з верхнім напівколом по центру (ш=16мм, в=8мм) і скругленими прямими кутами
+          const wPx = width;
+          const hPx = height;
+          const rPx = mmToPx(8); // радіус напівкола по вертикалі
+          const rectTopY = rPx; // y хорди напівкола
+          const rectBottomY = hPx; // низ фігури
+          const cx = wPx / 2;
+          const radiusX = mmToPx(16) / 2; // 8мм по горизонталі (півширина хорди)
+          const radiusY = rPx; // 8мм по вертикалі
+          const leftArcX = cx - radiusX;
+          const rightArcX = cx + radiusX;
 
-          // Повний трикутник, якщо повністю вміщується в прямокутник (дозволяємо дотик до меж)
-          const eps = 0.01;
-          const fitsInside =
-            triangleWidth <= width + eps && triangleHeight <= height + eps;
-          if (fitsInside) {
-            console.log(
-              "[adaptiveTriangle] getAdaptiveTriangleData: fitsInside=true -> isFull=true"
-            );
-            return { points: triangle, isFull: true };
+          const pts = [];
+          // Ліва точка хорди
+          pts.push({ x: leftArcX, y: rectTopY });
+          // Семпл дуги напівкола (π -> 2π)
+          const steps = 60;
+          for (let i = 1; i < steps - 1; i++) {
+            const t = i / (steps - 1);
+            const angle = Math.PI + Math.PI * t;
+            const x = cx + radiusX * Math.cos(angle);
+            const y = rectTopY + radiusY * Math.sin(angle);
+            pts.push({ x, y });
           }
+          // Права точка хорди
+          pts.push({ x: rightArcX, y: rectTopY });
 
-          // Інакше — реальний кліпінг і 5-кутник
-          const clipped = clipPolygonWithRect(triangle, width, height);
-          const vCount = Array.isArray(clipped) ? clipped.length : 0;
-          console.log(
-            "[adaptiveTriangle] getAdaptiveTriangleData: fitsInside=false -> vertexCount=",
-            vCount
-          );
-          return { points: clipped, isFull: false };
-          // Top horizontal segment length on each side of semicircle
-          const topSideLen = width - rightArcX; // == leftArcX
-          const crTop = Math.min(baseCornerR, topSideLen, rectBottomY - chordY);
-          const crBottom = baseCornerR; // bottom can use full allowed
+          // Скруглення прямокутної частини
+          const baseCr = Math.min(cr, rectBottomY - rectTopY, wPx / 2);
+          const topSideLen = wPx - rightArcX; // довжина верхньої прямої ділянки справа
+          const crTop = Math.min(baseCr, topSideLen);
+          const crBottom = baseCr;
           const cornerSegs =
-            crBottom > 0 ? Math.max(10, Math.round(crBottom / 2)) : 0;
-          // ---- Top-right corner ----
+            baseCr > 0 ? Math.max(10, Math.round(baseCr / 2)) : 0;
+
+          // ---- Top-right ----
           if (crTop > 0) {
-            // Move along top to start of arc
-            pts.push({ x: width - crTop, y: chordY });
-            const cxTR = width - crTop;
-            const cyTR = chordY + crTop;
+            pts.push({ x: wPx - crTop, y: rectTopY });
+            const cxTR = wPx - crTop;
+            const cyTR = rectTopY + crTop;
             for (let i = 0; i <= cornerSegs; i++) {
               const theta =
-                (3 * Math.PI) / 2 + (Math.PI / 2) * (i / cornerSegs); // 270->360
+                (3 * Math.PI) / 2 + (Math.PI / 2) * (i / cornerSegs); // 270->360°
               pts.push({
                 x: cxTR + crTop * Math.cos(theta),
                 y: cyTR + crTop * Math.sin(theta),
               });
             }
           } else {
-            pts.push({ x: width, y: chordY });
+            pts.push({ x: wPx, y: rectTopY });
           }
-          // ---- Right side down to bottom-right corner start ----
+          // ---- Right side + bottom-right ----
           if (crBottom > 0) {
-            pts.push({ x: width, y: rectBottomY - crBottom });
-            const cxBR = width - crBottom;
+            pts.push({ x: wPx, y: rectBottomY - crBottom });
+            const cxBR = wPx - crBottom;
             const cyBR = rectBottomY - crBottom;
             for (let i = 0; i <= cornerSegs; i++) {
-              const theta = 0 + (Math.PI / 2) * (i / cornerSegs); // 0->90
+              const theta = 0 + (Math.PI / 2) * (i / cornerSegs); // 0->90°
               pts.push({
                 x: cxBR + crBottom * Math.cos(theta),
                 y: cyBR + crBottom * Math.sin(theta),
               });
             }
           } else {
-            pts.push({ x: width, y: rectBottomY });
+            pts.push({ x: wPx, y: rectBottomY });
           }
-          // ---- Bottom edge to left bottom corner start ----
+          // ---- Bottom edge + bottom-left ----
           if (crBottom > 0) {
             pts.push({ x: crBottom, y: rectBottomY });
             const cxBL = crBottom;
             const cyBL = rectBottomY - crBottom;
             for (let i = 0; i <= cornerSegs; i++) {
-              const theta = Math.PI / 2 + (Math.PI / 2) * (i / cornerSegs); // 90->180
+              const theta = Math.PI / 2 + (Math.PI / 2) * (i / cornerSegs); // 90->180°
               pts.push({
                 x: cxBL + crBottom * Math.cos(theta),
                 y: cyBL + crBottom * Math.sin(theta),
@@ -1461,23 +1459,24 @@ const Toolbar = () => {
           } else {
             pts.push({ x: 0, y: rectBottomY });
           }
-          // ---- Left side up to top-left corner start ----
+          // ---- Left side + top-left ----
           if (crTop > 0) {
-            pts.push({ x: 0, y: chordY + crTop });
+            pts.push({ x: 0, y: rectTopY + crTop });
             const cxTL = crTop;
-            const cyTL = chordY + crTop;
+            const cyTL = rectTopY + crTop;
             for (let i = 0; i <= cornerSegs; i++) {
-              const theta = Math.PI + (Math.PI / 2) * (i / cornerSegs); // 180->270
+              const theta = Math.PI + (Math.PI / 2) * (i / cornerSegs); // 180->270°
               pts.push({
                 x: cxTL + crTop * Math.cos(theta),
                 y: cyTL + crTop * Math.sin(theta),
               });
             }
-            // Top edge back to start of semicircle
-            pts.push({ x: leftArcX, y: chordY });
+            // повертаємося на початок дуги
+            pts.push({ x: leftArcX, y: rectTopY });
           } else {
-            pts.push({ x: 0, y: chordY });
+            pts.push({ x: 0, y: rectTopY });
           }
+
           newClipPath = new fabric.Polygon(pts, { absolutePositioned: true });
           break;
         }
@@ -4499,21 +4498,21 @@ const Toolbar = () => {
 
             // Застосовуємо поточні кольори до SVG
             if (
-              globalColors.strokeColor &&
-              globalColors.strokeColor !== "transparent"
+              globalColors.textColor &&
+              globalColors.textColor !== "transparent"
             ) {
               svgText = svgText
-                .replace(/fill="[^"]*"/g, `fill="${globalColors.strokeColor}"`)
+                .replace(/fill="[^"]*"/g, `fill="${globalColors.textColor}"`)
                 .replace(
                   /stroke="[^"]*"/g,
-                  `stroke="${globalColors.strokeColor}"`
+                  `stroke="${globalColors.textColor}"`
                 );
 
               // Додаємо стилі до SVG, якщо їх немає
               if (!svgText.includes("fill=") && !svgText.includes("style=")) {
                 svgText = svgText.replace(
                   /<svg([^>]*)>/,
-                  `<svg$1 fill="${globalColors.strokeColor}">`
+                  `<svg$1 fill="${globalColors.textColor}">`
                 );
               }
             }
@@ -4537,18 +4536,33 @@ const Toolbar = () => {
                   obj.forEachObject(applyColorsToObject);
                 } else {
                   if (
-                    globalColors.strokeColor &&
-                    globalColors.strokeColor !== "transparent"
+                    globalColors.textColor &&
+                    globalColors.textColor !== "transparent"
                   ) {
                     obj.set({
-                      fill: globalColors.strokeColor,
-                      stroke: globalColors.strokeColor,
+                      fill: globalColors.textColor,
+                      stroke: globalColors.textColor,
                     });
                   }
                 }
               };
 
               applyColorsToObject(svgObject);
+
+              // Позначаємо, що цей об'єкт повинен слідувати кольору теми
+              try {
+                svgObject.set && svgObject.set({ useThemeColor: true });
+                if (
+                  svgObject.type === "group" &&
+                  typeof svgObject.forEachObject === "function"
+                ) {
+                  svgObject.forEachObject((child) => {
+                    try {
+                      child.set && child.set({ useThemeColor: true });
+                    } catch {}
+                  });
+                }
+              } catch {}
 
               // Масштабуємо SVG, якщо воно занадто велике
               const bounds = svgObject.getBoundingRect
@@ -4676,7 +4690,7 @@ const Toolbar = () => {
                   combineToSinglePath: true,
                   invert: undefined,
                   scale: 2,
-                  fillColor: globalColors?.strokeColor || "#000",
+                  fillColor: globalColors?.textColor || "#000",
                 }
               );
 
@@ -4688,6 +4702,21 @@ const Toolbar = () => {
                       result.objects,
                       result.options
                     );
+
+              // Об'єкт з векторизації також підв'язуємо до кольору теми
+              try {
+                obj.set && obj.set({ useThemeColor: true });
+                if (
+                  obj.type === "group" &&
+                  typeof obj.forEachObject === "function"
+                ) {
+                  obj.forEachObject((child) => {
+                    try {
+                      child.set && child.set({ useThemeColor: true });
+                    } catch {}
+                  });
+                }
+              } catch {}
 
               // Центруємо і масштабуємо
               const bounds = obj.getBoundingRect
@@ -7156,8 +7185,11 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => updateColorScheme("#FFFFFF", "#0000FF", "solid", 4)}
-            title="Білий текст, синій фон"
+            onClick={() =>
+              // Замість простого сірого робимо кастомний градієнт (правий верх -> лівий низ)
+              updateColorScheme("#FFFFFF", "#F5F5F5", "gradient", 4)
+            }
+            title="Білий текст, сірий градієнт"
           >
             <A5
               borderColor={
@@ -7243,7 +7275,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => updateColorScheme("#FFFFFF", "#808080", "solid", 11)}
-            title="Білий текст, сірий фон"
+            title="Білий текст, сірий фон (звичайний)"
           >
             <A12
               borderColor={

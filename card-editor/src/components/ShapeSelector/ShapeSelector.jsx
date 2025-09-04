@@ -203,11 +203,26 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "semiround":
-        // Семикруг: безопасный путь без експонентиальної нотації
-        // Используем тот же builder, что и в ShapeProperties (Corner Radius = 0)
-        const size = 57;
-        const d = makeRoundedSemiRoundPath(size, size, 0);
-        shape = createPath(d, { ...baseOptions, width: size, height: size });
+        // Чистий півколо (дуга зверху + пряма основа), без вертикальних боків
+        // Використовуємо абсолютну дугу SVG 'A' (fabric.Path підтримує)
+        (() => {
+          const diameter = 58; // довільний базовий розмір
+          const R = diameter / 2;
+          // upper semicircle: use sweep-flag=1 so arc goes over the top
+          const d = `M 0 ${R} A ${R} ${R} 0 0 1 ${diameter} ${R} L 0 ${R} Z`;
+          shape = createPath(d, {
+            ...baseOptions,
+            width: diameter,
+            height: R, // висота півкола = радіус
+          });
+          if (shape) {
+            // Позначимо тип як halfCircle, щоб у властивостях не вмикався радіус кутів для semiround
+            shape.shapeType = "halfCircle";
+            // Базові розміри для стабільного масштабування від слайдерів
+            shape.__baseBBoxW = diameter;
+            shape.__baseBBoxH = R;
+          }
+        })();
         break;
 
       case "roundTop":
@@ -265,7 +280,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     if (shape) {
       // Позначаємо тип фігури для подальшої логіки UI
-      shape.set({ shapeType: shapeType });
+      // Для semiround ми вже встановили shape.shapeType вище як 'halfCircle'
+      if (!shape.shapeType) {
+        shape.set({ shapeType: shapeType });
+      }
       if (shapeType === "round") {
         // Спеціальний прапорець для кола, навіть якщо це Path
         shape.set({ isCircle: true });

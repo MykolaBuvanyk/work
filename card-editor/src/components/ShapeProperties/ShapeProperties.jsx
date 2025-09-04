@@ -810,19 +810,47 @@ const ShapeProperties = ({
     switch (property) {
       case "width": {
         const targetPx = Math.max(0, mmToPx(value));
-        const baseW = obj.width || obj.getScaledWidth() || 1;
+        // Для halfCircle використовуємо стабільну базу ширини (bbox), щоб уникати стрибка
+        const isHalf = obj.shapeType === "halfCircle";
+        const baseW = isHalf
+          ? obj.__baseBBoxW || obj.width || obj.getScaledWidth() || 1
+          : obj.width || obj.getScaledWidth() || 1;
         const newScaleX = targetPx / baseW;
         holdCenterIfArrow((o) => {
           o.set({ scaleX: newScaleX });
+          // Для кругових фігур дзеркалимо масштаб по Y, щоб зберегти 1:1
+          if (
+            o.isCircle === true ||
+            o.type === "circle" ||
+            o.shapeType === "round" ||
+            o.shapeType === "halfCircle"
+          ) {
+            const sx = Math.abs(o.scaleX || 1);
+            o.set({ scaleY: sx });
+          }
         });
         break;
       }
       case "height": {
         const targetPx = Math.max(0, mmToPx(value));
-        const baseH = obj.height || obj.getScaledHeight() || 1;
+        const isHalf = obj.shapeType === "halfCircle";
+        // Для halfCircle стабільна база висоти (bbox) — це початковий радіус
+        const baseH = isHalf
+          ? obj.__baseBBoxH || obj.height || obj.getScaledHeight() || 1
+          : obj.height || obj.getScaledHeight() || 1;
         const newScaleY = targetPx / baseH;
         holdCenterIfArrow((o) => {
           o.set({ scaleY: newScaleY });
+          // Для кругових фігур дзеркалимо масштаб по X, щоб зберегти 1:1
+          if (
+            o.isCircle === true ||
+            o.type === "circle" ||
+            o.shapeType === "round" ||
+            o.shapeType === "halfCircle"
+          ) {
+            const sy = Math.abs(o.scaleY || 1);
+            o.set({ scaleX: sy });
+          }
         });
         break;
       }

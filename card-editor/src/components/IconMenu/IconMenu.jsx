@@ -137,18 +137,33 @@ const IconMenu = ({ isOpen, onClose }) => {
           obj.forEachObject(applyColorsToObject);
         } else {
           if (
-            globalColors.strokeColor &&
-            globalColors.strokeColor !== "transparent"
+            globalColors.textColor &&
+            globalColors.textColor !== "transparent"
           ) {
             obj.set({
-              fill: globalColors.strokeColor,
-              stroke: globalColors.strokeColor,
+              fill: globalColors.textColor,
+              stroke: globalColors.textColor,
             });
           }
         }
       };
 
       applyColorsToObject(svgObject);
+
+      // Позначаємо, що об'єкт має слідувати кольору теми
+      try {
+        svgObject.set && svgObject.set({ useThemeColor: true });
+        if (
+          svgObject.type === "group" &&
+          typeof svgObject.forEachObject === "function"
+        ) {
+          svgObject.forEachObject((child) => {
+            try {
+              child.set && child.set({ useThemeColor: true });
+            } catch {}
+          });
+        }
+      } catch {}
 
       const bounds = svgObject.getBoundingRect
         ? svgObject.getBoundingRect()
@@ -171,13 +186,10 @@ const IconMenu = ({ isOpen, onClose }) => {
   const createImageFromSVG = async (svgText, iconName) => {
     // Застосовуємо глобальні кольори до SVG тексту перед створенням зображення
     let modifiedSvgText = svgText;
-    if (
-      globalColors.strokeColor &&
-      globalColors.strokeColor !== "transparent"
-    ) {
+    if (globalColors.textColor && globalColors.textColor !== "transparent") {
       modifiedSvgText = svgText
-        .replace(/fill="[^"]*"/g, `fill="${globalColors.strokeColor}"`)
-        .replace(/stroke="[^"]*"/g, `stroke="${globalColors.strokeColor}"`);
+        .replace(/fill="[^"]*"/g, `fill="${globalColors.textColor}"`)
+        .replace(/stroke="[^"]*"/g, `stroke="${globalColors.textColor}"`);
 
       // Додаємо стилі до SVG, якщо їх немає
       if (
@@ -186,7 +198,7 @@ const IconMenu = ({ isOpen, onClose }) => {
       ) {
         modifiedSvgText = modifiedSvgText.replace(
           /<svg([^>]*)>/,
-          `<svg$1 fill="${globalColors.strokeColor}">`
+          `<svg$1 fill="${globalColors.textColor}">`
         );
       }
     }
@@ -248,8 +260,26 @@ const IconMenu = ({ isOpen, onClose }) => {
           svgObject.set && svgObject.set({ fromIconMenu: true });
         } catch {}
         canvas.add(svgObject);
-        canvas.setActiveObject(svgObject);
-        canvas.renderAll();
+        try {
+          if (typeof svgObject.setCoords === "function") svgObject.setCoords();
+        } catch {}
+        try {
+          canvas.setActiveObject(svgObject);
+        } catch {}
+        try {
+          canvas.requestRenderAll();
+        } catch {}
+        try {
+          requestAnimationFrame(() => {
+            try {
+              if (!canvas || !svgObject) return;
+              canvas.setActiveObject(svgObject);
+              if (typeof svgObject.setCoords === "function")
+                svgObject.setCoords();
+              canvas.requestRenderAll();
+            } catch {}
+          });
+        } catch {}
       } catch (svgError) {
         console.warn(`SVG error for ${iconName}:`, svgError);
         const imageObject = await createImageFromSVG(svgText, iconName);
@@ -257,8 +287,27 @@ const IconMenu = ({ isOpen, onClose }) => {
           imageObject.set && imageObject.set({ fromIconMenu: true });
         } catch {}
         canvas.add(imageObject);
-        canvas.setActiveObject(imageObject);
-        canvas.renderAll();
+        try {
+          if (typeof imageObject.setCoords === "function")
+            imageObject.setCoords();
+        } catch {}
+        try {
+          canvas.setActiveObject(imageObject);
+        } catch {}
+        try {
+          canvas.requestRenderAll();
+        } catch {}
+        try {
+          requestAnimationFrame(() => {
+            try {
+              if (!canvas || !imageObject) return;
+              canvas.setActiveObject(imageObject);
+              if (typeof imageObject.setCoords === "function")
+                imageObject.setCoords();
+              canvas.requestRenderAll();
+            } catch {}
+          });
+        } catch {}
       }
     } catch (error) {
       console.error(`Error loading ${iconName}:`, error);
@@ -270,8 +319,8 @@ const IconMenu = ({ isOpen, onClose }) => {
 
   const createPlaceholder = (iconName) => {
     const fillColor =
-      globalColors.strokeColor && globalColors.strokeColor !== "transparent"
-        ? globalColors.strokeColor
+      globalColors.textColor && globalColors.textColor !== "transparent"
+        ? globalColors.textColor
         : "#6c757d";
 
     const rect = new fabric.Rect({
@@ -305,7 +354,9 @@ const IconMenu = ({ isOpen, onClose }) => {
       originY: "center",
     });
     try {
-      group.set && group.set({ fromIconMenu: true });
+      group.set && group.set({ fromIconMenu: true, useThemeColor: true });
+      rect.set && rect.set({ useThemeColor: true });
+      text.set && text.set({ useThemeColor: true });
     } catch {}
 
     canvas.add(group);

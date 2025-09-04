@@ -12,7 +12,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   const [selectedShape, setSelectedShape] = useState(null);
   const dropdownRef = useRef(null);
 
-  // Закрытие по клику вне модального окна
+  // Закриття по клику вне модального окна
   useEffect(() => {
     if (!isOpen) return;
     const handleOutside = (e) => {
@@ -46,14 +46,31 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     { id: "customShape", name: "Custom shape" },
     { id: "line", name: "Line" },
     { id: "dashedLine", name: "Dashed Line" },
+    { id: "qrcode", name: "QR Code" },
   ];
 
+  // Додаємо універсальну функцію для додавання об'єкта на canvas з коректною ініціалізацією координат
+  const addObjectToCanvas = (obj) => {
+    if (!canvas || !obj) return;
+    canvas.add(obj);
+    if (typeof obj.setCoords === "function") obj.setCoords();
+    canvas.setActiveObject(obj);
+    if (obj.bringToFront) obj.bringToFront();
+    canvas.requestRenderAll();
+    setTimeout(() => {
+      if (!canvas) return;
+      canvas.setActiveObject(obj);
+      if (obj.bringToFront) obj.bringToFront();
+      if (typeof obj.setCoords === "function") obj.setCoords();
+      canvas.requestRenderAll();
+    }, 0);
+  };
+
   const addShape = (shapeType) => {
+    if (!canvas) return;
     // Закриваємо модалку одразу після вибору фігури
     if (typeof onClose === "function") onClose();
-    if (!canvas) return;
 
-    let shape = null;
     const canvasW =
       typeof canvas.getWidth === "function"
         ? canvas.getWidth()
@@ -65,10 +82,35 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     const centerX = (canvasW || 0) / 2;
     const centerY = (canvasH || 0) / 2;
 
+    // Обробка QR-коду: потрібні валідні centerX/centerY
+    if (shapeType === "qrcode") {
+      // Додаємо простий QR-код як квадрат (замість fabric.Image або fabric.Group для справжнього QR)
+      const qr = new fabric.Rect({
+        left: centerX,
+        top: centerY,
+        width: 80,
+        height: 80,
+        fill: "#fff",
+        stroke: "#000",
+        strokeWidth: 2,
+        originX: "center",
+        originY: "center",
+        shapeType: "qrcode",
+        selectable: true,
+      });
+      addObjectToCanvas(qr);
+      setActiveObject(qr);
+      setShapePropertiesOpen(true);
+      return;
+    }
+
+    let shape = null;
+
     const baseOptions = {
       left: centerX,
       top: centerY,
-      fill: globalColors.fillColor || "transparent",
+      // Fill по умолчанию отключён
+      fill: "transparent",
       stroke: globalColors.strokeColor || "#000000",
       strokeWidth: 2,
       originX: "center",
@@ -161,11 +203,26 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "semiround":
-        // Семикруг: безопасный путь без експонентиальной нотации
-        // Используем тот же builder, что и в ShapeProperties (Corner Radius = 0)
-        const size = 57;
-        const d = makeRoundedSemiRoundPath(size, size, 0);
-        shape = createPath(d, { ...baseOptions, width: size, height: size });
+        // Чистий півколо (дуга зверху + пряма основа), без вертикальних боків
+        // Використовуємо абсолютну дугу SVG 'A' (fabric.Path підтримує)
+        (() => {
+          const diameter = 58; // довільний базовий розмір
+          const R = diameter / 2;
+          // upper semicircle: use sweep-flag=1 so arc goes over the top
+          const d = `M 0 ${R} A ${R} ${R} 0 0 1 ${diameter} ${R} L 0 ${R} Z`;
+          shape = createPath(d, {
+            ...baseOptions,
+            width: diameter,
+            height: R, // висота півкола = радіус
+          });
+          if (shape) {
+            // Позначимо тип як halfCircle, щоб у властивостях не вмикався радіус кутів для semiround
+            shape.shapeType = "halfCircle";
+            // Базові розміри для стабільного масштабування від слайдерів
+            shape.__baseBBoxW = diameter;
+            shape.__baseBBoxH = R;
+          }
+        })();
         break;
 
       case "roundTop":
@@ -223,7 +280,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     if (shape) {
       // Позначаємо тип фігури для подальшої логіки UI
-      shape.set({ shapeType: shapeType });
+      // Для semiround ми вже встановили shape.shapeType вище як 'halfCircle'
+      if (!shape.shapeType) {
+        shape.set({ shapeType: shapeType });
+      }
       if (shapeType === "round") {
         // Спеціальний прапорець для кола, навіть якщо це Path
         shape.set({ isCircle: true });
@@ -250,23 +310,13 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
       // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
       shape.set({ hasBorders: true, hasControls: true, selectable: true });
-      canvas.add(shape);
-      if (typeof shape.setCoords === "function") shape.setCoords();
-      canvas.setActiveObject(shape);
-      if (shape.bringToFront) shape.bringToFront();
-      canvas.requestRenderAll();
+
+      // Додаємо фігуру через універсальну функцію
+      addObjectToCanvas(shape);
 
       // Встановлюємо активний об'єкт і відкриваємо властивості
       setActiveObject(shape);
       setShapePropertiesOpen(true);
-      // Повторно активуємо після циклу подій, щоб не згубити виділення при закритті модалки
-      setTimeout(() => {
-        if (!canvas) return;
-        canvas.setActiveObject(shape);
-        if (shape.bringToFront) shape.bringToFront();
-        if (typeof shape.setCoords === "function") shape.setCoords();
-        canvas.requestRenderAll();
-      }, 0);
     }
   };
 

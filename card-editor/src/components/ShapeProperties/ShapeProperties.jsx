@@ -646,6 +646,12 @@ const ShapeProperties = ({
             "turnLeft",
             "turnRight",
           ]);
+          const fillVal = activeObject.fill;
+          const hasFill =
+            typeof fillVal === "string" &&
+            fillVal !== "" &&
+            fillVal !== "transparent" &&
+            fillVal !== "none";
           setProperties({
             width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
             height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -657,10 +663,7 @@ const ShapeProperties = ({
                 : 0,
             thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
             // При активному Cut (manual) считаем Fill выключенным в UI
-            fill:
-              !isManualCut &&
-              activeObject.fill !== "transparent" &&
-              activeObject.fill !== "",
+            fill: !isManualCut && hasFill,
             cut: isManualCut,
           });
         }
@@ -712,6 +715,12 @@ const ShapeProperties = ({
           "turnLeft",
           "turnRight",
         ]);
+        const fillVal = activeObject.fill;
+        const hasFill =
+          typeof fillVal === "string" &&
+          fillVal !== "" &&
+          fillVal !== "transparent" &&
+          fillVal !== "none";
         setProperties({
           width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
           height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -722,10 +731,7 @@ const ShapeProperties = ({
               ? getCornerRadiusMmForRounded(activeObject)
               : 0,
           thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
-          fill:
-            !isManualCut &&
-            activeObject.fill !== "transparent" &&
-            activeObject.fill !== "",
+          fill: !isManualCut && hasFill,
           cut: isManualCut,
         });
       }
@@ -804,19 +810,47 @@ const ShapeProperties = ({
     switch (property) {
       case "width": {
         const targetPx = Math.max(0, mmToPx(value));
-        const baseW = obj.width || obj.getScaledWidth() || 1;
+        // Для halfCircle використовуємо стабільну базу ширини (bbox), щоб уникати стрибка
+        const isHalf = obj.shapeType === "halfCircle";
+        const baseW = isHalf
+          ? obj.__baseBBoxW || obj.width || obj.getScaledWidth() || 1
+          : obj.width || obj.getScaledWidth() || 1;
         const newScaleX = targetPx / baseW;
         holdCenterIfArrow((o) => {
           o.set({ scaleX: newScaleX });
+          // Для кругових фігур дзеркалимо масштаб по Y, щоб зберегти 1:1
+          if (
+            o.isCircle === true ||
+            o.type === "circle" ||
+            o.shapeType === "round" ||
+            o.shapeType === "halfCircle"
+          ) {
+            const sx = Math.abs(o.scaleX || 1);
+            o.set({ scaleY: sx });
+          }
         });
         break;
       }
       case "height": {
         const targetPx = Math.max(0, mmToPx(value));
-        const baseH = obj.height || obj.getScaledHeight() || 1;
+        const isHalf = obj.shapeType === "halfCircle";
+        // Для halfCircle стабільна база висоти (bbox) — це початковий радіус
+        const baseH = isHalf
+          ? obj.__baseBBoxH || obj.height || obj.getScaledHeight() || 1
+          : obj.height || obj.getScaledHeight() || 1;
         const newScaleY = targetPx / baseH;
         holdCenterIfArrow((o) => {
           o.set({ scaleY: newScaleY });
+          // Для кругових фігур дзеркалимо масштаб по X, щоб зберегти 1:1
+          if (
+            o.isCircle === true ||
+            o.type === "circle" ||
+            o.shapeType === "round" ||
+            o.shapeType === "halfCircle"
+          ) {
+            const sy = Math.abs(o.scaleY || 1);
+            o.set({ scaleX: sy });
+          }
         });
         break;
       }
@@ -865,8 +899,10 @@ const ShapeProperties = ({
         break;
       }
       case "thickness": {
+        // Разрешаем в инпуте показывать 0, но применяем минимум 1 мм для объекта
+        const applied = value === 0 ? 1 : value;
         holdCenterIfArrow((o) => {
-          o.set("strokeWidth", mmToPx(value));
+          o.set("strokeWidth", mmToPx(applied));
         });
         break;
       }
@@ -928,7 +964,8 @@ const ShapeProperties = ({
     if (current && typeof current.setCoords === "function") current.setCoords();
     canvas.requestRenderAll();
 
-    setTimeout(() => setIsManuallyEditing(false), 100);
+    // Не сбрасываем ручной режим здесь, чтобы не перетирать ввод пользователя во время печати
+    // Режим завершается в onBlur соответствующих инпутов
   };
 
   const incrementValue = (property, increment = 1) => {
@@ -1172,23 +1209,75 @@ const ShapeProperties = ({
                 type="number"
                 className={styles.input}
                 value={properties.thickness}
-                step={0.1}
-                onChange={(e) =>
-                  updateProperty("thickness", parseFloat(e.target.value) || 1)
-                }
+                step={0.5}
+                onKeyDown={(e) => {
+                  // Если пользователь нажал '.', воспринимаем как запятую и вставляем её в поле
+                  if (e.key === ".") {
+                    e.preventDefault();
+                    const el = e.currentTarget;
+                    const start = el.selectionStart ?? el.value.length;
+                    const end = el.selectionEnd ?? start;
+                    const v = String(el.value || "");
+                    // Не дублируем вторую десятичную запятую/точку
+                    if (v.includes(",") || v.includes(".")) return;
+                    const newV = v.slice(0, start) + "," + v.slice(end);
+                    el.value = newV;
+                    // Ставим каретку после вставленного символа
+                    try {
+                      el.setSelectionRange(start + 1, start + 1);
+                    } catch {}
+                    // Тригерим событие input, чтобы сработал onChange
+                    try {
+                      const evt = new Event("input", { bubbles: true });
+                      el.dispatchEvent(evt);
+                    } catch {}
+                  }
+                }}
+                onChange={(e) => {
+                  // Принимаем как разделитель и запятую, и точку; позволяем временно пустое значение
+                  const raw = String(e.target.value || "");
+                  // Если пусто — оставляем инпут пустым, не применяя 1 немедленно
+                  if (raw === "") {
+                    setIsManuallyEditing(true);
+                    setProperties((prev) => ({ ...prev, thickness: "" }));
+                    return;
+                  }
+                  // Если на конце ввода только разделитель — ждём дальнейшего ввода
+                  if (/[\.,]$/.test(raw)) {
+                    setIsManuallyEditing(true);
+                    setProperties((prev) => ({ ...prev, thickness: raw }));
+                    return;
+                  }
+                  const normalized = raw.replace(/,/g, ".");
+                  const num = parseFloat(normalized);
+                  if (isNaN(num)) {
+                    // Некорректное число: держим как есть в инпуте, объект не трогаем
+                    setIsManuallyEditing(true);
+                    setProperties((prev) => ({ ...prev, thickness: raw }));
+                    return;
+                  }
+                  // Валидное число — сразу применяем
+                  updateProperty("thickness", num);
+                }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() =>
-                  setTimeout(() => setIsManuallyEditing(false), 100)
-                }
+                onBlur={(e) => {
+                  // При потере фокуса коммитим значение: пустое трактуем как 1
+                  const raw = String(e.target.value || "");
+                  const normalized = raw.replace(/,/g, ".");
+                  const num = parseFloat(normalized);
+                  const finalVal = raw.trim() === "" || isNaN(num) ? 1 : num;
+                  updateProperty("thickness", finalVal);
+                  setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
               />
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue("thickness")}
+                  onClick={() => incrementValue("thickness", 0.5)}
                 ></i>
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue("thickness")}
+                  onClick={() => decrementValue("thickness", 0.5)}
                 ></i>
               </div>
             </div>

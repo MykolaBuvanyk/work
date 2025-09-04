@@ -135,27 +135,27 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     if (!canvas) return;
     const qrData = generateQRData();
     let svgText;
-    
+
     try {
       // Використовуємо qrcode-generator для повного контролю
-      const qr = qrGenerator(0, 'M'); // type 0 (auto), error correction M
+      const qr = qrGenerator(0, "M"); // type 0 (auto), error correction M
       qr.addData(qrData);
       qr.make();
-      
+
       const moduleCount = qr.getModuleCount();
       const cellSize = 4; // розмір одного модуля в пікселях
       const size = moduleCount * cellSize;
-      
+
       // Створюємо SVG без quiet zone та мікровідступів
       let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
-      
+
       // Фон
       const bgColor = globalColors?.backgroundColor || "#FFFFFF";
       const fgColor = globalColors?.textColor || "#000000";
       svg += `<rect width="${size}" height="${size}" fill="${bgColor}"/>`;
-      
+
       // Модулі QR коду - використовуємо один великий path для всіх чорних квадратів
-      let pathData = '';
+      let pathData = "";
       for (let row = 0; row < moduleCount; row++) {
         for (let col = 0; col < moduleCount; col++) {
           if (qr.isDark(row, col)) {
@@ -165,12 +165,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           }
         }
       }
-      
+
       if (pathData) {
         svg += `<path d="${pathData}" fill="${fgColor}" fill-rule="evenodd"/>`;
       }
-      
-      svg += '</svg>';
+
+      svg += "</svg>";
       svgText = svg;
     } catch (e) {
       console.error("Помилка створення QR:", e);
@@ -221,8 +221,72 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         isQRCode: true,
         qrText: qrData,
       });
+      // Мінімальний розмір QR 10x10 мм; стандартний при створенні — 20x20 мм
+      const PX_PER_MM = 96 / 25.4;
+      const minPx = 10 * PX_PER_MM;
+      const defaultPx = 20 * PX_PER_MM;
+      // Встановлюємо стандартний розмір 20мм при створенні
+      try {
+        const baseW =
+          obj.width ||
+          (typeof obj.getScaledWidth === "function"
+            ? obj.getScaledWidth()
+            : 0) ||
+          1;
+        const baseH =
+          obj.height ||
+          (typeof obj.getScaledHeight === "function"
+            ? obj.getScaledHeight()
+            : 0) ||
+          1;
+        const sX = defaultPx / baseW;
+        const sY = defaultPx / baseH;
+        obj.set({ scaleX: sX, scaleY: sY });
+      } catch {}
+      const clampQrMinSize = (qr) => {
+        try {
+          const w =
+            typeof qr.getScaledWidth === "function"
+              ? qr.getScaledWidth()
+              : qr.width * (qr.scaleX || 1);
+          const h =
+            typeof qr.getScaledHeight === "function"
+              ? qr.getScaledHeight()
+              : qr.height * (qr.scaleY || 1);
+          const sx = (qr.scaleX || 1) * (w < minPx ? minPx / (w || 1) : 1);
+          const sy = (qr.scaleY || 1) * (h < minPx ? minPx / (h || 1) : 1);
+          if (sx !== qr.scaleX || sy !== qr.scaleY) {
+            qr.set({ scaleX: sx, scaleY: sy });
+            qr.setCoords && qr.setCoords();
+          }
+        } catch {}
+      };
+      clampQrMinSize(obj);
       canvas.add(obj);
-      if (keepSelection || !auto) canvas.setActiveObject(obj);
+      // Стабілізуємо координати і активуємо QR, щоб уникнути падінь при рендері контролів
+      try {
+        if (typeof obj.setCoords === "function") obj.setCoords();
+      } catch {}
+      if (keepSelection || !auto) {
+        try {
+          canvas.setActiveObject(obj);
+        } catch {}
+      }
+      try {
+        canvas.requestRenderAll();
+      } catch {}
+      // Додаткове оновлення у наступному кадрі — для SVG/Group після первинного layout
+      try {
+        requestAnimationFrame(() => {
+          try {
+            if (!canvas || !obj) return;
+            if (keepSelection || !auto) canvas.setActiveObject(obj);
+            if (typeof obj.setCoords === "function") obj.setCoords();
+            clampQrMinSize(obj);
+            canvas.requestRenderAll();
+          } catch {}
+        });
+      } catch {}
     } catch (e) {
       console.error("Помилка створення нового QR (SVG):", e);
       if (!auto) alert("Помилка створення QR-коду");
@@ -234,6 +298,40 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       canvas.requestRenderAll();
     }
   };
+
+  // Глобально: забороняємо зменшувати QR менше 10мм під час масштабування
+  useEffect(() => {
+    if (!canvas) return;
+    const PX_PER_MM = 96 / 25.4;
+    const minPx = 10 * PX_PER_MM;
+    const handler = (e) => {
+      const t = e?.target;
+      if (!t || !t.isQRCode) return;
+      try {
+        const w =
+          typeof t.getScaledWidth === "function"
+            ? t.getScaledWidth()
+            : t.width * (t.scaleX || 1);
+        const h =
+          typeof t.getScaledHeight === "function"
+            ? t.getScaledHeight()
+            : t.height * (t.scaleY || 1);
+        let sx = t.scaleX || 1;
+        let sy = t.scaleY || 1;
+        if (w < minPx) sx *= minPx / (w || 1);
+        if (h < minPx) sy *= minPx / (h || 1);
+        if (sx !== t.scaleX || sy !== t.scaleY) {
+          t.set({ scaleX: sx, scaleY: sy });
+          t.setCoords && t.setCoords();
+          canvas.requestRenderAll();
+        }
+      } catch {}
+    };
+    canvas.on("object:scaling", handler);
+    return () => {
+      canvas.off("object:scaling", handler);
+    };
+  }, [canvas]);
 
   // Видалення поточного (active) QR або першого знайденого
   const deleteQRCode = () => {
@@ -266,8 +364,25 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         qrText: target.qrText,
       });
       canvas.add(clone);
-      canvas.setActiveObject(clone);
-      canvas.requestRenderAll();
+      try {
+        if (typeof clone.setCoords === "function") clone.setCoords();
+      } catch {}
+      try {
+        canvas.setActiveObject(clone);
+      } catch {}
+      try {
+        canvas.requestRenderAll();
+      } catch {}
+      try {
+        requestAnimationFrame(() => {
+          try {
+            if (!canvas || !clone) return;
+            canvas.setActiveObject(clone);
+            if (typeof clone.setCoords === "function") clone.setCoords();
+            canvas.requestRenderAll();
+          } catch {}
+        });
+      } catch {}
     } catch (e) {
       console.error("Помилка дублювання QR:", e);
     }

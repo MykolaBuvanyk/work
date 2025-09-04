@@ -18,8 +18,8 @@ const BOTTOM_ROTATE_GAP = 25; // від рамки до центру кнопк�
 const PANEL_BUTTON_DIAMETER = 24; // діаметр кнопки
 const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
 
-// Стиль рамки
-const OUTLINE_COLOR = "rgba(21, 157, 255, 1)";
+// Стиль рамки: використовуємо акцентний синій як в інших компонентах
+const OUTLINE_COLOR = "rgba(0, 108, 164, 1)"; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 
 const Canvas = () => {
@@ -37,6 +37,7 @@ const Canvas = () => {
   const [scale, setScale] = useState(1);
   const scaleRef = useRef(1);
   const resizingRef = useRef(false);
+  const outlineColorRef = useRef(OUTLINE_COLOR);
 
   // Main Fabric canvas lifecycle
   useEffect(() => {
@@ -54,19 +55,194 @@ const Canvas = () => {
     if (canvasRef.current) canvasRef.current.__fabricCanvas = fCanvas;
     setCanvas(fCanvas);
 
-    // Helpers used across handlers
-    const isTextObject = (o) =>
-      !!(
-        o && (o.type === "i-text" || o.type === "text" || o.type === "textbox")
-      );
+    // Події вибору
+    const isHole = (o) => !!o && o.isCutElement && o.cutType === "hole";
+    const isCut = (o) => !!o && o.isCutElement === true;
+    const isShapeWithProps = (o) =>
+      !!o &&
+      ["path", "rect", "circle", "ellipse"].includes(o.type) &&
+      !isHole(o);
+
+    const isTextObj = (o) =>
+      !!o && ["i-text", "text", "textbox"].includes(o.type);
+
     const isFromIconMenu = (o) =>
-      !!(o && (o.fromIconMenu === true || (o.data && o.data.fromIconMenu)));
-    const isHole = (o) => !!(o && (o.isHole || (o.data && o.data.isHole)));
-    const isShapeWithProps = (o) => !!(o && !isTextObject(o) && !isHole(o));
+      !!o &&
+      (o.fromIconMenu === true || (o.data && o.data.fromIconMenu === true));
+    const bringAllTextsToFront = () => {
+      try {
+        const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
+        texts.forEach((t) => fCanvas.bringToFront(t));
+      } catch {}
+    };
+
+    const handleSelection = (e) => {
+      const obj = e.selected?.[0];
+      if (isHole(obj)) {
+        // Забороняємо вибір отворів і закриваємо пропертіс
+        try {
+          fCanvas.discardActiveObject();
+        } catch {}
+        setActiveObject(null);
+        setShapePropertiesOpen(false);
+        return;
+      }
+      // Тримати тексти поверх при кожному виборі
+      bringAllTextsToFront();
+      // Cut elements from Cut block: не відкривати Shape Properties
+      if (obj && isCut(obj)) {
+        setActiveObject(obj);
+        setShapePropertiesOpen(false);
+        return;
+      }
+      // IconMenu elements: never open Shape Properties
+      if (obj && isFromIconMenu(obj)) {
+        setActiveObject(obj);
+        setShapePropertiesOpen(false);
+        return;
+      }
+      if (isShapeWithProps(obj)) {
+        setActiveObject(obj);
+        // Не відкривати модалку Shape Properties в режимі кастомної фігури та для іконок з IconMenu
+        if (!isCustomShapeMode && !isFromIconMenu(obj))
+          setShapePropertiesOpen(true);
+      }
+    };
+    fCanvas.on("selection:created", handleSelection);
+    fCanvas.on("selection:updated", handleSelection);
+    fCanvas.on("selection:cleared", () => {
+      setActiveObject(null);
+      setShapePropertiesOpen(false);
+    });
 
     fCanvas.on("mouse:down", (e) => {
+      // Если активен IText в режиме редактирования, перехватываем клики по оверлей-панели
+      try {
+        const active = fCanvas.getActiveObject();
+        const isTextEditing =
+          active &&
+          ["i-text", "text", "textbox"].includes(active.type) &&
+          active.isEditing;
+        if (isTextEditing) {
+          const pt = fCanvas.getPointer?.(e.e);
+          if (pt) {
+            const ac = active.aCoords;
+            if (ac && ac.tl && ac.tr && ac.br && ac.bl) {
+              const xs = [ac.tl.x, ac.tr.x, ac.br.x, ac.bl.x];
+              const ys = [ac.tl.y, ac.tr.y, ac.br.y, ac.bl.y];
+              const minX = Math.min(...xs),
+                maxX = Math.max(...xs),
+                minY = Math.min(...ys),
+                maxY = Math.max(...ys);
+              const s = scaleRef.current || 1;
+              const panelCx = (minX + maxX) / 2;
+              const panelCy = minY - TOP_PANEL_GAP / s;
+              const step = PANEL_BUTTON_DIAMETER + PANEL_BUTTON_GAP; // CSS px
+              const centerIndex = (5 - 1) / 2; // 5 кнопок
+              const buttonCenter = (index) => {
+                const cssOffsetX = (index - centerIndex) * step;
+                return {
+                  x: panelCx + cssOffsetX / s,
+                  y: panelCy,
+                };
+              };
+              const hitRadius = PANEL_BUTTON_DIAMETER / 2 / s;
+              const hit = (pos) => {
+                const dx = (pt.x || 0) - pos.x;
+                const dy = (pt.y || 0) - pos.y;
+                return dx * dx + dy * dy <= hitRadius * hitRadius;
+              };
+              const posA = buttonCenter(0);
+              const posB = buttonCenter(1);
+              const posC = buttonCenter(2);
+              const posDup = buttonCenter(3);
+              const posDel = buttonCenter(4);
+
+              // Если попали по одной из иконок — исполняем соответствующее действие и предотвращаем дальнейшую обработку
+              if (hit(posA)) {
+                // A: already in editing — ставим курсор в конец
+                try {
+                  const len = (active.text || "").length;
+                  if (typeof active.setSelectionStart === "function")
+                    active.setSelectionStart(len);
+                  if (typeof active.setSelectionEnd === "function")
+                    active.setSelectionEnd(len);
+                  if (
+                    active.hiddenTextarea &&
+                    typeof active.hiddenTextarea.focus === "function"
+                  )
+                    active.hiddenTextarea.focus();
+                } catch {}
+                fCanvas.requestRenderAll();
+                return; // прервали обработку клика
+              }
+              if (hit(posB)) {
+                try {
+                  // Для действий вне текста завершаем редактирование, применяем команду, затем возвращаем фокус
+                  active.exitEditing && active.exitEditing();
+                } catch {}
+                centerHorizontallyHandler(e, { target: active });
+                return;
+              }
+              if (hit(posC)) {
+                try {
+                  active.exitEditing && active.exitEditing();
+                } catch {}
+                centerVerticallyHandler(e, { target: active });
+                return;
+              }
+              if (hit(posDup)) {
+                try {
+                  active.exitEditing && active.exitEditing();
+                } catch {}
+                duplicateHandler(e, { target: active });
+                return;
+              }
+              if (hit(posDel)) {
+                try {
+                  active.exitEditing && active.exitEditing();
+                } catch {}
+                deleteHandler(e, { target: active });
+                return;
+              }
+            }
+          }
+        }
+      } catch {}
       const t = e.target;
+      // Якщо під курсором є текст — віддати йому пріоритет вибору
+      try {
+        const pt = fCanvas.getPointer?.(e.e);
+        if (pt) {
+          const textsUnder = (fCanvas.getObjects?.() || [])
+            .filter(isTextObj)
+            .filter((o) => {
+              try {
+                return typeof o.containsPoint === "function"
+                  ? o.containsPoint(pt)
+                  : false;
+              } catch {
+                return false;
+              }
+            });
+          if (textsUnder.length > 0) {
+            // Обираємо верхній текст (вони вже зверху завдяки bringAllTextsToFront)
+            const topText = textsUnder[textsUnder.length - 1];
+            fCanvas.setActiveObject(topText);
+            ensureActionControls(topText);
+            setShapePropertiesOpen(false);
+            fCanvas.requestRenderAll();
+            return; // зупиняємо обробку — не чіпаємо фігуру під текстом
+          }
+        }
+      } catch {}
       if (isHole(t)) return; // ігноруємо кліки по отворах
+      // Cut elements: активуємо без відкриття Shape Properties
+      if (t && isCut(t)) {
+        setActiveObject(t);
+        setShapePropertiesOpen(false);
+        return;
+      }
       // IconMenu elements: активуємо без відкриття Shape Properties
       if (t && isFromIconMenu(t)) {
         setActiveObject(t);
@@ -270,8 +446,8 @@ const Canvas = () => {
         const vp = viewportRef.current;
         const { width: baseW, height: baseH } = designRef.current || {};
         if (!vp || !baseW || !baseH) return 500;
-  const vw = Math.max(0, vp.clientWidth - 30);
-  const vh = Math.max(0, vp.clientHeight - 30);
+        const vw = Math.max(0, vp.clientWidth - 30);
+        const vh = Math.max(0, vp.clientHeight - 30);
         const maxFactor = Math.max(0.01, Math.min(vw / baseW, vh / baseH));
         return Math.max(1, Math.floor(maxFactor * 100));
       } catch {
@@ -292,7 +468,8 @@ const Canvas = () => {
         vw = Math.max(0, vp.clientWidth - 30);
         vh = Math.max(0, vp.clientHeight - 30);
       }
-      const maxFactorView = baseW && baseH ? Math.min(vw / baseW, vh / baseH) : 5;
+      const maxFactorView =
+        baseW && baseH ? Math.min(vw / baseW, vh / baseH) : 5;
       const minFactor = 0.3; // 30%
       const reqFactor = (requested || 0) / 100;
       const factor = Math.max(minFactor, Math.min(maxFactorView, reqFactor || 0));
@@ -491,6 +668,13 @@ const Canvas = () => {
       if (!target) return true;
       try {
         const cloned = await target.clone();
+        // preserve halfCircle base bbox for stable scaling via inputs
+        try {
+          if (target.shapeType === "halfCircle") {
+            cloned.__baseBBoxW = target.__baseBBoxW || target.width;
+            cloned.__baseBBoxH = target.__baseBBoxH || target.height;
+          }
+        } catch {}
         // Preserve IconMenu flag so modal stays closed for clones
         try {
           const isFromIcon =
@@ -527,43 +711,32 @@ const Canvas = () => {
       } catch {}
       return true;
     };
-    // Копіювання без буфера обміну: додає такий самий елемент зі зміщенням +10 вправо і -10 вгору
+    // Режим редагування: якщо ціль — текст, входимо в редагування і ставимо курсор в кінець; інакше — нічого
     const copyHandler = async (evt, transform) => {
       const target = transform?.target;
       if (!target) return true;
+      // Определяем, можно ли редактировать текст напрямую
+      const canEditText = typeof target.enterEditing === "function";
+      if (!canEditText) {
+        // Ничего не делаем для не-текста
+        return true;
+      }
       try {
-        const cloned = await target.clone();
-        // Preserve IconMenu flag so modal stays closed for clones
+        // Явно разрешаем вход в редактирование, минуя запрет одиночного клика
+        target.__allowNextEditing = true;
+        target.enterEditing && target.enterEditing();
+        const txt = typeof target.text === "string" ? target.text : "";
         try {
-          const isFromIcon =
-            target.fromIconMenu === true ||
-            (target.data && target.data.fromIconMenu === true);
-          if (isFromIcon) {
-            cloned.fromIconMenu = true;
-            if (!cloned.data) cloned.data = {};
-            cloned.data.fromIconMenu = true;
-          }
-        } catch {}
-        // Зміщення: вправо на 10, вгору на 10
-        const nextLeft = (target.left || 0) + 10;
-        const nextTop = (target.top || 0) - 10;
-        cloned.set({ left: nextLeft, top: nextTop });
-        if (typeof cloned.setCoords === "function") {
-          try {
-            cloned.setCoords();
-          } catch {}
-        }
-        fCanvas.add(cloned);
-        fCanvas.setActiveObject(cloned);
-        try {
-          ensureActionControls(cloned);
+          target.selectionStart = txt.length;
+          target.selectionEnd = txt.length;
         } catch {}
         try {
+          // Фокус на скрытую textarea, если доступна
           if (
-            cloned.fromIconMenu === true ||
-            (cloned.data && cloned.data.fromIconMenu === true)
+            target.hiddenTextarea &&
+            typeof target.hiddenTextarea.focus === "function"
           ) {
-            setShapePropertiesOpen(false);
+            target.hiddenTextarea.focus();
           }
         } catch {}
         fCanvas.requestRenderAll();
@@ -663,6 +836,8 @@ const Canvas = () => {
       if (!Object.prototype.hasOwnProperty.call(obj, "controls")) {
         obj.controls = { ...obj.controls };
       }
+      // Always allow drawing controls (we will hide resize handles below as needed)
+      obj.hasControls = true;
       obj.hasBorders = false;
       if (obj.setControlsVisibility)
         obj.setControlsVisibility({
@@ -729,24 +904,41 @@ const Canvas = () => {
         );
       };
 
-      // 4 кути
-      obj.controls.tlc = makeDotControl(cu.scalingEqually, "nwse-resize");
-      obj.controls.tlc.positionHandler = corner("lt");
-      obj.controls.trc = makeDotControl(cu.scalingEqually, "nesw-resize");
-      obj.controls.trc.positionHandler = corner("rt");
-      obj.controls.blc = makeDotControl(cu.scalingEqually, "nesw-resize");
-      obj.controls.blc.positionHandler = corner("lb");
-      obj.controls.brc = makeDotControl(cu.scalingEqually, "nwse-resize");
-      obj.controls.brc.positionHandler = corner("rb");
-      // 4 середини
-      obj.controls.mtc = makeDotControl(cu.scalingY, "ns-resize");
-      obj.controls.mtc.positionHandler = mid("x");
-      obj.controls.mbc = makeDotControl(cu.scalingY, "ns-resize");
-      obj.controls.mbc.positionHandler = mid("x2");
-      obj.controls.mlc = makeDotControl(cu.scalingX, "ew-resize");
-      obj.controls.mlc.positionHandler = mid("y");
-      obj.controls.mrc = makeDotControl(cu.scalingX, "ew-resize");
-      obj.controls.mrc.positionHandler = mid("y2");
+      // Helper: detect circle-like objects (must keep 1:1 aspect)
+      const isCircleLike = (o) =>
+        !!o &&
+        (o.isCircle === true ||
+          o.type === "circle" ||
+          o.shapeType === "round" ||
+          o.shapeType === "halfCircle");
+
+      // Resize handles: skip for Cut elements (only show action panel + rotate)
+      if (!obj.isCutElement) {
+        const circleLock = isCircleLike(obj);
+        if (circleLock) {
+          try {
+            obj.lockUniScaling = true; // preserve 1:1 via Fabric constraint
+          } catch {}
+        }
+        // 4 кути
+        obj.controls.tlc = makeDotControl(cu.scalingEqually, "nwse-resize");
+        obj.controls.tlc.positionHandler = corner("lt");
+        obj.controls.trc = makeDotControl(cu.scalingEqually, "nesw-resize");
+        obj.controls.trc.positionHandler = corner("rt");
+        obj.controls.blc = makeDotControl(cu.scalingEqually, "nesw-resize");
+        obj.controls.blc.positionHandler = corner("lb");
+        obj.controls.brc = makeDotControl(cu.scalingEqually, "nwse-resize");
+        obj.controls.brc.positionHandler = corner("rb");
+        // 4 середини — залишаємо осьове масштабування (рівномірність забезпечимо в object:scaling)
+        obj.controls.mtc = makeDotControl(cu.scalingY, "ns-resize");
+        obj.controls.mtc.positionHandler = mid("x");
+        obj.controls.mbc = makeDotControl(cu.scalingY, "ns-resize");
+        obj.controls.mbc.positionHandler = mid("x2");
+        obj.controls.mlc = makeDotControl(cu.scalingX, "ew-resize");
+        obj.controls.mlc.positionHandler = mid("y");
+        obj.controls.mrc = makeDotControl(cu.scalingX, "ew-resize");
+        obj.controls.mrc.positionHandler = mid("y2");
+      }
 
       // Декоративний фон панелі як окремий control під іншими
       const panelBgKey = "panel___bg";
@@ -793,8 +985,8 @@ const Canvas = () => {
         {
           key: "a",
           render: aIconRenderer,
-          handler: copyHandler,
-          cursor: "pointer",
+          handler: copyHandler, // теперь: режим редактирования текста / no-op
+          // курсор зададим динамически ниже через cursorStyleHandler
           w: 24,
           h: 24,
         },
@@ -841,9 +1033,9 @@ const Canvas = () => {
           const s = scaleRef.current || 1;
           return new fabric.Point(base.x + cssOffsetX / s, base.y);
         };
-        obj.controls["panel_" + btn.key] = new fabric.Control({
+        const control = new fabric.Control({
           positionHandler,
-          cursorStyle: btn.cursor,
+          cursorStyle: btn.cursor || "pointer",
           mouseUpHandler: (evt, transform) => {
             btn.handler(evt, transform);
             return true;
@@ -852,6 +1044,15 @@ const Canvas = () => {
           sizeX: (btn.w || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
           sizeY: (btn.h || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
         });
+        if (btn.key === "a") {
+          // Динамический курсор: 'text' для редактируемого текста, иначе 'default'
+          control.cursorStyleHandler = (_e, t) => {
+            const target = t?.target || obj;
+            const canEdit = target && typeof target.enterEditing === "function";
+            return canEdit ? "text" : "default";
+          };
+        }
+        obj.controls["panel_" + btn.key] = control;
       });
 
       // Кнопка обертання
@@ -897,10 +1098,43 @@ const Canvas = () => {
       }
     });
 
-    // Прапор масштабування для показу підказки
+    // Прапор масштабування для показу підказки + фіксація 1:1 для кіл
     fCanvas.on("object:scaling", (e) => {
       const t = e?.target;
       if (!t) return;
+      try {
+        const isCircleLike =
+          t.isCircle === true ||
+          t.type === "circle" ||
+          t.shapeType === "round" ||
+          t.shapeType === "halfCircle";
+        if (isCircleLike) {
+          const sx = Math.abs(t.scaleX || 1);
+          const sy = Math.abs(t.scaleY || 1);
+          // Вибираємо домінуючу вісь за натиснутою ручкою, щоб уникнути "стрибка" з боковими ручками
+          const corner = (e && e.transform && e.transform.corner) || "";
+          let s;
+          if (
+            corner === "ml" ||
+            corner === "mr" ||
+            corner === "mlc" ||
+            corner === "mrc"
+          ) {
+            s = sx; // тягнемо горизонтальну середину
+          } else if (
+            corner === "mt" ||
+            corner === "mb" ||
+            corner === "mtc" ||
+            corner === "mbc"
+          ) {
+            s = sy; // тягнемо вертикальну середину
+          } else {
+            s = Math.max(sx, sy); // для кутів — як було
+          }
+          t.scaleX = s;
+          t.scaleY = s;
+        }
+      } catch {}
       t.__isScaling = true;
       t.__wasScaling = true;
       if (t.__scaleExpireTimer) {
@@ -1280,7 +1514,7 @@ const Canvas = () => {
         maxY = Math.max(...ys);
       const s = scaleRef.current || 1;
       ctx.save();
-      ctx.strokeStyle = OUTLINE_COLOR;
+      ctx.strokeStyle = outlineColorRef.current || OUTLINE_COLOR;
       ctx.lineWidth = OUTLINE_WIDTH_CSS / s;
       ctx.setLineDash([]);
       ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
@@ -1327,7 +1561,6 @@ const Canvas = () => {
         ctx.lineTo(W, midY);
         ctx.stroke();
       }
-      // Вертикальна лінія по центру полотна (X): якщо центрували по горизонталі/X
       if (
         typeof active.__centerFlashVExpireAt === "number" &&
         nowTs2 < active.__centerFlashVExpireAt
@@ -1405,6 +1638,87 @@ const Canvas = () => {
         ctx.strokeText(label, x + padX, y + padY);
         ctx.fillText(label, x + padX, y + padY);
       }
+
+      // Если активен режим редактирования текста, рисуем панель действий поверх (для видимости во время редактирования)
+      try {
+        const isText =
+          active && ["i-text", "text", "textbox"].includes(active.type);
+        const isEditing = !!active.isEditing; // fabric.IText флаг редактирования
+        if (isText && isEditing) {
+          // Фон панели
+          const panelWcss = 163,
+            panelHcss = 33;
+          const panelW = panelWcss / s,
+            panelH = panelHcss / s;
+          const panelCx = (minX + maxX) / 2;
+          const panelCy = minY - TOP_PANEL_GAP / s;
+          const px = panelCx - panelW / 2;
+          const py = panelCy - panelH / 2;
+          const pr = 4 / s;
+          ctx.save();
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          ctx.strokeStyle = "rgba(0,0,0,1)";
+          ctx.lineWidth = 1 / s;
+          ctx.beginPath();
+          ctx.moveTo(px + pr, py);
+          ctx.lineTo(px + panelW - pr, py);
+          ctx.quadraticCurveTo(px + panelW, py, px + panelW, py + pr);
+          ctx.lineTo(px + panelW, py + panelH - pr);
+          ctx.quadraticCurveTo(
+            px + panelW,
+            py + panelH,
+            px + panelW - pr,
+            py + panelH
+          );
+          ctx.lineTo(px + pr, py + panelH);
+          ctx.quadraticCurveTo(px, py + panelH, px, py + panelH - pr);
+          ctx.lineTo(px, py + pr);
+          ctx.quadraticCurveTo(px, py, px + pr, py);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // Иконки A, B, C, duplicate, delete (не интерактивны в overlay, чисто визуально)
+          const buttonsCount = 5;
+          const step = PANEL_BUTTON_DIAMETER + PANEL_BUTTON_GAP; // CSS px
+          const centerIndex = (buttonsCount - 1) / 2;
+          const baseX = panelCx;
+          const baseY = panelCy;
+          const iconAt = (index) => {
+            const cssOffsetX = (index - centerIndex) * step;
+            return {
+              x: baseX + cssOffsetX / s,
+              y: baseY,
+            };
+          };
+          // Порядок: A, B, C, duplicate, delete
+          const posA = iconAt(0);
+          const posB = iconAt(1);
+          const posC = iconAt(2);
+          const posDup = iconAt(3);
+          const posDel = iconAt(4);
+
+          // Рендерим SVG-иконки повторно через те же рендеры, что и в controls
+          try {
+            // A
+            if (typeof aIconRenderer === "function")
+              aIconRenderer(ctx, posA.x, posA.y);
+            // B
+            if (typeof bIconRenderer === "function")
+              bIconRenderer(ctx, posB.x, posB.y);
+            // C
+            if (typeof cIconRenderer === "function")
+              cIconRenderer(ctx, posC.x, posC.y);
+            // Duplicate
+            if (typeof duplicateIconRenderer === "function")
+              duplicateIconRenderer(ctx, posDup.x, posDup.y);
+            // Delete
+            if (typeof deleteIconRenderer === "function")
+              deleteIconRenderer(ctx, posDel.x, posDel.y);
+          } catch {}
+        }
+      } catch {}
       ctx.restore();
     };
   fCanvas.on("before:render", clearTop);
@@ -1426,6 +1740,33 @@ const Canvas = () => {
         hardenHole(target);
         return; // не робимо активним
       }
+      // Правило шарів: текст завжди поверх усіх інших фігур
+      try {
+        if (isTextObj(target)) {
+          fCanvas.bringToFront(target);
+        } else {
+          const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
+          texts.forEach((t) => fCanvas.bringToFront(t));
+        }
+      } catch {}
+      // Якщо додано Cut-форму (з блоку Cut) — одразу активуємо і малюємо панель/рамку
+      try {
+        if (target.isCutElement === true && target.cutType === "shape") {
+          // Фіксовані розміри для фігур з Cut-модалки: забороняємо масштабування
+          try {
+            target.set({
+              lockScalingX: true,
+              lockScalingY: true,
+              lockUniScaling: true,
+            });
+          } catch {}
+          fCanvas.setActiveObject(target);
+          ensureActionControls(target);
+          setShapePropertiesOpen(false);
+          fCanvas.requestRenderAll();
+          return;
+        }
+      } catch {}
       // Якщо додано з IconMenu — одразу робимо активним та показуємо панель
       try {
         if (
@@ -1437,6 +1778,13 @@ const Canvas = () => {
           setShapePropertiesOpen(false);
           fCanvas.requestRenderAll();
           return;
+        }
+      } catch {}
+      // Для halfCircle зберігаємо базові розміри bbox при першому додаванні
+      try {
+        if (target.shapeType === "halfCircle") {
+          if (!target.__baseBBoxW) target.__baseBBoxW = target.width;
+          if (!target.__baseBBoxH) target.__baseBBoxH = target.height;
         }
       } catch {}
       // Ensure text objects compute aCoords before applying controls
@@ -1466,6 +1814,25 @@ const Canvas = () => {
       }
     });
 
+    // Додатковий запобіжник: не дозволяти масштабування Cut-формам з модалки
+    fCanvas.on("object:scaling", (e) => {
+      const t = e?.target;
+      if (t && t.isCutElement === true && t.cutType === "shape") {
+        try {
+          // Відкочуємо спробу масштабування
+          t.set({
+            scaleX: t._lastScaleX ?? t.scaleX,
+            scaleY: t._lastScaleY ?? t.scaleY,
+          });
+          t.setCoords && t.setCoords();
+        } catch {}
+        return false;
+      } else if (t) {
+        t._lastScaleX = t.scaleX;
+        t._lastScaleY = t.scaleY;
+      }
+    });
+
     return () => {
       window.removeEventListener("resize", resizeToViewport);
       fCanvas.off("before:render", clearTop);
@@ -1481,9 +1848,70 @@ const Canvas = () => {
     };
   }, [setCanvas, setActiveObject, setShapePropertiesOpen]);
 
+  // Оновлення кольору рамки: фіксований акцентний синій, не залежить від теми
+  useEffect(() => {
+    outlineColorRef.current = OUTLINE_COLOR;
+    try {
+      canvas && canvas.requestRenderAll();
+    } catch {}
+  }, [canvas]);
+
   useEffect(() => {
     if (!canvas) return;
-    canvas.set("backgroundColor", globalColors?.backgroundColor || "#FFFFFF");
+    const applySolid = () => {
+      canvas.set("backgroundColor", globalColors?.backgroundColor || "#FFFFFF");
+    };
+    const applyGradient = () => {
+      try {
+        const W =
+          typeof canvas.getWidth === "function"
+            ? canvas.getWidth()
+            : canvas.width || 0;
+        const H =
+          typeof canvas.getHeight === "function"
+            ? canvas.getHeight()
+            : canvas.height || 0;
+        const off = document.createElement("canvas");
+        off.width = Math.max(1, W);
+        off.height = Math.max(1, H);
+        const ctx = off.getContext("2d");
+        // Лінійний градієнт під кутом 152.22deg (як у CSS: linear-gradient(152.22deg, ...))
+        // Конвертуємо CSS-кут у напрямок у Canvas (x вправо, y вниз):
+        // 0deg у CSS — вгору; 90deg — вправо; 180deg — вниз; 270deg — вліво.
+        // Перетворення: dirX = sin(radCSS), dirY = -cos(radCSS)
+        const cssDeg = 152.22;
+        const rad = (cssDeg * Math.PI) / 180;
+        const dirX = Math.sin(rad);
+        const dirY = -Math.cos(rad);
+        const cx = W / 2;
+        const cy = H / 2;
+        // Довжина вздовж осі градієнта, щоб покрити весь прямокутник
+        const L = Math.abs(W * dirX) + Math.abs(H * dirY);
+        const x0 = cx - (dirX * L) / 2;
+        const y0 = cy - (dirY * L) / 2;
+        const x1 = cx + (dirX * L) / 2;
+        const y1 = cy + (dirY * L) / 2;
+        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+        grad.addColorStop(0.2828, "#B5B5B5");
+        grad.addColorStop(0.5241, "#F5F5F5");
+        grad.addColorStop(0.7414, "#979797");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+        const pattern = new fabric.Pattern({
+          source: off,
+          repeat: "no-repeat",
+        });
+        // У v6 можна напряму призначати Pattern як backgroundColor
+        canvas.set("backgroundColor", pattern);
+      } catch {
+        // fallback: суцільний фон
+        applySolid();
+      }
+    };
+
+    if (globalColors?.backgroundType === "gradient") applyGradient();
+    else applySolid();
+
     try {
       const active = canvas.getActiveObject?.();
       if (active && typeof active.setCoords === "function") {
@@ -1491,7 +1919,7 @@ const Canvas = () => {
       }
     } catch {}
     canvas.renderAll();
-  }, [canvas, globalColors?.backgroundColor]);
+  }, [canvas, globalColors?.backgroundColor, globalColors?.backgroundType]);
 
   // Авто-синхронізація кольорів QR/BarCode при зміні теми
   useEffect(() => {
@@ -1499,6 +1927,22 @@ const Canvas = () => {
     const textColor = globalColors?.textColor || "#000000";
     const bgColor = globalColors?.backgroundColor || "#FFFFFF";
     const objs = canvas.getObjects?.() || [];
+    // Перефарбовуємо усі об'єкти, що позначені як залежні від кольору теми
+    try {
+      const applyThemeColor = (obj) => {
+        if (!obj) return;
+        if (obj.type === "group" && typeof obj.forEachObject === "function") {
+          obj.forEachObject(applyThemeColor);
+        }
+        if (obj.useThemeColor) {
+          try {
+            obj.set({ fill: textColor, stroke: textColor });
+          } catch {}
+        }
+      };
+      objs.forEach(applyThemeColor);
+      canvas.requestRenderAll?.();
+    } catch {}
     const qrs = objs.filter((o) => o.isQRCode && o.qrText);
     const bars = objs.filter(
       (o) => o.isBarCode && o.barCodeText && o.barCodeType
@@ -1515,21 +1959,21 @@ const Canvas = () => {
           let svgText;
           try {
             // Використовуємо qrcode-generator для повного контролю
-            const qrGenerator = (await import('qrcode-generator')).default;
-            const qr = qrGenerator(0, 'M');
+            const qrGenerator = (await import("qrcode-generator")).default;
+            const qr = qrGenerator(0, "M");
             qr.addData(o.qrText);
             qr.make();
-            
+
             const moduleCount = qr.getModuleCount();
             const cellSize = 4;
             const size = moduleCount * cellSize;
-            
+
             // Створюємо SVG без quiet zone та мікровідступів
             let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
             svg += `<rect width="${size}" height="${size}" fill="${bgColor}"/>`;
-            
+
             // Модулі QR коду - використовуємо один великий path
-            let pathData = '';
+            let pathData = "";
             for (let row = 0; row < moduleCount; row++) {
               for (let col = 0; col < moduleCount; col++) {
                 if (qr.isDark(row, col)) {
@@ -1539,11 +1983,11 @@ const Canvas = () => {
                 }
               }
             }
-            
+
             if (pathData) {
               svg += `<path d="${pathData}" fill="${textColor}" fill-rule="evenodd"/>`;
             }
-            svg += '</svg>';
+            svg += "</svg>";
             svgText = svg;
           } catch {
             continue;
@@ -1576,9 +2020,27 @@ const Canvas = () => {
             const idx = arr.indexOf(o);
             const wasActive = canvas.getActiveObject() === o;
             canvas.add(obj);
+            try {
+              if (typeof obj.setCoords === "function") obj.setCoords();
+            } catch {}
             if (typeof canvas.moveTo === "function") canvas.moveTo(obj, idx);
-            if (wasActive) canvas.setActiveObject(obj);
+            if (wasActive) {
+              try {
+                canvas.setActiveObject(obj);
+              } catch {}
+            }
             canvas.remove(o);
+            // Доп. оновлення у наступному кадрі — для коректних aCoords перед малюванням контролів
+            try {
+              requestAnimationFrame(() => {
+                try {
+                  if (!canvas || !obj) return;
+                  if (wasActive) canvas.setActiveObject(obj);
+                  if (typeof obj.setCoords === "function") obj.setCoords();
+                  canvas.requestRenderAll();
+                } catch {}
+              });
+            } catch {}
           } catch {}
         }
 
@@ -1630,9 +2092,26 @@ const Canvas = () => {
             const idx = arr.indexOf(o);
             const wasActive = canvas.getActiveObject() === o;
             canvas.add(obj);
+            try {
+              if (typeof obj.setCoords === "function") obj.setCoords();
+            } catch {}
             if (typeof canvas.moveTo === "function") canvas.moveTo(obj, idx);
-            if (wasActive) canvas.setActiveObject(obj);
+            if (wasActive) {
+              try {
+                canvas.setActiveObject(obj);
+              } catch {}
+            }
             canvas.remove(o);
+            try {
+              requestAnimationFrame(() => {
+                try {
+                  if (!canvas || !obj) return;
+                  if (wasActive) canvas.setActiveObject(obj);
+                  if (typeof obj.setCoords === "function") obj.setCoords();
+                  canvas.requestRenderAll();
+                } catch {}
+              });
+            } catch {}
           } catch {}
         }
       } finally {

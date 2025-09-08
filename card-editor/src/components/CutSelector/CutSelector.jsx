@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
+import CircleWithCut from "../../utils/CircleWithCut";
+// Fallback for environments where fabric is default-exported
+const FabricNS = (fabric && (fabric.fabric || fabric)) || null;
 import styles from "./CutSelector.module.css";
 
 const CutSelector = ({ isOpen, onClose }) => {
-  const { canvas } = useCanvasContext();
+  const { canvas, setActiveObject } = useCanvasContext();
   const dropdownRef = useRef(null);
   const [activeTab, setActiveTab] = useState("cut"); // 'cut' | 'shape'
 
@@ -36,6 +39,140 @@ const CutSelector = ({ isOpen, onClose }) => {
   };
 
   // Функції для додавання різних форм вирізів (тут ви додасте свою логіку)
+  // --- SHAPE tab adders (regular editable shapes, NOT cut elements) ---
+  const addShapeObject = (obj) => {
+    if (!canvas || !obj) return;
+    // Debug: ensure click is firing
+    // eslint-disable-next-line no-console
+    console.debug("Add shape to canvas", {
+      hasCanvas: !!canvas,
+      type: obj?.type,
+    });
+    // Помечаем объект как добавленный из вкладки SHAPE, чтобы не показывать Shape Properties
+    try {
+      obj.fromShapeTab = true;
+      obj.data = { ...(obj.data || {}), fromShapeTab: true };
+    } catch {}
+    canvas.add(obj);
+    if (typeof obj.setCoords === "function") obj.setCoords();
+    canvas.setActiveObject(obj);
+    if (typeof setActiveObject === "function") setActiveObject(obj);
+    if (obj.bringToFront) obj.bringToFront();
+    // Ensure path has bbox for controls
+    if (obj.type === "path" && (!obj.width || !obj.height)) {
+      obj.set({ width: 80, height: 80 });
+    }
+    canvas.requestRenderAll();
+    setTimeout(() => {
+      if (!canvas || !obj) return;
+      canvas.setActiveObject(obj);
+      if (obj.bringToFront) obj.bringToFront();
+      if (typeof obj.setCoords === "function") obj.setCoords();
+      canvas.requestRenderAll();
+    }, 0);
+  };
+
+  const shapeBase = () => {
+    const { centerX, centerY } = getCenterCoordinates();
+    return {
+      left: centerX || 200,
+      top: centerY || 200,
+      originX: "center",
+      originY: "center",
+      fill: "transparent",
+      stroke: "#FD7714",
+      strokeWidth: 1.5,
+      strokeUniform: true,
+      selectable: true,
+      hasControls: true,
+      lockScalingFlip: true,
+    };
+  };
+
+  const addShapeHexagon = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    const d = "M59 27 45 51H16L2 27 16 2h29l14 25Z";
+    const path = new (FabricNS?.Path || fabric.Path)(d, {
+      ...opts,
+      width: 61,
+      height: 53,
+      scaleX: 1,
+      scaleY: 1,
+    });
+    addShapeObject(path);
+  };
+
+  const addShapeOctagon = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    const d = "M39 1L55 17V39L39 55H17L1 39V17L17 1H39Z";
+    const path = new (FabricNS?.Path || fabric.Path)(d, {
+      ...opts,
+      width: 56,
+      height: 56,
+      scaleX: 1,
+      scaleY: 1,
+    });
+    addShapeObject(path);
+  };
+
+  const addShapeRightTriangle = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    // Прямий кут знизу-зліва
+    const d = "M2 51H59L2 2Z";
+    const path = new (FabricNS?.Path || fabric.Path)(d, {
+      ...opts,
+      width: 61,
+      height: 53,
+      scaleX: 1,
+      scaleY: 1,
+    });
+    addShapeObject(path);
+  };
+
+  const addShapeQuarterCircleTR = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    // Чверть кола (верхня права)
+    const d = "M10 10H70V70A60 60 0 0 1 10 10Z";
+    const path = new (FabricNS?.Path || fabric.Path)(d, {
+      ...opts,
+      width: 70,
+      height: 70,
+      scaleX: 1,
+      scaleY: 1,
+    });
+    addShapeObject(path);
+  };
+
+  const addShapeArch = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    // Висока півовальна арка
+    const d = "M10 95 A40 90 0 0 1 90 95 L10 95 Z";
+    const path = new (FabricNS?.Path || fabric.Path)(d, {
+      ...opts,
+      width: 100,
+      height: 100,
+      scaleX: 0.8,
+      scaleY: 0.8,
+    });
+    addShapeObject(path);
+  };
+
+  const addShapeCircleWithCut = () => {
+    if (!canvas) return;
+    const opts = shapeBase();
+    const obj = new CircleWithCut({
+      ...opts,
+      width: 60,
+      height: 74,
+      orientation: "vertical",
+    });
+    addShapeObject(obj);
+  };
 
   const addCut1 = () => {
     if (canvas) {
@@ -48,7 +185,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           top: centerY,
           originX: "center",
           originY: "center",
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -81,7 +218,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           top: centerY,
           originX: "center",
           originY: "center",
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -114,7 +251,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           top: centerY,
           originX: "center",
           originY: "center",
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -147,7 +284,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           top: centerY,
           originX: "center",
           originY: "center",
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -177,7 +314,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -207,7 +344,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -237,7 +374,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -267,7 +404,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -297,7 +434,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -327,7 +464,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -357,7 +494,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         {
           left: 100,
           top: 100,
-          fill: "transparent",
+          fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -386,7 +523,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         left: 100,
         top: 100,
         radius: 43,
-        fill: "transparent",
+        fill: "#FFFFFF",
         stroke: "#FD7714",
         strokeWidth: 1.5,
         selectable: true,
@@ -412,7 +549,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         left: 100,
         top: 100,
         radius: 30,
-        fill: "transparent",
+        fill: "#FFFFFF",
         stroke: "#FD7714",
         strokeWidth: 1.5,
         selectable: true,
@@ -438,7 +575,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         left: 100,
         top: 100,
         radius: 35,
-        fill: "transparent",
+        fill: "#FFFFFF",
         stroke: "#FD7714",
         strokeWidth: 1.5,
         selectable: true,
@@ -464,7 +601,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         left: 100,
         top: 100,
         radius: 48,
-        fill: "transparent",
+        fill: "#FFFFFF",
         stroke: "#FD7714",
         strokeWidth: 1.5,
         selectable: true,
@@ -511,27 +648,39 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   // Функція для рендерингу іконки
   // Закриваємо модалку одразу при кліку, потім виконуємо додавання на canvas
-  const renderCutIcon = (svgIcon, onClick, title) => (
-    <div
-      className={styles.cutOption}
-      onClick={() => {
-        try {
-          if (typeof onClose === "function") onClose();
-        } finally {
-          if (typeof onClick === "function") onClick();
-        }
-      }}
-      title={title}
-    >
-      {svgIcon}
-    </div>
-  );
+  const renderCutIcon = (svgIcon, onClick, title) => {
+    const handleTrigger = (e) => {
+      e?.stopPropagation?.();
+      try {
+        if (typeof onClick === "function") onClick();
+      } finally {
+        if (typeof onClose === "function") setTimeout(onClose, 0);
+      }
+    };
+    const handleKey = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        handleTrigger(e);
+      }
+    };
+    return (
+      <div
+        className={styles.cutOption}
+        role="button"
+        tabIndex={0}
+        onMouseDown={handleTrigger}
+        onClick={handleTrigger}
+        onKeyDown={handleKey}
+        title={title}
+      >
+        {svgIcon}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.cutSelector}>
       <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.dropdownHeader}>
-          {/* Left: tabs (centered in left area) */}
           <div className={styles.tabSwitch}>
             <button
               className={`${styles.tabBtn} ${
@@ -552,9 +701,7 @@ const CutSelector = ({ isOpen, onClose }) => {
               SHAPE
             </button>
           </div>
-          {/* Center: title */}
           <h3>Cut Shapes</h3>
-          {/* Right: close */}
           <button className={styles.closeBtn} onClick={onClose} type="button">
             <svg
               width="24"
@@ -566,16 +713,16 @@ const CutSelector = ({ isOpen, onClose }) => {
               <path
                 d="M12.0008 12.0001L14.8292 14.8285M9.17236 14.8285L12.0008 12.0001L9.17236 14.8285ZM14.8292 9.17163L12.0008 12.0001L14.8292 9.17163ZM12.0008 12.0001L9.17236 9.17163L12.0008 12.0001Z"
                 stroke="#006CA4"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
                 stroke="#006CA4"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </button>
@@ -911,7 +1058,133 @@ const CutSelector = ({ isOpen, onClose }) => {
             )}
           </div>
         ) : (
-          <div className={styles.shapeTabEmpty}>Тут поки порожньо</div>
+          <div className={styles.shapeGrid}>
+            {/* Round Top (replaces Parabola) */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 100 100"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Adjusted strokeWidth (2.14) so visual thickness ~= 1.5px at 70px display width */}
+                <path
+                  d="M10 95 A40 90 0 0 1 90 95 L90 95 L10 95 Z"
+                  fill="none"
+                  stroke="#FD7714"
+                  strokeWidth="2.14"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>,
+              addShapeArch,
+              "Arch"
+            )}
+            {/* Quarter circle (top-right) */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 70 70"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 9h52v52A52 52 0 0 1 9 9Z"
+                  stroke="#FD7714"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="bevel"
+                />
+              </svg>,
+              addShapeQuarterCircleTR,
+              "Quarter Circle TR"
+            )}
+            {/* Hexagon */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 61 53"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* strokeWidth 1.30 => visual ~1.5px (1.30 * 70/61) */}
+                <path
+                  d="M59 27 45 51H16L2 27 16 2h29l14 25Z"
+                  stroke="#FD7714"
+                  strokeWidth="1.30"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>,
+              addShapeHexagon,
+              "Hexagon"
+            )}
+            {/* Octagon */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 56 56"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* strokeWidth 1.20 => visual ~1.5px (1.20 * 70/56) */}
+                <path
+                  d="M39 1L55 17V39L39 55H17L1 39V17L17 1H39Z"
+                  stroke="#FD7714"
+                  strokeWidth="1.20"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>,
+              addShapeOctagon,
+              "Octagon"
+            )}
+            {/* Right triangle */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 61 53"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* strokeWidth 1.30 => visual ~1.5px (1.30 * 70/61) */}
+                <path
+                  d="M2 51H59L2 2Z"
+                  stroke="#FD7714"
+                  strokeWidth="1.30"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>,
+              addShapeRightTriangle,
+              "Right Triangle"
+            )}
+            {/* Circle with cut (same as CUT tab 'Cut Shape 8') */}
+            {renderCutIcon(
+              <svg
+                width="70"
+                height="70"
+                viewBox="0 0 63 74"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke="#FD7714"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="bevel"
+                  strokeMiterlimit="22.9"
+                  d="M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0"
+                />
+              </svg>,
+              addShapeCircleWithCut,
+              "Circle with Cut"
+            )}
+          </div>
         )}
       </div>
     </div>

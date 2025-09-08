@@ -1101,7 +1101,8 @@ const Canvas = () => {
           t.isCircle === true ||
           t.type === "circle" ||
           t.shapeType === "round" ||
-          t.shapeType === "halfCircle";
+          t.shapeType === "halfCircle" ||
+          t.shapeType === "roundTop"; // додаємо roundTop для збереження пропорції (дуга не сплющується)
         if (isCircleLike) {
           const sx = Math.abs(t.scaleX || 1);
           const sy = Math.abs(t.scaleY || 1);

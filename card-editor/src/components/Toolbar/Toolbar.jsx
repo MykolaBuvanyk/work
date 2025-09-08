@@ -1328,8 +1328,64 @@ const Toolbar = () => {
       }
 
       // Для всіх інших типів фігур - стандартна логіка
-      const width = mmToPx(widthMm);
-      const height = mmToPx(heightMm);
+      // Спершу можлива корекція пропорцій для специфічних типів
+      let effWidthMm = widthMm;
+      let effHeightMm = heightMm;
+
+      if (currentShapeType === "halfCircle") {
+        // Зберігаємо справжній півкруг: ширина = 2 * висота (height = width/2)
+        // Визначаємо, яку величину змінював користувач (прийшла в overrides)
+        const changedWidth = Object.prototype.hasOwnProperty.call(
+          overrides,
+          "widthMm"
+        );
+        const changedHeight = Object.prototype.hasOwnProperty.call(
+          overrides,
+          "heightMm"
+        );
+        if (changedWidth && !changedHeight) {
+          effHeightMm = round1(effWidthMm / 2);
+        } else if (changedHeight && !changedWidth) {
+          effWidthMm = round1(effHeightMm * 2);
+        } else {
+          // Обидва або жодного — пріоритет ширина
+          effHeightMm = round1(effWidthMm / 2);
+        }
+        // Оновлюємо state (щоб інпут висоти відобразив скориговане значення)
+        setSizeValues((prev) => ({
+          ...prev,
+          width: effWidthMm,
+          height: effHeightMm,
+        }));
+      } else if (currentShapeType === "roundTop") {
+        // roundTop: пропорція верхнього півкола повинна зберігатися — воно ідеально кругле (діаметр = ширина фігури)
+        // Вихідний базовий path: ширина 100, висота 100 (верхній півкруг радіуса 50 + прямі стінки вниз)
+        // Щоб зберегти півкруг, половина верхньої висоти повинна дорівнювати радіусу = width/2.
+        // Тут приймаємо рішення фіксувати повну висоту = ширина (щоб верхній сегмент масштабувався рівно).
+        const changedWidth = Object.prototype.hasOwnProperty.call(
+          overrides,
+          "widthMm"
+        );
+        const changedHeight = Object.prototype.hasOwnProperty.call(
+          overrides,
+          "heightMm"
+        );
+        if (changedWidth && !changedHeight) {
+          effHeightMm = effWidthMm; // висота підлаштовується під ширину
+        } else if (changedHeight && !changedWidth) {
+          effWidthMm = effHeightMm; // ширина підлаштовується під висоту
+        } else {
+          effHeightMm = effWidthMm;
+        }
+        setSizeValues((prev) => ({
+          ...prev,
+          width: effWidthMm,
+          height: effHeightMm,
+        }));
+      }
+
+      const width = mmToPx(effWidthMm);
+      const height = mmToPx(effHeightMm);
       const cr = Math.max(0, Number(mmToPx(cornerRadiusMm)) || 0);
 
       // Встановлюємо нові розміри canvas

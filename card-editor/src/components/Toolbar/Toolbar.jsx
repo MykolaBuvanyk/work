@@ -83,7 +83,9 @@ const Toolbar = () => {
   const mmToPx = (mm) =>
     typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
-  // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
+  // Округлення: для пункту 2 (Size) потрібні лише цілі значення в мм
+  const round0 = (n) => Math.round(Number(n) || 0);
+  // Залишаємо також округлення до 1 знаку для інших місць, де це може бути потрібно
   const round1 = (n) => Math.round((Number(n) || 0) * 10) / 10;
   const [activeObject, setActiveObject] = useState(null);
   const [sizeValues, setSizeValues] = useState({
@@ -561,8 +563,8 @@ const Toolbar = () => {
         // Коли нічого не вибрано, показуємо розміри canvas
         const sz = getLogicalCanvasSize();
         setSizeValues({
-          width: Number(pxToMm(sz.width).toFixed(1)),
-          height: Number(pxToMm(sz.height).toFixed(1)),
+          width: round0(pxToMm(sz.width)),
+          height: round0(pxToMm(sz.height)),
           cornerRadius: 0,
         });
       });
@@ -573,8 +575,8 @@ const Toolbar = () => {
       // Ініціалізуємо початкові значення розмірів canvas
       const sz = getLogicalCanvasSize();
       setSizeValues({
-        width: Number(pxToMm(sz.width).toFixed(1)),
-        height: Number(pxToMm(sz.height).toFixed(1)),
+  width: round0(pxToMm(sz.width)),
+  height: round0(pxToMm(sz.height)),
         cornerRadius: 0,
       });
       // Блокуємо відкриття пропертей по dblclick на якорі
@@ -2188,22 +2190,16 @@ const Toolbar = () => {
   }, [holesDiameter, canvas, isHolesSelected, activeHolesType]);
 
   // Функція для оновлення візуального контуру canvas
+  // Тепер контур винесено в DOM/SVG шар під canvas, тому прибираємо будь-який контур на самому полотні
   const updateCanvasOutline = () => {
     if (!canvas) return;
-
-    // Глобальний масштаб відображення (не змінює геометрію в мм, лише візуально звільняє 1-2px по правому/нижньому краю)
-    const VIEWPORT_SCALE = 0.998; // ~0.2%
-    const vt = canvas.viewportTransform || fabric.iMatrix.concat();
-    if (Math.abs(vt[0] - VIEWPORT_SCALE) > 0.0001) {
-      canvas.setViewportTransform([VIEWPORT_SCALE, 0, 0, VIEWPORT_SCALE, 0, 0]);
-    }
-
-    // Видаляємо попередній контур
+    // Видаляємо попередній контур, якщо лишився
     const existingOutline = canvas
       .getObjects()
       .find((obj) => obj.isCanvasOutline);
     if (existingOutline) {
       canvas.remove(existingOutline);
+      canvas.requestRenderAll();
     }
 
     // Перевіряємо чи є користувацькі обводки
@@ -2261,6 +2257,8 @@ const Toolbar = () => {
       }
     }
   };
+
+  // Контур більше не малюємо на полотні — слухач масштабу не потрібен
 
   // Повне перезбирання внутрішнього бордера при зміні розміру / cornerRadius
   const updateExistingBorders = (overrides = {}) => {
@@ -6898,10 +6896,10 @@ const Toolbar = () => {
     }
   };
   const handleInputChange = (key, max, rawValue) => {
-    // Поддерживаем запятую как разделитель, затем округляем до 1 знака
+    // Підтримуємо кому, округлюємо до цілих
     const parsed = parseFloat(String(rawValue).replace(",", "."));
     const clamped = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
-    const value = round1(clamped);
+    const value = round0(clamped);
 
     // Compute next mm values synchronously
     let next = {
@@ -6928,13 +6926,13 @@ const Toolbar = () => {
     if (canvas) {
       // Update canvas/clipPath using explicit overrides to avoid one-step lag
       updateSize({
-        widthMm: round1(next.width),
-        heightMm: round1(next.height),
-        cornerRadiusMm: round1(next.cornerRadius),
+        widthMm: round0(next.width),
+        heightMm: round0(next.height),
+        cornerRadiusMm: round0(next.cornerRadius),
       });
       // Якщо змінювали саме радіус і є бордер — перебудувати його після оновлення clipPath
       if (key === "cornerRadius") {
-        updateExistingBorders({ cornerRadiusMm: round1(next.cornerRadius) });
+        updateExistingBorders({ cornerRadiusMm: round0(next.cornerRadius) });
       }
     }
   };
@@ -6942,8 +6940,9 @@ const Toolbar = () => {
   const changeValue = (key, delta, max) => {
     setSizeValues((prev) => {
       const cur = parseFloat(String(prev[key]).replace(",", ".")) || 0;
+      // Крок рівно 1, результати — цілі
       const nextVal = Math.max(0, Math.min(max, cur + delta));
-      const newValue = round1(nextVal);
+      const newValue = round0(nextVal);
       let updated = { ...prev, [key]: newValue };
 
       // Enforce square for circle family shapes via arrows too
@@ -6959,13 +6958,13 @@ const Toolbar = () => {
       // Параметри розміру застосовуємо лише до canvas/clipPath
       if (canvas) {
         updateSize({
-          widthMm: round1(updated.width),
-          heightMm: round1(updated.height),
-          cornerRadiusMm: round1(updated.cornerRadius),
+          widthMm: round0(updated.width),
+          heightMm: round0(updated.height),
+          cornerRadiusMm: round0(updated.cornerRadius),
         });
         if (key === "cornerRadius") {
           updateExistingBorders({
-            cornerRadiusMm: round1(
+            cornerRadiusMm: round0(
               key === "cornerRadius" ? newValue : updated.cornerRadius
             ),
           });

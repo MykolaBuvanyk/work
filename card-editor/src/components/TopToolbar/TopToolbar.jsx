@@ -53,7 +53,10 @@ const TopToolbar = ({ className }) => {
   const handleZoomOut = () => {
     if (!canvas) return;
   const effective = Math.round(displayScale);
-  const next = Math.max(effective - 1, 30);
+  const dynamicMin = typeof canvas.getMinDisplayScalePercent === "function"
+    ? canvas.getMinDisplayScalePercent()
+    : 10;
+  const next = Math.max(effective - 1, dynamicMin);
     const applied = typeof canvas.setDisplayScale === "function"
       ? canvas.setDisplayScale(next)
       : next;
@@ -61,20 +64,10 @@ const TopToolbar = ({ className }) => {
   };
 
   const handleZoomInputChange = (e) => {
-    // Allow typing but soft-clamp live to [30, dynamicMax] to avoid huge jumps
+    // Free-typing: keep only digits, allow empty while editing; no clamping here
     const raw = e.target.value;
     const digits = (raw || "").replace(/[^0-9]/g, "");
-    if (digits === "") {
-      setZoomInput("");
-      return;
-    }
-    let value = parseInt(digits, 10);
-    const dynamicMax = canvas && typeof canvas.getMaxDisplayScalePercent === "function"
-      ? canvas.getMaxDisplayScalePercent()
-      : 500;
-    if (isNaN(value)) value = Math.round(displayScale);
-    value = Math.min(dynamicMax, Math.max(30, value));
-    setZoomInput(String(value));
+    setZoomInput(digits);
   };
 
   const commitZoomInput = () => {
@@ -88,7 +81,10 @@ const TopToolbar = ({ className }) => {
     const dynamicMax = canvas && typeof canvas.getMaxDisplayScalePercent === "function"
       ? canvas.getMaxDisplayScalePercent()
       : 500;
-    value = Math.min(dynamicMax, Math.max(30, value));
+    const dynamicMin = canvas && typeof canvas.getMinDisplayScalePercent === "function"
+      ? canvas.getMinDisplayScalePercent()
+      : 10;
+    value = Math.min(dynamicMax, Math.max(dynamicMin, value));
     if (canvas && typeof canvas.setDisplayScale === "function") {
       const applied = canvas.setDisplayScale(value);
       setZoomInput(String(applied));

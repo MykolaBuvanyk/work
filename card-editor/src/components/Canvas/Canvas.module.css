@@ -20,13 +20,32 @@
     grid-row-gap: 0px;
 }
 
+/* Absolute container under the Fabric canvas for DOM-rendered shadow */
+.shadowHost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Absolute container above the Fabric canvas for DOM-rendered outline */
+.outlineHost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 2; /* above canvas */
+}
+
 .widthLabel,
 .heightLabel {
-    background: white;
+    background: transparent;
     /* border-bottom: 1px solid #aaa; */
     color: #333;
     font-size: 12px;
     padding: 2px 6px;
+    
     z-index: 10;
     border: 1px solid rgba(0, 0, 0, 0.7);
     
@@ -41,9 +60,12 @@
     width: 100%; */
     grid-area: 2 / 1 / 3 / 2;
     border-top: none;
+    padding-top: 15px;
 }
 .canvas {
     grid-area: 1 / 1 / 2 / 2;
+    position: relative;
+    z-index: 1; /* between shadow and outline */
 }
 
 .heightLabel {
@@ -53,4 +75,5 @@
     grid-area: 1 / 2 / 3 / 3;
     border-left: none;
     writing-mode: sideways-lr;
+    padding-left: 15px;
 }

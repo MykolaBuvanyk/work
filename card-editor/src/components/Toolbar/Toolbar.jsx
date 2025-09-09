@@ -116,6 +116,32 @@ const Toolbar = () => {
   const [hasUserPickedShape, setHasUserPickedShape] = useState(false);
   const [thickness, setThickness] = useState(1.6); // товщина (мм) для блоку 3
 
+  // Undo/Redo + трекер змін властивостей полотна
+  const { saveCanvasPropertiesState } = useUndoRedo();
+  const {
+    trackCanvasResize,
+    trackViewportChange,
+    trackShapeChange,
+    trackElementAdded,
+    trackColorThemeChange,
+    trackThicknessChange,
+    trackHolesChange,
+    trackBorderChange,
+    immediateSave,
+    debouncedSave,
+  } = useCanvasPropertiesTracker(
+    canvas,
+    globalColors,
+    saveCanvasPropertiesState,
+    {
+      currentShapeType,
+      cornerRadius: sizeValues ? sizeValues.cornerRadius : 0,
+      thickness,
+      activeHolesType,
+      holesDiameter,
+    }
+  );
+
   // Очистити canvas з збереженням фону
   const clearCanvasPreserveTheme = () => {
     if (!canvas) return;

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 // lock shape now: rectangle + top half-circle (width 16mm, height 8mm)
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
+import { useCanvasPropertiesTracker } from "../../hooks/useCanvasPropertiesTracker";
 import * as fabric from "fabric";
 import paper from "paper";
 import JsBarcode from "jsbarcode";
@@ -11,9 +13,9 @@ import BarCodeGenerator from "../BarCodeGenerator/BarCodeGenerator";
 import ShapeSelector from "../ShapeSelector/ShapeSelector";
 import CutSelector from "../CutSelector/CutSelector";
 import IconMenu from "../IconMenu/IconMenu";
+import UploadPreview from "../UploadPreview/UploadPreview";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
-import { vectorizeDataURLToSVG } from "../../utils/vectorizeImage";
 import {
   // Shape palette icons
   Icon0,
@@ -116,6 +118,30 @@ const Toolbar = () => {
   const customPointsRef = useRef(null); // поточні точки полігона в px
   const lastValidPointsRef = useRef(null); // останні валідні точки
   const initialOrientationRef = useRef(0); // початковий знак орієнтації
+
+  // Додаємо хуки для undo/redo та відстеження змін
+  const { saveCanvasPropertiesState } = useUndoRedo();
+  
+  // Створюємо стан тулбару для передачі в трекер
+  const toolbarState = {
+    currentShapeType,
+    cornerRadius: sizeValues.cornerRadius,
+    thickness,
+    activeHolesType,
+    holesDiameter,
+    hasBorder: false // Буде оновлено коли додамо border логіку
+  };
+
+  // Ініціалізуємо трекер змін
+  const {
+    trackShapeChange,
+    trackElementAdded,
+    trackColorThemeChange,
+    trackThicknessChange,
+    trackHolesChange,
+    trackBorderChange,
+    immediateSave
+  } = useCanvasPropertiesTracker(canvas, globalColors, saveCanvasPropertiesState, toolbarState);
   // Set default selected shape on mount
   useEffect(() => {
     // Choose the default shape type, e.g., rectangle
@@ -1343,17 +1369,48 @@ const Toolbar = () => {
       switch (currentShapeType) {
         case "rectangle":
           newClipPath = new fabric.Rect({
-            left: 0,
-            top: 0,
-            width: width - 1,
-            height: height - 1,
+            // Slight outward inflation (-0.5 offset + +1 size) to fully cover pixel grid and remove residual seams
+            left: -1,
+            top: -1,
+            width: width + 1,
+            height: height + 1,
             rx: cr,
             ry: cr,
             absolutePositioned: true,
+            stroke: null,
+            strokeWidth: 0,
+            objectCaching: false, // reduce chance of cached edge anti-alias seam
           });
           break;
 
         case "circle":
+      // --- Normalize clipPath to avoid 1px transparent contour seams ---
+      if (newClipPath) {
+        // Remove any accidental stroke that could create an inner gap
+        newClipPath.set({ stroke: null, strokeWidth: 0 });
+        // Для всіх, крім прямокутника, жорстко якіруємо до (0,0) лівий верх
+        if (newClipPath.type !== "rect") {
+          newClipPath.set({ originX: "left", originY: "top", left: 0, top: 0 });
+          // Обнулити pathOffset (важливо для path), щоб уникнути зсувів на малих розмірах
+          try {
+            if (newClipPath.type === "path") {
+              newClipPath.pathOffset = new fabric.Point(0, 0);
+            }
+          } catch {}
+        } else {
+          // Для прямокутника зберігаємо -0.5 інфляцію і не округлюємо
+        }
+        // For centered shapes, make sure radius-based ones fully cover area (slight +0.5 expansion if needed)
+        if (newClipPath.type === "circle" || newClipPath.type === "ellipse") {
+          // Expand by 0.25 to counteract anti-alias shrink
+          if (typeof newClipPath.radius === "number") newClipPath.radius += 0.25;
+          if (typeof newClipPath.rx === "number") newClipPath.rx += 0.25;
+          if (typeof newClipPath.ry === "number") newClipPath.ry += 0.25;
+        }
+        // Disable caching for crisper edge blending with background
+        newClipPath.set({ objectCaching: false });
+      }
+
         case "circleWithLine":
         case "circleWithCross":
           const radius = Math.min(width, height) / 2;
@@ -1495,7 +1552,22 @@ const Toolbar = () => {
           break;
 
         case "halfCircle": {
-          // Ultra smooth: adaptive tension + optional arc refinement for large radii
+          // Для дуже малих розмірів — точний шлях еліптичної дуги, щоб уникнути зсувів
+          if (width <= 64 || height <= 32) {
+            const rx = width / 2;
+            const ry = height; // півеліпс по висоті
+            const dArc = `M0 ${height} A ${rx} ${ry} 0 0 1 ${width} ${height} L ${width} ${height} L 0 ${height} Z`;
+            newClipPath = new fabric.Path(dArc, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+            break;
+          }
+          // Ultra smooth: adaptive tension + optional arc refinement for large/середніх розмірів
           // 1. Base coarse sampling – rely on smoothing to remove micro steps
           const arcSeg = Math.max(48, Math.min(220, Math.round(width / 4))); // slight increase for stability
           let pts = makeHalfCirclePolygonPoints(width, height, arcSeg);
@@ -1600,12 +1672,35 @@ const Toolbar = () => {
           }
           // Using OPEN Catmull-Rom (no wrap) then straight base line closure to avoid small spikes at base corners
           const d = pointsToOpenCatmullRomCubicPath(pts, tension);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          newClipPath = new fabric.Path(d, {
+            absolutePositioned: true,
+            originX: "left",
+            originY: "top",
+            left: 0,
+            top: 0,
+            objectCaching: false,
+          });
           break;
         }
 
         case "extendedHalfCircle": {
-          // Використовуємо покращену логіку з HTML реалізації
+          // Для дуже малих розмірів — прямий еліптичний верх із вертикальними «подовженнями» працює нестабільно,
+          // тому робимо точний півеліпс як у halfCircle
+          if (width <= 64 || height <= 32) {
+            const rx = width / 2;
+            const ry = height;
+            const dArc = `M0 ${height} A ${rx} ${ry} 0 0 1 ${width} ${height} L ${width} ${height} L 0 ${height} Z`;
+            newClipPath = new fabric.Path(dArc, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+            break;
+          }
+          // Використовуємо покращену логіку з HTML реалізації для більших розмірів
           const Rbase = width * 0.5;
 
           if (height <= Rbase) {
@@ -1716,32 +1811,164 @@ const Toolbar = () => {
         }
 
         case "hexagon": {
-          const d = makeRoundedHexagonPath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          if (width <= 64 || height <= 64) {
+            // точний шістикутник малих розмірів
+            const pts = [
+              { x: width * 0.25, y: 0 },
+              { x: width * 0.75, y: 0 },
+              { x: width, y: height * 0.5 },
+              { x: width * 0.75, y: height },
+              { x: width * 0.25, y: height },
+              { x: 0, y: height * 0.5 },
+            ];
+            newClipPath = new fabric.Polygon(pts, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          } else {
+            const d = makeRoundedHexagonPath(width, height, cr);
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          }
           break;
         }
 
         case "octagon": {
-          const d = makeRoundedOctagonPath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          if (width <= 64 || height <= 64) {
+            const pts = [
+              { x: width * 0.3, y: 0 },
+              { x: width * 0.7, y: 0 },
+              { x: width, y: height * 0.3 },
+              { x: width, y: height * 0.7 },
+              { x: width * 0.7, y: height },
+              { x: width * 0.3, y: height },
+              { x: 0, y: height * 0.7 },
+              { x: 0, y: height * 0.3 },
+            ];
+            newClipPath = new fabric.Polygon(pts, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          } else {
+            const d = makeRoundedOctagonPath(width, height, cr);
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          }
           break;
         }
 
         case "triangle": {
-          const d = makeRoundedTrianglePath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          if (width <= 64 || height <= 64) {
+            const pts = [
+              { x: width / 2, y: 0 },
+              { x: width, y: height },
+              { x: 0, y: height },
+            ];
+            newClipPath = new fabric.Polygon(pts, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          } else {
+            const d = makeRoundedTrianglePath(width, height, cr);
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          }
           break;
         }
 
         case "arrowLeft": {
-          const d = makeRoundedArrowLeftPath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          if (width <= 64 || height <= 64) {
+            const pts = [
+              { x: 0, y: height * 0.5625 },
+              { x: width * 0.25, y: height * 0.1875 },
+              { x: width * 0.25, y: height * 0.375 },
+              { x: width, y: height * 0.375 },
+              { x: width, y: height * 0.75 },
+              { x: width * 0.25, y: height * 0.75 },
+              { x: width * 0.25, y: height * 0.9375 },
+            ];
+            newClipPath = new fabric.Polygon(pts, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          } else {
+            const d = makeRoundedArrowLeftPath(width, height, cr);
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          }
           break;
         }
 
         case "arrowRight": {
-          const d = makeRoundedArrowRightPath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          if (width <= 64 || height <= 64) {
+            const pts = [
+              { x: width, y: height * 0.5 },
+              { x: width * 0.75, y: height * 0.1875 },
+              { x: width * 0.75, y: height * 0.375 },
+              { x: 0, y: height * 0.375 },
+              { x: 0, y: height * 0.75 },
+              { x: width * 0.75, y: height * 0.75 },
+              { x: width * 0.75, y: height * 0.9375 },
+            ];
+            newClipPath = new fabric.Polygon(pts, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          } else {
+            const d = makeRoundedArrowRightPath(width, height, cr);
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "left",
+              originY: "top",
+              left: 0,
+              top: 0,
+              objectCaching: false,
+            });
+          }
           break;
         }
 
@@ -1767,6 +1994,15 @@ const Toolbar = () => {
       // Встановлюємо новий clipPath
       if (newClipPath) {
         canvas.clipPath = newClipPath;
+        // Прибираємо будь-який контур у самої фігури clipPath (та дочірніх якщо група)
+        const stripStroke = (obj) => {
+          if (!obj) return;
+          obj.set({ stroke: null, strokeWidth: 0, strokeDashArray: null });
+          if (obj._objects && Array.isArray(obj._objects)) {
+            obj._objects.forEach(stripStroke);
+          }
+        };
+        stripStroke(canvas.clipPath);
       }
 
       // Оновлюємо візуальний контур і обводки
@@ -2137,6 +2373,14 @@ const Toolbar = () => {
   // Тепер контур винесено в DOM/SVG шар під canvas, тому прибираємо будь-який контур на самому полотні
   const updateCanvasOutline = () => {
     if (!canvas) return;
+    // Полністю відключено: більше не створюємо жодного контуру на canvas
+    const existingOutlineAll = canvas.getObjects().filter(o => o.isCanvasOutline);
+    if (existingOutlineAll.length) {
+      existingOutlineAll.forEach(o => canvas.remove(o));
+      canvas.requestRenderAll();
+    }
+    return; // <- припиняємо виконання щоб гарантовано не відмальовувати контур
+    /*
     // Видаляємо попередній контур, якщо лишився
     const existingOutline = canvas
       .getObjects()
@@ -2200,6 +2444,7 @@ const Toolbar = () => {
         canvas.sendObjectToBack(outlineShape);
       }
     }
+  */
   };
 
   // Контур більше не малюємо на полотні — слухач масштабу не потрібен
@@ -4213,6 +4458,9 @@ const Toolbar = () => {
         }
       }
       canvas.renderAll();
+      
+      // Відстежуємо зміну товщини
+      trackThicknessChange(value);
     }
   };
 
@@ -4421,6 +4669,9 @@ const Toolbar = () => {
 
     // Рендеримо canvas
     canvas.renderAll();
+    
+    // Відстежуємо зміну кольорової теми
+    trackColorThemeChange({ textColor, backgroundColor, backgroundType });
   };
 
   // Додавання тексту
@@ -4451,6 +4702,9 @@ const Toolbar = () => {
           text.hiddenTextarea.focus();
       } catch {}
       canvas.renderAll();
+      
+      // Відстежуємо додавання тексту
+      trackElementAdded('Text');
     }
   };
 
@@ -4458,6 +4712,12 @@ const Toolbar = () => {
   const addImage = () => {
     setIsIconMenuOpen(true);
   };
+
+  // Upload preview modal state
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [uploadMode, setUploadMode] = useState("raster"); // 'raster' | 'svg'
+  const [uploadDataURL, setUploadDataURL] = useState("");
+  const [uploadSvgText, setUploadSvgText] = useState("");
 
   // Додавання зображення через файловий діалог (для Upload кнопки)
   const addUploadImage = () => {
@@ -4477,13 +4737,13 @@ const Toolbar = () => {
       }
 
       // Перевіряємо розмір файлу (максимум 5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > 6 * 1024 * 1024) {
         alert("Файл занадто великий. Максимальний розмір: 5MB");
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = async (event) => {
+  const reader = new FileReader();
+  reader.onload = async (event) => {
         let addedOk = false; // track if we successfully added any object
         try {
           // Перевіряємо чи це SVG файл
@@ -4491,281 +4751,21 @@ const Toolbar = () => {
             file.type === "image/svg+xml" ||
             file.name.toLowerCase().endsWith(".svg")
           ) {
-            // Обробляємо SVG файл з застосуванням кольорів
-            let svgText = event.target.result;
-
-            // Застосовуємо поточні кольори до SVG
-            if (
-              globalColors.textColor &&
-              globalColors.textColor !== "transparent"
-            ) {
-              svgText = svgText
-                .replace(/fill="[^"]*"/g, `fill="${globalColors.textColor}"`)
-                .replace(
-                  /stroke="[^"]*"/g,
-                  `stroke="${globalColors.textColor}"`
-                );
-
-              // Додаємо стилі до SVG, якщо їх немає
-              if (!svgText.includes("fill=") && !svgText.includes("style=")) {
-                svgText = svgText.replace(
-                  /<svg([^>]*)>/,
-                  `<svg$1 fill="${globalColors.textColor}">`
-                );
-              }
-            }
-
-            try {
-              // Спробуємо завантажити як SVG об'єкт
-              const result = await fabric.loadSVGFromString(svgText);
-              let svgObject;
-              if (result.objects.length === 1) {
-                svgObject = result.objects[0];
-              } else {
-                svgObject = fabric.util.groupSVGElements(
-                  result.objects,
-                  result.options
-                );
-              }
-
-              // Застосовуємо кольори до SVG об'єктів
-              const applyColorsToObject = (obj) => {
-                if (obj.type === "group") {
-                  obj.forEachObject(applyColorsToObject);
-                } else {
-                  if (
-                    globalColors.textColor &&
-                    globalColors.textColor !== "transparent"
-                  ) {
-                    obj.set({
-                      fill: globalColors.textColor,
-                      stroke: globalColors.textColor,
-                    });
-                  }
-                }
-              };
-
-              applyColorsToObject(svgObject);
-
-              // Позначаємо, що цей об'єкт повинен слідувати кольору теми
-              try {
-                svgObject.set && svgObject.set({ useThemeColor: true });
-                if (
-                  svgObject.type === "group" &&
-                  typeof svgObject.forEachObject === "function"
-                ) {
-                  svgObject.forEachObject((child) => {
-                    try {
-                      child.set && child.set({ useThemeColor: true });
-                    } catch {}
-                  });
-                }
-              } catch {}
-
-              // Масштабуємо SVG, якщо воно занадто велике
-              const bounds = svgObject.getBoundingRect
-                ? svgObject.getBoundingRect()
-                : { width: 100, height: 100 };
-              const maxWidth = 300;
-              const maxHeight = 300;
-
-              if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const scale = Math.min(
-                  maxWidth / bounds.width,
-                  maxHeight / bounds.height
-                );
-                svgObject.scale(scale);
-              }
-
-              svgObject.set({
-                left: canvas.width / 2,
-                top: canvas.height / 2,
-                originX: "center",
-                originY: "center",
-                selectable: true,
-                hasControls: true,
-                hasBorders: true,
-              });
-
-              canvas.add(svgObject);
-              try {
-                if (typeof svgObject.setCoords === "function")
-                  svgObject.setCoords();
-              } catch {}
-              try {
-                canvas.setActiveObject(svgObject);
-              } catch {}
-              try {
-                canvas.requestRenderAll();
-              } catch {}
-              try {
-                requestAnimationFrame(() => {
-                  try {
-                    if (!canvas || !svgObject) return;
-                    canvas.setActiveObject(svgObject);
-                    if (typeof svgObject.setCoords === "function")
-                      svgObject.setCoords();
-                    canvas.requestRenderAll();
-                  } catch {}
-                });
-              } catch {}
-              addedOk = true;
-            } catch (svgError) {
-              console.warn(
-                "Не вдалося завантажити як SVG, спробуємо як зображення:",
-                svgError
-              );
-              // Якщо не вдалося завантажити як SVG, завантажуємо як звичайне зображення
-              const img = await fabric.FabricImage.fromURL(
-                event.target.result,
-                {
-                  crossOrigin: "anonymous",
-                }
-              );
-
-              const maxWidth = 300;
-              const maxHeight = 300;
-
-              if (img.width > maxWidth || img.height > maxHeight) {
-                const scale = Math.min(
-                  maxWidth / img.width,
-                  maxHeight / img.height
-                );
-                img.scale(scale);
-              }
-
-              img.set({
-                left: canvas.width / 2,
-                top: canvas.height / 2,
-                originX: "center",
-                originY: "center",
-                selectable: true,
-                hasControls: true,
-                hasBorders: true,
-              });
-
-              canvas.add(img);
-              try {
-                if (typeof img.setCoords === "function") img.setCoords();
-              } catch {}
-              try {
-                canvas.setActiveObject(img);
-              } catch {}
-              try {
-                canvas.requestRenderAll();
-              } catch {}
-              try {
-                requestAnimationFrame(() => {
-                  try {
-                    if (!canvas || !img) return;
-                    canvas.setActiveObject(img);
-                    if (typeof img.setCoords === "function") img.setCoords();
-                    canvas.requestRenderAll();
-                  } catch {}
-                });
-              } catch {}
-              addedOk = true;
-            }
+    // For preview flow: open modal with original SVG (no immediate add)
+    const raw = String(event.target.result || "");
+    setUploadMode("svg");
+    setUploadSvgText(raw);
+    setUploadDataURL("");
+    setIsUploadOpen(true);
+    return; // defer adding until confirm
           } else {
-            // Растрове зображення -> Векторизація в SVG і додавання на полотно
-            try {
-              const threshold = 120; // базове значення, можна винести у UI в майбутньому
-              const svgString = await vectorizeDataURLToSVG(
-                event.target.result,
-                {
-                  threshold,
-                  autoThreshold: true,
-                  autoInvert: true,
-                  // precision reductions (can tune later in UI)
-                  pathomit: 20,
-                  maxSize: 240,
-                  simplifyTolerance: 2.5,
-                  pointStep: 2,
-                  quantize: 1,
-                  roundDecimals: 0,
-                  // holes handling
-                  fillRule: "evenodd",
-                  combineToSinglePath: true,
-                  invert: undefined,
-                  scale: 2,
-                  fillColor: globalColors?.textColor || "#000",
-                }
-              );
-
-              const result = await fabric.loadSVGFromString(svgString);
-              const obj =
-                result.objects.length === 1
-                  ? result.objects[0]
-                  : fabric.util.groupSVGElements(
-                      result.objects,
-                      result.options
-                    );
-
-              // Об'єкт з векторизації також підв'язуємо до кольору теми
-              try {
-                obj.set && obj.set({ useThemeColor: true });
-                if (
-                  obj.type === "group" &&
-                  typeof obj.forEachObject === "function"
-                ) {
-                  obj.forEachObject((child) => {
-                    try {
-                      child.set && child.set({ useThemeColor: true });
-                    } catch {}
-                  });
-                }
-              } catch {}
-
-              // Центруємо і масштабуємо
-              const bounds = obj.getBoundingRect
-                ? obj.getBoundingRect()
-                : { width: 100, height: 100 };
-              const maxWidth = 300;
-              const maxHeight = 300;
-              if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const s = Math.min(
-                  maxWidth / bounds.width,
-                  maxHeight / bounds.height
-                );
-                obj.scale(s);
-              }
-
-              obj.set({
-                left: canvas.width / 2,
-                top: canvas.height / 2,
-                originX: "center",
-                originY: "center",
-                selectable: true,
-                hasControls: true,
-                hasBorders: true,
-              });
-
-              canvas.add(obj);
-              try {
-                if (typeof obj.setCoords === "function") obj.setCoords();
-              } catch {}
-              try {
-                canvas.setActiveObject(obj);
-              } catch {}
-              try {
-                canvas.requestRenderAll();
-              } catch {}
-              try {
-                requestAnimationFrame(() => {
-                  try {
-                    if (!canvas || !obj) return;
-                    canvas.setActiveObject(obj);
-                    if (typeof obj.setCoords === "function") obj.setCoords();
-                    canvas.requestRenderAll();
-                  } catch {}
-                });
-              } catch {}
-              addedOk = true;
-            } catch (vecErr) {
-              console.warn("Vectorization failed; skip adding raster:", vecErr);
-              // За новою логікою — нічого не додаємо, якщо не вдалося створити вектор
-              return;
-            }
+    // Raster: open modal with dataURL, preview will vectorize live
+    const raw = String(event.target.result || "");
+    setUploadMode("raster");
+    setUploadDataURL(raw);
+    setUploadSvgText("");
+    setIsUploadOpen(true);
+    return; // defer adding until confirm
           }
         } catch (error) {
           console.error("Помилка завантаження зображення:", error);
@@ -4998,6 +4998,9 @@ const Toolbar = () => {
     clearExistingHoles();
     setIsHolesSelected(false);
     setActiveHolesType(1);
+    
+    // Відстежуємо зміну отворів
+    trackHolesChange(1, holesDiameter);
   };
 
   // Допоміжна: видалити всі існуючі отвори (щоб одночасно був тільки один тип)
@@ -5863,6 +5866,9 @@ const Toolbar = () => {
 
       // Скидаємо отвори до No holes
       resetHolesToNone();
+      
+      // Відстежуємо зміну форми полотна
+      trackShapeChange("rectangle");
     }
   };
 
@@ -7407,6 +7413,75 @@ const Toolbar = () => {
             </span>
           </li> */}
         </ul>
+        {/* Upload preview modal */}
+        <UploadPreview
+          isOpen={isUploadOpen}
+          mode={uploadMode}
+          dataURL={uploadDataURL}
+          svgText={uploadSvgText}
+          themeColor={(globalColors && globalColors.textColor) || "#000"}
+          onClose={() => setIsUploadOpen(false)}
+          onConfirm={async ({ svg: finalSVG, strokeOnly }) => {
+            if (!canvas || !finalSVG) return;
+            try {
+              let themedSVG = String(finalSVG);
+              // Ensure theme color is applied
+              const theme = (globalColors && globalColors.textColor) || "#000";
+              try {
+                const doc = new DOMParser().parseFromString(themedSVG, "image/svg+xml");
+                // Apply theme color to all relevant elements; keep strokeOnly where indicated
+                doc.querySelectorAll("path,polygon,polyline,rect,circle,ellipse").forEach((el) => {
+                  if (strokeOnly) {
+                    el.setAttribute("fill", "transparent");
+                    el.setAttribute("stroke", theme);
+                    if (!el.getAttribute("stroke-width")) el.setAttribute("stroke-width", "1");
+                  } else {
+                    el.setAttribute("fill", theme);
+                    el.setAttribute("stroke", theme);
+                  }
+                });
+                themedSVG = new XMLSerializer().serializeToString(doc);
+              } catch {}
+
+              const result = await fabric.loadSVGFromString(themedSVG);
+              const obj =
+                result.objects.length === 1
+                  ? result.objects[0]
+                  : fabric.util.groupSVGElements(result.objects, result.options);
+
+              // Tag to theme if needed
+              try {
+                obj.set && obj.set({ useThemeColor: true });
+                if (obj.type === "group" && typeof obj.forEachObject === "function") {
+                  obj.forEachObject((child) => child.set && child.set({ useThemeColor: true }));
+                }
+              } catch {}
+
+              // Center and scale
+              const bounds = obj.getBoundingRect ? obj.getBoundingRect() : { width: 100, height: 100 };
+              const maxWidth = 300, maxHeight = 300;
+              if (bounds.width > maxWidth || bounds.height > maxHeight) {
+                const s = Math.min(maxWidth / bounds.width, maxHeight / bounds.height);
+                obj.scale(s);
+              }
+              obj.set({
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                originX: "center",
+                originY: "center",
+                selectable: true,
+                hasControls: true,
+                hasBorders: true,
+              });
+              canvas.add(obj);
+              try { obj.setCoords && obj.setCoords(); } catch {}
+              try { canvas.setActiveObject(obj); } catch {}
+              try { canvas.requestRenderAll(); } catch {}
+            } finally {
+              setIsUploadOpen(false);
+            }
+          }}
+        />
       </div>
       {/* 6. Holes */}
       <div className={`${styles.section} ${styles.colorSection}`}>
@@ -7566,7 +7641,7 @@ const Toolbar = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,image/svg+xml,.svg"
         onChange={handleUpload}
         style={{ display: "none" }}
       />

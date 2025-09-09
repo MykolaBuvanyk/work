@@ -9,7 +9,12 @@ import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
 
 const TopToolbar = ({ className }) => {
-  const { undo, redo, canUndo, canRedo } = useUndoRedo();
+  const { 
+    undo, 
+    redo, 
+    canUndo, 
+    canRedo
+  } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
   const { canvas } = useCanvasContext();
   const [zoom, setZoom] = useState(100); // legacy fabric zoom (kept for compatibility)

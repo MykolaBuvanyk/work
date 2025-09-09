@@ -35,6 +35,8 @@ export function vectorizeDataURLToSVG(dataURL, opts = {}) {
   invert: false, // invert mask (treat light as foreground)
   autoThreshold: true, // use Otsu if true
   autoInvert: true, // detect dark border -> invert so shapes become black
+  // Pre-processing
+  brightness: 0, // -255..255 shift in grayscale before threshold
   // Complexity guards
   maxContours: 200,
   maxPointsPerContour: 2000,
@@ -68,6 +70,8 @@ export function vectorizeDataURLToSVG(dataURL, opts = {}) {
           threshold: options.threshold,
           autoThreshold: options.autoThreshold !== false,
           autoInvert: options.autoInvert !== false,
+          invert: typeof options.invert === 'boolean' ? options.invert : undefined,
+          brightness: options.brightness || 0,
         });
         ctx.putImageData(imageData, 0, 0);
 
@@ -598,13 +602,15 @@ function binarizeImageData(imageData, cfg) {
   let threshold = typeof cfg.threshold === 'number' ? cfg.threshold : undefined;
   if (threshold === undefined && cfg.autoThreshold) threshold = otsuThreshold(data);
   if (threshold === undefined) threshold = 120;
-  let invert = false;
-  if (cfg.autoInvert) {
+  let invert = !!cfg.invert;
+  if (cfg.invert === undefined && cfg.autoInvert) {
     const borderMean = borderMeanGray(data, width, height);
     if (borderMean < threshold) invert = true;
   }
+  const bright = Math.max(-255, Math.min(255, Math.round(cfg.brightness || 0)));
   for (let i = 0; i < data.length; i += 4) {
-    const g = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    let g = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+    g = Math.max(0, Math.min(255, g + bright));
     const isDark = invert ? g >= threshold : g < threshold;
     const v = isDark ? 0 : 255; // 0 = black (foreground), 255 = white
     data[i] = data[i + 1] = data[i + 2] = v;

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import * as fabric from "fabric";
 import JsBarcode from "jsbarcode";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
+import { useCanvasPropertiesTracker } from "../../hooks/useCanvasPropertiesTracker";
 import styles from "./Canvas.module.css";
 
 // Відступи в межах viewport
@@ -29,6 +31,16 @@ const Canvas = () => {
   const viewportRef = useRef(null);
   const designRef = useRef(DEFAULT_DESIGN);
   const { setCanvas, setActiveObject, setShapePropertiesOpen, isCustomShapeMode, globalColors, canvas } = useCanvasContext();
+  
+  // Undo/Redo функціонал
+  const { saveCanvasPropertiesState } = useUndoRedo(canvas);
+  
+  // Відстеження змін властивостей полотна
+  const { trackCanvasResize, trackViewportChange } = useCanvasPropertiesTracker(
+    canvas, 
+    globalColors, 
+    saveCanvasPropertiesState
+  );
 
   // Local UI state for labels and CSS box
   const [displayWidth, setDisplayWidth] = useState(DEFAULT_DESIGN.width);
@@ -434,6 +446,12 @@ const Canvas = () => {
       scaleRef.current = scaleToFit;
       fCanvas.calcOffset();
       fCanvas.renderAll();
+      
+      // Відстежуємо зміну viewport
+      if (trackViewportChange) {
+        trackViewportChange(`Canvas resized to viewport (scale: ${Math.round(scaleToFit * 100)}%)`);
+      }
+      
       try {
         fCanvas.fire("display:scale", { scale: scaleToFit });
       } catch {}
@@ -504,6 +522,12 @@ const Canvas = () => {
       scaleRef.current = factor;
       fCanvas.calcOffset();
       fCanvas.renderAll();
+      
+      // Відстежуємо зміну viewport
+      if (trackViewportChange) {
+        trackViewportChange(`Display scale changed to ${clamped}%`);
+      }
+      
       try {
         fCanvas.fire("display:scale", { scale: factor });
       } catch {}
@@ -521,11 +545,19 @@ const Canvas = () => {
         typeof nextW === "number" &&
         typeof nextH === "number"
       ) {
+        const prevW = designRef.current.width;
+        const prevH = designRef.current.height;
+        
         designRef.current = { width: nextW, height: nextH };
         resizingRef.current = true;
         try {
           // Run synchronously so labels (width/height) reflect new size immediately
           resizeToViewport();
+          
+          // Відстежуємо зміну розміру полотна
+          if (trackCanvasResize && (nextW !== prevW || nextH !== prevH)) {
+            trackCanvasResize(nextW, nextH);
+          }
         } finally {
           resizingRef.current = false;
         }
@@ -1440,15 +1472,13 @@ const Canvas = () => {
             shapePath = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>`;
           }
         } else if (cp && cp.type === "polygon" && Array.isArray(cp.points)) {
-          // For polygon shapes (e.g., adaptive triangle clipped variant),
-          // use absolute design coordinates scaled to CSS. Do NOT add cp.left/cp.top
-          // because Fabric may shift them when corner radius changes.
+          // Без змін координат: масштабуємо тільки канву в CSS (s)
           const pts = cp.points
             .map((p) => `${p.x * s},${p.y * s}`)
             .join(" ");
           shapePath = `<polygon points="${pts}"/>`;
         } else if (cp && typeof cp.toSVG === "function") {
-          // For path shapes, scale by s and anchor at 0,0 to avoid shifts
+          // Без змін координат: лише масштаб по осях, без переносу
           try {
             const svg = cp.toSVG();
             const m = svg && svg.match(/ d=\"([^\"]+)\"/);
@@ -1484,14 +1514,18 @@ const Canvas = () => {
           shadowHost.innerHTML = svgHeader + filter + shadowBody + "</svg>";
         }
         if (outlineHost) {
-          // Fixed visual 2px in CSS pixels
-          const strokeLocal = 2; // CSS px
+          // Use constant 2 CSS px stroke like rectangle branch for uniform visual thickness
+          const strokeLocal = 2;
           const strokeColor = "#000000";
-          const pad = strokeLocal / 2; // expand host by half the stroke
-          const outlineSvgHeader = `<svg width="${cssWpx + strokeLocal}" height="${cssHpx + strokeLocal}" viewBox="0 0 ${cssWpx + strokeLocal} ${cssHpx + strokeLocal}" xmlns="http://www.w3.org/2000/svg" style="overflow: visible; shape-rendering: geometricPrecision;">`;
+          const pad = strokeLocal / 2;
+          const outW = cssWpx + strokeLocal;
+          const outH = cssHpx + strokeLocal;
+          const outlineSvgHeader = `<svg width="${outW}" height="${outH}" viewBox="0 0 ${outW} ${outH}" xmlns="http://www.w3.org/2000/svg" style="overflow: visible; shape-rendering: geometricPrecision;">`;
+          // Apply vector-effect directly on shape (important for <path> with transform)
+          const shapePathVE = shapePath.replace(/\/>$/, ' vector-effect="non-scaling-stroke"/>');
           const outlineBody = `
-            <g fill="none" stroke="${strokeColor}" stroke-width="${strokeLocal}" vector-effect="non-scaling-stroke" transform="translate(${pad}, ${pad})">
-              ${shapePath}
+            <g fill="none" stroke="${strokeColor}" stroke-width="${strokeLocal}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" transform="translate(${pad}, ${pad})">
+              ${shapePathVE}
             </g>`;
           outlineHost.innerHTML = outlineSvgHeader + outlineBody + "</svg>";
         }

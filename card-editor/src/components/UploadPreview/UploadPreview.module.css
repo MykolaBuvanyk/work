@@ -1,0 +1,108 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.modal {
+  width: 860px;
+  max-width: 95vw;
+  max-height: 91vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.headerWrapper {
+  position: relative;
+  text-align: center;
+  font-size: 16px;
+  color: rgba(0,108,164,1);
+  margin-bottom: 8px;
+}
+.headerWrapperText { display:flex; justify-content:center; align-items:center; }
+.para { font-weight:700; color: rgba(0,108,164,1); text-decoration: underline; margin: 0; }
+.closeBtn { cursor: pointer; position: absolute; top: -10px; right: -10px; }
+.controls { display: grid; gap: 8px; margin-bottom: 10px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row label { min-width: 80px; font-size: 13px; }
+.val { min-width: 32px; text-align: right; font-weight: 600; }
+.check { display: flex; align-items: center; gap: 6px; }
+.previewWrap { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.previewCol { display: grid; grid-template-rows: auto 1fr; gap: 6px; }
+.previewTitle { font-weight: 600; }
+.previewBox {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fafafa;
+  height: clamp(260px, 50vh, 460px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.previewBox img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.svgBox { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.svgBox svg { max-width: 100% !important; max-height: 100% !important; width: auto !important; height: auto !important; }
+.placeholder { color: #777; font-style: italic; }
+.footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.primary {
+  background: rgba(0, 108, 164, 1);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.secondary {
+  background: #e8e8e8;
+  color: #000;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.primary:disabled { opacity: 0.6; cursor: default; }
+
+/* Toggle switch */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.toggleTrack {
+  width: 44px;
+  height: 24px;
+  background: #cfcfcf;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.15s ease-in-out;
+}
+.toggleThumb {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.15s ease-in-out;
+}
+.toggle.on .toggleTrack { background: rgba(0, 108, 164, 1); }
+.toggle.on .toggleThumb { transform: translateX(20px); border-color: rgba(0, 108, 164, 1); }
+.toggleLabel { font-size: 12px; color: #333; min-width: 28px; text-align: left; }
+/* Remove default focus/active outlines on toggle button */
+.toggle:focus,
+.toggle:focus-visible,
+.toggle:active { outline: none; box-shadow: none; }
+.toggle::-moz-focus-inner { border: 0; }

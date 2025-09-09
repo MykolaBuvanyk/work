@@ -123,6 +123,17 @@ input[type="checkbox"] {
   /* Вимикаємо нативні стрілки у number */
   -moz-appearance: textfield;
 }
+
+.cornerRadiusDisabled input,
+.cornerRadiusDisabled label {
+  opacity: 0.5;
+}
+.cornerRadiusDisabled input {
+  cursor: not-allowed;
+}
+.cornerRadiusDisabled .arrows i {
+  pointer-events: none;
+}
 .inputGroup input::-webkit-inner-spin-button,
 .inputGroup input::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -359,4 +370,36 @@ input[type="number"]:focus {
 }
 .uploadActions button:hover {
   background: rgba(0, 108, 164, 0.85);
+}
+.customShapeOverlay {
+  position: absolute; /* скроллиться разом із вмістом сторінки */
+  left: 0;
+  top: 0;
+  width: 0; /* не займає місця; хендли позиціонуються напряму */
+  height: 0;
+  pointer-events: none;
+  z-index: 3000;
+}
+.customShapeHandle {
+  position: absolute;
+  background: #fff;
+  border: 2px solid #ff7a00;
+  border-radius: 50%;
+  box-sizing: border-box;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s, transform 0.15s;
+}
+.customShapeHandle:hover {
+  background: #ffe2cc;
+  transform: scale(1.05);
+}
+.customShapeHandle:active {
+  background: #ffc899;
+  transform: scale(0.95);
+}
+
+.activeCustomIcon svg * {
+  stroke: #006ca4 !important;
+  fill: none;
 }

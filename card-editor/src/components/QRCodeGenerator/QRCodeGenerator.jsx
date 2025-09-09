@@ -150,9 +150,8 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
 
       // Фон
-      const bgColor = globalColors?.backgroundColor || "#FFFFFF";
       const fgColor = globalColors?.textColor || "#000000";
-      svg += `<rect width="${size}" height="${size}" fill="${bgColor}"/>`;
+      // Прозорий фон: не додаємо rect з фоном
 
       // Модулі QR коду - використовуємо один великий path для всіх чорних квадратів
       let pathData = "";

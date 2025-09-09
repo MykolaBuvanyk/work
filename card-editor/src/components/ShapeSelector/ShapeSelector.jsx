@@ -71,6 +71,9 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     // Закриваємо модалку одразу після вибору фігури
     if (typeof onClose === "function") onClose();
 
+    // Custom shape більше не підтримується (залишається лише іконка)
+    if (shapeType === "customShape") return; // нічого не робимо
+
     const canvasW =
       typeof canvas.getWidth === "function"
         ? canvas.getWidth()
@@ -248,12 +251,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = createPath("M30 45H1V1H31L42 23L30 45Z", baseOptions);
         break;
 
-      case "customShape":
-        shape = createPath(
-          "M1 16V48L17 43L38 52L53 43V16H38L21 2L1 16Z",
-          baseOptions
-        );
-        break;
+      // customShape видалено (логіка вимкнена)
 
       case "line":
         shape = createPath("M0 0L100 0", {

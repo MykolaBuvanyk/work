@@ -4,62 +4,27 @@ import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./SaveAsModal.module.css";
+import { getAllProjects, formatDate } from "../../utils/projectStorage";
 
-const projects = [
-  {
-    id: 1,
-    name: "Water Des Sol 01",
-    date: "07 - 07 - 2025",
-    images: [
-      "../src/assets/images/image.png",
-      "../src/assets/images/image2.png",
-      "../src/assets/images/image3.png",
-      "../src/assets/images/image.png",
-    ],
-  },
-  {
-    id: 2,
-    name: "Water Des Sol 02",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-  {
-    id: 3,
-    name: "Water Des Sol 03",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-  {
-    id: 4,
-    name: "Water Des Sol 04",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-  {
-    id: 5,
-    name: "Water Des Sol 05",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-  {
-    id: 6,
-    name: "Water Des Sol 06",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-  {
-    id: 7,
-    name: "Water Des Sol 07",
-    date: "07 - 07 - 2025",
-    images: ["../src/assets/images/image.png"],
-  },
-];
-
-const SaveAsModal = ({ onClose }) => {
+const SaveAsModal = ({ onClose, onSaveAs }) => {
   const [activeTab, setActiveTab] = useState("saved");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3; // по 3 записи на сторінку
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
+  const [projects, setProjects] = useState([]);
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    getAllProjects().then((list) => {
+      const mapped = (list || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        date: formatDate(p.updatedAt || p.createdAt),
+        images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
+      }));
+      setProjects(mapped);
+    }).catch(() => {});
+  }, []);
 
   // 3. Ініціалізація слайдерів для кожного проекту
   useEffect(() => {
@@ -107,7 +72,7 @@ const SaveAsModal = ({ onClose }) => {
     return project.images.length > 3;
   };
   // Вираховуємо кількість сторінок
-  const totalPages = Math.ceil(projects.length / itemsPerPage);
+  const totalPages = Math.ceil(projects.length / itemsPerPage || 1);
 
   // Формуємо масив діапазонів для пагінації
   const ranges = [];
@@ -126,7 +91,7 @@ const SaveAsModal = ({ onClose }) => {
         <div className={styles.headerWrapperText}>
           <p className={styles.para}>Save Project as</p>
           <p className={styles.name}>(Name)</p>
-          <span>Water Des Sol 01</span>
+          <input className={styles.inputName} value={name} onChange={(e)=>setName(e.target.value)} placeholder="Project name" />
         </div>
         <svg
           onClick={onClose}
@@ -153,7 +118,7 @@ const SaveAsModal = ({ onClose }) => {
         </svg>
       </div>
       <div className={styles.buttonsWrapper}>
-        <button>
+        <button onClick={()=> onSaveAs && onSaveAs(name)}>
           <svg
             width="24"
             height="24"
@@ -179,7 +144,7 @@ const SaveAsModal = ({ onClose }) => {
           </svg>
           Save
         </button>
-        <button>
+        <button onClick={onClose}>
           <svg
             width="24"
             height="24"

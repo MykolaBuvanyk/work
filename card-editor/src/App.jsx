@@ -2,6 +2,7 @@ import { CanvasProvider } from "./contexts/CanvasContext";
 import Canvas from "./components/Canvas/Canvas";
 import Toolbar from "./components/Toolbar/Toolbar";
 import TextList from "./components/TextList/TextList";
+import ProjectCanvasesGrid from "./components/ProjectCanvasesGrid/ProjectCanvasesGrid";
 import IconMenu from "./components/IconMenu/IconMenu";
 import TopToolbar from "./components/TopToolbar/TopToolbar";
 import Accessories from "./components/Accessories/Accessories";
@@ -28,6 +29,7 @@ function App() {
             <TopToolbar className="topToolbar" />
             <Canvas className="canvas" />
             <TextList />
+            <ProjectCanvasesGrid />
           </div>
         </div>
       </div>

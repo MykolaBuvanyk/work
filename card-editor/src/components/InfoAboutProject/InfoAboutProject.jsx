@@ -2,12 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import styles from "./InfoAboutProject.module.css";
+import { getAllProjects } from "../../utils/projectStorage";
 
 const InfoAboutProject = () => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    getAllProjects().then((list)=> setCount((list||[]).length)).catch(()=>{});
+  }, []);
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
-        <h3 className={styles.title}>Projects: 10</h3>
+        <h3 className={styles.title}>Projects: {count}</h3>
         <button className={styles.cartButton}>
           <svg
             width="22"

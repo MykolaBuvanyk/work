@@ -20,6 +20,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toolbarItem:hover {
+  background-color: rgba(0,0,0,0.08);
+  border-radius: 6px;
+}
+
+.toolbarItem:active {
+  background-color: rgba(0,0,0,0.15);
 }
 
 .title {

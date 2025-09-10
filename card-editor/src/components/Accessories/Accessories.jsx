@@ -1,14 +1,72 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
+import { exportCanvas, addCanvasSnapshotToCurrentProject, deleteCanvasFromCurrentProject, getProject } from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 
 const TopToolbar = ({ className }) => {
+  const { canvas } = useCanvasContext();
+  const [working, setWorking] = useState(false);
+
+  // Helper: create a blank Fabric canvas state (same size as current) without objects
+  const buildBlankSnapshot = () => {
+    if (!canvas) return null;
+    const width = canvas.getWidth?.() || 0;
+    const height = canvas.getHeight?.() || 0;
+    const tmp = { json: { objects: [], version: canvas.version || fabric.version }, preview: "", width, height };
+    return tmp;
+  };
+
+  const handleNewSign = async () => {
+    if (working) return; setWorking(true);
+    try {
+      const blank = buildBlankSnapshot();
+      if (!blank) return;
+      await addCanvasSnapshotToCurrentProject(blank, { setAsCurrent: true });
+      // Clear current fabric canvas visually
+      if (canvas) {
+        canvas.__suspendUndoRedo = true;
+        canvas.clear();
+        canvas.setWidth(blank.width);
+        canvas.setHeight(blank.height);
+        canvas.renderAll();
+        canvas.__suspendUndoRedo = false;
+      }
+    } catch (e) {
+      console.error("New Sign failed", e);
+    } finally { setWorking(false); }
+  };
+
+  const handleDeleteSign = async () => {
+    if (working) return; setWorking(true);
+    try {
+      let currentCanvasId = null; let currentProjectId = null;
+      try { currentCanvasId = localStorage.getItem("currentCanvasId"); currentProjectId = localStorage.getItem("currentProjectId"); } catch {}
+      if (!currentCanvasId || !currentProjectId) { setWorking(false); return; }
+      await deleteCanvasFromCurrentProject(currentCanvasId);
+      // Decide next canvas to load (first in list) or blank if none
+      const project = await getProject(currentProjectId);
+      const next = project?.canvases?.[0];
+      if (next) {
+        try { localStorage.setItem("currentCanvasId", next.id); } catch {}
+        if (canvas && next.json) {
+          canvas.__suspendUndoRedo = true;
+          canvas.loadFromJSON(next.json, () => { canvas.renderAll(); canvas.__suspendUndoRedo = false; });
+        }
+      } else {
+        // No canvases left: clear canvas and remove currentCanvasId
+        try { localStorage.removeItem("currentCanvasId"); } catch {}
+        if (canvas) { canvas.clear(); canvas.renderAll(); }
+      }
+    } catch (e) {
+      console.error("Delete Sign failed", e);
+    } finally { setWorking(false); }
+  };
   return (
     <div className={`${styles.accessories} ${className}`}>
       <div className={styles.firstPart}>
         <ul className={styles.toolbarList}>
-          <li className={styles.toolbarItem}>
+          <li className={styles.toolbarItem} onClick={handleNewSign} title="Create new canvas (sign)">
             <svg
               width="24"
               height="24"
@@ -31,7 +89,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             New Sign
           </li>
-          <li className={styles.toolbarItem}>
+          <li className={styles.toolbarItem} onClick={handleDeleteSign} title="Delete current canvas (sign)">
             <svg
               width="24"
               height="24"

@@ -7,6 +7,7 @@ import styles from "./TopToolbar.module.css";
 import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
+import { saveCurrentProject, saveNewProject } from "../../utils/projectStorage";
 
 const TopToolbar = ({ className }) => {
   const { 
@@ -22,6 +23,19 @@ const TopToolbar = ({ className }) => {
   const [zoomInput, setZoomInput] = useState("100"); // editable input string
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!canvas || isSaving) return;
+    setIsSaving(true);
+    try {
+      await saveCurrentProject(canvas);
+    } catch (e) {
+      console.error("Save failed", e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDelete = () => {
     if (!canvas) return;
@@ -335,7 +349,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Preview
           </div>
-          <div className={styles.topToolbarEL}>
+          <div className={styles.topToolbarEL} onClick={handleSave} style={{cursor:"pointer", opacity: isSaving? 0.6: 1}}>
             <svg
               width="20"
               height="20"
@@ -408,7 +422,7 @@ const TopToolbar = ({ className }) => {
                 stroke-width="1.5"
               />
             </svg>
-            Save Project
+            {isSaving ? "Saving..." : "Save Project"}
           </div>
           <div
             className={styles.topToolbarEL}
@@ -553,7 +567,9 @@ const TopToolbar = ({ className }) => {
       </div>
       {/* Додати модалку */}
       {isSaveAsModalOpen && (
-        <SaveAsModal onClose={() => setSaveAsModalOpen(false)} />
+        <SaveAsModal onClose={() => setSaveAsModalOpen(false)} onSaveAs={async (name) => {
+          try { await saveNewProject(name, canvas); } catch(e){ console.error(e);} finally { setSaveAsModalOpen(false); }
+        }} />
       )}
       {isPreviewOpen && (
         <PreviewModal canvas={canvas} onClose={() => setPreviewOpen(false)} />

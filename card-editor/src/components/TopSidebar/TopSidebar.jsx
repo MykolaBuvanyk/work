@@ -6,16 +6,31 @@ import * as fabric from "fabric";
 import styles from "./TopSidebar.module.css";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
+import SaveAsModal from "../SaveAsModal/SaveAsModal";
+import { saveNewProject } from "../../utils/projectStorage";
 
 const TopSidebar = () => {
+  const { canvas } = useCanvasContext();
   const [isProjectsModalOpen, setProjectsModalOpen] = useState(false);
   const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
+  const [isSaveAsOpen, setSaveAsOpen] = useState(false);
+
+  const beginNewProjectFlow = () => setNewProjectModalOpen(true);
+
+  const handleSaveAs = async (name) => {
+    if (!canvas) { setSaveAsOpen(false); return; }
+    try {
+      await saveNewProject(name, canvas);
+    } catch (e) { console.error("Save As failed", e); }
+    setSaveAsOpen(false);
+  };
+
   return (
     <div className={styles.topSidebar}>
       <div className={styles.buttonWrapper}>
         <button
           className={styles.button}
-          onClick={() => setNewProjectModalOpen(true)}
+          onClick={beginNewProjectFlow}
         >
           <svg
             width="24"
@@ -58,7 +73,16 @@ const TopSidebar = () => {
         <YourProjectsModal onClose={() => setProjectsModalOpen(false)} />
       )}
       {isNewProjectModalOpen && (
-        <NewProjectsModal onClose={() => setNewProjectModalOpen(false)} />
+        <NewProjectsModal
+          onClose={() => setNewProjectModalOpen(false)}
+          onRequestSaveAs={() => { setNewProjectModalOpen(false); setSaveAsOpen(true); }}
+        />
+      )}
+      {isSaveAsOpen && (
+        <SaveAsModal
+          onClose={() => setSaveAsOpen(false)}
+          onSaveAs={handleSaveAs}
+        />
       )}
     </div>
   );

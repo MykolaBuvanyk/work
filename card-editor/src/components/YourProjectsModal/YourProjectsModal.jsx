@@ -4,56 +4,8 @@ import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./YourProjectsModal.module.css";
+import { getAllProjects, deleteProject, formatDate, getProject } from "../../utils/projectStorage";
 
-  const projects = [
-    {
-      id: 1,
-      name: "Water Des Sol 01",
-      date: "07 - 07 - 2025",
-      images: [
-        "../src/assets/images/image.png",
-        "../src/assets/images/image2.png",
-        "../src/assets/images/image3.png",
-        "../src/assets/images/image.png",
-      ],
-    },
-    {
-      id: 2,
-      name: "Water Des Sol 02",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-    {
-      id: 3,
-      name: "Water Des Sol 03",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-    {
-      id: 4,
-      name: "Water Des Sol 04",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-    {
-      id: 5,
-      name: "Water Des Sol 05",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-    {
-      id: 6,
-      name: "Water Des Sol 06",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-    {
-      id: 7,
-      name: "Water Des Sol 07",
-      date: "07 - 07 - 2025",
-      images: ["../src/assets/images/image.png"],
-    },
-  ];
 
 
 const YourProjectsModal = ({ onClose }) => {
@@ -61,6 +13,21 @@ const YourProjectsModal = ({ onClose }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3; // по 3 записи на сторінку
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    getAllProjects()
+      .then((list) => {
+        const mapped = (list || []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          date: formatDate(p.updatedAt || p.createdAt),
+          images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
+        }));
+        setProjects(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   // 3. Ініціалізація слайдерів для кожного проекту
   useEffect(() => {
@@ -108,7 +75,7 @@ const YourProjectsModal = ({ onClose }) => {
     return project.images.length > 3;
   };
   // Вираховуємо кількість сторінок
-  const totalPages = Math.ceil(projects.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil((projects?.length || 0) / itemsPerPage));
 
   // Формуємо масив діапазонів для пагінації
   const ranges = [];
@@ -121,6 +88,48 @@ const YourProjectsModal = ({ onClose }) => {
   // Поточні дані для відображення
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentProjects = projects.slice(startIndex, startIndex + itemsPerPage);
+
+  const { canvas } = useCanvasContext();
+
+  const handleDelete = async (id) => {
+    try { await deleteProject(id); } catch {}
+    try {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+    } catch {}
+  };
+
+  const handleEdit = async (id) => {
+    try {
+      const project = await getProject(id);
+      if (!project) return;
+      try {
+        localStorage.setItem("currentProjectId", project.id);
+        localStorage.setItem("currentProjectName", project.name || "");
+      } catch {}
+      const first = project.canvases && project.canvases[0];
+      if (first) {
+        try { localStorage.setItem("currentCanvasId", first.id); } catch {}
+        if (canvas && first.json && typeof canvas.loadFromJSON === "function") {
+          canvas.__suspendUndoRedo = true;
+          canvas.loadFromJSON(first.json, () => {
+            try { canvas.renderAll(); } catch {}
+            canvas.__suspendUndoRedo = false;
+          });
+        }
+      } else if (canvas) {
+        // Empty project - clear current canvas
+        canvas.clear();
+        canvas.renderAll();
+        try { localStorage.removeItem("currentCanvasId"); } catch {}
+      }
+      try {
+        window.dispatchEvent(new CustomEvent("project:switched", { detail: { projectId: project.id } }));
+      } catch {}
+      onClose && onClose();
+    } catch (e) {
+      console.error("Failed to open project", e);
+    }
+  };
   return (
     <div className={styles.yourProjectsModal}>
       <div className={styles.headerWrapper}>
@@ -260,7 +269,7 @@ const YourProjectsModal = ({ onClose }) => {
                   </td>
                   <td>
                     <ul className={styles.actionList}>
-                      <li>
+                      <li onClick={() => handleEdit(project.id)} style={{cursor:"pointer"}}>
                         <svg
                           width="20"
                           height="20"
@@ -299,7 +308,7 @@ const YourProjectsModal = ({ onClose }) => {
                         </svg>
                         Edit
                       </li>
-                      <li>
+                      <li onClick={() => handleDelete(project.id)} style={{cursor:"pointer"}}>
                         <svg
                           width="20"
                           height="20"

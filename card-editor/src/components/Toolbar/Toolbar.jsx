@@ -2041,32 +2041,41 @@ const Toolbar = () => {
           break;
 
         case "circle":
-      // --- Normalize clipPath to avoid 1px transparent contour seams ---
-      if (newClipPath) {
-        // Remove any accidental stroke that could create an inner gap
-        newClipPath.set({ stroke: null, strokeWidth: 0 });
-        // Для всіх, крім прямокутника, жорстко якіруємо до (0,0) лівий верх
-        if (newClipPath.type !== "rect") {
-          newClipPath.set({ originX: "left", originY: "top", left: 0, top: 0 });
-          // Обнулити pathOffset (важливо для path), щоб уникнути зсувів на малих розмірах
-          try {
-            if (newClipPath.type === "path") {
-              newClipPath.pathOffset = new fabric.Point(0, 0);
+          // --- Normalize clipPath to avoid 1px transparent contour seams ---
+          if (newClipPath) {
+            // Remove any accidental stroke that could create an inner gap
+            newClipPath.set({ stroke: null, strokeWidth: 0 });
+            // Для всіх, крім прямокутника, жорстко якіруємо до (0,0) лівий верх
+            if (newClipPath.type !== "rect") {
+              newClipPath.set({
+                originX: "left",
+                originY: "top",
+                left: 0,
+                top: 0,
+              });
+              // Обнулити pathOffset (важливо для path), щоб уникнути зсувів на малих розмірах
+              try {
+                if (newClipPath.type === "path") {
+                  newClipPath.pathOffset = new fabric.Point(0, 0);
+                }
+              } catch {}
+            } else {
+              // Для прямокутника зберігаємо -0.5 інфляцію і не округлюємо
             }
-          } catch {}
-        } else {
-          // Для прямокутника зберігаємо -0.5 інфляцію і не округлюємо
-        }
-        // For centered shapes, make sure radius-based ones fully cover area (slight +0.5 expansion if needed)
-        if (newClipPath.type === "circle" || newClipPath.type === "ellipse") {
-          // Expand by 0.25 to counteract anti-alias shrink
-          if (typeof newClipPath.radius === "number") newClipPath.radius += 0.25;
-          if (typeof newClipPath.rx === "number") newClipPath.rx += 0.25;
-          if (typeof newClipPath.ry === "number") newClipPath.ry += 0.25;
-        }
-        // Disable caching for crisper edge blending with background
-        newClipPath.set({ objectCaching: false });
-      }
+            // For centered shapes, make sure radius-based ones fully cover area (slight +0.5 expansion if needed)
+            if (
+              newClipPath.type === "circle" ||
+              newClipPath.type === "ellipse"
+            ) {
+              // Expand by 0.25 to counteract anti-alias shrink
+              if (typeof newClipPath.radius === "number")
+                newClipPath.radius += 0.25;
+              if (typeof newClipPath.rx === "number") newClipPath.rx += 0.25;
+              if (typeof newClipPath.ry === "number") newClipPath.ry += 0.25;
+            }
+            // Disable caching for crisper edge blending with background
+            newClipPath.set({ objectCaching: false });
+          }
 
         case "circleWithLine":
         case "circleWithCross":
@@ -2873,31 +2882,42 @@ const Toolbar = () => {
         }
         canvas.renderAll();
       } else if (currentShapeType === "circleWithCross") {
-        const diameterPx = canvas.width;
+        const canvasW = canvas.width;
+        const canvasH = canvas.height;
+        const centerX = canvasW / 2;
+        const diameterMm = pxToMm(canvasW);
+        // Лінії «Т» — перебудова
         const hLine = canvas
           .getObjects()
           .find((o) => o.isCircleWithCrossHorizontalLine);
-        if (hLine) {
-          const lineWidthMm = pxToMm(diameterPx) * 0.65;
-          hLine.set({
-            width: mmToPx(lineWidthMm),
-            left: diameterPx / 2,
-            top: canvas.height / 2,
-          });
-          hLine.setCoords();
-        }
         const vLine = canvas
           .getObjects()
           .find((o) => o.isCircleWithCrossVerticalLine);
+        const lineWidthMm = diameterMm * 0.65;
+        const lineThicknessMm = thickness;
+        const lineThicknessPx = mmToPx(lineThicknessMm);
+        const lineWidthPx = mmToPx(lineWidthMm);
+        const paddingPx = mmToPx(0.5); // зменшений відступ для ближчого розташування до лінії
+        const hTop = canvasH / 2 - lineThicknessPx / 2;
+        const hBottom = canvasH / 2 + lineThicknessPx / 2;
+        const vLeft = centerX - lineThicknessPx / 2;
+        const vRight = centerX + lineThicknessPx / 2;
+
+        if (hLine) {
+          hLine.set({ width: lineWidthPx, left: centerX, top: canvasH / 2 });
+          hLine.setCoords();
+        }
         if (vLine) {
-          const vHeightMm = pxToMm(diameterPx) * 0.33;
+          const vHeightMm = diameterMm * 0.33;
           vLine.set({
             height: mmToPx(vHeightMm),
-            left: diameterPx / 2,
-            top: canvas.height / 2,
+            left: centerX,
+            top: canvasH / 2,
           });
           vLine.setCoords();
         }
+
+        // Тексти — детермінована прив'язка до «Т» і меж круга
         const topText = canvas
           .getObjects()
           .find((o) => o.isCircleWithCrossTopText);
@@ -2907,24 +2927,57 @@ const Toolbar = () => {
         const brText = canvas
           .getObjects()
           .find((o) => o.isCircleWithCrossBottomRightText);
-        const radiusMm = pxToMm(diameterPx) / 2;
-        const lineThicknessMm = thickness;
-        const gapMm = (radiusMm - lineThicknessMm / 2) / 3;
-        const centerY = canvas.height / 2;
+
         if (topText) {
-          topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
+          topText.set({
+            left: centerX,
+            originX: "center",
+            textAlign: "center",
+            width: Math.max(20, lineWidthPx - paddingPx * 2),
+            fontSize: Math.max(topText.fontSize || 0, mmToPx(5)),
+          });
+          topText.initDimensions && topText.initDimensions();
+          const topH = topText.height || 0;
+          const desiredTop = Math.max(0, hTop - paddingPx - topH / 2);
+          topText.set({ top: desiredTop });
           topText.setCoords();
         }
-        const bottomY = centerY + mmToPx(gapMm);
+
         if (blText) {
-          blText.set({ left: diameterPx * 0.35, top: bottomY });
+          const leftX = paddingPx;
+          const leftW = Math.max(20, vLeft - paddingPx - leftX);
+          blText.set({
+            left: leftX,
+            width: leftW,
+            originX: "left",
+            textAlign: "center",
+            fontSize: Math.max(blText.fontSize || 0, mmToPx(5)),
+          });
+          blText.initDimensions && blText.initDimensions();
+          const h = blText.height || 0;
+          const desiredTop = hBottom + paddingPx + h / 2;
+          blText.set({ top: desiredTop });
           blText.setCoords();
         }
+
         if (brText) {
-          brText.set({ left: diameterPx * 0.65, top: bottomY });
+          const rightLeft = vRight + paddingPx;
+          const rightW = Math.max(20, canvasW - paddingPx - rightLeft);
+          brText.set({
+            left: rightLeft,
+            width: rightW,
+            originX: "left",
+            textAlign: "center",
+            fontSize: Math.max(brText.fontSize || 0, mmToPx(5)),
+          });
+          brText.initDimensions && brText.initDimensions();
+          const h = brText.height || 0;
+          const desiredTop = hBottom + paddingPx + h / 2;
+          brText.set({ top: desiredTop });
           brText.setCoords();
         }
-        canvas.renderAll();
+
+        canvas.requestRenderAll();
       }
 
       canvas.renderAll();
@@ -3030,9 +3083,11 @@ const Toolbar = () => {
   const updateCanvasOutline = () => {
     if (!canvas) return;
     // Полністю відключено: більше не створюємо жодного контуру на canvas
-    const existingOutlineAll = canvas.getObjects().filter(o => o.isCanvasOutline);
+    const existingOutlineAll = canvas
+      .getObjects()
+      .filter((o) => o.isCanvasOutline);
     if (existingOutlineAll.length) {
-      existingOutlineAll.forEach(o => canvas.remove(o));
+      existingOutlineAll.forEach((o) => canvas.remove(o));
       canvas.requestRenderAll();
     }
     return; // <- припиняємо виконання щоб гарантовано не відмальовувати контур
@@ -5175,7 +5230,7 @@ const Toolbar = () => {
         }
       }
       canvas.renderAll();
-      
+
       // Відстежуємо зміну товщини
       trackThicknessChange(value);
     }
@@ -5440,7 +5495,7 @@ const Toolbar = () => {
 
     // Рендеримо canvas
     canvas.renderAll();
-    
+
     // Відстежуємо зміну кольорової теми
     trackColorThemeChange({ textColor, backgroundColor, backgroundType });
   };
@@ -5461,7 +5516,7 @@ const Toolbar = () => {
         originY: "center",
         fontFamily: "Arial",
         fill: globalColors.textColor,
-        fontSize: 20,
+        fontSize: mmToPx(5),
       });
       canvas.add(text);
       canvas.setActiveObject(text);
@@ -5479,9 +5534,9 @@ const Toolbar = () => {
           text.hiddenTextarea.focus();
       } catch {}
       canvas.renderAll();
-      
+
       // Відстежуємо додавання тексту
-      trackElementAdded('Text');
+      trackElementAdded("Text");
     }
   };
 
@@ -5519,8 +5574,8 @@ const Toolbar = () => {
         return;
       }
 
-  const reader = new FileReader();
-  reader.onload = async (event) => {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
         let addedOk = false; // track if we successfully added any object
         try {
           // Перевіряємо чи це SVG файл
@@ -5528,21 +5583,21 @@ const Toolbar = () => {
             file.type === "image/svg+xml" ||
             file.name.toLowerCase().endsWith(".svg")
           ) {
-    // For preview flow: open modal with original SVG (no immediate add)
-    const raw = String(event.target.result || "");
-    setUploadMode("svg");
-    setUploadSvgText(raw);
-    setUploadDataURL("");
-    setIsUploadOpen(true);
-    return; // defer adding until confirm
+            // For preview flow: open modal with original SVG (no immediate add)
+            const raw = String(event.target.result || "");
+            setUploadMode("svg");
+            setUploadSvgText(raw);
+            setUploadDataURL("");
+            setIsUploadOpen(true);
+            return; // defer adding until confirm
           } else {
-    // Raster: open modal with dataURL, preview will vectorize live
-    const raw = String(event.target.result || "");
-    setUploadMode("raster");
-    setUploadDataURL(raw);
-    setUploadSvgText("");
-    setIsUploadOpen(true);
-    return; // defer adding until confirm
+            // Raster: open modal with dataURL, preview will vectorize live
+            const raw = String(event.target.result || "");
+            setUploadMode("raster");
+            setUploadDataURL(raw);
+            setUploadSvgText("");
+            setIsUploadOpen(true);
+            return; // defer adding until confirm
           }
         } catch (error) {
           console.error("Помилка завантаження зображення:", error);
@@ -5775,7 +5830,7 @@ const Toolbar = () => {
     clearExistingHoles();
     setIsHolesSelected(false);
     setActiveHolesType(1);
-    
+
     // Відстежуємо зміну отворів
     trackHolesChange(1, holesDiameter);
   };
@@ -6645,7 +6700,7 @@ const Toolbar = () => {
 
       // Скидаємо отвори до No holes
       resetHolesToNone();
-      
+
       // Відстежуємо зміну форми полотна
       trackShapeChange("rectangle");
     }
@@ -6929,6 +6984,15 @@ const Toolbar = () => {
         evented: false,
         hasControls: false,
         hasBorders: false,
+        lockMovementX: true,
+        lockMovementY: true,
+        lockRotation: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockSkewingX: true,
+        lockSkewingY: true,
+        hoverCursor: "default",
+        moveCursor: "default",
         strokeUniform: true,
         isCircleWithLineCenterLine: true,
       });
@@ -6936,15 +7000,16 @@ const Toolbar = () => {
 
       // Заготовки тексту над і під лінією
       const radiusMm = diameterMm / 2;
-      const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
+      const gapMm = (radiusMm - lineThicknessMm / 2) / 6; // еще меньший отступ для компактности
       const topY = mmToPx(100) / 2 - mmToPx(gapMm);
       const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
       const commonText = {
-        fontSize: 18,
+        fontSize: mmToPx(5),
         fontFamily: "Arial",
         fill: globalColors?.textColor || "#000",
         originX: "center",
         originY: "center",
+        textAlign: "center",
         selectable: true,
         editable: true,
       };
@@ -7021,6 +7086,15 @@ const Toolbar = () => {
         evented: false,
         hasControls: false,
         hasBorders: false,
+        lockMovementX: true,
+        lockMovementY: true,
+        lockRotation: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockSkewingX: true,
+        lockSkewingY: true,
+        hoverCursor: "default",
+        moveCursor: "default",
         strokeUniform: true,
         isCircleWithCrossHorizontalLine: true,
       });
@@ -7039,45 +7113,359 @@ const Toolbar = () => {
         evented: false,
         hasControls: false,
         hasBorders: false,
+        lockMovementX: true,
+        lockMovementY: true,
+        lockRotation: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockSkewingX: true,
+        lockSkewingY: true,
+        hoverCursor: "default",
+        moveCursor: "default",
         strokeUniform: true,
         isCircleWithCrossVerticalLine: true,
       });
       canvas.add(vLine);
-      // Тексти: top center, bottom left, bottom right
+      // Тексти як Textbox: top center, bottom left, bottom right
       const radiusMm = diameterMm / 2;
-      const gapMm = (radiusMm - lineThicknessMm / 2) / 3; // зменшений відступ
+      const gapMm = (radiusMm - lineThicknessMm / 2) / 6; // еще меньший отступ для компактности
       const topY = mmToPx(100) / 2 - mmToPx(gapMm);
       const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
-      const commonText = {
-        fontSize: 18,
+      const commonTextbox = {
+        fontSize: mmToPx(5), // 5 мм по стандарту
         fontFamily: "Arial",
         fill: globalColors?.textColor || "#000",
-        originX: "center",
         originY: "center",
         selectable: true,
         editable: true,
+        splitByGrapheme: true, // м'який перенос по символах
       };
-      const topText = new fabric.IText("TEXT TOP", {
-        left: mmToPx(100) / 2,
+      const centerX = mmToPx(100) / 2;
+      const lineThicknessPx = mmToPx(lineThicknessMm);
+      const lineWidthPx = mmToPx(lineWidthMm);
+      const paddingPx = mmToPx(0.5); // зменшений відступ для ближчого розташування до лінії
+
+      const topText = new fabric.Textbox("TEXT TOP", {
+        left: centerX,
         top: topY,
-        ...commonText,
+        width: Math.max(20, lineWidthPx - paddingPx * 2),
+        textAlign: "center",
+        originX: "center",
+        ...commonTextbox,
         isCircleWithCrossTopText: true,
       });
-      const bottomLeftText = new fabric.IText("TEXT L", {
-        left: mmToPx(100) * 0.35,
+      const bottomLeftText = new fabric.Textbox("TEXT L", {
+        left: paddingPx, // стартова позиція, можна рухати по X
         top: bottomY,
-        ...commonText,
+        textAlign: "center", // центр у своїй області
+        originX: "left",
+        ...commonTextbox,
         isCircleWithCrossBottomLeftText: true,
       });
-      const bottomRightText = new fabric.IText("TEXT R", {
-        left: mmToPx(100) * 0.65,
+      const bottomRightText = new fabric.Textbox("TEXT R", {
+        left: centerX + lineThicknessPx / 2 + paddingPx, // старт справа від вертикалі, можна рухати по X
         top: bottomY,
-        ...commonText,
+        textAlign: "center", // центр у своїй області
+        originX: "left",
+        ...commonTextbox,
+        splitByGrapheme: true, // перенос по буквах завжди
         isCircleWithCrossBottomRightText: true,
       });
+      // Зафіксувати стартовий валідний розмір = 5мм
+      const startPx = mmToPx(5);
+      topText._lastValidFontSize = startPx;
+      bottomLeftText._lastValidFontSize = startPx;
+      bottomRightText._lastValidFontSize = startPx;
       canvas.add(topText, bottomLeftText, bottomRightText);
       canvas.sendObjectToBack(hLine);
       canvas.sendObjectToBack(vLine);
+
+      // Розкладка і запобігання перетину з лініями «Т» (авто-перенос у нижніх боксах)
+      const enforceCircleCrossLayout = () => {
+        const canvasW = mmToPx(100);
+        const canvasH = mmToPx(100);
+        const cX = canvasW / 2;
+        const cY = canvasH / 2;
+        const radiusPx = mmToPx(100) / 2;
+        const hTop = mmToPx(100) / 2 - lineThicknessPx / 2;
+        const hBottom = mmToPx(100) / 2 + lineThicknessPx / 2;
+        const vLeft = cX - lineThicknessPx / 2;
+        const vRight = cX + lineThicknessPx / 2;
+
+        // Допоміжні: перевірка, що рамка повністю в колі з відступом
+        const isRectInsideCircle = (rect, cx, cy, r) => {
+          // невеликий запас тільки на padding, без зайвого зменшення радіуса
+          const padR = Math.max(0, r - paddingPx);
+          const pts = [
+            { x: rect.left, y: rect.top },
+            { x: rect.left + rect.width, y: rect.top },
+            { x: rect.left, y: rect.top + rect.height },
+            { x: rect.left + rect.width, y: rect.top + rect.height },
+          ];
+          return pts.every((p) => {
+            const dx = p.x - cx;
+            const dy = p.y - cy;
+            return dx * dx + dy * dy <= padR * padR;
+          });
+        };
+
+        // Перевірка «влазить?»
+        const fitsNow = (tb) => {
+          tb.initDimensions && tb.initDimensions();
+          const rect = tb.getBoundingRect(true, true);
+          const insideCanvas =
+            rect.left >= 0 &&
+            rect.top >= 0 &&
+            rect.left + rect.width <= canvasW &&
+            rect.top + rect.height <= canvasH;
+          if (!(insideCanvas && isRectInsideCircle(rect, cX, cY, radiusPx))) {
+            return false;
+          }
+          // Додаткові колізії із «Т»-лініями
+          const pad = paddingPx;
+          // Верхній текст не повинен торкатись горизонтальної лінії знизу
+          if (tb.isCircleWithCrossTopText) {
+            const bottomY = rect.top + rect.height;
+            if (bottomY > hTop - pad) return false;
+          }
+          // Нижні тексти не повинні торкатись горизонтальної лінії зверху
+          if (
+            tb.isCircleWithCrossBottomLeftText ||
+            tb.isCircleWithCrossBottomRightText
+          ) {
+            const topY = rect.top;
+            if (topY < hBottom + pad) return false;
+          }
+          // Лівий нижній не повинен перетинати вертикаль
+          if (tb.isCircleWithCrossBottomLeftText) {
+            const rightX = rect.left + rect.width;
+            if (rightX > vLeft - pad) return false;
+          }
+          // Правий нижній не повинен перетинати вертикаль
+          if (tb.isCircleWithCrossBottomRightText) {
+            const leftX = rect.left;
+            if (leftX < vRight + pad) return false;
+          }
+          return true;
+        };
+
+        // Обчислити максимальний допустимий fontSize (бінарний пошук)
+        const findMaxFontSize = (tb, lo, hi) => {
+          // зберігаємо поточний
+          const orig = tb.fontSize || lo;
+          let L = lo,
+            R = hi,
+            best = lo;
+          // обмежуємо ітерації
+          for (let i = 0; i < 12 && L <= R; i++) {
+            const mid = Math.floor((L + R) / 2);
+            tb.set({ fontSize: mid });
+            tb.initDimensions && tb.initDimensions();
+            if (fitsNow(tb)) {
+              best = mid;
+              L = mid + 1;
+            } else {
+              R = mid - 1;
+            }
+          }
+          // повертаємо кращий та виставляємо його
+          tb.set({ fontSize: best });
+          tb.initDimensions && tb.initDimensions();
+          return best;
+        };
+
+        // Підігнати розмір шрифту, щоб не виходити за межі круга (строгий режим)
+        const fitInsideCircle = (tb) => {
+          if (!tb) return;
+          if (tb.__fitting) return; // захист від рекурсії
+          tb.__fitting = true;
+          const minFont = Math.floor(mmToPx(5)); // мінімум 5мм по стандарту
+          const current = Math.max(minFont, Math.round(tb.fontSize || minFont));
+          const lastValid =
+            typeof tb._lastValidFontSize === "number"
+              ? Math.max(minFont, Math.round(tb._lastValidFontSize))
+              : current;
+          // Детермінована підгонка позиції до ліній
+          tb.initDimensions && tb.initDimensions();
+          let rect = tb.getBoundingRect(true, true);
+          const pad = paddingPx;
+          if (tb.isCircleWithCrossTopText) {
+            const bottomY = rect.top + rect.height;
+            const maxBottom = hTop - pad;
+            if (bottomY > maxBottom) {
+              const delta = bottomY - maxBottom;
+              tb.top -= delta; // підтягуємо рівно до межі
+              tb.initDimensions && tb.initDimensions();
+            }
+          } else {
+            // нижні
+            const topY = rect.top;
+            const minTop = hBottom + pad;
+            if (topY < minTop) {
+              const delta = minTop - topY;
+              tb.top += delta;
+              tb.initDimensions && tb.initDimensions();
+            }
+          }
+          // Після позиційної підгонки — остаточна перевірка і фіксація
+          if (fitsNow(tb)) {
+            tb._lastValidFontSize = Math.max(minFont, tb.fontSize | 0);
+          } else {
+            // Намагаємось трохи розслабити тільки позицію в межах canvas, без зменшення шрифта
+            rect = tb.getBoundingRect(true, true);
+            if (rect.top < 0) tb.top += -rect.top;
+            if (rect.left < 0) tb.left += -rect.left;
+            if (rect.left + rect.width > canvasW)
+              tb.left -= rect.left + rect.width - canvasW;
+            if (rect.top + rect.height > canvasH)
+              tb.top -= rect.top + rect.height - canvasH;
+            tb.initDimensions && tb.initDimensions();
+            // Більше не скидаємо fontSize до 5мм, користувач керує сам
+          }
+          tb.__fitting = false;
+        };
+
+        // Верхній текст: ширина по горизонтальній лінії, тримаємо над нею з відступом
+        topText.set({
+          width: Math.max(20, lineWidthPx - paddingPx * 2),
+          left: cX,
+          originX: "center",
+          textAlign: "center",
+        });
+        // Після зміни ширини оновлюємо розміри, щоб отримати правильну висоту
+        topText.initDimensions && topText.initDimensions();
+        const topH = topText.height || 0;
+        const desiredTop = Math.max(0, hTop - paddingPx - topH / 2);
+        if (topText.top > desiredTop) topText.top = desiredTop;
+        // Фітінг в колі
+        fitInsideCircle(topText);
+
+        // Лівий нижній бокс: від лівого краю до вертикальної лінії з полями
+        // Не фіксуємо left, дозволяємо користувачу рухати по X
+        const leftW = Math.max(
+          20,
+          vLeft - paddingPx - (bottomLeftText.left || 0)
+        );
+        bottomLeftText.set({ width: leftW, originX: "left" });
+        // Позиція нижче горизонтальної лінії
+        const minCenterBelow =
+          hBottom + paddingPx + (bottomLeftText.height || 0) / 2;
+        if (bottomLeftText.top < minCenterBelow)
+          bottomLeftText.top = minCenterBelow;
+        bottomLeftText.initDimensions && bottomLeftText.initDimensions();
+        fitInsideCircle(bottomLeftText);
+
+        // Правий нижній бокс: від правого краю вертикальної до правої межі
+        // Не фіксуємо left, дозволяємо користувачу рухати по X
+        // Дзеркальна логіка: ліва межа не повинна перетинати центральну лінію
+        let rightTextLeft = bottomRightText.left || vRight + paddingPx;
+        // Дзеркальна поведінка: left — від центральної лінії, width — до правого краю
+        // left = vRight + paddingPx + delta (delta — зміщення вправо)
+        let delta =
+          (bottomRightText.left || vRight + paddingPx) - (vRight + paddingPx);
+        let minLeft = vRight + paddingPx;
+        let maxRight = canvasW - paddingPx;
+        rightTextLeft = Math.max(minLeft, bottomRightText.left || minLeft);
+        // width — від лівого краю тексту до правого краю
+        let rightW = Math.max(20, maxRight - rightTextLeft);
+        // Якщо рамка виходить за межі правого краю — зсуваємо left вліво
+        if (rightTextLeft + rightW > maxRight) {
+          rightTextLeft = maxRight - rightW;
+        }
+        bottomRightText.left = rightTextLeft;
+        bottomRightText.set({
+          width: rightW,
+          originX: "left",
+        });
+        const minCenterBelowR =
+          hBottom + paddingPx + (bottomRightText.height || 0) / 2;
+        if (bottomRightText.top < minCenterBelowR)
+          bottomRightText.top = minCenterBelowR;
+        bottomRightText.initDimensions && bottomRightText.initDimensions();
+        fitInsideCircle(bottomRightText);
+
+        // Фінальний guard: якщо будь-який текст вийшов за межі видимої зони — повертаємо в безпечне положення
+        const ensureVisible = (tb, zone) => {
+          if (!tb) return;
+          tb.initDimensions && tb.initDimensions();
+          const r = tb.getBoundingRect(true, true);
+          let changed = false;
+          if (r.top < 0) {
+            tb.top += -r.top;
+            changed = true;
+          }
+          if (r.left < 0) {
+            tb.left += -r.left;
+            changed = true;
+          }
+          if (r.left + r.width > canvasW) {
+            tb.left -= r.left + r.width - canvasW;
+            changed = true;
+          }
+          if (r.top + r.height > canvasH) {
+            tb.top -= r.top + r.height - canvasH;
+            changed = true;
+          }
+          if (zone === "top") {
+            // не ниже допустимой границы
+            const maxBottom = hTop - paddingPx;
+            const newRect = tb.getBoundingRect(true, true);
+            const bottomY = newRect.top + newRect.height;
+            if (bottomY > maxBottom) {
+              tb.top -= bottomY - maxBottom;
+              changed = true;
+            }
+          } else if (zone === "bottomL" || zone === "bottomR") {
+            const minTop = hBottom + paddingPx;
+            const newRect = tb.getBoundingRect(true, true);
+            if (newRect.top < minTop) {
+              tb.top += minTop - newRect.top;
+              changed = true;
+            }
+          }
+          if (changed) tb.initDimensions && tb.initDimensions();
+        };
+
+        ensureVisible(topText, "top");
+        ensureVisible(bottomLeftText, "bottomL");
+        ensureVisible(bottomRightText, "bottomR");
+
+        canvas.requestRenderAll();
+      };
+
+      // Події для автоперерозкладки під час редагування/руху
+      const attachAutoLayout = (obj) => {
+        const handler = () => enforceCircleCrossLayout();
+        obj.on("changed", handler);
+        obj.on("editing:entered", handler);
+        obj.on("editing:exited", handler);
+        obj.on("moving", handler);
+        obj.on("modified", handler);
+        // Переводимо масштаб у fontSize з клампом по вміщенню
+        obj.on("scaling", () => {
+          try {
+            const scale = Math.max(obj.scaleX || 1, obj.scaleY || 1);
+            if (scale !== 1) {
+              const base = Math.round(obj.fontSize || mmToPx(5));
+              const desired = Math.max(6, Math.round(base * scale));
+              // шукаємо максимально допустимий до desired
+              obj.set({ scaleX: 1, scaleY: 1 });
+              // тимчасово виставляємо бажаний, далі fit відклацне до валідного
+              obj.set({ fontSize: desired });
+            }
+          } catch (e) {}
+          enforceCircleCrossLayout();
+        });
+        // Коли користувач змінює fontSize іншими шляхами — підтягнемо назад
+        obj.on("changed", () => enforceCircleCrossLayout());
+      };
+      attachAutoLayout(topText);
+      attachAutoLayout(bottomLeftText);
+      attachAutoLayout(bottomRightText);
+
+      // Початкова розкладка
+      enforceCircleCrossLayout();
+
       canvas.renderAll();
 
       // Скидаємо отвори до No holes
@@ -8253,18 +8641,24 @@ const Toolbar = () => {
               // Ensure theme color is applied
               const theme = (globalColors && globalColors.textColor) || "#000";
               try {
-                const doc = new DOMParser().parseFromString(themedSVG, "image/svg+xml");
+                const doc = new DOMParser().parseFromString(
+                  themedSVG,
+                  "image/svg+xml"
+                );
                 // Apply theme color to all relevant elements; keep strokeOnly where indicated
-                doc.querySelectorAll("path,polygon,polyline,rect,circle,ellipse").forEach((el) => {
-                  if (strokeOnly) {
-                    el.setAttribute("fill", "transparent");
-                    el.setAttribute("stroke", theme);
-                    if (!el.getAttribute("stroke-width")) el.setAttribute("stroke-width", "1");
-                  } else {
-                    el.setAttribute("fill", theme);
-                    el.setAttribute("stroke", theme);
-                  }
-                });
+                doc
+                  .querySelectorAll("path,polygon,polyline,rect,circle,ellipse")
+                  .forEach((el) => {
+                    if (strokeOnly) {
+                      el.setAttribute("fill", "transparent");
+                      el.setAttribute("stroke", theme);
+                      if (!el.getAttribute("stroke-width"))
+                        el.setAttribute("stroke-width", "1");
+                    } else {
+                      el.setAttribute("fill", theme);
+                      el.setAttribute("stroke", theme);
+                    }
+                  });
                 themedSVG = new XMLSerializer().serializeToString(doc);
               } catch {}
 
@@ -8272,21 +8666,35 @@ const Toolbar = () => {
               const obj =
                 result.objects.length === 1
                   ? result.objects[0]
-                  : fabric.util.groupSVGElements(result.objects, result.options);
+                  : fabric.util.groupSVGElements(
+                      result.objects,
+                      result.options
+                    );
 
               // Tag to theme if needed
               try {
                 obj.set && obj.set({ useThemeColor: true });
-                if (obj.type === "group" && typeof obj.forEachObject === "function") {
-                  obj.forEachObject((child) => child.set && child.set({ useThemeColor: true }));
+                if (
+                  obj.type === "group" &&
+                  typeof obj.forEachObject === "function"
+                ) {
+                  obj.forEachObject(
+                    (child) => child.set && child.set({ useThemeColor: true })
+                  );
                 }
               } catch {}
 
               // Center and scale
-              const bounds = obj.getBoundingRect ? obj.getBoundingRect() : { width: 100, height: 100 };
-              const maxWidth = 300, maxHeight = 300;
+              const bounds = obj.getBoundingRect
+                ? obj.getBoundingRect()
+                : { width: 100, height: 100 };
+              const maxWidth = 300,
+                maxHeight = 300;
               if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const s = Math.min(maxWidth / bounds.width, maxHeight / bounds.height);
+                const s = Math.min(
+                  maxWidth / bounds.width,
+                  maxHeight / bounds.height
+                );
                 obj.scale(s);
               }
               obj.set({
@@ -8299,9 +8707,15 @@ const Toolbar = () => {
                 hasBorders: true,
               });
               canvas.add(obj);
-              try { obj.setCoords && obj.setCoords(); } catch {}
-              try { canvas.setActiveObject(obj); } catch {}
-              try { canvas.requestRenderAll(); } catch {}
+              try {
+                obj.setCoords && obj.setCoords();
+              } catch {}
+              try {
+                canvas.setActiveObject(obj);
+              } catch {}
+              try {
+                canvas.requestRenderAll();
+              } catch {}
             } finally {
               setIsUploadOpen(false);
             }

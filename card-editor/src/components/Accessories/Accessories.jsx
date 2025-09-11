@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
-import { exportCanvas, addCanvasSnapshotToCurrentProject, deleteCanvasFromCurrentProject, getProject } from "../../utils/projectStorage";
+import { exportCanvas, addUnsavedSignFromSnapshot, updateUnsavedSignFromCanvas, getAllUnsavedSigns, deleteUnsavedSign } from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 
 const TopToolbar = ({ className }) => {
@@ -20,18 +20,28 @@ const TopToolbar = ({ className }) => {
   const handleNewSign = async () => {
     if (working) return; setWorking(true);
     try {
-      const blank = buildBlankSnapshot();
-      if (!blank) return;
-      await addCanvasSnapshotToCurrentProject(blank, { setAsCurrent: true });
-      // Clear current fabric canvas visually
-      if (canvas) {
-        canvas.__suspendUndoRedo = true;
-        canvas.clear();
-        canvas.setWidth(blank.width);
-        canvas.setHeight(blank.height);
-        canvas.renderAll();
-        canvas.__suspendUndoRedo = false;
+      const blank = buildBlankSnapshot(); if (!blank) return;
+      let currentUnsavedId = null;
+      try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
+      if (currentUnsavedId && canvas) {
+        // Persist active unsaved sign changes
+        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(()=>{});
+      } else {
+        // There is no active unsaved sign yet (user was on LIVE canvas). Save current canvas content first.
+        if (canvas) {
+          const toolbarState = window.getCurrentToolbarState?.() || {};
+          const snap = exportCanvas(canvas, toolbarState);
+          if (snap) {
+            await addUnsavedSignFromSnapshot(snap); // this becomes a stored previous sign
+          }
+        }
       }
+      // Now create new blank unsaved sign and make it current
+      const createdBlank = await addUnsavedSignFromSnapshot(blank);
+      try { localStorage.setItem("currentUnsavedSignId", createdBlank.id); } catch {}
+      if (canvas) { canvas.__suspendUndoRedo = true; canvas.clear(); canvas.renderAll(); canvas.__suspendUndoRedo = false; }
+      // Trigger update (addUnsavedSignFromSnapshot already dispatches, but ensure ordering)
+      try { window.dispatchEvent(new CustomEvent("unsaved:signsUpdated")); } catch {}
     } catch (e) {
       console.error("New Sign failed", e);
     } finally { setWorking(false); }
@@ -40,24 +50,29 @@ const TopToolbar = ({ className }) => {
   const handleDeleteSign = async () => {
     if (working) return; setWorking(true);
     try {
-      let currentCanvasId = null; let currentProjectId = null;
-      try { currentCanvasId = localStorage.getItem("currentCanvasId"); currentProjectId = localStorage.getItem("currentProjectId"); } catch {}
-      if (!currentCanvasId || !currentProjectId) { setWorking(false); return; }
-      await deleteCanvasFromCurrentProject(currentCanvasId);
-      // Decide next canvas to load (first in list) or blank if none
-      const project = await getProject(currentProjectId);
-      const next = project?.canvases?.[0];
-      if (next) {
-        try { localStorage.setItem("currentCanvasId", next.id); } catch {}
+      let currentUnsavedId = null;
+      try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
+      if (!currentUnsavedId) { setWorking(false); return; }
+      // Persist final state before removal (optional safety)
+      if (canvas) {
+        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(()=>{});
+      }
+      await deleteUnsavedSign(currentUnsavedId);
+      // Load remaining unsaved signs
+      const remaining = await getAllUnsavedSigns();
+      if (remaining.length) {
+        const next = remaining[0];
+        try { localStorage.setItem("currentUnsavedSignId", next.id); } catch {}
         if (canvas && next.json) {
           canvas.__suspendUndoRedo = true;
           canvas.loadFromJSON(next.json, () => { canvas.renderAll(); canvas.__suspendUndoRedo = false; });
         }
       } else {
-        // No canvases left: clear canvas and remove currentCanvasId
-        try { localStorage.removeItem("currentCanvasId"); } catch {}
-        if (canvas) { canvas.clear(); canvas.renderAll(); }
+        // No unsaved left -> clear context and revert to LIVE mode
+        try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+        if (canvas) { canvas.__suspendUndoRedo = true; canvas.clear(); canvas.renderAll(); canvas.__suspendUndoRedo = false; }
       }
+      try { window.dispatchEvent(new CustomEvent("unsaved:signsUpdated")); } catch {}
     } catch (e) {
       console.error("Delete Sign failed", e);
     } finally { setWorking(false); }

@@ -5152,7 +5152,7 @@ const Toolbar = () => {
         hasControls: true,
         hasBorders: true,
         isBarCode: true,
-        barCodeText: text,
+        barCodeText: "",
         barCodeType: codeType,
         suppressBarText: true,
       });

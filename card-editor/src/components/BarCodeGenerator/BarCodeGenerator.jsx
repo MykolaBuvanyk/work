@@ -147,7 +147,6 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         hasControls: true,
         hasBorders: true,
         isBarCode: true,
-        barCodeText: formData.text,
         barCodeType: formData.codeType,
         suppressBarText: true,
       });

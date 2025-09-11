@@ -2,18 +2,26 @@
 // Store: projects (keyPath: id)
 
 const DB_NAME = "card-editor";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // bumped to add unsavedSigns store
 const STORE = "projects";
+const UNSAVED_STORE = "unsavedSigns"; // temporary signs not yet attached to a project
 
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
+      // Projects store
       if (!db.objectStoreNames.contains(STORE)) {
         const store = db.createObjectStore(STORE, { keyPath: "id" });
         store.createIndex("updatedAt", "updatedAt", { unique: false });
         store.createIndex("name", "name", { unique: false });
+      }
+      // Unsaved signs store
+      if (!db.objectStoreNames.contains(UNSAVED_STORE)) {
+        const u = db.createObjectStore(UNSAVED_STORE, { keyPath: "id" });
+        u.createIndex("createdAt", "createdAt", { unique: false });
+        u.createIndex("updatedAt", "updatedAt", { unique: false });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -21,9 +29,8 @@ function openDB() {
   });
 }
 
-function tx(db, mode = "readonly") {
-  return db.transaction(STORE, mode).objectStore(STORE);
-}
+function tx(db, mode = "readonly") { return db.transaction(STORE, mode).objectStore(STORE); }
+function txUnsaved(db, mode = "readonly") { return db.transaction(UNSAVED_STORE, mode).objectStore(UNSAVED_STORE); }
 
 export async function getAllProjects() {
   const db = await openDB();
@@ -32,6 +39,124 @@ export async function getAllProjects() {
     const req = store.getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
+  });
+}
+
+// ---------------- Unsaved Signs (temporary) -----------------
+export async function getAllUnsavedSigns() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(UNSAVED_STORE)) return resolve([]);
+    const store = txUnsaved(db);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function putUnsavedSign(sign) {
+  if (!sign?.id) return null;
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = txUnsaved(db, "readwrite");
+    const req = store.put(sign);
+    req.onsuccess = () => resolve(sign);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function deleteUnsavedSign(id) {
+  if (!id) return null;
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = txUnsaved(db, "readwrite");
+    const req = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function clearAllUnsavedSigns() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains(UNSAVED_STORE)) return resolve();
+    const store = txUnsaved(db, "readwrite");
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function broadcastUnsavedUpdate() {
+  try { window.dispatchEvent(new CustomEvent("unsaved:signsUpdated")); } catch {}
+}
+
+export async function addUnsavedSignFromSnapshot(snapshot) {
+  if (!snapshot) return null;
+  const now = Date.now();
+  const entry = { id: uuid(), ...snapshot, createdAt: now, updatedAt: now };
+  await putUnsavedSign(entry);
+  broadcastUnsavedUpdate();
+  return entry;
+}
+
+export async function addBlankUnsavedSign(width = 0, height = 0) {
+  const entry = { id: uuid(), json: { objects: [], version: "fabric" }, preview: "", width, height, createdAt: Date.now(), updatedAt: Date.now() };
+  await putUnsavedSign(entry);
+  broadcastUnsavedUpdate();
+  return entry;
+}
+
+export async function updateUnsavedSignFromCanvas(id, canvas) {
+  if (!id || !canvas) return null;
+  
+  console.log('Updating unsaved sign:', id, 'with', canvas.getObjects().length, 'objects');
+  
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = txUnsaved(db, "readwrite");
+    const getReq = store.get(id);
+    getReq.onsuccess = () => {
+      const existing = getReq.result;
+      if (!existing) { 
+        console.warn('Unsaved sign not found for update:', id);
+        resolve(null); 
+        return; 
+      }
+      
+      try {
+        const toolbarState = window.getCurrentToolbarState?.() || {};
+        console.log('Capturing toolbar state for unsaved sign update');
+        
+        const snap = exportCanvas(canvas, toolbarState);
+        if (!snap) { 
+          console.error('Failed to export canvas for unsaved sign update');
+          resolve(null); 
+          return; 
+        }
+        
+        console.log('Exported canvas snapshot with', snap.json?.objects?.length || 0, 'objects');
+        
+        const updated = { ...existing, ...snap, updatedAt: Date.now() };
+        const putReq = store.put(updated);
+        putReq.onsuccess = () => { 
+          console.log('Successfully updated unsaved sign:', id);
+          broadcastUnsavedUpdate(); 
+          resolve(updated); 
+        };
+        putReq.onerror = () => {
+          console.error('Failed to save updated unsaved sign:', putReq.error);
+          reject(putReq.error);
+        };
+      } catch (error) {
+        console.error('Error updating unsaved sign:', error);
+        reject(error);
+      }
+    };
+    getReq.onerror = () => {
+      console.error('Error fetching unsaved sign for update:', getReq.error);
+      reject(getReq.error);
+    };
   });
 }
 
@@ -76,20 +201,65 @@ export function uuid() {
     .toString();
 }
 
-// Serialize current Fabric canvas to JSON + preview image
-export function exportCanvas(canvas) {
+// Serialize current Fabric canvas to JSON + preview image + toolbar state
+export function exportCanvas(canvas, toolbarState = {}) {
   if (!canvas) return null;
   try {
-    // Include common custom props used across the app
+    // Include ALL custom props used across the app to preserve element-specific data
     const extraProps = [
-      "data",
-      "shapeType",
-      "isCutElement",
-      "cutType",
-      "fromIconMenu",
-      "isCircle",
-      "clipPath",
+      // Basic element metadata
+      "data","shapeType","isCutElement","cutType","fromIconMenu","isCircle","clipPath",
+      
+      // Shape-specific properties
+      "baseCornerRadius","displayCornerRadiusMm","cornerRadiusMm",
+      
+      // Stroke and visual properties
+      "strokeUniform","borderColor","borderScaleFactor","innerStrokeWidth",
+      
+      // Border element properties
+      "isBorderShape","isRectangleInnerBorder",
+      
+      // QR Code properties
+      "isQRCode","qrText","qrSize",
+      
+      // Barcode properties  
+      "isBarCode","barCodeText","barCodeType",
+      
+      // Image properties
+      "originalSrc","imageSource","filters",
+      
+      // Text properties (already covered by Fabric, but ensuring custom text data)
+      "customTextData","fontFamily","fontSize","fontWeight","fontStyle",
+      
+      // Element identification and grouping
+      "id","name","layerId","groupId","customData",
+      
+      // Interaction & lock flags (so constraints persist after reload)
+      "selectable","evented","hasControls","hasBorders",
+      "lockMovementX","lockMovementY","lockScalingX","lockScalingY",
+      "lockRotation","lockSkewingX","lockSkewingY",
+      
+      // Visual interaction properties
+      "perPixelTargetFind","hoverCursor","moveCursor",
+      "transparentCorners","cornerColor","cornerStrokeColor",
+      "cornerStyle","cornerSize",
+      
+      // Exclusion properties
+      "excludeFromExport",
+      
+      // Custom hole properties
+      "holeType","holeDiameter","holePosition",
+      
+      // Animation and state properties
+      "animatable","visible","opacity","shadow",
+      
+      // Custom geometric properties for complex shapes
+      "customPath","originalGeometry","transformMatrix",
+      
+      // Element creation context
+      "createdAt","createdBy","elementVersion","toolbarSnapshot"
     ];
+    
     let json;
     if (typeof canvas.toDatalessJSON === "function") {
       json = canvas.toDatalessJSON(extraProps);
@@ -98,19 +268,287 @@ export function exportCanvas(canvas) {
     } else {
       json = {};
     }
+    
+    // Check if canvas has border elements before filtering
+    const borderElements = canvas.getObjects().filter(obj => obj.isBorderShape);
+    const hasBorder = borderElements.length > 0;
+    
+    console.log('Canvas export - found border elements:', borderElements.length);
+    console.log('Canvas export - hasBorder flag:', hasBorder);
+    console.log('Canvas export - toolbar state hasBorder:', toolbarState.hasBorder);
+    console.log('Canvas export - final hasBorder:', hasBorder || toolbarState.hasBorder || false);
+    
+    // Filter out border elements from JSON to avoid serialization issues
+    if (json && json.objects && Array.isArray(json.objects)) {
+      const originalCount = json.objects.length;
+      json.objects = json.objects.filter(obj => !obj.isBorderShape);
+      console.log('Filtered out border objects:', originalCount - json.objects.length);
+    }
+
+    // Enhance JSON with additional element-specific metadata
+    if (json && json.objects && Array.isArray(json.objects)) {
+      json.objects = json.objects.map(obj => {
+        // Add element creation timestamp if not present
+        if (!obj.createdAt) {
+          obj.createdAt = Date.now();
+        }
+        
+        // Store current toolbar snapshot for each element
+        obj.toolbarSnapshot = toolbarState;
+        
+        // Preserve element version for compatibility
+        obj.elementVersion = "2.0";
+        
+        return obj;
+      });
+    }
+    
     // Prefer design size (Fabric internal size equals design pixels in this app)
     const width = canvas.getWidth?.() || 0;
     const height = canvas.getHeight?.() || 0;
     const preview = canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
-    return { json, preview, width, height };
+    
+    // Store comprehensive toolbar state for each canvas
+    const canvasState = {
+      json,
+      preview,
+      width,
+      height,
+      height,
+      // Global canvas settings
+      backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF",
+      // Toolbar state (passed from Toolbar component)
+      toolbarState: {
+        // Shape settings
+        currentShapeType: toolbarState.currentShapeType || null,
+        cornerRadius: toolbarState.cornerRadius || 0,
+        // Size values (in mm)
+        sizeValues: toolbarState.sizeValues || { width: 150, height: 150, cornerRadius: 0 },
+        // Color settings
+        globalColors: toolbarState.globalColors || {
+          textColor: "#000000",
+          backgroundColor: "#FFFFFF", 
+          strokeColor: "#000000",
+          fillColor: "transparent",
+          backgroundType: "solid"
+        },
+        selectedColorIndex: toolbarState.selectedColorIndex || 0,
+        // Material settings
+        thickness: toolbarState.thickness || 1.6,
+        isAdhesiveTape: toolbarState.isAdhesiveTape || false,
+        // Holes settings
+        activeHolesType: toolbarState.activeHolesType || 1,
+        holesDiameter: toolbarState.holesDiameter || 2.5,
+        isHolesSelected: toolbarState.isHolesSelected || false,
+        // Shape customization
+        isCustomShapeMode: toolbarState.isCustomShapeMode || false,
+        isCustomShapeApplied: toolbarState.isCustomShapeApplied || false,
+        hasUserPickedShape: toolbarState.hasUserPickedShape || false,
+        // Copy settings
+        copiesCount: toolbarState.copiesCount || 1,
+        // Border settings (for programmatic recreation)
+        // Use border elements presence OR existing toolbar state
+        hasBorder: hasBorder || toolbarState.hasBorder || false,
+        // Modal states (usually don't need to persist, but included for completeness)
+        modalStates: {
+          isQrOpen: false,
+          isBarCodeOpen: false,
+          isShapeOpen: false,
+          isCutOpen: false,
+          isIconMenuOpen: false,
+          isShapePropertiesOpen: false
+        }
+      }
+    };
+    
+    return canvasState;
   } catch (e) {
     console.error("exportCanvas failed", e);
     return null;
   }
 }
 
+// Helper function to extract toolbar state from saved canvas data
+export function extractToolbarState(canvasData) {
+  if (!canvasData || !canvasData.toolbarState) {
+    // Return default state if no toolbar state found
+    return {
+      currentShapeType: "rectangle",
+      cornerRadius: 0,
+      sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+      globalColors: {
+        textColor: "#000000",
+        backgroundColor: "#FFFFFF",
+        strokeColor: "#000000", 
+        fillColor: "transparent",
+        backgroundType: "solid"
+      },
+      selectedColorIndex: 0,
+      thickness: 1.6,
+      isAdhesiveTape: false,
+      activeHolesType: 1,
+      holesDiameter: 2.5,
+      isHolesSelected: false,
+      isCustomShapeMode: false,
+      isCustomShapeApplied: false,
+      hasUserPickedShape: false,
+      copiesCount: 1
+    };
+  }
+  
+  return canvasData.toolbarState;
+}
+
+// Helper function to restore element-specific properties after canvas load
+export function restoreElementProperties(canvas, toolbarState = null) {
+  if (!canvas || !canvas.getObjects) return;
+  
+  try {
+    // Ensure inner stroke classes are available before restoring elements
+    if (window.ensureInnerStrokeClasses) {
+      window.ensureInnerStrokeClasses();
+    }
+    
+    const objects = canvas.getObjects();
+    
+    objects.forEach(obj => {
+      // Restore QR Code functionality
+      if (obj.isQRCode && obj.qrText) {
+        // Ensure QR code can be regenerated
+        obj.set({
+          isQRCode: true,
+          qrText: obj.qrText,
+          qrSize: obj.qrSize || 100
+        });
+      }
+      
+      // Restore Barcode functionality
+      if (obj.isBarCode && obj.barCodeText && obj.barCodeType) {
+        obj.set({
+          isBarCode: true,
+          barCodeText: obj.barCodeText,
+          barCodeType: obj.barCodeType
+        });
+      }
+      
+      // Restore cut element properties
+      if (obj.isCutElement) {
+        obj.set({
+          isCutElement: true,
+          cutType: obj.cutType || "hole"
+        });
+      }
+      
+      // Restore shape properties
+      if (obj.shapeType) {
+        obj.set({
+          shapeType: obj.shapeType
+        });
+      }
+      
+      // Restore corner radius properties
+      if (obj.cornerRadiusMm !== undefined) {
+        obj.set({
+          cornerRadiusMm: obj.cornerRadiusMm,
+          baseCornerRadius: obj.baseCornerRadius,
+          displayCornerRadiusMm: obj.displayCornerRadiusMm
+        });
+      }
+      
+      // Restore stroke properties
+      if (obj.strokeUniform !== undefined) {
+        obj.set({
+          strokeUniform: obj.strokeUniform
+        });
+      }
+      
+      // Restore inner stroke properties for border elements
+      if (obj.innerStrokeWidth !== undefined) {
+        obj.set({
+          innerStrokeWidth: obj.innerStrokeWidth
+        });
+      }
+      
+      // Restore border element properties
+      if (obj.isBorderShape) {
+        obj.set({
+          isBorderShape: true,
+          isRectangleInnerBorder: obj.isRectangleInnerBorder || false
+        });
+      }
+      
+      // Restore image properties
+      if (obj.type === 'image' && obj.originalSrc) {
+        obj.set({
+          originalSrc: obj.originalSrc
+        });
+      }
+      
+      // Restore icon menu properties
+      if (obj.fromIconMenu) {
+        obj.set({
+          fromIconMenu: true
+        });
+      }
+      
+      // Restore custom data
+      if (obj.customData) {
+        obj.set({
+          customData: obj.customData
+        });
+      }
+      
+      // Restore identification properties
+      if (obj.layerId || obj.groupId) {
+        obj.set({
+          layerId: obj.layerId,
+          groupId: obj.groupId
+        });
+      }
+    });
+    
+    canvas.renderAll();
+    
+    // Programmatic border recreation if needed
+    if (toolbarState && toolbarState.hasBorder) {
+      console.log('Border recreation needed - hasBorder:', true);
+      console.log('Toolbar state for border recreation:', {
+        hasBorder: toolbarState.hasBorder,
+        thickness: toolbarState.thickness,
+        globalColors: toolbarState.globalColors,
+        currentShapeType: toolbarState.currentShapeType
+      });
+      
+      if (window.recreateBorder) {
+        console.log('Calling window.recreateBorder() with saved toolbarState');
+        // Use timeout to ensure canvas is fully rendered before adding border
+        setTimeout(() => {
+          try {
+            window.recreateBorder(toolbarState);
+            console.log('Border recreation completed successfully');
+          } catch (error) {
+            console.error("Failed to recreate border:", error);
+          }
+        }, 200);
+      } else {
+        console.error('window.recreateBorder function not available');
+      }
+    } else {
+      console.log('Border recreation skipped:', {
+        hasToolbarState: !!toolbarState,
+        hasBorder: toolbarState?.hasBorder,
+        hasRecreateBorderFunction: !!window.recreateBorder
+      });
+    }
+    
+  } catch (e) {
+    console.error("Failed to restore element properties:", e);
+  }
+}
+
 export async function saveNewProject(name, canvas) {
-  const snap = exportCanvas(canvas);
+  const toolbarState = window.getCurrentToolbarState?.() || {};
+  const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
   const project = {
     id: uuid(),
@@ -124,6 +562,8 @@ export async function saveNewProject(name, canvas) {
     localStorage.setItem("currentProjectId", project.id);
     localStorage.setItem("currentProjectName", project.name);
   } catch {}
+  // absorb unsaved signs if any
+  try { await transferUnsavedSignsToProject(project.id); } catch {}
   return project;
 }
 
@@ -140,7 +580,8 @@ export async function saveCurrentProject(canvas) {
     const fallbackName = `Untitled ${new Date().toLocaleString()}`;
     return saveNewProject(fallbackName, canvas);
   }
-  const snap = exportCanvas(canvas);
+  const toolbarState = window.getCurrentToolbarState?.() || {};
+  const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
   const canvases = Array.isArray(existing.canvases) ? existing.canvases.slice(0, 10) : [];
   if (snap) {
@@ -153,6 +594,7 @@ export async function saveCurrentProject(canvas) {
   const updated = { ...existing, canvases, updatedAt: now };
   await putProject(updated);
   try { window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail: { projectId: updated.id } })); } catch {}
+  try { await transferUnsavedSignsToProject(updated.id); } catch {}
   return updated;
 }
 
@@ -176,23 +618,77 @@ function broadcastProjectUpdate(projectId) {
   } catch {}
 }
 
+// Transfer all unsaved signs into the specified project (append, max 10 total). Clears unsaved store.
+export async function transferUnsavedSignsToProject(projectId) {
+  if (!projectId) return null;
+  const unsaved = await getAllUnsavedSigns();
+  if (!unsaved.length) return null;
+  const project = await getProject(projectId);
+  if (!project) return null;
+  const existing = Array.isArray(project.canvases) ? project.canvases : [];
+  // Append unsaved entries (mapping to project canvas schema by adding ids if missing)
+  for (const s of unsaved) {
+    if (existing.length >= 10) break; // respect limit
+    existing.push({ id: uuid(), json: s.json, preview: s.preview, width: s.width, height: s.height });
+  }
+  project.canvases = existing;
+  project.updatedAt = Date.now();
+  await putProject(project);
+  await clearAllUnsavedSigns();
+  broadcastProjectUpdate(project.id);
+  broadcastUnsavedUpdate();
+  return project;
+}
+
 // Update (replace) a specific canvas snapshot in the current project by its id
 export async function updateCanvasInCurrentProject(canvasId, canvas) {
   if (!canvasId) return null;
+  
+  console.log('Updating project canvas:', canvasId, 'with', canvas.getObjects().length, 'objects');
+  
   let currentId = null;
   try { currentId = localStorage.getItem("currentProjectId"); } catch {}
-  if (!currentId) return null;
+  if (!currentId) {
+    console.warn('No current project ID found');
+    return null;
+  }
+  
   const project = await getProject(currentId);
-  if (!project) return null;
-  const snap = exportCanvas(canvas);
-  if (!snap) return null;
-  const idx = (project.canvases || []).findIndex(c => c.id === canvasId);
-  if (idx === -1) return null;
-  project.canvases[idx] = { ...project.canvases[idx], ...snap };
-  project.updatedAt = Date.now();
-  await putProject(project);
-  broadcastProjectUpdate(project.id);
-  return project;
+  if (!project) {
+    console.warn('Project not found:', currentId);
+    return null;
+  }
+  
+  try {
+    const toolbarState = window.getCurrentToolbarState?.() || {};
+    console.log('Capturing toolbar state for project canvas update');
+    
+    const snap = exportCanvas(canvas, toolbarState);
+    if (!snap) {
+      console.error('Failed to export canvas for project canvas update');
+      return null;
+    }
+    
+    console.log('Exported canvas snapshot with', snap.json?.objects?.length || 0, 'objects');
+    
+    const idx = (project.canvases || []).findIndex(c => c.id === canvasId);
+    if (idx === -1) {
+      console.warn('Canvas not found in project:', canvasId);
+      return null;
+    }
+    
+    project.canvases[idx] = { ...project.canvases[idx], ...snap };
+    project.updatedAt = Date.now();
+    
+    await putProject(project);
+    console.log('Successfully updated project canvas:', canvasId);
+    
+    broadcastProjectUpdate(project.id);
+    return project;
+  } catch (error) {
+    console.error('Error updating project canvas:', error);
+    return null;
+  }
 }
 
 // Append a new (blank or current state) canvas snapshot to current project (max 10)

@@ -56,6 +56,24 @@
   cursor: pointer;
 }
 
+.item[data-live="true"] {
+  position: relative;
+  border-color: #159DFF;
+}
+
+.item[data-live="true"]:before {
+  content: "LIVE";
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  background: #159DFF;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
 .thumb {
   height: 110px;
   border: 1px dashed #94a3b8;

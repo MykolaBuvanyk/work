@@ -125,8 +125,28 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
       }
       
       try {
-        const toolbarState = window.getCurrentToolbarState?.() || {};
-        console.log('Capturing toolbar state for unsaved sign update');
+        // ВИПРАВЛЕННЯ: Отримуємо актуальний toolbar state з кількох джерел
+        let toolbarState = {};
+        
+        // Спочатку намагаємося отримати з window функції
+        if (window.getCurrentToolbarState) {
+          toolbarState = window.getCurrentToolbarState() || {};
+          console.log('Got toolbar state from window function');
+        }
+        
+        // Додатково намагаємося отримати з canvas properties
+        const canvasState = {
+          currentShapeType: canvas.get("shapeType") || "rectangle",
+          cornerRadius: canvas.get("cornerRadius") || 0,
+          backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF",
+          width: canvas.getWidth(),
+          height: canvas.getHeight()
+        };
+        
+        // Мержимо всі джерела
+        toolbarState = { ...toolbarState, ...canvasState };
+        
+        console.log('Final toolbar state for unsaved sign update:', toolbarState);
         
         const snap = exportCanvas(canvas, toolbarState);
         if (!snap) { 
@@ -306,58 +326,89 @@ export function exportCanvas(canvas, toolbarState = {}) {
     // Prefer design size (Fabric internal size equals design pixels in this app)
     const width = canvas.getWidth?.() || 0;
     const height = canvas.getHeight?.() || 0;
-    const preview = canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
+    
+    // ВИПРАВЛЕННЯ: Генеруємо SVG preview замість PNG для кращої якості та розміру
+    let previewSvg = "";
+    let previewPng = "";
+    
+    try {
+      // Генеруємо SVG preview для відображення в UI
+      if (canvas.toSVG) {
+        const rawSvg = canvas.toSVG({
+          viewBox: {
+            x: 0,
+            y: 0,
+            width: width,
+            height: height
+          },
+          width: width,
+          height: height
+        });
+        
+        // ВИПРАВЛЕННЯ: Очищаємо SVG від потенційно проблемних символів
+        previewSvg = rawSvg
+          .replace(/[\x00-\x1F\x7F]/g, '') // Видаляємо control characters
+          .replace(/[\uFFFE\uFFFF]/g, ''); // Видаляємо non-characters
+        
+        console.log('Generated SVG preview, length:', previewSvg.length);
+      }
+      
+      // Також генеруємо PNG як fallback
+      if (canvas.toDataURL) {
+        previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+        console.log('Generated PNG preview as fallback');
+      }
+    } catch (error) {
+      console.error('Failed to generate preview:', error);
+      // Якщо SVG генерація не вдалася, спробуємо хоча б PNG
+      try {
+        if (canvas.toDataURL) {
+          previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+          console.log('Generated PNG preview as backup after SVG error');
+        }
+      } catch (pngError) {
+        console.error('Failed to generate PNG preview as backup:', pngError);
+      }
+    }
     
     // Store comprehensive toolbar state for each canvas
     const canvasState = {
       json,
-      preview,
+      preview: previewPng, // Зберігаємо PNG як fallback
+      previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
       width,
       height,
-      height,
-      // Global canvas settings
+      // ВИПРАВЛЕННЯ: Покращене збереження canvas properties
       backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF",
-      // Toolbar state (passed from Toolbar component)
+      canvasType: canvas.get("shapeType") || "rectangle",
+      cornerRadius: canvas.get("cornerRadius") || 0,
+      
+      // ВИПРАВЛЕННЯ: Зберігаємо повний toolbar state з canvas properties
       toolbarState: {
-        // Shape settings
-        currentShapeType: toolbarState.currentShapeType || null,
-        cornerRadius: toolbarState.cornerRadius || 0,
-        // Size values (in mm)
-        sizeValues: toolbarState.sizeValues || { width: 150, height: 150, cornerRadius: 0 },
-        // Color settings
-        globalColors: toolbarState.globalColors || {
-          textColor: "#000000",
-          backgroundColor: "#FFFFFF", 
-          strokeColor: "#000000",
-          fillColor: "transparent",
-          backgroundType: "solid"
+        ...toolbarState,
+        // Оновлюємо розміри в toolbar state
+        sizeValues: {
+          width: Math.round((width || 150) * 25.4 / 96), // px to mm
+          height: Math.round((height || 150) * 25.4 / 96), // px to mm
+          cornerRadius: toolbarState.cornerRadius || 0
         },
-        selectedColorIndex: toolbarState.selectedColorIndex || 0,
-        // Material settings
-        thickness: toolbarState.thickness || 1.6,
-        isAdhesiveTape: toolbarState.isAdhesiveTape || false,
-        // Holes settings
-        activeHolesType: toolbarState.activeHolesType || 1,
-        holesDiameter: toolbarState.holesDiameter || 2.5,
-        isHolesSelected: toolbarState.isHolesSelected || false,
-        // Shape customization
-        isCustomShapeMode: toolbarState.isCustomShapeMode || false,
-        isCustomShapeApplied: toolbarState.isCustomShapeApplied || false,
-        hasUserPickedShape: toolbarState.hasUserPickedShape || false,
-        // Copy settings
-        copiesCount: toolbarState.copiesCount || 1,
-        // Border settings (for programmatic recreation)
-        // Use border elements presence OR existing toolbar state
+        // Оновлюємо background color
+        globalColors: {
+          ...(toolbarState.globalColors || {}),
+          backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF"
+        },
+        // Зберігаємо border flag з множинних джерел
         hasBorder: hasBorder || toolbarState.hasBorder || false,
-        // Modal states (usually don't need to persist, but included for completeness)
-        modalStates: {
-          isQrOpen: false,
-          isBarCodeOpen: false,
-          isShapeOpen: false,
-          isCutOpen: false,
-          isIconMenuOpen: false,
-          isShapePropertiesOpen: false
-        }
+        // Зберігаємо timestamp
+        lastSaved: Date.now()
+      },
+      
+      // ВИПРАВЛЕННЯ: Додаткові метадані для відстеження
+      canvasMetadata: {
+        objectCount: canvas.getObjects().length,
+        hasBorderElements: hasBorder,
+        lastModified: Date.now(),
+        version: "2.0"
       }
     };
     
@@ -370,33 +421,67 @@ export function exportCanvas(canvas, toolbarState = {}) {
 
 // Helper function to extract toolbar state from saved canvas data
 export function extractToolbarState(canvasData) {
-  if (!canvasData || !canvasData.toolbarState) {
-    // Return default state if no toolbar state found
-    return {
-      currentShapeType: "rectangle",
-      cornerRadius: 0,
-      sizeValues: { width: 150, height: 150, cornerRadius: 0 },
-      globalColors: {
-        textColor: "#000000",
-        backgroundColor: "#FFFFFF",
-        strokeColor: "#000000", 
-        fillColor: "transparent",
-        backgroundType: "solid"
-      },
-      selectedColorIndex: 0,
-      thickness: 1.6,
-      isAdhesiveTape: false,
-      activeHolesType: 1,
-      holesDiameter: 2.5,
-      isHolesSelected: false,
-      isCustomShapeMode: false,
-      isCustomShapeApplied: false,
-      hasUserPickedShape: false,
-      copiesCount: 1
-    };
+  if (!canvasData) {
+    return getDefaultToolbarState();
   }
   
-  return canvasData.toolbarState;
+  // ВИПРАВЛЕННЯ: Правильно витягуємо збережений стан
+  const savedState = canvasData.toolbarState || {};
+  
+  return {
+    currentShapeType: savedState.currentShapeType || "rectangle",
+    cornerRadius: savedState.cornerRadius || 0,
+    sizeValues: savedState.sizeValues || { 
+      width: canvasData.width ? Math.round(canvasData.width * 25.4 / 96) : 150, 
+      height: canvasData.height ? Math.round(canvasData.height * 25.4 / 96) : 150, 
+      cornerRadius: savedState.cornerRadius || 0 
+    },
+    globalColors: savedState.globalColors || {
+      textColor: "#000000",
+      backgroundColor: canvasData.backgroundColor || "#FFFFFF",
+      strokeColor: "#000000",
+      fillColor: "transparent",
+      backgroundType: "solid"
+    },
+    selectedColorIndex: savedState.selectedColorIndex || 0,
+    thickness: savedState.thickness || 1.6,
+    isAdhesiveTape: savedState.isAdhesiveTape || false,
+    activeHolesType: savedState.activeHolesType || 1,
+    holesDiameter: savedState.holesDiameter || 2.5,
+    isHolesSelected: savedState.isHolesSelected || false,
+    isCustomShapeMode: false, // Завжди false при завантаженні
+    isCustomShapeApplied: savedState.isCustomShapeApplied || false,
+    hasUserPickedShape: savedState.hasUserPickedShape || false,
+    copiesCount: savedState.copiesCount || 1,
+    hasBorder: savedState.hasBorder || false
+  };
+}
+
+// Helper function to get default toolbar state
+function getDefaultToolbarState() {
+  return {
+    currentShapeType: "rectangle",
+    cornerRadius: 0,
+    sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+    globalColors: {
+      textColor: "#000000",
+      backgroundColor: "#FFFFFF",
+      strokeColor: "#000000", 
+      fillColor: "transparent",
+      backgroundType: "solid"
+    },
+    selectedColorIndex: 0,
+    thickness: 1.6,
+    isAdhesiveTape: false,
+    activeHolesType: 1,
+    holesDiameter: 2.5,
+    isHolesSelected: false,
+    isCustomShapeMode: false,
+    isCustomShapeApplied: false,
+    hasUserPickedShape: false,
+    copiesCount: 1,
+    hasBorder: false
+  };
 }
 
 // Helper function to restore element-specific properties after canvas load

@@ -9,6 +9,6 @@ export default defineConfig({
     include: ['fabric'],
   },
   server: {
-    allowedHosts: ['236c21331002.ngrok-free.app'],
+    allowedHosts: ['4576a41395b0.ngrok-free.app'],
   },
 })

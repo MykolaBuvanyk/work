@@ -2090,7 +2090,7 @@ const Canvas = () => {
               format: o.barCodeType,
               width: 2,
               height: 100,
-              displayValue: true,
+              displayValue: false,
               fontSize: 14,
               textMargin: 5,
               margin: 0, // removed outer padding

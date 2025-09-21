@@ -177,9 +177,10 @@ const CutSelector = ({ isOpen, onClose }) => {
   const addCut1 = () => {
     if (canvas) {
       const { centerX, centerY } = getCenterCoordinates();
-      // Коло з вирізом зверху
+      // Замкнута фігура: коло з впадиною зверху
       const path = new fabric.Path(
-        "M43 1a45 45 0 1 0 8 0M43 5h8M51 5V1M43 5V1",
+        // Створюємо замкнений контур: від точки впадинки по колу і назад через впадинку
+        "M43.2442 1C19.0163 3.02583 0.69503 23.7962 1.70908 48.088C2.72275 72.3794 22.7111 91.5507 47.0237 91.5507C71.3367 91.5511 91.3247 72.3798 92.3387 48.088C93.3528 23.7966 75.0319 3.0262 50.8036 1L50.8037 4.77953L43.2441 4.77954Z",
         {
           left: centerX,
           top: centerY,
@@ -200,6 +201,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           cutType: "shape", // Додаємо тип cut елементу
         }
       );
+
       canvas.add(path);
       canvas.setActiveObject(path);
       canvas.renderAll();
@@ -210,9 +212,9 @@ const CutSelector = ({ isOpen, onClose }) => {
   const addCut2 = () => {
     if (canvas) {
       const { centerX, centerY } = getCenterCoordinates();
-      // Напівкруглі вирізи з боків
+      // Напівкруглі вирізи з боків - робимо замкнену фігуру
       const path = new fabric.Path(
-        "M21 1h56M21 78h56M21 1a48 48 0 0 0 0 77M77 78a48 48 0 0 0 0-77",
+        "M21 1h56L77 1a48 48 0 0 1 0 77L77 78h-56L21 78a48 48 0 0 1 0-77Z",
         {
           left: centerX,
           top: centerY,
@@ -276,9 +278,9 @@ const CutSelector = ({ isOpen, onClose }) => {
   const addCut4 = () => {
     if (canvas) {
       const { centerX, centerY } = getCenterCoordinates();
-      // Вертикальні напівкруглі вирізи
+      // Вертикальні напівкруглі вирізи - робимо замкнену фігуру
       const path = new fabric.Path(
-        "M2 26v37M78 26v37M78 26a43 43 0 0 0-76 0M2 63a43 43 0 0 0 76 0",
+        "M2 26v37L2 63a43 43 0 0 0 76 0L78 63v-37L78 26a43 43 0 0 0-76 0Z",
         {
           left: centerX,
           top: centerY,
@@ -308,12 +310,15 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   const addCut5 = () => {
     if (canvas) {
-      // Великі вертикальні напівкруглі вирізи
+      const { centerX, centerY } = getCenterCoordinates();
+      // Великі вертикальні напівкруглі вирізи - робимо замкнену фігуру
       const path = new fabric.Path(
-        "M1 33v38M95 33v38M1 71a51 51 0 0 0 94 0M95 33a51 51 0 0 0-94 0",
+        "M1 33v38L1 71a51 51 0 0 0 94 0L95 71v-38L95 33a51 51 0 0 0-94 0Z",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
@@ -338,43 +343,77 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   const addCut6 = () => {
     if (canvas) {
-      // Коло з хрестом
-      const path = new fabric.Path(
+      const { centerX, centerY } = getCenterCoordinates();
+
+      // Створюємо замкнений path тільки для областей, які мають бути білими (виключаємо всі впадини)
+      const filledPath = new fabric.Path(
+        "M39 3L46 3L46 1C66 3 81 18 83 38L81 38L81 46L83 46C81 66 66 81 46 83L46 81L39 81L39 83C19 81 4 66 2 46L4 46L4 38L2 38C4 18 19 3 39 1L39 3Z",
+        {
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
+          fill: "#FFFFFF",
+          stroke: "transparent",
+          strokeWidth: 0,
+          selectable: false,
+          evented: false,
+        }
+      );
+
+      // Оригінальний бордер з впадинами
+      const border = new fabric.Path(
         "M39 3h7M39 3V1M46 3V1M39 1C19 3 3 18 2 38M84 38C82 18 66 3 46 1M46 83c20-2 36-17 38-37M2 46c1 20 17 35 37 37M4 46v-8M4 46H2M4 38H2M46 81h-7M46 81v2M39 81v2M81 38v8M81 38h3M81 46h3",
         {
-          left: 100,
-          top: 100,
-          fill: "#FFFFFF",
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
+          fill: "transparent",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
           strokeLineJoin: "bevel",
-          selectable: true,
-          hasControls: false,
-          hasBorders: true,
-          lockScalingX: true,
-          lockScalingY: true,
-          lockUniScaling: true,
-          isCutElement: true,
-          cutType: "shape",
+          selectable: false,
+          evented: false,
         }
       );
-      canvas.add(path);
-      canvas.setActiveObject(path);
+
+      const group = new fabric.Group([filledPath, border], {
+        left: centerX,
+        top: centerY,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
+      });
+
+      canvas.add(group);
+      canvas.setActiveObject(group);
       canvas.renderAll();
       onClose();
     }
   };
-
   const addCut7 = () => {
     if (canvas) {
-      // Коло з маленьким півколом знизу
+      const { centerX, centerY } = getCenterCoordinates();
+
+      // Коло з вирізаною впадиною знизу
       const path = new fabric.Path(
-        "M52 91a45 45 0 1 0-12 0M52 91a6 6 0 0 0-12 0",
+        "M52 91a45 45 0 1 0-12 0 M52 91a6 6 0 0 0-12 0",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
+          fillRule: "evenodd", // Для вирізання впадини
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -389,6 +428,7 @@ const CutSelector = ({ isOpen, onClose }) => {
           cutType: "shape",
         }
       );
+
       canvas.add(path);
       canvas.setActiveObject(path);
       canvas.renderAll();
@@ -398,12 +438,15 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   const addCut8 = () => {
     if (canvas) {
-      // Маленькі вертикальні напівкруглі вирізи
+      const { centerX, centerY } = getCenterCoordinates();
+      // Маленькі вертикальні напівкруглі вирізи - робимо замкнену фігуру
       const path = new fabric.Path(
-        "M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0",
+        "M1 18v39L1 57a36 36 0 0 0 60 0L61 57v-39L61 18a36 36 0 0 0-60 0Z",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
@@ -428,13 +471,17 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   const addCut9 = () => {
     if (canvas) {
-      // Коло з прямокутним вирізом знизу
+      const { centerX, centerY } = getCenterCoordinates();
+      // Коло з прямокутним вирізом знизу - використовуємо evenodd як для addCut1
       const path = new fabric.Path(
-        "M25 60v-3M25 57h11M36 60v-3M36 60a30 30 0 1 0-11 0",
+        "M36 60a30 30 0 1 0-11 0L25 57h11L36 57Z M25 60v-3M25 57h11M36 57v3",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
+          fillRule: "evenodd", // Для прозорої впадини
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -459,28 +506,60 @@ const CutSelector = ({ isOpen, onClose }) => {
   const addCut10 = () => {
     if (canvas) {
       // Коло з трикутним вирізом знизу
-      const path = new fabric.Path(
-        "m41 92 5-5M51 92l-5-5M51 92a45 45 0 1 0-10 0",
+      const { centerX, centerY } = getCenterCoordinates();
+      const filledPath = new fabric.Path(
+        // Круг, описаний кубічними кривими (той самий, що й бордер), + трикутник для вирізу
+        // Використовуємо точні координати, щоб заповнення і бордер співпадали.
+        "M41.3126 91.8812C17.387 89.22 -0.291335 68.3305 1.04133 44.2942C2.37399 20.258 22.2531 1.45068 46.3265 1.45068C70.3994 1.45068 90.2786 20.2583 91.6109 44.2942C92.9436 68.3305 75.2652 89.2204 51.3397 91.8812Z M41.3126 91.8813L46.3257 86.8682L51.3397 91.8813L41.3126 91.8813Z",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
+          fillRule: "evenodd",
+          stroke: "transparent",
+          strokeWidth: 0,
+          selectable: false,
+          evented: false,
+        }
+      );
+
+      const borderPath = new fabric.Path(
+        // Бордер скопійований за формою з наданого SVG: дві короткі лінії + довга дуга кола
+        "M41.3125 91.8813L46.3257 86.8682 M51.3397 91.8813L46.3262 86.8682 M51.3397 91.8812C75.2652 89.2204 92.9436 68.3305 91.6109 44.2942C90.2786 20.2583 70.3994 1.45068 46.3265 1.45068C22.2531 1.45068 2.37399 20.258 1.04133 44.2942C-0.291335 68.3305 17.387 89.22 41.3126 91.8812",
+        {
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
+          fill: "transparent",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
           strokeLineJoin: "bevel",
-          selectable: true,
-          hasControls: false,
-          hasBorders: true,
-          lockScalingX: true,
-          lockScalingY: true,
-          lockUniScaling: true,
-          isCutElement: true,
-          cutType: "shape",
+          selectable: false,
+          evented: false,
         }
       );
-      canvas.add(path);
-      canvas.setActiveObject(path);
+
+      const group = new fabric.Group([filledPath, borderPath], {
+        left: centerX,
+        top: centerY,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
+      });
+
+      canvas.add(group);
+      canvas.setActiveObject(group);
       canvas.renderAll();
       onClose();
     }
@@ -488,12 +567,16 @@ const CutSelector = ({ isOpen, onClose }) => {
 
   const addCut11 = () => {
     if (canvas) {
-      // Компактні вертикальні напівкруглі вирізи
+      const { centerX, centerY } = getCenterCoordinates();
+      // Компактні вертикальні напівкруглі вирізи — робимо тільки білий фон (без stroke)
+      // Основна форма (бордер + прозоре всередині) залишаємо як path
       const path = new fabric.Path(
         "M1 15v33M52 48V15M52 15a30 30 0 0 0-51 0M1 48a30 30 0 0 0 51 0",
         {
-          left: 100,
-          top: 100,
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
           fill: "#FFFFFF",
           stroke: "#FD7714",
           strokeWidth: 1.5,
@@ -509,8 +592,42 @@ const CutSelector = ({ isOpen, onClose }) => {
           cutType: "shape",
         }
       );
-      canvas.add(path);
-      canvas.setActiveObject(path);
+
+      // Додаємо окремий прямокутник-підкладку, щоб весь центр був білим
+      // Розміри прямокутника підібрані приблизно під іконку; можна підправити
+      const bgRect = new fabric.Path(
+        // Прямокутник шириною ~56 і висотою ~36, розміщений відносно центру іконки (збільшена ширина)
+        "M2 26h50v36H2z",
+        {
+          left: centerX,
+          top: centerY,
+          originX: "center",
+          originY: "center",
+          fill: "#FFFFFF",
+          stroke: "transparent",
+          selectable: false,
+          evented: false,
+        }
+      );
+
+      // Групуємо фон і бордер разом (фон буде внизу завдяки порядку)
+      const group = new fabric.Group([bgRect, path], {
+        left: centerX,
+        top: centerY,
+        originX: "center",
+        originY: "center",
+        selectable: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        isCutElement: true,
+        cutType: "shape",
+      });
+
+      canvas.add(group);
+      canvas.setActiveObject(group);
       canvas.renderAll();
       onClose();
     }
@@ -627,7 +744,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         left: 100,
         top: 100,
         radius: 56,
-        fill: "transparent",
+        fill: "white",
         stroke: "#FD7714",
         strokeWidth: 1.5,
         selectable: true,

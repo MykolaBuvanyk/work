@@ -348,7 +348,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
               <div className={styles.inputGroup}>
                 <input
                   type="text"
-                  placeholder="ABC - 123"
+                  placeholder=""
                   value={formData.text}
                   onChange={(e) => handleInputChange("text", e.target.value)}
                   className={styles.input}

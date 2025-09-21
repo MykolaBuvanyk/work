@@ -4,7 +4,6 @@ import CustomShapeStopModal from "./CustomShapeStopModal";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useCanvasPropertiesTracker } from "../../hooks/useCanvasPropertiesTracker";
-import { useToolbarState } from "../../hooks/useToolbarState";
 import * as fabric from "fabric";
 import paper from "paper";
 import JsBarcode from "jsbarcode";
@@ -82,9 +81,6 @@ const Toolbar = () => {
     isCustomShapeMode,
     setIsCustomShapeMode,
   } = useCanvasContext();
-  
-  const { getToolbarState } = useToolbarState();
-  
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
   const mmToPx = (mm) =>
@@ -145,157 +141,6 @@ const Toolbar = () => {
       holesDiameter,
     }
   );
-
-  // Export current toolbar state for persistence
-  const getCurrentToolbarState = () => {
-    // Check if there are any border elements on canvas
-    const hasBorder = canvas ? canvas.getObjects().some((obj) => obj.isBorderShape) : false;
-    
-    return getToolbarState({
-      currentShapeType,
-      cornerRadius: sizeValues.cornerRadius,
-      sizeValues,
-      selectedColorIndex,
-      thickness,
-      isAdhesiveTape,
-      activeHolesType,
-      holesDiameter,
-      isHolesSelected,
-      isCustomShapeApplied,
-      hasUserPickedShape,
-      copiesCount,
-      hasBorder
-    });
-  };
-
-  // Restore toolbar state from saved data
-  const restoreToolbarState = (toolbarState) => {
-    if (!toolbarState) return;
-    
-    try {
-      // Restore shape settings
-      if (toolbarState.currentShapeType) {
-        setCurrentShapeType(toolbarState.currentShapeType);
-      }
-      
-      // Restore size values
-      if (toolbarState.sizeValues) {
-        setSizeValues(toolbarState.sizeValues);
-      }
-      
-      // Restore color settings
-      if (toolbarState.globalColors) {
-        updateGlobalColors(toolbarState.globalColors);
-      }
-      if (typeof toolbarState.selectedColorIndex === 'number') {
-        setSelectedColorIndex(toolbarState.selectedColorIndex);
-      }
-      
-      // Restore material settings
-      if (typeof toolbarState.thickness === 'number') {
-        setThickness(toolbarState.thickness);
-      }
-      if (typeof toolbarState.isAdhesiveTape === 'boolean') {
-        setIsAdhesiveTape(toolbarState.isAdhesiveTape);
-      }
-      
-      // Restore holes settings
-      if (typeof toolbarState.activeHolesType === 'number') {
-        setActiveHolesType(toolbarState.activeHolesType);
-      }
-      if (typeof toolbarState.holesDiameter === 'number') {
-        setHolesDiameter(toolbarState.holesDiameter);
-      }
-      if (typeof toolbarState.isHolesSelected === 'boolean') {
-        setIsHolesSelected(toolbarState.isHolesSelected);
-      }
-      
-      // Restore shape customization
-      if (typeof toolbarState.isCustomShapeMode === 'boolean') {
-        setIsCustomShapeMode(toolbarState.isCustomShapeMode);
-      }
-      if (typeof toolbarState.isCustomShapeApplied === 'boolean') {
-        setIsCustomShapeApplied(toolbarState.isCustomShapeApplied);
-      }
-      if (typeof toolbarState.hasUserPickedShape === 'boolean') {
-        setHasUserPickedShape(toolbarState.hasUserPickedShape);
-      }
-      
-      // Restore copy settings
-      if (typeof toolbarState.copiesCount === 'number') {
-        setCopiesCount(toolbarState.copiesCount);
-      }
-      
-      // Note: hasBorder state is automatically determined from canvas objects,
-      // so no explicit restoration needed - border elements are restored via canvas JSON
-      
-    } catch (e) {
-      console.error("Failed to restore toolbar state:", e);
-    }
-  };
-
-  // Function to recreate border programmatically
-  const recreateBorder = (savedToolbarState = null) => {
-    console.log('recreateBorder called with savedToolbarState:', savedToolbarState);
-    if (!canvas) {
-      console.log('No canvas available for border recreation');
-      return;
-    }
-    
-    try {
-      // Use saved toolbar state if provided, otherwise get current state
-      let stateToUse = savedToolbarState;
-      if (!stateToUse) {
-        stateToUse = getCurrentToolbarState();
-        console.log('Using current toolbar state for border recreation:', stateToUse);
-      }
-      
-      if (!stateToUse.hasBorder) {
-        console.log('No border needed according to toolbar state');
-        return;
-      }
-      
-      // Get border settings from toolbar state
-      const color = stateToUse.globalColors?.strokeColor || stateToUse.globalColors?.textColor || globalColors?.strokeColor || globalColors?.textColor || "#000000";
-      const thicknessMm = stateToUse.thickness || thickness || 1.6;
-      const shapeType = stateToUse.currentShapeType || currentShapeType;
-      
-      console.log('Recreating border with:', { color, thicknessMm, shapeType });
-      
-      // Determine shape type and apply appropriate border
-      if (shapeType === "rectangle") {
-        console.log('Applying rectangle inner border');
-        applyRectangleInnerBorder({ thicknessMm, color });
-      } else if (shapeType === "circle") {
-        console.log('Applying circle inner border');
-        applyCircleInnerBorder({ thicknessMm, color });
-      } else {
-        console.log('No border function available for shape type:', shapeType);
-      }
-      // Add other shape types as needed
-      
-    } catch (e) {
-      console.error("Failed to recreate border:", e);
-    }
-  };
-
-  // Make toolbar state available globally for saving
-  useEffect(() => {
-    if (window) {
-      window.getCurrentToolbarState = getCurrentToolbarState;
-      window.restoreToolbarState = restoreToolbarState;
-      window.recreateBorder = recreateBorder;
-    }
-    return () => {
-      if (window) {
-        delete window.getCurrentToolbarState;
-        delete window.restoreToolbarState;
-        delete window.recreateBorder;
-      }
-    };
-  }, [currentShapeType, sizeValues, selectedColorIndex, thickness, isAdhesiveTape, 
-      activeHolesType, holesDiameter, isHolesSelected, isCustomShapeApplied, 
-      hasUserPickedShape, copiesCount]);
 
   // Очистити canvas з збереженням фону
   const clearCanvasPreserveTheme = () => {
@@ -3529,70 +3374,6 @@ const Toolbar = () => {
     InnerStrokeEllipseClass = InnerStrokeEllipse;
     InnerStrokePolygonClass = InnerStrokePolygon;
     InnerStrokePathClass = InnerStrokePath;
-    
-    // Register classes in Fabric.js using multiple approaches for compatibility
-    if (typeof fabric !== 'undefined') {
-      try {
-        console.log('Registering inner stroke classes in Fabric.js...');
-        
-        // Method 1: Using classRegistry (Fabric 5+)
-        if (fabric.util && fabric.util.classRegistry && fabric.util.classRegistry.setClass) {
-          console.log('Using classRegistry.setClass method');
-          fabric.util.classRegistry.setClass(InnerStrokeRect, 'innerStrokeRect');
-          fabric.util.classRegistry.setClass(InnerStrokeCircle, 'innerStrokeCircle');
-          fabric.util.classRegistry.setClass(InnerStrokeEllipse, 'innerStrokeEllipse');
-          fabric.util.classRegistry.setClass(InnerStrokePolygon, 'innerStrokePolygon');
-          fabric.util.classRegistry.setClass(InnerStrokePath, 'innerStrokePath');
-        } else {
-          console.log('Using direct fabric assignment method');
-          // Method 2: Direct assignment (Fabric 4.x and earlier)
-          fabric.InnerStrokeRect = InnerStrokeRect;
-          fabric.InnerStrokeCircle = InnerStrokeCircle;
-          fabric.InnerStrokeEllipse = InnerStrokeEllipse;
-          fabric.InnerStrokePolygon = InnerStrokePolygon;
-          fabric.InnerStrokePath = InnerStrokePath;
-        }
-        
-        // Method 3: Register with global object mapping for loadFromJSON
-        if (!fabric.util.classRegistry) {
-          fabric.util.classRegistry = {};
-        }
-        if (!fabric.util.classRegistry.getClass) {
-          console.log('Creating custom getClass method');
-          fabric.util.classRegistry.getClass = function(className) {
-            const mapping = {
-              'innerStrokeRect': InnerStrokeRect,
-              'innerStrokeCircle': InnerStrokeCircle,
-              'innerStrokeEllipse': InnerStrokeEllipse,
-              'innerStrokePolygon': InnerStrokePolygon,
-              'innerStrokePath': InnerStrokePath
-            };
-            console.log('getClass called for:', className, 'found:', !!mapping[className]);
-            return mapping[className] || fabric[className];
-          };
-        }
-        
-        // Method 4: Override fabric.util.getClass directly if it exists
-        if (fabric.util && fabric.util.getClass) {
-          const originalGetClass = fabric.util.getClass;
-          fabric.util.getClass = function(className) {
-            const mapping = {
-              'innerStrokeRect': InnerStrokeRect,
-              'innerStrokeCircle': InnerStrokeCircle,
-              'innerStrokeEllipse': InnerStrokeEllipse,
-              'innerStrokePolygon': InnerStrokePolygon,
-              'innerStrokePath': InnerStrokePath
-            };
-            console.log('util.getClass called for:', className);
-            return mapping[className] || originalGetClass(className);
-          };
-        }
-        
-        console.log('Inner stroke classes registered successfully');
-      } catch (e) {
-        console.warn('Failed to register inner stroke classes:', e);
-      }
-    }
   };
 
   // Add / update inner border for rectangle current shape

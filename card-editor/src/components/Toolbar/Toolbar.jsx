@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import CustomShapeStopModal from "./CustomShapeStopModal";
+import { copyHandler } from "../Canvas/Canvas";
 // lock shape now: rectangle + top half-circle (width 16mm, height 8mm)
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
@@ -109,6 +110,33 @@ const Toolbar = () => {
   const [isShapePropertiesOpen, setIsShapePropertiesOpen] = useState(false);
   const [copiesCount, setCopiesCount] = useState(1);
   const [holesDiameter, setHolesDiameter] = useState(2.5);
+
+  // Для lock: по умолчанию 5мм, тип дырки 2 (сверху), ограничения 2-7мм
+  useEffect(() => {
+    if (currentShapeType === "lock") {
+      setIsHolesSelected(true);
+      setActiveHolesType(2);
+      setHolesDiameter(5);
+    }
+  }, [currentShapeType]);
+
+  // Хардкодим ограничения только для lock и дырки сверху
+  const getHolesDiameterLimits = () => {
+    if (currentShapeType === "lock" && activeHolesType === 2) {
+      return { min: 2, max: 7, defaultValue: 5 };
+    }
+    // ...оставить текущие ограничения для других случаев...
+    return { min: 2.5, max: 10, defaultValue: 2.5 };
+  };
+
+  // Обработчик изменения диаметра дирки
+  const handleHolesDiameterChange = (value) => {
+    const { min, max } = getHolesDiameterLimits();
+    let v = Number(value);
+    if (isNaN(v)) v = min;
+    v = Math.max(min, Math.min(max, v));
+    setHolesDiameter(v);
+  };
   const [isHolesSelected, setIsHolesSelected] = useState(false);
   const [activeHolesType, setActiveHolesType] = useState(1); // 1..7, за замовчуванням — без отворів
   const [selectedColorIndex, setSelectedColorIndex] = useState(0); // Індекс обраного кольору (0 - перший колір за замовчуванням)
@@ -5301,22 +5329,61 @@ const Toolbar = () => {
       });
       canvas.add(text);
       canvas.setActiveObject(text);
-      try {
-        if (typeof text.enterEditing === "function") text.enterEditing();
-        const len = (text.text || "").length;
-        if (typeof text.setSelectionStart === "function")
-          text.setSelectionStart(len);
-        if (typeof text.setSelectionEnd === "function")
-          text.setSelectionEnd(len);
-        if (
-          text.hiddenTextarea &&
-          typeof text.hiddenTextarea.focus === "function"
-        )
-          text.hiddenTextarea.focus();
-      } catch {}
+      setTimeout(() => {
+        if (typeof copyHandler === "function") {
+          copyHandler(null, { target: text });
+          // Первая синхронизация selection
+          const len = (text.text || "").length;
+          if (typeof text.setSelectionStart === "function")
+            text.setSelectionStart(len);
+          if (typeof text.setSelectionEnd === "function")
+            text.setSelectionEnd(len);
+          if (text.hiddenTextarea) {
+            text.hiddenTextarea.selectionStart = len;
+            text.hiddenTextarea.selectionEnd = len;
+          }
+          // Вторая синхронизация через 50мс
+          setTimeout(() => {
+            if (typeof text.setSelectionStart === "function")
+              text.setSelectionStart(len);
+            if (typeof text.setSelectionEnd === "function")
+              text.setSelectionEnd(len);
+            if (text.hiddenTextarea) {
+              text.hiddenTextarea.selectionStart = len;
+              text.hiddenTextarea.selectionEnd = len;
+            }
+          }, 50);
+        } else {
+          try {
+            if (typeof text.enterEditing === "function") text.enterEditing();
+            const len = (text.text || "").length;
+            if (typeof text.setSelectionStart === "function")
+              text.setSelectionStart(len);
+            if (typeof text.setSelectionEnd === "function")
+              text.setSelectionEnd(len);
+            if (
+              text.hiddenTextarea &&
+              typeof text.hiddenTextarea.focus === "function"
+            )
+              text.hiddenTextarea.focus();
+            if (text.hiddenTextarea) {
+              text.hiddenTextarea.selectionStart = len;
+              text.hiddenTextarea.selectionEnd = len;
+            }
+            setTimeout(() => {
+              if (typeof text.setSelectionStart === "function")
+                text.setSelectionStart(len);
+              if (typeof text.setSelectionEnd === "function")
+                text.setSelectionEnd(len);
+              if (text.hiddenTextarea) {
+                text.hiddenTextarea.selectionStart = len;
+                text.hiddenTextarea.selectionEnd = len;
+              }
+            }, 50);
+          } catch {}
+        }
+      }, 50);
       canvas.renderAll();
-
-      // Відстежуємо додавання тексту
       trackElementAdded("Text");
     }
   };
@@ -5928,90 +5995,42 @@ const Toolbar = () => {
     clearExistingHoles();
     setIsHolesSelected(true);
     setActiveHolesType(6);
-    const wCanvas = pxToMm(canvas.getWidth());
-    const hCanvas = pxToMm(canvas.getHeight());
-    const holeWidthMm = 5;
-    const holeHeightMm = 2;
-    const sideOffsetMm = 3; // від боків до КРАЮ прямокутника
-    const verticalOffsetMm = 2; // від верху/низу до КРАЮ прямокутника
-
-    // Обчислюємо центри (бо origin center)
-    const cxLeftMm = sideOffsetMm + holeWidthMm / 2;
-    const cxRightMm = wCanvas - (sideOffsetMm + holeWidthMm / 2);
-    const cyTopMm = verticalOffsetMm + holeHeightMm / 2;
-    const cyBottomMm = hCanvas - (verticalOffsetMm + holeHeightMm / 2);
-
-    const rectsData = [
-      { xMm: cxLeftMm, yMm: cyTopMm },
-      { xMm: cxRightMm, yMm: cyTopMm },
-      { xMm: cxLeftMm, yMm: cyBottomMm },
-      { xMm: cxRightMm, yMm: cyBottomMm },
-    ];
-
-    rectsData.forEach(({ xMm, yMm }, idx) => {
-      const holeWidthPx = holeWidthMm * PX_PER_MM;
-      const holeHeightPx = holeHeightMm * PX_PER_MM;
-      const r = new fabric.Rect({
-        left: xMm * PX_PER_MM,
-        top: yMm * PX_PER_MM,
-        width: holeWidthPx,
-        height: holeHeightPx,
-        originX: "center",
-        originY: "center",
-        fill: "#FFFFFF",
-        stroke: "#000000",
-        strokeWidth: 1,
-        isCutElement: true,
-        cutType: "hole",
-        holeType6Rect: true,
-        holeWidthMm,
-        holeHeightMm,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      });
-      canvas.add(r);
-      r.setCoords();
-      try {
-        console.log(
-          `Type6 hole #${idx + 1}: center=(${xMm.toFixed(2)}mm, ${yMm.toFixed(
-            2
-          )}mm) size=${holeWidthMm}x${holeHeightMm}mm (px ${holeWidthPx.toFixed(
-            2
-          )}x${holeHeightPx.toFixed(2)})`
-        );
-        console.log("scaled dims px:", r.getScaledWidth(), r.getScaledHeight());
-      } catch {}
+    const wCanvasPx = canvas.getWidth();
+    const hCanvasPx = canvas.getHeight();
+    // Диаметр дырки в мм
+    const diameterMm = holesDiameter || 3;
+    const diameterPx = mmToPx(diameterMm);
+    // Левый средний центр
+    const leftOffsetPx = mmToPx(3) + diameterPx / 2;
+    const centerY = hCanvasPx / 2;
+    const hole = new fabric.Circle({
+      left: leftOffsetPx,
+      top: centerY,
+      radius: diameterPx / 2,
+      fill: "#FFFFFF",
+      stroke: "#000000",
+      strokeWidth: 1,
+      originX: "center",
+      originY: "center",
+      isCutElement: true,
+      cutType: "hole",
+      hasControls: false,
+      hasBorders: true,
+      lockScalingX: true,
+      lockScalingY: true,
+      lockUniScaling: true,
+      selectable: false,
+      evented: false,
+      lockMovementX: true,
+      lockMovementY: true,
     });
+    canvas.add(hole);
+    hole.setCoords();
     try {
       console.log(
-        `Тип 6: прямокутні отвори 5x2мм. Центри: left=${cxLeftMm}мм / right=${cxRightMm}мм, top=${cyTopMm}мм / bottom=${cyBottomMm}мм.`
+        `Type6 hole: center=(${pxToMm(leftOffsetPx).toFixed(2)}mm, ${pxToMm(centerY).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
       );
     } catch {}
-    // Примусове узгодження (на випадок якщо десь змінюються пропорції)
-    const targetWpx = holeWidthMm * PX_PER_MM;
-    const targetHpx = holeHeightMm * PX_PER_MM;
-    canvas.getObjects().forEach((o) => {
-      if (o.holeType6Rect) {
-        const sw = o.getScaledWidth();
-        const sh = o.getScaledHeight();
-        if (Math.abs(sw - targetWpx) > 0.6 || Math.abs(sh - targetHpx) > 0.6) {
-          o.set({ width: targetWpx, height: targetHpx, scaleX: 1, scaleY: 1 });
-          o.setCoords();
-          try {
-            console.log(
-              `Enforce direct set -> ${o.getScaledWidth()}x${o.getScaledHeight()} px`
-            );
-          } catch {}
-        }
-      }
-    });
     canvas.requestRenderAll();
   };
 
@@ -7964,10 +7983,11 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                value={sizeValues.width}
-                onChange={(e) =>
-                  handleInputChange("width", 1200, e.target.value)
-                }
+                value={sizeValues.width === 0 ? "" : sizeValues.width}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? "" : e.target.value;
+                  handleInputChange("width", 1200, val);
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -8005,7 +8025,10 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                value={sizeValues.cornerRadius}
+                value={
+                  sizeValues.cornerRadius === 0 ? "" : sizeValues.cornerRadius
+                }
+                max={Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2)}
                 disabled={isCircleSelected || isCustomShapeApplied}
                 style={{
                   cursor:
@@ -8014,11 +8037,14 @@ const Toolbar = () => {
                       : "text",
                   opacity: isCustomShapeApplied ? 0.85 : 1,
                 }}
-                onChange={(e) =>
-                  !isCircleSelected &&
-                  !isCustomShapeApplied &&
-                  handleInputChange("cornerRadius", 50, e.target.value)
-                }
+                onChange={(e) => {
+                  let val = e.target.value === "" ? "" : e.target.value;
+                  const maxCorner = Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2);
+                  if (val !== "" && Number(val) > maxCorner) val = maxCorner;
+                  if (!isCircleSelected && !isCustomShapeApplied) {
+                    handleInputChange("cornerRadius", Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2), val);
+                  }
+                }}
               />
               <div
                 className={styles.arrows}
@@ -8030,19 +8056,25 @@ const Toolbar = () => {
               >
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() =>
-                    !isCircleSelected &&
-                    !isCustomShapeApplied &&
-                    changeValue("cornerRadius", 1, 50)
-                  }
+                  onClick={() => {
+                    if (!isCircleSelected && !isCustomShapeApplied) {
+                      const maxCorner = Math.floor(
+                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                      );
+                      changeValue("cornerRadius", 1, maxCorner);
+                    }
+                  }}
                 />
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() =>
-                    !isCircleSelected &&
-                    !isCustomShapeApplied &&
-                    changeValue("cornerRadius", -1, 50)
-                  }
+                  onClick={() => {
+                    if (!isCircleSelected && !isCustomShapeApplied) {
+                      const maxCorner = Math.floor(
+                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                      );
+                      changeValue("cornerRadius", -1, maxCorner);
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -8053,10 +8085,11 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                value={sizeValues.height}
-                onChange={(e) =>
-                  handleInputChange("height", 1200, e.target.value)
-                }
+                value={sizeValues.height === 0 ? "" : sizeValues.height}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? "" : e.target.value;
+                  handleInputChange("height", 1200, val);
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -8071,7 +8104,13 @@ const Toolbar = () => {
             </div>
           </div>
 
-          <div className={styles.unitLabel}>* (mm)</div>
+          <div className={styles.unitLabel}>
+            {currentShapeType === "lock"
+              ? (isHolesSelected && activeHolesType !== 1
+                  ? holesDiameter
+                  : 0)
+              : "*"} (mm)
+          </div>
         </div>
       </div>
       {/* 3. Thickness */}
@@ -8511,40 +8550,58 @@ const Toolbar = () => {
           </div>
           <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
             <h3 style={{ marginRight: "60px" }}>Holes</h3>
-            {isHolesSelected && (
+            {isHolesSelected && activeHolesType !== 5 && (
               <>
                 <div className={styles.field} style={{ margin: 0 }}>
                   <div className={styles.inputGroup}>
                     <input
                       type="number"
-                      min={2.5}
-                      max={10}
+                      min={currentShapeType === "lock" ? 2 : 2.5}
+                      max={currentShapeType === "lock" ? 7 : 10}
                       step={0.5}
                       value={holesDiameter}
                       onChange={(e) => {
                         const raw = parseFloat(e.target.value);
-                        const val = isNaN(raw)
-                          ? 2.5
-                          : Math.max(2.5, Math.min(10, raw));
+                        let val = isNaN(raw) ? 2.5 : raw;
+                        // Только для lock и дырки сверху
+                        if (currentShapeType === "lock" && activeHolesType === 2) {
+                          val = Math.max(2, Math.min(7, val));
+                        }
                         setHolesDiameter(val);
                       }}
                     />
                     <div className={styles.arrows}>
                       <i
                         className="fa-solid fa-chevron-up"
-                        onClick={() =>
-                          setHolesDiameter((prev) =>
-                            Math.min(10, Number((prev + 0.5).toFixed(1)))
-                          )
-                        }
+                        onClick={() => {
+                          setHolesDiameter((prev) => {
+                            let next = Number((prev + 0.5).toFixed(1));
+                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                              next = Math.min(7, next);
+                              next = Math.max(2, next);
+                            } else {
+                              next = Math.min(10, next);
+                              next = Math.max(2.5, next);
+                            }
+                            return next;
+                          });
+                        }}
                       />
                       <i
                         className="fa-solid fa-chevron-down"
-                        onClick={() =>
-                          setHolesDiameter((prev) =>
-                            Math.max(2.5, Number((prev - 0.5).toFixed(1)))
-                          )
-                        }
+                        onClick={() => {
+                          setHolesDiameter((prev) => {
+                            let next = Number((prev - 0.5).toFixed(1));
+                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                              next = Math.max(2, next);
+                              next = Math.min(7, next);
+                            } else {
+                              next = Math.max(2.5, next);
+                              next = Math.min(10, next);
+                            }
+                            return next;
+                          });
+                        }}
                       />
                     </div>
                   </div>
@@ -8614,10 +8671,10 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                min={1}
-                value={copiesCount}
+                value={copiesCount === 0 ? "" : copiesCount}
                 onChange={(e) => {
-                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  const val =
+                    e.target.value === "" ? "" : parseInt(e.target.value);
                   setCopiesCount(val);
                 }}
               />

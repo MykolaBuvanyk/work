@@ -789,15 +789,7 @@ const ShapeProperties = ({
       }
     };
 
-    // Забороняємо зміну Fill, коли активний Cut (manual)
-    if (
-      property === "fill" &&
-      (properties.cut ||
-        activeObject.isCutElement ||
-        activeObject.cutType === "manual")
-    ) {
-      return;
-    }
+    // Дозволяємо зміну Fill навіть якщо Cut активний
 
     // Corner Radius: приводимо к целому неотрицательному
     if (property === "cornerRadius") {
@@ -909,11 +901,8 @@ const ShapeProperties = ({
       case "fill": {
         holdCenterIfArrow((o) => {
           if (value) {
-            const themeStroke = globalColors?.textColor || "#000000";
-            const fillColor = properties.cut
-              ? "#FFA500"
-              : o.stroke || themeStroke;
-            o.set("fill", fillColor);
+            const themeFill = globalColors?.textColor || "#000000";
+            o.set("fill", themeFill);
           } else {
             o.set("fill", "transparent");
           }
@@ -1288,8 +1277,14 @@ const ShapeProperties = ({
               <input
                 type="checkbox"
                 checked={properties.fill}
-                disabled={properties.cut}
-                onChange={(e) => updateProperty("fill", e.target.checked)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    updateProperty("cut", false);
+                    updateProperty("fill", true);
+                  } else {
+                    updateProperty("fill", false);
+                  }
+                }}
               />
             </div>
             <div className={styles.cutFillWrapperEl}>
@@ -1297,8 +1292,14 @@ const ShapeProperties = ({
               <input
                 type="checkbox"
                 checked={properties.cut}
-                disabled={properties.fill}
-                onChange={(e) => updateProperty("cut", e.target.checked)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    updateProperty("fill", false);
+                    updateProperty("cut", true);
+                  } else {
+                    updateProperty("cut", false);
+                  }
+                }}
               />
             </div>
           </label>

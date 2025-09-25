@@ -285,6 +285,98 @@ const TextList = () => {
         } catch {}
       });
 
+      // Викликаємо copyHandler з Canvas для повної імітації кліку по кнопці редагування
+      try {
+        if (
+          window.__canvasCopyHandler &&
+          typeof window.__canvasCopyHandler === "function"
+        ) {
+          window.__canvasCopyHandler(null, { target: text });
+          // Двойная синхронизация selection
+          const len = (text.text || "").length;
+          if (typeof text.setSelectionStart === "function")
+            text.setSelectionStart(len);
+          if (typeof text.setSelectionEnd === "function")
+            text.setSelectionEnd(len);
+          if (text.hiddenTextarea) {
+            text.hiddenTextarea.selectionStart = len;
+            text.hiddenTextarea.selectionEnd = len;
+          }
+          setTimeout(() => {
+            if (typeof text.setSelectionStart === "function")
+              text.setSelectionStart(len);
+            if (typeof text.setSelectionEnd === "function")
+              text.setSelectionEnd(len);
+            if (text.hiddenTextarea) {
+              text.hiddenTextarea.selectionStart = len;
+              text.hiddenTextarea.selectionEnd = len;
+            }
+          }, 50);
+        } else if (
+          window.cardEditorCopyHandler &&
+          typeof window.cardEditorCopyHandler === "function"
+        ) {
+          window.cardEditorCopyHandler(null, { target: text });
+          const len = (text.text || "").length;
+          if (typeof text.setSelectionStart === "function")
+            text.setSelectionStart(len);
+          if (typeof text.setSelectionEnd === "function")
+            text.setSelectionEnd(len);
+          if (text.hiddenTextarea) {
+            text.hiddenTextarea.selectionStart = len;
+            text.hiddenTextarea.selectionEnd = len;
+          }
+          setTimeout(() => {
+            if (typeof text.setSelectionStart === "function")
+              text.setSelectionStart(len);
+            if (typeof text.setSelectionEnd === "function")
+              text.setSelectionEnd(len);
+            if (text.hiddenTextarea) {
+              text.hiddenTextarea.selectionStart = len;
+              text.hiddenTextarea.selectionEnd = len;
+            }
+          }, 50);
+        } else {
+          // Фолбек: ручний виклик логіки
+          text.__allowNextEditing = true;
+          text.enterEditing && text.enterEditing();
+          const txt = typeof text.text === "string" ? text.text : "";
+          try {
+            text.selectionStart = txt.length;
+            text.selectionEnd = txt.length;
+            if (typeof text.setSelectionStart === "function")
+              text.setSelectionStart(txt.length);
+            if (typeof text.setSelectionEnd === "function")
+              text.setSelectionEnd(txt.length);
+            if (text.hiddenTextarea) {
+              text.hiddenTextarea.selectionStart = txt.length;
+              text.hiddenTextarea.selectionEnd = txt.length;
+            }
+            setTimeout(() => {
+              if (typeof text.setSelectionStart === "function")
+                text.setSelectionStart(txt.length);
+              if (typeof text.setSelectionEnd === "function")
+                text.setSelectionEnd(txt.length);
+              if (text.hiddenTextarea) {
+                text.hiddenTextarea.selectionStart = txt.length;
+                text.hiddenTextarea.selectionEnd = txt.length;
+              }
+            }, 50);
+          } catch {}
+          try {
+            if (
+              text.hiddenTextarea &&
+              typeof text.hiddenTextarea.focus === "function"
+            ) {
+              text.hiddenTextarea.focus();
+            }
+          } catch {}
+          if (canvas && typeof canvas.requestRenderAll === "function") {
+            canvas.requestRenderAll();
+          }
+        }
+      } catch {}
+
       // Очищуємо поле після додавання
       setNewTextValue("Add text");
 

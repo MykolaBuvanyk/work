@@ -1,4 +1,4 @@
-.newProjectsModal{
+.newProjectsModal {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -10,7 +10,7 @@
   height: auto;
   font-weight: 400;
   font-size: 16px;
-  box-shadow: 0px 5px 5px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   position: fixed;
   top: 30%;
@@ -23,7 +23,9 @@
   text-align: center;
 }
 
-.newProjectsModal p { margin: 0; }
+.newProjectsModal p {
+  margin: 0;
+}
 .buttonContainer {
   display: flex;
   gap: 25px;
@@ -52,7 +54,7 @@
 .buttonContainer button:hover {
   background-color: rgba(205, 203, 203, 0.284);
 }
-.buttonContainer .active{
+.buttonContainer .active {
   background-color: rgba(0, 108, 164, 1);
   color: white;
 }

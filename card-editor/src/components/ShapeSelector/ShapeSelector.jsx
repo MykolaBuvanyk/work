@@ -5,6 +5,7 @@ import styles from "./ShapeSelector.module.css";
 import {
   /* ...existing code... */ makeRoundedSemiRoundPath,
 } from "../ShapeProperties/ShapeProperties";
+import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
 
 const ShapeSelector = ({ isOpen, onClose }) => {
   const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
@@ -151,6 +152,15 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     };
 
     switch (shapeType) {
+      case "text":
+        shape = new fabric.IText("Новий текст", {
+          ...baseOptions,
+          fontSize: 32,
+          fontFamily: "Arial",
+          fill: globalColors.textColor || "#000000",
+          selectable: true,
+        });
+        break;
       case "rectangle":
         shape = new fabric.Rect({
           ...baseOptions,
@@ -309,12 +319,21 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
       shape.set({ hasBorders: true, hasControls: true, selectable: true });
 
-      // Додаємо фігуру через універсальну функцію
+      // Додаємо прапорець джерела (ShapeSelector)
+      shape.fromShapeTab = true;
+      shape.data = { ...(shape.data || {}), fromShapeTab: true };
       addObjectToCanvas(shape);
-
-      // Встановлюємо активний об'єкт і відкриваємо властивості
       setActiveObject(shape);
       setShapePropertiesOpen(true);
+      // Централізованная активация редактирования через copyHandler
+      if (shapeType === "text" && typeof canvasCopyHandler === "function") {
+        canvasCopyHandler(null, { target: shape });
+      } else if (
+        shapeType === "text" &&
+        typeof shape.enterEditing === "function"
+      ) {
+        shape.enterEditing();
+      }
     }
   };
 

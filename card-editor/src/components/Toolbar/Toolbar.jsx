@@ -5659,13 +5659,20 @@ const Toolbar = () => {
   // Емпірична формула відступу (з ескізів):
   // offsetMm = clamp(0, 7.5, 0.03 * maxSideMm + clamp(0.8, 3.2, 4.8 - 18/diameterMm))
   const getHoleOffsetPx = () => {
-    const { maxMm } = getFigureDimsMm();
+    const { maxMm, minMm } = getFigureDimsMm();
     const d = Math.max(holesDiameter || 0, 0.1);
     let additive = 4.8 - 18 / d; // зменшується при збільшенні діаметра
     if (!isFinite(additive)) additive = 0;
     additive = Math.max(0.8, Math.min(additive, 3.2));
     const base = 0.03 * (maxMm || 0);
-    const offsetMm = Math.min(base + additive, 7.5);
+    let offsetMm = Math.min(base + additive, 7.5);
+    // Мінімальна відстань від краю дирки до краю фігури: 2мм
+    // Тобто offset >= 2мм + радіус дирки
+    const minOffsetMm = 2 + (d || 0.1) / 2;
+    // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
+    const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
+    offsetMm = Math.max(offsetMm, minOffsetMm);
+    offsetMm = Math.min(offsetMm, maxOffsetMm);
     return mmToPx(offsetMm);
   };
 
@@ -5997,14 +6004,14 @@ const Toolbar = () => {
     setActiveHolesType(6);
     const wCanvasPx = canvas.getWidth();
     const hCanvasPx = canvas.getHeight();
-    // Диаметр дырки в мм
+    // Діаметр дирки в мм
     const diameterMm = holesDiameter || 3;
     const diameterPx = mmToPx(diameterMm);
-    // Левый средний центр
-    const leftOffsetPx = mmToPx(3) + diameterPx / 2;
+    // Динамічний відступ як у 7-ї дирки
+    const offsetPx = getHoleOffsetPx();
     const centerY = hCanvasPx / 2;
     const hole = new fabric.Circle({
-      left: leftOffsetPx,
+      left: offsetPx,
       top: centerY,
       radius: diameterPx / 2,
       fill: "#FFFFFF",
@@ -6028,7 +6035,7 @@ const Toolbar = () => {
     hole.setCoords();
     try {
       console.log(
-        `Type6 hole: center=(${pxToMm(leftOffsetPx).toFixed(2)}mm, ${pxToMm(
+        `Type6 hole: center=(${pxToMm(offsetPx).toFixed(2)}mm, ${pxToMm(
           centerY
         ).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
       );

@@ -75,7 +75,7 @@ const ShapeProperties = ({
     height: 0, // mm
     rotation: 0,
     cornerRadius: 0,
-    thickness: 2, // mm
+    thickness: 1, // mm
     fill: false,
     cut: false,
   });
@@ -764,7 +764,7 @@ const ShapeProperties = ({
     // Беремо тільки реальний активний об'єкт із canvas, не використовуємо копії з контексту
     const obj =
       typeof canvas.getActiveObject === "function"
-        ? canvas.getActiveObject()
+        ? canvas.getActiveObject() || null
         : null;
     if (!obj || typeof obj.set !== "function") return;
 
@@ -981,6 +981,12 @@ const ShapeProperties = ({
   };
 
   if (!isOpen || !activeObject) return null;
+  // Не показывать модалку для QR-кода
+  if (
+    activeObject?.isQRCode === true ||
+    (activeObject?.data && activeObject.data.isQRCode === true)
+  )
+    return null;
 
   // Визначаємо, чи Corner radius має бути вимкнено (коло та деякі стрілки)
   const isCircle =
@@ -1051,11 +1057,30 @@ const ShapeProperties = ({
               <input
                 type="number"
                 className={styles.input}
-                value={properties.width}
-                step={0.1}
-                onChange={(e) =>
-                  updateProperty("width", parseFloat(e.target.value) || 0)
+                value={
+                  typeof properties.width === "string"
+                    ? properties.width
+                    : properties.width === 0
+                    ? ""
+                    : properties.width
                 }
+                step={0.1}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Дозволяємо вводити будь-який текст, включаючи порожній
+                  if (val === "") {
+                    setProperties((prev) => ({ ...prev, width: "" }));
+                    updateProperty("width", 0);
+                  } else {
+                    // Дозволяємо вводити коми, крапки, поки не завершено
+                    setProperties((prev) => ({ ...prev, width: val }));
+                    // Якщо це валідне число — оновлюємо розмір
+                    const parsed = parseFloat(val.replace(",", "."));
+                    if (!isNaN(parsed)) {
+                      updateProperty("width", parsed);
+                    }
+                  }
+                }}
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>
                   setTimeout(() => setIsManuallyEditing(false), 100)
@@ -1079,10 +1104,26 @@ const ShapeProperties = ({
               <input
                 type="number"
                 className={styles.input}
-                value={properties.rotation}
-                onChange={(e) =>
-                  updateProperty("rotation", parseInt(e.target.value) || 0)
+                value={
+                  typeof properties.rotation === "string"
+                    ? properties.rotation
+                    : properties.rotation === 0
+                    ? ""
+                    : properties.rotation
                 }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setProperties((prev) => ({ ...prev, rotation: "" }));
+                    updateProperty("rotation", 0);
+                  } else {
+                    setProperties((prev) => ({ ...prev, rotation: val }));
+                    const parsed = parseInt(val);
+                    if (!isNaN(parsed)) {
+                      updateProperty("rotation", parsed);
+                    }
+                  }
+                }}
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>
                   setTimeout(() => setIsManuallyEditing(false), 100)
@@ -1106,11 +1147,27 @@ const ShapeProperties = ({
               <input
                 type="number"
                 className={styles.input}
-                value={properties.height}
-                step={0.1}
-                onChange={(e) =>
-                  updateProperty("height", parseFloat(e.target.value) || 0)
+                value={
+                  typeof properties.height === "string"
+                    ? properties.height
+                    : properties.height === 0
+                    ? ""
+                    : properties.height
                 }
+                step={0.1}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setProperties((prev) => ({ ...prev, height: "" }));
+                    updateProperty("height", 0);
+                  } else {
+                    setProperties((prev) => ({ ...prev, height: val }));
+                    const parsed = parseFloat(val.replace(",", "."));
+                    if (!isNaN(parsed)) {
+                      updateProperty("height", parsed);
+                    }
+                  }
+                }}
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={() =>
                   setTimeout(() => setIsManuallyEditing(false), 100)
@@ -1141,18 +1198,34 @@ const ShapeProperties = ({
               <input
                 type="number"
                 className={styles.input}
-                value={properties.cornerRadius}
+                value={
+                  typeof properties.cornerRadius === "string"
+                    ? properties.cornerRadius
+                    : properties.cornerRadius === 0
+                    ? ""
+                    : properties.cornerRadius
+                }
                 disabled={isCircle || !supportsCornerRadius}
                 style={{
                   cursor:
                     isCircle || !supportsCornerRadius ? "not-allowed" : "text",
                 }}
                 step={1}
-                onChange={(e) =>
-                  !isCircle &&
-                  supportsCornerRadius &&
-                  updateProperty("cornerRadius", parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!isCircle && supportsCornerRadius) {
+                    if (val === "") {
+                      setProperties((prev) => ({ ...prev, cornerRadius: "" }));
+                      updateProperty("cornerRadius", 0);
+                    } else {
+                      setProperties((prev) => ({ ...prev, cornerRadius: val }));
+                      const parsed = parseInt(val);
+                      if (!isNaN(parsed)) {
+                        updateProperty("cornerRadius", parsed);
+                      }
+                    }
+                  }
+                }}
                 onFocus={() =>
                   !isCircle &&
                   supportsCornerRadius &&
@@ -1197,25 +1270,27 @@ const ShapeProperties = ({
               <input
                 type="number"
                 className={styles.input}
-                value={properties.thickness}
+                value={
+                  typeof properties.thickness === "string"
+                    ? properties.thickness
+                    : properties.thickness === 0 || properties.thickness === 1
+                    ? ""
+                    : properties.thickness
+                }
                 step={0.5}
                 onKeyDown={(e) => {
-                  // Если пользователь нажал '.', воспринимаем как запятую и вставляем её в поле
                   if (e.key === ".") {
                     e.preventDefault();
                     const el = e.currentTarget;
                     const start = el.selectionStart ?? el.value.length;
                     const end = el.selectionEnd ?? start;
                     const v = String(el.value || "");
-                    // Не дублируем вторую десятичную запятую/точку
                     if (v.includes(",") || v.includes(".")) return;
                     const newV = v.slice(0, start) + "," + v.slice(end);
                     el.value = newV;
-                    // Ставим каретку после вставленного символа
                     try {
                       el.setSelectionRange(start + 1, start + 1);
                     } catch {}
-                    // Тригерим событие input, чтобы сработал onChange
                     try {
                       const evt = new Event("input", { bubbles: true });
                       el.dispatchEvent(evt);
@@ -1223,16 +1298,14 @@ const ShapeProperties = ({
                   }
                 }}
                 onChange={(e) => {
-                  // Принимаем как разделитель и запятую, и точку; позволяем временно пустое значение
                   const raw = String(e.target.value || "");
-                  // Если пусто — оставляем инпут пустым, не применяя 1 немедленно
                   if (raw === "") {
                     setIsManuallyEditing(true);
                     setProperties((prev) => ({ ...prev, thickness: "" }));
+                    updateProperty("thickness", 0.5);
                     return;
                   }
-                  // Если на конце ввода только разделитель — ждём дальнейшего ввода
-                  if (/[\.,]$/.test(raw)) {
+                  if (/[,\.]$/.test(raw)) {
                     setIsManuallyEditing(true);
                     setProperties((prev) => ({ ...prev, thickness: raw }));
                     return;
@@ -1240,12 +1313,10 @@ const ShapeProperties = ({
                   const normalized = raw.replace(/,/g, ".");
                   const num = parseFloat(normalized);
                   if (isNaN(num)) {
-                    // Некорректное число: держим как есть в инпуте, объект не трогаем
                     setIsManuallyEditing(true);
                     setProperties((prev) => ({ ...prev, thickness: raw }));
                     return;
                   }
-                  // Валидное число — сразу применяем
                   updateProperty("thickness", num);
                 }}
                 onFocus={() => setIsManuallyEditing(true)}

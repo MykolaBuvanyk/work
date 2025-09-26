@@ -6028,7 +6028,9 @@ const Toolbar = () => {
     hole.setCoords();
     try {
       console.log(
-        `Type6 hole: center=(${pxToMm(leftOffsetPx).toFixed(2)}mm, ${pxToMm(centerY).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
+        `Type6 hole: center=(${pxToMm(leftOffsetPx).toFixed(2)}mm, ${pxToMm(
+          centerY
+        ).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
       );
     } catch {}
     canvas.requestRenderAll();
@@ -8028,7 +8030,12 @@ const Toolbar = () => {
                 value={
                   sizeValues.cornerRadius === 0 ? "" : sizeValues.cornerRadius
                 }
-                max={Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2)}
+                max={Math.floor(
+                  Math.min(
+                    Number(sizeValues.width) || 0,
+                    Number(sizeValues.height) || 0
+                  ) / 2
+                )}
                 disabled={isCircleSelected || isCustomShapeApplied}
                 style={{
                   cursor:
@@ -8039,10 +8046,24 @@ const Toolbar = () => {
                 }}
                 onChange={(e) => {
                   let val = e.target.value === "" ? "" : e.target.value;
-                  const maxCorner = Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2);
+                  const maxCorner = Math.floor(
+                    Math.min(
+                      Number(sizeValues.width) || 0,
+                      Number(sizeValues.height) || 0
+                    ) / 2
+                  );
                   if (val !== "" && Number(val) > maxCorner) val = maxCorner;
                   if (!isCircleSelected && !isCustomShapeApplied) {
-                    handleInputChange("cornerRadius", Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2), val);
+                    handleInputChange(
+                      "cornerRadius",
+                      Math.floor(
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
+                      ),
+                      val
+                    );
                   }
                 }}
               />
@@ -8059,7 +8080,10 @@ const Toolbar = () => {
                   onClick={() => {
                     if (!isCircleSelected && !isCustomShapeApplied) {
                       const maxCorner = Math.floor(
-                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
                       );
                       changeValue("cornerRadius", 1, maxCorner);
                     }
@@ -8070,7 +8094,10 @@ const Toolbar = () => {
                   onClick={() => {
                     if (!isCircleSelected && !isCustomShapeApplied) {
                       const maxCorner = Math.floor(
-                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
                       );
                       changeValue("cornerRadius", -1, maxCorner);
                     }
@@ -8104,13 +8131,7 @@ const Toolbar = () => {
             </div>
           </div>
 
-          <div className={styles.unitLabel}>
-            {currentShapeType === "lock"
-              ? (isHolesSelected && activeHolesType !== 1
-                  ? holesDiameter
-                  : 0)
-              : "*"} (mm)
-          </div>
+          <div className={styles.unitLabel}>{"* (mm)"}</div>
         </div>
       </div>
       {/* 3. Thickness */}
@@ -8171,7 +8192,14 @@ const Toolbar = () => {
             />
           </div>
           <div></div>
-          <div className={styles.unitLabel}>* (mm)</div>
+          <div className={styles.unitLabel}>
+            {currentShapeType === "lock"
+              ? isHolesSelected && activeHolesType !== 1
+                ? holesDiameter
+                : 0
+              : "*"}{" "}
+            (mm)
+          </div>
         </div>
       </div>
       {/* 4. Colour */}
@@ -8564,7 +8592,10 @@ const Toolbar = () => {
                         const raw = parseFloat(e.target.value);
                         let val = isNaN(raw) ? 2.5 : raw;
                         // Только для lock и дырки сверху
-                        if (currentShapeType === "lock" && activeHolesType === 2) {
+                        if (
+                          currentShapeType === "lock" &&
+                          activeHolesType === 2
+                        ) {
                           val = Math.max(2, Math.min(7, val));
                         }
                         setHolesDiameter(val);
@@ -8576,7 +8607,10 @@ const Toolbar = () => {
                         onClick={() => {
                           setHolesDiameter((prev) => {
                             let next = Number((prev + 0.5).toFixed(1));
-                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                            if (
+                              currentShapeType === "lock" &&
+                              activeHolesType === 2
+                            ) {
                               next = Math.min(7, next);
                               next = Math.max(2, next);
                             } else {
@@ -8592,7 +8626,10 @@ const Toolbar = () => {
                         onClick={() => {
                           setHolesDiameter((prev) => {
                             let next = Number((prev - 0.5).toFixed(1));
-                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                            if (
+                              currentShapeType === "lock" &&
+                              activeHolesType === 2
+                            ) {
                               next = Math.max(2, next);
                               next = Math.min(7, next);
                             } else {

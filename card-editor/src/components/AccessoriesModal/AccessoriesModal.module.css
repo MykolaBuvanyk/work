@@ -1,0 +1,233 @@
+.modalRoot {
+  position: fixed;
+  top: 5%;
+  left: 0;
+  right: 0;
+  z-index: 3000;
+  display: flex;
+  justify-content: center; /* по середині між лівим і правим краями */
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.dropdown {
+  position: relative;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 5px 2px rgba(0, 0, 0, 0.25);
+  z-index: 3100;
+  width: 1100px; /* фіксована ширина завжди */
+  min-width: 1100px;
+  max-width: 1100px;
+  pointer-events: auto;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  padding: 20px 15px 0 0;
+}
+
+.dropdownHeader h3 {
+  color: rgba(0, 108, 164, 1);
+  font-size: 16px;
+  text-decoration: underline;
+  margin: 0;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 0;
+  background-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  padding: 20px;
+  padding-top: 0;
+}
+
+/* На мобільних теж тримаємо 1100px за вимогою */
+@media (max-width: 600px) {
+  .content {
+    padding: 12px 16px;
+  }
+  .dropdownHeader {
+    padding: 12px 16px 8px;
+  }
+}
+
+/* Accessories list */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: grid;
+  /* Фіксуємо ширину колонок зображень, щоб усі стовпці вирівнювались вертикально */
+  grid-template-columns: 28px 28px 72px 1fr auto auto 2fr 80px; /* зменшили ширину колонки дод. фото */
+  align-items: center;
+  gap: 12px;
+}
+
+.colIndex {
+  font-weight: 600;
+  text-align: left;
+}
+
+.colCheckbox {
+  display: flex;
+  justify-content: center;
+}
+
+.colThumb,
+.colExtra {
+  display: flex;
+  justify-content: center;
+}
+
+.thumb {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.thumbSm {
+  transform: scale(0.85);
+  transform-origin: center;
+}
+
+.extraThumb {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scale(0.9);
+  transform-origin: center;
+}
+
+.extraThumbSm {
+  transform: scale(0.8);
+}
+
+.colName {
+  font-weight: 500;
+}
+
+.colQty {
+  display: flex;
+  align-items: center;
+}
+
+.colPrice {
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: 16px; /* більший відступ від інпутів до ціни */
+}
+
+.colDesc {
+  color: #444;
+  font-size: 14px;
+  margin-left: 16px; /* більший відступ від ціни до опису */
+}
+
+/* Input group and arrows (aligned with Toolbar) */
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inputGroup input[type="number"] {
+  width: 48px !important;
+  background-color: rgba(0, 108, 164, 1);
+  color: white;
+  border-radius: 0;
+  font-size: 14px;
+  text-align: center;
+  padding: 5px;
+  border: none;
+}
+.inputGroup input[type="number"]:focus {
+  outline: none;
+  border: none;
+}
+.inputGroup input::-webkit-inner-spin-button,
+.inputGroup input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+.arrows i {
+  font-size: 14px;
+  color: #444;
+  transition: color 0.2s;
+}
+.arrows i:hover {
+  color: #000;
+}
+
+/* Checkbox (aligned with Toolbar) */
+.list input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.61);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.list input[type="checkbox"]:checked {
+  background-color: rgba(0, 108, 164, 1);
+  border: none;
+}
+.list input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 7px;
+  width: 5px;
+  font-weight: 900;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 900px) {
+  .row {
+    grid-template-columns: 24px 24px 64px 1fr auto auto 1.5fr 70px;
+    gap: 10px;
+  }
+  .colPrice {
+    margin-left: 12px;
+  }
+  .colDesc {
+    margin-left: 12px;
+  }
+  .colDesc {
+    font-size: 13px;
+  }
+}

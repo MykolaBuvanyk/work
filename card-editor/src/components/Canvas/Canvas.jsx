@@ -106,6 +106,33 @@ const Canvas = () => {
         setShapePropertiesOpen(false);
         return;
       }
+      // QR-код: активировать режим редактирования, но не открывать ShapeProperties
+      if (
+        obj &&
+        (obj.isQRCode === true || (obj.data && obj.data.isQRCode === true))
+      ) {
+        setActiveObject(obj);
+        // Включить синюю рамку, controls и т.д. (editable)
+        try {
+          obj.set({
+            selectable: true,
+            evented: true,
+            hasControls: true,
+            hasBorders: true,
+            lockScalingX: false,
+            lockScalingY: false,
+            lockUniScaling: false,
+            lockMovementX: false,
+            lockMovementY: false,
+          });
+          obj.canvas && obj.setCoords && obj.setCoords();
+          obj.canvas &&
+            obj.canvas.requestRenderAll &&
+            obj.canvas.requestRenderAll();
+        } catch {}
+        setShapePropertiesOpen(false);
+        return;
+      }
       // Тримати тексти поверх при кожному виборі
       bringAllTextsToFront();
       // Cut elements: якщо додані з Shape Selector (fromShapeTab), завжди відкриваємо Shape Properties

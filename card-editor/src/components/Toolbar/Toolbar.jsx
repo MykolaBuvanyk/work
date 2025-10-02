@@ -5852,13 +5852,20 @@ const Toolbar = () => {
   // Емпірична формула відступу (з ескізів):
   // offsetMm = clamp(0, 7.5, 0.03 * maxSideMm + clamp(0.8, 3.2, 4.8 - 18/diameterMm))
   const getHoleOffsetPx = () => {
-    const { maxMm } = getFigureDimsMm();
+    const { maxMm, minMm } = getFigureDimsMm();
     const d = Math.max(holesDiameter || 0, 0.1);
     let additive = 4.8 - 18 / d; // зменшується при збільшенні діаметра
     if (!isFinite(additive)) additive = 0;
     additive = Math.max(0.8, Math.min(additive, 3.2));
     const base = 0.03 * (maxMm || 0);
-    const offsetMm = Math.min(base + additive, 7.5);
+    let offsetMm = Math.min(base + additive, 7.5);
+    // Мінімальна відстань від краю дирки до краю фігури: 2мм
+    // Тобто offset >= 2мм + радіус дирки
+    const minOffsetMm = 2 + (d || 0.1) / 2;
+    // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
+    const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
+    offsetMm = Math.max(offsetMm, minOffsetMm);
+    offsetMm = Math.min(offsetMm, maxOffsetMm);
     return mmToPx(offsetMm);
   };
 
@@ -6190,14 +6197,14 @@ const Toolbar = () => {
     setActiveHolesType(6);
     const wCanvasPx = canvas.getWidth();
     const hCanvasPx = canvas.getHeight();
-    // Диаметр дырки в мм
+    // Діаметр дирки в мм
     const diameterMm = holesDiameter || 3;
     const diameterPx = mmToPx(diameterMm);
-    // Левый средний центр
-    const leftOffsetPx = mmToPx(3) + diameterPx / 2;
+    // Динамічний відступ як у 7-ї дирки
+    const offsetPx = getHoleOffsetPx();
     const centerY = hCanvasPx / 2;
     const hole = new fabric.Circle({
-      left: leftOffsetPx,
+      left: offsetPx,
       top: centerY,
       radius: diameterPx / 2,
       fill: "#FFFFFF",
@@ -6221,7 +6228,9 @@ const Toolbar = () => {
     hole.setCoords();
     try {
       console.log(
-        `Type6 hole: center=(${pxToMm(leftOffsetPx).toFixed(2)}mm, ${pxToMm(centerY).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
+        `Type6 hole: center=(${pxToMm(offsetPx).toFixed(2)}mm, ${pxToMm(
+          centerY
+        ).toFixed(2)}mm) diameter=${diameterMm}mm (px ${diameterPx.toFixed(2)})`
       );
     } catch {}
     canvas.requestRenderAll();
@@ -8249,7 +8258,12 @@ const Toolbar = () => {
                 value={
                   sizeValues.cornerRadius === 0 ? "" : sizeValues.cornerRadius
                 }
-                max={Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2)}
+                max={Math.floor(
+                  Math.min(
+                    Number(sizeValues.width) || 0,
+                    Number(sizeValues.height) || 0
+                  ) / 2
+                )}
                 disabled={isCircleSelected || isCustomShapeApplied}
                 style={{
                   cursor:
@@ -8260,10 +8274,24 @@ const Toolbar = () => {
                 }}
                 onChange={(e) => {
                   let val = e.target.value === "" ? "" : e.target.value;
-                  const maxCorner = Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2);
+                  const maxCorner = Math.floor(
+                    Math.min(
+                      Number(sizeValues.width) || 0,
+                      Number(sizeValues.height) || 0
+                    ) / 2
+                  );
                   if (val !== "" && Number(val) > maxCorner) val = maxCorner;
                   if (!isCircleSelected && !isCustomShapeApplied) {
-                    handleInputChange("cornerRadius", Math.floor(Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2), val);
+                    handleInputChange(
+                      "cornerRadius",
+                      Math.floor(
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
+                      ),
+                      val
+                    );
                   }
                 }}
               />
@@ -8280,7 +8308,10 @@ const Toolbar = () => {
                   onClick={() => {
                     if (!isCircleSelected && !isCustomShapeApplied) {
                       const maxCorner = Math.floor(
-                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
                       );
                       changeValue("cornerRadius", 1, maxCorner);
                     }
@@ -8291,7 +8322,10 @@ const Toolbar = () => {
                   onClick={() => {
                     if (!isCircleSelected && !isCustomShapeApplied) {
                       const maxCorner = Math.floor(
-                        Math.min(Number(sizeValues.width) || 0, Number(sizeValues.height) || 0) / 2
+                        Math.min(
+                          Number(sizeValues.width) || 0,
+                          Number(sizeValues.height) || 0
+                        ) / 2
                       );
                       changeValue("cornerRadius", -1, maxCorner);
                     }
@@ -8325,13 +8359,7 @@ const Toolbar = () => {
             </div>
           </div>
 
-          <div className={styles.unitLabel}>
-            {currentShapeType === "lock"
-              ? (isHolesSelected && activeHolesType !== 1
-                  ? holesDiameter
-                  : 0)
-              : "*"} (mm)
-          </div>
+          <div className={styles.unitLabel}>{"* (mm)"}</div>
         </div>
       </div>
       {/* 3. Thickness */}
@@ -8392,7 +8420,14 @@ const Toolbar = () => {
             />
           </div>
           <div></div>
-          <div className={styles.unitLabel}>* (mm)</div>
+          <div className={styles.unitLabel}>
+            {currentShapeType === "lock"
+              ? isHolesSelected && activeHolesType !== 1
+                ? holesDiameter
+                : 0
+              : "*"}{" "}
+            (mm)
+          </div>
         </div>
       </div>
       {/* 4. Colour */}
@@ -8785,7 +8820,10 @@ const Toolbar = () => {
                         const raw = parseFloat(e.target.value);
                         let val = isNaN(raw) ? 2.5 : raw;
                         // Только для lock и дырки сверху
-                        if (currentShapeType === "lock" && activeHolesType === 2) {
+                        if (
+                          currentShapeType === "lock" &&
+                          activeHolesType === 2
+                        ) {
                           val = Math.max(2, Math.min(7, val));
                         }
                         setHolesDiameter(val);
@@ -8797,7 +8835,10 @@ const Toolbar = () => {
                         onClick={() => {
                           setHolesDiameter((prev) => {
                             let next = Number((prev + 0.5).toFixed(1));
-                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                            if (
+                              currentShapeType === "lock" &&
+                              activeHolesType === 2
+                            ) {
                               next = Math.min(7, next);
                               next = Math.max(2, next);
                             } else {
@@ -8813,7 +8854,10 @@ const Toolbar = () => {
                         onClick={() => {
                           setHolesDiameter((prev) => {
                             let next = Number((prev - 0.5).toFixed(1));
-                            if (currentShapeType === "lock" && activeHolesType === 2) {
+                            if (
+                              currentShapeType === "lock" &&
+                              activeHolesType === 2
+                            ) {
                               next = Math.max(2, next);
                               next = Math.min(7, next);
                             } else {

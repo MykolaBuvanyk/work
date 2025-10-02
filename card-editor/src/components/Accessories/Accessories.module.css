@@ -26,12 +26,12 @@
 }
 
 .toolbarItem:hover {
-  background-color: rgba(0,0,0,0.08);
+  background-color: rgba(0, 0, 0, 0.08);
   border-radius: 6px;
 }
 
 .toolbarItem:active {
-  background-color: rgba(0,0,0,0.15);
+  background-color: rgba(0, 0, 0, 0.15);
 }
 
 .title {
@@ -51,8 +51,8 @@
 }
 
 .accessoriesEl {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 24px 28px 1fr auto auto; /* checkbox | icon | name | qty | price */
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -61,13 +61,24 @@
 }
 
 .accessoriesEl .price {
-  margin-left: auto;
+  white-space: nowrap;
+}
+
+.accessoryIcon {
+  width: 24px;
+  height: 24px;
+}
+.accessoryIconPlaceholder {
+  width: 24px;
+  height: 24px;
+  background: #e0e0e0;
+  border-radius: 4px;
 }
 
 .inputGroup {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .inputGroup input {
@@ -154,4 +165,10 @@ input[type="checkbox"]:checked::after {
   align-items: center; /* Выравнивание текста и иконки по вертикали */
   gap: 10px; /* Расстояние между текстом и иконкой */
   margin-top: 10px; /* Отступ сверху */
+  cursor: pointer; /* Курсор при наведении */
+  transition: all 0.4s ease; /* Плавный переход для всех свойств */
+}
+
+.moreAccessories:hover {
+  color: #058105; /* Изменение цвета текста при наведении */
 }

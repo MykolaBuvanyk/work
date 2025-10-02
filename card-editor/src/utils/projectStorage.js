@@ -635,6 +635,11 @@ export async function saveNewProject(name, canvas) {
   const toolbarState = window.getCurrentToolbarState?.() || {};
   const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
+  
+  // Отримуємо поточний ID незбереженого знаку
+  let currentUnsavedId = null;
+  try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
+  
   const project = {
     id: uuid(),
     name: name && String(name).trim() ? String(name).trim() : "Untitled",
@@ -647,8 +652,8 @@ export async function saveNewProject(name, canvas) {
     localStorage.setItem("currentProjectId", project.id);
     localStorage.setItem("currentProjectName", project.name);
   } catch {}
-  // absorb unsaved signs if any
-  try { await transferUnsavedSignsToProject(project.id); } catch {}
+  // absorb unsaved signs if any (excluding current one to avoid duplication)
+  try { await transferUnsavedSignsToProject(project.id, currentUnsavedId); } catch {}
   return project;
 }
 
@@ -665,6 +670,11 @@ export async function saveCurrentProject(canvas) {
     const fallbackName = `Untitled ${new Date().toLocaleString()}`;
     return saveNewProject(fallbackName, canvas);
   }
+  
+  // Отримуємо поточний ID незбереженого знаку
+  let currentUnsavedId = null;
+  try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
+  
   const toolbarState = window.getCurrentToolbarState?.() || {};
   const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
@@ -679,7 +689,7 @@ export async function saveCurrentProject(canvas) {
   const updated = { ...existing, canvases, updatedAt: now };
   await putProject(updated);
   try { window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail: { projectId: updated.id } })); } catch {}
-  try { await transferUnsavedSignsToProject(updated.id); } catch {}
+  try { await transferUnsavedSignsToProject(updated.id, currentUnsavedId); } catch {}
   return updated;
 }
 
@@ -704,7 +714,8 @@ function broadcastProjectUpdate(projectId) {
 }
 
 // Transfer all unsaved signs into the specified project (append, max 10 total). Clears unsaved store.
-export async function transferUnsavedSignsToProject(projectId) {
+// excludeId - ID незбереженого знаку, який не потрібно додавати (щоб уникнути дублювання поточного полотна)
+export async function transferUnsavedSignsToProject(projectId, excludeId = null) {
   if (!projectId) return null;
   const unsaved = await getAllUnsavedSigns();
   if (!unsaved.length) return null;
@@ -712,7 +723,9 @@ export async function transferUnsavedSignsToProject(projectId) {
   if (!project) return null;
   const existing = Array.isArray(project.canvases) ? project.canvases : [];
   // Append unsaved entries (mapping to project canvas schema by adding ids if missing)
+  // Виключаємо поточний знак, щоб уникнути дублювання
   for (const s of unsaved) {
+    if (s.id === excludeId) continue; // Пропускаємо поточний знак
     if (existing.length >= 10) break; // respect limit
     existing.push({ id: uuid(), json: s.json, preview: s.preview, width: s.width, height: s.height });
   }

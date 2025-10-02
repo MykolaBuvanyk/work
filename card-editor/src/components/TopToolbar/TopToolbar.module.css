@@ -32,14 +32,14 @@
   gap: 5px;
 }
 
-.buttonWrapper{
+.buttonWrapper {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: 15px;
 }
 
-.blueButton{
+.blueButton {
   width: fit-content;
   display: flex;
   justify-content: center;

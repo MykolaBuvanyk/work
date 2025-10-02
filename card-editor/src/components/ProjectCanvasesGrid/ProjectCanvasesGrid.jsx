@@ -2,13 +2,38 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./ProjectCanvasesGrid.module.css";
 import { getProject, getAllUnsavedSigns, updateUnsavedSignFromCanvas, extractToolbarState, restoreElementProperties, addBlankUnsavedSign, updateCanvasInCurrentProject } from "../../utils/projectStorage";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { useFabricCanvas } from "../../hooks/useFabricCanvas";
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
+const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
+
+const mapEntryToDesign = (entry) => {
+  if (!entry) return null;
+
+  const jsonTemplate = entry.jsonTemplate || entry.json || null;
+  const widthFromJson = jsonTemplate?.width;
+  const heightFromJson = jsonTemplate?.height;
+
+  return {
+    id: entry.id,
+    name: entry.name,
+    width: entry.width || widthFromJson || DEFAULT_DESIGN_SIZE.width,
+    height: entry.height || heightFromJson || DEFAULT_DESIGN_SIZE.height,
+    jsonTemplate,
+    backgroundColor: entry.backgroundColor,
+    toolbarState: entry.toolbarState || null,
+    meta: {
+      isUnsaved: !!entry._unsaved,
+      sourceType: entry._unsaved ? "unsaved" : "project",
+    },
+  };
+};
 
 const ProjectCanvasesGrid = () => {
-  const { canvas } = useCanvasContext();
+  const { setDesigns: setContextDesigns } = useCanvasContext();
+  const { canvas, loadDesign, selectDesign } = useFabricCanvas();
   const [project, setProject] = useState(null);
   const [unsavedSigns, setUnsavedSigns] = useState([]); // persisted unsaved signs from dedicated store
   const updateDebounceRef = useRef();
@@ -17,6 +42,8 @@ const ProjectCanvasesGrid = () => {
   const currentUnsavedIdRef = useRef(null); // track which unsaved sign is currently loaded
   const currentProjectCanvasIdRef = useRef(null); // track which project canvas is currently loaded
   const createdInitialRef = useRef(false); // guard to avoid duplicate initial creation
+  const initialCanvasLoadRef = useRef(false);
+  const openCanvasRef = useRef(null);
   console.log('ProjectCanvasesGrid: Component initialized, createdInitialRef:', createdInitialRef.current);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
@@ -41,7 +68,6 @@ const ProjectCanvasesGrid = () => {
             const exists = mapped.find(x => x.id === active);
             if (exists) {
               setSelectedId(active);
-              currentUnsavedIdRef.current = active;
             }
           }
         } catch {}
@@ -216,8 +242,10 @@ const ProjectCanvasesGrid = () => {
     }
 
     console.log('Auto-create: Creating initial blank canvas');
-    const width = canvas.getWidth?.() || 800;
-    const height = canvas.getHeight?.() || 600;
+    // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+    const PX_PER_MM = 96 / 25.4;
+    const width = Math.round(120 * PX_PER_MM);  // ~453 px
+    const height = Math.round(80 * PX_PER_MM);  // ~302 px
     createdInitialRef.current = true;
     
     (async () => {
@@ -241,6 +269,28 @@ const ProjectCanvasesGrid = () => {
   // Simple canvas list: unsaved signs -> project canvases
   const storedCanvases = project?.canvases || [];
   const canvases = [...unsavedSigns, ...storedCanvases];
+  const designPayloads = useMemo(
+    () => canvases.map(mapEntryToDesign).filter(Boolean),
+    [canvases]
+  );
+
+  useEffect(() => {
+    if (typeof setContextDesigns !== "function") return;
+
+    setContextDesigns((prev) => {
+      const prevArray = Array.isArray(prev) ? prev : [];
+      if (prevArray.length === designPayloads.length) {
+        const identical = prevArray.every(
+          (design, index) => design?.id === designPayloads[index]?.id
+        );
+        if (identical) {
+          return prevArray;
+        }
+      }
+
+      return designPayloads;
+    });
+  }, [designPayloads, setContextDesigns]);
   const totalPages = Math.max(1, Math.ceil(canvases.length / PAGE_SIZE));
 
   const ranges = useMemo(() => {
@@ -353,132 +403,93 @@ const ProjectCanvasesGrid = () => {
       
       // Completely reset canvas state
       console.log('Resetting canvas state...');
-      
-      // Clear everything
-      canvas.clear();
-      canvas.setZoom(1);
-      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-      
-      // Reset background to white
-      canvas.set("backgroundColor", "#FFFFFF");
-      
-      // Load the saved state FIRST, then set dimensions
-      const savedState = canvasToLoad.json;
-      if (savedState && savedState.objects) {
-        console.log('Loading canvas state with', savedState.objects.length, 'objects');
-        
-        // Ensure classes are available
-        if (window.ensureInnerStrokeClasses) {
-          window.ensureInnerStrokeClasses();
-        }
-        
-        // ВИПРАВЛЕННЯ: Завантажуємо JSON ПЕРЕД встановленням розмірів
-        canvas.loadFromJSON(savedState, () => {
-          console.log('JSON loaded successfully, setting canvas properties...');
-          
-          try {
-            // ПІСЛЯ завантаження JSON встановлюємо правильні розміри
-            const savedWidth = canvasToLoad.width || 800;
-            const savedHeight = canvasToLoad.height || 600;
-            
-            // Тільки тепер встановлюємо розміри
-            canvas.setWidth(savedWidth);
-            canvas.setHeight(savedHeight);
-            
-            // Відновлюємо background color
-            if (canvasToLoad.backgroundColor) {
-              console.log('Setting background color:', canvasToLoad.backgroundColor);
-              canvas.set("backgroundColor", canvasToLoad.backgroundColor);
-            }
-            
-            // Restore element properties (borders, etc.)
-            try {
-              restoreElementProperties(canvas);
-              console.log('Element properties restored');
-            } catch (e) {
-              console.error('Failed to restore element properties:', e);
-            }
-            
-            // КРИТИЧНО: Форсуємо повний rerender
-            canvas.calcOffset();
-            canvas.renderAll();
-            
-            // ВАЖЛИВО: Знімаємо флаги тільки після завершення
-            canvas.__suspendUndoRedo = false;
-            canvas.__switching = false;
-            
-            console.log('Canvas loading completed successfully, objects:', canvas.getObjects().length);
-            
-            // ВИПРАВЛЕННЯ: Відновлюємо toolbar state ПІСЛЯ всіх операцій з canvas
-            setTimeout(() => {
-              const toolbarState = extractToolbarState(canvasToLoad);
-              console.log('Restoring toolbar state (delayed):', toolbarState);
-              
-              if (window.restoreToolbarState) {
-                window.restoreToolbarState(toolbarState);
-                console.log('Toolbar state restored successfully');
-              } else {
-                console.warn('window.restoreToolbarState not available');
-              }
-              
-              // ДОДАТКОВО: Тригеримо подію для оновлення UI
-              window.dispatchEvent(new CustomEvent('canvas:loaded', { 
-                detail: { canvasId: canvasEntry.id, toolbarState } 
-              }));
-              
-            }, 100); // Короткий delay для завершення всіх операцій
-            
-          } catch (error) {
-            console.error('Error in canvas setup after JSON load:', error);
-            canvas.__suspendUndoRedo = false;
-            canvas.__switching = false;
+
+      const mappedDesign =
+        mapEntryToDesign(canvasToLoad) || {
+          id: canvasEntry.id,
+          width: canvasToLoad.width || DEFAULT_DESIGN_SIZE.width,
+          height: canvasToLoad.height || DEFAULT_DESIGN_SIZE.height,
+          jsonTemplate: canvasToLoad.json || null,
+          backgroundColor: canvasToLoad.backgroundColor,
+        };
+
+      const registerDesignInContext = () => {
+        if (typeof setContextDesigns !== "function") return;
+        setContextDesigns((prev) => {
+          const prevArray = Array.isArray(prev) ? prev : [];
+          const existingIndex = prevArray.findIndex(
+            (design) => design?.id === mappedDesign.id
+          );
+          if (existingIndex === -1) {
+            return [...prevArray, mappedDesign];
           }
+          const existing = prevArray[existingIndex] || {};
+          const merged = { ...existing, ...mappedDesign };
+          const next = [...prevArray];
+          next[existingIndex] = merged;
+          return next;
         });
-      } else {
-        console.log('No saved state, setting up empty canvas...');
-        
-        try {
-          // Для порожнього полотна встановлюємо розміри
-          const newWidth = canvasToLoad.width || 800;
-          const newHeight = canvasToLoad.height || 600;
-          canvas.setWidth(newWidth);
-          canvas.setHeight(newHeight);
-          
-          // Встановлюємо background color
-          if (canvasToLoad.backgroundColor) {
-            canvas.set("backgroundColor", canvasToLoad.backgroundColor);
-          }
-          
-          canvas.calcOffset();
-          canvas.renderAll();
-          
-          // ТАКОЖ знімаємо флаги для порожнього полотна
-          canvas.__suspendUndoRedo = false;
-          canvas.__switching = false;
-          
-          console.log('Empty canvas setup completed');
-          
-          // ВИПРАВЛЕННЯ: Відновлюємо toolbar state для порожнього полотна ПІСЛЯ setup
-          setTimeout(() => {
-            const toolbarState = extractToolbarState(canvasToLoad);
-            console.log('Restoring toolbar state for empty canvas (delayed):', toolbarState);
-            
-            if (window.restoreToolbarState) {
-              window.restoreToolbarState(toolbarState);
-              console.log('Toolbar state restored for empty canvas');
-            }
-            
-            // Тригеримо подію для оновлення UI
-            window.dispatchEvent(new CustomEvent('canvas:loaded', { 
-              detail: { canvasId: canvasEntry.id, toolbarState } 
-            }));
-          }, 100);
-          
-        } catch (error) {
-          console.error('Error setting up empty canvas:', error);
-          canvas.__suspendUndoRedo = false;
-          canvas.__switching = false;
+      };
+
+      try {
+        if (canvas.setViewportTransform) {
+          canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
         }
+
+        if (typeof window !== "undefined" && window.ensureInnerStrokeClasses) {
+          try {
+            window.ensureInnerStrokeClasses();
+          } catch (e) {
+            console.warn('Failed to ensure inner stroke classes', e);
+          }
+        }
+
+        registerDesignInContext();
+        selectDesign?.(mappedDesign.id);
+
+        await loadDesign(mappedDesign);
+
+        if (canvasToLoad.backgroundColor) {
+          canvas.set("backgroundColor", canvasToLoad.backgroundColor);
+        }
+
+        try {
+          restoreElementProperties(canvas);
+          console.log('Element properties restored');
+        } catch (e) {
+          console.error('Failed to restore element properties:', e);
+        }
+
+        canvas.__suspendUndoRedo = false;
+        canvas.__switching = false;
+
+        console.log('Canvas loading completed successfully, objects:', canvas.getObjects().length);
+
+        setTimeout(() => {
+          const toolbarState = extractToolbarState(canvasToLoad);
+          console.log('Restoring toolbar state (delayed):', toolbarState);
+
+          if (window.restoreToolbarState) {
+            window.restoreToolbarState(toolbarState);
+            console.log('Toolbar state restored successfully');
+          } else {
+            console.warn('window.restoreToolbarState not available');
+          }
+
+          window.dispatchEvent(
+            new CustomEvent('canvas:loaded', {
+              detail: { canvasId: canvasEntry.id, toolbarState },
+            })
+          );
+        }, 100);
+      } catch (error) {
+        console.error('Error loading canvas via fabric loader:', error);
+        canvas.__suspendUndoRedo = false;
+        canvas.__switching = false;
+      }
+
+      if (!canvas.__suspendUndoRedo && !canvas.__switching) {
+        canvas.requestRenderAll?.();
       }
       
       // Update tracking state
@@ -504,8 +515,59 @@ const ProjectCanvasesGrid = () => {
     }
   };
 
+  openCanvasRef.current = openCanvas;
+
   // If user clicks save button outside this component, unsaved signs will be transferred.
   // Example: <button onClick={()=> transferUnsavedSignsToProject(project?.id)}>Commit unsaved to project</button>
+
+  useEffect(() => {
+    if (initialCanvasLoadRef.current) return;
+    if (!canvas || !isProjectLoaded || !isUnsavedLoaded) return;
+
+    let storedUnsavedId = null;
+    let storedProjectCanvasId = null;
+
+    try {
+      storedUnsavedId = localStorage.getItem("currentUnsavedSignId");
+    } catch {}
+
+    try {
+      storedProjectCanvasId = localStorage.getItem("currentCanvasId");
+    } catch {}
+
+    const unsavedEntry = storedUnsavedId
+      ? unsavedSigns.find((entry) => entry.id === storedUnsavedId)
+      : null;
+    const projectEntry = storedProjectCanvasId
+      ? storedCanvases.find((entry) => entry.id === storedProjectCanvasId)
+      : null;
+
+    const fallbackEntry = canvases[0] || null;
+    const entryToOpen = unsavedEntry || projectEntry || fallbackEntry;
+
+    if (!entryToOpen) {
+      initialCanvasLoadRef.current = true;
+      return;
+    }
+
+    initialCanvasLoadRef.current = true;
+
+    const loadInitial = async () => {
+      try {
+        setSelectedId(entryToOpen.id);
+      } catch {}
+
+      if (typeof openCanvasRef.current === "function") {
+        try {
+          await openCanvasRef.current(entryToOpen);
+        } catch (error) {
+          console.error("Failed to auto-load initial canvas", error);
+        }
+      }
+    };
+
+    loadInitial();
+  }, [canvas, isProjectLoaded, isUnsavedLoaded, unsavedSigns, storedCanvases, canvases]);
 
   // Auto-save current canvas when objects change
   useEffect(() => {

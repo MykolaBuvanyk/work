@@ -382,20 +382,20 @@ input[type="number"]:focus {
 }
 .customShapeHandle {
   position: absolute;
-  background: #fff;
-  border: 2px solid #ff7a00;
+  background: #ff3232;
+  border: none;
   border-radius: 50%;
   box-sizing: border-box;
   cursor: pointer;
   pointer-events: auto;
-  transition: background 0.15s, transform 0.15s;
+  transition: background-color 0.15s, transform 0.15s;
 }
 .customShapeHandle:hover {
-  background: #ffe2cc;
+  background: #ff6565;
   transform: scale(1.05);
 }
 .customShapeHandle:active {
-  background: #ffc899;
+  background: #d90000;
   transform: scale(0.95);
 }
 

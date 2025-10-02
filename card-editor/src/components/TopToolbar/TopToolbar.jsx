@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
-import { useUndoRedo } from "../../hooks/useUndoRedo";
+  import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
@@ -349,7 +349,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Preview
           </div>
-          <div className={styles.topToolbarEL} onClick={handleSave} style={{cursor:"pointer", opacity: isSaving? 0.6: 1}}>
+          {/* <div className={styles.topToolbarEL} onClick={handleSave} style={{cursor:"pointer", opacity: isSaving? 0.6: 1}}>
             <svg
               width="20"
               height="20"
@@ -395,7 +395,7 @@ const TopToolbar = ({ className }) => {
                 </clipPath>
               </defs>
             </svg>
-          </div>
+          </div> */}
         </div>
         <div className={styles.toolbarRow}>
           <div className={styles.topToolbarEL}>

@@ -7,7 +7,7 @@ import styles from "./TopSidebar.module.css";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
-import { saveNewProject } from "../../utils/projectStorage";
+import { saveNewProject, clearAllUnsavedSigns, addBlankUnsavedSign } from "../../utils/projectStorage";
 
 const TopSidebar = () => {
   const { canvas } = useCanvasContext();
@@ -15,7 +15,68 @@ const TopSidebar = () => {
   const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [isSaveAsOpen, setSaveAsOpen] = useState(false);
 
-  const beginNewProjectFlow = () => setNewProjectModalOpen(true);
+  const beginNewProjectFlow = () => {
+    // Перевірка чи проект вже збережений
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+
+    if (currentProjectId) {
+      // Проект вже збережений - створюємо новий проект
+      handleCreateNewProject();
+    } else {
+      // Проект не збережений - показуємо модалку Save/Discard/Cancel
+      setNewProjectModalOpen(true);
+    }
+  };
+
+  const handleCreateNewProject = async () => {
+    // Очищаємо таблицю з тимчасовими проектами
+    try {
+      await clearAllUnsavedSigns();
+    } catch (e) {
+      console.error("Failed to clear unsaved signs", e);
+    }
+
+    // Очищаємо localStorage від поточного проекту
+    try {
+      localStorage.removeItem("currentProjectId");
+      localStorage.removeItem("currentProjectName");
+      localStorage.removeItem("currentCanvasId");
+    } catch {}
+
+    // Створюємо нове пусте полотно
+    if (canvas) {
+      try {
+        canvas.__suspendUndoRedo = true;
+        canvas.discardActiveObject && canvas.discardActiveObject();
+        canvas.clear();
+        canvas.renderAll();
+        canvas.__suspendUndoRedo = false;
+      } catch (e) {
+        console.error("Failed to clear canvas", e);
+      }
+    }
+
+    // Викликаємо подію про скидання проекту
+    try {
+      window.dispatchEvent(new CustomEvent("project:reset"));
+    } catch {}
+
+    // Створюємо новий порожній знак (як у handleNewSign в Accessories)
+    // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+    const PX_PER_MM = 96 / 25.4;
+    const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM);  // ~453 px
+    const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM);  // ~302 px
+    
+    try {
+      await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+      window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+    } catch (e) {
+      console.error("Failed to create new blank sign", e);
+    }
+  };
 
   const handleSaveAs = async (name) => {
     if (!canvas) { setSaveAsOpen(false); return; }

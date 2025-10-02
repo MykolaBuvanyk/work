@@ -1,46 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
-import * as fabric from "fabric";
-import { exportCanvas, addUnsavedSignFromSnapshot, updateUnsavedSignFromCanvas, getAllUnsavedSigns, deleteUnsavedSign } from "../../utils/projectStorage";
+import { updateUnsavedSignFromCanvas, getAllUnsavedSigns, deleteUnsavedSign, addBlankUnsavedSign } from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 
 const TopToolbar = ({ className }) => {
   const { canvas } = useCanvasContext();
   const [working, setWorking] = useState(false);
 
-  // Helper: create a blank Fabric canvas state (same size as current) without objects
-  const buildBlankSnapshot = () => {
-    if (!canvas) return null;
-    const width = canvas.getWidth?.() || 0;
-    const height = canvas.getHeight?.() || 0;
-    const tmp = { json: { objects: [], version: canvas.version || fabric.version }, preview: "", width, height };
-    return tmp;
-  };
-
   const handleNewSign = async () => {
     if (working) return; setWorking(true);
     try {
-      const blank = buildBlankSnapshot(); if (!blank) return;
       let currentUnsavedId = null;
       try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
       if (currentUnsavedId && canvas) {
-        // Persist active unsaved sign changes
         await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(()=>{});
-      } else {
-        // There is no active unsaved sign yet (user was on LIVE canvas). Save current canvas content first.
-        if (canvas) {
-          const toolbarState = window.getCurrentToolbarState?.() || {};
-          const snap = exportCanvas(canvas, toolbarState);
-          if (snap) {
-            await addUnsavedSignFromSnapshot(snap); // this becomes a stored previous sign
-          }
-        }
       }
-      // Now create new blank unsaved sign and make it current
-      const createdBlank = await addUnsavedSignFromSnapshot(blank);
-      try { localStorage.setItem("currentUnsavedSignId", createdBlank.id); } catch {}
-      if (canvas) { canvas.__suspendUndoRedo = true; canvas.clear(); canvas.renderAll(); canvas.__suspendUndoRedo = false; }
-      // Trigger update (addUnsavedSignFromSnapshot already dispatches, but ensure ordering)
+
+      // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+      const PX_PER_MM = 96 / 25.4;
+      const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM);  // ~453 px
+      const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM);  // ~302 px
+
+      await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
       try { window.dispatchEvent(new CustomEvent("unsaved:signsUpdated")); } catch {}
     } catch (e) {
       console.error("New Sign failed", e);

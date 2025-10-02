@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import CustomShapeStopModal from "./CustomShapeStopModal";
 import { copyHandler } from "../Canvas/Canvas";
 // lock shape now: rectangle + top half-circle (width 16mm, height 8mm)
@@ -170,6 +170,221 @@ const Toolbar = () => {
     }
   );
 
+    const toolbarStateRef = useRef(null);
+    const prevToolbarStateSerializedRef = useRef("");
+
+    const cloneToolbarState = useCallback((state) => {
+      if (!state) return null;
+      return {
+        ...state,
+        sizeValues: { ...(state.sizeValues || {}) },
+        globalColors: { ...(state.globalColors || {}) },
+      };
+    }, []);
+
+    const buildToolbarState = useCallback(() => {
+      const hasBorder = !!canvas?.getObjects?.().some((obj) => obj?.isBorderShape);
+      const safeSize = sizeValues || {};
+      const safeColors = globalColors || {};
+
+      return {
+        currentShapeType: currentShapeType || "rectangle",
+        sizeValues: {
+          width:
+            safeSize.width !== undefined
+              ? Number(safeSize.width) || 0
+              : 0,
+          height:
+            safeSize.height !== undefined
+              ? Number(safeSize.height) || 0
+              : 0,
+          cornerRadius:
+            safeSize.cornerRadius !== undefined
+              ? Number(safeSize.cornerRadius) || 0
+              : 0,
+        },
+        thickness: Number(thickness) || 0,
+        hasBorder,
+        globalColors: { ...safeColors },
+        selectedColorIndex,
+        isAdhesiveTape: !!isAdhesiveTape,
+        activeHolesType,
+        holesDiameter: Number(holesDiameter) || 0,
+        isHolesSelected: !!isHolesSelected,
+        isCustomShapeMode: !!isCustomShapeMode,
+        isCustomShapeApplied: !!isCustomShapeApplied,
+        hasUserPickedShape: !!hasUserPickedShape,
+        copiesCount: Number(copiesCount) || 1,
+      };
+    }, [
+      canvas,
+      sizeValues,
+      globalColors,
+      currentShapeType,
+      thickness,
+      selectedColorIndex,
+      isAdhesiveTape,
+      activeHolesType,
+      holesDiameter,
+      isHolesSelected,
+      isCustomShapeMode,
+      isCustomShapeApplied,
+      hasUserPickedShape,
+      copiesCount,
+    ]);
+
+    const applyToolbarState = useCallback(
+      (incoming) => {
+        if (!incoming || typeof incoming !== "object") return;
+
+        if (incoming.currentShapeType) {
+          setCurrentShapeType(incoming.currentShapeType);
+        }
+
+        if (incoming.sizeValues) {
+          setSizeValues((prev) => ({
+            width:
+              incoming.sizeValues.width !== undefined
+                ? Number(incoming.sizeValues.width) || prev.width
+                : prev.width,
+            height:
+              incoming.sizeValues.height !== undefined
+                ? Number(incoming.sizeValues.height) || prev.height
+                : prev.height,
+            cornerRadius:
+              incoming.sizeValues.cornerRadius !== undefined
+                ? Number(incoming.sizeValues.cornerRadius) || prev.cornerRadius
+                : prev.cornerRadius,
+          }));
+        }
+
+        if (incoming.cornerRadius !== undefined && !incoming.sizeValues) {
+          const parsedCorner = Number(incoming.cornerRadius);
+          if (Number.isFinite(parsedCorner)) {
+            setSizeValues((prev) => ({ ...prev, cornerRadius: parsedCorner }));
+          }
+        }
+
+        if (incoming.thickness !== undefined) {
+          setThickness((prev) => {
+            const parsed = Number(incoming.thickness);
+            return Number.isFinite(parsed) ? parsed : prev;
+          });
+        }
+
+        if (incoming.globalColors) {
+          updateGlobalColors({ ...incoming.globalColors });
+        }
+
+        if (incoming.selectedColorIndex !== undefined) {
+          setSelectedColorIndex((prev) => {
+            const parsed = Number(incoming.selectedColorIndex);
+            return Number.isFinite(parsed) ? parsed : prev;
+          });
+        }
+
+        if (incoming.isAdhesiveTape !== undefined) {
+          setIsAdhesiveTape(!!incoming.isAdhesiveTape);
+        }
+
+        if (incoming.activeHolesType !== undefined) {
+          setActiveHolesType((prev) => {
+            const parsed = Number(incoming.activeHolesType);
+            return Number.isFinite(parsed) ? parsed : prev;
+          });
+        }
+
+        if (incoming.holesDiameter !== undefined) {
+          setHolesDiameter((prev) => {
+            const parsed = Number(incoming.holesDiameter);
+            return Number.isFinite(parsed) ? parsed : prev;
+          });
+        }
+
+        if (incoming.isHolesSelected !== undefined) {
+          setIsHolesSelected(!!incoming.isHolesSelected);
+        }
+
+        if (incoming.isCustomShapeApplied !== undefined) {
+          setIsCustomShapeApplied(!!incoming.isCustomShapeApplied);
+        }
+
+        if (incoming.hasUserPickedShape !== undefined) {
+          setHasUserPickedShape(!!incoming.hasUserPickedShape);
+        }
+
+        if (incoming.copiesCount !== undefined) {
+          setCopiesCount((prev) => {
+            const parsed = Number(incoming.copiesCount);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : prev;
+          });
+        }
+
+        if (incoming.isCustomShapeMode !== undefined) {
+          setIsCustomShapeMode(!!incoming.isCustomShapeMode);
+        }
+      },
+      [
+        setCurrentShapeType,
+        setSizeValues,
+        setThickness,
+        updateGlobalColors,
+        setSelectedColorIndex,
+        setIsAdhesiveTape,
+        setActiveHolesType,
+        setHolesDiameter,
+        setIsHolesSelected,
+        setIsCustomShapeApplied,
+        setHasUserPickedShape,
+        setCopiesCount,
+        setIsCustomShapeMode,
+      ]
+    );
+
+    const getToolbarState = useCallback(() => {
+      const current = toolbarStateRef.current || buildToolbarState();
+      return cloneToolbarState(current);
+    }, [buildToolbarState, cloneToolbarState]);
+
+    useEffect(() => {
+      const snapshot = buildToolbarState();
+      toolbarStateRef.current = snapshot;
+
+      const serialized = JSON.stringify(snapshot);
+      if (serialized !== prevToolbarStateSerializedRef.current) {
+        prevToolbarStateSerializedRef.current = serialized;
+        if (typeof window !== "undefined") {
+          try {
+            window.dispatchEvent(
+              new CustomEvent("toolbar:changed", {
+                detail: cloneToolbarState(snapshot),
+              })
+            );
+          } catch (error) {
+            console.warn("Failed to dispatch toolbar:changed", error);
+          }
+        }
+      }
+    }, [buildToolbarState, cloneToolbarState]);
+
+    useEffect(() => {
+      if (typeof window === "undefined") {
+        return undefined;
+      }
+
+      window.getCurrentToolbarState = getToolbarState;
+      window.restoreToolbarState = applyToolbarState;
+
+      return () => {
+        if (window.getCurrentToolbarState === getToolbarState) {
+          delete window.getCurrentToolbarState;
+        }
+        if (window.restoreToolbarState === applyToolbarState) {
+          delete window.restoreToolbarState;
+        }
+      };
+    }, [getToolbarState, applyToolbarState]);
+
   // Очистити canvas з збереженням фону
   const clearCanvasPreserveTheme = () => {
     if (!canvas) return;
@@ -191,15 +406,20 @@ const Toolbar = () => {
   const baseCornersRef = useRef([]); // mutable corner points [{x,y}]
   const originalClipRef = useRef(null); // original clipPath for cancel
   const [overlayHandles, setOverlayHandles] = useState([]); // DOM overlay handles
-  // Set default selected shape on mount
-  useEffect(() => {
-    // Choose the default shape type, e.g., rectangle
-    setCurrentShapeType("rectangle");
-    // Call addRectangle to initialize the canvas with the default shape
-    if (canvas) {
-      addRectangle();
+  const overlayHandlesRafRef = useRef(null); // pending requestAnimationFrame id for handle positioning
+  useEffect(() => () => {
+    if (overlayHandlesRafRef.current !== null) {
+      cancelAnimationFrame(overlayHandlesRafRef.current);
+      overlayHandlesRafRef.current = null;
     }
-  }, [canvas]); // end init effect
+  }, []);
+  // Set default selected shape on mount
+  // useEffect(() => {
+  //   setCurrentShapeType("rectangle");
+  //   if (canvas) {
+  //     addRectangle();
+  //   }
+  // }, [canvas]);
 
   // Corner radius вимикаємо для кола та простих стрілок (left/right)
   const isCircleSelected =
@@ -627,92 +847,61 @@ const Toolbar = () => {
     rebuildPolygonClip();
   };
 
-  const positionHandles = () => {
+  const computeHandlePositions = () => {
     if (!canvas) return;
     const pts = baseCornersRef.current;
-    if (!pts.length) {
+    const upperCanvas = canvas.upperCanvasEl;
+    if (!pts.length || !upperCanvas) {
       setOverlayHandles([]);
       return;
     }
-    const rect = canvas.upperCanvasEl.getBoundingClientRect();
+    const rect = upperCanvas.getBoundingClientRect();
+    const figW = canvas.getWidth();
+    const figH = canvas.getHeight();
+    if (!figW || !figH || !rect.width || !rect.height) {
+      setOverlayHandles([]);
+      return;
+    }
     const scrollX = window.scrollX || window.pageXOffset || 0;
     const scrollY = window.scrollY || window.pageYOffset || 0;
     // Фактичний масштаб у viewport (враховує fabric zoom + можливий CSS transform контейнера)
-    const scaleX = rect.width / canvas.getWidth();
-    const scaleY = rect.height / canvas.getHeight();
+    const scaleX = rect.width / figW;
+    const scaleY = rect.height / figH;
     const uniformScale = (scaleX + scaleY) / 2; // усереднюємо для діаметра
-    // signed area for reflex detection
-    let area = 0;
-    for (let i = 0, n = pts.length; i < n; i++) {
-      const p = pts[i];
-      const q = pts[(i + 1) % n];
-      area += p.x * q.y - q.x * p.y;
-    }
-    const signedArea = area / 2;
-    const isPointInside = (x, y) => {
-      let inside = false;
-      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-        const xi = pts[i].x,
-          yi = pts[i].y;
-        const xj = pts[j].x,
-          yj = pts[j].y;
-        const intersect =
-          yi > y !== yj > y &&
-          x < ((xj - xi) * (y - yi)) / (yj - yi + 1e-9) + xi;
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    };
-    const figW = canvas.getWidth();
-    const figH = canvas.getHeight();
     const minSide = Math.max(1, Math.min(figW, figH));
-    const baseOffset = Math.max(6, Math.min(18, minSide * 0.1));
-    const dynamicRadius = Math.max(2, Math.min(6, minSide * 0.0167));
+    const dynamicRadius = Math.max(1.5, Math.min(4, minSide * 0.012));
     const n = pts.length;
     const newHandles = [];
     for (let i = 0; i < n; i++) {
-      const pPrev = pts[(i - 1 + n) % n];
       const p = pts[i];
-      const pNext = pts[(i + 1) % n];
-      const v1 = { x: pPrev.x - p.x, y: pPrev.y - p.y };
-      const v2 = { x: pNext.x - p.x, y: pNext.y - p.y };
-      const len1 = Math.hypot(v1.x, v1.y) || 1;
-      const len2 = Math.hypot(v2.x, v2.y) || 1;
-      const n1 = { x: v1.x / len1, y: v1.y / len1 };
-      const n2 = { x: v2.x / len2, y: v2.y / len2 };
-      let bis = { x: n1.x + n2.x, y: n1.y + n2.y };
-      let bisLen = Math.hypot(bis.x, bis.y);
-      if (bisLen < 1e-3) {
-        bis = { x: n2.y, y: -n2.x };
-        bisLen = Math.hypot(bis.x, bis.y) || 1;
-      }
-      let dir = { x: bis.x / bisLen, y: bis.y / bisLen };
-      const cross =
-        (pPrev.x - p.x) * (pNext.y - p.y) - (pPrev.y - p.y) * (pNext.x - p.x);
-      const isReflex = signedArea > 0 ? cross < 0 : cross > 0;
-      if (isReflex) dir = { x: -dir.x, y: -dir.y };
-      const edgeA = Math.hypot(pPrev.x - p.x, pPrev.y - p.y) || 1;
-      const edgeB = Math.hypot(pNext.x - p.x, pNext.y - p.y) || 1;
-      const dot = (v1.x * v2.x + v1.y * v2.y) / (edgeA * edgeB);
-      const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-      const angleFactor = angle / Math.PI;
-      const offset = baseOffset * (0.55 + 0.45 * (1 - angleFactor));
-      let hx = p.x + dir.x * offset;
-      let hy = p.y + dir.y * offset;
-      if (!isPointInside(hx, hy)) {
-        hx = p.x - dir.x * offset;
-        hy = p.y - dir.y * offset;
-      }
+      const hx = p.x;
+      const hy = p.y;
       newHandles.push({
         index: i,
         corner: { x: p.x, y: p.y },
         handle: { x: hx, y: hy },
         screenX: scrollX + rect.left + hx * scaleX,
         screenY: scrollY + rect.top + hy * scaleY,
-        size: dynamicRadius * 2 * uniformScale, // масштабований діаметр
+        size: dynamicRadius * 2 * uniformScale,
       });
     }
     setOverlayHandles(newHandles);
+  };
+
+  const positionHandles = ({ immediate = false } = {}) => {
+    if (!canvas) return;
+    if (overlayHandlesRafRef.current !== null) {
+      cancelAnimationFrame(overlayHandlesRafRef.current);
+      overlayHandlesRafRef.current = null;
+    }
+    if (immediate) {
+      computeHandlePositions();
+      return;
+    }
+    overlayHandlesRafRef.current = window.requestAnimationFrame(() => {
+      overlayHandlesRafRef.current = null;
+      computeHandlePositions();
+    });
   };
 
   const startDomDrag = (e, idx) => {
@@ -797,7 +986,7 @@ const Toolbar = () => {
     baseCornersRef.current[i] = candidate;
     rebuildPolygonClip();
     canvas.requestRenderAll();
-    positionHandles();
+    positionHandles({ immediate: true });
   };
 
   const onDomDragEnd = () => {
@@ -880,6 +1069,10 @@ const Toolbar = () => {
     setIsCustomShapeMode(false);
     // Вихід – фігура вже кастомна, залишаємо true (не скидаємо)
     setOverlayHandles([]);
+    if (overlayHandlesRafRef.current !== null) {
+      cancelAnimationFrame(overlayHandlesRafRef.current);
+      overlayHandlesRafRef.current = null;
+    }
     updateCanvasOutline();
     canvas.requestRenderAll();
     if (outsideCustomListenerRef.current) {
@@ -898,7 +1091,7 @@ const Toolbar = () => {
     const handleWheel = (e) => {
       if (e.ctrlKey || e.metaKey) {
         // ймовірно змінюємо zoom — оновити на наступний кадр
-        requestAnimationFrame(() => positionHandles());
+        positionHandles();
       }
     };
     const handleResize = () => positionHandles();
@@ -7815,6 +8008,34 @@ const Toolbar = () => {
       resetHolesToNone();
     }
   };
+
+  // Автоматична ініціалізація прямокутника для порожніх полотен
+  useEffect(() => {
+    if (!canvas) return;
+
+    const handleCanvasLoaded = (e) => {
+      // Перевіряємо чи полотно порожнє (немає об'єктів і немає clipPath)
+      const objects = canvas.getObjects();
+      const hasObjects = objects && objects.length > 0;
+      const hasClipPath = !!canvas.clipPath;
+      
+      // Якщо полотно порожнє - ініціалізуємо прямокутник
+      if (!hasObjects && !hasClipPath) {
+        console.log('Canvas is empty, initializing default rectangle shape');
+        // Невелика затримка щоб canvas встиг повністю завантажитися
+        setTimeout(() => {
+          addRectangle();
+        }, 100);
+      }
+    };
+
+    window.addEventListener('canvas:loaded', handleCanvasLoaded);
+
+    return () => {
+      window.removeEventListener('canvas:loaded', handleCanvasLoaded);
+    };
+  }, [canvas, addRectangle]);
+
   const handleInputChange = (key, max, rawValue) => {
     // Поддерживаем запятую как разделитель, затем округляем до 1 знака
     const parsed = parseFloat(String(rawValue).replace(",", "."));

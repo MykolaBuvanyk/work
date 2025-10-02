@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
-import { updateUnsavedSignFromCanvas, getAllUnsavedSigns, deleteUnsavedSign, addBlankUnsavedSign } from "../../utils/projectStorage";
+import {
+  updateUnsavedSignFromCanvas,
+  getAllUnsavedSigns,
+  deleteUnsavedSign,
+  addBlankUnsavedSign,
+} from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 import AccessoriesModal from "../AccessoriesModal/AccessoriesModal";
 // Modal images (used only inside modal, but state lives here for two-way sync)
@@ -30,7 +35,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: false,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
     {
       id: 2,
@@ -42,7 +47,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: false,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
     {
       id: 3,
@@ -54,7 +59,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: false,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
     {
       id: 4,
@@ -67,7 +72,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: true,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
     {
       id: 5,
@@ -80,7 +85,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: true,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
     {
       id: 6,
@@ -93,7 +98,7 @@ const TopToolbar = ({ className }) => {
       hasExtra: true,
       checked: false,
       visible: false,
-      qty: "0",
+      qty: "1",
     },
   ]);
 
@@ -168,17 +173,21 @@ const TopToolbar = ({ className }) => {
         currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
       } catch {}
       if (currentUnsavedId && canvas) {
-        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(()=>{});
+        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
+          () => {}
+        );
       }
 
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
       const PX_PER_MM = 96 / 25.4;
-      const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM);  // ~453 px
-      const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM);  // ~302 px
+      const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
+      const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
       await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-      try { window.dispatchEvent(new CustomEvent("unsaved:signsUpdated")); } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+      } catch {}
     } catch (e) {
       console.error("New Sign failed", e);
     } finally {
@@ -338,7 +347,7 @@ const TopToolbar = ({ className }) => {
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
           {accessories
-            .filter((it) => it.visible)
+            .filter((it) => it.checked)
             .map((it) => {
               const qtyNum = parseNumber(it.qty);
               const total = it.price * qtyNum;

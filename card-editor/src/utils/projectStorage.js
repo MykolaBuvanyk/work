@@ -135,10 +135,24 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
         }
         
         // Додатково намагаємося отримати з canvas properties
+        // ВИПРАВЛЕННЯ: Обробка Pattern для текстур
+        let bgColor = canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF";
+        const bgTextureUrl = canvas.get("backgroundTextureUrl");
+        const bgType = canvas.get("backgroundType") || "solid";
+        
+        // Якщо це Pattern (текстура), використовуємо збережений URL
+        if (bgType === "texture" && bgTextureUrl) {
+          bgColor = bgTextureUrl;
+        } else if (typeof bgColor === "object" && bgColor !== null) {
+          // Якщо backgroundColor - це об'єкт Pattern, але немає URL, повертаємо білий
+          bgColor = "#FFFFFF";
+        }
+        
         const canvasState = {
           currentShapeType: canvas.get("shapeType") || "rectangle",
           cornerRadius: canvas.get("cornerRadius") || 0,
-          backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF",
+          backgroundColor: bgColor,
+          backgroundType: bgType,
           width: canvas.getWidth(),
           height: canvas.getHeight()
         };
@@ -372,6 +386,19 @@ export function exportCanvas(canvas, toolbarState = {}) {
     }
     
     // Store comprehensive toolbar state for each canvas
+    // ВИПРАВЛЕННЯ: Обробка Pattern для текстур
+    let bgColor = canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF";
+    const bgTextureUrl = canvas.get("backgroundTextureUrl");
+    const bgType = canvas.get("backgroundType") || "solid";
+    
+    // Якщо це Pattern (текстура), використовуємо збережений URL
+    if (bgType === "texture" && bgTextureUrl) {
+      bgColor = bgTextureUrl;
+    } else if (typeof bgColor === "object" && bgColor !== null) {
+      // Якщо backgroundColor - це об'єкт Pattern, але немає URL, повертаємо білий
+      bgColor = "#FFFFFF";
+    }
+    
     const canvasState = {
       json,
       preview: previewPng, // Зберігаємо PNG як fallback
@@ -379,7 +406,8 @@ export function exportCanvas(canvas, toolbarState = {}) {
       width,
       height,
       // ВИПРАВЛЕННЯ: Покращене збереження canvas properties
-      backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF",
+      backgroundColor: bgColor,
+      backgroundType: bgType,
       canvasType: canvas.get("shapeType") || "rectangle",
       cornerRadius: canvas.get("cornerRadius") || 0,
       
@@ -395,13 +423,19 @@ export function exportCanvas(canvas, toolbarState = {}) {
         // Оновлюємо background color
         globalColors: {
           ...(toolbarState.globalColors || {}),
-          backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF"
+          backgroundColor: bgColor,
+          backgroundType: bgType
         },
         // Зберігаємо border flag з множинних джерел
         hasBorder: hasBorder || toolbarState.hasBorder || false,
+        // Зберігаємо copies count
+        copiesCount: Number(toolbarState.copiesCount) || 1,
         // Зберігаємо timestamp
         lastSaved: Date.now()
       },
+      
+      // Зберігаємо copies count на верхньому рівні для зручного доступу
+      copiesCount: Number(toolbarState.copiesCount) || 1,
       
       // ВИПРАВЛЕННЯ: Додаткові метадані для відстеження
       canvasMetadata: {
@@ -441,7 +475,7 @@ export function extractToolbarState(canvasData) {
       backgroundColor: canvasData.backgroundColor || "#FFFFFF",
       strokeColor: "#000000",
       fillColor: "transparent",
-      backgroundType: "solid"
+      backgroundType: canvasData.backgroundType || "solid"
     },
     selectedColorIndex: savedState.selectedColorIndex || 0,
     thickness: savedState.thickness || 1.6,

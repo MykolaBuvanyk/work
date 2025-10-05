@@ -3,6 +3,7 @@ import styles from "./ProjectCanvasesGrid.module.css";
 import { getProject, getAllUnsavedSigns, updateUnsavedSignFromCanvas, extractToolbarState, restoreElementProperties, addBlankUnsavedSign, updateCanvasInCurrentProject } from "../../utils/projectStorage";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
+import * as fabric from "fabric";
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
@@ -449,8 +450,54 @@ const ProjectCanvasesGrid = () => {
 
         await loadDesign(mappedDesign);
 
+        // ВИПРАВЛЕННЯ: Відновлюємо фон з урахуванням текстур
         if (canvasToLoad.backgroundColor) {
-          canvas.set("backgroundColor", canvasToLoad.backgroundColor);
+          const bgType = canvasToLoad.backgroundType || "solid";
+          
+          if (bgType === "texture") {
+            // Якщо це текстура, завантажуємо її через ту саму логіку
+            const img = document.createElement('img');
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              try {
+                const scaleX = (canvas.width / img.width);
+                const scaleY = (canvas.height / img.height);
+                
+                const patternCanvas = document.createElement('canvas');
+                const ctx = patternCanvas.getContext('2d');
+                
+                patternCanvas.width = img.width * scaleX;
+                patternCanvas.height = img.height * scaleY;
+                
+                ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
+                
+                const pattern = new fabric.Pattern({
+                  source: patternCanvas,
+                  repeat: 'repeat'
+                });
+                
+                canvas.set("backgroundColor", pattern);
+                canvas.set("backgroundTextureUrl", canvasToLoad.backgroundColor);
+                canvas.set("backgroundType", "texture");
+                canvas.renderAll();
+              } catch (error) {
+                console.error('Error restoring texture pattern:', error);
+                canvas.set("backgroundColor", "#FFFFFF");
+                canvas.renderAll();
+              }
+            };
+            img.onerror = () => {
+              console.error('Error loading texture image:', canvasToLoad.backgroundColor);
+              canvas.set("backgroundColor", "#FFFFFF");
+              canvas.renderAll();
+            };
+            img.src = canvasToLoad.backgroundColor;
+          } else {
+            // Звичайний колір
+            canvas.set("backgroundColor", canvasToLoad.backgroundColor);
+            canvas.set("backgroundTextureUrl", null);
+            canvas.set("backgroundType", bgType);
+          }
         }
 
         try {
@@ -803,7 +850,7 @@ const ProjectCanvasesGrid = () => {
                 </div>
                 <div className={styles.meta}>
                   <span>{pxToMm(c.width)} × {pxToMm(c.height)} (mm)</span>
-                  <span>{/* optionally qty or index */}</span>
+                  <span>{(c.copiesCount || c.toolbarState?.copiesCount || 1)} pcs</span>
                 </div>
               </div>
             );

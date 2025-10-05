@@ -5487,19 +5487,62 @@ const Toolbar = () => {
     // Встановлюємо фон canvas
     if (backgroundType === "solid") {
       canvas.set("backgroundColor", backgroundColor);
+      canvas.set("backgroundTextureUrl", null);
+      canvas.set("backgroundType", "solid");
+      canvas.renderAll();
+      trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     } else if (backgroundType === "gradient") {
       // Місце для градієнта - буде реалізовано пізніше
       canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
+      canvas.set("backgroundTextureUrl", null);
+      canvas.set("backgroundType", "gradient");
+      canvas.renderAll();
+      trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     } else if (backgroundType === "texture") {
-      // Місце для текстури - буде реалізовано пізніше
-      canvas.set("backgroundColor", backgroundColor); // Тимчасово використовуємо solid color
+      // Завантажуємо текстуру
+      const img = document.createElement('img');
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          // Обраховуємо масштаб як відношення canvas до зображення
+          // Зменшуємо у 4 рази для повторення текстури
+          const scaleX = (canvas.width / img.width);
+          const scaleY = (canvas.height / img.height);
+          
+          // Створюємо canvas для масштабування текстури
+          const patternCanvas = document.createElement('canvas');
+          const ctx = patternCanvas.getContext('2d');
+          
+          patternCanvas.width = img.width * scaleX;
+          patternCanvas.height = img.height * scaleY;
+          
+          // Малюємо масштабоване зображення
+          ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
+          
+          const pattern = new fabric.Pattern({
+            source: patternCanvas,
+            repeat: 'repeat'
+          });
+          
+          // Зберігаємо оригінальний URL текстури для серіалізації
+          canvas.set("backgroundColor", pattern);
+          canvas.set("backgroundTextureUrl", backgroundColor);
+          canvas.set("backgroundType", "texture");
+          canvas.renderAll();
+        } catch (error) {
+          console.error('Error creating texture pattern:', error);
+          canvas.set("backgroundColor", backgroundColor);
+          canvas.renderAll();
+        }
+      };
+      img.onerror = () => {
+        console.error('Error loading texture image:', backgroundColor);
+        canvas.set("backgroundColor", "#FFFFFF");
+        canvas.renderAll();
+      };
+      img.src = backgroundColor;
+      trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     }
-
-    // Рендеримо canvas
-    canvas.renderAll();
-
-    // Відстежуємо зміну кольорової теми
-    trackColorThemeChange({ textColor, backgroundColor, backgroundType });
   };
 
   // Запобігаємо повторному застосуванню вже активної схеми
@@ -8584,7 +8627,7 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => handleColorPick(12, "#000000", "#D2B48C", "texture")}
+            onClick={() => handleColorPick(12, "#000000", "/textures/Wood.jpg", "texture")}
             title="Чорний текст, фон дерева"
           >
             <A13
@@ -8596,7 +8639,7 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => handleColorPick(13, "#FFFFFF", "#36454F", "texture")}
+            onClick={() => handleColorPick(13, "#FFFFFF", "/textures/Carbon.jpg", "texture")}
             title="Білий текст, карбоновий фон"
           >
             <A14

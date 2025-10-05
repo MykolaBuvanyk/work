@@ -78,8 +78,14 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     // Custom shape: додаємо саме ту форму, що й на іконці
     if (shapeType === "customShape") {
-      const canvasW = typeof canvas.getWidth === "function" ? canvas.getWidth() : canvas?.width || 0;
-      const canvasH = typeof canvas.getHeight === "function" ? canvas.getHeight() : canvas?.height || 0;
+      const canvasW =
+        typeof canvas.getWidth === "function"
+          ? canvas.getWidth()
+          : canvas?.width || 0;
+      const canvasH =
+        typeof canvas.getHeight === "function"
+          ? canvas.getHeight()
+          : canvas?.height || 0;
       const centerX = (canvasW || 0) / 2;
       const centerY = (canvasH || 0) / 2;
       const baseOptions = {
@@ -93,9 +99,19 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         strokeUniform: true,
         strokeLineJoin: "round",
       };
-      const d = "M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z";
-      const custom = new fabric.Path(d, { ...baseOptions, width: 54, height: 53 });
-      custom.set({ shapeType: "customShape", hasBorders: true, hasControls: true, selectable: true });
+      const d =
+        "M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z";
+      const custom = new fabric.Path(d, {
+        ...baseOptions,
+        width: 54,
+        height: 53,
+      });
+      custom.set({
+        shapeType: "customShape",
+        hasBorders: true,
+        hasControls: true,
+        selectable: true,
+      });
       addObjectToCanvas(custom);
       setActiveObject(custom);
       setShapePropertiesOpen(true);
@@ -178,7 +194,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       }
     };
 
-  switch (shapeType) {
+    switch (shapeType) {
       case "text":
         shape = new fabric.IText("Новий текст", {
           ...baseOptions,
@@ -415,8 +431,18 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     switch (shapeType) {
       case "customShape":
         return (
-          <svg width="54" height="53" viewBox="0 0 54 53" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z" stroke="black" strokeWidth="2" />
+          <svg
+            width="54"
+            height="53"
+            viewBox="0 0 54 53"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z"
+              stroke="black"
+              strokeWidth="2"
+            />
           </svg>
         );
       case "rectangle":
@@ -651,26 +677,75 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
       case "arch":
         return (
-          <svg width="70" height="70" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 95 A40 90 0 0 1 90 95 L10 95 Z" fill="none" stroke="#000" strokeWidth="2.14" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 100 100"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10 95 A40 90 0 0 1 90 95 L10 95 Z"
+              fill="none"
+              stroke="#000"
+              strokeWidth="2.14"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         );
       case "quarterCircleTR":
         return (
-          <svg width="70" height="70" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 9h52v52A52 52 0 0 1 9 9Z" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="bevel" />
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 70 70"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 9h52v52A52 52 0 0 1 9 9Z"
+              stroke="#000"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="bevel"
+            />
           </svg>
         );
       case "rightTriangle":
         return (
-          <svg width="70" height="70" viewBox="0 0 61 53" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 51H59L2 2Z" stroke="#000" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 61 53"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2 51H59L2 2Z"
+              stroke="#000"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         );
       case "circleWithCut":
         return (
-          <svg width="70" height="70" viewBox="0 0 63 74" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="bevel" strokeMiterlimit="22.9" d="M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0" />
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 63 74"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke="#000"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="bevel"
+              strokeMiterlimit="22.9"
+              d="M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0"
+            />
           </svg>
         );
 
@@ -741,17 +816,20 @@ const ShapeSelector = ({ isOpen, onClose }) => {
               </button>
             </div>
 
-              <div className={styles.content}>
+            <div className={styles.content}>
               <div className={styles.shapesGrid}>
                 {shapes.map((shape, idx) => {
-                  const isLine = shape.id === "line" || shape.id === "dashedLine";
+                  const isLine =
+                    shape.id === "line" || shape.id === "dashedLine";
                   // Вставляємо розрив рядка перед лініями (останній ряд)
                   const breakBefore = shape.id === "line";
                   return (
                     <React.Fragment key={shape.id}>
                       {breakBefore && <div className={styles.rowBreak} />}
                       <div
-                        className={`${styles.shapeItem} ${isLine ? styles.lineItem : ""}`}
+                        className={`${styles.shapeItem} ${
+                          isLine ? styles.lineItem : ""
+                        }`}
                         onClick={() => addShape(shape.id)}
                         title={shape.name}
                       >

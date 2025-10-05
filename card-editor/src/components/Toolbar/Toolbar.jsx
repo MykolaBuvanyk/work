@@ -170,220 +170,217 @@ const Toolbar = () => {
     }
   );
 
-    const toolbarStateRef = useRef(null);
-    const prevToolbarStateSerializedRef = useRef("");
+  const toolbarStateRef = useRef(null);
+  const prevToolbarStateSerializedRef = useRef("");
 
-    const cloneToolbarState = useCallback((state) => {
-      if (!state) return null;
-      return {
-        ...state,
-        sizeValues: { ...(state.sizeValues || {}) },
-        globalColors: { ...(state.globalColors || {}) },
-      };
-    }, []);
+  const cloneToolbarState = useCallback((state) => {
+    if (!state) return null;
+    return {
+      ...state,
+      sizeValues: { ...(state.sizeValues || {}) },
+      globalColors: { ...(state.globalColors || {}) },
+    };
+  }, []);
 
-    const buildToolbarState = useCallback(() => {
-      const hasBorder = !!canvas?.getObjects?.().some((obj) => obj?.isBorderShape);
-      const safeSize = sizeValues || {};
-      const safeColors = globalColors || {};
+  const buildToolbarState = useCallback(() => {
+    const hasBorder = !!canvas
+      ?.getObjects?.()
+      .some((obj) => obj?.isBorderShape);
+    const safeSize = sizeValues || {};
+    const safeColors = globalColors || {};
 
-      return {
-        currentShapeType: currentShapeType || "rectangle",
-        sizeValues: {
-          width:
-            safeSize.width !== undefined
-              ? Number(safeSize.width) || 0
-              : 0,
-          height:
-            safeSize.height !== undefined
-              ? Number(safeSize.height) || 0
-              : 0,
-          cornerRadius:
-            safeSize.cornerRadius !== undefined
-              ? Number(safeSize.cornerRadius) || 0
-              : 0,
-        },
-        thickness: Number(thickness) || 0,
-        hasBorder,
-        globalColors: { ...safeColors },
-        selectedColorIndex,
-        isAdhesiveTape: !!isAdhesiveTape,
-        activeHolesType,
-        holesDiameter: Number(holesDiameter) || 0,
-        isHolesSelected: !!isHolesSelected,
-        isCustomShapeMode: !!isCustomShapeMode,
-        isCustomShapeApplied: !!isCustomShapeApplied,
-        hasUserPickedShape: !!hasUserPickedShape,
-        copiesCount: Number(copiesCount) || 1,
-      };
-    }, [
-      canvas,
-      sizeValues,
-      globalColors,
-      currentShapeType,
-      thickness,
-      selectedColorIndex,
-      isAdhesiveTape,
-      activeHolesType,
-      holesDiameter,
-      isHolesSelected,
-      isCustomShapeMode,
-      isCustomShapeApplied,
-      hasUserPickedShape,
-      copiesCount,
-    ]);
-
-    const applyToolbarState = useCallback(
-      (incoming) => {
-        if (!incoming || typeof incoming !== "object") return;
-
-        if (incoming.currentShapeType) {
-          setCurrentShapeType(incoming.currentShapeType);
-        }
-
-        if (incoming.sizeValues) {
-          setSizeValues((prev) => ({
-            width:
-              incoming.sizeValues.width !== undefined
-                ? Number(incoming.sizeValues.width) || prev.width
-                : prev.width,
-            height:
-              incoming.sizeValues.height !== undefined
-                ? Number(incoming.sizeValues.height) || prev.height
-                : prev.height,
-            cornerRadius:
-              incoming.sizeValues.cornerRadius !== undefined
-                ? Number(incoming.sizeValues.cornerRadius) || prev.cornerRadius
-                : prev.cornerRadius,
-          }));
-        }
-
-        if (incoming.cornerRadius !== undefined && !incoming.sizeValues) {
-          const parsedCorner = Number(incoming.cornerRadius);
-          if (Number.isFinite(parsedCorner)) {
-            setSizeValues((prev) => ({ ...prev, cornerRadius: parsedCorner }));
-          }
-        }
-
-        if (incoming.thickness !== undefined) {
-          setThickness((prev) => {
-            const parsed = Number(incoming.thickness);
-            return Number.isFinite(parsed) ? parsed : prev;
-          });
-        }
-
-        if (incoming.globalColors) {
-          updateGlobalColors({ ...incoming.globalColors });
-        }
-
-        if (incoming.selectedColorIndex !== undefined) {
-          setSelectedColorIndex((prev) => {
-            const parsed = Number(incoming.selectedColorIndex);
-            return Number.isFinite(parsed) ? parsed : prev;
-          });
-        }
-
-        if (incoming.isAdhesiveTape !== undefined) {
-          setIsAdhesiveTape(!!incoming.isAdhesiveTape);
-        }
-
-        if (incoming.activeHolesType !== undefined) {
-          setActiveHolesType((prev) => {
-            const parsed = Number(incoming.activeHolesType);
-            return Number.isFinite(parsed) ? parsed : prev;
-          });
-        }
-
-        if (incoming.holesDiameter !== undefined) {
-          setHolesDiameter((prev) => {
-            const parsed = Number(incoming.holesDiameter);
-            return Number.isFinite(parsed) ? parsed : prev;
-          });
-        }
-
-        if (incoming.isHolesSelected !== undefined) {
-          setIsHolesSelected(!!incoming.isHolesSelected);
-        }
-
-        if (incoming.isCustomShapeApplied !== undefined) {
-          setIsCustomShapeApplied(!!incoming.isCustomShapeApplied);
-        }
-
-        if (incoming.hasUserPickedShape !== undefined) {
-          setHasUserPickedShape(!!incoming.hasUserPickedShape);
-        }
-
-        if (incoming.copiesCount !== undefined) {
-          setCopiesCount((prev) => {
-            const parsed = Number(incoming.copiesCount);
-            return Number.isFinite(parsed) && parsed > 0 ? parsed : prev;
-          });
-        }
-
-        if (incoming.isCustomShapeMode !== undefined) {
-          setIsCustomShapeMode(!!incoming.isCustomShapeMode);
-        }
+    return {
+      currentShapeType: currentShapeType || "rectangle",
+      sizeValues: {
+        width: safeSize.width !== undefined ? Number(safeSize.width) || 0 : 0,
+        height:
+          safeSize.height !== undefined ? Number(safeSize.height) || 0 : 0,
+        cornerRadius:
+          safeSize.cornerRadius !== undefined
+            ? Number(safeSize.cornerRadius) || 0
+            : 0,
       },
-      [
-        setCurrentShapeType,
-        setSizeValues,
-        setThickness,
-        updateGlobalColors,
-        setSelectedColorIndex,
-        setIsAdhesiveTape,
-        setActiveHolesType,
-        setHolesDiameter,
-        setIsHolesSelected,
-        setIsCustomShapeApplied,
-        setHasUserPickedShape,
-        setCopiesCount,
-        setIsCustomShapeMode,
-      ]
-    );
+      thickness: Number(thickness) || 0,
+      hasBorder,
+      globalColors: { ...safeColors },
+      selectedColorIndex,
+      isAdhesiveTape: !!isAdhesiveTape,
+      activeHolesType,
+      holesDiameter: Number(holesDiameter) || 0,
+      isHolesSelected: !!isHolesSelected,
+      isCustomShapeMode: !!isCustomShapeMode,
+      isCustomShapeApplied: !!isCustomShapeApplied,
+      hasUserPickedShape: !!hasUserPickedShape,
+      copiesCount: Number(copiesCount) || 1,
+    };
+  }, [
+    canvas,
+    sizeValues,
+    globalColors,
+    currentShapeType,
+    thickness,
+    selectedColorIndex,
+    isAdhesiveTape,
+    activeHolesType,
+    holesDiameter,
+    isHolesSelected,
+    isCustomShapeMode,
+    isCustomShapeApplied,
+    hasUserPickedShape,
+    copiesCount,
+  ]);
 
-    const getToolbarState = useCallback(() => {
-      const current = toolbarStateRef.current || buildToolbarState();
-      return cloneToolbarState(current);
-    }, [buildToolbarState, cloneToolbarState]);
+  const applyToolbarState = useCallback(
+    (incoming) => {
+      if (!incoming || typeof incoming !== "object") return;
 
-    useEffect(() => {
-      const snapshot = buildToolbarState();
-      toolbarStateRef.current = snapshot;
-
-      const serialized = JSON.stringify(snapshot);
-      if (serialized !== prevToolbarStateSerializedRef.current) {
-        prevToolbarStateSerializedRef.current = serialized;
-        if (typeof window !== "undefined") {
-          try {
-            window.dispatchEvent(
-              new CustomEvent("toolbar:changed", {
-                detail: cloneToolbarState(snapshot),
-              })
-            );
-          } catch (error) {
-            console.warn("Failed to dispatch toolbar:changed", error);
-          }
-        }
-      }
-    }, [buildToolbarState, cloneToolbarState]);
-
-    useEffect(() => {
-      if (typeof window === "undefined") {
-        return undefined;
+      if (incoming.currentShapeType) {
+        setCurrentShapeType(incoming.currentShapeType);
       }
 
-      window.getCurrentToolbarState = getToolbarState;
-      window.restoreToolbarState = applyToolbarState;
+      if (incoming.sizeValues) {
+        setSizeValues((prev) => ({
+          width:
+            incoming.sizeValues.width !== undefined
+              ? Number(incoming.sizeValues.width) || prev.width
+              : prev.width,
+          height:
+            incoming.sizeValues.height !== undefined
+              ? Number(incoming.sizeValues.height) || prev.height
+              : prev.height,
+          cornerRadius:
+            incoming.sizeValues.cornerRadius !== undefined
+              ? Number(incoming.sizeValues.cornerRadius) || prev.cornerRadius
+              : prev.cornerRadius,
+        }));
+      }
 
-      return () => {
-        if (window.getCurrentToolbarState === getToolbarState) {
-          delete window.getCurrentToolbarState;
+      if (incoming.cornerRadius !== undefined && !incoming.sizeValues) {
+        const parsedCorner = Number(incoming.cornerRadius);
+        if (Number.isFinite(parsedCorner)) {
+          setSizeValues((prev) => ({ ...prev, cornerRadius: parsedCorner }));
         }
-        if (window.restoreToolbarState === applyToolbarState) {
-          delete window.restoreToolbarState;
+      }
+
+      if (incoming.thickness !== undefined) {
+        setThickness((prev) => {
+          const parsed = Number(incoming.thickness);
+          return Number.isFinite(parsed) ? parsed : prev;
+        });
+      }
+
+      if (incoming.globalColors) {
+        updateGlobalColors({ ...incoming.globalColors });
+      }
+
+      if (incoming.selectedColorIndex !== undefined) {
+        setSelectedColorIndex((prev) => {
+          const parsed = Number(incoming.selectedColorIndex);
+          return Number.isFinite(parsed) ? parsed : prev;
+        });
+      }
+
+      if (incoming.isAdhesiveTape !== undefined) {
+        setIsAdhesiveTape(!!incoming.isAdhesiveTape);
+      }
+
+      if (incoming.activeHolesType !== undefined) {
+        setActiveHolesType((prev) => {
+          const parsed = Number(incoming.activeHolesType);
+          return Number.isFinite(parsed) ? parsed : prev;
+        });
+      }
+
+      if (incoming.holesDiameter !== undefined) {
+        setHolesDiameter((prev) => {
+          const parsed = Number(incoming.holesDiameter);
+          return Number.isFinite(parsed) ? parsed : prev;
+        });
+      }
+
+      if (incoming.isHolesSelected !== undefined) {
+        setIsHolesSelected(!!incoming.isHolesSelected);
+      }
+
+      if (incoming.isCustomShapeApplied !== undefined) {
+        setIsCustomShapeApplied(!!incoming.isCustomShapeApplied);
+      }
+
+      if (incoming.hasUserPickedShape !== undefined) {
+        setHasUserPickedShape(!!incoming.hasUserPickedShape);
+      }
+
+      if (incoming.copiesCount !== undefined) {
+        setCopiesCount((prev) => {
+          const parsed = Number(incoming.copiesCount);
+          return Number.isFinite(parsed) && parsed > 0 ? parsed : prev;
+        });
+      }
+
+      if (incoming.isCustomShapeMode !== undefined) {
+        setIsCustomShapeMode(!!incoming.isCustomShapeMode);
+      }
+    },
+    [
+      setCurrentShapeType,
+      setSizeValues,
+      setThickness,
+      updateGlobalColors,
+      setSelectedColorIndex,
+      setIsAdhesiveTape,
+      setActiveHolesType,
+      setHolesDiameter,
+      setIsHolesSelected,
+      setIsCustomShapeApplied,
+      setHasUserPickedShape,
+      setCopiesCount,
+      setIsCustomShapeMode,
+    ]
+  );
+
+  const getToolbarState = useCallback(() => {
+    const current = toolbarStateRef.current || buildToolbarState();
+    return cloneToolbarState(current);
+  }, [buildToolbarState, cloneToolbarState]);
+
+  useEffect(() => {
+    const snapshot = buildToolbarState();
+    toolbarStateRef.current = snapshot;
+
+    const serialized = JSON.stringify(snapshot);
+    if (serialized !== prevToolbarStateSerializedRef.current) {
+      prevToolbarStateSerializedRef.current = serialized;
+      if (typeof window !== "undefined") {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("toolbar:changed", {
+              detail: cloneToolbarState(snapshot),
+            })
+          );
+        } catch (error) {
+          console.warn("Failed to dispatch toolbar:changed", error);
         }
-      };
-    }, [getToolbarState, applyToolbarState]);
+      }
+    }
+  }, [buildToolbarState, cloneToolbarState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    window.getCurrentToolbarState = getToolbarState;
+    window.restoreToolbarState = applyToolbarState;
+
+    return () => {
+      if (window.getCurrentToolbarState === getToolbarState) {
+        delete window.getCurrentToolbarState;
+      }
+      if (window.restoreToolbarState === applyToolbarState) {
+        delete window.restoreToolbarState;
+      }
+    };
+  }, [getToolbarState, applyToolbarState]);
 
   // Очистити canvas з збереженням фону
   const clearCanvasPreserveTheme = () => {
@@ -407,12 +404,15 @@ const Toolbar = () => {
   const originalClipRef = useRef(null); // original clipPath for cancel
   const [overlayHandles, setOverlayHandles] = useState([]); // DOM overlay handles
   const overlayHandlesRafRef = useRef(null); // pending requestAnimationFrame id for handle positioning
-  useEffect(() => () => {
-    if (overlayHandlesRafRef.current !== null) {
-      cancelAnimationFrame(overlayHandlesRafRef.current);
-      overlayHandlesRafRef.current = null;
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (overlayHandlesRafRef.current !== null) {
+        cancelAnimationFrame(overlayHandlesRafRef.current);
+        overlayHandlesRafRef.current = null;
+      }
+    },
+    []
+  );
   // Set default selected shape on mount
   // useEffect(() => {
   //   setCurrentShapeType("rectangle");
@@ -8036,10 +8036,10 @@ const Toolbar = () => {
       const objects = canvas.getObjects();
       const hasObjects = objects && objects.length > 0;
       const hasClipPath = !!canvas.clipPath;
-      
+
       // Якщо полотно порожнє - ініціалізуємо прямокутник
       if (!hasObjects && !hasClipPath) {
-        console.log('Canvas is empty, initializing default rectangle shape');
+        console.log("Canvas is empty, initializing default rectangle shape");
         // Невелика затримка щоб canvas встиг повністю завантажитися
         setTimeout(() => {
           addRectangle();
@@ -8047,10 +8047,10 @@ const Toolbar = () => {
       }
     };
 
-    window.addEventListener('canvas:loaded', handleCanvasLoaded);
+    window.addEventListener("canvas:loaded", handleCanvasLoaded);
 
     return () => {
-      window.removeEventListener('canvas:loaded', handleCanvasLoaded);
+      window.removeEventListener("canvas:loaded", handleCanvasLoaded);
     };
   }, [canvas, addRectangle]);
 

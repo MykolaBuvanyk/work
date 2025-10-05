@@ -651,31 +651,31 @@ const CutSelector = ({ isOpen, onClose }) => {
     };
     // Массив названий для первых 11 фигур
     const cutNames = [
-      'R=12mm\u200B\nKey=1x2mm',
-      'W=25.2mm\u200B\nH=20.3mm',
-      'W=22.5mm\u200B\nH=18.4mm',
-      'H=22.5mm\u200B\nW=20.3mm',
-      'H=27mm\u200B\nW=25mm',
-      'W=H=21.7mm\u200B\nKey=2x0.6',
-      'W=H=24mm\u200B\nKey=R1.6',
-      'H=19mm\u200B\nW=16mm',
-      'W=H=15.8mm\u200B\nKey=3x0.8',
-      'W=H=24mm\u200B\nKey=1.4',
-      'H=16mm\u200B\nW=13.5mm',
+      "R=12mm\u200B\nKey=1x2mm",
+      "W=25.2mm\u200B\nH=20.3mm",
+      "W=22.5mm\u200B\nH=18.4mm",
+      "H=22.5mm\u200B\nW=20.3mm",
+      "H=27mm\u200B\nW=25mm",
+      "W=H=21.7mm\u200B\nKey=2x0.6",
+      "W=H=24mm\u200B\nKey=R1.6",
+      "H=19mm\u200B\nW=16mm",
+      "W=H=15.8mm\u200B\nKey=3x0.8",
+      "W=H=24mm\u200B\nKey=1.4",
+      "H=16mm\u200B\nW=13.5mm",
     ];
     // Названия для вкладки SHAPE (в указанном порядке)
     const shapeLabelByTitle = {
-      'Arch': '180° arc',
-      'Quarter Circle TR': '90° arc',
-      'Hexagon': 'Hexagon',
-      'Octagon': 'Octagon',
-      'Right Triangle': 'Triangle',
-      'Circle with Cut': 'Circle with cut off',
+      Arch: "180° arc",
+      "Quarter Circle TR": "90° arc",
+      Hexagon: "Hexagon",
+      Octagon: "Octagon",
+      "Right Triangle": "Triangle",
+      "Circle with Cut": "Circle with cut off",
     };
     // Определяем индекс фигуры по названию title
     let cutIndex = null;
-    if (title && title.startsWith('Cut Shape ')) {
-      const num = parseInt(title.replace('Cut Shape ', ''), 10);
+    if (title && title.startsWith("Cut Shape ")) {
+      const num = parseInt(title.replace("Cut Shape ", ""), 10);
       if (!isNaN(num)) cutIndex = num - 1;
     }
     return (
@@ -693,27 +693,29 @@ const CutSelector = ({ isOpen, onClose }) => {
           <div
             style={{
               fontWeight: 400,
-              fontSize: '12px',
-              color: '#333',
-              textAlign: 'center',
-              marginTop: '6px',
-              whiteSpace: 'pre-line',
-              lineHeight: '1.2',
+              fontSize: "12px",
+              color: "#333",
+              textAlign: "center",
+              marginTop: "6px",
+              whiteSpace: "pre-line",
+              lineHeight: "1.2",
             }}
           >
-            {cutNames[cutIndex].replace(/\u200B\n/g, '\n').replace(/\n/g, '\u000A')}
+            {cutNames[cutIndex]
+              .replace(/\u200B\n/g, "\n")
+              .replace(/\n/g, "\u000A")}
           </div>
         )}
-        {activeTab === 'shape' && title && shapeLabelByTitle[title] && (
+        {activeTab === "shape" && title && shapeLabelByTitle[title] && (
           <div
             style={{
               fontWeight: 400,
-              fontSize: '12px',
-              color: '#333',
-              textAlign: 'center',
-              marginTop: '6px',
-              whiteSpace: 'pre-line',
-              lineHeight: '1.2',
+              fontSize: "12px",
+              color: "#333",
+              textAlign: "center",
+              marginTop: "6px",
+              whiteSpace: "pre-line",
+              lineHeight: "1.2",
             }}
           >
             {shapeLabelByTitle[title]}

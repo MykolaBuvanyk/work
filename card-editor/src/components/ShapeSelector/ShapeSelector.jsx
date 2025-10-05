@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
+import CircleWithCut from "../../utils/CircleWithCut";
 import styles from "./ShapeSelector.module.css";
 import {
   /* ...existing code... */ makeRoundedSemiRoundPath,
@@ -45,9 +46,12 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     { id: "turnLeft", name: "Turn left" },
     { id: "turnRight", name: "Turn right" },
     { id: "customShape", name: "Custom shape" },
+    { id: "arch", name: "180° arc" },
+    { id: "quarterCircleTR", name: "90° arc" },
+    { id: "rightTriangle", name: "Triangle" },
+    { id: "circleWithCut", name: "Circle with cut off" },
     { id: "line", name: "Line" },
     { id: "dashedLine", name: "Dashed Line" },
-    { id: "qrcode", name: "QR Code" },
   ];
 
   // Додаємо універсальну функцію для додавання об'єкта на canvas з коректною ініціалізацією координат
@@ -72,8 +76,47 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     // Закриваємо модалку одразу після вибору фігури
     if (typeof onClose === "function") onClose();
 
-    // Custom shape більше не підтримується (залишається лише іконка)
-    if (shapeType === "customShape") return; // нічого не робимо
+    // Custom shape: додаємо саме ту форму, що й на іконці
+    if (shapeType === "customShape") {
+      const canvasW =
+        typeof canvas.getWidth === "function"
+          ? canvas.getWidth()
+          : canvas?.width || 0;
+      const canvasH =
+        typeof canvas.getHeight === "function"
+          ? canvas.getHeight()
+          : canvas?.height || 0;
+      const centerX = (canvasW || 0) / 2;
+      const centerY = (canvasH || 0) / 2;
+      const baseOptions = {
+        left: centerX,
+        top: centerY,
+        fill: "transparent",
+        stroke: globalColors.strokeColor || "#000000",
+        strokeWidth: 2,
+        originX: "center",
+        originY: "center",
+        strokeUniform: true,
+        strokeLineJoin: "round",
+      };
+      const d =
+        "M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z";
+      const custom = new fabric.Path(d, {
+        ...baseOptions,
+        width: 54,
+        height: 53,
+      });
+      custom.set({
+        shapeType: "customShape",
+        hasBorders: true,
+        hasControls: true,
+        selectable: true,
+      });
+      addObjectToCanvas(custom);
+      setActiveObject(custom);
+      setShapePropertiesOpen(true);
+      return;
+    }
 
     const canvasW =
       typeof canvas.getWidth === "function"
@@ -210,6 +253,53 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       case "triangle":
         shape = createPath("M59 51H2L31 2L59 51Z", baseOptions);
         break;
+      case "arch": {
+        // 180° arc
+        const d = "M10 95 A40 90 0 0 1 90 95 L10 95 Z";
+        shape = createPath(d, {
+          ...baseOptions,
+          width: 100,
+          height: 100,
+          scaleX: 0.8,
+          scaleY: 0.8,
+        });
+        break;
+      }
+      case "quarterCircleTR": {
+        // 90° arc (top-right quarter)
+        const d = "M10 10H70V70A60 60 0 0 1 10 10Z";
+        shape = createPath(d, {
+          ...baseOptions,
+          width: 70,
+          height: 70,
+          scaleX: 1,
+          scaleY: 1,
+        });
+        break;
+      }
+      case "rightTriangle": {
+        // Right triangle (прямий кут знизу-зліва)
+        const d = "M2 51H59L2 2Z";
+        shape = createPath(d, {
+          ...baseOptions,
+          width: 61,
+          height: 53,
+          scaleX: 1,
+          scaleY: 1,
+        });
+        break;
+      }
+      case "circleWithCut": {
+        // Circle with cut off
+        // Використовуємо прямо імпортований клас CircleWithCut (без fallback)
+        shape = new CircleWithCut({
+          ...baseOptions,
+          width: 60,
+          height: 74,
+          orientation: "vertical",
+        });
+        break;
+      }
 
       case "warningTriangle":
         shape = createPath("M1 32V51.5H23.5H43V32L22 2L1 32Z", baseOptions);
@@ -339,6 +429,22 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
   const renderShapeIcon = (shapeType) => {
     switch (shapeType) {
+      case "customShape":
+        return (
+          <svg
+            width="54"
+            height="53"
+            viewBox="0 0 54 53"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M1 15.7077V48.4538L16.75 43.1231L37.973 51.5L52.75 43.1231V15.7077H37.973L21.027 2L1 15.7077Z"
+              stroke="black"
+              strokeWidth="2"
+            />
+          </svg>
+        );
       case "rectangle":
         return (
           <svg
@@ -569,19 +675,76 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           </svg>
         );
 
-      case "customShape":
+      case "arch":
         return (
           <svg
+            width="70"
+            height="70"
+            viewBox="0 0 100 100"
             xmlns="http://www.w3.org/2000/svg"
-            width="54"
-            height="53"
-            fill="none"
           >
             <path
+              d="M10 95 A40 90 0 0 1 90 95 L10 95 Z"
               fill="none"
               stroke="#000"
-              strokeWidth="2"
-              d="M1 16v32l16-5 21 9 15-9V16H38L21 2 1 16Z"
+              strokeWidth="2.14"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      case "quarterCircleTR":
+        return (
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 70 70"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 9h52v52A52 52 0 0 1 9 9Z"
+              stroke="#000"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="bevel"
+            />
+          </svg>
+        );
+      case "rightTriangle":
+        return (
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 61 53"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2 51H59L2 2Z"
+              stroke="#000"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      case "circleWithCut":
+        return (
+          <svg
+            width="70"
+            height="70"
+            viewBox="0 0 63 74"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke="#000"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="bevel"
+              strokeMiterlimit="22.9"
+              d="M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0"
             />
           </svg>
         );
@@ -655,19 +818,29 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
             <div className={styles.content}>
               <div className={styles.shapesGrid}>
-                {shapes.map((shape) => (
-                  <div
-                    key={shape.id}
-                    className={styles.shapeItem}
-                    onClick={() => addShape(shape.id)}
-                    title={shape.name}
-                  >
-                    <div className={styles.shapeIcon}>
-                      {renderShapeIcon(shape.id)}
-                    </div>
-                    <span className={styles.shapeName}>{shape.name}</span>
-                  </div>
-                ))}
+                {shapes.map((shape, idx) => {
+                  const isLine =
+                    shape.id === "line" || shape.id === "dashedLine";
+                  // Вставляємо розрив рядка перед лініями (останній ряд)
+                  const breakBefore = shape.id === "line";
+                  return (
+                    <React.Fragment key={shape.id}>
+                      {breakBefore && <div className={styles.rowBreak} />}
+                      <div
+                        className={`${styles.shapeItem} ${
+                          isLine ? styles.lineItem : ""
+                        }`}
+                        onClick={() => addShape(shape.id)}
+                        title={shape.name}
+                      >
+                        <div className={styles.shapeIcon}>
+                          {renderShapeIcon(shape.id)}
+                        </div>
+                        <span className={styles.shapeName}>{shape.name}</span>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
               </div>
             </div>
           </div>

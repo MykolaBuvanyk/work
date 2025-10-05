@@ -6,6 +6,8 @@ import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
 import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
+import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
+import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
 import { saveCurrentProject, saveNewProject } from "../../utils/projectStorage";
 
@@ -22,6 +24,8 @@ const TopToolbar = ({ className }) => {
   const [displayScale, setDisplayScale] = useState(100); // viewport scale (auto-fit or CSS scaling) relative to design size
   const [zoomInput, setZoomInput] = useState("100"); // editable input string
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
+  const [isProjectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -349,55 +353,92 @@ const TopToolbar = ({ className }) => {
             </svg>
             Preview
           </div>
-          {/* <div className={styles.topToolbarEL} onClick={handleSave} style={{cursor:"pointer", opacity: isSaving? 0.6: 1}}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g opacity="0.74" clip-path="url(#clip0_82_664)">
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M14.2992 4.29917C14.6509 3.94754 15.1278 3.75 15.6251 3.75C16.1223 3.75 16.5992 3.94754 16.9509 4.29917C17.3025 4.6508 17.5001 5.12772 17.5001 5.625V12.5C17.5001 12.8452 17.2202 13.125 16.8751 13.125C16.5299 13.125 16.2501 12.8452 16.2501 12.5V5.625C16.2501 5.45924 16.1842 5.30027 16.067 5.18306C15.9498 5.06585 15.7908 5 15.6251 5C15.4593 5 15.3003 5.06585 15.1831 5.18306C15.0659 5.30027 15.0001 5.45924 15.0001 5.625V10C15.0001 10.3452 14.7202 10.625 14.3751 10.625C14.0299 10.625 13.7501 10.3452 13.7501 10V5.625C13.7501 5.12772 13.9476 4.6508 14.2992 4.29917Z"
-                  fill="#1E293B"
-                />
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M11.7992 1.79917C12.1509 1.44754 12.6278 1.25 13.1251 1.25C13.6223 1.25 14.0992 1.44754 14.4509 1.79917C14.8025 2.15081 15.0001 2.62772 15.0001 3.125V10C15.0001 10.3452 14.7202 10.625 14.3751 10.625C14.0299 10.625 13.7501 10.3452 13.7501 10V3.125C13.7501 2.95924 13.6842 2.80027 13.567 2.68306C13.4498 2.56585 13.2908 2.5 13.1251 2.5C12.9593 2.5 12.8003 2.56585 12.6831 2.68306C12.5659 2.80027 12.5001 2.95924 12.5001 3.125V9.375C12.5001 9.72018 12.2202 10 11.8751 10C11.5299 10 11.2501 9.72018 11.2501 9.375V3.125C11.2501 2.62772 11.4476 2.15081 11.7992 1.79917Z"
-                  fill="#1E293B"
-                />
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M6.79923 2.42417C7.15086 2.07254 7.62777 1.875 8.12505 1.875C8.62233 1.875 9.09925 2.07254 9.45088 2.42417C9.80251 2.77581 10.0001 3.25272 10.0001 3.75V9.41406C10.0001 9.75924 9.72023 10.0391 9.37505 10.0391C9.02987 10.0391 8.75005 9.75924 8.75005 9.41406V3.75C8.75005 3.58424 8.6842 3.42527 8.56699 3.30806C8.44978 3.19085 8.29081 3.125 8.12505 3.125C7.95929 3.125 7.80032 3.19085 7.68311 3.30806C7.5659 3.42527 7.50005 3.58424 7.50005 3.75V12.5C7.50005 12.8452 7.22023 13.125 6.87505 13.125C6.52987 13.125 6.25005 12.8452 6.25005 12.5V3.75C6.25005 3.25272 6.4476 2.77581 6.79923 2.42417Z"
-                  fill="#1E293B"
-                />
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M9.29923 0.549175C9.65086 0.197544 10.1278 0 10.6251 0C11.1223 0 11.5992 0.197544 11.9509 0.549175C12.3025 0.900805 12.5001 1.37772 12.5001 1.875V9.375C12.5001 9.72018 12.2202 10 11.8751 10C11.5299 10 11.2501 9.72018 11.2501 9.375V1.875C11.2501 1.70924 11.1842 1.55027 11.067 1.43306C10.9498 1.31585 10.7908 1.25 10.6251 1.25C10.4593 1.25 10.3003 1.31585 10.1831 1.43306C10.0659 1.55027 10.0001 1.70924 10.0001 1.875V9.375C10.0001 9.72018 9.72023 10 9.37505 10C9.02987 10 8.75005 9.72018 8.75005 9.375V1.875C8.75005 1.37772 8.9476 0.900805 9.29923 0.549175Z"
-                  fill="#1E293B"
-                />
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M4.88552 9.33683C4.73515 9.08031 4.35992 8.96392 4.02761 9.15278C3.87059 9.24197 3.79971 9.35095 3.76901 9.47534C3.73419 9.61645 3.74156 9.82533 3.84149 10.0962L3.8421 10.0978L5.89446 15.709C6.26357 16.5853 6.7492 17.3261 7.49504 17.8556C8.24196 18.386 9.31423 18.75 10.9376 18.75C12.5136 18.75 13.8193 18.2291 14.7356 17.2339C15.6564 16.2338 16.2501 14.6824 16.2501 12.5C16.2501 12.1548 16.5299 11.875 16.8751 11.875C17.2202 11.875 17.5001 12.1548 17.5001 12.5C17.5001 14.9036 16.8437 16.7897 15.6552 18.0806C14.4621 19.3764 12.799 20 10.9376 20C9.12337 20 7.77944 19.5906 6.77137 18.8749C5.76595 18.161 5.15895 17.1877 4.73615 16.1792C4.73242 16.1703 4.7289 16.1613 4.72558 16.1522L2.66877 10.5289C2.66867 10.5286 2.66856 10.5283 2.66845 10.528C2.50846 10.094 2.4449 9.62372 2.55541 9.17587C2.67012 8.71104 2.96122 8.32096 3.41 8.06601C3.40996 8.06603 3.41004 8.06599 3.41 8.06601C4.2817 7.5707 5.48877 7.79801 6.00274 8.77455C6.01157 8.79135 6.01964 8.80853 6.02692 8.82606L7.45231 12.2604C7.58463 12.5792 7.43345 12.945 7.11464 13.0773C6.79583 13.2096 6.43011 13.0584 6.2978 12.7396L4.88552 9.33683Z"
-                  fill="#1E293B"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_82_664">
-                  <rect width="20" height="20" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-          </div> */}
+          <div className={styles.topToolbarEL}>
+            <div className={styles.fontSizeControl}>
+              <button className={styles.sizeButton} onClick={handleZoomOut}>
+                -
+              </button>
+              <input
+                type="text"
+                className={styles.fontSizeInput}
+                value={zoomInput}
+                onChange={handleZoomInputChange}
+                onBlur={handleZoomInputBlur}
+                onKeyDown={handleZoomInputKeyDown}
+                title="Масштаб відносно макету, % (10–500)"
+                inputMode="numeric"
+                placeholder="100"
+              />
+              <span className={styles.fontSizePercent}>%</span>
+              <button className={styles.sizeButton} onClick={handleZoomIn}>
+                +
+              </button>
+            </div>
+          </div>
         </div>
         <div className={styles.toolbarRow}>
+          <div className={styles.buttonWrapper}>
+            <button
+              className={styles.blueButton}
+              onClick={() => setNewProjectModalOpen(true)}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M14 2V8H20"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 18V12"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M9 15H15"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              New project
+            </button>
+            <button
+              className={styles.blueButton}
+              onClick={() => setProjectsModalOpen(true)}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1 4.75C1 3.784 1.784 3 2.75 3H7.721C8.301 3 8.841 3.286 9.168 3.765L10.572 5.828C10.618 5.897 10.696 5.938 10.779 5.938H19.25C20.216 5.938 21 6.721 21 7.688V19.25C21 19.7141 20.8156 20.1592 20.4874 20.4874C20.1592 20.8156 19.7141 21 19.25 21H2.75C2.28587 21 1.84075 20.8156 1.51256 20.4874C1.18437 20.1592 1 19.7141 1 19.25V4.75ZM2.75 4.5C2.6837 4.5 2.62011 4.52634 2.57322 4.57322C2.52634 4.62011 2.5 4.6837 2.5 4.75V19.25C2.5 19.388 2.612 19.5 2.75 19.5H19.25C19.3163 19.5 19.3799 19.4737 19.4268 19.4268C19.4737 19.3799 19.5 19.3163 19.5 19.25V7.687C19.5 7.6207 19.4737 7.55711 19.4268 7.51022C19.3799 7.46334 19.3163 7.437 19.25 7.437H10.779C10.4937 7.43709 10.2128 7.36743 9.96055 7.2341C9.70835 7.10076 9.49257 6.9078 9.332 6.672L7.928 4.61C7.9049 4.57613 7.87387 4.5484 7.83763 4.52923C7.80138 4.51006 7.761 4.50003 7.72 4.5H2.75Z"
+                  fill="white"
+                />
+              </svg>
+              Your project
+            </button>
+          </div>
           <div className={styles.topToolbarEL}>
             <svg
               width="24"
@@ -481,24 +522,6 @@ const TopToolbar = ({ className }) => {
             Save Project as
           </div>
           <div
-            className={`${styles.topToolbarEL} ${styles.delete}`}
-            onClick={handleDelete}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M18.5172 12.7795L19.26 12.8829L18.5172 12.7795ZM18.2549 14.6645L18.9977 14.7679L18.2549 14.6645ZM5.74514 14.6645L6.48798 14.5611L5.74514 14.6645ZM5.4828 12.7795L4.73996 12.8829L5.4828 12.7795ZM9.18365 21.7368L8.89206 22.4278L9.18365 21.7368ZM6.47508 18.5603L7.17907 18.3017L6.47508 18.5603ZM17.5249 18.5603L18.2289 18.819V18.819L17.5249 18.5603ZM14.8164 21.7368L14.5248 21.0458H14.5248L14.8164 21.7368ZM5.74664 8.92906C5.70746 8.5167 5.34142 8.21418 4.92906 8.25336C4.5167 8.29254 4.21418 8.65858 4.25336 9.07094L5.74664 8.92906ZM19.7466 9.07094C19.7858 8.65858 19.4833 8.29254 19.0709 8.25336C18.6586 8.21418 18.2925 8.5167 18.2534 8.92906L19.7466 9.07094ZM20 7.75C20.4142 7.75 20.75 7.41421 20.75 7C20.75 6.58579 20.4142 6.25 20 6.25V7.75ZM4 6.25C3.58579 6.25 3.25 6.58579 3.25 7C3.25 7.41421 3.58579 7.75 4 7.75V6.25ZM9.25 18C9.25 18.4142 9.58579 18.75 10 18.75C10.4142 18.75 10.75 18.4142 10.75 18H9.25ZM10.75 10C10.75 9.58579 10.4142 9.25 10 9.25C9.58579 9.25 9.25 9.58579 9.25 10H10.75ZM13.25 18C13.25 18.4142 13.5858 18.75 14 18.75C14.4142 18.75 14.75 18.4142 14.75 18H13.25ZM14.75 10C14.75 9.58579 14.4142 9.25 14 9.25C13.5858 9.25 13.25 9.58579 13.25 10H14.75ZM16 7V7.75H16.75V7H16ZM8 7H7.25V7.75H8V7ZM18.5172 12.7795L17.7744 12.6761L17.512 14.5611L18.2549 14.6645L18.9977 14.7679L19.26 12.8829L18.5172 12.7795ZM5.74514 14.6645L6.48798 14.5611L6.22564 12.6761L5.4828 12.7795L4.73996 12.8829L5.0023 14.7679L5.74514 14.6645ZM12 22V21.25C10.4708 21.25 9.92544 21.2358 9.47524 21.0458L9.18365 21.7368L8.89206 22.4278C9.68914 22.7642 10.6056 22.75 12 22.75V22ZM5.74514 14.6645L5.0023 14.7679C5.282 16.7777 5.43406 17.9017 5.77109 18.819L6.47508 18.5603L7.17907 18.3017C6.91156 17.5736 6.77851 16.6488 6.48798 14.5611L5.74514 14.6645ZM9.18365 21.7368L9.47524 21.0458C8.55279 20.6566 7.69496 19.7058 7.17907 18.3017L6.47508 18.5603L5.77109 18.819C6.3857 20.4918 7.48205 21.8328 8.89206 22.4278L9.18365 21.7368ZM18.2549 14.6645L17.512 14.5611C17.2215 16.6488 17.0884 17.5736 16.8209 18.3017L17.5249 18.5603L18.2289 18.819C18.5659 17.9017 18.718 16.7777 18.9977 14.7679L18.2549 14.6645ZM12 22V22.75C13.3944 22.75 14.3109 22.7642 15.1079 22.4278L14.8164 21.7368L14.5248 21.0458C14.0746 21.2358 13.5292 21.25 12 21.25V22ZM17.5249 18.5603L16.8209 18.3017C16.305 19.7058 15.4472 20.6566 14.5248 21.0458L14.8164 21.7368L15.1079 22.4278C16.5179 21.8328 17.6143 20.4918 18.2289 18.819L17.5249 18.5603ZM5.4828 12.7795L6.22564 12.6761C6.00352 11.08 5.83766 9.88703 5.74664 8.92906L5 9L4.25336 9.07094C4.34819 10.069 4.51961 11.2995 4.73996 12.8829L5.4828 12.7795ZM18.5172 12.7795L19.26 12.8829C19.4804 11.2995 19.6518 10.069 19.7466 9.07094L19 9L18.2534 8.92906C18.1623 9.88702 17.9965 11.08 17.7744 12.6761L18.5172 12.7795ZM20 7V6.25H4V7V7.75H20V7ZM10 18H10.75V10H10H9.25V18H10ZM14 18H14.75V10H14H13.25V18H14ZM16 6H15.25V7H16H16.75V6H16ZM16 7V6.25H8V7V7.75H16V7ZM8 7H8.75V6H8H7.25V7H8ZM12 2V2.75C13.7949 2.75 15.25 4.20507 15.25 6H16H16.75C16.75 3.37665 14.6234 1.25 12 1.25V2ZM12 2V1.25C9.37665 1.25 7.25 3.37665 7.25 6H8H8.75C8.75 4.20507 10.2051 2.75 12 2.75V2Z"
-                fill="#2D264B"
-              />
-            </svg>
-            Delete
-          </div>
-          <div
             className={`${styles.topToolbarEL} ${
               !canUndo ? styles.disabled : ""
             }`}
@@ -516,7 +539,6 @@ const TopToolbar = ({ className }) => {
                 fill={canUndo ? "#2D264B" : "#CCCCCC"}
               />
             </svg>
-            Undo
           </div>
           <div
             className={`${styles.topToolbarEL} ${
@@ -536,29 +558,6 @@ const TopToolbar = ({ className }) => {
                 fill={canRedo ? "#2D264B" : "#CCCCCC"}
               />
             </svg>
-            Redo
-          </div>
-          <div className={styles.topToolbarEL}>
-            <div className={styles.fontSizeControl}>
-              <button className={styles.sizeButton} onClick={handleZoomOut}>
-                -
-              </button>
-              <input
-                type="text"
-                className={styles.fontSizeInput}
-                value={zoomInput}
-                onChange={handleZoomInputChange}
-                onBlur={handleZoomInputBlur}
-                onKeyDown={handleZoomInputKeyDown}
-                title="Масштаб відносно макету, % (10–500)"
-                inputMode="numeric"
-                placeholder="100"
-              />
-              <span className={styles.fontSizePercent}>%</span>
-              <button className={styles.sizeButton} onClick={handleZoomIn}>
-                +
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -567,12 +566,33 @@ const TopToolbar = ({ className }) => {
       </div>
       {/* Додати модалку */}
       {isSaveAsModalOpen && (
-        <SaveAsModal onClose={() => setSaveAsModalOpen(false)} onSaveAs={async (name) => {
-          try { await saveNewProject(name, canvas); } catch(e){ console.error(e);} finally { setSaveAsModalOpen(false); }
-        }} />
+        <SaveAsModal
+          onClose={() => setSaveAsModalOpen(false)}
+          onSaveAs={async (name) => {
+            try {
+              await saveNewProject(name, canvas);
+            } catch (e) {
+              console.error(e);
+            } finally {
+              setSaveAsModalOpen(false);
+            }
+          }}
+        />
       )}
       {isPreviewOpen && (
         <PreviewModal canvas={canvas} onClose={() => setPreviewOpen(false)} />
+      )}
+      {isProjectsModalOpen && (
+        <YourProjectsModal onClose={() => setProjectsModalOpen(false)} />
+      )}
+      {isNewProjectModalOpen && (
+        <NewProjectsModal
+          onClose={() => setNewProjectModalOpen(false)}
+          onRequestSaveAs={() => {
+            setNewProjectModalOpen(false);
+            setSaveAsModalOpen(true);
+          }}
+        />
       )}
     </div>
   );

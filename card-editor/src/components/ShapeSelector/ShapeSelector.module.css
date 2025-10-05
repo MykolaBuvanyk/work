@@ -63,17 +63,29 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center; /* Центрування елементів у рядку */
-  gap: 15px;
-  margin-top: 40px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .shapeItem {
-display: flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 12px 8px;
   cursor: pointer;
+  flex: 0 0 calc(20% - 12px);
+}
+
+/* Розрив рядка для примусового перенесення (full-width flex item) */
+.rowBreak {
+  flex-basis: 100%;
+  height: 0;
+}
+
+/* Окремий стиль для ліній: по 2 елементи в рядку */
+.lineItem {
+  /* Такая же ширина, как у обычных элементов по 5 в ряд */
   flex: 0 0 calc(20% - 12px);
 }
 

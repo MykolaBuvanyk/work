@@ -758,6 +758,27 @@ const ShapeProperties = ({
     };
   }, [canvas, activeObject, isOpen, shapePropertiesOpen, isManuallyEditing]);
 
+  // Реакция на смену цветовой темы: если Fill активен у фигуры (не cut shape), обновить fill под новый textColor
+  useEffect(() => {
+    if (!canvas || !activeObject) return;
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+    // Не трогаем врожденные cut-элементы из CUT-селектора
+    const isCutShape = obj.isCutElement && obj.cutType === "shape";
+    if (isCutShape) return;
+    // Если включен Cut manual — оставляем белую заливку
+    if (obj.isCutElement && obj.cutType === "manual") return;
+    // Если у объекта в UI активен Fill — подстраиваем цвет
+    const themeText = globalColors?.textColor || "#000000";
+    if (properties.fill) {
+      try {
+        obj.set("fill", themeText);
+        if (typeof obj.setCoords === "function") obj.setCoords();
+        canvas.requestRenderAll();
+      } catch {}
+    }
+  }, [globalColors?.textColor]);
+
   // Оновлення властивостей активного об'єкта
   const updateProperty = (property, value) => {
     if (!canvas) return;
@@ -910,34 +931,51 @@ const ShapeProperties = ({
         break;
       }
       case "cut": {
-        const themeStroke = globalColors?.textColor || "#000000";
-        const ORANGE = "#FFA500";
+        const themeTextColor = globalColors?.textColor || "#000000";
+        const themeStrokeColor = globalColors?.strokeColor || "#000000";
+        // Используем фирменный оранжевый, как в остальных элементах UI
+        const ORANGE = "#FD7714";
         holdCenterIfArrow((o) => {
+          const isCutShape = o?.cutType === "shape"; // объекты, добавленные из CUT-селектора
+          const isFromShapeTab = !!(o?.fromShapeTab || o?.data?.fromShapeTab);
           if (value) {
-            // Cut ON: имитация выреза — белая заливка, бордер цвета темы
-            // Бордер должен быть оранжевым, как раньше
+            // Cut ON
             o.set("stroke", ORANGE);
-            o.set({
-              isCutElement: true,
-              cutType: "manual",
-              hasControls: false,
-              lockScalingX: true,
-              lockScalingY: true,
-              lockUniScaling: true,
-            });
             o.set("fill", "#FFFFFF");
+            if (isCutShape) {
+              // Не трогаем блокировки для врожденных CUT-элементов
+              o.set({ isCutElement: true });
+            } else {
+              // Ручной Cut: фигуры из ShapeSelector (и прочие) остаются масштабируемыми
+              o.set({
+                isCutElement: true,
+                cutType: "manual",
+                hasControls: true,
+                lockScalingX: false,
+                lockScalingY: false,
+                lockUniScaling: false,
+              });
+            }
           } else {
-            // Cut OFF: вернуть бордер темы, заливку согласно флагу Fill
-            o.set("stroke", themeStroke);
-            o.set({
-              isCutElement: false,
-              cutType: null,
-              hasControls: true,
-              lockScalingX: false,
-              lockScalingY: false,
-              lockUniScaling: false,
-            });
-            o.set("fill", properties.fill ? themeStroke : "transparent");
+            // Cut OFF
+            o.set("stroke", themeStrokeColor);
+            if (isCutShape) {
+              // Для элементов CUT-селектора не снимаем их особенности управления
+              // (оставляем их как есть)
+              o.set({ isCutElement: true });
+              // Белая заливка обычно сохраняется для cut-элементов, но если нужно — можно сделать прозрачной
+            } else {
+              o.set({
+                isCutElement: false,
+                cutType: null,
+                hasControls: true,
+                lockScalingX: false,
+                lockScalingY: false,
+                lockUniScaling: false,
+              });
+              // При включённом Fill заливаем цветом текста, иначе прозрачная заливка
+              o.set("fill", properties.fill ? themeTextColor : "transparent");
+            }
           }
         });
         break;

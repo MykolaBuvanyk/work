@@ -105,44 +105,48 @@ export class CircleWithCut extends (fabric?.Object || Object) {
       // Full circle (diameter = min(width,height) based on orientation)
       const radius = this.orientation === "vertical" ? h / 2 : w / 2;
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.closePath();
     } else if (this.orientation === "vertical") {
-      // Vertical capsule: straight sides, exact circular arcs top/bottom
+      // Vertical capsule: build a single closed outline
       const sq = Math.max(0, r * r - halfW * halfW);
       const y0 = Math.sqrt(sq);
-      // sides
-      ctx.moveTo(-halfW, -y0);
-      ctx.lineTo(-halfW, y0);
-      ctx.moveTo(halfW, -y0);
-      ctx.lineTo(halfW, y0);
-      // angles defining arc endpoints on the circle
       const ang = Math.acos(Math.min(1, Math.max(-1, halfW / r)));
-      // Top arc: from (halfW,-y0) to (-halfW,-y0) along the top (anticlockwise)
+      // Start at top-right contact point, go along top arc to top-left,
+      // then straight down left side, bottom arc to bottom-right,
+      // and back up right side to close.
       ctx.moveTo(halfW, -y0);
       ctx.arc(0, 0, r, -ang, -Math.PI + ang, true);
-      // Bottom arc: from (-halfW,y0) to (halfW,y0) along the bottom (anticlockwise)
-      ctx.moveTo(-halfW, y0);
+      ctx.lineTo(-halfW, y0);
       ctx.arc(0, 0, r, Math.PI - ang, ang, true);
+      ctx.lineTo(halfW, -y0);
+      ctx.closePath();
     } else {
-      // Horizontal capsule: straight top/bottom, arcs left/right
+      // Horizontal capsule: single closed outline
       const halfH = h / 2;
       const rH = w / 2; // radius driven by width
       const sq = Math.max(0, rH * rH - halfH * halfH);
       const x0 = Math.sqrt(sq);
-      // top/bottom lines
-      ctx.moveTo(-x0, -halfH);
-      ctx.lineTo(x0, -halfH);
-      ctx.moveTo(-x0, halfH);
-      ctx.lineTo(x0, halfH);
-      // angles
       const ang = Math.acos(Math.min(1, Math.max(-1, halfH / rH)));
-      // Left arc: from top to bottom along left side
-      ctx.moveTo(-x0, -halfH);
-      ctx.arc(0, 0, rH, Math.PI + ang, Math.PI - ang, true);
-      // Right arc: from bottom to top along right side
-      ctx.moveTo(x0, halfH);
+      // Start at top-right, go left along top, then left arc top->bottom, then bottom line,
+      // then right arc bottom->top and close.
+      ctx.moveTo(x0, -halfH);
+      ctx.lineTo(-x0, -halfH);
+      ctx.arc(0, 0, rH, Math.PI - ang, Math.PI + ang, true);
+      ctx.lineTo(x0, halfH);
       ctx.arc(0, 0, rH, ang, -ang, true);
+      ctx.closePath();
     }
 
+    // Заливка (если задана и не прозрачная)
+    if (
+      this.fill &&
+      this.fill !== "transparent" &&
+      this.fill !== "none" &&
+      typeof this._renderFill === "function"
+    ) {
+      this._renderFill(ctx);
+    }
+    // Обводка
     if (this.stroke) {
       this._renderStroke(ctx);
     }

@@ -5445,7 +5445,7 @@ const Toolbar = () => {
     objects.forEach((obj) => {
       // Cut елементи (manual): stroke = ORANGE, fill = білий (зберігаємо як раніше)
       if (obj.isCutElement && obj.cutType === "manual") {
-        obj.set({ stroke: "#FFA500", fill: "#FFFFFF" });
+        obj.set({ stroke: "#FD7714", fill: "#FFFFFF" });
         return;
       }
 
@@ -5468,6 +5468,15 @@ const Toolbar = () => {
         obj.type === "path"
       ) {
         // Для фігур встановлюємо stroke колір та прозору заливку або колір тексту
+        obj.set({
+          stroke: textColor,
+          fill:
+            obj.fill === "transparent" || obj.fill === ""
+              ? "transparent"
+              : textColor,
+        });
+      } else if (obj.type === "circle-with-cut") {
+        // Підтримка кастомної фігури CircleWithCut
         obj.set({
           stroke: textColor,
           fill:

@@ -633,136 +633,6 @@ const CutSelector = ({ isOpen, onClose }) => {
     }
   };
 
-  const addCut12 = () => {
-    if (canvas) {
-      // Просте коло
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 43,
-        fill: "#FFFFFF",
-        stroke: "#FD7714",
-        strokeWidth: 1.5,
-        selectable: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        isCutElement: true,
-        cutType: "shape",
-      });
-      canvas.add(circle);
-      canvas.setActiveObject(circle);
-      canvas.renderAll();
-      onClose();
-    }
-  };
-
-  const addCut13 = () => {
-    if (canvas) {
-      // Маленьке коло
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 30,
-        fill: "#FFFFFF",
-        stroke: "#FD7714",
-        strokeWidth: 1.5,
-        selectable: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        isCutElement: true,
-        cutType: "shape",
-      });
-      canvas.add(circle);
-      canvas.setActiveObject(circle);
-      canvas.renderAll();
-      onClose();
-    }
-  };
-
-  const addCut14 = () => {
-    if (canvas) {
-      // Середнє коло
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 35,
-        fill: "#FFFFFF",
-        stroke: "#FD7714",
-        strokeWidth: 1.5,
-        selectable: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        isCutElement: true,
-        cutType: "shape",
-      });
-      canvas.add(circle);
-      canvas.setActiveObject(circle);
-      canvas.renderAll();
-      onClose();
-    }
-  };
-
-  const addCut15 = () => {
-    if (canvas) {
-      // Велике коло
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 48,
-        fill: "#FFFFFF",
-        stroke: "#FD7714",
-        strokeWidth: 1.5,
-        selectable: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        isCutElement: true,
-        cutType: "shape",
-      });
-      canvas.add(circle);
-      canvas.setActiveObject(circle);
-      canvas.renderAll();
-      onClose();
-    }
-  };
-
-  const addCut16 = () => {
-    if (canvas) {
-      // Дуже велике коло
-      const circle = new fabric.Circle({
-        left: 100,
-        top: 100,
-        radius: 56,
-        fill: "white",
-        stroke: "#FD7714",
-        strokeWidth: 1.5,
-        selectable: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        isCutElement: true,
-        cutType: "shape",
-      });
-      canvas.add(circle);
-      canvas.setActiveObject(circle);
-      canvas.renderAll();
-      onClose();
-    }
-  };
-
   // Функція для рендерингу іконки
   // Закриваємо модалку одразу при кліку, потім виконуємо додавання на canvas
   const renderCutIcon = (svgIcon, onClick, title) => {
@@ -793,6 +663,15 @@ const CutSelector = ({ isOpen, onClose }) => {
       'W=H=24mm\u200B\nKey=1.4',
       'H=16mm\u200B\nW=13.5mm',
     ];
+    // Названия для вкладки SHAPE (в указанном порядке)
+    const shapeLabelByTitle = {
+      'Arch': '180° arc',
+      'Quarter Circle TR': '90° arc',
+      'Hexagon': 'Hexagon',
+      'Octagon': 'Octagon',
+      'Right Triangle': 'Triangle',
+      'Circle with Cut': 'Circle with cut off',
+    };
     // Определяем индекс фигуры по названию title
     let cutIndex = null;
     if (title && title.startsWith('Cut Shape ')) {
@@ -810,7 +689,6 @@ const CutSelector = ({ isOpen, onClose }) => {
         title={title}
       >
         {svgIcon}
-        {/* Добавляем подпись для первых 11 фигур */}
         {cutIndex !== null && cutIndex < cutNames.length && (
           <div
             style={{
@@ -824,6 +702,21 @@ const CutSelector = ({ isOpen, onClose }) => {
             }}
           >
             {cutNames[cutIndex].replace(/\u200B\n/g, '\n').replace(/\n/g, '\u000A')}
+          </div>
+        )}
+        {activeTab === 'shape' && title && shapeLabelByTitle[title] && (
+          <div
+            style={{
+              fontWeight: 400,
+              fontSize: '12px',
+              color: '#333',
+              textAlign: 'center',
+              marginTop: '6px',
+              whiteSpace: 'pre-line',
+              lineHeight: '1.2',
+            }}
+          >
+            {shapeLabelByTitle[title]}
           </div>
         )}
       </div>
@@ -1104,110 +997,6 @@ const CutSelector = ({ isOpen, onClose }) => {
               </svg>,
               addCut11,
               "Cut Shape 11"
-            )}
-            {renderCutIcon(
-              <svg
-                width="89"
-                height="90"
-                viewBox="0 0 87 88"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fill-rule="evenodd"
-                  clip-rule="evenodd"
-                  d="M85.9754 43.9736C85.9754 20.4906 66.939 1.45386 43.4561 1.45386C19.9731 1.45386 0.936413 20.4906 0.936035 43.9732C0.936035 67.4562 19.9728 86.4933 43.4557 86.4933C66.9387 86.4933 85.9754 67.4565 85.9754 43.9736Z"
-                  stroke="#FD7714"
-                  stroke-width="1.5"
-                  stroke-miterlimit="22.9256"
-                  stroke-linecap="round"
-                  stroke-linejoin="bevel"
-                />
-              </svg>,
-              addCut12,
-              "Cut Shape 12"
-            )}
-
-            {/* Ряд 4 */}
-            {renderCutIcon(
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="63"
-                height="63"
-                fill="none"
-              >
-                <path
-                  stroke="#FD7714"
-                  stroke-linecap="round"
-                  stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
-                  stroke-width="1.5"
-                  d="M62 31a30 30 0 1 0-61 0 30 30 0 0 0 61 0v0Z"
-                  clip-rule="evenodd"
-                />
-              </svg>,
-              addCut13,
-              "Cut Shape 13"
-            )}
-            {renderCutIcon(
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="75"
-                height="74"
-                fill="none"
-              >
-                <path
-                  stroke="#FD7714"
-                  stroke-linecap="round"
-                  stroke-linejoin="bevel"
-                  stroke-miterlimit="22.93"
-                  stroke-width="1.5"
-                  d="M73.34 36.8a35.9 35.9 0 1 0-71.81 0 35.9 35.9 0 0 0 71.8 0v0Z"
-                  clip-rule="evenodd"
-                />
-              </svg>,
-              addCut14,
-              "Cut Shape 14"
-            )}
-            {renderCutIcon(
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="99"
-                height="99"
-                fill="none"
-              >
-                <path
-                  stroke="#FD7714"
-                  stroke-linecap="round"
-                  stroke-linejoin="bevel"
-                  stroke-miterlimit="22.93"
-                  stroke-width="1.5"
-                  d="M97.86 49.33a48.19 48.19 0 1 0-96.38 0 48.19 48.19 0 0 0 96.38 0Z"
-                  clip-rule="evenodd"
-                />
-              </svg>,
-              addCut15,
-              "Cut Shape 15"
-            )}
-            {renderCutIcon(
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="116"
-                height="116"
-                fill="none"
-              >
-                <path
-                  stroke="#FD7714"
-                  stroke-linecap="round"
-                  stroke-linejoin="bevel"
-                  stroke-miterlimit="22.93"
-                  stroke-width="1.5"
-                  d="M114.73 58.08a56.7 56.7 0 1 0-113.38 0 56.7 56.7 0 0 0 113.38 0v0Z"
-                  clip-rule="evenodd"
-                />
-              </svg>,
-              addCut16,
-              "Cut Shape 16"
             )}
           </div>
         ) : (

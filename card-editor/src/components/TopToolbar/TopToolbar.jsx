@@ -9,7 +9,12 @@ import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
-import { saveCurrentProject, saveNewProject } from "../../utils/projectStorage";
+import { 
+  saveCurrentProject, 
+  saveNewProject,
+  clearAllUnsavedSigns,
+  addBlankUnsavedSign
+} from "../../utils/projectStorage";
 
 const TopToolbar = ({ className }) => {
   const { 
@@ -31,6 +36,20 @@ const TopToolbar = ({ className }) => {
 
   const handleSave = async () => {
     if (!canvas || isSaving) return;
+    
+    // Перевіряємо чи проект вже збережений
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+    
+    // Якщо проект не збережений - відкриваємо SaveAsModal
+    if (!currentProjectId) {
+      setSaveAsModalOpen(true);
+      return;
+    }
+    
+    // Якщо збережений - оновлюємо проект
     setIsSaving(true);
     try {
       await saveCurrentProject(canvas);
@@ -38,6 +57,108 @@ const TopToolbar = ({ className }) => {
       console.error("Save failed", e);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleNewProject = async () => {
+    if (!canvas) return;
+    
+    // Перевіряємо чи є збережений проект
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+    
+    // Якщо проект вже збережений - просто створюємо новий без модалки
+    if (currentProjectId) {
+      // Очищуємо localStorage
+      try {
+        localStorage.removeItem("currentProjectId");
+        localStorage.removeItem("currentProjectName");
+        localStorage.removeItem("currentCanvasId");
+        localStorage.removeItem("currentUnsavedSignId");
+      } catch {}
+      
+      // Очищуємо canvas
+      try {
+        canvas.__suspendUndoRedo = true;
+        canvas.discardActiveObject && canvas.discardActiveObject();
+        canvas.clear();
+        canvas.renderAll();
+        canvas.__suspendUndoRedo = false;
+      } catch {}
+      
+      // Скидаємо toolbar state до дефолтних значень
+      if (window.restoreToolbarState) {
+        try {
+          window.restoreToolbarState({
+            currentShapeType: "rectangle",
+            cornerRadius: 0,
+            sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+            globalColors: {
+              textColor: "#000000",
+              backgroundColor: "#FFFFFF",
+              strokeColor: "#000000", 
+              fillColor: "transparent",
+              backgroundType: "solid"
+            },
+            selectedColorIndex: 0,
+            thickness: 1.6,
+            isAdhesiveTape: false,
+            activeHolesType: 1,
+            holesDiameter: 2.5,
+            isHolesSelected: false,
+            isCustomShapeMode: false,
+            isCustomShapeApplied: false,
+            hasUserPickedShape: false,
+            copiesCount: 1,
+            hasBorder: false
+          });
+        } catch (e) {
+          console.error("Failed to reset toolbar state", e);
+        }
+      }
+      
+      // Очищаємо всі unsaved signs перед створенням нового
+      try {
+        await clearAllUnsavedSigns();
+      } catch (e) {
+        console.error("Failed to clear unsaved signs", e);
+      }
+      
+      // Створюємо нове полотно за замовчуванням
+      try {
+        // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+        const PX_PER_MM = 96 / 25.4;
+        const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
+        const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
+        
+        const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        
+        // Встановлюємо новий sign як активний
+        try {
+          localStorage.setItem("currentUnsavedSignId", newSign.id);
+        } catch {}
+        
+        // Відправляємо подію про оновлення unsaved signs
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+        
+        // Відправляємо подію про reset проекту (після створення нового полотна)
+        window.dispatchEvent(new CustomEvent("project:reset"));
+        
+        // Даємо час на оновлення state і автоматично відкриваємо полотно
+        setTimeout(() => {
+          console.log('Dispatching canvas:autoOpen from TopToolbar for new sign:', newSign.id);
+          window.dispatchEvent(new CustomEvent("canvas:autoOpen", { 
+            detail: { canvasId: newSign.id, isUnsaved: true } 
+          }));
+        }, 500);
+      } catch (e) {
+        console.error("Failed to create default canvas", e);
+      }
+    } else {
+      // Якщо проект не збережений - показуємо модалку
+      setNewProjectModalOpen(true);
     }
   };
 
@@ -128,9 +249,17 @@ const TopToolbar = ({ className }) => {
     }
   };
 
-  // Додаємо підтримку клавіші Delete
+  // Додаємо підтримку клавіші Delete та Ctrl+S
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Обробка Ctrl+S для збереження проекту
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+        return;
+      }
+      
+      // Обробка Delete для видалення об'єктів
       if (e.key === "Delete" || e.key === "Backspace") {
         // Якщо фокус в полі вводу або активний текст в режимі редагування — не видаляти
         const tag = (e.target && e.target.tagName) || "";
@@ -157,7 +286,7 @@ const TopToolbar = ({ className }) => {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [canvas]);
+  }, [canvas, isSaving]);
 
   // Синхронізуємо zoom state з canvas при ініціалізації
   useEffect(() => {
@@ -380,7 +509,7 @@ const TopToolbar = ({ className }) => {
           <div className={styles.buttonWrapper}>
             <button
               className={styles.blueButton}
-              onClick={() => setNewProjectModalOpen(true)}
+              onClick={handleNewProject}
             >
               <svg
                 width="24"
@@ -439,7 +568,7 @@ const TopToolbar = ({ className }) => {
               Your project
             </button>
           </div>
-          <div className={styles.topToolbarEL}>
+          <div className={styles.topToolbarEL} onClick={handleSave}>
             <svg
               width="24"
               height="24"
@@ -569,12 +698,25 @@ const TopToolbar = ({ className }) => {
         <SaveAsModal
           onClose={() => setSaveAsModalOpen(false)}
           onSaveAs={async (name) => {
+            if (!name || !name.trim()) {
+              alert("Please enter a project name");
+              return;
+            }
+            setIsSaving(true);
             try {
-              await saveNewProject(name, canvas);
+              const savedProject = await saveNewProject(name, canvas);
+              // Оновлюємо currentProjectId після збереження
+              if (savedProject && savedProject.id) {
+                localStorage.setItem("currentProjectId", savedProject.id);
+                // Відправляємо подію для автоматичного відкриття полотна
+                window.dispatchEvent(new CustomEvent("project:opened", { detail: { projectId: savedProject.id } }));
+              }
+              // Не закриваємо модалку після збереження - користувач може захотіти зберегти ще проекти
             } catch (e) {
-              console.error(e);
+              console.error("Save as failed:", e);
+              alert("Failed to save project. Please try again.");
             } finally {
-              setSaveAsModalOpen(false);
+              setIsSaving(false);
             }
           }}
         />

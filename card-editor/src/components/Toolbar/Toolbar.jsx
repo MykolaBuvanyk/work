@@ -81,9 +81,11 @@ const Toolbar = () => {
     updateGlobalColors,
     isCustomShapeMode,
     setIsCustomShapeMode,
+    setCanvasShapeType,
   } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
   const PX_PER_MM = 96 / 25.4;
+  const LOCK_ARCH_HEIGHT_MM = 8;
   const mmToPx = (mm) =>
     typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
@@ -97,6 +99,14 @@ const Toolbar = () => {
     cornerRadius: 0,
   });
   const [currentShapeType, setCurrentShapeType] = useState(null); // Тип поточної фігури
+  
+  // Синхронізація локального currentShapeType з глобальним canvasShapeType
+  useEffect(() => {
+    if (currentShapeType && setCanvasShapeType) {
+      setCanvasShapeType(currentShapeType);
+    }
+  }, [currentShapeType, setCanvasShapeType]);
+  
   // Чи застосовано кастомне редагування (після натискання іконки кастом форми)
   const [isCustomShapeApplied, setIsCustomShapeApplied] = useState(false);
   // Застосовуємо дефолтну схему кольорів при завантаженні
@@ -143,6 +153,12 @@ const Toolbar = () => {
   // Користувач вибрав фігуру вручну (для розблокування останньої іконки в блоці 1)
   const [hasUserPickedShape, setHasUserPickedShape] = useState(false);
   const [thickness, setThickness] = useState(1.6); // товщина (мм) для блоку 3
+
+  useEffect(() => {
+    if (typeof setCanvasShapeType === "function") {
+      setCanvasShapeType(currentShapeType || "rectangle");
+    }
+  }, [currentShapeType, setCanvasShapeType]);
 
   // Undo/Redo + трекер змін властивостей полотна
   const { saveCanvasPropertiesState } = useUndoRedo();
@@ -6714,6 +6730,14 @@ const Toolbar = () => {
     setSizeValues((prev) => ({ ...prev, cornerRadius: 0 }));
   };
 
+  // Helper: встановлення типу фігури (локально + на canvas для збереження в БД)
+  const setShapeType = (type) => {
+    setCurrentShapeType(type);
+    if (canvas) {
+      canvas.set("shapeType", type);
+    }
+  };
+
   // Icon0 - Прямокутник (задає форму canvas)
   const addRectangle = () => {
     if (canvas) {
@@ -6723,7 +6747,7 @@ const Toolbar = () => {
       clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType("rectangle");
+      setShapeType("rectangle");
 
       // Встановлюємо розміри canvas (120x80 мм для прямокутника з відступами)
       const width = 120; // mm
@@ -6769,7 +6793,7 @@ const Toolbar = () => {
       clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType("circle");
+      setShapeType("circle");
 
       // Встановлюємо розміри canvas (100x100 мм для кола)
       const width = 100; // mm
@@ -6812,7 +6836,7 @@ const Toolbar = () => {
       clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType("ellipse");
+      setShapeType("ellipse");
 
       // Встановлюємо розміри canvas (140x80 мм для еліпса)
       const width = 140; // mm
@@ -6855,7 +6879,8 @@ const Toolbar = () => {
       clearCanvasPreserveTheme();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType("lock");
+      setShapeType("lock");
+      
       // Нові розміри (залишимо 100x90 мм загальна висота включно з півкругом)
       const totalHeightMM = 90; // загальна висота
       const widthMM = 100;
@@ -8098,15 +8123,31 @@ const Toolbar = () => {
   }, [canvas, addRectangle]);
 
   const handleInputChange = (key, max, rawValue) => {
+    const isHeightField = key === "height";
+    const isLockShape = currentShapeType === "lock";
+    const effectiveMax =
+      isLockShape && isHeightField
+        ? Math.max(0, max - LOCK_ARCH_HEIGHT_MM)
+        : max;
+
     // Поддерживаем запятую как разделитель, затем округляем до 1 знака
     const parsed = parseFloat(String(rawValue).replace(",", "."));
-    const clamped = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
+    const clamped = Math.max(0, Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed));
     const value = round1(clamped);
+    const effectiveHeight =
+      isLockShape && isHeightField
+        ? round1(value + LOCK_ARCH_HEIGHT_MM)
+        : value;
 
     // Compute next mm values synchronously
     let next = {
       width: key === "width" ? value : sizeValues.width,
-      height: key === "height" ? value : sizeValues.height,
+      height:
+        key === "height"
+          ? isLockShape
+            ? effectiveHeight
+            : value
+          : sizeValues.height,
       cornerRadius: key === "cornerRadius" ? value : sizeValues.cornerRadius,
     };
 
@@ -8121,7 +8162,11 @@ const Toolbar = () => {
       next = { ...next, width: side, height: side };
       setSizeValues((prev) => ({ ...prev, width: side, height: side }));
     } else {
-      setSizeValues((prev) => ({ ...prev, [key]: value }));
+      if (isLockShape && isHeightField) {
+        setSizeValues((prev) => ({ ...prev, height: effectiveHeight }));
+      } else {
+        setSizeValues((prev) => ({ ...prev, [key]: value }));
+      }
     }
 
     // Параметри розміру застосовуємо лише до canvas/clipPath
@@ -8144,8 +8189,11 @@ const Toolbar = () => {
 
   const changeValue = (key, delta, max) => {
     setSizeValues((prev) => {
+      const isHeightField = key === "height";
+      const isLockShape = currentShapeType === "lock";
       const cur = parseFloat(String(prev[key]).replace(",", ".")) || 0;
-      const nextVal = Math.max(0, Math.min(max, cur + delta));
+      const minVal = isLockShape && isHeightField ? LOCK_ARCH_HEIGHT_MM : 0;
+      const nextVal = Math.max(minVal, Math.min(max, cur + delta));
       const newValue = round1(nextVal);
       let updated = { ...prev, [key]: newValue };
 
@@ -8182,6 +8230,13 @@ const Toolbar = () => {
       return updated;
     });
   };
+
+  const actualHeightMm = Number(sizeValues?.height) || 0;
+  const displayHeightMm =
+    currentShapeType === "lock"
+      ? round1(Math.max(0, actualHeightMm - LOCK_ARCH_HEIGHT_MM))
+      : actualHeightMm;
+  const heightInputValue = displayHeightMm === 0 ? "" : displayHeightMm;
 
   return (
     <div className={styles.toolbar}>
@@ -8392,7 +8447,7 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                value={sizeValues.height === 0 ? "" : sizeValues.height}
+                value={heightInputValue}
                 onChange={(e) => {
                   const val = e.target.value === "" ? "" : e.target.value;
                   handleInputChange("height", 1200, val);

@@ -13,6 +13,7 @@ const DEFAULT_DESIGN = { width: 1200, height: 800 };
 // Unit conversion (96 DPI)
 const PX_PER_MM = 96 / 25.4;
 const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
+const LOCK_ARCH_HEIGHT_MM = 8;
 
 // Параметри панелі керування
 const TOP_PANEL_GAP = 25; // від рамки до центру кнопок (CSS px)
@@ -37,6 +38,7 @@ const Canvas = () => {
     isCustomShapeMode,
     globalColors,
     canvas,
+    canvasShapeType,
   } = useCanvasContext();
 
   // Undo/Redo функціонал
@@ -501,8 +503,12 @@ const Canvas = () => {
       fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
       fCanvas.getDesignSize = () => ({ width: baseW, height: baseH });
       fCanvas.getCssSize = () => ({ width: cssW, height: cssH });
+      
+      // Для lock віднімаємо висоту дужки (8mm) при відображенні
+      const heightMmToDisplay = canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
+      
       setDisplayWidth(baseW);
-      setDisplayHeight(baseH);
+      setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
       setScale(scaleToFit);
       scaleRef.current = scaleToFit;
@@ -584,8 +590,11 @@ const Canvas = () => {
       fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
 
       // Update state + notify listeners
+      // Для lock віднімаємо висоту дужки (8mm) при відображенні
+      const heightMmToDisplay = canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
+      
       setDisplayWidth(baseW);
-      setDisplayHeight(baseH);
+      setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
       setScale(factor);
       scaleRef.current = factor;
@@ -2301,6 +2310,20 @@ const Canvas = () => {
     };
   }, [canvas, globalColors?.textColor, globalColors?.backgroundColor]);
 
+  const isLockShape = canvasShapeType === "lock";
+  const scaleFactor = scaleRef.current || scale || 1;
+  const lockArchDesignPx = isLockShape ? LOCK_ARCH_HEIGHT_MM * PX_PER_MM : 0;
+  const lockArchCss = isLockShape ? lockArchDesignPx * scaleFactor : 0;
+  const heightLabelHeightPx = isLockShape
+    ? Math.max(0, cssHeight - lockArchCss)
+    : cssHeight;
+  const heightLabelMarginTopPx = isLockShape ? lockArchCss : 0;
+  const heightLabelMm = (() => {
+    const rawMm = pxToMm(displayHeight);
+    const adjusted = isLockShape ? rawMm - LOCK_ARCH_HEIGHT_MM : rawMm;
+    return Math.max(0, adjusted);
+  })();
+
   return (
     <div className={styles.viewport} ref={viewportRef}>
       <div className={styles.canvasWrapper}>
@@ -2312,9 +2335,12 @@ const Canvas = () => {
         </div>
         <div
           className={styles.heightLabel}
-          style={{ height: `${cssHeight}px` }}
+          style={{
+            height: `${heightLabelHeightPx}px`,
+            marginTop: isLockShape ? `${heightLabelMarginTopPx}px` : undefined,
+          }}
         >
-          <span>{pxToMm(displayHeight).toFixed(0)} mm</span>
+          <span>{heightLabelMm.toFixed(0)} mm</span>
         </div>
       </div>
     </div>

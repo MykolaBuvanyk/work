@@ -14,16 +14,29 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
 
-  useEffect(() => {
+  // Функція для завантаження проектів
+  const loadProjects = () => {
     getAllProjects().then((list) => {
-      const mapped = (list || []).map((p) => ({
+      // Сортуємо проекти за датою оновлення (новіші спочатку)
+      const sorted = (list || []).sort((a, b) => {
+        const dateA = a.updatedAt || a.createdAt || 0;
+        const dateB = b.updatedAt || b.createdAt || 0;
+        return dateB - dateA; // Від нових до старих
+      });
+
+      const mapped = sorted.map((p) => ({
         id: p.id,
         name: p.name,
         date: formatDate(p.updatedAt || p.createdAt),
         images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
+        updatedAt: p.updatedAt || p.createdAt, // Зберігаємо для сортування
       }));
       setProjects(mapped);
     }).catch(() => {});
+  };
+
+  useEffect(() => {
+    loadProjects();
   }, []);
 
   // 3. Ініціалізація слайдерів для кожного проекту
@@ -118,7 +131,18 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
         </svg>
       </div>
       <div className={styles.buttonsWrapper}>
-        <button onClick={()=> onSaveAs && onSaveAs(name)}>
+        <button onClick={async () => {
+          if (onSaveAs) {
+            await onSaveAs(name);
+            // Невелика затримка щоб дати час IndexedDB оновити дані
+            setTimeout(() => {
+              // Оновлюємо список проектів після збереження
+              loadProjects();
+            }, 200);
+            // Очищаємо поле вводу
+            setName("");
+          }
+        }}>
           <svg
             width="24"
             height="24"

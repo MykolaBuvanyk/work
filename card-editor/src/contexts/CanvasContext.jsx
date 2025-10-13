@@ -8,6 +8,7 @@ export const CanvasProvider = ({ children }) => {
   const [shapePropertiesOpen, setShapePropertiesOpen] = useState(false);
   // Глобальний стан: режим кастомної фігури (редагування вершин)
   const [isCustomShapeMode, setIsCustomShapeMode] = useState(false);
+  const [canvasShapeType, setCanvasShapeType] = useState("rectangle");
 
   // Набір дизайнів (полотен) та активне полотно
   const [designs, setDesigns] = useState([]);
@@ -63,6 +64,8 @@ export const CanvasProvider = ({ children }) => {
         setShapePropertiesOpen,
         isCustomShapeMode,
         setIsCustomShapeMode,
+  canvasShapeType,
+  setCanvasShapeType,
         globalColors,
         updateGlobalColors,
         designs,

@@ -124,6 +124,8 @@ const YourProjectsModal = ({ onClose }) => {
       }
       try {
         window.dispatchEvent(new CustomEvent("project:switched", { detail: { projectId: project.id } }));
+        // Додаємо подію для автоматичного відкриття полотна
+        window.dispatchEvent(new CustomEvent("project:opened", { detail: { projectId: project.id } }));
       } catch {}
       onClose && onClose();
     } catch (e) {

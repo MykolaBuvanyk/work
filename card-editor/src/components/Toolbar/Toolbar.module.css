@@ -403,3 +403,75 @@ input[type="number"]:focus {
   stroke: #006ca4 !important;
   fill: none;
 }
+
+/* Toolbar Footer */
+.toolbarFooter {
+  margin: 60px 0 30px;
+  display: flex;
+  flex-direction: column; /* колонкою, щоб note був нижче всього */
+  gap: 10px;
+}
+
+.footerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.footerInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 132, 0, 1);
+}
+
+.footerPageCount {
+  color: rgba(0, 0, 0, 1);
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* контрольований відступ між 2, /, 10 */
+}
+
+.footerButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footerButtons svg {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.footerButtons svg:hover {
+  opacity: 0.8;
+}
+/* Footer note section */
+.footerNoteSection {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.footerNoteTitle {
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 8px;
+  color: rgba(0, 0, 0, 1);
+}
+
+.footerNoteInput {
+  width: 100%;
+  padding: 3px 5px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  color: rgba(0, 108, 164, 1);
+}

@@ -6,6 +6,7 @@ import ProjectCanvasesGrid from "./components/ProjectCanvasesGrid/ProjectCanvase
 import IconMenu from "./components/IconMenu/IconMenu";
 import TopToolbar from "./components/TopToolbar/TopToolbar";
 import Accessories from "./components/Accessories/Accessories";
+import ToolbarFooter from "./components/Toolbar/ToolbarFooter";
 import ShapeProperties from "./components/ShapeProperties/ShapeProperties";
 import "./App.css";
 import Header from "./components/Header/Header";
@@ -23,6 +24,7 @@ function App() {
             <TopSidebar />
             <Toolbar />
             <Accessories />
+            <ToolbarFooter />
             {/* <IconMenu /> */}
           </div>
           <div className="main-content">

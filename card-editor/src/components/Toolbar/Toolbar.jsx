@@ -5525,43 +5525,43 @@ const Toolbar = () => {
       trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     } else if (backgroundType === "texture") {
       // Завантажуємо текстуру
-      const img = document.createElement('img');
-      img.crossOrigin = 'anonymous';
+      const img = document.createElement("img");
+      img.crossOrigin = "anonymous";
       img.onload = () => {
         try {
           // Обраховуємо масштаб як відношення canvas до зображення
           // Зменшуємо у 4 рази для повторення текстури
-          const scaleX = (canvas.width / img.width);
-          const scaleY = (canvas.height / img.height);
-          
+          const scaleX = canvas.width / img.width;
+          const scaleY = canvas.height / img.height;
+
           // Створюємо canvas для масштабування текстури
-          const patternCanvas = document.createElement('canvas');
-          const ctx = patternCanvas.getContext('2d');
-          
+          const patternCanvas = document.createElement("canvas");
+          const ctx = patternCanvas.getContext("2d");
+
           patternCanvas.width = img.width * scaleX;
           patternCanvas.height = img.height * scaleY;
-          
+
           // Малюємо масштабоване зображення
           ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
-          
+
           const pattern = new fabric.Pattern({
             source: patternCanvas,
-            repeat: 'repeat'
+            repeat: "repeat",
           });
-          
+
           // Зберігаємо оригінальний URL текстури для серіалізації
           canvas.set("backgroundColor", pattern);
           canvas.set("backgroundTextureUrl", backgroundColor);
           canvas.set("backgroundType", "texture");
           canvas.renderAll();
         } catch (error) {
-          console.error('Error creating texture pattern:', error);
+          console.error("Error creating texture pattern:", error);
           canvas.set("backgroundColor", backgroundColor);
           canvas.renderAll();
         }
       };
       img.onerror = () => {
-        console.error('Error loading texture image:', backgroundColor);
+        console.error("Error loading texture image:", backgroundColor);
         canvas.set("backgroundColor", "#FFFFFF");
         canvas.renderAll();
       };
@@ -8691,7 +8691,9 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => handleColorPick(12, "#000000", "/textures/Wood.jpg", "texture")}
+            onClick={() =>
+              handleColorPick(12, "#000000", "/textures/Wood.jpg", "texture")
+            }
             title="Чорний текст, фон дерева"
           >
             <A13
@@ -8703,7 +8705,9 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => handleColorPick(13, "#FFFFFF", "/textures/Carbon.jpg", "texture")}
+            onClick={() =>
+              handleColorPick(13, "#FFFFFF", "/textures/Carbon.jpg", "texture")
+            }
             title="Білий текст, карбоновий фон"
           >
             <A14

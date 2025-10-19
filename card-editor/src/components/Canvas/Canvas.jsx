@@ -73,6 +73,46 @@ const Canvas = () => {
       backgroundColor: "#f5f5f5",
       selection: true,
     });
+    // Утилиты: скрыть/показать hiddenTextarea Fabric, чтобы не мигал нативный курсор
+    const applyHiddenTextareaStyle = (ta) => {
+      try {
+        ta.style.caretColor = "transparent";
+        ta.style.color = "transparent";
+        ta.style.background = "transparent";
+        ta.style.border = "0";
+        ta.style.outline = "none";
+        ta.style.position = "fixed"; // вне потока, чтобы не мелькала
+        ta.style.top = "-10000px";
+        ta.style.left = "-10000px";
+        ta.style.width = "0";
+        ta.style.height = "0";
+        ta.style.opacity = "0";
+        ta.style.pointerEvents = "none";
+      } catch {}
+    };
+    const clearHiddenTextareaStyle = (ta) => {
+      try {
+        ta.removeAttribute("style");
+      } catch {}
+    };
+    const enforceHideCaretIfEditing = () => {
+      try {
+        const obj = fCanvas.getActiveObject && fCanvas.getActiveObject();
+        if (
+          obj &&
+          (obj.type === "i-text" ||
+            obj.type === "text" ||
+            obj.type === "textbox") &&
+          obj.isEditing &&
+          obj.hiddenTextarea
+        ) {
+          try {
+            obj.hiddenTextarea.setAttribute("data-fabric-hidden-textarea", "1");
+          } catch {}
+          applyHiddenTextareaStyle(obj.hiddenTextarea);
+        }
+      } catch {}
+    };
     if (canvasRef.current) canvasRef.current.__fabricCanvas = fCanvas;
     setCanvas(fCanvas);
 
@@ -383,11 +423,53 @@ const Canvas = () => {
             ensureActionControls(t);
             fCanvas.requestRenderAll();
           } catch {}
-        } else {
-          // спожити дозвіл тільки для цього входу
-          t.__allowNextEditing = false;
+          return;
         }
+        // спожити дозвіл тільки для цього входу
+        t.__allowNextEditing = false;
+        // Скрываем нативный caret у hiddenTextarea и включаем периодическую подстраховку
+        try {
+          if (t.__caretHideTimer) clearInterval(t.__caretHideTimer);
+        } catch {}
+        try {
+          t.__caretHideTimer = setInterval(() => {
+            try {
+              if (t.hiddenTextarea) {
+                try {
+                  t.hiddenTextarea.setAttribute(
+                    "data-fabric-hidden-textarea",
+                    "1"
+                  );
+                } catch {}
+                applyHiddenTextareaStyle(t.hiddenTextarea);
+              }
+            } catch {}
+          }, 100);
+        } catch {}
+        try {
+          if (t.hiddenTextarea) {
+            try {
+              t.hiddenTextarea.setAttribute("data-fabric-hidden-textarea", "1");
+            } catch {}
+            applyHiddenTextareaStyle(t.hiddenTextarea);
+          }
+        } catch {}
       }
+    });
+    // На каждом кадре после рендера убеждаемся, что hiddenTextarea остаётся скрытой
+    fCanvas.on("after:render", enforceHideCaretIfEditing);
+    // При выходе из редактирования: очищаем интервал и ещё раз убеждаемся, что hiddenTextarea скрыта
+    fCanvas.on("text:editing:exited", (e) => {
+      const t = e?.target;
+      try {
+        if (t && t.__caretHideTimer) clearInterval(t.__caretHideTimer);
+      } catch {}
+      try {
+        if (t) t.__caretHideTimer = null;
+      } catch {}
+      try {
+        if (t && t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
+      } catch {}
     });
 
     const mirrorIfPath = (e) => {
@@ -477,6 +559,35 @@ const Canvas = () => {
     fCanvas.on("object:rotating", onRotatingSnap);
 
     const originalSetDimensions = fCanvas.setDimensions.bind(fCanvas);
+    // Перегенерація фону-текстури під поточні розміри canvasa
+    const rebuildBackgroundTexture = () => {
+      try {
+        const type = fCanvas.get && fCanvas.get("backgroundType");
+        const url = fCanvas.get && fCanvas.get("backgroundTextureUrl");
+        if (type !== "texture" || !url) return;
+        const img = document.createElement("img");
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          try {
+            const scaleX = (fCanvas.width || 0) / (img.width || 1);
+            const scaleY = (fCanvas.height || 0) / (img.height || 1);
+            const patternCanvas = document.createElement("canvas");
+            const ctx = patternCanvas.getContext("2d");
+            patternCanvas.width = Math.max(1, img.width * scaleX);
+            patternCanvas.height = Math.max(1, img.height * scaleY);
+            ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
+            const pattern = new fabric.Pattern({
+              source: patternCanvas,
+              repeat: "no-repeat",
+            });
+            fCanvas.set("backgroundColor", pattern);
+            fCanvas.requestRenderAll && fCanvas.requestRenderAll();
+          } catch {}
+        };
+        img.onerror = () => {};
+        img.src = url;
+      } catch {}
+    };
     const resizeToViewport = () => {
       if (!viewportRef.current) return;
       const { width: baseW, height: baseH } = designRef.current;
@@ -503,10 +614,11 @@ const Canvas = () => {
       fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
       fCanvas.getDesignSize = () => ({ width: baseW, height: baseH });
       fCanvas.getCssSize = () => ({ width: cssW, height: cssH });
-      
+
       // Для lock віднімаємо висоту дужки (8mm) при відображенні
-      const heightMmToDisplay = canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
-      
+      const heightMmToDisplay =
+        canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
+
       setDisplayWidth(baseW);
       setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
@@ -591,8 +703,9 @@ const Canvas = () => {
 
       // Update state + notify listeners
       // Для lock віднімаємо висоту дужки (8mm) при відображенні
-      const heightMmToDisplay = canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
-      
+      const heightMmToDisplay =
+        canvasShapeType === "lock" ? baseH - PX_PER_MM * 8 : baseH;
+
       setDisplayWidth(baseW);
       setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
@@ -638,6 +751,10 @@ const Canvas = () => {
           if (trackCanvasResize && (nextW !== prevW || nextH !== prevH)) {
             trackCanvasResize(nextW, nextH);
           }
+          // Якщо фон є текстурою — регенеруємо під новий розмір, щоб не дублювався
+          try {
+            rebuildBackgroundTexture();
+          } catch {}
         } finally {
           resizingRef.current = false;
         }
@@ -2370,7 +2487,24 @@ export const copyHandler = async (evt, transform) => {
         target.hiddenTextarea &&
         typeof target.hiddenTextarea.focus === "function"
       ) {
-        target.hiddenTextarea.focus();
+        const ta = target.hiddenTextarea;
+        // Немедленно применим стили, чтобы нативная каретка не мигала
+        try {
+          ta.setAttribute("data-fabric-hidden-textarea", "1");
+          ta.style.caretColor = "transparent";
+          ta.style.color = "transparent";
+          ta.style.background = "transparent";
+          ta.style.border = "0";
+          ta.style.outline = "none";
+          ta.style.position = "fixed";
+          ta.style.top = "-10000px";
+          ta.style.left = "-10000px";
+          ta.style.width = "0";
+          ta.style.height = "0";
+          ta.style.opacity = "0";
+          ta.style.pointerEvents = "none";
+        } catch {}
+        ta.focus();
         // После фокусировки явно ставим курсор в конец через fabric методы
         setTimeout(() => {
           try {

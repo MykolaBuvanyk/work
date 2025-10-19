@@ -15,7 +15,6 @@
 /*Я добавив не пізди*/
 .app {
   display: flex;
-
 }
 * {
   box-sizing: border-box;
@@ -69,4 +68,22 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+}
+
+/* Fix: скрыть нативный курсор hiddenTextarea fabric.js, чтобы не было «второго курсора» */
+.canvas-container textarea,
+textarea[data-fabric-hidden-textarea] {
+  /* Fabric создаёт скрытую textarea для ввода; прячем её визуально, чтобы курсор не дублировался */
+  position: fixed !important;
+  top: -100000px !important;
+  left: -100000px !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  caret-color: transparent !important;
+  color: transparent !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
 }

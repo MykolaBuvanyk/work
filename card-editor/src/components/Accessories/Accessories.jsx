@@ -347,7 +347,9 @@ const TopToolbar = ({ className }) => {
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
           {accessories
-            .filter((it) => it.checked)
+            .filter(
+              (it) => it.checked || it.id === 1 || it.id === 2 || it.id === 3
+            )
             .map((it) => {
               const qtyNum = parseNumber(it.qty);
               const total = it.price * qtyNum;

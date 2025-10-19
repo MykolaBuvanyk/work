@@ -99,14 +99,14 @@ const Toolbar = () => {
     cornerRadius: 0,
   });
   const [currentShapeType, setCurrentShapeType] = useState(null); // Тип поточної фігури
-  
+
   // Синхронізація локального currentShapeType з глобальним canvasShapeType
   useEffect(() => {
     if (currentShapeType && setCanvasShapeType) {
       setCanvasShapeType(currentShapeType);
     }
   }, [currentShapeType, setCanvasShapeType]);
-  
+
   // Чи застосовано кастомне редагування (після натискання іконки кастом форми)
   const [isCustomShapeApplied, setIsCustomShapeApplied] = useState(false);
   // Застосовуємо дефолтну схему кольорів при завантаженні
@@ -5473,7 +5473,11 @@ const Toolbar = () => {
         return;
       }
 
-      if (obj.type === "i-text" || obj.type === "text") {
+      if (
+        obj.type === "i-text" ||
+        obj.type === "text" ||
+        obj.type === "textbox"
+      ) {
         obj.set({ fill: textColor });
       } else if (
         obj.type === "rect" ||
@@ -5546,7 +5550,7 @@ const Toolbar = () => {
 
           const pattern = new fabric.Pattern({
             source: patternCanvas,
-            repeat: "repeat",
+            repeat: "no-repeat", // не дублюємо текстуру
           });
 
           // Зберігаємо оригінальний URL текстури для серіалізації
@@ -5590,60 +5594,17 @@ const Toolbar = () => {
       });
       canvas.add(text);
       canvas.setActiveObject(text);
-      setTimeout(() => {
-        if (typeof copyHandler === "function") {
-          copyHandler(null, { target: text });
-          // Первая синхронизация selection
-          const len = (text.text || "").length;
-          if (typeof text.setSelectionStart === "function")
-            text.setSelectionStart(len);
-          if (typeof text.setSelectionEnd === "function")
-            text.setSelectionEnd(len);
-          if (text.hiddenTextarea) {
-            text.hiddenTextarea.selectionStart = len;
-            text.hiddenTextarea.selectionEnd = len;
+      // Запускаем редактирование единообразно через copyHandler без дополнительных таймеров/дублирования
+      // Небольшая задержка кадра нужна, чтобы объект стал активным и имел корректные coords
+      requestAnimationFrame(() => {
+        try {
+          if (typeof copyHandler === "function") {
+            copyHandler(null, { target: text });
+          } else if (typeof text.enterEditing === "function") {
+            text.enterEditing();
           }
-          // Вторая синхронизация через 50мс
-          setTimeout(() => {
-            if (typeof text.setSelectionStart === "function")
-              text.setSelectionStart(len);
-            if (typeof text.setSelectionEnd === "function")
-              text.setSelectionEnd(len);
-            if (text.hiddenTextarea) {
-              text.hiddenTextarea.selectionStart = len;
-              text.hiddenTextarea.selectionEnd = len;
-            }
-          }, 50);
-        } else {
-          try {
-            if (typeof text.enterEditing === "function") text.enterEditing();
-            const len = (text.text || "").length;
-            if (typeof text.setSelectionStart === "function")
-              text.setSelectionStart(len);
-            if (typeof text.setSelectionEnd === "function")
-              text.setSelectionEnd(len);
-            if (
-              text.hiddenTextarea &&
-              typeof text.hiddenTextarea.focus === "function"
-            )
-              text.hiddenTextarea.focus();
-            if (text.hiddenTextarea) {
-              text.hiddenTextarea.selectionStart = len;
-              text.hiddenTextarea.selectionEnd = len;
-            }
-            setTimeout(() => {
-              if (typeof text.setSelectionStart === "function")
-                text.setSelectionStart(len);
-              if (typeof text.setSelectionEnd === "function")
-                text.setSelectionEnd(len);
-              if (text.hiddenTextarea) {
-                text.hiddenTextarea.selectionStart = len;
-                text.hiddenTextarea.selectionEnd = len;
-              }
-            }, 50);
-          } catch {}
-        }
-      }, 50);
+        } catch {}
+      });
       canvas.renderAll();
       trackElementAdded("Text");
     }
@@ -5994,6 +5955,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6039,6 +6001,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6062,6 +6025,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6108,6 +6072,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6131,6 +6096,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6154,6 +6120,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6177,6 +6144,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6228,6 +6196,7 @@ const Toolbar = () => {
         strokeWidth: 1,
         isCutElement: true,
         cutType: "hole",
+        preventThemeRecolor: true,
         holeType5Rect: true,
         hasControls: false,
         hasBorders: true,
@@ -6282,6 +6251,7 @@ const Toolbar = () => {
       originY: "center",
       isCutElement: true,
       cutType: "hole",
+      preventThemeRecolor: true,
       hasControls: false,
       hasBorders: true,
       lockScalingX: true,
@@ -6332,6 +6302,7 @@ const Toolbar = () => {
         originY: "center",
         isCutElement: true, // Позначаємо як Cut елемент
         cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
         hasControls: false, // Забороняємо зміну розміру
         hasBorders: true,
         lockScalingX: true,
@@ -6873,6 +6844,14 @@ const Toolbar = () => {
   // Icon3 - Замок (задає форму canvas)
   const addLock = () => {
     if (canvas) {
+      // Якщо вже активна форма lock і є отвір типу 2 (верхній) — просто ігноруємо повторне створення
+      if (
+        currentShapeType === "lock" &&
+        isHolesSelected &&
+        activeHolesType === 2
+      ) {
+        return; // залишаємо існуючу дирку
+      }
       resetCornerRadiusState();
       setIsCustomShapeApplied(false);
       // Очищуємо canvas з збереженням теми
@@ -6880,7 +6859,7 @@ const Toolbar = () => {
 
       // Встановлюємо тип поточної фігури
       setShapeType("lock");
-      
+
       // Нові розміри (залишимо 100x90 мм загальна висота включно з півкругом)
       const totalHeightMM = 90; // загальна висота
       const widthMM = 100;
@@ -7007,7 +6986,16 @@ const Toolbar = () => {
       canvas.renderAll();
 
       // Скидаємо отвори до No holes
-      resetHolesToNone();
+      // Але якщо це повторний виклик і до цього вже був lock із отвором типу 2 — не чіпаємо
+      if (
+        !(
+          currentShapeType === "lock" &&
+          isHolesSelected &&
+          activeHolesType === 2
+        )
+      ) {
+        resetHolesToNone();
+      }
     }
   };
 
@@ -8132,7 +8120,10 @@ const Toolbar = () => {
 
     // Поддерживаем запятую как разделитель, затем округляем до 1 знака
     const parsed = parseFloat(String(rawValue).replace(",", "."));
-    const clamped = Math.max(0, Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed));
+    const clamped = Math.max(
+      0,
+      Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed)
+    );
     const value = round1(clamped);
     const effectiveHeight =
       isLockShape && isHeightField
@@ -8151,6 +8142,31 @@ const Toolbar = () => {
       cornerRadius: key === "cornerRadius" ? value : sizeValues.cornerRadius,
     };
 
+    // --- Глобальні обмеження для картки ---
+    // 1) Кожна сторона максимум 600 мм
+    // 2) Якщо одна сторона > 295, інша не може бути > 295
+    const LIMIT_SIDE_MAX = 600;
+    const LIMIT_OTHER_THRESHOLD = 295;
+
+    const clampPair = (w, h) => {
+      let W = Math.min(LIMIT_SIDE_MAX, w || 0);
+      let H = Math.min(LIMIT_SIDE_MAX, h || 0);
+      // Нове правило: не зменшуємо вже велику сторону >295 при зміні іншої.
+      // Якщо після зміни обидві >295 — обрізаємо ТІЛЬКИ редаговану до 295.
+      if (W > LIMIT_OTHER_THRESHOLD && H > LIMIT_OTHER_THRESHOLD) {
+        if (key === "width") {
+          W = LIMIT_OTHER_THRESHOLD; // редагували width
+        } else if (key === "height") {
+          H = LIMIT_OTHER_THRESHOLD; // редагували height
+        }
+      }
+      return { W: round1(W), H: round1(H) };
+    };
+
+    const pair = clampPair(next.width, next.height);
+    next.width = pair.W;
+    next.height = pair.H;
+
     // For circle-based shapes, keep 1:1 aspect by mirroring the changed side
     const isCircleFamily =
       currentShapeType === "circle" ||
@@ -8158,14 +8174,24 @@ const Toolbar = () => {
       currentShapeType === "circleWithCross";
     if (isCircleFamily && (key === "width" || key === "height")) {
       // Make it square using the edited dimension
-      const side = value;
+      const side = key === "width" ? next.width : next.height; // уже клампнули
       next = { ...next, width: side, height: side };
       setSizeValues((prev) => ({ ...prev, width: side, height: side }));
     } else {
       if (isLockShape && isHeightField) {
-        setSizeValues((prev) => ({ ...prev, height: effectiveHeight }));
+        // effectiveHeight вже врахований в next.height після clampPair
+        setSizeValues((prev) => ({
+          ...prev,
+          width: next.width,
+          height: next.height,
+        }));
       } else {
-        setSizeValues((prev) => ({ ...prev, [key]: value }));
+        setSizeValues((prev) => ({
+          ...prev,
+          width: next.width,
+          height: next.height,
+          cornerRadius: next.cornerRadius,
+        }));
       }
     }
 
@@ -8197,13 +8223,30 @@ const Toolbar = () => {
       const newValue = round1(nextVal);
       let updated = { ...prev, [key]: newValue };
 
+      // --- Глобальні обмеження для картки (аналогічно handleInputChange) ---
+      const LIMIT_SIDE_MAX = 600;
+      const LIMIT_OTHER_THRESHOLD = 295;
+      let w = key === "width" ? newValue : updated.width;
+      let h = key === "height" ? newValue : updated.height;
+      w = Math.min(LIMIT_SIDE_MAX, w || 0);
+      h = Math.min(LIMIT_SIDE_MAX, h || 0);
+      if (w > LIMIT_OTHER_THRESHOLD && h > LIMIT_OTHER_THRESHOLD) {
+        if (key === "width") {
+          w = LIMIT_OTHER_THRESHOLD; // редагували width
+        } else if (key === "height") {
+          h = LIMIT_OTHER_THRESHOLD; // редагували height
+        }
+      }
+      updated.width = round1(w);
+      updated.height = round1(h);
+
       // Enforce square for circle family shapes via arrows too
       const isCircleFamily =
         currentShapeType === "circle" ||
         currentShapeType === "circleWithLine" ||
         currentShapeType === "circleWithCross";
       if (isCircleFamily && (key === "width" || key === "height")) {
-        const side = newValue;
+        const side = key === "width" ? updated.width : updated.height; // після клампу
         updated = { ...updated, width: side, height: side };
       }
 
@@ -8238,6 +8281,33 @@ const Toolbar = () => {
       : actualHeightMm;
   const heightInputValue = displayHeightMm === 0 ? "" : displayHeightMm;
 
+  // Corner radius input: по умолчанию показываем "0", но позволяем очищать поле
+  const [isCornerEditing, setIsCornerEditing] = useState(false);
+  const [cornerRadiusInput, setCornerRadiusInput] = useState("0");
+  useEffect(() => {
+    // Синхронизация из state, если не редактируем и поле не принудительно пустое
+    if (!isCornerEditing && cornerRadiusInput !== "") {
+      const v =
+        sizeValues && sizeValues.cornerRadius != null
+          ? String(sizeValues.cornerRadius)
+          : "0";
+      if (cornerRadiusInput !== v) setCornerRadiusInput(v);
+    }
+  }, [sizeValues?.cornerRadius, isCornerEditing]);
+
+  // Гарантуємо що отвори (cutType: 'hole') завжди залишаються білими з чорним обводом, незалежно від теми.
+  useEffect(() => {
+    if (!canvas) return;
+    (canvas.getObjects?.() || [])
+      .filter((o) => o.isCutElement && o.cutType === "hole")
+      .forEach((o) => {
+        if (o.fill !== "#FFFFFF" || o.stroke !== "#000000") {
+          o.set({ fill: "#FFFFFF", stroke: "#000000" });
+        }
+      });
+    canvas.requestRenderAll?.();
+  }, [canvas, globalColors]);
+
   return (
     <div className={styles.toolbar}>
       {isCustomShapeMode && (
@@ -8269,27 +8339,66 @@ const Toolbar = () => {
         </div>
         <div className={styles.icons}>
           <h3>Shape</h3>
-          <span onClick={withShapePick(addRectangle)}>{Icon0}</span>
-          <span onClick={withShapePick(addCircle)}>{Icon1}</span>
-          <span onClick={withShapePick(addEllipse)}>{Icon2}</span>
-          <span onClick={withShapePick(addLock)}>{Icon3}</span>
-          <span onClick={withShapePick(addCircleWithLine)}>{Icon4}</span>
-          <span onClick={withShapePick(addCircleWithCross)}>{Icon5}</span>
-          <span onClick={withShapePick(addAdaptiveTriangle)}>{Icon6}</span>
-          <span onClick={withShapePick(addHalfCircle)}>{Icon7}</span>
-          <span onClick={withShapePick(addExtendedHalfCircle)}>{Icon8}</span>
-          <span onClick={withShapePick(addHexagon)}>{Icon9}</span>
-          <span onClick={withShapePick(addOctagon)}>{Icon10}</span>
-          <span onClick={withShapePick(addTriangleUp)}>{Icon11}</span>
-          <span onClick={withShapePick(addArrowLeft)}>{Icon12}</span>
-          <span onClick={withShapePick(addArrowRight)}>{Icon13}</span>
+          <span title="Rectangle" onClick={withShapePick(addRectangle)}>
+            {Icon0}
+          </span>
+          <span title="Round" onClick={withShapePick(addCircle)}>
+            {Icon1}
+          </span>
+          <span title="Oval" onClick={withShapePick(addEllipse)}>
+            {Icon2}
+          </span>
+          <span
+            title="Rectangle with a loop (Hanging Sing)"
+            onClick={withShapePick(addLock)}
+          >
+            {Icon3}
+          </span>
+          <span
+            title="Round with a line"
+            onClick={withShapePick(addCircleWithLine)}
+          >
+            {Icon4}
+          </span>
+          <span
+            title="Round with a T-shaped line"
+            onClick={withShapePick(addCircleWithCross)}
+          >
+            {Icon5}
+          </span>
+          <span
+            title="Warning Triangle"
+            onClick={withShapePick(addAdaptiveTriangle)}
+          >
+            {Icon6}
+          </span>
+          <span title="Semi round" onClick={withShapePick(addHalfCircle)}>
+            {Icon7}
+          </span>
+          <span
+            title="Round Top"
+            onClick={withShapePick(addExtendedHalfCircle)}
+          >
+            {Icon8}
+          </span>
+          <span title="Hexagon" onClick={withShapePick(addHexagon)}>
+            {Icon9}
+          </span>
+          <span title="Octagon" onClick={withShapePick(addOctagon)}>
+            {Icon10}
+          </span>
+          <span title="Triangle" onClick={withShapePick(addTriangleUp)}>
+            {Icon11}
+          </span>
+          <span title="Left arrow" onClick={withShapePick(addArrowLeft)}>
+            {Icon12}
+          </span>
+          <span title="Right arrow" onClick={withShapePick(addArrowRight)}>
+            {Icon13}
+          </span>
           {(() => {
             const disabled = blockedCustomTypes.has(currentShapeType);
-            const title = disabled
-              ? "Недоступно для цієї форми"
-              : isCustomShapeMode
-              ? "Вийти з Custom Shape"
-              : "Custom Shape";
+            const title = "Custom shape";
             return (
               <span
                 onClick={disabled ? undefined : toggleCustomShapeMode}
@@ -8362,9 +8471,7 @@ const Toolbar = () => {
             <div className={styles.inputGroup}>
               <input
                 type="number"
-                value={
-                  sizeValues.cornerRadius === 0 ? "" : sizeValues.cornerRadius
-                }
+                value={cornerRadiusInput}
                 max={Math.floor(
                   Math.min(
                     Number(sizeValues.width) || 0,
@@ -8380,14 +8487,25 @@ const Toolbar = () => {
                   opacity: isCustomShapeApplied ? 0.85 : 1,
                 }}
                 onChange={(e) => {
-                  let val = e.target.value === "" ? "" : e.target.value;
+                  setIsCornerEditing(true);
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    // Разрешаем пустую строку визуально
+                    setCornerRadiusInput("");
+                    return; // пока пусто — не применять
+                  }
                   const maxCorner = Math.floor(
                     Math.min(
                       Number(sizeValues.width) || 0,
                       Number(sizeValues.height) || 0
                     ) / 2
                   );
-                  if (val !== "" && Number(val) > maxCorner) val = maxCorner;
+                  const num = Number(raw);
+                  const clamped = isNaN(num)
+                    ? 0
+                    : Math.min(maxCorner, Math.max(0, num));
+                  // Мгновенно отрисовываем ограниченное значение, если превысили
+                  setCornerRadiusInput(String(clamped));
                   if (!isCircleSelected && !isCustomShapeApplied) {
                     handleInputChange(
                       "cornerRadius",
@@ -8397,8 +8515,15 @@ const Toolbar = () => {
                           Number(sizeValues.height) || 0
                         ) / 2
                       ),
-                      val
+                      clamped
                     );
+                  }
+                }}
+                onBlur={() => {
+                  setIsCornerEditing(false);
+                  // Если оставили пусто — восстановим "0" визуально без изменения логики
+                  if (cornerRadiusInput === "") {
+                    setCornerRadiusInput("0");
                   }
                 }}
               />
@@ -8548,7 +8673,7 @@ const Toolbar = () => {
         <div className={styles.colors}>
           <span
             onClick={() => handleColorPick(0, "#000000", "#FFFFFF", "solid")}
-            title="Чорний текст, білий фон"
+            title="White / Black"
           >
             <A1
               borderColor={
@@ -8560,7 +8685,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(1, "#0000FF", "#FFFFFF", "solid")}
-            title="Синій текст, білий фон"
+            title="White / Blue"
           >
             <A2
               borderColor={
@@ -8572,7 +8697,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(2, "#FF0000", "#FFFFFF", "solid")}
-            title="Червоний текст, білий фон"
+            title="White / Red"
           >
             <A3
               borderColor={
@@ -8584,7 +8709,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(3, "#FFFFFF", "#000000", "solid")}
-            title="Білий текст, чорний фон"
+            title="Black / White"
           >
             <A4
               borderColor={
@@ -8596,7 +8721,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(4, "#FFFFFF", "#0000FF", "solid")}
-            title="Білий текст, синій фон"
+            title="Blue / White"
           >
             <A5
               borderColor={
@@ -8608,7 +8733,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(5, "#FFFFFF", "#FF0000", "solid")}
-            title="Білий текст, червоний фон"
+            title="Red / White"
           >
             <A6
               borderColor={
@@ -8620,7 +8745,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(6, "#FFFFFF", "#00FF00", "solid")}
-            title="Білий текст, зелений фон"
+            title="Green / White"
           >
             <A7
               borderColor={
@@ -8632,7 +8757,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(7, "#000000", "#FFFF00", "solid")}
-            title="Чорний текст, жовтий фон"
+            title="Yellow / Black"
           >
             <A8
               borderColor={
@@ -8644,7 +8769,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(8, "#000000", "#F0F0F0", "gradient")}
-            title="Чорний текст, градієнт фон"
+            title="Silver / Black"
           >
             <A9
               borderColor={
@@ -8656,7 +8781,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(9, "#FFFFFF", "#8B4513", "solid")}
-            title="Білий текст, коричневий фон"
+            title="Brown / White"
           >
             <A10
               borderColor={
@@ -8668,7 +8793,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(10, "#FFFFFF", "#FFA500", "solid")}
-            title="Білий текст, оранжевий фон"
+            title="Orange / White"
           >
             <A11
               borderColor={
@@ -8680,7 +8805,7 @@ const Toolbar = () => {
           </span>
           <span
             onClick={() => handleColorPick(11, "#FFFFFF", "#808080", "solid")}
-            title="Білий текст, сірий фон (звичайний)"
+            title="Gray / White"
           >
             <A12
               borderColor={
@@ -8694,7 +8819,7 @@ const Toolbar = () => {
             onClick={() =>
               handleColorPick(12, "#000000", "/textures/Wood.jpg", "texture")
             }
-            title="Чорний текст, фон дерева"
+            title="Maple (“Wood”) / Black"
           >
             <A13
               borderColor={
@@ -8708,7 +8833,7 @@ const Toolbar = () => {
             onClick={() =>
               handleColorPick(13, "#FFFFFF", "/textures/Carbon.jpg", "texture")
             }
-            title="Білий текст, карбоновий фон"
+            title="Carbon / White"
           >
             <A14
               borderColor={
@@ -8752,6 +8877,7 @@ const Toolbar = () => {
           </li>
           <li className={styles.elementsEl} onClick={addShape}>
             <span
+              title="Cut + Fill"
               className={[
                 styles.elementsSpanWrapper,
                 isShapeOpen ? styles.active : "",
@@ -8769,6 +8895,7 @@ const Toolbar = () => {
           </li>
           <li className={styles.elementsEl} onClick={cut}>
             <span
+              title="Fixed Shapes"
               className={[
                 styles.elementsSpanWrapper,
                 isCutOpen ? styles.active : "",

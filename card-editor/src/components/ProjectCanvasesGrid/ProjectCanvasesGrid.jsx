@@ -1217,7 +1217,10 @@ const ProjectCanvasesGrid = () => {
         <div className={styles.empty}>No canvases in current project.</div>
       ) : (
         <div className={styles.grid}>
-          {current.map((c) => {
+          {current.map((c, index) => {
+            // Обчислюємо глобальний індекс елемента
+            const globalIndex = startIndex + index + 1;
+            
             // ВИПРАВЛЕННЯ: Використовуємо тільки збережені preview (SVG або PNG) з безпечною перевіркою
             const hasSvgPreview =
               c.previewSvg &&
@@ -1236,6 +1239,17 @@ const ProjectCanvasesGrid = () => {
                 }`}
                 onClick={() => openCanvas(c)}
               >
+                {/* Нумерація слайду */}
+                <div 
+                  className={styles.slideNumber}
+                  style={{
+                    backgroundColor: selectedId === c.id ? '#159DFF' : '#ffffff',
+                    color: selectedId === c.id ? '#ffffff' : '#000000'
+                  }}
+                >
+                  {globalIndex}
+                </div>
+                
                 <div className={styles.thumb}>
                   {hasSvgPreview || hasPngPreview ? (
                     hasSvgPreview ? (

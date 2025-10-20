@@ -1245,6 +1245,77 @@ const Toolbar = () => {
     return Math.max(0, Math.min(r, maxR));
   };
 
+  // Генерує точки для полігону з округленими кутами (для використання з fabric.Polygon)
+  const roundPolygonCorners = (points, radius, segments = 8) => {
+    if (!points || points.length < 3) return points;
+    if (radius <= 0) return points;
+    
+    const n = points.length;
+    const result = [];
+    
+    // Полігональна орієнтація
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const ccw = area > 0;
+    
+    const rMaxGlobal = clampRadiusForEdges(points, radius);
+    if (rMaxGlobal <= 0) return points;
+    
+    for (let i = 0; i < n; i++) {
+      const prev = points[(i - 1 + n) % n];
+      const curr = points[i];
+      const next = points[(i + 1) % n];
+      
+      const v1x = curr.x - prev.x;
+      const v1y = curr.y - prev.y;
+      const v2x = next.x - curr.x;
+      const v2y = next.y - curr.y;
+      
+      const len1 = Math.hypot(v1x, v1y) || 1;
+      const len2 = Math.hypot(v2x, v2y) || 1;
+      const u1x = v1x / len1;
+      const u1y = v1y / len1;
+      const u2x = v2x / len2;
+      const u2y = v2y / len2;
+      
+      const cross = u1x * u2y - u1y * u2x;
+      const isConvex = ccw ? cross > 0 : cross < 0;
+      
+      const rLocal = Math.max(0, Math.min(rMaxGlobal, len1 / 2 - 0.001, len2 / 2 - 0.001));
+      
+      if (!isConvex || rLocal <= 0) {
+        result.push({ x: curr.x, y: curr.y });
+        continue;
+      }
+      
+      const p1x = curr.x - u1x * rLocal;
+      const p1y = curr.y - u1y * rLocal;
+      const p2x = curr.x + u2x * rLocal;
+      const p2y = curr.y + u2y * rLocal;
+      
+      // Додаємо точку перед округленням
+      result.push({ x: p1x, y: p1y });
+      
+      // Апроксимуємо quadratic bezier curve точками
+      for (let j = 1; j <= segments; j++) {
+        const t = j / (segments + 1);
+        const mt = 1 - t;
+        const x = mt * mt * p1x + 2 * mt * t * curr.x + t * t * p2x;
+        const y = mt * mt * p1y + 2 * mt * t * curr.y + t * t * p2y;
+        result.push({ x, y });
+      }
+      
+      // Додаємо точку після округлення
+      result.push({ x: p2x, y: p2y });
+    }
+    
+    return result;
+  };
+
   const buildRoundedPolygonPath = (points, radius) => {
     if (!points || points.length < 3) return "";
     const n = points.length;
@@ -2307,10 +2378,10 @@ const Toolbar = () => {
             const dArc = `M0 ${height} A ${rx} ${ry} 0 0 1 ${width} ${height} L ${width} ${height} L 0 ${height} Z`;
             newClipPath = new fabric.Path(dArc, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
             break;
@@ -2422,10 +2493,10 @@ const Toolbar = () => {
           const d = pointsToOpenCatmullRomCubicPath(pts, tension);
           newClipPath = new fabric.Path(d, {
             absolutePositioned: true,
-            originX: "left",
-            originY: "top",
-            left: 0,
-            top: 0,
+            originX: "center",
+            originY: "center",
+            left: width / 2,
+            top: height / 2,
             objectCaching: false,
           });
           break;
@@ -2440,10 +2511,10 @@ const Toolbar = () => {
             const dArc = `M0 ${height} A ${rx} ${ry} 0 0 1 ${width} ${height} L ${width} ${height} L 0 ${height} Z`;
             newClipPath = new fabric.Path(dArc, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
             break;
@@ -2532,7 +2603,14 @@ const Toolbar = () => {
               return 0.5;
             })();
             const d = pointsToOpenCatmullRomCubicPath(pts, tension);
-            newClipPath = new fabric.Path(d, { absolutePositioned: true });
+            newClipPath = new fabric.Path(d, {
+              absolutePositioned: true,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
+              objectCaching: false,
+            });
           } else {
             // Високий варіант – наша спеціальна плавна логіка
             const cornerRadius = Math.max(0, Math.min(cr, height - 1));
@@ -2543,6 +2621,10 @@ const Toolbar = () => {
             );
             newClipPath = new fabric.Path(pathString, {
               absolutePositioned: true,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               fill: "transparent",
               stroke: "transparent",
             });
@@ -2578,13 +2660,15 @@ const Toolbar = () => {
               objectCaching: false,
             });
           } else {
+            // Генеруємо округлений hexagon
             const d = makeRoundedHexagonPath(width, height, cr);
+            
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
           }
@@ -2612,13 +2696,15 @@ const Toolbar = () => {
               objectCaching: false,
             });
           } else {
+            // Генеруємо округлений octagon
             const d = makeRoundedOctagonPath(width, height, cr);
+            
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
           }
@@ -2641,15 +2727,26 @@ const Toolbar = () => {
               objectCaching: false,
             });
           } else {
+            // Генеруємо округлений triangle
             const d = makeRoundedTrianglePath(width, height, cr);
+            
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
+            
+            // ВАРІАНТ 1: Інвертована компенсація
+            // Для triangle потрібна додаткова компенсація по Y через асиметрію фігури
+            if (cr > 0) {
+              const bounds = newClipPath._calcDimensions();
+              // Змінюємо знак - додаємо замість віднімання
+              const centerYOffset = (bounds.top + bounds.height / 2) - height / 2;
+              newClipPath.top = height / 2 + centerYOffset;
+            }
           }
           break;
         }
@@ -2674,15 +2771,27 @@ const Toolbar = () => {
               objectCaching: false,
             });
           } else {
+            // Генеруємо округлену arrowLeft
             const d = makeRoundedArrowLeftPath(width, height, cr);
+            
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
+            
+            // ВАРІАНТ 1: Інвертована компенсація для arrows
+            if (cr > 0) {
+              const bounds = newClipPath._calcDimensions();
+              // Додаємо замість віднімання
+              const centerYOffset = (bounds.top + bounds.height / 2) - height / 2;
+              newClipPath.top = height / 2 + centerYOffset;
+              const centerXOffset = (bounds.left + bounds.width / 2) - width / 2;
+              newClipPath.left = width / 2 + centerXOffset;
+            }
           }
           break;
         }
@@ -2707,22 +2816,43 @@ const Toolbar = () => {
               objectCaching: false,
             });
           } else {
+            // Генеруємо округлену arrowRight
             const d = makeRoundedArrowRightPath(width, height, cr);
+            
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "left",
-              originY: "top",
-              left: 0,
-              top: 0,
+              originX: "center",
+              originY: "center",
+              left: width / 2,
+              top: height / 2,
               objectCaching: false,
             });
+            
+            // ВАРІАНТ 1: Інвертована компенсація для arrows
+            if (cr > 0) {
+              const bounds = newClipPath._calcDimensions();
+              // Додаємо замість віднімання
+              const centerYOffset = (bounds.top + bounds.height / 2) - height / 2;
+              newClipPath.top = height / 2 + centerYOffset;
+              const centerXOffset = (bounds.left + bounds.width / 2) - width / 2;
+              newClipPath.left = width / 2 + centerXOffset;
+            }
           }
           break;
         }
 
         case "flag": {
+          // Генеруємо округлений flag
           const d = makeRoundedFlagPath(width, height, cr);
-          newClipPath = new fabric.Path(d, { absolutePositioned: true });
+          
+          newClipPath = new fabric.Path(d, {
+            absolutePositioned: true,
+            originX: "center",
+            originY: "center",
+            left: width / 2,
+            top: height / 2,
+            objectCaching: false,
+          });
           break;
         }
 
@@ -4710,17 +4840,24 @@ const Toolbar = () => {
     let pathData = null;
     if (cp.type === "path" && cp.path) {
       pathData = cp.path.map((cmd) => cmd.slice()); // deep copy commands
+    } else if (cp.type === "polygon" && cp.points) {
+      // Для polygon використовуємо точки напряму
+      pathData = cp.points.map((p) => ({ x: p.x, y: p.y }));
     } else {
-      // fallback: regenerate (shouldn't happen for hexagon but keeps function safe)
+      // fallback: regenerate
       const rPx = mmToPx(sizeValues.cornerRadius || 0);
-      const pathStr = makeRoundedHexagonPath(canvas.width, canvas.height, rPx);
-      pathData = pathStr; // fabric.Path can take string
+      const d = makeRoundedHexagonPath(canvas.width, canvas.height, rPx);
+      // Створюємо тимчасовий path щоб отримати pathData
+      const tempPath = new fabric.Path(d);
+      pathData = tempPath.path.map((cmd) => cmd.slice());
     }
+    
+    // Створюємо border на основі типу clipPath
     const border = new InnerStrokePathClass(pathData, {
       left: cp.left ?? 0,
       top: cp.top ?? 0,
-      originX: cp.originX ?? "center",
-      originY: cp.originY ?? "center",
+      originX: cp.originX ?? "left",
+      originY: cp.originY ?? "top",
       absolutePositioned: true,
       fill: "transparent",
       stroke: strokeColor,
@@ -4731,6 +4868,7 @@ const Toolbar = () => {
       isBorderShape: true,
       isHexagonInnerBorder: true,
     });
+    
     // Ensure pathOffset identical (prevents positional shift when radius changes)
     if (cp.pathOffset && border.pathOffset) {
       border.pathOffset.x = cp.pathOffset.x;
@@ -7806,11 +7944,16 @@ const Toolbar = () => {
       const d = makeRoundedHexagonPath(
         mmToPx(127),
         mmToPx(114),
-        currentShapeType === "hexagon"
-          ? mmToPx(sizeValues.cornerRadius || 0)
-          : 0
+        currentShapeType === "hexagon" ? mmToPx(sizeValues.cornerRadius || 0) : 0
       );
-      const clipPath = new fabric.Path(d, { absolutePositioned: true });
+      
+      const clipPath = new fabric.Path(d, { 
+        absolutePositioned: true,
+        originX: "center",
+        originY: "center",
+        left: mmToPx(127) / 2,
+        top: mmToPx(114) / 2
+      });
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;

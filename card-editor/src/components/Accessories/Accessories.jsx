@@ -23,6 +23,8 @@ const TopToolbar = ({ className }) => {
   const { canvas } = useCanvasContext();
   const [working, setWorking] = useState(false);
   const [isAccessoriesOpen, setAccessoriesOpen] = useState(false);
+  const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
+  
   // Toolbar <-> Modal shared state
   const [accessories, setAccessories] = useState([
     {
@@ -183,11 +185,25 @@ const TopToolbar = ({ className }) => {
       const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
       const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
-      await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+      const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
       try {
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
       } catch {}
+      
+      // НОВЕ: Автоматично відкриваємо новостворене полотно
+      setTimeout(() => {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("canvas:autoOpen", {
+              detail: { canvasId: newSign.id, isUnsaved: true }
+            })
+          );
+          console.log("Auto-opening new canvas:", newSign.id);
+        } catch (err) {
+          console.error("Failed to auto-open new canvas:", err);
+        }
+      }, 300);
     } catch (e) {
       console.error("New Sign failed", e);
     } finally {
@@ -239,6 +255,8 @@ const TopToolbar = ({ className }) => {
           canvas.renderAll();
           canvas.__suspendUndoRedo = false;
         }
+        // Скидаємо флаг перевірки, щоб автоматично створити нове полотно
+        setHasCheckedCanvases(false);
       }
       try {
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
@@ -249,6 +267,86 @@ const TopToolbar = ({ className }) => {
       setWorking(false);
     }
   };
+
+  // Автоматично створюємо дефолтне полотно якщо проект порожній
+  useEffect(() => {
+    if (!canvas || hasCheckedCanvases || working) return;
+
+    const checkAndCreateCanvas = async () => {
+      try {
+        // Отримуємо всі unsaved signs
+        const unsavedSigns = await getAllUnsavedSigns();
+        
+        // Перевіряємо чи є полотна в проекті
+        let projectCanvasCount = 0;
+        try {
+          const projectId = localStorage.getItem("currentProjectId");
+          if (projectId) {
+            const { getProject } = await import("../../utils/projectStorage");
+            const project = await getProject(projectId);
+            projectCanvasCount = project?.canvases?.length || 0;
+          }
+        } catch (err) {
+          console.warn("Could not check project canvases:", err);
+        }
+
+        const totalCanvases = unsavedSigns.length + projectCanvasCount;
+        
+        console.log("Canvas check:", {
+          unsavedSigns: unsavedSigns.length,
+          projectCanvases: projectCanvasCount,
+          total: totalCanvases
+        });
+
+        // Якщо немає жодного полотна - створюємо дефолтне
+        if (totalCanvases < 1) {
+          console.log("No canvases found, creating default canvas");
+          
+          // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+          const PX_PER_MM = 96 / 25.4;
+          const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
+          const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
+
+          const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+          
+          // Оновлюємо localStorage
+          try {
+            localStorage.setItem("currentUnsavedSignId", newSign.id);
+          } catch {}
+
+          // Тригеримо подію оновлення
+          try {
+            window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+          } catch {}
+
+          console.log("Default canvas created:", newSign.id);
+          
+          // НОВЕ: Автоматично відкриваємо створене полотно
+          // Чекаємо трохи щоб ProjectCanvasesGrid встиг оновитись
+          setTimeout(() => {
+            try {
+              window.dispatchEvent(
+                new CustomEvent("canvas:autoOpen", {
+                  detail: { canvasId: newSign.id, isUnsaved: true }
+                })
+              );
+              console.log("Auto-opening created canvas:", newSign.id);
+            } catch (err) {
+              console.error("Failed to auto-open canvas:", err);
+            }
+          }, 300);
+        }
+
+        setHasCheckedCanvases(true);
+      } catch (error) {
+        console.error("Failed to check/create default canvas:", error);
+        setHasCheckedCanvases(true); // Встановлюємо флаг навіть при помилці
+      }
+    };
+
+    checkAndCreateCanvas();
+  }, [canvas, hasCheckedCanvases, working]);
+
   return (
     <div className={`${styles.accessories} ${className}`}>
       <div className={styles.firstPart}>

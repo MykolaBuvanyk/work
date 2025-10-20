@@ -81,6 +81,8 @@ const ShapeProperties = ({
   });
 
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
+  // Запам'ятовуємо попередню товщину перед увімкненням Cut, щоб відновити її після вимкнення Cut
+  const [prevThicknessBeforeCut, setPrevThicknessBeforeCut] = useState(null);
 
   const activeObject = activeShape || canvas?.getActiveObject();
 
@@ -758,6 +760,46 @@ const ShapeProperties = ({
     };
   }, [canvas, activeObject, isOpen, shapePropertiesOpen, isManuallyEditing]);
 
+  // Коли змінюється активний об'єкт, примусово скидаємо ручне редагування
+  // і оновлюємо властивості з нового об'єкта, щоб не переносити попередні значення (товщина тощо)
+  useEffect(() => {
+    if (!activeObject) return;
+    setIsManuallyEditing(false);
+    const isManualCut =
+      !!activeObject.isCutElement || activeObject.cutType === "manual";
+    const supportedPathShapes = new Set([
+      "roundedCorners",
+      "rectangle",
+      "hexagon",
+      "octagon",
+      "triangle",
+      "warningTriangle",
+      "semiround",
+      "roundTop",
+      "turnLeft",
+      "turnRight",
+    ]);
+    const fillVal = activeObject.fill;
+    const hasFill =
+      typeof fillVal === "string" &&
+      fillVal !== "" &&
+      fillVal !== "transparent" &&
+      fillVal !== "none";
+    setProperties({
+      width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
+      height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
+      rotation: Math.round(activeObject.angle || 0),
+      cornerRadius:
+        activeObject.type === "rect" ||
+        supportedPathShapes.has(activeObject.shapeType)
+          ? getCornerRadiusMmForRounded(activeObject)
+          : 0,
+      thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+      fill: !isManualCut && hasFill,
+      cut: isManualCut,
+    });
+  }, [activeObject]);
+
   // Реакция на смену цветовой темы: если Fill активен у фигуры (не cut shape), обновить fill под новый textColor
   useEffect(() => {
     if (!canvas || !activeObject) return;
@@ -818,7 +860,17 @@ const ShapeProperties = ({
       value = Math.max(0, Math.min(30, Math.round(value || 0)));
     }
     // Локально оновлюємо стан, щоб інпут одразу відображав нове значення
-    setProperties((prev) => ({ ...prev, [property]: value }));
+    // Для кола синхронізуємо ширину і висоту між собою
+    const isCircleLocal =
+      obj?.type === "circle" ||
+      obj?.isCircle === true ||
+      obj?.shapeType === "round";
+    setProperties((prev) => {
+      if (isCircleLocal && (property === "width" || property === "height")) {
+        return { ...prev, width: value, height: value };
+      }
+      return { ...prev, [property]: value };
+    });
 
     switch (property) {
       case "width": {
@@ -912,8 +964,8 @@ const ShapeProperties = ({
         break;
       }
       case "thickness": {
-        // Разрешаем в инпуте показывать 0, но применяем минимум 1 мм для объекта
-        const applied = value === 0 ? 1 : value;
+        // Дозволяємо товщину 0 мм (без мінімуму 1)
+        const applied = Math.max(0, value || 0);
         holdCenterIfArrow((o) => {
           o.set("strokeWidth", mmToPx(applied));
         });
@@ -999,7 +1051,13 @@ const ShapeProperties = ({
     setIsManuallyEditing(true);
     const currentValue = properties[property];
     const newValue = currentValue + increment;
-    updateProperty(property, newValue);
+    if (isCircle && (property === "width" || property === "height")) {
+      // Для кола оновлюємо обидва
+      updateProperty("width", newValue);
+      updateProperty("height", newValue);
+    } else {
+      updateProperty(property, newValue);
+    }
   };
 
   const decrementValue = (property, decrement = 1) => {
@@ -1015,7 +1073,12 @@ const ShapeProperties = ({
       newValue = Math.max(0, currentValue - decrement);
     }
 
-    updateProperty(property, newValue);
+    if (isCircle && (property === "width" || property === "height")) {
+      updateProperty("width", newValue);
+      updateProperty("height", newValue);
+    } else {
+      updateProperty(property, newValue);
+    }
   };
 
   if (!isOpen || !activeObject) return null;
@@ -1090,7 +1153,7 @@ const ShapeProperties = ({
         </div>
         <div className={styles.propertyGroup}>
           <label className={styles.label}>
-            Width (mm):
+            Width:
             <div className={styles.inputGroup}>
               <input
                 type="number"
@@ -1180,7 +1243,7 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Height (mm):
+            Height:
             <div className={styles.inputGroup}>
               <input
                 type="number"
@@ -1303,15 +1366,21 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Thickness (mm):
+            Thickness:
             <div className={styles.inputGroup}>
               <input
                 type="number"
                 className={styles.input}
+                disabled={properties.fill || properties.cut}
+                style={{
+                  cursor:
+                    properties.fill || properties.cut ? "not-allowed" : "text",
+                  opacity: properties.fill || properties.cut ? 0.7 : 1,
+                }}
                 value={
                   typeof properties.thickness === "string"
                     ? properties.thickness
-                    : properties.thickness === 0 || properties.thickness === 1
+                    : properties.thickness === 0.5
                     ? ""
                     : properties.thickness
                 }
@@ -1363,12 +1432,19 @@ const ShapeProperties = ({
                   const raw = String(e.target.value || "");
                   const normalized = raw.replace(/,/g, ".");
                   const num = parseFloat(normalized);
-                  const finalVal = raw.trim() === "" || isNaN(num) ? 1 : num;
+                  const finalVal = raw.trim() === "" || isNaN(num) ? 0.5 : num;
                   updateProperty("thickness", finalVal);
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
               />
-              <div className={styles.arrows}>
+              <div
+                className={styles.arrows}
+                style={{
+                  pointerEvents:
+                    properties.fill || properties.cut ? "none" : "auto",
+                  opacity: properties.fill || properties.cut ? 0.6 : 1,
+                }}
+              >
                 <i
                   className="fa-solid fa-chevron-up"
                   onClick={() => incrementValue("thickness", 0.5)}
@@ -1390,8 +1466,13 @@ const ShapeProperties = ({
                   if (e.target.checked) {
                     updateProperty("cut", false);
                     updateProperty("fill", true);
+                    // При активному Fill товщина має бути 0 та поле неактивне
+                    updateProperty("thickness", 0);
                   } else {
                     updateProperty("fill", false);
+                    // Після вимкнення Fill: повертаємо товщину до 0.5 і показуємо її в інпуті
+                    setProperties((prev) => ({ ...prev, thickness: "0.5" }));
+                    updateProperty("thickness", 0.5);
                   }
                 }}
               />
@@ -1403,10 +1484,32 @@ const ShapeProperties = ({
                 checked={properties.cut}
                 onChange={(e) => {
                   if (e.target.checked) {
+                    // Запам'ятати поточну товщину, щоб відновити після вимкнення Cut
+                    const currentTh = (() => {
+                      const t = properties.thickness;
+                      if (typeof t === "number") return t;
+                      const parsed = parseFloat(String(t).replace(/,/g, "."));
+                      return isNaN(parsed) ? 0.5 : parsed;
+                    })();
+                    setPrevThicknessBeforeCut(currentTh);
                     updateProperty("fill", false);
                     updateProperty("cut", true);
+                    // Під час Cut товщина завжди 0.5 мм
+                    setProperties((prev) => ({ ...prev, thickness: "0.5" }));
+                    updateProperty("thickness", 0.5);
                   } else {
                     updateProperty("cut", false);
+                    // Відновлюємо попередню товщину, якщо Fill не активний
+                    const thToRestore = prevThicknessBeforeCut;
+                    if (!properties.fill) {
+                      const restoreVal =
+                        typeof thToRestore === "number" && !isNaN(thToRestore)
+                          ? thToRestore
+                          : 0.5;
+                      updateProperty("thickness", restoreVal);
+                    }
+                    // Скидаємо запам'ятоване значення
+                    setPrevThicknessBeforeCut(null);
                   }
                 }}
               />

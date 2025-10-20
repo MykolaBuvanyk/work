@@ -28,6 +28,46 @@ const AccessoriesModal = ({
     };
   }, [isOpen, onClose]);
 
+  // Динамічно вмикаємо внутрішній скрол лише коли модалка вища за доступну висоту екрана
+  useEffect(() => {
+    if (!isOpen) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const updateScrollable = () => {
+      // Враховуємо top: 5% для .modalRoot -> даємо ~90% висоти екрана під модалку
+      const available = Math.floor(window.innerHeight * 0.9);
+      // scrollHeight дає природну висоту контенту модалки
+      const natural = el.scrollHeight;
+      if (natural > available) {
+        el.style.maxHeight = available + "px";
+        el.style.overflowY = "auto";
+      } else {
+        el.style.maxHeight = "";
+        el.style.overflowY = "visible";
+      }
+    };
+
+    // Оновлюємо одразу, на ресайзі і коли завантажуються зображення
+    updateScrollable();
+    window.addEventListener("resize", updateScrollable);
+
+    const imgs = el.querySelectorAll("img");
+    const onImgLoad = () => updateScrollable();
+    imgs.forEach((img) => {
+      if (!img.complete) img.addEventListener("load", onImgLoad);
+    });
+
+    const mo = new MutationObserver(() => updateScrollable());
+    mo.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      window.removeEventListener("resize", updateScrollable);
+      imgs.forEach((img) => img.removeEventListener("load", onImgLoad));
+      mo.disconnect();
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -48,16 +88,18 @@ const AccessoriesModal = ({
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M6 6L18 18"
-                stroke="#333"
-                strokeWidth="2"
+                d="M12.0008 12.0001L14.8292 14.8285M9.17236 14.8285L12.0008 12.0001L9.17236 14.8285ZM14.8292 9.17163L12.0008 12.0001L14.8292 9.17163ZM12.0008 12.0001L9.17236 9.17163L12.0008 12.0001Z"
+                stroke="#006CA4"
+                strokeWidth="1.5"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
-                d="M18 6L6 18"
-                stroke="#333"
-                strokeWidth="2"
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="#006CA4"
+                strokeWidth="1.5"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </button>
@@ -76,11 +118,7 @@ const AccessoriesModal = ({
                 </div>
                 <div className={styles.colThumb}>
                   <img
-                    className={`${styles.thumb} ${
-                      it.id === 1 || it.id === 4 || it.id === 5 || it.id === 6
-                        ? styles.thumbSm
-                        : ""
-                    }`}
+                    className={styles.thumb}
                     src={it.img}
                     alt={`${it.name} image`}
                   />
@@ -110,13 +148,46 @@ const AccessoriesModal = ({
                 <div className={styles.colDesc}>{it.desc}</div>
                 <div className={styles.colExtra}>
                   {it.hasExtra && it.extraImg ? (
-                    <img
-                      className={`${styles.extraThumb} ${
-                        it.id === 6 ? styles.extraThumbSm : ""
-                      }`}
-                      src={it.extraImg}
-                      alt={`${it.name} extra`}
-                    />
+                    <div className={styles.extraWrap}>
+                      {it.id === 4 ? (
+                        <div className={styles.extraLabel}>Example use</div>
+                      ) : null}
+                      <img
+                        className={styles.extraThumb}
+                        src={it.extraImg}
+                        alt={`${it.name} extra`}
+                        style={{
+                          // Фіксовані розміри додаткових картинок без наведення
+                          width:
+                            it.id === 4
+                              ? 117
+                              : it.id === 5
+                              ? 96
+                              : it.id === 6
+                              ? 85
+                              : undefined,
+                          height:
+                            it.id === 4
+                              ? 113
+                              : it.id === 5
+                              ? 130
+                              : it.id === 6
+                              ? 145
+                              : undefined,
+                        }}
+                      />
+                      {/* Збільшене превʼю при наведенні */}
+                      <div
+                        className={styles.extraPreviewOverlay}
+                        aria-hidden="true"
+                      >
+                        <img
+                          className={styles.extraPreviewImage}
+                          src={it.extraImg}
+                          alt=""
+                        />
+                      </div>
+                    </div>
                   ) : null}
                 </div>
               </li>

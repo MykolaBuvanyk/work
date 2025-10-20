@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
-  import { useUndoRedo } from "../../hooks/useUndoRedo";
+import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
@@ -9,20 +9,15 @@ import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
-import { 
-  saveCurrentProject, 
+import {
+  saveCurrentProject,
   saveNewProject,
   clearAllUnsavedSigns,
-  addBlankUnsavedSign
+  addBlankUnsavedSign,
 } from "../../utils/projectStorage";
 
 const TopToolbar = ({ className }) => {
-  const { 
-    undo, 
-    redo, 
-    canUndo, 
-    canRedo
-  } = useUndoRedo();
+  const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
   const { canvas } = useCanvasContext();
   const [zoom, setZoom] = useState(100); // legacy fabric zoom (kept for compatibility)
@@ -36,19 +31,19 @@ const TopToolbar = ({ className }) => {
 
   const handleSave = async () => {
     if (!canvas || isSaving) return;
-    
+
     // Перевіряємо чи проект вже збережений
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
     } catch {}
-    
+
     // Якщо проект не збережений - відкриваємо SaveAsModal
     if (!currentProjectId) {
       setSaveAsModalOpen(true);
       return;
     }
-    
+
     // Якщо збережений - оновлюємо проект
     setIsSaving(true);
     try {
@@ -62,13 +57,13 @@ const TopToolbar = ({ className }) => {
 
   const handleNewProject = async () => {
     if (!canvas) return;
-    
+
     // Перевіряємо чи є збережений проект
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
     } catch {}
-    
+
     // Якщо проект вже збережений - просто створюємо новий без модалки
     if (currentProjectId) {
       // Очищуємо localStorage
@@ -78,7 +73,7 @@ const TopToolbar = ({ className }) => {
         localStorage.removeItem("currentCanvasId");
         localStorage.removeItem("currentUnsavedSignId");
       } catch {}
-      
+
       // Очищуємо canvas
       try {
         canvas.__suspendUndoRedo = true;
@@ -87,7 +82,7 @@ const TopToolbar = ({ className }) => {
         canvas.renderAll();
         canvas.__suspendUndoRedo = false;
       } catch {}
-      
+
       // Скидаємо toolbar state до дефолтних значень
       if (window.restoreToolbarState) {
         try {
@@ -98,9 +93,9 @@ const TopToolbar = ({ className }) => {
             globalColors: {
               textColor: "#000000",
               backgroundColor: "#FFFFFF",
-              strokeColor: "#000000", 
+              strokeColor: "#000000",
               fillColor: "transparent",
-              backgroundType: "solid"
+              backgroundType: "solid",
             },
             selectedColorIndex: 0,
             thickness: 1.6,
@@ -112,46 +107,54 @@ const TopToolbar = ({ className }) => {
             isCustomShapeApplied: false,
             hasUserPickedShape: false,
             copiesCount: 1,
-            hasBorder: false
+            hasBorder: false,
           });
         } catch (e) {
           console.error("Failed to reset toolbar state", e);
         }
       }
-      
+
       // Очищаємо всі unsaved signs перед створенням нового
       try {
         await clearAllUnsavedSigns();
       } catch (e) {
         console.error("Failed to clear unsaved signs", e);
       }
-      
+
       // Створюємо нове полотно за замовчуванням
       try {
         // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
         const PX_PER_MM = 96 / 25.4;
         const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
         const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
-        
-        const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-        
+
+        const newSign = await addBlankUnsavedSign(
+          DEFAULT_WIDTH,
+          DEFAULT_HEIGHT
+        );
+
         // Встановлюємо новий sign як активний
         try {
           localStorage.setItem("currentUnsavedSignId", newSign.id);
         } catch {}
-        
+
         // Відправляємо подію про оновлення unsaved signs
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
-        
+
         // Відправляємо подію про reset проекту (після створення нового полотна)
         window.dispatchEvent(new CustomEvent("project:reset"));
-        
+
         // Даємо час на оновлення state і автоматично відкриваємо полотно
         setTimeout(() => {
-          console.log('Dispatching canvas:autoOpen from TopToolbar for new sign:', newSign.id);
-          window.dispatchEvent(new CustomEvent("canvas:autoOpen", { 
-            detail: { canvasId: newSign.id, isUnsaved: true } 
-          }));
+          console.log(
+            "Dispatching canvas:autoOpen from TopToolbar for new sign:",
+            newSign.id
+          );
+          window.dispatchEvent(
+            new CustomEvent("canvas:autoOpen", {
+              detail: { canvasId: newSign.id, isUnsaved: true },
+            })
+          );
         }, 500);
       } catch (e) {
         console.error("Failed to create default canvas", e);
@@ -184,26 +187,30 @@ const TopToolbar = ({ className }) => {
     if (!canvas) return;
     // Work in effective scale units; apply via CSS scaling API
     const effective = Math.round(displayScale);
-    const dynamicMax = typeof canvas.getMaxDisplayScalePercent === "function"
-      ? canvas.getMaxDisplayScalePercent()
-      : 500;
+    const dynamicMax =
+      typeof canvas.getMaxDisplayScalePercent === "function"
+        ? canvas.getMaxDisplayScalePercent()
+        : 500;
     const next = Math.min(effective + 1, dynamicMax);
-    const applied = typeof canvas.setDisplayScale === "function"
-      ? canvas.setDisplayScale(next)
-      : next;
+    const applied =
+      typeof canvas.setDisplayScale === "function"
+        ? canvas.setDisplayScale(next)
+        : next;
     setZoomInput(String(applied));
   };
 
   const handleZoomOut = () => {
     if (!canvas) return;
-  const effective = Math.round(displayScale);
-  const dynamicMin = typeof canvas.getMinDisplayScalePercent === "function"
-    ? canvas.getMinDisplayScalePercent()
-    : 10;
-  const next = Math.max(effective - 1, dynamicMin);
-    const applied = typeof canvas.setDisplayScale === "function"
-      ? canvas.setDisplayScale(next)
-      : next;
+    const effective = Math.round(displayScale);
+    const dynamicMin =
+      typeof canvas.getMinDisplayScalePercent === "function"
+        ? canvas.getMinDisplayScalePercent()
+        : 10;
+    const next = Math.max(effective - 1, dynamicMin);
+    const applied =
+      typeof canvas.setDisplayScale === "function"
+        ? canvas.setDisplayScale(next)
+        : next;
     setZoomInput(String(applied));
   };
 
@@ -222,12 +229,14 @@ const TopToolbar = ({ className }) => {
     }
     let value = parseInt(digits, 10);
     if (isNaN(value)) value = Math.round(displayScale);
-    const dynamicMax = canvas && typeof canvas.getMaxDisplayScalePercent === "function"
-      ? canvas.getMaxDisplayScalePercent()
-      : 500;
-    const dynamicMin = canvas && typeof canvas.getMinDisplayScalePercent === "function"
-      ? canvas.getMinDisplayScalePercent()
-      : 10;
+    const dynamicMax =
+      canvas && typeof canvas.getMaxDisplayScalePercent === "function"
+        ? canvas.getMaxDisplayScalePercent()
+        : 500;
+    const dynamicMin =
+      canvas && typeof canvas.getMinDisplayScalePercent === "function"
+        ? canvas.getMinDisplayScalePercent()
+        : 10;
     value = Math.min(dynamicMax, Math.max(dynamicMin, value));
     if (canvas && typeof canvas.setDisplayScale === "function") {
       const applied = canvas.setDisplayScale(value);
@@ -253,12 +262,12 @@ const TopToolbar = ({ className }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Обробка Ctrl+S для збереження проекту
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         handleSave();
         return;
       }
-      
+
       // Обробка Delete для видалення об'єктів
       if (e.key === "Delete" || e.key === "Backspace") {
         // Якщо фокус в полі вводу або активний текст в режимі редагування — не видаляти
@@ -301,9 +310,9 @@ const TopToolbar = ({ className }) => {
     if (!canvas) return;
     const handler = (e) => {
       if (e?.scale) {
-  const pct = Math.round(e.scale * 100);
-  setDisplayScale(pct);
-  setZoomInput(String(pct));
+        const pct = Math.round(e.scale * 100);
+        setDisplayScale(pct);
+        setZoomInput(String(pct));
       }
     };
     canvas.on("display:scale", handler);
@@ -507,10 +516,7 @@ const TopToolbar = ({ className }) => {
         </div>
         <div className={styles.toolbarRow}>
           <div className={styles.buttonWrapper}>
-            <button
-              className={styles.blueButton}
-              onClick={handleNewProject}
-            >
+            <button className={styles.blueButton} onClick={handleNewProject}>
               <svg
                 width="24"
                 height="24"
@@ -654,6 +660,7 @@ const TopToolbar = ({ className }) => {
             className={`${styles.topToolbarEL} ${
               !canUndo ? styles.disabled : ""
             }`}
+            title="Undo"
             onClick={canUndo ? undo : undefined}
           >
             <svg
@@ -673,6 +680,7 @@ const TopToolbar = ({ className }) => {
             className={`${styles.topToolbarEL} ${
               !canRedo ? styles.disabled : ""
             }`}
+            title="Redo"
             onClick={canRedo ? redo : undefined}
           >
             <svg
@@ -709,7 +717,11 @@ const TopToolbar = ({ className }) => {
               if (savedProject && savedProject.id) {
                 localStorage.setItem("currentProjectId", savedProject.id);
                 // Відправляємо подію для автоматичного відкриття полотна
-                window.dispatchEvent(new CustomEvent("project:opened", { detail: { projectId: savedProject.id } }));
+                window.dispatchEvent(
+                  new CustomEvent("project:opened", {
+                    detail: { projectId: savedProject.id },
+                  })
+                );
               }
               // Не закриваємо модалку після збереження - користувач може захотіти зберегти ще проекти
             } catch (e) {

@@ -147,51 +147,55 @@ const ProjectCanvasesGrid = () => {
       load();
     };
     const unsavedUpdated = () => loadUnsaved();
-    
+
     // Новий обробник для відкриття проекту
     const handleProjectOpened = async (e) => {
-      console.log('Project opened event received, resetting canvas load flag');
+      console.log("Project opened event received, resetting canvas load flag");
       const projectIdFromEvent = e?.detail?.projectId;
       initialCanvasLoadRef.current = false;
-      
+
       // Відкриваємо перше полотно проекту
       setTimeout(async () => {
         try {
-          const projectId = projectIdFromEvent || localStorage.getItem("currentProjectId");
+          const projectId =
+            projectIdFromEvent || localStorage.getItem("currentProjectId");
           if (!projectId) {
-            console.log('No project ID found after project opened');
+            console.log("No project ID found after project opened");
             return;
           }
-          
+
           const currentProject = await getProject(projectId);
           if (!currentProject) {
-            console.log('Project not found:', projectId);
+            console.log("Project not found:", projectId);
             return;
           }
-          
+
           const canvases = currentProject.canvases || [];
-          console.log('Project loaded, canvases count:', canvases.length);
-          
+          console.log("Project loaded, canvases count:", canvases.length);
+
           // Оновлюємо локальний state
           setProject(currentProject);
           setIsProjectLoaded(true);
-          
+
           // Також завантажуємо unsaved signs
           try {
             const unsavedList = await getAllUnsavedSigns();
-            const mapped = unsavedList.map(s => ({ ...s, _unsaved: true }));
+            const mapped = unsavedList.map((s) => ({ ...s, _unsaved: true }));
             setUnsavedSigns(mapped);
             setIsUnsavedLoaded(true);
           } catch (err) {
-            console.error('Failed to load unsaved signs:', err);
+            console.error("Failed to load unsaved signs:", err);
             setUnsavedSigns([]);
             setIsUnsavedLoaded(true);
           }
-          
+
           if (canvases.length > 0) {
             const firstCanvas = canvases[0];
-            console.log('Auto-opening first project canvas after save:', firstCanvas.id);
-            
+            console.log(
+              "Auto-opening first project canvas after save:",
+              firstCanvas.id
+            );
+
             // Встановлюємо його як активний
             try {
               localStorage.setItem("currentCanvasId", firstCanvas.id);
@@ -207,14 +211,14 @@ const ProjectCanvasesGrid = () => {
             } catch {}
             
             // Даємо час на оновлення state
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             // Відкриваємо його
             if (openCanvasRef.current && canvas) {
               await openCanvasRef.current(firstCanvas);
-              console.log('Canvas opened successfully');
+              console.log("Canvas opened successfully");
             } else {
-              console.log('openCanvasRef or canvas not available');
+              console.log("openCanvasRef or canvas not available");
             }
           } else {
             console.log('No canvases in project');
@@ -230,51 +234,61 @@ const ProjectCanvasesGrid = () => {
             } catch {}
           }
         } catch (error) {
-          console.error('Failed to auto-open canvas after project opened:', error);
+          console.error(
+            "Failed to auto-open canvas after project opened:",
+            error
+          );
         }
       }, 200); // Даємо час на оновлення після події
     };
-    
+
     // Новий обробник для автоматичного відкриття полотна
     const handleCanvasAutoOpen = async (e) => {
       const canvasId = e?.detail?.canvasId;
       const isUnsaved = e?.detail?.isUnsaved;
-      
+
       if (!canvasId) {
-        console.log('No canvas ID provided for auto-open');
+        console.log("No canvas ID provided for auto-open");
         return;
       }
-      
-      console.log('Canvas auto-open event received:', canvasId, 'isUnsaved:', isUnsaved);
-      
+
+      console.log(
+        "Canvas auto-open event received:",
+        canvasId,
+        "isUnsaved:",
+        isUnsaved
+      );
+
       // Чекаємо поки canvas буде готовий
       if (!canvas) {
-        console.log('Canvas not ready yet, waiting...');
+        console.log("Canvas not ready yet, waiting...");
         // Повторюємо спробу через 100мс
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent("canvas:autoOpen", { 
-            detail: { canvasId, isUnsaved } 
-          }));
+          window.dispatchEvent(
+            new CustomEvent("canvas:autoOpen", {
+              detail: { canvasId, isUnsaved },
+            })
+          );
         }, 100);
         return;
       }
-      
+
       try {
         let canvasToOpen = null;
         let attempts = 0;
         const maxAttempts = 10;
-        
+
         // Пробуємо знайти полотно, робимо кілька спроб
         while (!canvasToOpen && attempts < maxAttempts) {
           if (isUnsaved) {
             // Завантажуємо свіжі unsaved signs
             const unsavedList = await getAllUnsavedSigns();
-            const mapped = unsavedList.map(s => ({ ...s, _unsaved: true }));
-            
-            canvasToOpen = mapped.find(s => s.id === canvasId);
-            
+            const mapped = unsavedList.map((s) => ({ ...s, _unsaved: true }));
+
+            canvasToOpen = mapped.find((s) => s.id === canvasId);
+
             if (canvasToOpen) {
-              console.log('Found unsaved sign to open:', canvasId);
+              console.log("Found unsaved sign to open:", canvasId);
               setUnsavedSigns(mapped);
               setIsUnsavedLoaded(true);
             }
@@ -284,40 +298,44 @@ const ProjectCanvasesGrid = () => {
             if (projectId) {
               const currentProject = await getProject(projectId);
               if (currentProject) {
-                canvasToOpen = currentProject.canvases?.find(c => c.id === canvasId);
-                
+                canvasToOpen = currentProject.canvases?.find(
+                  (c) => c.id === canvasId
+                );
+
                 if (canvasToOpen) {
-                  console.log('Found project canvas to open:', canvasId);
+                  console.log("Found project canvas to open:", canvasId);
                   setProject(currentProject);
                   setIsProjectLoaded(true);
                 }
               }
             }
           }
-          
+
           if (!canvasToOpen) {
-            console.log(`Canvas not found yet, attempt ${attempts + 1}/${maxAttempts}`);
-            await new Promise(resolve => setTimeout(resolve, 100));
+            console.log(
+              `Canvas not found yet, attempt ${attempts + 1}/${maxAttempts}`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 100));
             attempts++;
           }
         }
-        
+
         if (canvasToOpen && openCanvasRef.current) {
-          console.log('Auto-opening canvas:', canvasId);
-          
+          console.log("Auto-opening canvas:", canvasId);
+
           // Чекаємо ще трохи щоб state оновився
-          await new Promise(resolve => setTimeout(resolve, 150));
-          
+          await new Promise((resolve) => setTimeout(resolve, 150));
+
           await openCanvasRef.current(canvasToOpen);
-          console.log('Canvas auto-opened successfully');
+          console.log("Canvas auto-opened successfully");
         } else {
-          console.log('Canvas not found after all attempts:', canvasId);
+          console.log("Canvas not found after all attempts:", canvasId);
         }
       } catch (error) {
-        console.error('Failed to auto-open canvas:', error);
+        console.error("Failed to auto-open canvas:", error);
       }
     };
-    
+
     window.addEventListener("project:canvasesUpdated", updated);
     window.addEventListener("project:switched", switched);
     window.addEventListener("project:reset", reset);
@@ -693,14 +711,6 @@ const ProjectCanvasesGrid = () => {
           canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
         }
 
-        if (typeof window !== "undefined" && window.ensureInnerStrokeClasses) {
-          try {
-            window.ensureInnerStrokeClasses();
-          } catch (e) {
-            console.warn("Failed to ensure inner stroke classes", e);
-          }
-        }
-
         registerDesignInContext();
         selectDesign?.(mappedDesign.id);
 
@@ -936,27 +946,27 @@ const ProjectCanvasesGrid = () => {
 
     // ВИПРАВЛЕННЯ: Пріоритет - проектні полотна, потім unsaved, потім fallback
     let entryToOpen = null;
-    
+
     // Якщо є збережений проект, пріоритет віддаємо його полотнам
     const hasProject = project?.id && storedCanvases.length > 0;
-    
+
     if (hasProject) {
       // Якщо є збережене полотно проекту - відкриваємо його
       entryToOpen = projectEntry || storedCanvases[0];
-      console.log('Auto-loading project canvas:', entryToOpen?.id);
+      console.log("Auto-loading project canvas:", entryToOpen?.id);
     } else if (unsavedEntry) {
       // Інакше беремо unsaved sign
       entryToOpen = unsavedEntry;
-      console.log('Auto-loading unsaved sign:', entryToOpen?.id);
+      console.log("Auto-loading unsaved sign:", entryToOpen?.id);
     } else {
       // Fallback - перше доступне полотно
       entryToOpen = canvases[0] || null;
-      console.log('Auto-loading fallback canvas:', entryToOpen?.id);
+      console.log("Auto-loading fallback canvas:", entryToOpen?.id);
     }
 
     if (!entryToOpen) {
       initialCanvasLoadRef.current = true;
-      console.log('No canvas to auto-load');
+      console.log("No canvas to auto-load");
       return;
     }
 
@@ -969,7 +979,7 @@ const ProjectCanvasesGrid = () => {
 
       if (typeof openCanvasRef.current === "function") {
         try {
-          console.log('Auto-opening canvas:', entryToOpen.id);
+          console.log("Auto-opening canvas:", entryToOpen.id);
           await openCanvasRef.current(entryToOpen);
         } catch (error) {
           console.error("Failed to auto-load initial canvas", error);
@@ -1289,7 +1299,7 @@ const ProjectCanvasesGrid = () => {
           {current.map((c, index) => {
             // Обчислюємо глобальний індекс елемента
             const globalIndex = startIndex + index + 1;
-            
+
             // ВИПРАВЛЕННЯ: Використовуємо тільки збережені preview (SVG або PNG) з безпечною перевіркою
             const hasSvgPreview =
               c.previewSvg &&
@@ -1309,16 +1319,17 @@ const ProjectCanvasesGrid = () => {
                 onClick={() => openCanvas(c)}
               >
                 {/* Нумерація слайду */}
-                <div 
+                <div
                   className={styles.slideNumber}
                   style={{
-                    backgroundColor: selectedId === c.id ? '#159DFF' : '#ffffff',
-                    color: selectedId === c.id ? '#ffffff' : '#000000'
+                    backgroundColor:
+                      selectedId === c.id ? "#159DFF" : "#ffffff",
+                    color: selectedId === c.id ? "#ffffff" : "#000000",
                   }}
                 >
                   {globalIndex}
                 </div>
-                
+
                 <div className={styles.thumb}>
                   {hasSvgPreview || hasPngPreview ? (
                     hasSvgPreview ? (

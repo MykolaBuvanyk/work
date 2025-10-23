@@ -130,10 +130,22 @@ const Canvas = () => {
     const isFromIconMenu = (o) =>
       !!o &&
       (o.fromIconMenu === true || (o.data && o.data.fromIconMenu === true));
+
+    const bringCanvasObjectToFront = (target) => {
+      if (!target) return;
+      if (typeof fCanvas.bringToFront === "function") {
+        fCanvas.bringToFront(target);
+      } else if (typeof fCanvas.bringObjectToFront === "function") {
+        fCanvas.bringObjectToFront(target);
+      } else if (typeof target.bringToFront === "function") {
+        target.bringToFront();
+      }
+    };
+
     const bringAllTextsToFront = () => {
       try {
         const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
-        texts.forEach((t) => fCanvas.bringToFront(t));
+        texts.forEach((t) => bringCanvasObjectToFront(t));
       } catch {}
     };
 
@@ -2045,10 +2057,10 @@ const Canvas = () => {
       // Правило шарів: текст завжди поверх усіх інших фігур
       try {
         if (isTextObj(target)) {
-          fCanvas.bringToFront(target);
+          bringCanvasObjectToFront(target);
         } else {
           const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
-          texts.forEach((t) => fCanvas.bringToFront(t));
+          texts.forEach((t) => bringCanvasObjectToFront(t));
         }
       } catch {}
       // Якщо додано Cut-форму (з блоку Cut) — одразу активуємо і малюємо панель/рамку
@@ -2160,9 +2172,43 @@ const Canvas = () => {
 
   useEffect(() => {
     if (!canvas) return;
-    const applySolid = () => {
-      canvas.set("backgroundColor", globalColors?.backgroundColor || "#FFFFFF");
+    let disposed = false;
+
+    const refreshActiveObject = () => {
+      if (disposed) return;
+      try {
+        const active = canvas.getActiveObject?.();
+        if (active && typeof active.setCoords === "function") {
+          active.setCoords();
+        }
+      } catch {}
+      canvas.renderAll();
     };
+
+    const applySolid = (color) => {
+      const nextColor = color || "#FFFFFF";
+      const currentType = canvas.get("backgroundType");
+      const currentTexture = canvas.get("backgroundTextureUrl");
+      const currentColor =
+        typeof canvas.backgroundColor === "string"
+          ? canvas.backgroundColor
+          : null;
+
+      if (
+        currentType === "solid" &&
+        currentTexture == null &&
+        currentColor === nextColor
+      ) {
+        refreshActiveObject();
+        return;
+      }
+
+      canvas.set("backgroundColor", nextColor);
+      canvas.set("backgroundType", "solid");
+      canvas.set("backgroundTextureUrl", null);
+      refreshActiveObject();
+    };
+
     const applyGradient = () => {
       try {
         const W =
@@ -2177,17 +2223,12 @@ const Canvas = () => {
         off.width = Math.max(1, W);
         off.height = Math.max(1, H);
         const ctx = off.getContext("2d");
-        // Лінійний градієнт під кутом 152.22deg (як у CSS: linear-gradient(152.22deg, ...))
-        // Конвертуємо CSS-кут у напрямок у Canvas (x вправо, y вниз):
-        // 0deg у CSS — вгору; 90deg — вправо; 180deg — вниз; 270deg — вліво.
-        // Перетворення: dirX = sin(radCSS), dirY = -cos(radCSS)
         const cssDeg = 152.22;
         const rad = (cssDeg * Math.PI) / 180;
         const dirX = Math.sin(rad);
         const dirY = -Math.cos(rad);
         const cx = W / 2;
         const cy = H / 2;
-        // Довжина вздовж осі градієнта, щоб покрити весь прямокутник
         const L = Math.abs(W * dirX) + Math.abs(H * dirY);
         const x0 = cx - (dirX * L) / 2;
         const y0 = cy - (dirY * L) / 2;
@@ -2203,24 +2244,105 @@ const Canvas = () => {
           source: off,
           repeat: "no-repeat",
         });
-        // У v6 можна напряму призначати Pattern як backgroundColor
         canvas.set("backgroundColor", pattern);
+        canvas.set("backgroundType", "gradient");
+        canvas.set("backgroundTextureUrl", null);
+        refreshActiveObject();
       } catch {
-        // fallback: суцільний фон
-        applySolid();
+        applySolid(globalColors?.backgroundColor);
       }
     };
 
-    if (globalColors?.backgroundType === "gradient") applyGradient();
-    else applySolid();
-
-    try {
-      const active = canvas.getActiveObject?.();
-      if (active && typeof active.setCoords === "function") {
-        active.setCoords();
+    const applyTexture = (url) => {
+      if (!url) {
+        applySolid(undefined);
+        return;
       }
-    } catch {}
-    canvas.renderAll();
+
+      const currentType = canvas.get("backgroundType");
+      const currentTexture = canvas.get("backgroundTextureUrl");
+      const currentIsPattern =
+        canvas.backgroundColor && typeof canvas.backgroundColor === "object";
+
+      if (
+        currentType === "texture" &&
+        currentTexture === url &&
+        currentIsPattern
+      ) {
+        refreshActiveObject();
+        return;
+      }
+
+      const img = document.createElement("img");
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        if (disposed) return;
+        try {
+          const canvasWidth =
+            typeof canvas.getWidth === "function"
+              ? canvas.getWidth()
+              : canvas.width || 0;
+          const canvasHeight =
+            typeof canvas.getHeight === "function"
+              ? canvas.getHeight()
+              : canvas.height || 0;
+
+          const scaleX = canvasWidth && img.width ? canvasWidth / img.width : 1;
+          const scaleY =
+            canvasHeight && img.height ? canvasHeight / img.height : 1;
+
+          const patternCanvas = document.createElement("canvas");
+          patternCanvas.width = img.width * scaleX;
+          patternCanvas.height = img.height * scaleY;
+          const patternCtx = patternCanvas.getContext("2d");
+          if (!patternCtx) {
+            applySolid(undefined);
+            return;
+          }
+          patternCtx.drawImage(
+            img,
+            0,
+            0,
+            patternCanvas.width,
+            patternCanvas.height
+          );
+
+          const pattern = new fabric.Pattern({
+            source: patternCanvas,
+            repeat: "no-repeat",
+          });
+
+          canvas.set("backgroundColor", pattern);
+          canvas.set("backgroundTextureUrl", url);
+          canvas.set("backgroundType", "texture");
+          refreshActiveObject();
+        } catch (error) {
+          console.error("Failed to apply texture background:", error);
+          applySolid(undefined);
+        }
+      };
+      img.onerror = () => {
+        if (disposed) return;
+        console.error("Failed to load texture background:", url);
+        applySolid(undefined);
+      };
+      img.src = url;
+    };
+
+    const type = globalColors?.backgroundType;
+    const color = globalColors?.backgroundColor;
+
+    if (type === "gradient") {
+      applyGradient();
+    } else if (type === "texture") {
+      applyTexture(color);
+    } else {
+      applySolid(color);
+    }
+
+    return () => {
+      disposed = true;
+    };
   }, [canvas, globalColors?.backgroundColor, globalColors?.backgroundType]);
 
   // Авто-синхронізація кольорів QR/BarCode при зміні теми

@@ -8,6 +8,7 @@ import {
   restoreElementProperties,
   addBlankUnsavedSign,
   updateCanvasInCurrentProject,
+  deleteUnsavedSign,
 } from "../../utils/projectStorage";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
@@ -50,13 +51,8 @@ const ProjectCanvasesGrid = () => {
   const [selectedId, setSelectedId] = useState(null);
   const currentUnsavedIdRef = useRef(null); // track which unsaved sign is currently loaded
   const currentProjectCanvasIdRef = useRef(null); // track which project canvas is currently loaded
-  const createdInitialRef = useRef(false); // guard to avoid duplicate initial creation
   const initialCanvasLoadRef = useRef(false);
   const openCanvasRef = useRef(null);
-  console.log(
-    "ProjectCanvasesGrid: Component initialized, createdInitialRef:",
-    createdInitialRef.current
-  );
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
@@ -115,7 +111,30 @@ const ProjectCanvasesGrid = () => {
           return null;
         }
       })();
-      if (!pid || pid === currentId) load();
+      if (!pid || pid === currentId) {
+        load();
+      }
+
+      const detail = e?.detail || {};
+      const activeId = detail.activeCanvasId ?? null;
+      const activeIndex =
+        typeof detail.activeCanvasIndex === "number" && detail.activeCanvasIndex >= 0
+          ? detail.activeCanvasIndex
+          : null;
+
+      try {
+        if (activeId) {
+          window.__currentProjectCanvasId = activeId;
+          localStorage.setItem("currentProjectCanvasId", activeId);
+        }
+        if (activeIndex !== null) {
+          window.__currentProjectCanvasIndex = activeIndex;
+          localStorage.setItem(
+            "currentProjectCanvasIndex",
+            String(activeIndex)
+          );
+        }
+      } catch {}
     };
     const switched = () => {
       // Скидаємо флаг при переключенні проекту
@@ -176,7 +195,15 @@ const ProjectCanvasesGrid = () => {
             // Встановлюємо його як активний
             try {
               localStorage.setItem("currentCanvasId", firstCanvas.id);
+              localStorage.setItem("currentProjectCanvasId", firstCanvas.id);
+              localStorage.setItem("currentProjectCanvasIndex", "0");
               localStorage.removeItem("currentUnsavedSignId");
+            } catch {}
+            try {
+              if (typeof window !== "undefined") {
+                window.__currentProjectCanvasId = firstCanvas.id;
+                window.__currentProjectCanvasIndex = 0;
+              }
             } catch {}
             
             // Даємо час на оновлення state
@@ -191,6 +218,16 @@ const ProjectCanvasesGrid = () => {
             }
           } else {
             console.log('No canvases in project');
+            try {
+              localStorage.removeItem("currentProjectCanvasId");
+              localStorage.removeItem("currentProjectCanvasIndex");
+            } catch {}
+            try {
+              if (typeof window !== "undefined") {
+                window.__currentProjectCanvasId = null;
+                window.__currentProjectCanvasIndex = null;
+              }
+            } catch {}
           }
         } catch (error) {
           console.error('Failed to auto-open canvas after project opened:', error);
@@ -410,88 +447,23 @@ const ProjectCanvasesGrid = () => {
     };
   }, [canvas]);
 
-  // Create an initial blank unsaved sign on first load if nothing exists
-  useEffect(() => {
-    if (!canvas) {
-      console.log("Auto-create check: no canvas yet");
-      return;
-    }
-    if (createdInitialRef.current) {
-      console.log("Auto-create check: already created initial canvas");
-      return;
-    }
-    if (!isProjectLoaded || !isUnsavedLoaded) {
-      console.log("Auto-create check: waiting for data load", {
-        isProjectLoaded,
-        isUnsavedLoaded,
-      });
-      return;
-    }
-
-    const projectCanvasCount = project?.canvases?.length || 0;
-    const unsavedSignsCount = unsavedSigns?.length || 0;
-    const hasAny = projectCanvasCount > 0 || unsavedSignsCount > 0;
-
-    // ВИПРАВЛЕННЯ: Додаємо перевірку localStorage для існуючих активних canvas
-    let hasActiveCanvas = false;
-    try {
-      const currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
-      const currentCanvasId = localStorage.getItem("currentCanvasId");
-      hasActiveCanvas = !!(currentUnsavedId || currentCanvasId);
-    } catch (e) {
-      console.warn("Failed to check localStorage for active canvas:", e);
-    }
-
-    console.log("Auto-create check:", {
-      projectCanvasCount,
-      unsavedSignsCount,
-      hasAny,
-      hasActiveCanvas,
-      createdInitialRef: createdInitialRef.current,
-    });
-
-    // ВИПРАВЛЕННЯ: Не створюємо нове полотно якщо є будь-які існуючі або активні
-    if (hasAny || hasActiveCanvas) {
-      console.log(
-        "Auto-create check: canvases already exist or active canvas found, not creating new one"
-      );
-      // Встановлюємо флаг, щоб уникнути повторних перевірок
-      createdInitialRef.current = true;
-      return;
-    }
-
-    console.log("Auto-create: Creating initial blank canvas");
-    // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-    const PX_PER_MM = 96 / 25.4;
-    const width = Math.round(120 * PX_PER_MM); // ~453 px
-    const height = Math.round(80 * PX_PER_MM); // ~302 px
-    createdInitialRef.current = true;
-
-    (async () => {
-      try {
-        const entry = await addBlankUnsavedSign(width, height);
-        const unsavedEntry = { ...entry, _unsaved: true };
-        // Optimistically update local state so it shows immediately
-        setUnsavedSigns((prev) => [unsavedEntry, ...prev]);
-        try {
-          localStorage.setItem("currentUnsavedSignId", unsavedEntry.id);
-        } catch {}
-        setSelectedId(unsavedEntry.id);
-        // Load it into the working canvas right away
-        await openCanvas(unsavedEntry);
-        console.log(
-          "Auto-create: Successfully created and opened initial canvas"
-        );
-      } catch (e) {
-        console.error("Failed to create initial unsaved sign", e);
-        createdInitialRef.current = false; // Reset on error
-      }
-    })();
-  }, [canvas, isProjectLoaded, isUnsavedLoaded, project, unsavedSigns]);
-
-  // Simple canvas list: unsaved signs -> project canvases
+  // Simple canvas list: project canvases -> unsaved signs (sorted by creation time)
   const storedCanvases = project?.canvases || [];
-  const canvases = [...unsavedSigns, ...storedCanvases];
+  
+  // ВИПРАВЛЕННЯ: Сортуємо unsaved signs за датою створення (найстаріші спочатку)
+  const sortedUnsavedSigns = useMemo(() => {
+    return [...unsavedSigns].sort((a, b) => {
+      const timeA = a.createdAt || 0;
+      const timeB = b.createdAt || 0;
+      return timeA - timeB; // ascending order (oldest first)
+    });
+  }, [unsavedSigns]);
+  
+  // ВИПРАВЛЕННЯ: Проектні полотна спочатку, потім unsaved (нові в кінці)
+  const canvases = useMemo(() => {
+    return [...storedCanvases, ...sortedUnsavedSigns];
+  }, [storedCanvases, sortedUnsavedSigns]);
+  
   const designPayloads = useMemo(
     () => canvases.map(mapEntryToDesign).filter(Boolean),
     [canvases]
@@ -552,6 +524,8 @@ const ProjectCanvasesGrid = () => {
       return;
     }
 
+    const entryIndex = canvases.findIndex((c) => c.id === canvasEntry.id);
+
     console.log(
       "Opening canvas:",
       canvasEntry.id,
@@ -586,6 +560,36 @@ const ProjectCanvasesGrid = () => {
         try {
           await updateUnsavedSignFromCanvas(currentUnsavedId, canvas);
           console.log("Saved unsaved sign successfully");
+          if (!canvasEntry._unsaved) {
+            try {
+              await deleteUnsavedSign(currentUnsavedId);
+              setUnsavedSigns((prev) =>
+                prev.filter((sign) => sign.id !== currentUnsavedId)
+              );
+              try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+              try {
+                window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+              } catch {}
+              console.log(
+                "Removed unsaved sign after switching to project canvas:",
+                currentUnsavedId
+              );
+            } catch (cleanupError) {
+              console.error(
+                "Failed to remove unsaved sign after switch:",
+                cleanupError
+              );
+            }
+            try {
+              if (typeof window !== "undefined") {
+                window.__pendingUnsavedCleanupId = null;
+              }
+            } catch {}
+          } else {
+            if (typeof window !== "undefined") {
+              try { window.__pendingUnsavedCleanupId = currentUnsavedId; } catch {}
+            }
+          }
         } catch (e) {
           console.error("Failed to save unsaved sign:", e);
         }
@@ -817,6 +821,14 @@ const ProjectCanvasesGrid = () => {
         currentProjectCanvasIdRef.current = null;
         try {
           localStorage.setItem("currentUnsavedSignId", canvasEntry.id);
+          localStorage.removeItem("currentProjectCanvasId");
+          localStorage.removeItem("currentProjectCanvasIndex");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = null;
+            window.__currentProjectCanvasIndex = null;
+          }
         } catch {}
         console.log("Set current unsaved sign to:", canvasEntry.id);
       } else {
@@ -824,6 +836,22 @@ const ProjectCanvasesGrid = () => {
         currentProjectCanvasIdRef.current = canvasEntry.id;
         try {
           localStorage.removeItem("currentUnsavedSignId");
+          localStorage.setItem("currentProjectCanvasId", canvasEntry.id);
+          if (entryIndex !== -1) {
+            localStorage.setItem(
+              "currentProjectCanvasIndex",
+              String(entryIndex)
+            );
+          }
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = canvasEntry.id;
+            window.__currentProjectCanvasIndex = entryIndex !== -1 ? entryIndex : null;
+            if (!canvasEntry._unsaved) {
+              window.__pendingUnsavedCleanupId = null;
+            }
+          }
         } catch {}
         console.log("Set current project canvas to:", canvasEntry.id);
       }
@@ -900,7 +928,7 @@ const ProjectCanvasesGrid = () => {
     } catch {}
 
     const unsavedEntry = storedUnsavedId
-      ? unsavedSigns.find((entry) => entry.id === storedUnsavedId)
+      ? sortedUnsavedSigns.find((entry) => entry.id === storedUnsavedId)
       : null;
     const projectEntry = storedProjectCanvasId
       ? storedCanvases.find((entry) => entry.id === storedProjectCanvasId)
@@ -950,7 +978,7 @@ const ProjectCanvasesGrid = () => {
     };
 
     loadInitial();
-  }, [canvas, isProjectLoaded, isUnsavedLoaded, unsavedSigns, storedCanvases, canvases, project]);
+  }, [canvas, isProjectLoaded, isUnsavedLoaded, sortedUnsavedSigns, storedCanvases, canvases, project]);
 
   // Auto-save current canvas when objects change
   useEffect(() => {
@@ -1181,6 +1209,47 @@ const ProjectCanvasesGrid = () => {
     };
   }, [canvas]);
 
+  const handleNewSign = async () => {
+    try {
+      let currentUnsavedId = null;
+      try {
+        currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+      } catch {}
+      if (currentUnsavedId && canvas) {
+        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
+          () => {}
+        );
+      }
+
+      // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
+      const PX_PER_MM = 96 / 25.4;
+      const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
+      const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
+
+      const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+      try {
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+      } catch {}
+      
+      // Автоматично відкриваємо новостворене полотно
+      setTimeout(() => {
+        try {
+          window.dispatchEvent(
+            new CustomEvent("canvas:autoOpen", {
+              detail: { canvasId: newSign.id, isUnsaved: true }
+            })
+          );
+          console.log("Auto-opening new canvas:", newSign.id);
+        } catch (err) {
+          console.error("Failed to auto-open new canvas:", err);
+        }
+      }, 300);
+    } catch (e) {
+      console.error("New Sign failed", e);
+    }
+  };
+
   if (!project) return null;
 
   return (
@@ -1283,8 +1352,45 @@ const ProjectCanvasesGrid = () => {
                   </span>
                 </div>
               </div>
-            );
-          })}
+              );
+            })}
+
+          {/* Кнопка створення нового полотна */}
+          <div
+            className={styles.newSignButton}
+            onClick={handleNewSign}
+            title="Create new canvas (sign)"
+          >
+            <div className={styles.newSignButtonContent}>
+              <svg
+                width="102"
+                height="102"
+                viewBox="0 0 102 102"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g style={{ mixBlendMode: 'plus-darker' }}>
+                  <path
+                    d="M12.75 85V17C12.75 13.6185 14.0943 10.3764 16.4854 7.98535C18.8764 5.59426 22.1185 4.25 25.5 4.25H59.5L59.9192 4.27075C60.8924 4.36718 61.8073 4.79751 62.5049 5.49512L88.0049 30.9951C88.8019 31.7922 89.25 32.8728 89.25 34V85C89.25 88.3815 87.9057 91.6236 85.5146 94.0147C83.1236 96.4057 79.8815 97.75 76.5 97.75H25.5C22.1185 97.75 18.8764 96.4057 16.4854 94.0147C14.0943 91.6236 12.75 88.3815 12.75 85ZM21.25 85C21.25 86.1272 21.6981 87.2079 22.4951 88.0049C23.2921 88.8019 24.3728 89.25 25.5 89.25H76.5C77.6272 89.25 78.7078 88.8019 79.5049 88.0049C80.3019 87.2079 80.75 86.1272 80.75 85V35.7598L57.7402 12.75H25.5C24.3728 12.75 23.2921 13.1981 22.4951 13.9951C21.6981 14.7921 21.25 15.8728 21.25 17V85Z"
+                    fill="#138E32"
+                  />
+                  <path
+                    d="M55.25 8.5C55.25 6.15279 57.1528 4.25 59.5 4.25C61.8472 4.25 63.75 6.15279 63.75 8.5V29.75H85C87.3472 29.75 89.25 31.6528 89.25 34C89.25 36.3472 87.3472 38.25 85 38.25H59.5C57.1528 38.25 55.25 36.3472 55.25 34V8.5Z"
+                    fill="#138E32"
+                  />
+                  <path
+                    d="M46.75 76.5V51C46.75 48.6528 48.6528 46.75 51 46.75C53.3472 46.75 55.25 48.6528 55.25 51V76.5C55.25 78.8472 53.3472 80.75 51 80.75C48.6528 80.75 46.75 78.8472 46.75 76.5Z"
+                    fill="#138E32"
+                  />
+                  <path
+                    d="M63.75 59.5C66.0972 59.5 68 61.4028 68 63.75C68 66.0972 66.0972 68 63.75 68H38.25C35.9028 68 34 66.0972 34 63.75C34 61.4028 35.9028 59.5 38.25 59.5H63.75Z"
+                    fill="#138E32"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div className={styles.newSignButtonLabel}>Create the new sign</div>
+          </div>
         </div>
       )}
     </div>

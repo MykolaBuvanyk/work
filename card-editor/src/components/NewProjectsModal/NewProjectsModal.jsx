@@ -119,7 +119,15 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
       localStorage.removeItem("currentProjectId"); 
       localStorage.removeItem("currentProjectName"); 
       localStorage.removeItem("currentCanvasId");
+      localStorage.removeItem("currentProjectCanvasId");
+      localStorage.removeItem("currentProjectCanvasIndex");
       localStorage.removeItem("currentUnsavedSignId");
+    } catch {}
+    try {
+      if (typeof window !== "undefined") {
+        window.__currentProjectCanvasId = null;
+        window.__currentProjectCanvasIndex = null;
+      }
     } catch {}
     
     // Очищаємо canvas
@@ -182,6 +190,14 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
       // Встановлюємо новий sign як активний
       try {
         localStorage.setItem("currentUnsavedSignId", newSign.id);
+        localStorage.removeItem("currentProjectCanvasId");
+        localStorage.removeItem("currentProjectCanvasIndex");
+      } catch {}
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = null;
+          window.__currentProjectCanvasIndex = null;
+        }
       } catch {}
       
       // Відправляємо подію про оновлення unsaved signs

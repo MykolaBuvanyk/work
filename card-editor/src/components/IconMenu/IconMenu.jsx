@@ -38,7 +38,7 @@ const IconMenu = ({ isOpen, onClose }) => {
     "Animals",
     "Arrows",
     "Basic_Shapes",
-    "building",
+    "Building",
     "Celebrations",
     "Chapter_Calendar",
     "Children",
@@ -47,8 +47,7 @@ const IconMenu = ({ isOpen, onClose }) => {
     "Fire_Safety",
     "First_Aid",
     "Food",
-    "frame",
-    "frames",
+    "Frames",
     "Horoscope",
     "Mandatory",
     "Maritime",
@@ -61,29 +60,20 @@ const IconMenu = ({ isOpen, onClose }) => {
     "Work_and_School",
   ];
 
-  const potentialIcons = {
-    Animals: Array.from({ length: 43 }, (_, i) => `Animals_${i}.svg`),
+  const allIcons = {
+    Animals: Array.from({ length: 43 }, (_, i) => i === 27 ? null : `Animals_${i}.svg`).filter(Boolean),
     Arrows: Array.from({ length: 7 }, (_, i) => `Arrows_${i}.svg`),
     Basic_Shapes: Array.from({ length: 20 }, (_, i) => `Basic_Shapes_${i}.svg`),
-    building: Array.from({ length: 8 }, (_, i) => `building_${i + 1}.svg`),
+    Building: ["building_1.svg", "building_2.svg", "building_3.svg", "building_4.svg", "building_5.svg", "building_6.svg", "building_7.svg"],
     Celebrations: Array.from({ length: 50 }, (_, i) => `Celebrations_${i}.svg`),
-    Chapter_Calendar: Array.from(
-      { length: 5 },
-      (_, i) => `Chapter_Calendar_${i + 2}.svg`
-    ),
+    Chapter_Calendar: ["Chapter_Calendar_2.svg", "Chapter_Calendar_3.svg", "Chapter_Calendar_4.svg", "Chapter_Calendar_5.svg", "Chapter_Calendar_6.svg"],
     Children: Array.from({ length: 11 }, (_, i) => `Children_${i}.svg`),
     Electronics: Array.from({ length: 34 }, (_, i) => `Electronics_${i}.svg`),
     Emoji: Array.from({ length: 50 }, (_, i) => `Emoji_${i}.svg`),
     Fire_Safety: Array.from({ length: 17 }, (_, i) => `Fire_Safety_${i}.svg`),
     First_Aid: Array.from({ length: 33 }, (_, i) => `First_Aid_${i}.svg`),
     Food: Array.from({ length: 50 }, (_, i) => `Food_${i}.svg`),
-    frame: ["frame_1.svg"],
-    frames: Array.from({ length: 49 }, (_, i) => `frames_${i + 1}.svg`).filter(
-      (n) =>
-        !["frames_10", "frames_11", "frames_21", "frames_25"].some((m) =>
-          n.includes(m)
-        )
-    ),
+    Frames: ["frame_1.svg", "frames_2.svg", "frames_3.svg", "frames_4.svg", "frames_5.svg", "frames_6.svg", "frames_7.svg", "frames_8.svg", "frames_9.svg", "frames_12.svg", "frames_13.svg", "frames_14.svg", "frames_15.svg", "frames_16.svg", "frames_17.svg", "frames_18.svg", "frames_19.svg", "frames_20.svg", "frames_22.svg", "frames_23.svg", "frames_24.svg", "frames_26.svg", "frames_27.svg", "frames_28.svg", "frames_29.svg", "frames_30.svg", "frames_31.svg", "frames_32.svg", "frames_33.svg", "frames_34.svg", "frames_35.svg", "frames_36.svg", "frames_37.svg", "frames_38.svg", "frames_39.svg", "frames_40.svg", "frames_41.svg", "frames_42.svg", "frames_43.svg", "frames_44.svg", "frames_45.svg", "frames_46.svg", "frames_47.svg", "frames_48.svg", "frames_49.svg"],
     Horoscope: Array.from({ length: 12 }, (_, i) => `Horoscope_${i + 1}.svg`),
     Mandatory: Array.from({ length: 34 }, (_, i) => `Mandatory_${i}.svg`),
     Maritime: Array.from({ length: 20 }, (_, i) => `Maritime_${i + 1}.svg`),
@@ -92,30 +82,21 @@ const IconMenu = ({ isOpen, onClose }) => {
     Prohibition: Array.from({ length: 5 }, (_, i) => `Prohibition_${i}.svg`),
     Tools: Array.from({ length: 50 }, (_, i) => `Tools_${i}.svg`),
     Transport: Array.from({ length: 22 }, (_, i) => `Transport_${i}.svg`),
-    Warning: Array.from({ length: 47 }, (_, i) => `Warning_${i}.svg`),
-    Work_and_School: Array.from(
-      { length: 19 },
-      (_, i) => `Work_and_School_${i}.svg`
-    ),
+    Warning: ["Warning_0.svg", "Warning_1.svg", "Warning_2.svg", "Warning_3.svg", "Warning_4.svg", "Warning_5.svg", "Warning_6.svg", "Warning_7.svg", "Warning_8.svg", "Warning_9.svg", "Warning_10.svg", "Warning_11.svg", "Warning_12.svg", "Warning_13.svg", "Warning_14.svg", "Warning_15.svg", "Warning_16.svg", "Warning_17.svg", "Warning_18.svg", "Warning_19.svg", "Warning_20.svg", "Warning_21.svg", "Warning_22.svg", "Warning_23.svg", "Warning_24.svg", "Warning_25.svg", "Warning_26.svg", "Warning_27.svg", "Warning_28.svg", "Warning_29.svg", "Warning_30.svg", "Warning_31.svg", "Warning_32.svg", "Warning_33.svg", "Warning_34.svg", "Warning_35.svg", "Warning_36.svg", "Warning_37.svg", "Warning_38.svg", "Warning_39.svg", "Warning_40.svg", "Warning_41.svg", "Warning_42.svg", "Warning_43.svg", "Warning_44.svg", "Warning_45.svg", "Warning_46.svg", "Warning_47.svg"],
+    Work_and_School: Array.from({ length: 19 }, (_, i) => `Work_and_School_${i}.svg`),
   };
 
+  // Функція для форматування назв категорій для відображення
+  const formatCategoryName = (category) => {
+    return category
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Просто використовуємо всі іконки без перевірки доступності
   useEffect(() => {
-    const checkAvailableIcons = async () => {
-      const available = {};
-      for (const [category, icons] of Object.entries(potentialIcons)) {
-        available[category] = [];
-        for (const icon of icons) {
-          try {
-            const response = await fetch(`/src/assets/images/icon/${icon}`);
-            if (response.ok) available[category].push(icon);
-          } catch (error) {
-            console.warn(`Іконка ${icon} недоступна:`, error);
-          }
-        }
-      }
-      setAvailableIcons(available);
-    };
-    checkAvailableIcons();
+    setAvailableIcons(allIcons);
   }, []);
 
   const createSVGFromText = async (svgText, iconName) => {
@@ -250,7 +231,7 @@ const IconMenu = ({ isOpen, onClose }) => {
     } catch {}
     if (mountedRef.current) setIsLoading(true);
     try {
-      const response = await fetch(`/src/assets/images/icon/${iconName}`);
+      const response = await fetch(`/images/icon/${iconName}`);
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
       const svgText = await response.text();
@@ -364,7 +345,7 @@ const IconMenu = ({ isOpen, onClose }) => {
     canvas.renderAll();
   };
 
-  const getPreviewUrl = (iconName) => `/src/assets/images/icon/${iconName}`;
+  const getPreviewUrl = (iconName) => `/images/icon/${iconName}`;
 
   if (!isOpen) return null;
 
@@ -405,7 +386,7 @@ const IconMenu = ({ isOpen, onClose }) => {
         >
           {categories.map((category) => (
             <option key={category} value={category}>
-              {category} ({availableIcons[category]?.length || 0})
+              {formatCategoryName(category)} ({availableIcons[category]?.length || 0})
             </option>
           ))}
         </select>
@@ -427,11 +408,11 @@ const IconMenu = ({ isOpen, onClose }) => {
                   }}
                 />
                 <div className={styles.iconPlaceholder}>
-                  <span>{icon.split(".")[0]}</span>
+                  <span>{icon.split(".")[0].replace(/_/g, ' ')}</span>
                 </div>
               </div>
               <span className={styles.iconName}>
-                {icon.replace(".svg", "")}
+                {icon.replace(".svg", "").replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
               </span>
             </div>
           ))}

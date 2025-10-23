@@ -123,49 +123,35 @@ const TextList = () => {
 
       for (const font of fontFiles) {
         try {
-          // Спробуємо кілька можливих шляхів
-          const possiblePaths = [
-            `/src/assets/fonts/${font.file}`,
-            `./src/assets/fonts/${font.file}`,
-            `../assets/fonts/${font.file}`,
-            `../../assets/fonts/${font.file}`,
-          ];
+          // Використовуємо шлях до public
+          const path = `/fonts/${font.file}`;
 
-          let fontLoaded = false;
-
-          for (const path of possiblePaths) {
-            try {
-              const fontFace = new FontFace(font.name, `url(${path})`);
-              await fontFace.load();
-              document.fonts.add(fontFace);
-              loadedFonts.push({
-                name: font.name,
-                value: font.name,
-                loaded: true,
-              });
-              fontLoaded = true;
-              break;
-            } catch (error) {
-              // Продовжуємо спробувати інші шляхи
-              continue;
-            }
-          }
-
-          if (!fontLoaded) {
-            console.warn(
-              `Не вдалося завантажити шрифт ${font.name} з жодного шляху`
-            );
-          }
+          const fontFace = new FontFace(font.name, `url(${path})`);
+          await fontFace.load();
+          document.fonts.add(fontFace);
+          loadedFonts.push({
+            name: font.name,
+            value: font.name,
+            loaded: true,
+          });
         } catch (error) {
           console.warn(`Помилка завантаження шрифту ${font.name}:`, error);
         }
       }
 
-      // Об'єднуємо системні та завантажені шрифти
+      // Об'єднуємо системні та завантажені шрифти, видаляючи дублікати
       const allFonts = [...systemFonts, ...loadedFonts];
+      
+      // Видаляємо дублікати за значенням value (назвою шрифту)
+      const uniqueFonts = allFonts.reduce((acc, font) => {
+        if (!acc.find(f => f.value === font.value)) {
+          acc.push(font);
+        }
+        return acc;
+      }, []);
 
-      setAvailableFonts(allFonts);
-      console.log(`Завантажено ${loadedFonts.length} кастомних шрифтів`);
+      setAvailableFonts(uniqueFonts);
+      console.log(`Завантажено ${loadedFonts.length} кастомних шрифтів, всього унікальних: ${uniqueFonts.length}`);
     } catch (error) {
       console.error("Помилка завантаження шрифтів:", error);
       // Fallback до базових шрифтів

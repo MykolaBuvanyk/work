@@ -1899,9 +1899,8 @@ const Toolbar = () => {
       const b = points[(i + 1) % n];
       area += a.x * b.y - b.x * a.y;
     }
-    const ccw = area > 0; // істина, якщо точки відсортовані проти год. стрілки
+    const ccw = area > 0;
 
-    // Глобальна «стеля» радіуса, але конкретний r обчислюємо для кожної вершини
     const rMaxGlobal = clampRadiusForEdges(points, radius);
 
     // Якщо радіус 0 — повертаємо звичайний багатокутник
@@ -1930,18 +1929,15 @@ const Toolbar = () => {
       const u2x = v2x / len2;
       const u2y = v2y / len2;
 
-      // Ознака опуклого/вгнутого кута через векторний добуток
-      const cross = u1x * u2y - u1y * u2x; // >0 для повороту вліво від u1 до u2
+      const cross = u1x * u2y - u1y * u2x;
       const isConvex = ccw ? cross > 0 : cross < 0;
 
-      // Локальна «стеля» радіуса: не більше половини суміжних ребер
       const rLocal = Math.max(
         0,
         Math.min(rMaxGlobal, len1 / 2 - 0.001, len2 / 2 - 0.001)
       );
 
       if (!isConvex || rLocal <= 0) {
-        // Вгнутий кут або нульовий радіус — не заокруглюємо
         if (i === 0) d += `M ${curr.x} ${curr.y}`;
         else d += ` L ${curr.x} ${curr.y}`;
         continue;
@@ -1996,22 +1992,18 @@ const Toolbar = () => {
   };
 
   const centerPathToCanvas = (path, width, height) => {
+    // Надёжное центрирование path по координатам фрейма [0..width, 0..height]
+    // Игнорируем _calcDimensions, т.к. для скруглённых форм Bezier‑экстремумы
+    // могут давать смещённый bbox и приводить к визуальному сдвигу.
     if (!path) return;
     try {
-      const dims = path._calcDimensions?.();
-      const offsetX = dims ? dims.left + dims.width / 2 : width / 2;
-      const offsetY = dims ? dims.top + dims.height / 2 : height / 2;
       path.set({
         originX: "center",
         originY: "center",
         left: width / 2,
         top: height / 2,
       });
-      if (Number.isFinite(offsetX) && Number.isFinite(offsetY)) {
-        path.pathOffset = new fabric.Point(offsetX, offsetY);
-      } else {
-        path.pathOffset = new fabric.Point(width / 2, height / 2);
-      }
+      path.pathOffset = new fabric.Point(width / 2, height / 2);
     } catch {
       try {
         path.set({
@@ -3338,23 +3330,21 @@ const Toolbar = () => {
             // Генеруємо округлений triangle
             const d = makeRoundedTrianglePath(width, height, cr);
 
+            // Адаптивний strokeWidth: 1:1 з радіусом для повного покриття
+            // cr=5->5px, cr=20->20px, cr=47->47px, cr=50->50px (cap)
+            const adaptiveStrokeWidth = Math.min(50, Math.max(2, cr));
+
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
-              originX: "center",
-              originY: "center",
-              left: width / 2,
-              top: height / 2,
               objectCaching: false,
+              // Додаємо fill stroke щоб заповнити білі зони від Bezier-скруглень
+              fill: "#000000",
+              stroke: "#000000",
+              strokeWidth: adaptiveStrokeWidth,
+              strokeLineJoin: "round",
             });
-
-            // ВАРІАНТ 1: Інвертована компенсація
-            // Для triangle потрібна додаткова компенсація по Y через асиметрію фігури
-            if (cr > 0) {
-              const bounds = newClipPath._calcDimensions();
-              // Змінюємо знак - додаємо замість віднімання
-              const centerYOffset = bounds.top + bounds.height / 2 - height / 2;
-              newClipPath.top = height / 2 + centerYOffset;
-            }
+            // Центруємо шлях точно по габаритам, щоб при зміні радіуса не було зсуву
+            centerPathToCanvas(newClipPath, width, height);
           }
           break;
         }
@@ -3382,9 +3372,16 @@ const Toolbar = () => {
             // Генеруємо округлену arrowLeft
             const d = makeRoundedArrowLeftPath(width, height, cr);
 
+            // Адаптивний strokeWidth: 1:1 з радіусом для повного покриття
+            const adaptiveStrokeWidth = Math.min(50, Math.max(2, cr));
+
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
               objectCaching: false,
+              fill: "#000000",
+              stroke: "#000000",
+              strokeWidth: adaptiveStrokeWidth,
+              strokeLineJoin: "round",
             });
             centerPathToCanvas(newClipPath, width, height);
           }
@@ -3414,9 +3411,16 @@ const Toolbar = () => {
             // Генеруємо округлену arrowRight
             const d = makeRoundedArrowRightPath(width, height, cr);
 
+            // Адаптивний strokeWidth: 1:1 з радіусом для повного покриття
+            const adaptiveStrokeWidth = Math.min(50, Math.max(2, cr));
+
             newClipPath = new fabric.Path(d, {
               absolutePositioned: true,
               objectCaching: false,
+              fill: "#000000",
+              stroke: "#000000",
+              strokeWidth: adaptiveStrokeWidth,
+              strokeLineJoin: "round",
             });
             centerPathToCanvas(newClipPath, width, height);
           }
@@ -3453,11 +3457,31 @@ const Toolbar = () => {
 
       // Встановлюємо новий clipPath
       if (newClipPath) {
+        // При изменении именно cornerRadius гарантируем повторное центрирование
+        // для фигур, создаваемых как path (особенно triangle/arrowLeft/arrowRight)
+        try {
+          if (
+            overrides &&
+            Object.prototype.hasOwnProperty.call(overrides, "cornerRadiusMm") &&
+            newClipPath.type === "path"
+          ) {
+            centerPathToCanvas(newClipPath, width, height);
+          }
+        } catch {}
         canvas.clipPath = newClipPath;
         // Прибираємо будь-який контур у самої фігури clipPath (та дочірніх якщо група)
+        // ОКРІМ triangle та arrows, де stroke потрібен для покриття білих зон від Bezier
         const stripStroke = (obj) => {
           if (!obj) return;
-          obj.set({ stroke: null, strokeWidth: 0, strokeDashArray: null });
+          // Зберігаємо stroke для triangle та стрілок при наявності cornerRadius
+          const keepStroke =
+            (currentShapeType === "triangle" ||
+              currentShapeType === "arrowLeft" ||
+              currentShapeType === "arrowRight") &&
+            cr > 0;
+          if (!keepStroke) {
+            obj.set({ stroke: null, strokeWidth: 0, strokeDashArray: null });
+          }
           if (obj._objects && Array.isArray(obj._objects)) {
             obj._objects.forEach(stripStroke);
           }
@@ -7382,15 +7406,14 @@ const Toolbar = () => {
       );
       const clipPath = new fabric.Path(d, {
         absolutePositioned: true,
+        // Центруємо по реальному розміру полотна (100×100 мм),
+        // а не по 120×80 мм, щоб виключити зсув фігури до ресайзу
         originX: "center",
         originY: "center",
-        left: mmToPx(120) / 2,
-        top: mmToPx(80) / 2,
         objectCaching: false,
       });
-      try {
-        clipPath.pathOffset = new fabric.Point(mmToPx(120) / 2, mmToPx(80) / 2);
-      } catch {}
+      // Нормалізуємо позицію та pathOffset відносно поточного canvas
+      centerPathToCanvas(clipPath, mmToPx(100), mmToPx(100));
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;
@@ -7438,13 +7461,9 @@ const Toolbar = () => {
         absolutePositioned: true,
         originX: "center",
         originY: "center",
-        left: mmToPx(120) / 2,
-        top: mmToPx(80) / 2,
         objectCaching: false,
       });
-      try {
-        clipPath.pathOffset = new fabric.Point(mmToPx(120) / 2, mmToPx(80) / 2);
-      } catch {}
+      centerPathToCanvas(clipPath, mmToPx(100), mmToPx(100));
 
       // Встановлюємо clipPath для canvas
       canvas.clipPath = clipPath;

@@ -120,3 +120,42 @@
   text-align: center;
   color: #64748b;
 }
+
+.newSignButton {
+  border: 2px dashed #34C759;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 178px;
+}
+
+.newSignButton:hover {
+  background: #f0fdf4;
+  border-color: #017F01;
+}
+
+.newSignButtonContent {
+  height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.newSignButtonContent svg {
+  width: 100px;
+  height: 100px;
+}
+
+.newSignButtonLabel {
+  font-size: 14px;
+  color: #006CA4;
+  text-align: center;
+  font-weight: 500;
+}

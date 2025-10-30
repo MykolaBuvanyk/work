@@ -4,7 +4,14 @@ import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import * as fabric from "fabric";
 import styles from "./YourProjectsModal.module.css";
-import { getAllProjects, deleteProject, formatDate, getProject } from "../../utils/projectStorage";
+import { 
+  getAllProjects, 
+  deleteProject, 
+  formatDate, 
+  getProject,
+  addCanvasesFromProjectsToCurrentProject,
+  clearAllUnsavedSigns 
+} from "../../utils/projectStorage";
 
 
 
@@ -14,6 +21,7 @@ const YourProjectsModal = ({ onClose }) => {
   const itemsPerPage = 3; // по 3 записи на сторінку
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
   const [projects, setProjects] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]); // Для чекбоксів
 
   useEffect(() => {
     getAllProjects()
@@ -102,13 +110,40 @@ const YourProjectsModal = ({ onClose }) => {
     try {
       const project = await getProject(id);
       if (!project) return;
+      
+      // Очищаємо всі незбережені полотна при переключенні на інший проект
+      try {
+        await clearAllUnsavedSigns();
+        console.log("Cleared all unsaved signs on project switch");
+        
+        // Очищаємо localStorage від unsaved sign ID
+        try {
+          localStorage.removeItem("currentUnsavedSignId");
+        } catch {}
+        
+        // Тригеримо подію оновлення unsaved signs
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+      } catch (err) {
+        console.error("Failed to clear unsaved signs:", err);
+      }
+      
       try {
         localStorage.setItem("currentProjectId", project.id);
         localStorage.setItem("currentProjectName", project.name || "");
       } catch {}
       const first = project.canvases && project.canvases[0];
       if (first) {
-        try { localStorage.setItem("currentCanvasId", first.id); } catch {}
+        try {
+          localStorage.setItem("currentCanvasId", first.id);
+          localStorage.setItem("currentProjectCanvasId", first.id);
+          localStorage.setItem("currentProjectCanvasIndex", "0");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = first.id;
+            window.__currentProjectCanvasIndex = 0;
+          }
+        } catch {}
         if (canvas && first.json && typeof canvas.loadFromJSON === "function") {
           canvas.__suspendUndoRedo = true;
           canvas.loadFromJSON(first.json, () => {
@@ -120,7 +155,17 @@ const YourProjectsModal = ({ onClose }) => {
         // Empty project - clear current canvas
         canvas.clear();
         canvas.renderAll();
-        try { localStorage.removeItem("currentCanvasId"); } catch {}
+        try {
+          localStorage.removeItem("currentCanvasId");
+          localStorage.removeItem("currentProjectCanvasId");
+          localStorage.removeItem("currentProjectCanvasIndex");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = null;
+            window.__currentProjectCanvasIndex = null;
+          }
+        } catch {}
       }
       try {
         window.dispatchEvent(new CustomEvent("project:switched", { detail: { projectId: project.id } }));
@@ -130,6 +175,57 @@ const YourProjectsModal = ({ onClose }) => {
       onClose && onClose();
     } catch (e) {
       console.error("Failed to open project", e);
+    }
+  };
+
+  // Обробник зміни чекбокса
+  const handleCheckboxChange = (projectId) => {
+    setSelectedProjects((prev) => {
+      if (prev.includes(projectId)) {
+        return prev.filter((id) => id !== projectId);
+      } else {
+        return [...prev, projectId];
+      }
+    });
+  };
+
+  // Обробник додавання вибраних проектів до поточного
+  const handleAddToCurrentProject = async () => {
+    if (selectedProjects.length === 0) {
+      alert("Please select at least one project to add");
+      return;
+    }
+
+    try {
+      const result = await addCanvasesFromProjectsToCurrentProject(selectedProjects);
+      
+      if (result) {
+        // Успішно додано
+        console.log("Canvases added successfully");
+        
+        // Тригеримо оновлення проекту
+        try {
+          window.dispatchEvent(
+            new CustomEvent("project:canvasesUpdated", {
+              detail: { projectId: result.id }
+            })
+          );
+        } catch {}
+        
+        // Очищаємо вибрані проекти
+        setSelectedProjects([]);
+        
+        // Показуємо повідомлення
+        alert(`Successfully added canvases from ${selectedProjects.length} project(s)`);
+        
+        // Закриваємо модалку
+        onClose && onClose();
+      } else {
+        alert("Failed to add canvases. Please make sure you have a current project open.");
+      }
+    } catch (error) {
+      console.error("Failed to add canvases to current project:", error);
+      alert("An error occurred while adding canvases");
     }
   };
   return (
@@ -225,7 +321,11 @@ const YourProjectsModal = ({ onClose }) => {
               return (
                 <tr key={project.id} className={styles.tr}>
                   <td>
-                    <input type="checkbox" />
+                    <input 
+                      type="checkbox" 
+                      checked={selectedProjects.includes(project.id)}
+                      onChange={() => handleCheckboxChange(project.id)}
+                    />
                   </td>
                   <td>{startIndex + index + 1}</td>
                   <td>{project.name}</td>
@@ -332,7 +432,14 @@ const YourProjectsModal = ({ onClose }) => {
             })}
           </tbody>
         </table>
-        <div className={styles.addToCurrProject}>
+        <div 
+          className={styles.addToCurrProject}
+          onClick={handleAddToCurrentProject}
+          style={{ 
+            cursor: selectedProjects.length > 0 ? 'pointer' : 'not-allowed',
+            opacity: selectedProjects.length > 0 ? 1 : 0.5
+          }}
+        >
           <svg
             width="24"
             height="24"
@@ -353,7 +460,7 @@ const YourProjectsModal = ({ onClose }) => {
               </clipPath>
             </defs>
           </svg>
-          Add to current project
+          Add to current project {selectedProjects.length > 0 && `(${selectedProjects.length})`}
         </div>
         {/* Пагінація */}
         {projects.length > itemsPerPage && (

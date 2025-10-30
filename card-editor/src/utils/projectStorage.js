@@ -146,8 +146,8 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
 
       try {
         // ВИПРАВЛЕННЯ: Отримуємо актуальний toolbar state з кількох джерел
-        let toolbarState = {};
-
+          let toolbarState = {};
+        
         // Спочатку намагаємося отримати з window функції
         if (window.getCurrentToolbarState) {
           toolbarState = window.getCurrentToolbarState() || {};
@@ -795,10 +795,34 @@ export async function saveNewProject(name, canvas) {
   try {
     localStorage.setItem("currentProjectId", project.id);
     localStorage.setItem("currentProjectName", project.name);
+    const firstCanvas = project.canvases?.[0] || null;
+    if (firstCanvas) {
+      localStorage.setItem("currentCanvasId", firstCanvas.id);
+      localStorage.setItem("currentProjectCanvasId", firstCanvas.id);
+      localStorage.setItem("currentProjectCanvasIndex", "0");
+      localStorage.removeItem("currentUnsavedSignId");
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = firstCanvas.id;
+          window.__currentProjectCanvasIndex = 0;
+        }
+      } catch {}
+    } else {
+      localStorage.removeItem("currentCanvasId");
+      localStorage.removeItem("currentProjectCanvasId");
+      localStorage.removeItem("currentProjectCanvasIndex");
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = null;
+          window.__currentProjectCanvasIndex = null;
+        }
+      } catch {}
+    }
   } catch {}
   // absorb unsaved signs if any (excluding current one to avoid duplication)
   try {
-    await transferUnsavedSignsToProject(project.id, currentUnsavedId);
+    const exclude = currentUnsavedId ? [currentUnsavedId] : [];
+    await transferUnsavedSignsToProject(project.id, exclude);
   } catch {}
   return project;
 }
@@ -821,35 +845,187 @@ export async function saveCurrentProject(canvas) {
 
   // Отримуємо поточний ID незбереженого знаку
   let currentUnsavedId = null;
-  try {
-    currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
-  } catch {}
+  try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
 
+  // Визначаємо активне полотно, яке потрібно оновити
+  let currentCanvasId = null;
+  let currentProjectCanvasId = null;
+  let currentProjectCanvasIndex = null;
+  let runtimeProjectCanvasId = null;
+  let runtimeProjectCanvasIndex = null;
+  let pendingUnsavedCleanupId = null;
+  try {
+    if (typeof window !== "undefined") {
+      runtimeProjectCanvasId = window.__currentProjectCanvasId || null;
+      runtimeProjectCanvasIndex = window.__currentProjectCanvasIndex || null;
+      pendingUnsavedCleanupId = window.__pendingUnsavedCleanupId || null;
+    }
+  } catch {}
+  try { currentCanvasId = localStorage.getItem("currentCanvasId"); } catch {}
+  try { currentProjectCanvasId = localStorage.getItem("currentProjectCanvasId"); } catch {}
+  try {
+    const storedIndex = localStorage.getItem("currentProjectCanvasIndex");
+    if (storedIndex !== null && storedIndex !== undefined) {
+      const parsed = Number(storedIndex);
+      if (!Number.isNaN(parsed)) {
+        currentProjectCanvasIndex = parsed;
+      }
+    }
+  } catch {}
+  const activeProjectCanvasId = runtimeProjectCanvasId || currentProjectCanvasId || null;
+  const activeProjectCanvasIndex =
+    typeof runtimeProjectCanvasIndex === "number" && runtimeProjectCanvasIndex >= 0
+      ? runtimeProjectCanvasIndex
+      : currentProjectCanvasIndex;
+
+  const targetCanvasId = activeProjectCanvasId || currentCanvasId || null;
+  const hasStoredIndex =
+    typeof activeProjectCanvasIndex === "number" &&
+    activeProjectCanvasIndex >= 0;
+  
   const toolbarState = window.getCurrentToolbarState?.() || {};
   const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
-  const canvases = Array.isArray(existing.canvases)
-    ? existing.canvases.slice(0, 10)
-    : [];
+  const canvases = Array.isArray(existing.canvases) ? existing.canvases.slice(0, 10).map(canvasEntry => ({ ...canvasEntry })) : [];
+
   if (snap) {
     if (canvases.length === 0) {
-      canvases.push({ id: uuid(), ...snap });
+      const newCanvasId = targetCanvasId || uuid();
+      canvases.push({ id: newCanvasId, ...snap });
+      currentCanvasId = newCanvasId;
+      try {
+        localStorage.setItem("currentCanvasId", newCanvasId);
+        localStorage.setItem("currentProjectCanvasId", newCanvasId);
+        localStorage.setItem("currentProjectCanvasIndex", "0");
+        localStorage.removeItem("currentUnsavedSignId");
+      } catch {}
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = newCanvasId;
+          window.__currentProjectCanvasIndex = 0;
+        }
+      } catch {}
+      console.log('[projectStorage] saveCurrentProject: created first canvas entry', { newCanvasId });
     } else {
-      canvases[0] = { ...(canvases[0] || {}), ...snap };
+      const isActiveUnsaved = Boolean(currentUnsavedId) && !targetCanvasId;
+      let targetIndex = -1;
+
+      if (!isActiveUnsaved && targetCanvasId) {
+        targetIndex = canvases.findIndex(c => c.id === targetCanvasId);
+        console.log('[projectStorage] saveCurrentProject: lookup by id', {
+          targetCanvasId,
+          targetIndex,
+          canvasesCount: canvases.length
+        });
+      }
+
+      if (!isActiveUnsaved && targetIndex === -1 && hasStoredIndex && activeProjectCanvasIndex < canvases.length) {
+        targetIndex = activeProjectCanvasIndex;
+        console.log('[projectStorage] saveCurrentProject: fallback to stored index', {
+          storedIndex: activeProjectCanvasIndex,
+          canvasesCount: canvases.length
+        });
+      }
+
+      if (!isActiveUnsaved && targetIndex !== -1) {
+        const resolvedId = canvases[targetIndex].id;
+        canvases[targetIndex] = { ...canvases[targetIndex], ...snap };
+        currentCanvasId = resolvedId;
+        try {
+          localStorage.setItem("currentCanvasId", resolvedId);
+          localStorage.setItem("currentProjectCanvasId", resolvedId);
+          localStorage.setItem("currentProjectCanvasIndex", String(targetIndex));
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = resolvedId;
+            window.__currentProjectCanvasIndex = targetIndex;
+          }
+        } catch {}
+        console.log('[projectStorage] saveCurrentProject: updated existing canvas', {
+          targetIndex,
+          resolvedId
+        });
+      } else {
+        const newCanvasId = uuid();
+        canvases.push({ id: newCanvasId, ...snap });
+        currentCanvasId = newCanvasId;
+        try {
+          localStorage.setItem("currentCanvasId", newCanvasId);
+          localStorage.setItem("currentProjectCanvasId", newCanvasId);
+          localStorage.setItem("currentProjectCanvasIndex", String(canvases.length - 1));
+          localStorage.removeItem("currentUnsavedSignId");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = newCanvasId;
+            window.__currentProjectCanvasIndex = canvases.length - 1;
+          }
+        } catch {}
+        console.warn('[projectStorage] saveCurrentProject: appended new canvas because no target found', {
+          newCanvasId,
+          canvasesCount: canvases.length,
+          targetCanvasId,
+          hasStoredIndex,
+          storedIndex: currentProjectCanvasIndex,
+          isActiveUnsaved
+        });
+      }
     }
   }
   const updated = { ...existing, canvases, updatedAt: now };
   await putProject(updated);
   try {
-    window.dispatchEvent(
-      new CustomEvent("project:canvasesUpdated", {
-        detail: { projectId: updated.id },
-      })
-    );
+    const detail = {
+      projectId: updated.id,
+      activeCanvasId: (() => {
+        try {
+          return typeof window !== "undefined"
+            ? window.__currentProjectCanvasId || currentProjectCanvasId || currentCanvasId || null
+            : currentProjectCanvasId || currentCanvasId || null;
+        } catch {
+          return currentProjectCanvasId || currentCanvasId || null;
+        }
+      })(),
+      activeCanvasIndex: (() => {
+        try {
+          return typeof window !== "undefined"
+            ? window.__currentProjectCanvasIndex ?? currentProjectCanvasIndex ?? null
+            : currentProjectCanvasIndex ?? null;
+        } catch {
+          return currentProjectCanvasIndex ?? null;
+        }
+      })()
+    };
+    window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail }));
   } catch {}
-  try {
-    await transferUnsavedSignsToProject(updated.id, currentUnsavedId);
-  } catch {}
+  try { await transferUnsavedSignsToProject(updated.id, currentUnsavedId); } catch {}
+
+  const unsavedToRemove = new Set();
+  if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
+  if (pendingUnsavedCleanupId && !unsavedToRemove.has(pendingUnsavedCleanupId)) {
+    unsavedToRemove.add(pendingUnsavedCleanupId);
+  }
+
+  if (unsavedToRemove.size) {
+    try {
+      await Promise.all([...unsavedToRemove].map((id) => deleteUnsavedSign(id)));
+      broadcastUnsavedUpdate();
+    } catch (err) {
+      console.warn('Failed to clean up unsaved signs after project save:', err);
+    }
+
+    try {
+      if (typeof window !== "undefined") {
+        if (unsavedToRemove.has(pendingUnsavedCleanupId)) {
+          window.__pendingUnsavedCleanupId = null;
+        }
+      }
+      if (unsavedToRemove.has(currentUnsavedId)) {
+        try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+      }
+    } catch {}
+  }
   return updated;
 }
 
@@ -869,43 +1045,82 @@ export function formatDate(ts) {
 
 function broadcastProjectUpdate(projectId) {
   try {
-    window.dispatchEvent(
-      new CustomEvent("project:canvasesUpdated", { detail: { projectId } })
-    );
+    const detail = { projectId };
+    try {
+      if (typeof window !== "undefined") {
+        detail.activeCanvasId = window.__currentProjectCanvasId ?? null;
+        detail.activeCanvasIndex = window.__currentProjectCanvasIndex ?? null;
+      }
+    } catch {}
+    window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail }));
   } catch {}
 }
 
 // Transfer all unsaved signs into the specified project (append, max 10 total). Clears unsaved store.
 // excludeId - ID незбереженого знаку, який не потрібно додавати (щоб уникнути дублювання поточного полотна)
-export async function transferUnsavedSignsToProject(
-  projectId,
-  excludeId = null
-) {
+export async function transferUnsavedSignsToProject(projectId, excludeIds = null) {
   if (!projectId) return null;
   const unsaved = await getAllUnsavedSigns();
   if (!unsaved.length) return null;
   const project = await getProject(projectId);
   if (!project) return null;
   const existing = Array.isArray(project.canvases) ? project.canvases : [];
+
+  const excludeSet = new Set();
+  if (excludeIds instanceof Set) {
+    excludeIds.forEach((id) => { if (id) excludeSet.add(id); });
+  } else if (Array.isArray(excludeIds)) {
+    excludeIds.forEach((id) => { if (id) excludeSet.add(id); });
+  } else if (typeof excludeIds === "string" && excludeIds) {
+    excludeSet.add(excludeIds);
+  }
+
+  console.log('[projectStorage] transferUnsavedSignsToProject', {
+    projectId,
+    unsavedCount: unsaved.length,
+    excludeIds: Array.from(excludeSet)
+  });
   // Append unsaved entries (mapping to project canvas schema by adding ids if missing)
   // Виключаємо поточний знак, щоб уникнути дублювання
+  const transferredIds = [];
   for (const s of unsaved) {
-    if (s.id === excludeId) continue; // Пропускаємо поточний знак
+    if (excludeSet.has(s.id)) continue; // Пропускаємо виключені знаки
     if (existing.length >= 10) break; // respect limit
+    const newCanvasId = uuid();
     existing.push({
-      id: uuid(),
+      id: newCanvasId,
       json: s.json,
       preview: s.preview,
+      previewSvg: s.previewSvg,
       width: s.width,
       height: s.height,
+      backgroundColor: s.backgroundColor,
+      backgroundType: s.backgroundType,
+      canvasType: s.canvasType,
+      cornerRadius: s.cornerRadius,
+      toolbarState: s.toolbarState,
+      copiesCount: s.copiesCount,
+      canvasMetadata: {
+        ...(s.canvasMetadata || {}),
+        sourceUnsavedId: s.id,
+        migratedAt: Date.now()
+      }
     });
+    transferredIds.push(s.id);
   }
-  project.canvases = existing;
-  project.updatedAt = Date.now();
-  await putProject(project);
-  await clearAllUnsavedSigns();
-  broadcastProjectUpdate(project.id);
-  broadcastUnsavedUpdate();
+
+  if (transferredIds.length) {
+    project.canvases = existing;
+    project.updatedAt = Date.now();
+    await putProject(project);
+    await Promise.all(transferredIds.map(id => deleteUnsavedSign(id)));
+    broadcastProjectUpdate(project.id);
+    broadcastUnsavedUpdate();
+  }
+  else {
+    // Якщо нічого не перенесено, все одно повідомляємо про оновлення списку незбережених знаків
+    broadcastUnsavedUpdate();
+  }
   return project;
 }
 
@@ -992,16 +1207,24 @@ export async function addCanvasSnapshotToCurrentProject(
       updatedAt: now,
       canvases: [{ id: uuid(), ...snapshot }],
     };
-    await putProject(project);
-    broadcastProjectUpdate(project.id);
+  await putProject(project);
+  broadcastProjectUpdate(project.id);
     try {
       localStorage.setItem("currentProjectId", project.id);
       localStorage.setItem("currentProjectName", project.name);
-    } catch {}
-    if (setAsCurrent)
-      try {
+      if (setAsCurrent && project.canvases[0]) {
         localStorage.setItem("currentCanvasId", project.canvases[0].id);
-      } catch {}
+        localStorage.setItem("currentProjectCanvasId", project.canvases[0].id);
+        localStorage.setItem("currentProjectCanvasIndex", "0");
+        localStorage.removeItem("currentUnsavedSignId");
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = project.canvases[0].id;
+            window.__currentProjectCanvasIndex = 0;
+          }
+        } catch {}
+      }
+    } catch {}
     return project;
   }
   const project = await getProject(currentId);
@@ -1015,10 +1238,20 @@ export async function addCanvasSnapshotToCurrentProject(
   project.updatedAt = Date.now();
   await putProject(project);
   broadcastProjectUpdate(project.id);
-  if (setAsCurrent)
+  if (setAsCurrent) {
     try {
       localStorage.setItem("currentCanvasId", canvasEntry.id);
+      localStorage.setItem("currentProjectCanvasId", canvasEntry.id);
+      localStorage.setItem("currentProjectCanvasIndex", String(project.canvases.length - 1));
+      localStorage.removeItem("currentUnsavedSignId");
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = canvasEntry.id;
+          window.__currentProjectCanvasIndex = project.canvases.length - 1;
+        }
+      } catch {}
     } catch {}
+  }
   return project;
 }
 
@@ -1040,4 +1273,106 @@ export async function deleteCanvasFromCurrentProject(canvasId) {
   await putProject(project);
   broadcastProjectUpdate(project.id);
   return project;
+}
+
+// Add canvases from selected projects to the current project
+export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
+  if (!Array.isArray(projectIds) || projectIds.length === 0) return null;
+  
+  let currentId = null;
+  try { currentId = localStorage.getItem("currentProjectId"); } catch {}
+  if (!currentId) {
+    console.warn("No current project to add canvases to");
+    return null;
+  }
+  
+  const currentProject = await getProject(currentId);
+  if (!currentProject) {
+    console.warn("Current project not found:", currentId);
+    return null;
+  }
+  
+  currentProject.canvases = Array.isArray(currentProject.canvases) ? currentProject.canvases : [];
+  
+  let addedCount = 0;
+  const MAX_CANVASES = 10;
+  
+  // Iterate through selected projects
+  for (const projectId of projectIds) {
+    if (projectId === currentId) {
+      console.log("Skipping current project itself");
+      continue; // Skip current project
+    }
+    
+    if (currentProject.canvases.length >= MAX_CANVASES) {
+      console.warn("Maximum canvas limit reached:", MAX_CANVASES);
+      break;
+    }
+    
+    try {
+      const sourceProject = await getProject(projectId);
+      if (!sourceProject || !Array.isArray(sourceProject.canvases)) {
+        console.warn("Source project not found or has no canvases:", projectId);
+  try {
+    const unsavedToRemove = new Set();
+    if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
+    if (pendingUnsavedCleanupId && !unsavedToRemove.has(pendingUnsavedCleanupId)) {
+      unsavedToRemove.add(pendingUnsavedCleanupId);
+    }
+
+    if (unsavedToRemove.size) {
+      console.log('[projectStorage] saveCurrentProject: removing pending unsaved signs', {
+        ids: Array.from(unsavedToRemove)
+      });
+      try {
+        await Promise.all([...unsavedToRemove].map((id) => deleteUnsavedSign(id)));
+        broadcastUnsavedUpdate();
+      } catch (err) {
+        console.warn('Failed to clean up unsaved signs after project save:', err);
+      }
+
+      try {
+        if (typeof window !== "undefined") {
+          if (unsavedToRemove.has(pendingUnsavedCleanupId)) {
+            window.__pendingUnsavedCleanupId = null;
+          }
+        }
+        if (unsavedToRemove.has(currentUnsavedId)) {
+          try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+        }
+      } catch {}
+    }
+    await transferUnsavedSignsToProject(updated.id, unsavedToRemove);
+  } catch {}
+      }
+      
+      // Add canvases from source project
+      for (const canvas of sourceProject.canvases) {
+        if (currentProject.canvases.length >= MAX_CANVASES) {
+          console.warn("Maximum canvas limit reached during transfer");
+          break;
+        }
+        
+        // Create a copy with new ID
+        const canvasCopy = {
+          ...canvas,
+          id: uuid(), // Generate new ID to avoid conflicts
+        };
+        
+        currentProject.canvases.push(canvasCopy);
+        addedCount++;
+      }
+    } catch (error) {
+      console.error("Error adding canvases from project:", projectId, error);
+    }
+  }
+  
+  if (addedCount > 0) {
+    currentProject.updatedAt = Date.now();
+    await putProject(currentProject);
+    broadcastProjectUpdate(currentProject.id);
+    console.log(`Successfully added ${addedCount} canvases to current project`);
+  }
+  
+  return currentProject;
 }

@@ -5,19 +5,22 @@ import {
   getAllUnsavedSigns,
   deleteUnsavedSign,
   addBlankUnsavedSign,
+  deleteCanvasFromCurrentProject,
+  getProject,
+  updateCanvasInCurrentProject,
 } from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 import AccessoriesModal from "../AccessoriesModal/AccessoriesModal";
 // Modal images (used only inside modal, but state lives here for two-way sync)
-import imgCableTies from "../../assets/images/accessories/CableTies 1.png";
-import imgPh95 from "../../assets/images/accessories/ph1 2.9 x 9.5 mm 1.png";
-import imgPh13 from "../../assets/images/accessories/ph1 2.9 x 13 mm 1.png";
-import imgSHook from "../../assets/images/accessories/S-Hook 1.png";
-import imgKeyring from "../../assets/images/accessories/Keyring 1.png";
-import imgBallchain from "../../assets/images/accessories/Ballchain 1.png";
-import imgSHookSign from "../../assets/images/accessories/S-hook+sign 1.png";
-import imgKeyringSign1 from "../../assets/images/accessories/Keyring+sign 1.png";
-import imgKeyringSign2 from "../../assets/images/accessories/Keyring+sign 2.png";
+import imgCableTies from "/images/accessories/CableTies 1.png";
+import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 1.png";
+import imgPh13 from "/images/accessories/ph1 2.9 x 13 mm 1.png";
+import imgSHook from "/images/accessories/S-Hook 1.png";
+import imgKeyring from "/images/accessories/Keyring 1.png";
+import imgBallchain from "/images/accessories/Ballchain 1.png";
+import imgSHookSign from "/images/accessories/S-hook+sign 1.png";
+import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
+import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
 
 const TopToolbar = ({ className }) => {
   const { canvas } = useCanvasContext();
@@ -104,19 +107,19 @@ const TopToolbar = ({ className }) => {
     },
   ]);
 
-  // Load toolbar icons dynamically if present; fallback to placeholder if missing
+  // Toolbar icons - using direct paths to public folder
   const svgIcons = React.useMemo(() => {
-    const modules = import.meta.glob("../../assets/images/accessories/*.svg", {
-      eager: true,
-      as: "url",
-    });
+    const iconFiles = [
+      "cable.svg",
+      "screws.svg",
+      "S-Hook.svg",
+      "Keyring.svg",
+      "Ballchain.svg"
+    ];
     const map = {};
-    Object.entries(modules).forEach(([path, url]) => {
-      const file = path.split("/").pop();
-      if (file) {
-        map[file] = url;
-        map[file.toLowerCase()] = url;
-      }
+    iconFiles.forEach((file) => {
+      map[file] = `/images/accessories/${file}`;
+      map[file.toLowerCase()] = `/images/accessories/${file}`;
     });
     return map;
   }, []);
@@ -216,51 +219,150 @@ const TopToolbar = ({ className }) => {
     setWorking(true);
     try {
       let currentUnsavedId = null;
+      let currentProjectCanvasId = null;
+      let currentProjectId = null;
+      
       try {
         currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+        currentProjectCanvasId =
+          localStorage.getItem("currentProjectCanvasId") ||
+          localStorage.getItem("currentCanvasId");
+        currentProjectId = localStorage.getItem("currentProjectId");
       } catch {}
-      if (!currentUnsavedId) {
+      
+      // Визначаємо що саме треба видалити
+      const isUnsavedSign = !!currentUnsavedId;
+      const isProjectCanvas = !!currentProjectCanvasId && !!currentProjectId;
+      
+      if (!isUnsavedSign && !isProjectCanvas) {
+        console.log("No canvas to delete");
         setWorking(false);
         return;
       }
-      // Persist final state before removal (optional safety)
-      if (canvas) {
-        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
-          () => {}
-        );
-      }
-      await deleteUnsavedSign(currentUnsavedId);
-      // Load remaining unsaved signs
-      const remaining = await getAllUnsavedSigns();
-      if (remaining.length) {
-        const next = remaining[0];
+      
+      // Видаляємо unsaved sign
+      if (isUnsavedSign) {
+        console.log("Deleting unsaved sign:", currentUnsavedId);
+        
+        // Persist final state before removal (optional safety)
+        if (canvas) {
+          await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
+            () => {}
+          );
+        }
+        
+        await deleteUnsavedSign(currentUnsavedId);
+        
         try {
-          localStorage.setItem("currentUnsavedSignId", next.id);
+          localStorage.removeItem("currentUnsavedSignId");
         } catch {}
-        if (canvas && next.json) {
+        
+        // Тригеримо оновлення
+        try {
+          window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+        } catch {}
+      }
+      
+      // Видаляємо canvas з проекту
+      if (isProjectCanvas) {
+        console.log("Deleting project canvas:", currentProjectCanvasId);
+        
+        // Persist final state before removal (optional safety)
+        if (canvas) {
+          await updateCanvasInCurrentProject(currentProjectCanvasId, canvas).catch(
+            () => {}
+          );
+        }
+        
+        await deleteCanvasFromCurrentProject(currentProjectCanvasId);
+        
+        try {
+          localStorage.removeItem("currentCanvasId");
+          localStorage.removeItem("currentProjectCanvasId");
+          localStorage.removeItem("currentProjectCanvasIndex");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = null;
+            window.__currentProjectCanvasIndex = null;
+          }
+        } catch {}
+        
+        // Тригеримо оновлення проекту
+        try {
+          window.dispatchEvent(
+            new CustomEvent("project:canvasesUpdated", {
+              detail: { projectId: currentProjectId }
+            })
+          );
+        } catch {}
+      }
+      
+      // Завантажуємо наступне доступне полотно
+      let nextCanvasToLoad = null;
+      
+      // Спочатку перевіряємо чи є ще полотна в проекті
+      if (currentProjectId) {
+        const project = await getProject(currentProjectId);
+        if (project && project.canvases && project.canvases.length > 0) {
+          nextCanvasToLoad = project.canvases[0];
+          try {
+            localStorage.setItem("currentCanvasId", nextCanvasToLoad.id);
+            localStorage.setItem("currentProjectCanvasId", nextCanvasToLoad.id);
+            localStorage.setItem("currentProjectCanvasIndex", "0");
+          } catch {}
+          try {
+            if (typeof window !== "undefined") {
+              window.__currentProjectCanvasId = nextCanvasToLoad.id;
+              window.__currentProjectCanvasIndex = 0;
+            }
+          } catch {}
+          
+          if (canvas && nextCanvasToLoad.json) {
+            canvas.__suspendUndoRedo = true;
+            canvas.loadFromJSON(nextCanvasToLoad.json, () => {
+              canvas.renderAll();
+              canvas.__suspendUndoRedo = false;
+            });
+          }
+          
+          console.log("Loaded next project canvas:", nextCanvasToLoad.id);
+          setWorking(false);
+          return;
+        }
+      }
+      
+      // Якщо в проекті немає полотен, перевіряємо unsaved signs
+      const remaining = await getAllUnsavedSigns();
+      if (remaining.length > 0) {
+        nextCanvasToLoad = remaining[0];
+        try {
+          localStorage.setItem("currentUnsavedSignId", nextCanvasToLoad.id);
+        } catch {}
+        
+        if (canvas && nextCanvasToLoad.json) {
           canvas.__suspendUndoRedo = true;
-          canvas.loadFromJSON(next.json, () => {
+          canvas.loadFromJSON(nextCanvasToLoad.json, () => {
             canvas.renderAll();
             canvas.__suspendUndoRedo = false;
           });
         }
+        
+        console.log("Loaded next unsaved sign:", nextCanvasToLoad.id);
       } else {
-        // No unsaved left -> clear context and revert to LIVE mode
-        try {
-          localStorage.removeItem("currentUnsavedSignId");
-        } catch {}
+        // Немає жодних полотен - очищаємо canvas
+        console.log("No more canvases available, clearing canvas");
+        
         if (canvas) {
           canvas.__suspendUndoRedo = true;
           canvas.clear();
           canvas.renderAll();
           canvas.__suspendUndoRedo = false;
         }
+        
         // Скидаємо флаг перевірки, щоб автоматично створити нове полотно
         setHasCheckedCanvases(false);
       }
-      try {
-        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
-      } catch {}
     } catch (e) {
       console.error("Delete Sign failed", e);
     } finally {
@@ -274,6 +376,9 @@ const TopToolbar = ({ className }) => {
 
     const checkAndCreateCanvas = async () => {
       try {
+        // ВИПРАВЛЕННЯ: Додаємо затримку щоб дати час іншим компонентам створити полотна
+       
+        
         // Отримуємо всі unsaved signs
         const unsavedSigns = await getAllUnsavedSigns();
         
@@ -292,7 +397,7 @@ const TopToolbar = ({ className }) => {
 
         const totalCanvases = unsavedSigns.length + projectCanvasCount;
         
-        console.log("Canvas check:", {
+        console.log("Canvas check (delayed):", {
           unsavedSigns: unsavedSigns.length,
           projectCanvases: projectCanvasCount,
           total: totalCanvases
@@ -300,7 +405,7 @@ const TopToolbar = ({ className }) => {
 
         // Якщо немає жодного полотна - створюємо дефолтне
         if (totalCanvases < 1) {
-          console.log("No canvases found, creating default canvas");
+          console.log("No canvases found after delay, creating default canvas");
           
           // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
           const PX_PER_MM = 96 / 25.4;
@@ -335,6 +440,8 @@ const TopToolbar = ({ className }) => {
               console.error("Failed to auto-open canvas:", err);
             }
           }, 300);
+        } else {
+          console.log("Canvases already exist, skipping auto-creation");
         }
 
         setHasCheckedCanvases(true);
@@ -345,6 +452,20 @@ const TopToolbar = ({ className }) => {
     };
 
     checkAndCreateCanvas();
+    
+    // Слухаємо подію створення полотна з інших компонентів
+    const handleCanvasCreated = () => {
+      console.log("Canvas created event received, marking as checked");
+      setHasCheckedCanvases(true);
+    };
+    
+    window.addEventListener("canvas:created", handleCanvasCreated);
+    window.addEventListener("unsaved:signsUpdated", handleCanvasCreated);
+    
+    return () => {
+      window.removeEventListener("canvas:created", handleCanvasCreated);
+      window.removeEventListener("unsaved:signsUpdated", handleCanvasCreated);
+    };
   }, [canvas, hasCheckedCanvases, working]);
 
   return (

@@ -9,6 +9,9 @@ import {
 } from "../../utils/projectStorage";
 import styles from "./NewProjectsModal.module.css";
 
+const DEFAULT_SHAPE_WIDTH_MM = 120;
+const DEFAULT_SHAPE_HEIGHT_MM = 80;
+
 const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
   const { canvas } = useCanvasContext();
 
@@ -36,7 +39,11 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
           window.restoreToolbarState({
             currentShapeType: "rectangle",
             cornerRadius: 0,
-            sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+            sizeValues: {
+              width: DEFAULT_SHAPE_WIDTH_MM,
+              height: DEFAULT_SHAPE_HEIGHT_MM,
+              cornerRadius: 0,
+            },
             globalColors: {
               textColor: "#000000",
               backgroundColor: "#FFFFFF",
@@ -146,7 +153,11 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
         window.restoreToolbarState({
           currentShapeType: "rectangle",
           cornerRadius: 0,
-          sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+          sizeValues: {
+            width: DEFAULT_SHAPE_WIDTH_MM,
+            height: DEFAULT_SHAPE_HEIGHT_MM,
+            cornerRadius: 0,
+          },
           globalColors: {
             textColor: "#000000",
             backgroundColor: "#FFFFFF",

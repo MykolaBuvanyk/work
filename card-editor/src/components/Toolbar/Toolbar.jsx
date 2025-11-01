@@ -67,6 +67,9 @@ import {
   Hole7,
 } from "../../assets/Icons";
 
+const DEFAULT_SHAPE_WIDTH_MM = 120;
+const DEFAULT_SHAPE_HEIGHT_MM = 80;
+
 const Toolbar = () => {
   const {
     canvas,
@@ -89,18 +92,26 @@ const Toolbar = () => {
   const [activeObject, setActiveObject] = useState(null);
   const [sizeValues, setSizeValues] = useState({
     // Store UI values in millimeters
-    width: 150,
-    height: 150,
+    width: DEFAULT_SHAPE_WIDTH_MM,
+    height: DEFAULT_SHAPE_HEIGHT_MM,
     cornerRadius: 0,
   });
   const [currentShapeType, setCurrentShapeType] = useState(null); // Тип поточної фігури
 
-  // Синхронізація локального currentShapeType з глобальним canvasShapeType
+  // Синхронізація локального currentShapeType з глобальним canvasShapeType та canvas
   useEffect(() => {
-    if (currentShapeType && setCanvasShapeType) {
-      setCanvasShapeType(currentShapeType);
+    if (currentShapeType) {
+      // Оновлюємо глобальний контекст
+      if (setCanvasShapeType) {
+        setCanvasShapeType(currentShapeType);
+      }
+      // ВИПРАВЛЕННЯ: Синхронізуємо з canvas
+      if (canvas && canvas.get("shapeType") !== currentShapeType) {
+        canvas.set("shapeType", currentShapeType);
+        console.log("Synced canvas shapeType:", currentShapeType);
+      }
     }
-  }, [currentShapeType, setCanvasShapeType]);
+  }, [currentShapeType, setCanvasShapeType, canvas]);
 
   // Чи застосовано кастомне редагування (після натискання іконки кастом форми)
   const [isCustomShapeApplied, setIsCustomShapeApplied] = useState(false);
@@ -679,8 +690,25 @@ const Toolbar = () => {
     (incoming) => {
       if (!incoming || typeof incoming !== "object") return;
 
-      if (incoming.currentShapeType) {
-        setCurrentShapeType(incoming.currentShapeType);
+      // ВИПРАВЛЕННЯ: Спочатку перевіряємо, чи є shapeType на canvas
+      // Якщо є і він відрізняється від incoming, використовуємо canvas shapeType
+      const canvasShapeType = canvas?.get?.("shapeType");
+      const incomingShapeType = incoming.currentShapeType;
+      
+      if (incomingShapeType) {
+        // Якщо є canvas shapeType і він збігається з incoming, або якщо canvas shapeType відсутній
+        if (!canvasShapeType || canvasShapeType === incomingShapeType) {
+          setCurrentShapeType(incomingShapeType);
+          console.log("Applied shapeType from toolbar state:", incomingShapeType);
+        } else {
+          // Canvas має інший shapeType - використовуємо його
+          setCurrentShapeType(canvasShapeType);
+          console.log("Preserved canvas shapeType over toolbar state:", canvasShapeType, "vs", incomingShapeType);
+        }
+      } else if (canvasShapeType) {
+        // Якщо incoming не має shapeType, але canvas має - використовуємо canvas
+        setCurrentShapeType(canvasShapeType);
+        console.log("Used canvas shapeType (no incoming):", canvasShapeType);
       }
 
       if (incoming.sizeValues) {
@@ -730,7 +758,19 @@ const Toolbar = () => {
       }
 
       if (incoming.globalColors) {
-        updateGlobalColors({ ...incoming.globalColors });
+        // Уникаємо передчасного перезапису фону: loadDesign сам синхронізує фон та globalColors
+        const { backgroundColor, backgroundType, ...otherColors } = incoming.globalColors;
+
+        if (Object.keys(otherColors).length > 0) {
+          updateGlobalColors({ ...otherColors });
+        }
+
+        console.log("Deferred background sync to load pipeline", {
+          incomingBg: backgroundColor,
+          incomingBgType: backgroundType,
+          preservedBg: canvas?.backgroundColor || canvas?.get?.("backgroundColor"),
+          preservedBgType: canvas?.get?.("backgroundType"),
+        });
       }
 
       if (incoming.selectedColorIndex !== undefined) {
@@ -808,6 +848,7 @@ const Toolbar = () => {
       }
     },
     [
+      canvas,
       setCurrentShapeType,
       setSizeValues,
       setThickness,
@@ -925,12 +966,65 @@ const Toolbar = () => {
       }
     };
   }, [
+    canvas,
     applyToolbarState,
     ensureBorderPresence,
     getBorderColor,
     getToolbarState,
     thickness,
   ]);
+
+  // НОВИЙ: Окремий useEffect для forceRestoreCanvasShape (після updateSize)
+  useEffect(() => {
+    const forceRestoreCanvasShape = (toolbarState) => {
+      if (!canvas || !toolbarState) return;
+      
+      const shapeType = toolbarState.currentShapeType || "rectangle";
+      const widthMm =
+        toolbarState.sizeValues?.width || DEFAULT_SHAPE_WIDTH_MM;
+      const heightMm =
+        toolbarState.sizeValues?.height || DEFAULT_SHAPE_HEIGHT_MM;
+      const cornerRadiusMm = toolbarState.sizeValues?.cornerRadius || 0;
+      
+      console.log("Force restoring canvas shape:", {
+        shapeType,
+        widthMm,
+        heightMm,
+        cornerRadiusMm
+      });
+      
+      // Встановлюємо shapeType на canvas
+      canvas.set("shapeType", shapeType);
+      setCurrentShapeType(shapeType);
+      
+      // Встановлюємо розміри
+      setSizeValues({
+        width: widthMm,
+        height: heightMm,
+        cornerRadius: cornerRadiusMm
+      });
+      
+      // Викликаємо updateSize для перебудови clipPath
+      setTimeout(() => {
+        if (updateSize) {
+          updateSize({
+            widthMm: widthMm,
+            heightMm: heightMm,
+            cornerRadiusMm: cornerRadiusMm
+          });
+          canvas.requestRenderAll();
+        }
+      }, 50);
+    };
+
+    window.forceRestoreCanvasShape = forceRestoreCanvasShape;
+
+    return () => {
+      if (window.forceRestoreCanvasShape === forceRestoreCanvasShape) {
+        delete window.forceRestoreCanvasShape;
+      }
+    };
+  }, [canvas, setCurrentShapeType, setSizeValues]);
 
   useEffect(() => {
     ensureBorderPresence();
@@ -1009,6 +1103,8 @@ const Toolbar = () => {
   // Corner radius вимикаємо для кола та простих стрілок (left/right)
   const isCircleSelected =
     currentShapeType === "circle" ||
+    currentShapeType === "oval" ||
+    currentShapeType === "ellipse" ||
     currentShapeType === "circleWithLine" ||
     currentShapeType === "circleWithCross" ||
     currentShapeType === "leftArrow" ||
@@ -1729,9 +1825,57 @@ const Toolbar = () => {
   // (Видалено mouse:down: заважав drag якорів)
   useEffect(() => {
     if (!canvas) return;
+    // Хелпер: санація контролів об'єкта, щоб виключити падіння у drawControls при першому кліку
+    const sanitizeObjectControls = (obj) => {
+      if (!obj) return;
+      try {
+        const baseControls = (fabric && fabric.Object && fabric.Object.prototype && fabric.Object.prototype.controls) || {};
+        // Відновлюємо контролли якщо відсутні/порожні
+        if (!obj.controls || Object.keys(obj.controls).length === 0) {
+          obj.controls = Object.entries(baseControls).reduce((acc, [k, v]) => {
+            if (v) acc[k] = v;
+            return acc;
+          }, {});
+        } else {
+          // Прибираємо невалідні
+          Object.keys(obj.controls).forEach((k) => {
+            if (!obj.controls[k]) delete obj.controls[k];
+          });
+        }
+        // Перевіряємо кожен контроль
+        Object.keys(obj.controls || {}).forEach((k) => {
+          const ctrl = obj.controls[k];
+          const base = baseControls[k];
+          if (!ctrl || typeof ctrl.positionHandler !== "function" || typeof ctrl.render !== "function") {
+            if (base) obj.controls[k] = base; else delete obj.controls[k];
+          }
+        });
+        // Безпечна обгортка positionHandler: завжди повертаємо {x,y}
+        Object.keys(obj.controls || {}).forEach((k) => {
+          const ctrl = obj.controls[k];
+          if (!ctrl) return;
+          if (!ctrl.__safeWrapped && typeof ctrl.positionHandler === "function") {
+            const original = ctrl.positionHandler;
+            ctrl.positionHandler = function (...args) {
+              try {
+                const p = original.apply(this, args);
+                if (p && typeof p.x === "number" && typeof p.y === "number") return p;
+              } catch {}
+              const center = typeof obj.getCenterPoint === "function" ? obj.getCenterPoint() : { x: obj.left || 0, y: obj.top || 0 };
+              return { x: center.x, y: center.y };
+            };
+            ctrl.__safeWrapped = true;
+          }
+        });
+        if (typeof obj.cornerSize !== "number" || !isFinite(obj.cornerSize)) obj.cornerSize = 13;
+        if (typeof obj.setCoords === "function") obj.setCoords();
+      } catch {}
+    };
     // init canvas listeners
     canvas.on("selection:created", () => {
       const obj = canvas.getActiveObject();
+      // Санітуємо контролли активного об'єкта для виключення падіння при першому кліку
+      sanitizeObjectControls(obj);
       if (obj && (obj.name === "vertex" || obj.name === "cornerHandle")) {
         canvas.discardActiveObject();
         canvas.requestRenderAll();
@@ -1741,6 +1885,7 @@ const Toolbar = () => {
     });
     canvas.on("selection:updated", () => {
       const obj = canvas.getActiveObject();
+      sanitizeObjectControls(obj);
       if (obj && (obj.name === "vertex" || obj.name === "cornerHandle")) {
         canvas.discardActiveObject();
         canvas.requestRenderAll();
@@ -2486,6 +2631,16 @@ const Toolbar = () => {
     const editedKey = overrides.__editedKey;
     const editedIsDecrease = !!overrides.__editedIsDecrease;
 
+    // ВИПРАВЛЕННЯ: Зберігаємо поточний cornerRadius прямо на canvas (в міліметрах)
+    if (canvas && typeof canvas.set === "function") {
+      const normalizedCorner = Number.isFinite(Number(cornerRadiusMm))
+        ? Number(cornerRadiusMm)
+        : 0;
+      canvas.set("cornerRadius", normalizedCorner);
+    }
+
+    const effectiveShapeType = canvas?.get?.("shapeType") || currentShapeType;
+
     // Якщо ми НЕ в custom режимі, але current clipPath позначено як customEdited — застосуємо лише округлення без перебудови оригінальної форми
     if (
       canvas &&
@@ -2576,9 +2731,9 @@ const Toolbar = () => {
     }
 
     // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
-    if (canvas && currentShapeType) {
+    if (canvas && effectiveShapeType) {
       // Спеціальна обробка для адаптивного трикутника
-      if (currentShapeType === "adaptiveTriangle") {
+      if (effectiveShapeType === "adaptiveTriangle") {
         const refW = mmToPx(190);
         const refH = mmToPx(165);
         const refRatio = refW / refH;
@@ -2714,7 +2869,7 @@ const Toolbar = () => {
       let effWidthMm = widthMm;
       let effHeightMm = heightMm;
 
-      if (currentShapeType === "halfCircle") {
+  if (effectiveShapeType === "halfCircle") {
         // Зберігаємо справжній півкруг: ширина = 2 * висота (height = width/2)
         // Визначаємо, яку величину змінював користувач (прийшла в overrides)
         const changedWidth = Object.prototype.hasOwnProperty.call(
@@ -2739,7 +2894,7 @@ const Toolbar = () => {
           width: effWidthMm,
           height: effHeightMm,
         }));
-      } else if (currentShapeType === "roundTop") {
+  } else if (effectiveShapeType === "roundTop") {
         // roundTop: пропорція верхнього півкола повинна зберігатися — воно ідеально кругле (діаметр = ширина фігури)
         // Вихідний базовий path: ширина 100, висота 100 (верхній півкруг радіуса 50 + прямі стінки вниз)
         // Щоб зберегти півкруг, половина верхньої висоти повинна дорівнювати радіусу = width/2.
@@ -2776,7 +2931,7 @@ const Toolbar = () => {
       // Створюємо новий clipPath з новими розмірами
       let newClipPath = null;
 
-      switch (currentShapeType) {
+  switch (effectiveShapeType) {
         case "rectangle":
           newClipPath = new fabric.Rect({
             // Slight outward inflation (-0.5 offset + +1 size) to fully cover pixel grid and remove residual seams
@@ -5028,23 +5183,59 @@ const Toolbar = () => {
         obj.type === "polygon" ||
         obj.type === "path"
       ) {
-        // Для фігур встановлюємо stroke колір та прозору заливку або колір тексту
-        obj.set({
-          stroke: textColor,
-          fill:
-            obj.fill === "transparent" || obj.fill === ""
-              ? "transparent"
-              : textColor,
-        });
+        const isTransparent =
+          obj.fill === "transparent" ||
+          obj.fill === "" ||
+          obj.fill === null ||
+          typeof obj.fill === "undefined";
+        const usesThemeColor = obj.useThemeColor === true;
+        const followThemeStroke = obj.followThemeStroke !== false;
+
+        if (isTransparent) {
+          obj.set({ fill: "transparent" });
+        } else if (usesThemeColor) {
+          obj.set({ fill: textColor });
+        } else if (
+          typeof obj.initialFillColor === "string" &&
+          obj.initialFillColor !== "" &&
+          obj.initialFillColor !== "transparent" &&
+          obj.fill !== obj.initialFillColor
+        ) {
+          obj.set({ fill: obj.initialFillColor });
+        }
+
+        if (usesThemeColor || followThemeStroke) {
+          obj.set({ stroke: textColor });
+        } else if (typeof obj.initialStrokeColor === "string") {
+          obj.set({ stroke: obj.initialStrokeColor });
+        }
       } else if (obj.type === "circle-with-cut") {
-        // Підтримка кастомної фігури CircleWithCut
-        obj.set({
-          stroke: textColor,
-          fill:
-            obj.fill === "transparent" || obj.fill === ""
-              ? "transparent"
-              : textColor,
-        });
+        const isTransparent =
+          obj.fill === "transparent" ||
+          obj.fill === "" ||
+          obj.fill === null ||
+          typeof obj.fill === "undefined";
+        const usesThemeColor = obj.useThemeColor === true;
+        const followThemeStroke = obj.followThemeStroke !== false;
+
+        if (isTransparent) {
+          obj.set({ fill: "transparent" });
+        } else if (usesThemeColor) {
+          obj.set({ fill: textColor });
+        } else if (
+          typeof obj.initialFillColor === "string" &&
+          obj.initialFillColor !== "" &&
+          obj.initialFillColor !== "transparent" &&
+          obj.fill !== obj.initialFillColor
+        ) {
+          obj.set({ fill: obj.initialFillColor });
+        }
+
+        if (usesThemeColor || followThemeStroke) {
+          obj.set({ stroke: textColor });
+        } else if (typeof obj.initialStrokeColor === "string") {
+          obj.set({ stroke: obj.initialStrokeColor });
+        }
       } else if (obj.type === "line") {
         obj.set({ stroke: textColor });
       }

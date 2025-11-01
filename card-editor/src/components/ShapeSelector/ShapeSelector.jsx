@@ -8,6 +8,9 @@ import {
 } from "../ShapeProperties/ShapeProperties";
 import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
 
+const DEFAULT_SHAPE_FILL = "#FFFFFF";
+const DEFAULT_SHAPE_STROKE = "#000000";
+
 const ShapeSelector = ({ isOpen, onClose }) => {
   const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
     useCanvasContext();
@@ -91,8 +94,11 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       const baseOptions = {
         left: centerX,
         top: centerY,
-        fill: "transparent",
-        stroke: globalColors.strokeColor || "#000000",
+        fill: DEFAULT_SHAPE_FILL,
+        stroke:
+          globalColors.strokeColor ||
+          globalColors.textColor ||
+          DEFAULT_SHAPE_STROKE,
         strokeWidth: 2,
         originX: "center",
         originY: "center",
@@ -111,7 +117,15 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         hasBorders: true,
         hasControls: true,
         selectable: true,
+        useThemeColor: false,
+        initialFillColor: DEFAULT_SHAPE_FILL,
+        initialStrokeColor:
+          globalColors.strokeColor ||
+          globalColors.textColor ||
+          DEFAULT_SHAPE_STROKE,
+        followThemeStroke: true,
       });
+      custom.pendingShapePropsDefaults = { fill: false, cut: false };
       addObjectToCanvas(custom);
       setActiveObject(custom);
       setShapePropertiesOpen(true);
@@ -153,12 +167,16 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     let shape = null;
 
+    const themeStroke =
+      globalColors.strokeColor ||
+      globalColors.textColor ||
+      DEFAULT_SHAPE_STROKE;
+
     const baseOptions = {
       left: centerX,
       top: centerY,
-      // Fill по умолчанию отключён
-      fill: "transparent",
-      stroke: globalColors.strokeColor || "#000000",
+      fill: DEFAULT_SHAPE_FILL,
+      stroke: themeStroke,
       strokeWidth: 2,
       originX: "center",
       originY: "center",
@@ -297,6 +315,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           width: 60,
           height: 74,
           orientation: "vertical",
+          fill: DEFAULT_SHAPE_FILL,
         });
         break;
       }
@@ -357,6 +376,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = createPath("M0 0L100 0", {
           ...baseOptions,
           fill: "",
+          stroke:
+            globalColors.strokeColor ||
+            globalColors.textColor ||
+            DEFAULT_SHAPE_STROKE,
           strokeWidth: 3,
           strokeLineCap: "round",
         });
@@ -366,6 +389,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shape = createPath("M0 0L100 0", {
           ...baseOptions,
           fill: "",
+          stroke:
+            globalColors.strokeColor ||
+            globalColors.textColor ||
+            DEFAULT_SHAPE_STROKE,
           strokeWidth: 3,
           strokeDashArray: [5, 5],
           strokeLineCap: "round",
@@ -406,8 +433,28 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         });
       }
 
+      // Початкове заповнення: нові фігури мають білу заливку та не синхронізуються з темою, доки користувач явно не увімкне Fill
+      if (shapeType === "text") {
+        shape.set({ useThemeColor: true });
+      } else if (shapeType === "line" || shapeType === "dashedLine") {
+        shape.set({ useThemeColor: true });
+      } else {
+        shape.set({
+          fill: DEFAULT_SHAPE_FILL,
+          useThemeColor: false,
+          initialFillColor: DEFAULT_SHAPE_FILL,
+          initialStrokeColor: DEFAULT_SHAPE_STROKE,
+        });
+      }
+
       // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
       shape.set({ hasBorders: true, hasControls: true, selectable: true });
+
+      if (shapeType !== "text" && shapeType !== "line" && shapeType !== "dashedLine") {
+        shape.pendingShapePropsDefaults = { fill: false, cut: false };
+        shape.followThemeStroke = true;
+        shape.initialStrokeColor = themeStroke;
+      }
 
       // Додаємо прапорець джерела (ShapeSelector)
       shape.fromShapeTab = true;

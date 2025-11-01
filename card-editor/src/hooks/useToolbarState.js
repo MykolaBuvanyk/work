@@ -2,6 +2,9 @@
 import { useContext } from 'react';
 import { useCanvasContext } from '../contexts/CanvasContext';
 
+const DEFAULT_SHAPE_WIDTH_MM = 120;
+const DEFAULT_SHAPE_HEIGHT_MM = 80;
+
 export const useToolbarState = () => {
   const { globalColors, isCustomShapeMode } = useCanvasContext();
 
@@ -12,7 +15,12 @@ export const useToolbarState = () => {
       currentShapeType: componentState.currentShapeType || null,
       cornerRadius: componentState.cornerRadius || 0,
       // Size values (in mm)
-      sizeValues: componentState.sizeValues || { width: 150, height: 150, cornerRadius: 0 },
+      sizeValues:
+        componentState.sizeValues || {
+          width: DEFAULT_SHAPE_WIDTH_MM,
+          height: DEFAULT_SHAPE_HEIGHT_MM,
+          cornerRadius: 0,
+        },
       // Color settings from context
       globalColors: globalColors || {
         textColor: "#000000",

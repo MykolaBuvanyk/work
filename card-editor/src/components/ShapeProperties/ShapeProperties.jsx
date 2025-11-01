@@ -867,8 +867,8 @@ const ShapeProperties = ({
     if (isCutShape) return;
     // Если включен Cut manual — оставляем белую заливку
     if (obj.isCutElement && obj.cutType === "manual") return;
-  // Якщо фігура відмовилась від темної заливки — не примушуємо зміну кольору
-  if (obj.useThemeColor !== true) return;
+    // Якщо фігура відмовилась від темної заливки — не примушуємо зміну кольору
+    if (obj.useThemeColor !== true) return;
     // Якщо у об'єкта активний Fill — синхронізуємо із темою
     const themeText = globalColors?.textColor || "#000000";
     if (properties.fill) {

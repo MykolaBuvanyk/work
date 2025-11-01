@@ -694,16 +694,24 @@ const Toolbar = () => {
       // Якщо є і він відрізняється від incoming, використовуємо canvas shapeType
       const canvasShapeType = canvas?.get?.("shapeType");
       const incomingShapeType = incoming.currentShapeType;
-      
+
       if (incomingShapeType) {
         // Якщо є canvas shapeType і він збігається з incoming, або якщо canvas shapeType відсутній
         if (!canvasShapeType || canvasShapeType === incomingShapeType) {
           setCurrentShapeType(incomingShapeType);
-          console.log("Applied shapeType from toolbar state:", incomingShapeType);
+          console.log(
+            "Applied shapeType from toolbar state:",
+            incomingShapeType
+          );
         } else {
           // Canvas має інший shapeType - використовуємо його
           setCurrentShapeType(canvasShapeType);
-          console.log("Preserved canvas shapeType over toolbar state:", canvasShapeType, "vs", incomingShapeType);
+          console.log(
+            "Preserved canvas shapeType over toolbar state:",
+            canvasShapeType,
+            "vs",
+            incomingShapeType
+          );
         }
       } else if (canvasShapeType) {
         // Якщо incoming не має shapeType, але canvas має - використовуємо canvas
@@ -759,7 +767,8 @@ const Toolbar = () => {
 
       if (incoming.globalColors) {
         // Уникаємо передчасного перезапису фону: loadDesign сам синхронізує фон та globalColors
-        const { backgroundColor, backgroundType, ...otherColors } = incoming.globalColors;
+        const { backgroundColor, backgroundType, ...otherColors } =
+          incoming.globalColors;
 
         if (Object.keys(otherColors).length > 0) {
           updateGlobalColors({ ...otherColors });
@@ -768,7 +777,8 @@ const Toolbar = () => {
         console.log("Deferred background sync to load pipeline", {
           incomingBg: backgroundColor,
           incomingBgType: backgroundType,
-          preservedBg: canvas?.backgroundColor || canvas?.get?.("backgroundColor"),
+          preservedBg:
+            canvas?.backgroundColor || canvas?.get?.("backgroundColor"),
           preservedBgType: canvas?.get?.("backgroundType"),
         });
       }
@@ -978,39 +988,38 @@ const Toolbar = () => {
   useEffect(() => {
     const forceRestoreCanvasShape = (toolbarState) => {
       if (!canvas || !toolbarState) return;
-      
+
       const shapeType = toolbarState.currentShapeType || "rectangle";
-      const widthMm =
-        toolbarState.sizeValues?.width || DEFAULT_SHAPE_WIDTH_MM;
+      const widthMm = toolbarState.sizeValues?.width || DEFAULT_SHAPE_WIDTH_MM;
       const heightMm =
         toolbarState.sizeValues?.height || DEFAULT_SHAPE_HEIGHT_MM;
       const cornerRadiusMm = toolbarState.sizeValues?.cornerRadius || 0;
-      
+
       console.log("Force restoring canvas shape:", {
         shapeType,
         widthMm,
         heightMm,
-        cornerRadiusMm
+        cornerRadiusMm,
       });
-      
+
       // Встановлюємо shapeType на canvas
       canvas.set("shapeType", shapeType);
       setCurrentShapeType(shapeType);
-      
+
       // Встановлюємо розміри
       setSizeValues({
         width: widthMm,
         height: heightMm,
-        cornerRadius: cornerRadiusMm
+        cornerRadius: cornerRadiusMm,
       });
-      
+
       // Викликаємо updateSize для перебудови clipPath
       setTimeout(() => {
         if (updateSize) {
           updateSize({
             widthMm: widthMm,
             heightMm: heightMm,
-            cornerRadiusMm: cornerRadiusMm
+            cornerRadiusMm: cornerRadiusMm,
           });
           canvas.requestRenderAll();
         }
@@ -1829,7 +1838,12 @@ const Toolbar = () => {
     const sanitizeObjectControls = (obj) => {
       if (!obj) return;
       try {
-        const baseControls = (fabric && fabric.Object && fabric.Object.prototype && fabric.Object.prototype.controls) || {};
+        const baseControls =
+          (fabric &&
+            fabric.Object &&
+            fabric.Object.prototype &&
+            fabric.Object.prototype.controls) ||
+          {};
         // Відновлюємо контролли якщо відсутні/порожні
         if (!obj.controls || Object.keys(obj.controls).length === 0) {
           obj.controls = Object.entries(baseControls).reduce((acc, [k, v]) => {
@@ -1846,28 +1860,41 @@ const Toolbar = () => {
         Object.keys(obj.controls || {}).forEach((k) => {
           const ctrl = obj.controls[k];
           const base = baseControls[k];
-          if (!ctrl || typeof ctrl.positionHandler !== "function" || typeof ctrl.render !== "function") {
-            if (base) obj.controls[k] = base; else delete obj.controls[k];
+          if (
+            !ctrl ||
+            typeof ctrl.positionHandler !== "function" ||
+            typeof ctrl.render !== "function"
+          ) {
+            if (base) obj.controls[k] = base;
+            else delete obj.controls[k];
           }
         });
         // Безпечна обгортка positionHandler: завжди повертаємо {x,y}
         Object.keys(obj.controls || {}).forEach((k) => {
           const ctrl = obj.controls[k];
           if (!ctrl) return;
-          if (!ctrl.__safeWrapped && typeof ctrl.positionHandler === "function") {
+          if (
+            !ctrl.__safeWrapped &&
+            typeof ctrl.positionHandler === "function"
+          ) {
             const original = ctrl.positionHandler;
             ctrl.positionHandler = function (...args) {
               try {
                 const p = original.apply(this, args);
-                if (p && typeof p.x === "number" && typeof p.y === "number") return p;
+                if (p && typeof p.x === "number" && typeof p.y === "number")
+                  return p;
               } catch {}
-              const center = typeof obj.getCenterPoint === "function" ? obj.getCenterPoint() : { x: obj.left || 0, y: obj.top || 0 };
+              const center =
+                typeof obj.getCenterPoint === "function"
+                  ? obj.getCenterPoint()
+                  : { x: obj.left || 0, y: obj.top || 0 };
               return { x: center.x, y: center.y };
             };
             ctrl.__safeWrapped = true;
           }
         });
-        if (typeof obj.cornerSize !== "number" || !isFinite(obj.cornerSize)) obj.cornerSize = 13;
+        if (typeof obj.cornerSize !== "number" || !isFinite(obj.cornerSize))
+          obj.cornerSize = 13;
         if (typeof obj.setCoords === "function") obj.setCoords();
       } catch {}
     };
@@ -2869,7 +2896,7 @@ const Toolbar = () => {
       let effWidthMm = widthMm;
       let effHeightMm = heightMm;
 
-  if (effectiveShapeType === "halfCircle") {
+      if (effectiveShapeType === "halfCircle") {
         // Зберігаємо справжній півкруг: ширина = 2 * висота (height = width/2)
         // Визначаємо, яку величину змінював користувач (прийшла в overrides)
         const changedWidth = Object.prototype.hasOwnProperty.call(
@@ -2894,7 +2921,7 @@ const Toolbar = () => {
           width: effWidthMm,
           height: effHeightMm,
         }));
-  } else if (effectiveShapeType === "roundTop") {
+      } else if (effectiveShapeType === "roundTop") {
         // roundTop: пропорція верхнього півкола повинна зберігатися — воно ідеально кругле (діаметр = ширина фігури)
         // Вихідний базовий path: ширина 100, висота 100 (верхній півкруг радіуса 50 + прямі стінки вниз)
         // Щоб зберегти півкруг, половина верхньої висоти повинна дорівнювати радіусу = width/2.
@@ -2931,7 +2958,7 @@ const Toolbar = () => {
       // Створюємо новий clipPath з новими розмірами
       let newClipPath = null;
 
-  switch (effectiveShapeType) {
+      switch (effectiveShapeType) {
         case "rectangle":
           newClipPath = new fabric.Rect({
             // Slight outward inflation (-0.5 offset + +1 size) to fully cover pixel grid and remove residual seams

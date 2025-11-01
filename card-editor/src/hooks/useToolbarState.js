@@ -1,6 +1,6 @@
 // Hook to manage and extract current toolbar state for persistence
-import { useContext } from 'react';
-import { useCanvasContext } from '../contexts/CanvasContext';
+import { useContext } from "react";
+import { useCanvasContext } from "../contexts/CanvasContext";
 
 const DEFAULT_SHAPE_WIDTH_MM = 120;
 const DEFAULT_SHAPE_HEIGHT_MM = 80;
@@ -15,19 +15,18 @@ export const useToolbarState = () => {
       currentShapeType: componentState.currentShapeType || null,
       cornerRadius: componentState.cornerRadius || 0,
       // Size values (in mm)
-      sizeValues:
-        componentState.sizeValues || {
-          width: DEFAULT_SHAPE_WIDTH_MM,
-          height: DEFAULT_SHAPE_HEIGHT_MM,
-          cornerRadius: 0,
-        },
+      sizeValues: componentState.sizeValues || {
+        width: DEFAULT_SHAPE_WIDTH_MM,
+        height: DEFAULT_SHAPE_HEIGHT_MM,
+        cornerRadius: 0,
+      },
       // Color settings from context
       globalColors: globalColors || {
         textColor: "#000000",
-        backgroundColor: "#FFFFFF", 
+        backgroundColor: "#FFFFFF",
         strokeColor: "#000000",
         fillColor: "transparent",
-        backgroundType: "solid"
+        backgroundType: "solid",
       },
       selectedColorIndex: componentState.selectedColorIndex || 0,
       // Material settings
@@ -44,7 +43,7 @@ export const useToolbarState = () => {
       // Copy settings
       copiesCount: componentState.copiesCount || 1,
       // Border settings
-      hasBorder: componentState.hasBorder || false
+      hasBorder: componentState.hasBorder || false,
     };
   };
 

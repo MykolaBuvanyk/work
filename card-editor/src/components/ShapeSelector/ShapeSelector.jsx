@@ -450,7 +450,11 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       // Гарантуємо, що у фігури активні контролы/рамка і вона обрана одразу
       shape.set({ hasBorders: true, hasControls: true, selectable: true });
 
-      if (shapeType !== "text" && shapeType !== "line" && shapeType !== "dashedLine") {
+      if (
+        shapeType !== "text" &&
+        shapeType !== "line" &&
+        shapeType !== "dashedLine"
+      ) {
         shape.pendingShapePropsDefaults = { fill: false, cut: false };
         shape.followThemeStroke = true;
         shape.initialStrokeColor = themeStroke;

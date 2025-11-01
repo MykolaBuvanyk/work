@@ -22,7 +22,10 @@ const scheduleFrame = (fn) => {
     try {
       fn();
     } catch (error) {
-      console.warn("useFabricCanvas scheduleFrame timeout fallback failed", error);
+      console.warn(
+        "useFabricCanvas scheduleFrame timeout fallback failed",
+        error
+      );
     }
   }, 16);
 };
@@ -98,14 +101,15 @@ export const useFabricCanvas = () => {
             };
 
             try {
-              const maybePromise = canvas.loadFromJSON(design.jsonTemplate, finish);
+              const maybePromise = canvas.loadFromJSON(
+                design.jsonTemplate,
+                finish
+              );
               if (maybePromise && typeof maybePromise.then === "function") {
-                maybePromise
-                  .then(finish)
-                  .catch((err) => {
-                    settled = true;
-                    reject(err);
-                  });
+                maybePromise.then(finish).catch((err) => {
+                  settled = true;
+                  reject(err);
+                });
               }
             } catch (loadErr) {
               settled = true;
@@ -120,7 +124,7 @@ export const useFabricCanvas = () => {
               obj.dirty = true;
               if (obj.group) obj.group.dirty = true;
               obj.setCoords?.();
-              
+
               // ВИПРАВЛЕННЯ: Примушуємо використовувати стандартні Fabric controls
               // щоб уникнути "Cannot read properties of undefined (reading 'x')" при першому кліку
               if (!obj.controls || Object.keys(obj.controls).length === 0) {
@@ -180,7 +184,10 @@ export const useFabricCanvas = () => {
                   };
                 });
                 // Базові параметри контролів
-                if (typeof obj.cornerSize !== "number" || !isFinite(obj.cornerSize)) {
+                if (
+                  typeof obj.cornerSize !== "number" ||
+                  !isFinite(obj.cornerSize)
+                ) {
                   obj.cornerSize = 13;
                 }
               } catch {}
@@ -292,7 +299,8 @@ export const useFabricCanvas = () => {
     }
 
     const toolbarState =
-      typeof window !== "undefined" && typeof window.getCurrentToolbarState === "function"
+      typeof window !== "undefined" &&
+      typeof window.getCurrentToolbarState === "function"
         ? window.getCurrentToolbarState()
         : null;
 

@@ -16,6 +16,9 @@ import {
   addBlankUnsavedSign,
 } from "../../utils/projectStorage";
 
+const DEFAULT_SHAPE_WIDTH_MM = 120;
+const DEFAULT_SHAPE_HEIGHT_MM = 80;
+
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel, exportToExcel } = useExcelImport();
@@ -97,7 +100,11 @@ const TopToolbar = ({ className }) => {
           window.restoreToolbarState({
             currentShapeType: "rectangle",
             cornerRadius: 0,
-            sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+            sizeValues: {
+              width: DEFAULT_SHAPE_WIDTH_MM,
+              height: DEFAULT_SHAPE_HEIGHT_MM,
+              cornerRadius: 0,
+            },
             globalColors: {
               textColor: "#000000",
               backgroundColor: "#FFFFFF",

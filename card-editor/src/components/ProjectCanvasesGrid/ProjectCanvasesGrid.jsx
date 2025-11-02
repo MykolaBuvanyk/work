@@ -46,7 +46,8 @@ const mapEntryToDesign = (entry) => {
 };
 
 const ProjectCanvasesGrid = () => {
-  const { setDesigns: setContextDesigns } = useCanvasContext();
+  const { setDesigns: setContextDesigns, updateGlobalColors } =
+    useCanvasContext();
   const { canvas, loadDesign, selectDesign } = useFabricCanvas();
   const [project, setProject] = useState(null);
   const [unsavedSigns, setUnsavedSigns] = useState([]); // persisted unsaved signs from dedicated store
@@ -123,7 +124,8 @@ const ProjectCanvasesGrid = () => {
       const detail = e?.detail || {};
       const activeId = detail.activeCanvasId ?? null;
       const activeIndex =
-        typeof detail.activeCanvasIndex === "number" && detail.activeCanvasIndex >= 0
+        typeof detail.activeCanvasIndex === "number" &&
+        detail.activeCanvasIndex >= 0
           ? detail.activeCanvasIndex
           : null;
 
@@ -214,7 +216,7 @@ const ProjectCanvasesGrid = () => {
                 window.__currentProjectCanvasIndex = 0;
               }
             } catch {}
-            
+
             // Даємо час на оновлення state
             await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -226,7 +228,7 @@ const ProjectCanvasesGrid = () => {
               console.log("openCanvasRef or canvas not available");
             }
           } else {
-            console.log('No canvases in project');
+            console.log("No canvases in project");
             try {
               localStorage.removeItem("currentProjectCanvasId");
               localStorage.removeItem("currentProjectCanvasIndex");
@@ -472,7 +474,7 @@ const ProjectCanvasesGrid = () => {
 
   // Simple canvas list: project canvases -> unsaved signs (sorted by creation time)
   const storedCanvases = project?.canvases || [];
-  
+
   // ВИПРАВЛЕННЯ: Сортуємо unsaved signs за датою створення (найстаріші спочатку)
   const sortedUnsavedSigns = useMemo(() => {
     return [...unsavedSigns].sort((a, b) => {
@@ -481,12 +483,12 @@ const ProjectCanvasesGrid = () => {
       return timeA - timeB; // ascending order (oldest first)
     });
   }, [unsavedSigns]);
-  
+
   // ВИПРАВЛЕННЯ: Проектні полотна спочатку, потім unsaved (нові в кінці)
   const canvases = useMemo(() => {
     return [...storedCanvases, ...sortedUnsavedSigns];
   }, [storedCanvases, sortedUnsavedSigns]);
-  
+
   const designPayloads = useMemo(
     () => canvases.map(mapEntryToDesign).filter(Boolean),
     [canvases]
@@ -555,6 +557,17 @@ const ProjectCanvasesGrid = () => {
       "Type:",
       canvasEntry._unsaved ? "unsaved" : "project"
     );
+    console.log("Canvas entry details:", {
+      id: canvasEntry.id,
+      canvasType: canvasEntry.canvasType,
+      width: canvasEntry.width,
+      height: canvasEntry.height,
+      hasJson: !!canvasEntry.json,
+      objectCount: canvasEntry.json?.objects?.length || 0,
+      hasToolbarState: !!canvasEntry.toolbarState,
+      shapeType:
+        canvasEntry.toolbarState?.currentShapeType || canvasEntry.canvasType,
+    });
 
     try {
       // First, save current canvas state before switching
@@ -589,7 +602,9 @@ const ProjectCanvasesGrid = () => {
               setUnsavedSigns((prev) =>
                 prev.filter((sign) => sign.id !== currentUnsavedId)
               );
-              try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+              try {
+                localStorage.removeItem("currentUnsavedSignId");
+              } catch {}
               try {
                 window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
               } catch {}
@@ -610,7 +625,9 @@ const ProjectCanvasesGrid = () => {
             } catch {}
           } else {
             if (typeof window !== "undefined") {
-              try { window.__pendingUnsavedCleanupId = currentUnsavedId; } catch {}
+              try {
+                window.__pendingUnsavedCleanupId = currentUnsavedId;
+              } catch {}
             }
           }
         } catch (e) {
@@ -691,6 +708,7 @@ const ProjectCanvasesGrid = () => {
         height: canvasToLoad.height || DEFAULT_DESIGN_SIZE.height,
         jsonTemplate: canvasToLoad.json || null,
         backgroundColor: canvasToLoad.backgroundColor,
+        toolbarState: canvasToLoad.toolbarState || null, // ВИПРАВЛЕННЯ: додано toolbarState
       };
 
       const registerDesignInContext = () => {
@@ -719,11 +737,55 @@ const ProjectCanvasesGrid = () => {
         registerDesignInContext();
         selectDesign?.(mappedDesign.id);
 
+        // ВИПРАВЛЕННЯ: Відновлюємо shapeType на canvas ПЕРЕД завантаженням design
+        if (canvasToLoad.canvasType) {
+          canvas.set("shapeType", canvasToLoad.canvasType);
+          console.log(
+            "Set canvas shapeType BEFORE loadDesign:",
+            canvasToLoad.canvasType
+          );
+        }
+
         await loadDesign(mappedDesign);
 
         // ВИПРАВЛЕННЯ: Відновлюємо фон з урахуванням текстур
-        if (canvasToLoad.backgroundColor) {
-          const bgType = canvasToLoad.backgroundType || "solid";
+        // Для нових карток завжди встановлюємо білий фон
+        const isNewCanvas =
+          !canvasToLoad.json ||
+          !canvasToLoad.json.objects ||
+          canvasToLoad.json.objects.length === 0;
+        const bgColor = canvasToLoad.backgroundColor || "#FFFFFF";
+        const bgType = canvasToLoad.backgroundType || "solid";
+
+        // ВИПРАВЛЕННЯ: Завжди встановлюємо білий фон для нових карток або якщо збережений фон білий
+        if (isNewCanvas || (bgColor === "#FFFFFF" && bgType === "solid")) {
+          console.log(
+            "New canvas or white background detected, forcing white background",
+            {
+              isNewCanvas,
+              bgColor,
+              bgType,
+            }
+          );
+          canvas.set("backgroundColor", "#FFFFFF");
+          canvas.set("backgroundTextureUrl", null);
+          canvas.set("backgroundType", "solid");
+          canvas.renderAll();
+
+          // ВИПРАВЛЕННЯ: Синхронізуємо globalColors для нової картки
+          if (updateGlobalColors) {
+            updateGlobalColors({
+              backgroundColor: "#FFFFFF",
+              backgroundType: "solid",
+            });
+            console.log("Set globalColors to white for new canvas");
+          }
+        } else if (bgColor && bgColor !== "#FFFFFF") {
+          console.log("Restoring canvas background:", {
+            backgroundColor: bgColor,
+            backgroundType: bgType,
+            canvasId: canvasToLoad.id,
+          });
 
           if (bgType === "texture") {
             // Якщо це текстура, завантажуємо її через ту саму логіку
@@ -760,6 +822,26 @@ const ProjectCanvasesGrid = () => {
                 );
                 canvas.set("backgroundType", "texture");
                 canvas.renderAll();
+
+                console.log(
+                  "Texture background restored successfully:",
+                  canvasToLoad.backgroundColor
+                );
+
+                // ВИПРАВЛЕННЯ: Синхронізуємо globalColors з фактичним станом canvas
+                if (updateGlobalColors) {
+                  updateGlobalColors({
+                    backgroundColor: canvasToLoad.backgroundColor,
+                    backgroundType: "texture",
+                  });
+                  console.log(
+                    "Synchronized globalColors with canvas texture:",
+                    {
+                      backgroundColor: canvasToLoad.backgroundColor,
+                      backgroundType: "texture",
+                    }
+                  );
+                }
               } catch (error) {
                 console.error("Error restoring texture pattern:", error);
                 canvas.set("backgroundColor", "#FFFFFF");
@@ -777,9 +859,41 @@ const ProjectCanvasesGrid = () => {
             img.src = canvasToLoad.backgroundColor;
           } else {
             // Звичайний колір
-            canvas.set("backgroundColor", canvasToLoad.backgroundColor);
+            canvas.set("backgroundColor", bgColor);
             canvas.set("backgroundTextureUrl", null);
             canvas.set("backgroundType", bgType);
+            canvas.renderAll();
+
+            console.log("Solid background restored successfully:", bgColor);
+
+            // ВИПРАВЛЕННЯ: Синхронізуємо globalColors з фактичним станом canvas
+            if (updateGlobalColors) {
+              updateGlobalColors({
+                backgroundColor: bgColor,
+                backgroundType: bgType,
+              });
+              console.log("Synchronized globalColors with canvas background:", {
+                backgroundColor: bgColor,
+                backgroundType: bgType,
+              });
+            }
+          }
+        } else {
+          // Якщо немає збереженого кольору, встановлюємо білий за замовчуванням
+          console.log(
+            "No background color in saved data, setting white default"
+          );
+          canvas.set("backgroundColor", "#FFFFFF");
+          canvas.set("backgroundTextureUrl", null);
+          canvas.set("backgroundType", "solid");
+          canvas.renderAll();
+
+          if (updateGlobalColors) {
+            updateGlobalColors({
+              backgroundColor: "#FFFFFF",
+              backgroundType: "solid",
+            });
+            console.log("Set default white background in globalColors");
           }
         }
 
@@ -798,15 +912,72 @@ const ProjectCanvasesGrid = () => {
           canvas.getObjects().length
         );
 
+        // ВИПРАВЛЕННЯ: restoreToolbarState вже викликається в loadDesign через canvas:loaded event
+        // Тому тут ми лише додатково налаштовуємо canvas та логуємо інформацію
         setTimeout(() => {
           const toolbarState = extractToolbarState(canvasToLoad);
-          console.log("Restoring toolbar state (delayed):", toolbarState);
 
-          if (window.restoreToolbarState) {
-            window.restoreToolbarState(toolbarState);
-            console.log("Toolbar state restored successfully");
-          } else {
-            console.warn("window.restoreToolbarState not available");
+          // ВИПРАВЛЕННЯ: Синхронізуємо backgroundColor в toolbarState з фактичним станом canvas
+          // Це потрібно, щоб уникнути перезапису фону при застосуванні toolbar state
+          const actualCanvasBg = canvas.get("backgroundColor");
+          const actualCanvasBgType = canvas.get("backgroundType") || "solid";
+          const actualCanvasBgUrl = canvas.get("backgroundTextureUrl");
+
+          // Якщо на canvas вже є фон, використовуємо його замість збереженого в toolbarState
+          if (actualCanvasBg) {
+            let bgColorToUse = actualCanvasBg;
+
+            // Якщо це Pattern (текстура), використовуємо URL
+            if (actualCanvasBgType === "texture" && actualCanvasBgUrl) {
+              bgColorToUse = actualCanvasBgUrl;
+            } else if (
+              typeof actualCanvasBg === "object" &&
+              actualCanvasBg !== null
+            ) {
+              // Якщо backgroundColor - це об'єкт Pattern, але немає URL
+              bgColorToUse = canvasToLoad.backgroundColor || "#FFFFFF";
+            }
+
+            // Оновлюємо toolbarState, щоб він відповідав фактичному стану canvas
+            toolbarState.globalColors = {
+              ...(toolbarState.globalColors || {}),
+              backgroundColor: bgColorToUse,
+              backgroundType: actualCanvasBgType,
+            };
+
+            console.log(
+              "Synchronized toolbarState backgroundColor with canvas:",
+              {
+                canvasBg: actualCanvasBg,
+                canvasBgType: actualCanvasBgType,
+                canvasBgUrl: actualCanvasBgUrl,
+                finalBg: bgColorToUse,
+              }
+            );
+          }
+
+          console.log("Canvas loaded, toolbar state:", toolbarState);
+          console.log("Canvas data loaded:", {
+            canvasType: canvasToLoad.canvasType,
+            width: canvasToLoad.width,
+            height: canvasToLoad.height,
+            backgroundColor: canvasToLoad.backgroundColor,
+            objectCount: canvasToLoad.json?.objects?.length || 0,
+            toolbarState: toolbarState,
+          });
+
+          // ВИПРАВЛЕННЯ: Переконуємося, що shapeType на canvas відповідає збереженому
+          const actualShapeType =
+            canvasToLoad.canvasType || toolbarState.currentShapeType;
+          if (actualShapeType && canvas.get("shapeType") !== actualShapeType) {
+            canvas.set("shapeType", actualShapeType);
+            console.log("Corrected canvas shapeType:", actualShapeType);
+          }
+
+          // НОВИЙ: Примусово відновлюємо форму canvas
+          if (window.forceRestoreCanvasShape) {
+            console.log("Force restoring canvas shape with toolbarState");
+            window.forceRestoreCanvasShape(toolbarState);
           }
 
           window.dispatchEvent(
@@ -814,7 +985,7 @@ const ProjectCanvasesGrid = () => {
               detail: { canvasId: canvasEntry.id, toolbarState },
             })
           );
-        }, 100);
+        }, 150); // Збільшили таймаут для надійності
       } catch (error) {
         console.error("Error loading canvas via fabric loader:", error);
         canvas.__suspendUndoRedo = false;
@@ -862,7 +1033,8 @@ const ProjectCanvasesGrid = () => {
         try {
           if (typeof window !== "undefined") {
             window.__currentProjectCanvasId = canvasEntry.id;
-            window.__currentProjectCanvasIndex = entryIndex !== -1 ? entryIndex : null;
+            window.__currentProjectCanvasIndex =
+              entryIndex !== -1 ? entryIndex : null;
             if (!canvasEntry._unsaved) {
               window.__pendingUnsavedCleanupId = null;
             }
@@ -993,7 +1165,15 @@ const ProjectCanvasesGrid = () => {
     };
 
     loadInitial();
-  }, [canvas, isProjectLoaded, isUnsavedLoaded, sortedUnsavedSigns, storedCanvases, canvases, project]);
+  }, [
+    canvas,
+    isProjectLoaded,
+    isUnsavedLoaded,
+    sortedUnsavedSigns,
+    storedCanvases,
+    canvases,
+    project,
+  ]);
 
   // Auto-save current canvas when objects change
   useEffect(() => {
@@ -1246,13 +1426,13 @@ const ProjectCanvasesGrid = () => {
       try {
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
       } catch {}
-      
+
       // Автоматично відкриваємо новостворене полотно
       setTimeout(() => {
         try {
           window.dispatchEvent(
             new CustomEvent("canvas:autoOpen", {
-              detail: { canvasId: newSign.id, isUnsaved: true }
+              detail: { canvasId: newSign.id, isUnsaved: true },
             })
           );
           console.log("Auto-opening new canvas:", newSign.id);
@@ -1379,8 +1559,8 @@ const ProjectCanvasesGrid = () => {
                   </span>
                 </div>
               </div>
-              );
-            })}
+            );
+          })}
 
           {/* Кнопка створення нового полотна */}
           <div
@@ -1396,7 +1576,7 @@ const ProjectCanvasesGrid = () => {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <g style={{ mixBlendMode: 'plus-darker' }}>
+                <g style={{ mixBlendMode: "plus-darker" }}>
                   <path
                     d="M12.75 85V17C12.75 13.6185 14.0943 10.3764 16.4854 7.98535C18.8764 5.59426 22.1185 4.25 25.5 4.25H59.5L59.9192 4.27075C60.8924 4.36718 61.8073 4.79751 62.5049 5.49512L88.0049 30.9951C88.8019 31.7922 89.25 32.8728 89.25 34V85C89.25 88.3815 87.9057 91.6236 85.5146 94.0147C83.1236 96.4057 79.8815 97.75 76.5 97.75H25.5C22.1185 97.75 18.8764 96.4057 16.4854 94.0147C14.0943 91.6236 12.75 88.3815 12.75 85ZM21.25 85C21.25 86.1272 21.6981 87.2079 22.4951 88.0049C23.2921 88.8019 24.3728 89.25 25.5 89.25H76.5C77.6272 89.25 78.7078 88.8019 79.5049 88.0049C80.3019 87.2079 80.75 86.1272 80.75 85V35.7598L57.7402 12.75H25.5C24.3728 12.75 23.2921 13.1981 22.4951 13.9951C21.6981 14.7921 21.25 15.8728 21.25 17V85Z"
                     fill="#138E32"

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import * as fabric from "fabric";
 import { useCanvasContext } from "../contexts/CanvasContext";
 
 const scheduleFrame = (fn) => {
@@ -21,7 +22,10 @@ const scheduleFrame = (fn) => {
     try {
       fn();
     } catch (error) {
-      console.warn("useFabricCanvas scheduleFrame timeout fallback failed", error);
+      console.warn(
+        "useFabricCanvas scheduleFrame timeout fallback failed",
+        error
+      );
     }
   }, 16);
 };
@@ -32,12 +36,17 @@ const CUSTOM_PROPS = [
   "name",
   "data",
   "fromIconMenu",
+  "fromShapeTab",
   "isCutElement",
   "cutType",
   "clipPathId",
   "originalWidth",
   "originalHeight",
   "placeholder",
+  "useThemeColor",
+  "initialFillColor",
+  "initialStrokeColor",
+  "followThemeStroke",
 ];
 
 export const useFabricCanvas = () => {
@@ -47,6 +56,7 @@ export const useFabricCanvas = () => {
     currentDesignId,
     selectDesign,
     updateDesignById,
+    updateGlobalColors,
   } = useCanvasContext();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -91,14 +101,15 @@ export const useFabricCanvas = () => {
             };
 
             try {
-              const maybePromise = canvas.loadFromJSON(design.jsonTemplate, finish);
+              const maybePromise = canvas.loadFromJSON(
+                design.jsonTemplate,
+                finish
+              );
               if (maybePromise && typeof maybePromise.then === "function") {
-                maybePromise
-                  .then(finish)
-                  .catch((err) => {
-                    settled = true;
-                    reject(err);
-                  });
+                maybePromise.then(finish).catch((err) => {
+                  settled = true;
+                  reject(err);
+                });
               }
             } catch (loadErr) {
               settled = true;
@@ -113,6 +124,100 @@ export const useFabricCanvas = () => {
               obj.dirty = true;
               if (obj.group) obj.group.dirty = true;
               obj.setCoords?.();
+
+              // ВИПРАВЛЕННЯ: Примушуємо використовувати стандартні Fabric controls
+              // щоб уникнути "Cannot read properties of undefined (reading 'x')" при першому кліку
+              if (!obj.controls || Object.keys(obj.controls).length === 0) {
+                const protoControls = fabric?.Object?.prototype?.controls || {};
+                obj.controls = Object.entries(protoControls).reduce(
+                  (acc, [key, control]) => {
+                    if (control) acc[key] = control;
+                    return acc;
+                  },
+                  {}
+                );
+              } else {
+                // Санітаримо наявні контролли: пропускаємо undefined, щоб Fabric не падав на першому рендері
+                Object.keys(obj.controls).forEach((key) => {
+                  if (!obj.controls[key]) {
+                    delete obj.controls[key];
+                  }
+                });
+              }
+
+              // Додаткова перевірка: у кожного контролу має бути positionHandler та render
+              // Якщо їх нема — підміняємо на стандартні або видаляємо контроль
+              try {
+                const baseControls = fabric?.Object?.prototype?.controls || {};
+                Object.keys(obj.controls || {}).forEach((key) => {
+                  const ctrl = obj.controls[key];
+                  const base = baseControls[key];
+                  if (
+                    !ctrl ||
+                    typeof ctrl.positionHandler !== "function" ||
+                    typeof ctrl.render !== "function"
+                  ) {
+                    if (base) {
+                      obj.controls[key] = base;
+                    } else {
+                      delete obj.controls[key];
+                      return;
+                    }
+                  }
+                  // Обгортка positionHandler, щоб завжди повертались валідні {x,y}
+                  const originalPos = obj.controls[key].positionHandler;
+                  obj.controls[key].positionHandler = function (...args) {
+                    try {
+                      const res = originalPos?.apply(this, args);
+                      if (
+                        res &&
+                        typeof res.x === "number" &&
+                        typeof res.y === "number"
+                      )
+                        return res;
+                    } catch {}
+                    const center =
+                      typeof obj.getCenterPoint === "function"
+                        ? obj.getCenterPoint()
+                        : { x: obj.left || 0, y: obj.top || 0 };
+                    return { x: center.x, y: center.y };
+                  };
+                });
+                // Базові параметри контролів
+                if (
+                  typeof obj.cornerSize !== "number" ||
+                  !isFinite(obj.cornerSize)
+                ) {
+                  obj.cornerSize = 13;
+                }
+              } catch {}
+
+              const fromShapeTab =
+                obj.fromShapeTab === true ||
+                (obj.data && obj.data.fromShapeTab === true);
+              if (fromShapeTab) {
+                if (obj.useThemeColor === undefined) {
+                  obj.useThemeColor = false;
+                }
+                if (obj.followThemeStroke === undefined) {
+                  obj.followThemeStroke = true;
+                }
+                if (
+                  obj.initialFillColor === undefined &&
+                  typeof obj.fill === "string" &&
+                  obj.fill !== "" &&
+                  obj.fill !== "transparent"
+                ) {
+                  obj.initialFillColor = obj.fill;
+                }
+                if (
+                  obj.initialStrokeColor === undefined &&
+                  typeof obj.stroke === "string" &&
+                  obj.stroke !== ""
+                ) {
+                  obj.initialStrokeColor = obj.stroke;
+                }
+              }
             } catch (innerErr) {
               console.warn("Failed to refresh canvas object", innerErr);
             }
@@ -146,6 +251,20 @@ export const useFabricCanvas = () => {
               console.warn("Failed to restore toolbar state", restoreError);
             }
           });
+        } else {
+          // Нове полотно без збереженого стану тулбара — примусово встановлюємо білу тему за замовчуванням
+          // Це не торкається існуючих полотен і гарантує, що новий дизайн не успадковує попередній «карбон»
+          try {
+            updateGlobalColors?.({
+              textColor: "#000000",
+              backgroundColor: "#FFFFFF",
+              strokeColor: "#000000",
+              fillColor: "transparent",
+              backgroundType: "solid",
+            });
+          } catch (e) {
+            // no-op
+          }
         }
       } catch (err) {
         console.error("Failed to load design", err);
@@ -180,7 +299,8 @@ export const useFabricCanvas = () => {
     }
 
     const toolbarState =
-      typeof window !== "undefined" && typeof window.getCurrentToolbarState === "function"
+      typeof window !== "undefined" &&
+      typeof window.getCurrentToolbarState === "function"
         ? window.getCurrentToolbarState()
         : null;
 

@@ -6,6 +6,19 @@ const DB_VERSION = 2; // bumped to add unsavedSigns store
 const STORE = "projects";
 const UNSAVED_STORE = "unsavedSigns"; // temporary signs not yet attached to a project
 
+const DEFAULT_GLOBAL_COLORS = {
+  textColor: "#000000",
+  backgroundColor: "#FFFFFF",
+  strokeColor: "#000000",
+  fillColor: "transparent",
+  backgroundType: "solid",
+};
+
+const DEFAULT_SIGN_SIZE_MM = {
+  width: 120,
+  height: 80,
+};
+
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -113,6 +126,13 @@ export async function addBlankUnsavedSign(width = 0, height = 0) {
     preview: "",
     width,
     height,
+    // ВИПРАВЛЕННЯ: Завжди встановлюємо білий фон для нових карток
+    backgroundColor: "#FFFFFF",
+    backgroundType: "solid",
+    toolbarState: {
+      ...getDefaultToolbarState(),
+      globalColors: { ...DEFAULT_GLOBAL_COLORS },
+    },
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -146,12 +166,19 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
 
       try {
         // ВИПРАВЛЕННЯ: Отримуємо актуальний toolbar state з кількох джерел
-          let toolbarState = {};
-        
+        let toolbarState = {};
+
+        // Перевіряємо чи це новий порожній canvas
+        const isNewCanvas = canvas.getObjects().length === 0;
+
         // Спочатку намагаємося отримати з window функції
+        // НО для нових canvas НЕ використовуємо background з toolbar state
         if (window.getCurrentToolbarState) {
           toolbarState = window.getCurrentToolbarState() || {};
-          console.log("Got toolbar state from window function");
+          console.log("Got toolbar state from window function", {
+            isNewCanvas,
+            hasToolbarState: !!toolbarState,
+          });
         }
 
         // Додатково намагаємося отримати з canvas properties
@@ -178,8 +205,38 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
           height: canvas.getHeight(),
         };
 
-        // Мержимо всі джерела
-        toolbarState = { ...toolbarState, ...canvasState };
+        // ВИПРАВЛЕННЯ: Мержимо toolbar state, але canvasState має вищий пріоритет
+        // Це гарантує, що фактичний стан canvas не буде перезаписаний старим toolbar state
+        // Для нових canvas ЗАВЖДИ використовуємо тільки canvasState (білий фон)
+        if (isNewCanvas) {
+          console.log(
+            "New canvas detected - using only canvas state (white background)"
+          );
+          toolbarState = {
+            ...canvasState,
+            globalColors: {
+              backgroundColor: "#FFFFFF",
+              backgroundType: "solid",
+            },
+          };
+        } else {
+          toolbarState = {
+            ...toolbarState,
+            ...canvasState,
+            // Також оновлюємо globalColors якщо вони є
+            globalColors: {
+              ...(toolbarState.globalColors || {}),
+              backgroundColor: bgColor,
+              backgroundType: bgType,
+            },
+          };
+        }
+
+        // ВИПРАВЛЕННЯ: Синхронізуємо cornerRadius у sizeValues з актуальним значенням canvas
+        toolbarState.sizeValues = {
+          ...(toolbarState.sizeValues || {}),
+          cornerRadius: canvasState.cornerRadius,
+        };
 
         console.log(
           "Final toolbar state for unsaved sign update:",
@@ -200,11 +257,16 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
         );
 
         const updated = { ...existing, ...snap, updatedAt: Date.now() };
-        const putReq = store.put(updated);
+
+        // ВИПРАВЛЕННЯ: Додаткова перевірка та очистка перед збереженням в IndexedDB
+        // Видаляємо всі можливі HTMLCanvasElement та інші non-serializable об'єкти
+        const safeUpdated = JSON.parse(JSON.stringify(updated));
+
+        const putReq = store.put(safeUpdated);
         putReq.onsuccess = () => {
           console.log("Successfully updated unsaved sign:", id);
           broadcastUnsavedUpdate();
-          resolve(updated);
+          resolve(safeUpdated);
         };
         putReq.onerror = () => {
           console.error("Failed to save updated unsaved sign:", putReq.error);
@@ -394,6 +456,54 @@ export function exportCanvas(canvas, toolbarState = {}) {
       );
     }
 
+    // ВИПРАВЛЕННЯ: Додаткова очистка від HTMLCanvasElement та інших non-serializable об'єктів
+    const cleanObject = (obj) => {
+      if (!obj || typeof obj !== "object") return obj;
+
+      // Якщо це HTMLCanvasElement або інший DOM елемент, повертаємо null
+      if (obj instanceof HTMLElement || obj instanceof HTMLCanvasElement) {
+        return null;
+      }
+
+      // Якщо це Array
+      if (Array.isArray(obj)) {
+        return obj
+          .map((item) => cleanObject(item))
+          .filter((item) => item !== null);
+      }
+
+      // Якщо це звичайний об'єкт
+      const cleaned = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+
+          // Пропускаємо функції та non-serializable об'єкти
+          if (typeof value === "function") continue;
+          if (
+            value instanceof HTMLElement ||
+            value instanceof HTMLCanvasElement
+          )
+            continue;
+
+          // Рекурсивно очищаємо вкладені об'єкти
+          const cleanedValue = cleanObject(value);
+          if (cleanedValue !== null) {
+            cleaned[key] = cleanedValue;
+          }
+        }
+      }
+      return cleaned;
+    };
+
+    json = cleanObject(json);
+
+    // ВИПРАВЛЕННЯ: Додаємо shapeType до JSON верхнього рівня
+    if (json && !json.shapeType) {
+      json.shapeType =
+        canvas.get("shapeType") || toolbarState.currentShapeType || "rectangle";
+    }
+
     if (json && Array.isArray(json.objects)) {
       json.objects = json.objects.map((obj) => {
         if (obj?.isBorderShape && obj.clipPath) {
@@ -445,6 +555,15 @@ export function exportCanvas(canvas, toolbarState = {}) {
     // Prefer design size (Fabric internal size equals design pixels in this app)
     const width = canvas.getWidth?.() || 0;
     const height = canvas.getHeight?.() || 0;
+
+    // ВИПРАВЛЕННЯ: Отримуємо shapeType з canvas
+    const canvasShapeType =
+      canvas.get("shapeType") || toolbarState.currentShapeType || "rectangle";
+    console.log("Exporting canvas - shapeType sources:", {
+      canvasShapeType: canvas.get("shapeType"),
+      toolbarShapeType: toolbarState.currentShapeType,
+      finalShapeType: canvasShapeType,
+    });
 
     // ВИПРАВЛЕННЯ: Генеруємо SVG preview замість PNG для кращої якості та розміру
     let previewSvg = "";
@@ -514,17 +633,26 @@ export function exportCanvas(canvas, toolbarState = {}) {
       // ВИПРАВЛЕННЯ: Покращене збереження canvas properties
       backgroundColor: bgColor,
       backgroundType: bgType,
-      canvasType: canvas.get("shapeType") || "rectangle",
+      canvasType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
       cornerRadius: canvas.get("cornerRadius") || 0,
 
       // ВИПРАВЛЕННЯ: Зберігаємо повний toolbar state з canvas properties
       toolbarState: {
         ...toolbarState,
+        cornerRadius: canvas.get("cornerRadius") || 0,
+        // ВИПРАВЛЕННЯ: Зберігаємо актуальний тип фігури з canvas
+        currentShapeType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
         // Оновлюємо розміри в toolbar state
         sizeValues: {
-          width: Math.round(((width || 150) * 25.4) / 72), // px to mm
-          height: Math.round(((height || 150) * 25.4) / 72), // px to mm
-          cornerRadius: toolbarState.cornerRadius || 0,
+          width:
+            typeof width === "number"
+              ? Math.round((width * 25.4) / 72)
+              : DEFAULT_SIGN_SIZE_MM.width,
+          height:
+            typeof height === "number"
+              ? Math.round((height * 25.4) / 72)
+              : DEFAULT_SIGN_SIZE_MM.height,
+          cornerRadius: canvas.get("cornerRadius") || 0,
         },
         // Оновлюємо background color
         globalColors: {
@@ -552,6 +680,16 @@ export function exportCanvas(canvas, toolbarState = {}) {
       },
     };
 
+    console.log("Canvas exported successfully:", {
+      canvasType: canvasState.canvasType,
+      width: canvasState.width,
+      height: canvasState.height,
+      objectCount: canvasState.json?.objects?.length || 0,
+      backgroundColor: canvasState.backgroundColor,
+      currentShapeType: canvasState.toolbarState?.currentShapeType,
+      hasBorder: canvasState.toolbarState?.hasBorder,
+    });
+
     return canvasState;
   } catch (e) {
     console.error("exportCanvas failed", e);
@@ -568,16 +706,24 @@ export function extractToolbarState(canvasData) {
   // ВИПРАВЛЕННЯ: Правильно витягуємо збережений стан
   const savedState = canvasData.toolbarState || {};
 
+  // ВИПРАВЛЕННЯ: Використовуємо canvasType з верхнього рівня як пріоритетний
+  // Це гарантує, що тип фігури береться з фактичного збереженого canvas.shapeType
+  const actualShapeType =
+    canvasData.canvasType ||
+    savedState.currentShapeType ||
+    canvasData.json?.shapeType ||
+    "rectangle";
+
   return {
-    currentShapeType: savedState.currentShapeType || "rectangle",
+    currentShapeType: actualShapeType,
     cornerRadius: savedState.cornerRadius || 0,
     sizeValues: savedState.sizeValues || {
       width: canvasData.width
         ? Math.round((canvasData.width * 25.4) / 72)
-        : 150,
+        : DEFAULT_SIGN_SIZE_MM.width,
       height: canvasData.height
         ? Math.round((canvasData.height * 25.4) / 72)
-        : 150,
+        : DEFAULT_SIGN_SIZE_MM.height,
       cornerRadius: savedState.cornerRadius || 0,
     },
     globalColors: savedState.globalColors || {
@@ -606,7 +752,11 @@ function getDefaultToolbarState() {
   return {
     currentShapeType: "rectangle",
     cornerRadius: 0,
-    sizeValues: { width: 150, height: 150, cornerRadius: 0 },
+    sizeValues: {
+      width: DEFAULT_SIGN_SIZE_MM.width,
+      height: DEFAULT_SIGN_SIZE_MM.height,
+      cornerRadius: 0,
+    },
     globalColors: {
       textColor: "#000000",
       backgroundColor: "#FFFFFF",
@@ -845,7 +995,9 @@ export async function saveCurrentProject(canvas) {
 
   // Отримуємо поточний ID незбереженого знаку
   let currentUnsavedId = null;
-  try { currentUnsavedId = localStorage.getItem("currentUnsavedSignId"); } catch {}
+  try {
+    currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+  } catch {}
 
   // Визначаємо активне полотно, яке потрібно оновити
   let currentCanvasId = null;
@@ -861,8 +1013,12 @@ export async function saveCurrentProject(canvas) {
       pendingUnsavedCleanupId = window.__pendingUnsavedCleanupId || null;
     }
   } catch {}
-  try { currentCanvasId = localStorage.getItem("currentCanvasId"); } catch {}
-  try { currentProjectCanvasId = localStorage.getItem("currentProjectCanvasId"); } catch {}
+  try {
+    currentCanvasId = localStorage.getItem("currentCanvasId");
+  } catch {}
+  try {
+    currentProjectCanvasId = localStorage.getItem("currentProjectCanvasId");
+  } catch {}
   try {
     const storedIndex = localStorage.getItem("currentProjectCanvasIndex");
     if (storedIndex !== null && storedIndex !== undefined) {
@@ -872,9 +1028,11 @@ export async function saveCurrentProject(canvas) {
       }
     }
   } catch {}
-  const activeProjectCanvasId = runtimeProjectCanvasId || currentProjectCanvasId || null;
+  const activeProjectCanvasId =
+    runtimeProjectCanvasId || currentProjectCanvasId || null;
   const activeProjectCanvasIndex =
-    typeof runtimeProjectCanvasIndex === "number" && runtimeProjectCanvasIndex >= 0
+    typeof runtimeProjectCanvasIndex === "number" &&
+    runtimeProjectCanvasIndex >= 0
       ? runtimeProjectCanvasIndex
       : currentProjectCanvasIndex;
 
@@ -882,11 +1040,13 @@ export async function saveCurrentProject(canvas) {
   const hasStoredIndex =
     typeof activeProjectCanvasIndex === "number" &&
     activeProjectCanvasIndex >= 0;
-  
+
   const toolbarState = window.getCurrentToolbarState?.() || {};
   const snap = exportCanvas(canvas, toolbarState);
   const now = Date.now();
-  const canvases = Array.isArray(existing.canvases) ? existing.canvases.slice(0, 10).map(canvasEntry => ({ ...canvasEntry })) : [];
+  const canvases = Array.isArray(existing.canvases)
+    ? existing.canvases.slice(0, 10).map((canvasEntry) => ({ ...canvasEntry }))
+    : [];
 
   if (snap) {
     if (canvases.length === 0) {
@@ -905,26 +1065,37 @@ export async function saveCurrentProject(canvas) {
           window.__currentProjectCanvasIndex = 0;
         }
       } catch {}
-      console.log('[projectStorage] saveCurrentProject: created first canvas entry', { newCanvasId });
+      console.log(
+        "[projectStorage] saveCurrentProject: created first canvas entry",
+        { newCanvasId }
+      );
     } else {
       const isActiveUnsaved = Boolean(currentUnsavedId) && !targetCanvasId;
       let targetIndex = -1;
 
       if (!isActiveUnsaved && targetCanvasId) {
-        targetIndex = canvases.findIndex(c => c.id === targetCanvasId);
-        console.log('[projectStorage] saveCurrentProject: lookup by id', {
+        targetIndex = canvases.findIndex((c) => c.id === targetCanvasId);
+        console.log("[projectStorage] saveCurrentProject: lookup by id", {
           targetCanvasId,
           targetIndex,
-          canvasesCount: canvases.length
+          canvasesCount: canvases.length,
         });
       }
 
-      if (!isActiveUnsaved && targetIndex === -1 && hasStoredIndex && activeProjectCanvasIndex < canvases.length) {
+      if (
+        !isActiveUnsaved &&
+        targetIndex === -1 &&
+        hasStoredIndex &&
+        activeProjectCanvasIndex < canvases.length
+      ) {
         targetIndex = activeProjectCanvasIndex;
-        console.log('[projectStorage] saveCurrentProject: fallback to stored index', {
-          storedIndex: activeProjectCanvasIndex,
-          canvasesCount: canvases.length
-        });
+        console.log(
+          "[projectStorage] saveCurrentProject: fallback to stored index",
+          {
+            storedIndex: activeProjectCanvasIndex,
+            canvasesCount: canvases.length,
+          }
+        );
       }
 
       if (!isActiveUnsaved && targetIndex !== -1) {
@@ -934,7 +1105,10 @@ export async function saveCurrentProject(canvas) {
         try {
           localStorage.setItem("currentCanvasId", resolvedId);
           localStorage.setItem("currentProjectCanvasId", resolvedId);
-          localStorage.setItem("currentProjectCanvasIndex", String(targetIndex));
+          localStorage.setItem(
+            "currentProjectCanvasIndex",
+            String(targetIndex)
+          );
         } catch {}
         try {
           if (typeof window !== "undefined") {
@@ -942,10 +1116,13 @@ export async function saveCurrentProject(canvas) {
             window.__currentProjectCanvasIndex = targetIndex;
           }
         } catch {}
-        console.log('[projectStorage] saveCurrentProject: updated existing canvas', {
-          targetIndex,
-          resolvedId
-        });
+        console.log(
+          "[projectStorage] saveCurrentProject: updated existing canvas",
+          {
+            targetIndex,
+            resolvedId,
+          }
+        );
       } else {
         const newCanvasId = uuid();
         canvases.push({ id: newCanvasId, ...snap });
@@ -953,7 +1130,10 @@ export async function saveCurrentProject(canvas) {
         try {
           localStorage.setItem("currentCanvasId", newCanvasId);
           localStorage.setItem("currentProjectCanvasId", newCanvasId);
-          localStorage.setItem("currentProjectCanvasIndex", String(canvases.length - 1));
+          localStorage.setItem(
+            "currentProjectCanvasIndex",
+            String(canvases.length - 1)
+          );
           localStorage.removeItem("currentUnsavedSignId");
         } catch {}
         try {
@@ -962,14 +1142,17 @@ export async function saveCurrentProject(canvas) {
             window.__currentProjectCanvasIndex = canvases.length - 1;
           }
         } catch {}
-        console.warn('[projectStorage] saveCurrentProject: appended new canvas because no target found', {
-          newCanvasId,
-          canvasesCount: canvases.length,
-          targetCanvasId,
-          hasStoredIndex,
-          storedIndex: currentProjectCanvasIndex,
-          isActiveUnsaved
-        });
+        console.warn(
+          "[projectStorage] saveCurrentProject: appended new canvas because no target found",
+          {
+            newCanvasId,
+            canvasesCount: canvases.length,
+            targetCanvasId,
+            hasStoredIndex,
+            storedIndex: currentProjectCanvasIndex,
+            isActiveUnsaved,
+          }
+        );
       }
     }
   }
@@ -981,7 +1164,10 @@ export async function saveCurrentProject(canvas) {
       activeCanvasId: (() => {
         try {
           return typeof window !== "undefined"
-            ? window.__currentProjectCanvasId || currentProjectCanvasId || currentCanvasId || null
+            ? window.__currentProjectCanvasId ||
+                currentProjectCanvasId ||
+                currentCanvasId ||
+                null
             : currentProjectCanvasId || currentCanvasId || null;
         } catch {
           return currentProjectCanvasId || currentCanvasId || null;
@@ -990,29 +1176,40 @@ export async function saveCurrentProject(canvas) {
       activeCanvasIndex: (() => {
         try {
           return typeof window !== "undefined"
-            ? window.__currentProjectCanvasIndex ?? currentProjectCanvasIndex ?? null
+            ? window.__currentProjectCanvasIndex ??
+                currentProjectCanvasIndex ??
+                null
             : currentProjectCanvasIndex ?? null;
         } catch {
           return currentProjectCanvasIndex ?? null;
         }
-      })()
+      })(),
     };
-    window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail }));
+    window.dispatchEvent(
+      new CustomEvent("project:canvasesUpdated", { detail })
+    );
   } catch {}
-  try { await transferUnsavedSignsToProject(updated.id, currentUnsavedId); } catch {}
+  try {
+    await transferUnsavedSignsToProject(updated.id, currentUnsavedId);
+  } catch {}
 
   const unsavedToRemove = new Set();
   if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
-  if (pendingUnsavedCleanupId && !unsavedToRemove.has(pendingUnsavedCleanupId)) {
+  if (
+    pendingUnsavedCleanupId &&
+    !unsavedToRemove.has(pendingUnsavedCleanupId)
+  ) {
     unsavedToRemove.add(pendingUnsavedCleanupId);
   }
 
   if (unsavedToRemove.size) {
     try {
-      await Promise.all([...unsavedToRemove].map((id) => deleteUnsavedSign(id)));
+      await Promise.all(
+        [...unsavedToRemove].map((id) => deleteUnsavedSign(id))
+      );
       broadcastUnsavedUpdate();
     } catch (err) {
-      console.warn('Failed to clean up unsaved signs after project save:', err);
+      console.warn("Failed to clean up unsaved signs after project save:", err);
     }
 
     try {
@@ -1022,7 +1219,9 @@ export async function saveCurrentProject(canvas) {
         }
       }
       if (unsavedToRemove.has(currentUnsavedId)) {
-        try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
+        try {
+          localStorage.removeItem("currentUnsavedSignId");
+        } catch {}
       }
     } catch {}
   }
@@ -1052,13 +1251,18 @@ function broadcastProjectUpdate(projectId) {
         detail.activeCanvasIndex = window.__currentProjectCanvasIndex ?? null;
       }
     } catch {}
-    window.dispatchEvent(new CustomEvent("project:canvasesUpdated", { detail }));
+    window.dispatchEvent(
+      new CustomEvent("project:canvasesUpdated", { detail })
+    );
   } catch {}
 }
 
 // Transfer all unsaved signs into the specified project (append, max 10 total). Clears unsaved store.
 // excludeId - ID незбереженого знаку, який не потрібно додавати (щоб уникнути дублювання поточного полотна)
-export async function transferUnsavedSignsToProject(projectId, excludeIds = null) {
+export async function transferUnsavedSignsToProject(
+  projectId,
+  excludeIds = null
+) {
   if (!projectId) return null;
   const unsaved = await getAllUnsavedSigns();
   if (!unsaved.length) return null;
@@ -1068,17 +1272,21 @@ export async function transferUnsavedSignsToProject(projectId, excludeIds = null
 
   const excludeSet = new Set();
   if (excludeIds instanceof Set) {
-    excludeIds.forEach((id) => { if (id) excludeSet.add(id); });
+    excludeIds.forEach((id) => {
+      if (id) excludeSet.add(id);
+    });
   } else if (Array.isArray(excludeIds)) {
-    excludeIds.forEach((id) => { if (id) excludeSet.add(id); });
+    excludeIds.forEach((id) => {
+      if (id) excludeSet.add(id);
+    });
   } else if (typeof excludeIds === "string" && excludeIds) {
     excludeSet.add(excludeIds);
   }
 
-  console.log('[projectStorage] transferUnsavedSignsToProject', {
+  console.log("[projectStorage] transferUnsavedSignsToProject", {
     projectId,
     unsavedCount: unsaved.length,
-    excludeIds: Array.from(excludeSet)
+    excludeIds: Array.from(excludeSet),
   });
   // Append unsaved entries (mapping to project canvas schema by adding ids if missing)
   // Виключаємо поточний знак, щоб уникнути дублювання
@@ -1103,8 +1311,8 @@ export async function transferUnsavedSignsToProject(projectId, excludeIds = null
       canvasMetadata: {
         ...(s.canvasMetadata || {}),
         sourceUnsavedId: s.id,
-        migratedAt: Date.now()
-      }
+        migratedAt: Date.now(),
+      },
     });
     transferredIds.push(s.id);
   }
@@ -1113,11 +1321,10 @@ export async function transferUnsavedSignsToProject(projectId, excludeIds = null
     project.canvases = existing;
     project.updatedAt = Date.now();
     await putProject(project);
-    await Promise.all(transferredIds.map(id => deleteUnsavedSign(id)));
+    await Promise.all(transferredIds.map((id) => deleteUnsavedSign(id)));
     broadcastProjectUpdate(project.id);
     broadcastUnsavedUpdate();
-  }
-  else {
+  } else {
     // Якщо нічого не перенесено, все одно повідомляємо про оновлення списку незбережених знаків
     broadcastUnsavedUpdate();
   }
@@ -1207,8 +1414,8 @@ export async function addCanvasSnapshotToCurrentProject(
       updatedAt: now,
       canvases: [{ id: uuid(), ...snapshot }],
     };
-  await putProject(project);
-  broadcastProjectUpdate(project.id);
+    await putProject(project);
+    broadcastProjectUpdate(project.id);
     try {
       localStorage.setItem("currentProjectId", project.id);
       localStorage.setItem("currentProjectName", project.name);
@@ -1242,7 +1449,10 @@ export async function addCanvasSnapshotToCurrentProject(
     try {
       localStorage.setItem("currentCanvasId", canvasEntry.id);
       localStorage.setItem("currentProjectCanvasId", canvasEntry.id);
-      localStorage.setItem("currentProjectCanvasIndex", String(project.canvases.length - 1));
+      localStorage.setItem(
+        "currentProjectCanvasIndex",
+        String(project.canvases.length - 1)
+      );
       localStorage.removeItem("currentUnsavedSignId");
       try {
         if (typeof window !== "undefined") {
@@ -1278,87 +1488,104 @@ export async function deleteCanvasFromCurrentProject(canvasId) {
 // Add canvases from selected projects to the current project
 export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
   if (!Array.isArray(projectIds) || projectIds.length === 0) return null;
-  
+
   let currentId = null;
-  try { currentId = localStorage.getItem("currentProjectId"); } catch {}
+  try {
+    currentId = localStorage.getItem("currentProjectId");
+  } catch {}
   if (!currentId) {
     console.warn("No current project to add canvases to");
     return null;
   }
-  
+
   const currentProject = await getProject(currentId);
   if (!currentProject) {
     console.warn("Current project not found:", currentId);
     return null;
   }
-  
-  currentProject.canvases = Array.isArray(currentProject.canvases) ? currentProject.canvases : [];
-  
+
+  currentProject.canvases = Array.isArray(currentProject.canvases)
+    ? currentProject.canvases
+    : [];
+
   let addedCount = 0;
   const MAX_CANVASES = 10;
-  
+
   // Iterate through selected projects
   for (const projectId of projectIds) {
     if (projectId === currentId) {
       console.log("Skipping current project itself");
       continue; // Skip current project
     }
-    
+
     if (currentProject.canvases.length >= MAX_CANVASES) {
       console.warn("Maximum canvas limit reached:", MAX_CANVASES);
       break;
     }
-    
+
     try {
       const sourceProject = await getProject(projectId);
       if (!sourceProject || !Array.isArray(sourceProject.canvases)) {
         console.warn("Source project not found or has no canvases:", projectId);
-  try {
-    const unsavedToRemove = new Set();
-    if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
-    if (pendingUnsavedCleanupId && !unsavedToRemove.has(pendingUnsavedCleanupId)) {
-      unsavedToRemove.add(pendingUnsavedCleanupId);
-    }
-
-    if (unsavedToRemove.size) {
-      console.log('[projectStorage] saveCurrentProject: removing pending unsaved signs', {
-        ids: Array.from(unsavedToRemove)
-      });
-      try {
-        await Promise.all([...unsavedToRemove].map((id) => deleteUnsavedSign(id)));
-        broadcastUnsavedUpdate();
-      } catch (err) {
-        console.warn('Failed to clean up unsaved signs after project save:', err);
-      }
-
-      try {
-        if (typeof window !== "undefined") {
-          if (unsavedToRemove.has(pendingUnsavedCleanupId)) {
-            window.__pendingUnsavedCleanupId = null;
+        try {
+          const unsavedToRemove = new Set();
+          if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
+          if (
+            pendingUnsavedCleanupId &&
+            !unsavedToRemove.has(pendingUnsavedCleanupId)
+          ) {
+            unsavedToRemove.add(pendingUnsavedCleanupId);
           }
-        }
-        if (unsavedToRemove.has(currentUnsavedId)) {
-          try { localStorage.removeItem("currentUnsavedSignId"); } catch {}
-        }
-      } catch {}
-    }
-    await transferUnsavedSignsToProject(updated.id, unsavedToRemove);
-  } catch {}
+
+          if (unsavedToRemove.size) {
+            console.log(
+              "[projectStorage] saveCurrentProject: removing pending unsaved signs",
+              {
+                ids: Array.from(unsavedToRemove),
+              }
+            );
+            try {
+              await Promise.all(
+                [...unsavedToRemove].map((id) => deleteUnsavedSign(id))
+              );
+              broadcastUnsavedUpdate();
+            } catch (err) {
+              console.warn(
+                "Failed to clean up unsaved signs after project save:",
+                err
+              );
+            }
+
+            try {
+              if (typeof window !== "undefined") {
+                if (unsavedToRemove.has(pendingUnsavedCleanupId)) {
+                  window.__pendingUnsavedCleanupId = null;
+                }
+              }
+              if (unsavedToRemove.has(currentUnsavedId)) {
+                try {
+                  localStorage.removeItem("currentUnsavedSignId");
+                } catch {}
+              }
+            } catch {}
+          }
+          await transferUnsavedSignsToProject(updated.id, unsavedToRemove);
+        } catch {}
       }
-      
+
       // Add canvases from source project
       for (const canvas of sourceProject.canvases) {
         if (currentProject.canvases.length >= MAX_CANVASES) {
           console.warn("Maximum canvas limit reached during transfer");
           break;
         }
-        
+
         // Create a copy with new ID
         const canvasCopy = {
           ...canvas,
           id: uuid(), // Generate new ID to avoid conflicts
         };
-        
+
         currentProject.canvases.push(canvasCopy);
         addedCount++;
       }
@@ -1366,13 +1593,13 @@ export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
       console.error("Error adding canvases from project:", projectId, error);
     }
   }
-  
+
   if (addedCount > 0) {
     currentProject.updatedAt = Date.now();
     await putProject(currentProject);
     broadcastProjectUpdate(currentProject.id);
     console.log(`Successfully added ${addedCount} canvases to current project`);
   }
-  
+
   return currentProject;
 }

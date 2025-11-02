@@ -86,6 +86,63 @@ const ShapeProperties = ({
 
   const activeObject = activeShape || canvas?.getActiveObject();
 
+  // Якщо фігура прийшла з ShapeSelector і ще не визначила режим темної заливки — відключаємо її
+  useEffect(() => {
+    if (!activeObject) return;
+    const fromShapeTab =
+      activeObject.fromShapeTab === true ||
+      (activeObject.data && activeObject.data.fromShapeTab === true);
+    if (!fromShapeTab) return;
+    if (activeObject.useThemeColor === undefined) {
+      try {
+        activeObject.set({ useThemeColor: false });
+      } catch {
+        activeObject.useThemeColor = false;
+      }
+    }
+    if (activeObject.followThemeStroke === undefined) {
+      activeObject.followThemeStroke = true;
+    }
+    if (
+      activeObject.pendingShapePropsDefaults &&
+      typeof activeObject.pendingShapePropsDefaults === "object"
+    ) {
+      const defaults = activeObject.pendingShapePropsDefaults;
+      if (defaults.fill === false) {
+        try {
+          activeObject.set({ fill: "transparent", useThemeColor: false });
+        } catch {
+          activeObject.fill = "transparent";
+          activeObject.useThemeColor = false;
+        }
+      }
+      if (defaults.cut === false) {
+        try {
+          activeObject.set({ isCutElement: false, cutType: null });
+        } catch {
+          activeObject.isCutElement = false;
+          activeObject.cutType = null;
+        }
+      }
+      delete activeObject.pendingShapePropsDefaults;
+      if (canvas && typeof canvas.requestRenderAll === "function") {
+        canvas.requestRenderAll();
+      }
+    }
+    if (
+      activeObject.initialFillColor === undefined &&
+      typeof activeObject.fill === "string"
+    ) {
+      activeObject.initialFillColor = activeObject.fill;
+    }
+    if (
+      activeObject.initialStrokeColor === undefined &&
+      typeof activeObject.stroke === "string"
+    ) {
+      activeObject.initialStrokeColor = activeObject.stroke;
+    }
+  }, [activeObject]);
+
   // Unit conversion (96 DPI)
   const PX_PER_MM = 72 / 25.4;
   // Демпфер чутливості для Corner Radius: 1 = без згладжування
@@ -810,16 +867,18 @@ const ShapeProperties = ({
     if (isCutShape) return;
     // Если включен Cut manual — оставляем белую заливку
     if (obj.isCutElement && obj.cutType === "manual") return;
-    // Если у объекта в UI активен Fill — подстраиваем цвет
+    // Якщо фігура відмовилась від темної заливки — не примушуємо зміну кольору
+    if (obj.useThemeColor !== true) return;
+    // Якщо у об'єкта активний Fill — синхронізуємо із темою
     const themeText = globalColors?.textColor || "#000000";
     if (properties.fill) {
       try {
-        obj.set("fill", themeText);
+        obj.set({ fill: themeText, useThemeColor: true });
         if (typeof obj.setCoords === "function") obj.setCoords();
         canvas.requestRenderAll();
       } catch {}
     }
-  }, [globalColors?.textColor]);
+  }, [canvas, activeObject, globalColors?.textColor, properties.fill]);
 
   // Оновлення властивостей активного об'єкта
   const updateProperty = (property, value) => {
@@ -975,9 +1034,9 @@ const ShapeProperties = ({
         holdCenterIfArrow((o) => {
           if (value) {
             const themeFill = globalColors?.textColor || "#000000";
-            o.set("fill", themeFill);
+            o.set({ fill: themeFill, useThemeColor: true });
           } else {
-            o.set("fill", "transparent");
+            o.set({ fill: "transparent", useThemeColor: false });
           }
         });
         break;
@@ -993,7 +1052,7 @@ const ShapeProperties = ({
           if (value) {
             // Cut ON
             o.set("stroke", ORANGE);
-            o.set("fill", "#FFFFFF");
+            o.set({ fill: "#FFFFFF", useThemeColor: false });
             if (isCutShape) {
               // Не трогаем блокировки для врожденных CUT-элементов
               o.set({ isCutElement: true });
@@ -1026,7 +1085,11 @@ const ShapeProperties = ({
                 lockUniScaling: false,
               });
               // При включённом Fill заливаем цветом текста, иначе прозрачная заливка
-              o.set("fill", properties.fill ? themeTextColor : "transparent");
+              if (properties.fill) {
+                o.set({ fill: themeTextColor, useThemeColor: true });
+              } else {
+                o.set({ fill: "transparent", useThemeColor: false });
+              }
             }
           }
         });

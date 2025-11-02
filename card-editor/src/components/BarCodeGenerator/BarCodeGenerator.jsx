@@ -108,7 +108,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
 
     // Enforce minimum 30mm width (maintain aspect ratio)
     try {
-      const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
       const minPx = 30 * PX_PER_MM;
       const curWidth =
         typeof obj.getScaledWidth === "function"
@@ -271,7 +271,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       const t = e.target;
       if (!t || !t.isBarCode) return;
       try {
-        const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
         const minPx = 30 * PX_PER_MM;
         const w = t.getScaledWidth();
         if (w < minPx && w > 0) {

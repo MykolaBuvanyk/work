@@ -77,7 +77,7 @@ const Toolbar = () => {
     setCanvasShapeType,
   } = useCanvasContext();
   // Unit conversion helpers (assume CSS 96 DPI)
-  const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
   const LOCK_ARCH_HEIGHT_MM = 8;
   const mmToPx = (mm) =>
     typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;

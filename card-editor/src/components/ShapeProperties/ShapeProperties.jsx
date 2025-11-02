@@ -87,7 +87,7 @@ const ShapeProperties = ({
   const activeObject = activeShape || canvas?.getActiveObject();
 
   // Unit conversion (96 DPI)
-  const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
   // Демпфер чутливості для Corner Radius: 1 = без згладжування
   const RADIUS_DAMPING = 1;
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);

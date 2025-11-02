@@ -11,7 +11,7 @@ import styles from "./Canvas.module.css";
 const MARGIN = 40;
 const DEFAULT_DESIGN = { width: 1200, height: 800 };
 // Unit conversion (96 DPI)
-const PX_PER_MM = 96 / 25.4;
+const PX_PER_MM = 72 / 25.4;
 const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
 const LOCK_ARCH_HEIGHT_MM = 8;
 

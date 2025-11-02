@@ -7,21 +7,30 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "export-server": "node server/layoutExportServer.js"
   },
   "dependencies": {
+    "@resvg/resvg-wasm": "^2.6.2",
+    "cors": "^2.8.5",
     "clipper-js": "^1.0.2",
     "clipper-lib": "^6.4.2",
+    "express": "^4.21.2",
     "fabric": "^6.7.0",
     "imagetracerjs": "^1.2.6",
     "jsbarcode": "^3.12.1",
+    "jspdf": "^3.0.3",
+    "jszip": "^3.10.1",
     "paper": "^0.12.18",
+    "pdfkit": "^0.15.0",
     "potrace": "^2.1.8",
     "potrace-wasm": "^1.0.4",
     "qrcode": "^1.5.4",
     "qrcode-generator": "^2.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "svg-to-pdfkit": "^0.1.8",
+    "svg2pdf.js": "^2.6.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

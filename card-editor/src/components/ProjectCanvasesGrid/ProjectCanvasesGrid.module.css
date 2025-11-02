@@ -159,3 +159,32 @@
   text-align: center;
   font-weight: 500;
 }
+
+.layoutControls {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+
+.layoutPlannerBtn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0f172a 80%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.layoutPlannerBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.3);
+}
+
+.layoutPlannerBtn:focus {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 3px;
+}

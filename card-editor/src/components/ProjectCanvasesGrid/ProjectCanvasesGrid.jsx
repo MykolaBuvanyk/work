@@ -13,6 +13,7 @@ import {
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
 import * as fabric from "fabric";
+import LayoutPlannerModal from "./LayoutPlannerModal/LayoutPlannerModal";
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
@@ -34,6 +35,9 @@ const mapEntryToDesign = (entry) => {
     jsonTemplate,
     backgroundColor: entry.backgroundColor,
     toolbarState: entry.toolbarState || null,
+    preview: entry.preview || null,
+    previewSvg: entry.previewSvg || null,
+    copiesCount: entry.copiesCount ?? entry.toolbarState?.copiesCount ?? null,
     meta: {
       isUnsaved: !!entry._unsaved,
       sourceType: entry._unsaved ? "unsaved" : "project",
@@ -49,6 +53,7 @@ const ProjectCanvasesGrid = () => {
   const updateDebounceRef = useRef();
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
+  const [isLayoutModalOpen, setIsLayoutModalOpen] = useState(false);
   const currentUnsavedIdRef = useRef(null); // track which unsaved sign is currently loaded
   const currentProjectCanvasIdRef = useRef(null); // track which project canvas is currently loaded
   const initialCanvasLoadRef = useRef(false);
@@ -519,7 +524,7 @@ const ProjectCanvasesGrid = () => {
   const startIndex = (page - 1) * PAGE_SIZE;
   const current = canvases.slice(startIndex, startIndex + PAGE_SIZE);
 
-  const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
   const pxToMm = (px) => {
     const mm = (Number(px) || 0) / PX_PER_MM;
     return Math.round(mm);
@@ -1232,7 +1237,7 @@ const ProjectCanvasesGrid = () => {
       }
 
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-      const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
       const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
       const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
@@ -1263,7 +1268,8 @@ const ProjectCanvasesGrid = () => {
   if (!project) return null;
 
   return (
-    <div className={styles.wrapper}>
+    <>
+      <div className={styles.wrapper}>
       <div className={styles.header}>
         <button
           className={styles.navBtn}
@@ -1280,6 +1286,16 @@ const ProjectCanvasesGrid = () => {
             }`}
             onClick={() => setPage(r.page)}
           >
+
+        <div className={styles.layoutControls}>
+          <button
+            type="button"
+            className={styles.layoutPlannerBtn}
+            onClick={() => setIsLayoutModalOpen(true)}
+          >
+            PDF
+          </button>
+        </div>
             {r.start}–{r.end}
           </button>
         ))}
@@ -1404,7 +1420,15 @@ const ProjectCanvasesGrid = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      <LayoutPlannerModal
+        isOpen={isLayoutModalOpen}
+        onClose={() => setIsLayoutModalOpen(false)}
+        designs={designPayloads}
+        spacingMm={5}
+      />
+    </>
   );
 };
 

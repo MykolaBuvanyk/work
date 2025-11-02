@@ -132,7 +132,7 @@ const TopToolbar = ({ className }) => {
       // Створюємо нове полотно за замовчуванням
       try {
         // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-        const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
         const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
         const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 

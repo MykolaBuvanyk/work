@@ -507,8 +507,8 @@ export function exportCanvas(canvas, toolbarState = {}) {
 
     const canvasState = {
       json,
-      preview: previewPng, // Зберігаємо PNG як fallback
-      previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
+  preview: previewPng, // Зберігаємо PNG як fallback
+  previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
       width,
       height,
       // ВИПРАВЛЕННЯ: Покращене збереження canvas properties
@@ -522,8 +522,8 @@ export function exportCanvas(canvas, toolbarState = {}) {
         ...toolbarState,
         // Оновлюємо розміри в toolbar state
         sizeValues: {
-          width: Math.round(((width || 150) * 25.4) / 96), // px to mm
-          height: Math.round(((height || 150) * 25.4) / 96), // px to mm
+          width: Math.round(((width || 150) * 25.4) / 72), // px to mm
+          height: Math.round(((height || 150) * 25.4) / 72), // px to mm
           cornerRadius: toolbarState.cornerRadius || 0,
         },
         // Оновлюємо background color
@@ -573,10 +573,10 @@ export function extractToolbarState(canvasData) {
     cornerRadius: savedState.cornerRadius || 0,
     sizeValues: savedState.sizeValues || {
       width: canvasData.width
-        ? Math.round((canvasData.width * 25.4) / 96)
+        ? Math.round((canvasData.width * 25.4) / 72)
         : 150,
       height: canvasData.height
-        ? Math.round((canvasData.height * 25.4) / 96)
+        ? Math.round((canvasData.height * 25.4) / 72)
         : 150,
       cornerRadius: savedState.cornerRadius || 0,
     },

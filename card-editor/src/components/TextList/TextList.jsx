@@ -12,7 +12,7 @@ const TextList = () => {
   const isUpdatingRef = useRef(false);
 
   // Units: show/edit in millimeters; convert to pixels for Fabric
-  const PX_PER_MM = 96 / 25.4;
+  const PX_PER_MM = 72 / 25.4;
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const MIN_FONT_MM = 3;

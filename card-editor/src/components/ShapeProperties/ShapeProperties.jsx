@@ -108,11 +108,12 @@ const ShapeProperties = ({
       typeof activeObject.pendingShapePropsDefaults === "object"
     ) {
       const defaults = activeObject.pendingShapePropsDefaults;
+      // Не змінюємо заливку: залишаємо білу за замовчуванням.
+      // Лише гарантуємо, що фігура не підписана на тему.
       if (defaults.fill === false) {
         try {
-          activeObject.set({ fill: "transparent", useThemeColor: false });
+          activeObject.set({ useThemeColor: false });
         } catch {
-          activeObject.fill = "transparent";
           activeObject.useThemeColor = false;
         }
       }

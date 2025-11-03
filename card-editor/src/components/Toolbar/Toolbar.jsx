@@ -1074,13 +1074,9 @@ const Toolbar = () => {
     canvas.clear();
     canvas.set("backgroundColor", bg);
     canvas.requestRenderAll();
-    borderStateRef.current = {
-      ...borderStateRef.current,
-      mode: "default",
-      thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
-    };
-    setIsBorderActive(false);
-    trackBorderChange?.(false);
+    // ВАЖЛИВО: Не скидаємо режим/товщину бордера при зміні базової фігури
+    // (щоб створення нової фігури відразу підхопило останній вибір користувача)
+    // Реконструкція відбудеться після встановлення нового clipPath через ensureBorderPresence().
   };
   // Режим кастомної фігури (редагування вершин) — тепер у контексті
   // --- Custom Shape (нова реалізація) ---
@@ -2962,10 +2958,10 @@ const Toolbar = () => {
         case "rectangle":
           newClipPath = new fabric.Rect({
             // Slight outward inflation (-0.5 offset + +1 size) to fully cover pixel grid and remove residual seams
-            left: -1,
-            top: -1,
-            width: width + 1,
-            height: height + 1,
+            left: 0,
+            top: 0,
+            width: width ,
+            height: height,
             rx: cr,
             ry: cr,
             absolutePositioned: true,
@@ -6524,32 +6520,11 @@ const Toolbar = () => {
       // Встановлюємо тип поточної фігури
       setShapeType("circle");
 
-      // Встановлюємо розміри canvas (100x100 мм для кола)
+      // УНІФІКУЄМО: створення через той самий пайплайн, що й ресайз (updateSize)
       const width = 100; // mm
       const height = 100; // mm
-      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
-
-      // Створюємо clipPath у формі кола з правильними розмірами
-      const radius = mmToPx(Math.min(width, height) / 2);
-      const clipPath = new fabric.Circle({
-        left: mmToPx(width) / 2,
-        top: mmToPx(height) / 2,
-        radius: radius,
-        originX: "center",
-        originY: "center",
-        absolutePositioned: true,
-      });
-
-      // Встановлюємо clipPath для canvas
-      canvas.clipPath = clipPath;
-
-      // Оновлюємо розміри в стані
       setSizeValues((prev) => ({ ...prev, width, height, cornerRadius: 0 }));
-
-      // Додаємо візуальний контур
-      updateCanvasOutline();
-
-      canvas.renderAll();
+      updateSize({ widthMm: width, heightMm: height, cornerRadiusMm: 0 });
 
       // Скидаємо отвори до No holes
       resetHolesToNone();
@@ -6567,32 +6542,11 @@ const Toolbar = () => {
       // Встановлюємо тип поточної фігури
       setShapeType("ellipse");
 
-      // Встановлюємо розміри canvas (140x80 мм для еліпса)
+      // УНІФІКУЄМО: створення через той самий пайплайн, що й ресайз (updateSize)
       const width = 140; // mm
       const height = 80; // mm
-      canvas.setDimensions({ width: mmToPx(width), height: mmToPx(height) });
-
-      // Створюємо clipPath у формі еліпса з правильними розмірами
-      const clipPath = new fabric.Ellipse({
-        left: mmToPx(width) / 2,
-        top: mmToPx(height) / 2,
-        rx: mmToPx(width) / 2,
-        ry: mmToPx(height) / 2,
-        originX: "center",
-        originY: "center",
-        absolutePositioned: true,
-      });
-
-      // Встановлюємо clipPath для canvas
-      canvas.clipPath = clipPath;
-
-      // Оновлюємо розміри в стані
       setSizeValues((prev) => ({ ...prev, width, height, cornerRadius: 0 }));
-
-      // Додаємо візуальний контур
-      updateCanvasOutline();
-
-      canvas.renderAll();
+      updateSize({ widthMm: width, heightMm: height, cornerRadiusMm: 0 });
 
       // Скидаємо отвори до No holes
       resetHolesToNone();

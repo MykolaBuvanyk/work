@@ -2960,7 +2960,7 @@ const Toolbar = () => {
             // Slight outward inflation (-0.5 offset + +1 size) to fully cover pixel grid and remove residual seams
             left: 0,
             top: 0,
-            width: width ,
+            width: width,
             height: height,
             rx: cr,
             ry: cr,

@@ -27,8 +27,11 @@ const resolveFillColor = (object) => {
   return null;
 };
 
+const PX_PER_MM = 72 / 25.4;
+const pxToMm = (px) => (Number(px) || 0) / PX_PER_MM;
+
 export const useExcelImport = () => {
-  const { canvas } = useCanvasContext();
+  const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
 
   // Експорт шаблону в Excel
   const exportToExcel = async () => {
@@ -38,20 +41,92 @@ export const useExcelImport = () => {
     }
 
     try {
-      // Збираємо дані про всі об'єкти на canvas
-      const canvasData = {
-        width: canvas.getWidth(),
-        height: canvas.getHeight(),
-        backgroundColor:
-          canvas.backgroundColor || canvas.get("backgroundColor") || "#ffffff",
-        objects: [],
-      };
-
-      // Додаємо тип фігури полотна та корнер радіус
       const toolbarState =
         typeof window !== "undefined" && window.getCurrentToolbarState
           ? window.getCurrentToolbarState() || {}
           : {};
+      const toolbarColors = toolbarState.globalColors || {};
+      const borderShape = canvas
+        ?.getObjects?.()
+        ?.find?.((obj) => obj?.isBorderShape);
+      const borderEnabled = !!toolbarState?.hasBorder;
+      const borderThicknessMm =
+        Number(toolbarState?.thickness) ||
+        (borderShape?.cardBorderThicknessPx !== undefined
+          ? pxToMm(borderShape.cardBorderThicknessPx)
+          : 0);
+      const borderColor =
+        (typeof borderShape?.stroke === "string" && borderShape.stroke) ||
+        "#000000";
+      const globalColorsSnapshot = {
+        ...(globalColors || {}),
+        ...toolbarColors,
+      };
+
+      const rawBackground =
+        canvas.backgroundColor || canvas.get("backgroundColor") || null;
+      let backgroundType =
+        canvas.get("backgroundType") ||
+        toolbarColors.backgroundType ||
+        (rawBackground && typeof rawBackground === "object"
+          ? "texture"
+          : "solid");
+      if (!backgroundType || typeof backgroundType !== "string") {
+        backgroundType = "solid";
+      }
+      backgroundType = backgroundType.toLowerCase();
+      if (!["solid", "gradient", "texture"].includes(backgroundType)) {
+        backgroundType = "solid";
+      }
+
+      let backgroundColor = "#ffffff";
+      let backgroundTextureUrl =
+        canvas.get("backgroundTextureUrl") ||
+        toolbarColors.backgroundTextureUrl ||
+        "";
+
+      if (backgroundType === "texture") {
+        backgroundTextureUrl =
+          backgroundTextureUrl || toolbarColors.backgroundColor || "";
+        if (typeof backgroundTextureUrl !== "string") {
+          backgroundTextureUrl = "";
+        }
+        backgroundColor =
+          (typeof toolbarColors.backgroundColor === "string" &&
+            toolbarColors.backgroundColor) ||
+          backgroundTextureUrl ||
+          "#ffffff";
+      } else {
+        if (
+          typeof toolbarColors.backgroundColor === "string" &&
+          toolbarColors.backgroundColor.trim() !== ""
+        ) {
+          backgroundColor = toolbarColors.backgroundColor;
+        } else if (
+          typeof rawBackground === "string" &&
+          rawBackground.trim() !== ""
+        ) {
+          backgroundColor = rawBackground;
+        }
+        backgroundTextureUrl = "";
+      }
+
+      const canvasData = {
+        width: canvas.getWidth(),
+        height: canvas.getHeight(),
+        backgroundColor,
+        backgroundType,
+        backgroundTextureUrl,
+        globalColors: globalColorsSnapshot,
+        border: {
+          enabled: borderEnabled,
+          thicknessMm: borderThicknessMm,
+          color: borderColor,
+        },
+        objects: [],
+      };
+
+      // Додаємо тип фігури полотна та корнер радіус
       const canvasShapeType =
         canvas.get("shapeType") || toolbarState.currentShapeType || "rectangle";
       const canvasCornerRadius =
@@ -236,6 +311,27 @@ export const useExcelImport = () => {
         { property: "Canvas Width", value: canvasData.width },
         { property: "Canvas Height", value: canvasData.height },
         { property: "Background Color", value: canvasData.backgroundColor },
+        { property: "Background Type", value: canvasData.backgroundType },
+        {
+          property: "Background Texture URL",
+          value: canvasData.backgroundTextureUrl,
+        },
+        {
+          property: "Global Colors",
+          value: JSON.stringify(canvasData.globalColors || {}),
+        },
+        {
+          property: "Border Enabled",
+          value: canvasData.border?.enabled ? 1 : 0,
+        },
+        {
+          property: "Border Thickness (mm)",
+          value: Number(canvasData.border?.thicknessMm || 0),
+        },
+        {
+          property: "Border Color",
+          value: canvasData.border?.color || "#000000",
+        },
         { property: "Canvas Shape Type", value: canvasShapeType },
         { property: "Corner Radius", value: canvasCornerRadius },
         { property: "Objects Count", value: canvasData.objects.length },
@@ -298,6 +394,12 @@ export const useExcelImport = () => {
           let canvasWidth = 800;
           let canvasHeight = 600;
           let backgroundColor = "#ffffff";
+          let backgroundType = "solid";
+          let backgroundTextureUrl = "";
+          let globalColorsFromFile = null;
+          let borderEnabled = false;
+          let borderThicknessMm = 0;
+          let borderColor = "#000000";
           let shapeType = "rectangle";
           let cornerRadius = 0;
 
@@ -312,6 +414,42 @@ export const useExcelImport = () => {
             if (row.property === "Background Color" && row.value) {
               backgroundColor = row.value || "#ffffff";
             }
+            if (row.property === "Background Type" && row.value) {
+              backgroundType = String(row.value || "solid");
+            }
+            if (row.property === "Background Texture URL" && row.value) {
+              backgroundTextureUrl = String(row.value || "");
+            }
+            if (row.property === "Global Colors" && row.value) {
+              try {
+                globalColorsFromFile = JSON.parse(row.value);
+              } catch (parseErr) {
+                console.warn(
+                  "Failed to parse Global Colors from Excel",
+                  parseErr
+                );
+                globalColorsFromFile = null;
+              }
+            }
+            if (row.property === "Border Enabled" && row.value !== undefined) {
+              const val = row.value;
+              borderEnabled = val === true || val === 1 || String(val) === "1";
+            }
+            if (
+              row.property === "Border Thickness (mm)" &&
+              row.value !== undefined
+            ) {
+              const parsed = Number(row.value);
+              if (Number.isFinite(parsed)) {
+                borderThicknessMm = parsed;
+              }
+            }
+            if (row.property === "Border Color" && row.value) {
+              if (typeof row.value === "string") {
+                const trimmed = row.value.trim();
+                if (trimmed) borderColor = trimmed;
+              }
+            }
             if (row.property === "Canvas Shape Type" && row.value) {
               shapeType = String(row.value || "rectangle");
             }
@@ -322,11 +460,151 @@ export const useExcelImport = () => {
           });
 
           // Встановлюємо розміри canvas
+          const normalizeColor = (value, fallback = "#ffffff") => {
+            if (typeof value !== "string") return fallback;
+            const trimmed = value.trim();
+            if (!trimmed || trimmed === "{}") return fallback;
+            return trimmed;
+          };
+
+          const normalizedType = (backgroundType || "solid").toLowerCase();
+          const solidBg = normalizeColor(backgroundColor, "#ffffff");
+          const normalizedToolbarBgType = [
+            "solid",
+            "gradient",
+            "texture",
+          ].includes(normalizedType)
+            ? normalizedType
+            : "solid";
+          const normalizedToolbarTexture =
+            normalizedToolbarBgType === "texture"
+              ? normalizeColor(
+                  backgroundTextureUrl || backgroundColor || "",
+                  ""
+                )
+              : "";
+          const normalizedToolbarBgColor =
+            normalizedToolbarBgType === "texture"
+              ? normalizedToolbarTexture || solidBg
+              : solidBg;
+
           if (canvas) {
             canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
-            // Використовуємо правильний метод для fabric.js v6+
-            canvas.set("backgroundColor", backgroundColor);
-            canvas.renderAll();
+
+            const applySolidBackground = (color) => {
+              canvas.set("backgroundType", "solid");
+              canvas.set("backgroundTextureUrl", null);
+              canvas.set("backgroundColor", color);
+              canvas.renderAll();
+            };
+
+            const applyTextureBackground = async (url) => {
+              const textureUrl = normalizeColor(url, "");
+              if (!textureUrl) {
+                applySolidBackground(solidBg);
+                return;
+              }
+              await new Promise((resolve) => {
+                const img = document.createElement("img");
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                  try {
+                    const scaleX = (canvas.width || 0) / (img.width || 1);
+                    const scaleY = (canvas.height || 0) / (img.height || 1);
+                    const patternCanvas = document.createElement("canvas");
+                    const ctx = patternCanvas.getContext("2d");
+                    patternCanvas.width = Math.max(1, img.width * scaleX);
+                    patternCanvas.height = Math.max(1, img.height * scaleY);
+                    ctx.drawImage(
+                      img,
+                      0,
+                      0,
+                      patternCanvas.width,
+                      patternCanvas.height
+                    );
+                    const pattern = new fabric.Pattern({
+                      source: patternCanvas,
+                      repeat: "no-repeat",
+                    });
+                    canvas.set("backgroundColor", pattern);
+                    canvas.set("backgroundType", "texture");
+                    canvas.set("backgroundTextureUrl", textureUrl);
+                    canvas.renderAll();
+                  } catch (applyErr) {
+                    console.error(
+                      "Failed to apply imported texture background:",
+                      applyErr
+                    );
+                    applySolidBackground(solidBg);
+                  }
+                  resolve();
+                };
+                img.onerror = () => {
+                  console.error(
+                    "Failed to load imported texture background:",
+                    textureUrl
+                  );
+                  applySolidBackground(solidBg);
+                  resolve();
+                };
+                img.src = textureUrl;
+              });
+            };
+
+            if (normalizedToolbarBgType === "texture") {
+              const textureSource =
+                normalizedToolbarTexture ||
+                backgroundTextureUrl ||
+                backgroundColor ||
+                "";
+              await applyTextureBackground(textureSource);
+            } else if (normalizedToolbarBgType === "gradient") {
+              applySolidBackground(solidBg);
+              canvas.set("backgroundType", "gradient");
+            } else {
+              applySolidBackground(solidBg);
+            }
+          }
+
+          const combinedGlobalColors = {
+            ...(globalColors || {}),
+            ...(globalColorsFromFile || {}),
+            backgroundColor:
+              normalizedToolbarBgType === "texture"
+                ? normalizedToolbarTexture || normalizedToolbarBgColor
+                : normalizedToolbarBgColor,
+            backgroundType: normalizedToolbarBgType,
+          };
+          if (normalizedToolbarBgType === "texture") {
+            combinedGlobalColors.backgroundTextureUrl =
+              normalizedToolbarTexture;
+          } else {
+            combinedGlobalColors.backgroundTextureUrl = "";
+          }
+          if (!combinedGlobalColors.textColor) {
+            combinedGlobalColors.textColor =
+              globalColorsFromFile?.textColor ||
+              globalColors?.textColor ||
+              "#000000";
+          }
+          if (!combinedGlobalColors.strokeColor) {
+            combinedGlobalColors.strokeColor =
+              globalColorsFromFile?.strokeColor ||
+              combinedGlobalColors.textColor ||
+              "#000000";
+          }
+          if (!combinedGlobalColors.fillColor) {
+            combinedGlobalColors.fillColor =
+              globalColorsFromFile?.fillColor ||
+              globalColors?.fillColor ||
+              "transparent";
+          }
+          if (borderColor) {
+            combinedGlobalColors.strokeColor = borderColor;
+            combinedGlobalColors.borderColor = borderColor;
+          }
+          if (typeof updateGlobalColors === "function") {
+            updateGlobalColors(combinedGlobalColors);
           }
 
           // Встановлюємо тип фігури полотна та корнер радіус і відновлюємо форму
@@ -334,7 +612,6 @@ export const useExcelImport = () => {
             if (canvas) {
               canvas.set && canvas.set("shapeType", shapeType || "rectangle");
               canvas.set && canvas.set("cornerRadius", cornerRadius || 0);
-              // Спроба примусово відновити форму через тулбарну функцію, якщо вона доступна
               const mmFromPx = (px) => Math.round((px * 25.4) / 72);
               const toolbarPayload = {
                 currentShapeType: shapeType || "rectangle",
@@ -344,23 +621,21 @@ export const useExcelImport = () => {
                   height: mmFromPx(canvasHeight),
                   cornerRadius: cornerRadius || 0,
                 },
-                globalColors: {
-                  backgroundColor,
-                  backgroundType: "solid",
-                },
+                globalColors: { ...combinedGlobalColors },
+                hasBorder: borderEnabled,
+                thickness: borderThicknessMm,
               };
+
               if (
                 typeof window !== "undefined" &&
                 typeof window.forceRestoreCanvasShape === "function"
               ) {
-                // Невелика затримка, щоб застосовані розміри/фон устаканилися
                 setTimeout(() => {
                   try {
                     window.forceRestoreCanvasShape(toolbarPayload);
                   } catch (e) {
                     console.warn("forceRestoreCanvasShape failed", e);
                   }
-                  // І одразу синхронізуємо інпуты тулбара з фактичними значеннями canvas
                   try {
                     if (
                       typeof window.syncToolbarSizeFromCanvas === "function"
@@ -368,6 +643,17 @@ export const useExcelImport = () => {
                       window.syncToolbarSizeFromCanvas();
                     }
                   } catch {}
+                  if (typeof window.recreateBorder === "function") {
+                    try {
+                      window.recreateBorder({
+                        hasBorder: borderEnabled,
+                        thickness: borderThicknessMm,
+                        color: borderColor,
+                      });
+                    } catch (borderErr) {
+                      console.warn("recreateBorder failed", borderErr);
+                    }
+                  }
                 }, 50);
               }
             }
@@ -378,7 +664,6 @@ export const useExcelImport = () => {
             );
           }
 
-          // Відновлюємо об'єкти
           const objectsData = jsonData.filter(
             (row) =>
               row.property &&
@@ -390,30 +675,24 @@ export const useExcelImport = () => {
           console.log("Objects to restore:", objectsData.length); // Для діагностики
 
           let restoredCount = 0;
-
-          // Допоміжна функція для фільтрації дублюючого фону (великі прямокутники того ж кольору, що й фон)
           const isBackgroundLikeRect = (o) => {
+            if (!o) return false;
             try {
-              if (!o || o.type !== "rect") return false;
-              // колір має співпадати з фоном (без урахування регістру)
               const fill = (o.fill || "").toString().trim().toLowerCase();
-              const bg = (backgroundColor || "")
+              const bg = (normalizedToolbarBgColor || "#ffffff")
                 .toString()
                 .trim()
                 .toLowerCase();
               if (!fill || !bg || fill !== bg) return false;
 
-              // ефективні розміри з урахуванням scale
               const effW = (o.width || 0) * (o.scaleX || 1);
               const effH = (o.height || 0) * (o.scaleY || 1);
-              // покриття >= 95% полотна
               const coverW = effW >= canvasWidth * 0.95;
               const coverH = effH >= canvasHeight * 0.95;
               if (!(coverW && coverH)) return false;
 
-              // позиція близько до (0,0) з невеликим відступом
               const near = (v) =>
-                Math.abs(v || 0) <= Math.max(canvasWidth, canvasHeight) * 0.02; // 2%
+                Math.abs(v || 0) <= Math.max(canvasWidth, canvasHeight) * 0.02;
               if (!near(o.left) || !near(o.top)) return false;
 
               return true;

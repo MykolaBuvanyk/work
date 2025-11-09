@@ -108,7 +108,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
 
     // Enforce minimum 30mm width (maintain aspect ratio)
     try {
-  const PX_PER_MM = 72 / 25.4;
+      const PX_PER_MM = 72 / 25.4;
       const minPx = 30 * PX_PER_MM;
       const curWidth =
         typeof obj.getScaledWidth === "function"
@@ -150,6 +150,8 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         barCodeText: formData.text,
         barCodeType: formData.codeType,
         suppressBarText: true,
+        fill: globalColors?.textColor || "#000000",
+        barCodeColor: globalColors?.textColor || "#000000",
       });
       canvas.add(obj);
       // Стабілізуємо координати та активуємо перед відмальовкою
@@ -213,6 +215,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         isBarCode: true,
         barCodeText: target.barCodeText,
         barCodeType: target.barCodeType,
+        fill: target.barCodeColor || globalColors?.textColor || "#000000",
+        barCodeColor:
+          target.barCodeColor || globalColors?.textColor || "#000000",
       });
       canvas.add(clone);
       try {
@@ -271,7 +276,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       const t = e.target;
       if (!t || !t.isBarCode) return;
       try {
-  const PX_PER_MM = 72 / 25.4;
+        const PX_PER_MM = 72 / 25.4;
         const minPx = 30 * PX_PER_MM;
         const w = t.getScaledWidth();
         if (w < minPx && w > 0) {

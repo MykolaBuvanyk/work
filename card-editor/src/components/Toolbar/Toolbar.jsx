@@ -1028,9 +1028,42 @@ const Toolbar = () => {
 
     window.forceRestoreCanvasShape = forceRestoreCanvasShape;
 
+    // Додатково: API для синхронізації інпутів тулбара з фактичними значеннями canvas
+    const syncToolbarSizeFromCanvas = () => {
+      try {
+        if (!canvas) return;
+        const pxToMmLocal = (px) => Number(((Number(px) || 0) * 25.4) / 72);
+        const wPx =
+          typeof canvas.getWidth === "function"
+            ? canvas.getWidth()
+            : canvas.width || 0;
+        const hPx =
+          typeof canvas.getHeight === "function"
+            ? canvas.getHeight()
+            : canvas.height || 0;
+        const crMm = Number(canvas.get?.("cornerRadius")) || 0;
+        const wMm = Math.round(pxToMmLocal(wPx) * 10) / 10;
+        const hMm = Math.round(pxToMmLocal(hPx) * 10) / 10;
+        // Не змінюємо форму, лише відображаємо актуальні розміри/радіус у UI
+        setSizeValues((prev) => ({
+          ...prev,
+          width: wMm,
+          height: hMm,
+          cornerRadius: crMm,
+        }));
+      } catch (e) {
+        console.warn("syncToolbarSizeFromCanvas failed", e);
+      }
+    };
+
+    window.syncToolbarSizeFromCanvas = syncToolbarSizeFromCanvas;
+
     return () => {
       if (window.forceRestoreCanvasShape === forceRestoreCanvasShape) {
         delete window.forceRestoreCanvasShape;
+      }
+      if (window.syncToolbarSizeFromCanvas === syncToolbarSizeFromCanvas) {
+        delete window.syncToolbarSizeFromCanvas;
       }
     };
   }, [canvas, setCurrentShapeType, setSizeValues]);
@@ -5044,6 +5077,7 @@ const Toolbar = () => {
         selectable: true,
         hasControls: true,
         hasBorders: true,
+        backgroundColor: "transparent",
       });
 
       // Замінюємо старий об'єкт новим
@@ -5107,6 +5141,8 @@ const Toolbar = () => {
         barCodeText: text,
         barCodeType: codeType,
         suppressBarText: true,
+        fill: foregroundColor,
+        barCodeColor: foregroundColor,
       });
 
       // Мінімальна ширина 30мм: коригуємо масштаб, якщо поточна менша

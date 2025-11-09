@@ -897,6 +897,38 @@ const ProjectCanvasesGrid = () => {
           }
         }
 
+        // НОВЕ: Відновлюємо фон-картинку, якщо збережено backgroundImage
+        try {
+          const bgImgData = canvasToLoad.backgroundImage;
+          if (bgImgData && bgImgData.src) {
+            console.log("Restoring canvas background image", bgImgData);
+            fabric.FabricImage.fromURL(bgImgData.src)
+              .then((img) => {
+                try {
+                  img.set({
+                    opacity: bgImgData.opacity ?? 1,
+                    originX: bgImgData.originX ?? "left",
+                    originY: bgImgData.originY ?? "top",
+                    scaleX: bgImgData.scaleX ?? 1,
+                    scaleY: bgImgData.scaleY ?? 1,
+                    left: bgImgData.left ?? 0,
+                    top: bgImgData.top ?? 0,
+                    angle: bgImgData.angle ?? 0,
+                  });
+                  canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+                  // Не змінюємо backgroundType, щоб текстури/solid могли співіснувати як резервний фон
+                } catch (e) {
+                  console.warn("Failed to apply background image:", e);
+                }
+              })
+              .catch((e) => {
+                console.warn("Failed to load background image:", e);
+              });
+          }
+        } catch (bgImgErr) {
+          console.warn("Background image restore error:", bgImgErr);
+        }
+
         try {
           restoreElementProperties(canvas);
           console.log("Element properties restored");
@@ -979,6 +1011,15 @@ const ProjectCanvasesGrid = () => {
             console.log("Force restoring canvas shape with toolbarState");
             window.forceRestoreCanvasShape(toolbarState);
           }
+
+          // Після відновлення форми — синхронізуємо інпуты тулбара з фактичними значеннями canvas
+          setTimeout(() => {
+            try {
+              if (typeof window.syncToolbarSizeFromCanvas === "function") {
+                window.syncToolbarSizeFromCanvas();
+              }
+            } catch {}
+          }, 120);
 
           window.dispatchEvent(
             new CustomEvent("canvas:loaded", {
@@ -1417,7 +1458,7 @@ const ProjectCanvasesGrid = () => {
       }
 
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-  const PX_PER_MM = 72 / 25.4;
+      const PX_PER_MM = 72 / 25.4;
       const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
       const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
@@ -1450,156 +1491,157 @@ const ProjectCanvasesGrid = () => {
   return (
     <>
       <div className={styles.wrapper}>
-      <div className={styles.header}>
-        <button
-          className={styles.navBtn}
-          disabled={page === 1}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-        >
-          &lt;&lt;
-        </button>
-        {ranges.map((r) => (
+        <div className={styles.header}>
           <button
-            key={r.page}
-            className={`${styles.rangesBtn} ${
-              page === r.page ? styles.rangesBtnActive : ""
-            }`}
-            onClick={() => setPage(r.page)}
+            className={styles.navBtn}
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-
-        <div className={styles.layoutControls}>
-          <button
-            type="button"
-            className={styles.layoutPlannerBtn}
-            onClick={() => setIsLayoutModalOpen(true)}
-          >
-            PDF
+            &lt;&lt;
           </button>
-        </div>
-            {r.start}–{r.end}
-          </button>
-        ))}
-        <button
-          className={styles.navBtn}
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-        >
-          &gt;&gt;
-        </button>
-      </div>
-
-      {current.length === 0 ? (
-        <div className={styles.empty}>No canvases in current project.</div>
-      ) : (
-        <div className={styles.grid}>
-          {current.map((c, index) => {
-            // Обчислюємо глобальний індекс елемента
-            const globalIndex = startIndex + index + 1;
-
-            // ВИПРАВЛЕННЯ: Використовуємо тільки збережені preview (SVG або PNG) з безпечною перевіркою
-            const hasSvgPreview =
-              c.previewSvg &&
-              typeof c.previewSvg === "string" &&
-              c.previewSvg.trim().length > 0;
-            const hasPngPreview =
-              c.preview &&
-              typeof c.preview === "string" &&
-              c.preview.trim().length > 0;
-
-            return (
-              <div
-                key={c.id}
-                className={`${styles.item} ${
-                  selectedId === c.id ? styles.selected : ""
-                }`}
-                onClick={() => openCanvas(c)}
-              >
-                {/* Нумерація слайду */}
-                <div
-                  className={styles.slideNumber}
-                  style={{
-                    backgroundColor:
-                      selectedId === c.id ? "#159DFF" : "#ffffff",
-                    color: selectedId === c.id ? "#ffffff" : "#000000",
-                  }}
+          {ranges.map((r) => (
+            <button
+              key={r.page}
+              className={`${styles.rangesBtn} ${
+                page === r.page ? styles.rangesBtnActive : ""
+              }`}
+              onClick={() => setPage(r.page)}
+            >
+              <div className={styles.layoutControls}>
+                <button
+                  type="button"
+                  className={styles.layoutPlannerBtn}
+                  onClick={() => setIsLayoutModalOpen(true)}
                 >
-                  {globalIndex}
-                </div>
-
-                <div className={styles.thumb}>
-                  {hasSvgPreview || hasPngPreview ? (
-                    hasSvgPreview ? (
-                      // ВИПРАВЛЕННЯ: Використовуємо URL encoding для SVG замість btoa
-                      <img
-                        src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-                          c.previewSvg
-                        )}`}
-                        alt="preview"
-                        onError={(e) => {
-                          // Fallback на PNG якщо SVG не завантажується
-                          if (hasPngPreview) {
-                            e.target.src = c.preview;
-                          }
-                        }}
-                      />
-                    ) : (
-                      // Fallback на PNG preview
-                      <img src={c.preview} alt="preview" />
-                    )
-                  ) : (
-                    <span>Preview</span>
-                  )}
-                </div>
-                <div className={styles.meta}>
-                  <span>
-                    {pxToMm(c.width)} × {pxToMm(c.height)} (mm)
-                  </span>
-                  <span>
-                    {c.copiesCount || c.toolbarState?.copiesCount || 1} pcs
-                  </span>
-                </div>
+                  PDF
+                </button>
               </div>
-            );
-          })}
-
-          {/* Кнопка створення нового полотна */}
-          <div
-            className={styles.newSignButton}
-            onClick={handleNewSign}
-            title="Create new canvas (sign)"
+              {r.start}–{r.end}
+            </button>
+          ))}
+          <button
+            className={styles.navBtn}
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           >
-            <div className={styles.newSignButtonContent}>
-              <svg
-                width="102"
-                height="102"
-                viewBox="0 0 102 102"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g style={{ mixBlendMode: "plus-darker" }}>
-                  <path
-                    d="M12.75 85V17C12.75 13.6185 14.0943 10.3764 16.4854 7.98535C18.8764 5.59426 22.1185 4.25 25.5 4.25H59.5L59.9192 4.27075C60.8924 4.36718 61.8073 4.79751 62.5049 5.49512L88.0049 30.9951C88.8019 31.7922 89.25 32.8728 89.25 34V85C89.25 88.3815 87.9057 91.6236 85.5146 94.0147C83.1236 96.4057 79.8815 97.75 76.5 97.75H25.5C22.1185 97.75 18.8764 96.4057 16.4854 94.0147C14.0943 91.6236 12.75 88.3815 12.75 85ZM21.25 85C21.25 86.1272 21.6981 87.2079 22.4951 88.0049C23.2921 88.8019 24.3728 89.25 25.5 89.25H76.5C77.6272 89.25 78.7078 88.8019 79.5049 88.0049C80.3019 87.2079 80.75 86.1272 80.75 85V35.7598L57.7402 12.75H25.5C24.3728 12.75 23.2921 13.1981 22.4951 13.9951C21.6981 14.7921 21.25 15.8728 21.25 17V85Z"
-                    fill="#138E32"
-                  />
-                  <path
-                    d="M55.25 8.5C55.25 6.15279 57.1528 4.25 59.5 4.25C61.8472 4.25 63.75 6.15279 63.75 8.5V29.75H85C87.3472 29.75 89.25 31.6528 89.25 34C89.25 36.3472 87.3472 38.25 85 38.25H59.5C57.1528 38.25 55.25 36.3472 55.25 34V8.5Z"
-                    fill="#138E32"
-                  />
-                  <path
-                    d="M46.75 76.5V51C46.75 48.6528 48.6528 46.75 51 46.75C53.3472 46.75 55.25 48.6528 55.25 51V76.5C55.25 78.8472 53.3472 80.75 51 80.75C48.6528 80.75 46.75 78.8472 46.75 76.5Z"
-                    fill="#138E32"
-                  />
-                  <path
-                    d="M63.75 59.5C66.0972 59.5 68 61.4028 68 63.75C68 66.0972 66.0972 68 63.75 68H38.25C35.9028 68 34 66.0972 34 63.75C34 61.4028 35.9028 59.5 38.25 59.5H63.75Z"
-                    fill="#138E32"
-                  />
-                </g>
-              </svg>
-            </div>
-            <div className={styles.newSignButtonLabel}>Create the new sign</div>
-          </div>
+            &gt;&gt;
+          </button>
         </div>
-      )}
+
+        {current.length === 0 ? (
+          <div className={styles.empty}>No canvases in current project.</div>
+        ) : (
+          <div className={styles.grid}>
+            {current.map((c, index) => {
+              // Обчислюємо глобальний індекс елемента
+              const globalIndex = startIndex + index + 1;
+
+              // ВИПРАВЛЕННЯ: Використовуємо тільки збережені preview (SVG або PNG) з безпечною перевіркою
+              const hasSvgPreview =
+                c.previewSvg &&
+                typeof c.previewSvg === "string" &&
+                c.previewSvg.trim().length > 0;
+              const hasPngPreview =
+                c.preview &&
+                typeof c.preview === "string" &&
+                c.preview.trim().length > 0;
+
+              return (
+                <div
+                  key={c.id}
+                  className={`${styles.item} ${
+                    selectedId === c.id ? styles.selected : ""
+                  }`}
+                  onClick={() => openCanvas(c)}
+                >
+                  {/* Нумерація слайду */}
+                  <div
+                    className={styles.slideNumber}
+                    style={{
+                      backgroundColor:
+                        selectedId === c.id ? "#159DFF" : "#ffffff",
+                      color: selectedId === c.id ? "#ffffff" : "#000000",
+                    }}
+                  >
+                    {globalIndex}
+                  </div>
+
+                  <div className={styles.thumb}>
+                    {hasSvgPreview || hasPngPreview ? (
+                      hasSvgPreview ? (
+                        // ВИПРАВЛЕННЯ: Використовуємо URL encoding для SVG замість btoa
+                        <img
+                          src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                            c.previewSvg
+                          )}`}
+                          alt="preview"
+                          onError={(e) => {
+                            // Fallback на PNG якщо SVG не завантажується
+                            if (hasPngPreview) {
+                              e.target.src = c.preview;
+                            }
+                          }}
+                        />
+                      ) : (
+                        // Fallback на PNG preview
+                        <img src={c.preview} alt="preview" />
+                      )
+                    ) : (
+                      <span>Preview</span>
+                    )}
+                  </div>
+                  <div className={styles.meta}>
+                    <span>
+                      {pxToMm(c.width)} × {pxToMm(c.height)} (mm)
+                    </span>
+                    <span>
+                      {c.copiesCount || c.toolbarState?.copiesCount || 1} pcs
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Кнопка створення нового полотна */}
+            <div
+              className={styles.newSignButton}
+              onClick={handleNewSign}
+              title="Create new canvas (sign)"
+            >
+              <div className={styles.newSignButtonContent}>
+                <svg
+                  width="102"
+                  height="102"
+                  viewBox="0 0 102 102"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g style={{ mixBlendMode: "plus-darker" }}>
+                    <path
+                      d="M12.75 85V17C12.75 13.6185 14.0943 10.3764 16.4854 7.98535C18.8764 5.59426 22.1185 4.25 25.5 4.25H59.5L59.9192 4.27075C60.8924 4.36718 61.8073 4.79751 62.5049 5.49512L88.0049 30.9951C88.8019 31.7922 89.25 32.8728 89.25 34V85C89.25 88.3815 87.9057 91.6236 85.5146 94.0147C83.1236 96.4057 79.8815 97.75 76.5 97.75H25.5C22.1185 97.75 18.8764 96.4057 16.4854 94.0147C14.0943 91.6236 12.75 88.3815 12.75 85ZM21.25 85C21.25 86.1272 21.6981 87.2079 22.4951 88.0049C23.2921 88.8019 24.3728 89.25 25.5 89.25H76.5C77.6272 89.25 78.7078 88.8019 79.5049 88.0049C80.3019 87.2079 80.75 86.1272 80.75 85V35.7598L57.7402 12.75H25.5C24.3728 12.75 23.2921 13.1981 22.4951 13.9951C21.6981 14.7921 21.25 15.8728 21.25 17V85Z"
+                      fill="#138E32"
+                    />
+                    <path
+                      d="M55.25 8.5C55.25 6.15279 57.1528 4.25 59.5 4.25C61.8472 4.25 63.75 6.15279 63.75 8.5V29.75H85C87.3472 29.75 89.25 31.6528 89.25 34C89.25 36.3472 87.3472 38.25 85 38.25H59.5C57.1528 38.25 55.25 36.3472 55.25 34V8.5Z"
+                      fill="#138E32"
+                    />
+                    <path
+                      d="M46.75 76.5V51C46.75 48.6528 48.6528 46.75 51 46.75C53.3472 46.75 55.25 48.6528 55.25 51V76.5C55.25 78.8472 53.3472 80.75 51 80.75C48.6528 80.75 46.75 78.8472 46.75 76.5Z"
+                      fill="#138E32"
+                    />
+                    <path
+                      d="M63.75 59.5C66.0972 59.5 68 61.4028 68 63.75C68 66.0972 66.0972 68 63.75 68H38.25C35.9028 68 34 66.0972 34 63.75C34 61.4028 35.9028 59.5 38.25 59.5H63.75Z"
+                      fill="#138E32"
+                    />
+                  </g>
+                </svg>
+              </div>
+              <div className={styles.newSignButtonLabel}>
+                Create the new sign
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <LayoutPlannerModal

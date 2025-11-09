@@ -434,6 +434,16 @@ export function exportCanvas(canvas, toolbarState = {}) {
       "createdBy",
       "elementVersion",
       "toolbarSnapshot",
+
+      // THEME FOLLOW PROPS (to keep dynamic coloring after reload)
+      "useThemeColor",
+      "followThemeStroke",
+      "initialFillColor",
+      "initialStrokeColor",
+
+      // Source flags (helpful for restore heuristics)
+      "fromIconMenu",
+      "fromShapeTab",
     ];
 
     let json;
@@ -497,6 +507,83 @@ export function exportCanvas(canvas, toolbarState = {}) {
     };
 
     json = cleanObject(json);
+
+    // НОВЕ: Вбудовуємо надійні джерела для image-об'єктів, щоб виживали після перезавантаження
+    try {
+      if (json && Array.isArray(json.objects)) {
+        const liveObjects =
+          typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
+        json.objects = json.objects.map((obj, idx) => {
+          try {
+            if (obj && obj.type === "image") {
+              // Пошук відповідного live-об'єкта за індексом як основний варіант
+              const live =
+                liveObjects[idx] && liveObjects[idx].type === "image"
+                  ? liveObjects[idx]
+                  : liveObjects.find(
+                      (o) =>
+                        o.type === "image" &&
+                        (o.id && obj.id ? o.id === obj.id : true)
+                    ) || null;
+              const element =
+                live &&
+                (live._originalElement || live._element || live.getElement?.());
+              const origSrc =
+                (live &&
+                  (live.getSrc?.() || live.src || (element && element.src))) ||
+                obj.src;
+
+              // Якщо src відсутній або це тимчасовий blob:, пробуємо вбудувати dataURL
+              const needsEmbed =
+                !obj.src ||
+                (typeof obj.src === "string" && obj.src.startsWith("blob:"));
+              if (
+                element &&
+                (needsEmbed ||
+                  (typeof origSrc === "string" && origSrc.startsWith("blob:")))
+              ) {
+                try {
+                  const off = document.createElement("canvas");
+                  const w =
+                    element.naturalWidth ||
+                    element.videoWidth ||
+                    element.width ||
+                    live?.width ||
+                    0;
+                  const h =
+                    element.naturalHeight ||
+                    element.videoHeight ||
+                    element.height ||
+                    live?.height ||
+                    0;
+                  if (w > 0 && h > 0) {
+                    off.width = w;
+                    off.height = h;
+                    const ctx = off.getContext("2d");
+                    ctx.drawImage(element, 0, 0, w, h);
+                    const dataUrl = off.toDataURL("image/png");
+                    if (dataUrl && dataUrl.length > 0) {
+                      obj.originalSrc = origSrc || obj.originalSrc || null;
+                      obj.src = dataUrl;
+                    }
+                  }
+                } catch (embedErr) {
+                  // Якщо неможливо вбудувати через CORS — зберігаємо хоч би originalSrc
+                  obj.originalSrc = origSrc || obj.originalSrc || null;
+                }
+              } else if (origSrc) {
+                // Переконуємося, що зберегли оригінальне посилання
+                obj.originalSrc = origSrc || obj.originalSrc || null;
+                obj.src = obj.src || origSrc;
+              }
+            }
+          } catch {}
+          return obj;
+        });
+      }
+    } catch (imgSanitizeErr) {
+      console.warn("Image embedding during export failed:", imgSanitizeErr);
+    }
 
     // ВИПРАВЛЕННЯ: Додаємо shapeType до JSON верхнього рівня
     if (json && !json.shapeType) {
@@ -624,15 +711,59 @@ export function exportCanvas(canvas, toolbarState = {}) {
       bgColor = "#FFFFFF";
     }
 
+    // НОВЕ: Зберігаємо фон-картинку canvas, якщо вона є
+    let backgroundImage = null;
+    try {
+      const bgImg = canvas.backgroundImage || canvas.get?.("backgroundImage");
+      if (bgImg) {
+        const element =
+          bgImg._originalElement || bgImg._element || bgImg.getElement?.();
+        let src = bgImg.getSrc?.() || (element && element.src) || null;
+        const needsEmbed =
+          !src || (typeof src === "string" && src.startsWith("blob:"));
+        if (element && needsEmbed) {
+          try {
+            const off = document.createElement("canvas");
+            const w =
+              element.naturalWidth || element.videoWidth || element.width || 0;
+            const h =
+              element.naturalHeight ||
+              element.videoHeight ||
+              element.height ||
+              0;
+            if (w > 0 && h > 0) {
+              off.width = w;
+              off.height = h;
+              const ctx = off.getContext("2d");
+              ctx.drawImage(element, 0, 0, w, h);
+              src = off.toDataURL("image/png");
+            }
+          } catch {}
+        }
+        backgroundImage = {
+          src: src || null,
+          opacity: bgImg.opacity ?? 1,
+          originX: bgImg.originX ?? "left",
+          originY: bgImg.originY ?? "top",
+          scaleX: bgImg.scaleX ?? 1,
+          scaleY: bgImg.scaleY ?? 1,
+          left: bgImg.left ?? 0,
+          top: bgImg.top ?? 0,
+          angle: bgImg.angle ?? 0,
+        };
+      }
+    } catch {}
+
     const canvasState = {
       json,
-  preview: previewPng, // Зберігаємо PNG як fallback
-  previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
+      preview: previewPng, // Зберігаємо PNG як fallback
+      previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
       width,
       height,
       // ВИПРАВЛЕННЯ: Покращене збереження canvas properties
       backgroundColor: bgColor,
       backgroundType: bgType,
+      backgroundImage, // НОВЕ: фон як зображення, якщо було встановлено
       canvasType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
       cornerRadius: canvas.get("cornerRadius") || 0,
 
@@ -783,6 +914,11 @@ export function restoreElementProperties(canvas, toolbarState = null) {
   if (!canvas || !canvas.getObjects) return;
 
   try {
+    const themeTextColor =
+      (toolbarState &&
+        toolbarState.globalColors &&
+        toolbarState.globalColors.textColor) ||
+      "#000000";
     const objects = canvas.getObjects();
 
     objects.forEach((obj) => {
@@ -854,6 +990,58 @@ export function restoreElementProperties(canvas, toolbarState = null) {
               : 2,
         });
       }
+
+      // Ensure themed icons/shapes continue to follow theme after reload
+      try {
+        // If object originated from icon menu or previously marked to follow theme,
+        // persist/propagate the flag (children of groups too)
+        let shouldFollowTheme =
+          obj.useThemeColor === true || obj.fromIconMenu === true;
+
+        // Heuristic: for legacy saved objects without flag — if stroke already matches theme
+        // but fill is plain white, treat it as theme-following icon
+        if (!shouldFollowTheme && !obj.isCutElement) {
+          const fillStr =
+            typeof obj.fill === "string" ? obj.fill.toLowerCase() : "";
+          const strokeStr =
+            typeof obj.stroke === "string" ? obj.stroke.toLowerCase() : "";
+          const themeStr = String(themeTextColor || "#000000").toLowerCase();
+          if (
+            (fillStr === "#ffffff" || fillStr === "white") &&
+            strokeStr === themeStr
+          ) {
+            shouldFollowTheme = true;
+          }
+        }
+        if (shouldFollowTheme) {
+          obj.useThemeColor = true;
+          if (typeof obj.set === "function") {
+            // Do not override explicit transparent fills, but ensure default white artifacts are recolored
+            const isTransparent =
+              obj.fill === "transparent" || obj.fill === "" || obj.fill == null;
+            if (!isTransparent) {
+              // Align fill to current theme color so next theme switch also works predictably
+              obj.set({ fill: themeTextColor });
+            }
+            obj.set({ stroke: themeTextColor });
+          }
+          if (obj.type === "group" && typeof obj.forEachObject === "function") {
+            obj.forEachObject((child) => {
+              try {
+                if (child && typeof child.set === "function") {
+                  child.set({ useThemeColor: true });
+                  const childTransparent =
+                    child.fill === "transparent" ||
+                    child.fill === "" ||
+                    child.fill == null;
+                  if (!childTransparent) child.set({ fill: themeTextColor });
+                  child.set({ stroke: themeTextColor });
+                }
+              } catch {}
+            });
+          }
+        }
+      } catch {}
 
       // Restore image properties
       if (obj.type === "image" && obj.originalSrc) {
@@ -1304,6 +1492,7 @@ export async function transferUnsavedSignsToProject(
       height: s.height,
       backgroundColor: s.backgroundColor,
       backgroundType: s.backgroundType,
+      backgroundImage: s.backgroundImage,
       canvasType: s.canvasType,
       cornerRadius: s.cornerRadius,
       toolbarState: s.toolbarState,

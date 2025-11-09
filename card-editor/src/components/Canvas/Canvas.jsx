@@ -6,6 +6,12 @@ import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useCanvasPropertiesTracker } from "../../hooks/useCanvasPropertiesTracker";
 import styles from "./Canvas.module.css";
+import {
+  buildQrSvgMarkup,
+  computeQrVectorData,
+  decorateQrGroup,
+  DEFAULT_QR_CELL_SIZE,
+} from "../../utils/qrFabricUtils";
 
 // Відступи в межах viewport
 const MARGIN = 40;
@@ -2385,6 +2391,7 @@ const Canvas = () => {
         for (const o of qrs) {
           const { left, top, scaleX, scaleY, angle, originX, originY } = o;
           let svgText;
+          let qrSizePx = 0;
           try {
             // Використовуємо qrcode-generator для повного контролю
             const qrGenerator = (await import("qrcode-generator")).default;
@@ -2392,30 +2399,19 @@ const Canvas = () => {
             qr.addData(o.qrText);
             qr.make();
 
-            const moduleCount = qr.getModuleCount();
-            const cellSize = 4;
-            const size = moduleCount * cellSize;
+            const cellSize = DEFAULT_QR_CELL_SIZE;
+            const { optimizedPath, displayPath, size } = computeQrVectorData(
+              qr,
+              cellSize
+            );
 
-            // Створюємо SVG без quiet zone та мікровідступів
-            let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
-
-            // Модулі QR коду - використовуємо один великий path
-            let pathData = "";
-            for (let row = 0; row < moduleCount; row++) {
-              for (let col = 0; col < moduleCount; col++) {
-                if (qr.isDark(row, col)) {
-                  const x = col * cellSize;
-                  const y = row * cellSize;
-                  pathData += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`;
-                }
-              }
-            }
-
-            if (pathData) {
-              svg += `<path d="${pathData}" fill="${textColor}" fill-rule="evenodd"/>`;
-            }
-            svg += "</svg>";
-            svgText = svg;
+            svgText = buildQrSvgMarkup({
+              size,
+              displayPath,
+              optimizedPath,
+              strokeColor: textColor,
+            });
+            qrSizePx = size;
           } catch {
             continue;
           }
@@ -2429,6 +2425,7 @@ const Canvas = () => {
                     res.objects || [],
                     res.options || {}
                   );
+            decorateQrGroup(obj);
             obj.set({
               left,
               top,
@@ -2442,6 +2439,7 @@ const Canvas = () => {
               hasBorders: true,
               isQRCode: true,
               qrText: o.qrText,
+              qrSize: qrSizePx || o.qrSize || obj.width || 0,
               backgroundColor: "transparent",
             });
             const arr = canvas.getObjects();

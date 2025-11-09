@@ -19,6 +19,12 @@ import UploadPreview from "../UploadPreview/UploadPreview";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import styles from "./Toolbar.module.css";
 import {
+  buildQrSvgMarkup,
+  computeQrVectorData,
+  decorateQrGroup,
+  DEFAULT_QR_CELL_SIZE,
+} from "../../utils/qrFabricUtils";
+import {
   // Shape palette icons
   Icon0,
   Icon1,
@@ -5025,31 +5031,18 @@ const Toolbar = () => {
       const qr = qrGenerator(0, "M");
       qr.addData(text);
       qr.make();
+      const cellSize = DEFAULT_QR_CELL_SIZE;
+      const { optimizedPath, displayPath, size } = computeQrVectorData(
+        qr,
+        cellSize
+      );
 
-      const moduleCount = qr.getModuleCount();
-      const cellSize = 4;
-      const size = moduleCount * cellSize;
-
-      // Створюємо SVG без quiet zone та мікровідступів
-      let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
-      // Прозорий фон: не додаємо background rect
-
-      // Модулі QR коду - використовуємо один великий path
-      let pathData = "";
-      for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-          if (qr.isDark(row, col)) {
-            const x = col * cellSize;
-            const y = row * cellSize;
-            pathData += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`;
-          }
-        }
-      }
-
-      if (pathData) {
-        svg += `<path d="${pathData}" fill="${foregroundColor}" fill-rule="evenodd"/>`;
-      }
-      svg += "</svg>";
+      const svg = buildQrSvgMarkup({
+        size,
+        displayPath,
+        optimizedPath,
+        strokeColor: foregroundColor,
+      });
 
       // Завантажуємо SVG в Fabric
       const result = await fabric.loadSVGFromString(svg);
@@ -5063,6 +5056,8 @@ const Toolbar = () => {
         );
       }
 
+      decorateQrGroup(newObj);
+
       // Зберігаємо властивості оригінального об'єкта
       newObj.set({
         left: qrObj.left,
@@ -5074,6 +5069,7 @@ const Toolbar = () => {
         originY: qrObj.originY,
         isQRCode: true,
         qrText: text,
+        qrSize: size || qrObj.qrSize || newObj.width || 0,
         selectable: true,
         hasControls: true,
         hasBorders: true,

@@ -51,6 +51,7 @@
   font-size: 20px;
   cursor: pointer;
   transition: transform 0.2s ease;
+  padding: 0;
 }
 
 .closeBtn:hover {
@@ -78,11 +79,12 @@
   border: 1px solid #cbd5f5;
   min-width: 180px;
   font-size: 14px;
+  color: white;
 }
 
 .orientationToggle {
   display: inline-flex;
-  background: #e2e8f0;
+  background: #3b3b3b;
   border-radius: 999px;
   padding: 4px;
   gap: 4px;
@@ -95,7 +97,7 @@
   border-radius: 999px;
   font-size: 13px;
   cursor: pointer;
-  color: #1e293b;
+  color: white;
   transition: background 0.2s ease, color 0.2s ease;
 }
 

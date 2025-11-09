@@ -244,11 +244,25 @@ export const useFabricCanvas = () => {
           typeof window !== "undefined" &&
           typeof window.restoreToolbarState === "function"
         ) {
+          // 1) Відновлюємо стан тулбара
           scheduleFrame(() => {
             try {
               window.restoreToolbarState(canvasLoadedPayload.toolbarState);
             } catch (restoreError) {
               console.warn("Failed to restore toolbar state", restoreError);
+            }
+          });
+          // 2) Примусово відновлюємо форму полотна згідно збереженого shapeType/розмірів
+          // Робимо це наступним кадром, щоб updateSize зміг перебудувати clipPath/бордер коректно
+          scheduleFrame(() => {
+            try {
+              if (typeof window.forceRestoreCanvasShape === "function") {
+                window.forceRestoreCanvasShape(
+                  canvasLoadedPayload.toolbarState
+                );
+              }
+            } catch (shapeErr) {
+              console.warn("Failed to force restore canvas shape", shapeErr);
             }
           });
         } else {

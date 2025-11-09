@@ -212,6 +212,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         isQRCode: true,
         qrText: qrData,
         qrSize: generatedSize || obj.width || 0,
+        backgroundColor: "transparent",
       });
       // Мінімальний розмір QR 10x10 мм; стандартний при створенні — 20x20 мм
       const PX_PER_MM = 72 / 25.4;
@@ -294,7 +295,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
   // Глобально: забороняємо зменшувати QR менше 10мм під час масштабування
   useEffect(() => {
     if (!canvas) return;
-  const PX_PER_MM = 72 / 25.4;
+    const PX_PER_MM = 72 / 25.4;
     const minPx = 10 * PX_PER_MM;
     const handler = (e) => {
       const t = e?.target;

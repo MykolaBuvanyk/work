@@ -139,7 +139,7 @@ const TopToolbar = ({ className }) => {
       // Створюємо нове полотно за замовчуванням
       try {
         // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-  const PX_PER_MM = 72 / 25.4;
+        const PX_PER_MM = 72 / 25.4;
         const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
         const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
@@ -382,6 +382,31 @@ const TopToolbar = ({ className }) => {
                 </defs>
               </svg>
               Import via Excel
+            </li>
+            <li className={styles.toolbarItem} onClick={exportToExcel}>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 3V15M12 15L8 11M12 15L16 11"
+                  stroke="#009951"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17"
+                  stroke="#009951"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Export to Excel
             </li>
             <li className={styles.toolbarItem}>
               <svg

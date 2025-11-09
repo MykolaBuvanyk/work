@@ -2355,7 +2355,11 @@ const Canvas = () => {
   useEffect(() => {
     if (!canvas) return;
     const textColor = globalColors?.textColor || "#000000";
-    const bgColor = globalColors?.backgroundColor || "#FFFFFF";
+    const backgroundType = globalColors?.backgroundType || "solid";
+    const barcodeBackground =
+      backgroundType === "texture"
+        ? "transparent"
+        : globalColors?.backgroundColor || "#FFFFFF";
     const objs = canvas.getObjects?.() || [];
     // Перефарбовуємо усі об'єкти, що позначені як залежні від кольору теми
     try {
@@ -2436,6 +2440,7 @@ const Canvas = () => {
               isQRCode: true,
               qrText: o.qrText,
               qrSize: qrSizePx || o.qrSize || obj.width || 0,
+              backgroundColor: "transparent",
             });
             const arr = canvas.getObjects();
             const idx = arr.indexOf(o);
@@ -2481,7 +2486,7 @@ const Canvas = () => {
               fontSize: 14,
               textMargin: 5,
               margin: 0, // removed outer padding
-              background: bgColor,
+              background: barcodeBackground,
               lineColor: textColor,
             });
             const serializer = new XMLSerializer();
@@ -2508,6 +2513,8 @@ const Canvas = () => {
               isBarCode: true,
               barCodeText: o.barCodeText,
               barCodeType: o.barCodeType,
+              fill: textColor,
+              barCodeColor: textColor,
             });
             const arr = canvas.getObjects();
             const idx = arr.indexOf(o);
@@ -2544,7 +2551,12 @@ const Canvas = () => {
     return () => {
       disposed = true;
     };
-  }, [canvas, globalColors?.textColor, globalColors?.backgroundColor]);
+  }, [
+    canvas,
+    globalColors?.textColor,
+    globalColors?.backgroundColor,
+    globalColors?.backgroundType,
+  ]);
 
   const isLockShape = canvasShapeType === "lock";
   const scaleFactor = scaleRef.current || scale || 1;

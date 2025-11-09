@@ -4,6 +4,12 @@ import qrGenerator from "qrcode-generator";
 import * as fabric from "fabric";
 import styles from "./QRCodeGenerator.module.css";
 import { QrCode } from "../../assets/Icons";
+import {
+  buildQrSvgMarkup,
+  computeQrVectorData,
+  decorateQrGroup,
+  DEFAULT_QR_CELL_SIZE,
+} from "../../utils/qrFabricUtils";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
   // Закриття по клику вне модального окна
@@ -136,41 +142,26 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     const qrData = generateQRData();
     let svgText;
 
+    const cellSize = DEFAULT_QR_CELL_SIZE;
+    let generatedSize = 0;
     try {
-      // Використовуємо qrcode-generator для повного контролю
-      const qr = qrGenerator(0, "M"); // type 0 (auto), error correction M
+      const qr = qrGenerator(0, "M");
       qr.addData(qrData);
       qr.make();
 
-      const moduleCount = qr.getModuleCount();
-      const cellSize = 4; // розмір одного модуля в пікселях
-      const size = moduleCount * cellSize;
-
-      // Створюємо SVG без quiet zone та мікровідступів
-      let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
-
-      // Фон
       const fgColor = globalColors?.textColor || "#000000";
-      // Прозорий фон: не додаємо rect з фоном
+      const { optimizedPath, displayPath, size } = computeQrVectorData(
+        qr,
+        cellSize
+      );
 
-      // Модулі QR коду - використовуємо один великий path для всіх чорних квадратів
-      let pathData = "";
-      for (let row = 0; row < moduleCount; row++) {
-        for (let col = 0; col < moduleCount; col++) {
-          if (qr.isDark(row, col)) {
-            const x = col * cellSize;
-            const y = row * cellSize;
-            pathData += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`;
-          }
-        }
-      }
-
-      if (pathData) {
-        svg += `<path d="${pathData}" fill="${fgColor}" fill-rule="evenodd"/>`;
-      }
-
-      svg += "</svg>";
-      svgText = svg;
+      svgText = buildQrSvgMarkup({
+        size,
+        displayPath,
+        optimizedPath,
+        strokeColor: fgColor,
+      });
+      generatedSize = size;
     } catch (e) {
       console.error("Помилка створення QR:", e);
       if (!auto) alert("Не вдалося згенерувати QR-код");
@@ -198,6 +189,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           result.objects || [],
           result.options || {}
         );
+      decorateQrGroup(obj);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
       obj.set({
@@ -219,9 +211,10 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         hasBorders: true,
         isQRCode: true,
         qrText: qrData,
+        qrSize: generatedSize || obj.width || 0,
       });
       // Мінімальний розмір QR 10x10 мм; стандартний при створенні — 20x20 мм
-  const PX_PER_MM = 72 / 25.4;
+      const PX_PER_MM = 72 / 25.4;
       const minPx = 10 * PX_PER_MM;
       const defaultPx = 20 * PX_PER_MM;
       // Встановлюємо стандартний розмір 20мм при створенні
@@ -361,7 +354,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         top: target.top + 30,
         isQRCode: true,
         qrText: target.qrText,
+        qrSize: target.qrSize,
       });
+      decorateQrGroup(clone);
       canvas.add(clone);
       try {
         if (typeof clone.setCoords === "function") clone.setCoords();

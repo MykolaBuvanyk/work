@@ -15,6 +15,12 @@ const ORIENTATION_LABELS = {
   landscape: "Горизонтально",
 };
 
+const LAYOUT_OUTLINE_COLOR = "#0000FF";
+const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
+const TEXT_STROKE_COLOR = "#008181";
+const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
+const BLACK_STROKE_STYLE_PATTERN = /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
+
 const toMm = (px = 0) => (Number(px) || 0) / PX_PER_MM;
 
 const round1 = (value) => Math.round(Number(value) || 0);
@@ -46,6 +52,9 @@ const normalizeDesigns = (designs = []) =>
 
       const copies = extractCopies(design);
       const svgContent = design?.previewSvg || null;
+      
+      // Витягуємо strokeColor з toolbarState для відслідковування колірної теми
+      const themeStrokeColor = design?.toolbarState?.globalColors?.strokeColor || null;
 
       return {
         id: design.id ?? `design-${index}`,
@@ -57,6 +66,7 @@ const normalizeDesigns = (designs = []) =>
         copies,
         svg: svgContent,
         preview: design?.preview || null,
+        themeStrokeColor, // Додаємо інформацію про колір теми
       };
     })
     .filter(Boolean)
@@ -108,6 +118,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       copies: item.copies ?? 1,
       svg: item.svg || null,
       preview: item.preview || null,
+      themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
     };
 
     row.items.push(placement);
@@ -144,6 +155,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       copies: item.copies ?? 1,
       svg: item.svg || null,
       preview: item.preview || null,
+      themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
     };
 
     const row = {
@@ -187,6 +199,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
         copies: totalCopies,
         svg: item.svg || null,
         preview: item.preview || null,
+        themeStrokeColor: item.themeStrokeColor || null, // Зберігаємо колір теми
       });
     }
   });
@@ -285,7 +298,184 @@ const convertPercentagesToAbsolute = (node, totals) => {
   });
 };
 
-const buildPlacementPreview = (placement) => {
+const normalizeStrokeValue = (value) => {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim().toLowerCase();
+  if (trimmed.startsWith("rgb")) {
+    const numbers = trimmed
+      .replace(/rgba?\(/, "")
+      .replace(/\)/, "")
+      .split(",")
+      .map((part) => part.trim());
+    if (numbers.length >= 3) {
+      const [r, g, b, a = "1"] = numbers;
+      if (Number(r) === 0 && Number(g) === 0 && Number(b) === 0 && Number(a) !== 0) {
+        return "rgb(0,0,0)";
+      }
+    }
+  }
+  return trimmed;
+};
+
+const shouldRecolorStroke = (strokeValue) => {
+  const normalized = normalizeStrokeValue(strokeValue);
+  if (!normalized) return false;
+  return BLACK_STROKE_VALUES.has(normalized);
+};
+
+const normalizeColorValue = (color) => {
+  if (typeof color !== "string") return "";
+  const trimmed = color.trim().toLowerCase();
+  
+  // Нормалізуємо rgb/rgba формати
+  if (trimmed.startsWith("rgb")) {
+    const numbers = trimmed
+      .replace(/rgba?\(/, "")
+      .replace(/\)/, "")
+      .split(",")
+      .map((part) => part.trim());
+    
+    if (numbers.length >= 3) {
+      const [r, g, b] = numbers.map(n => parseInt(n));
+      // Конвертуємо в hex для порівняння
+      return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+    }
+  }
+  
+  // Для hex кольорів - нормалізуємо до 6 символів
+  if (trimmed.startsWith("#")) {
+    if (trimmed.length === 4) {
+      // Розширюємо короткий формат #RGB -> #RRGGBB
+      const [, r, g, b] = trimmed;
+      return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    return trimmed.slice(0, 7); // #RRGGBB
+  }
+  
+  return trimmed;
+};
+
+const colorsMatch = (color1, color2) => {
+  if (!color1 || !color2) return false;
+  const norm1 = normalizeColorValue(color1);
+  const norm2 = normalizeColorValue(color2);
+  return norm1 === norm2;
+};
+
+const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
+  if (!rootElement?.querySelectorAll || !themeStrokeColor) return;
+
+  const elements = rootElement.querySelectorAll("*");
+  elements.forEach((node) => {
+    // Перевіряємо stroke атрибут
+    const strokeAttr = node.getAttribute("stroke");
+    if (strokeAttr && colorsMatch(strokeAttr, themeStrokeColor)) {
+      // Замінюємо на бірюзовий колір
+      node.setAttribute("stroke", TEXT_STROKE_COLOR);
+      
+      // Видаляємо fill, залишаємо тільки контур
+      node.setAttribute("fill", "none");
+      
+      // Додаємо властивості для кращого відображення
+      if (!node.getAttribute("stroke-width")) {
+        node.setAttribute("stroke-width", "1");
+      }
+      node.setAttribute("stroke-linejoin", "round");
+      node.setAttribute("stroke-linecap", "round");
+    }
+    
+    // Перевіряємо fill атрибут
+    const fillAttr = node.getAttribute("fill");
+    if (fillAttr && colorsMatch(fillAttr, themeStrokeColor)) {
+      // Конвертуємо fill в stroke
+      node.setAttribute("stroke", TEXT_STROKE_COLOR);
+      node.setAttribute("fill", "none");
+      
+      if (!node.getAttribute("stroke-width")) {
+        node.setAttribute("stroke-width", "1");
+      }
+      node.setAttribute("stroke-linejoin", "round");
+      node.setAttribute("stroke-linecap", "round");
+    }
+    
+    // Перевіряємо style атрибут
+    const styleAttr = node.getAttribute("style");
+    if (styleAttr) {
+      let updated = styleAttr;
+      let hasThemeColor = false;
+      
+      // Шукаємо stroke або fill з кольором теми в style
+      const strokeMatch = styleAttr.match(/stroke\s*:\s*([^;]+)/i);
+      if (strokeMatch && colorsMatch(strokeMatch[1], themeStrokeColor)) {
+        updated = updated.replace(/stroke\s*:\s*[^;]+/gi, `stroke: ${TEXT_STROKE_COLOR}`);
+        hasThemeColor = true;
+      }
+      
+      const fillMatch = styleAttr.match(/fill\s*:\s*([^;]+)/i);
+      if (fillMatch && colorsMatch(fillMatch[1], themeStrokeColor)) {
+        updated = updated.replace(/fill\s*:\s*[^;]+/gi, `fill: none`);
+        if (!updated.includes("stroke:")) {
+          updated += `; stroke: ${TEXT_STROKE_COLOR}`;
+        }
+        hasThemeColor = true;
+      }
+      
+      if (hasThemeColor) {
+        if (!updated.includes("stroke-width:")) {
+          updated += `; stroke-width: 1`;
+        }
+        updated += `; stroke-linejoin: round; stroke-linecap: round`;
+        node.setAttribute("style", updated);
+      }
+    }
+  });
+};
+
+const recolorStrokeAttributes = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+
+  const elements = rootElement.querySelectorAll("*");
+  elements.forEach((node) => {
+    const strokeAttr = node.getAttribute("stroke");
+    if (strokeAttr && shouldRecolorStroke(strokeAttr)) {
+      node.setAttribute("stroke", OUTLINE_STROKE_COLOR);
+    }
+
+    const styleAttr = node.getAttribute("style");
+    if (styleAttr) {
+      const updated = styleAttr.replace(
+        BLACK_STROKE_STYLE_PATTERN,
+        `$1${OUTLINE_STROKE_COLOR}`
+      );
+      if (updated !== styleAttr) {
+        node.setAttribute("style", updated);
+      }
+    }
+  });
+};
+
+const convertTextToStrokeOnly = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+
+  const textElements = rootElement.querySelectorAll("text, tspan");
+  textElements.forEach((textNode) => {
+    // Зберігаємо оригінальний fill або встановлюємо чорний за замовчуванням
+    const currentFill = textNode.getAttribute("fill");
+    if (!currentFill || currentFill === "none") {
+      textNode.setAttribute("fill", "#000000");
+    }
+    
+    // Встановлюємо stroke (обводку) з кольором #008181
+    textNode.setAttribute("stroke", TEXT_STROKE_COLOR);
+    
+    // Встановлюємо ширину обводки
+    textNode.setAttribute("stroke-width", "1.5");
+    
+    // Додаємо додаткові властивості для кращого відображення
+    textNode.setAttribute("stroke-linejoin", "round");
+    textNode.setAttribute("stroke-linecap", "round");
+  });
+};const buildPlacementPreview = (placement) => {
   const { svg, preview } = placement || {};
 
   if (svg && typeof window !== "undefined") {
@@ -354,16 +544,32 @@ const buildPlacementPreview = (placement) => {
         .filter((value) => Number.isFinite(value));
 
       if (viewBoxParts && viewBoxParts.length === 4) {
-        const [, , viewBoxWidth, viewBoxHeight] = viewBoxParts;
+        const [, , vbWidth, vbHeight] = viewBoxParts;
         convertPercentagesToAbsolute(exportElement, {
-          width: viewBoxWidth,
-          height: viewBoxHeight,
+          width: vbWidth,
+          height: vbHeight,
         });
       }
+
+      // Конвертуємо елементи з кольором теми в бірюзовий stroke
+      if (placement.themeStrokeColor) {
+        convertThemeColorElementsToStroke(exportElement, placement.themeStrokeColor);
+      }
+      
+      recolorStrokeAttributes(exportElement);
+      convertTextToStrokeOnly(exportElement);
 
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
+      
+      // Конвертуємо елементи з кольором теми для preview також
+      if (placement.themeStrokeColor) {
+        convertThemeColorElementsToStroke(previewElement, placement.themeStrokeColor);
+      }
+      
+      recolorStrokeAttributes(previewElement);
+      convertTextToStrokeOnly(previewElement);
 
       const serializer = new XMLSerializer();
       const exportMarkup = serializer.serializeToString(exportElement);

@@ -1,3 +1,5 @@
+import { decorateQrGroup } from "./qrFabricUtils";
+
 // Lightweight IndexedDB storage for projects and their canvases (JSON + preview)
 // Store: projects (keyPath: id)
 
@@ -413,6 +415,9 @@ export function exportCanvas(canvas, toolbarState = {}) {
       // Exclusion properties
       "excludeFromExport",
 
+  // QR internal preview stroke state
+  "qrExportStrokeWidth",
+
       // Custom hole properties
       "holeType",
       "holeDiameter",
@@ -794,6 +799,7 @@ export function restoreElementProperties(canvas, toolbarState = null) {
           qrText: obj.qrText,
           qrSize: obj.qrSize || 100,
         });
+        decorateQrGroup(obj);
       }
 
       // Restore Barcode functionality

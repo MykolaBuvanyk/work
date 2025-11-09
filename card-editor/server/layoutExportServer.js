@@ -8,6 +8,7 @@ const DEFAULT_PORT = Number(process.env.LAYOUT_EXPORT_PORT || 4177);
 const ALLOWED_ORIGINS = process.env.LAYOUT_EXPORT_ORIGINS
   ? process.env.LAYOUT_EXPORT_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
   : null;
+const OUTLINE_STROKE_COLOR = "#0000FF";
 
 const app = express();
 
@@ -46,7 +47,7 @@ const buildFallbackSvgMarkup = (placement, message) => {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
-  <rect x="${inset}" y="${inset}" width="${Math.max(width - inset * 2, 0)}" height="${Math.max(height - inset * 2, 0)}" fill="none" stroke="#c12d2d" stroke-width="${Math.min(inset * 2, 1)}" />
+  <rect x="${inset}" y="${inset}" width="${Math.max(width - inset * 2, 0)}" height="${Math.max(height - inset * 2, 0)}" fill="none" stroke="${OUTLINE_STROKE_COLOR}" stroke-width="${Math.min(inset * 2, 1)}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />
   <text x="${inset * 2}" y="${textY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#404040">${label}</text>
 </svg>`;
 };
@@ -102,6 +103,15 @@ app.post("/api/layout-pdf", async (req, res) => {
 
         if (placement?.svgMarkup) {
           try {
+            // Логування для діагностики
+            if (placement.svgMarkup.includes('<text')) {
+              console.log(`SVG містить текст для ${placement?.id || placementIndex}`);
+              const textMatch = placement.svgMarkup.match(/<text[^>]*>/);
+              if (textMatch) {
+                console.log('Приклад тегу text:', textMatch[0]);
+              }
+            }
+            
             svgToPdf(doc, placement.svgMarkup, xPt, yTopPt, {
               assumePt: false,
               width: widthPt,
@@ -133,7 +143,7 @@ app.post("/api/layout-pdf", async (req, res) => {
         const yBottomPt = pageHeightPt - mmToPoints((placement?.y || 0) + (placement?.height || 0));
         doc.save();
         doc.lineWidth(1);
-        doc.strokeColor("#c12d2d");
+        doc.strokeColor(OUTLINE_STROKE_COLOR);
         doc.rect(xPt, yBottomPt, widthPt, heightPt).stroke();
         doc.restore();
       });

@@ -29,8 +29,9 @@
     "qrcode-generator": "^2.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "svg-to-pdfkit": "^0.1.8",
-    "svg2pdf.js": "^2.6.0",
+  "svg-to-pdfkit": "^0.1.8",
+  "svg2pdf.js": "^2.6.0",
+  "@xmldom/xmldom": "^0.8.10",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

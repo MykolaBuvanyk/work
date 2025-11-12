@@ -10,7 +10,9 @@ import fontkitModule from "fontkit";
 const MM_TO_PT = 72 / 25.4;
 const DEFAULT_PORT = Number(process.env.LAYOUT_EXPORT_PORT || 4177);
 const ALLOWED_ORIGINS = process.env.LAYOUT_EXPORT_ORIGINS
-  ? process.env.LAYOUT_EXPORT_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
+  ? process.env.LAYOUT_EXPORT_ORIGINS.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
   : null;
 const OUTLINE_STROKE_COLOR = "#0000FF";
 const TEXT_OUTLINE_COLOR = "#008181";
@@ -21,79 +23,286 @@ const __dirname = path.dirname(__filename);
 const FONT_DIR = path.resolve(__dirname, "../src/assets/fonts");
 
 const FONT_DEFINITIONS = [
-  { id: "AbrilFatface-Regular", file: "AbrilFatface-Regular.ttf", aliases: ["abril fatface", "abril-fatface"] },
-  { id: "AlfaSlabOne-Regular", file: "AlfaSlabOne-Regular.ttf", aliases: ["alfa slab one", "alfa-slab-one"] },
-  { id: "ArialMT", file: "ArialMT.ttf", aliases: ["arial", "arialmt", "arial, sans-serif"] },
-  { id: "Arial-BoldMT", file: "Arial-BoldMT.ttf", aliases: ["arial bold", "arial-bold", "arial bold mt", "arial boldmt"] },
-  { id: "Arial-ItalicMT", file: "Arial-ItalicMT.ttf", aliases: ["arial italic", "arial-italic", "arial italic mt"] },
-  { id: "Arial-BoldItalicMT", file: "Arial-BoldItalicMT.ttf", aliases: ["arial bold italic", "arial-bold-italic", "arial bolditalic"] },
-  { id: "ArialNarrow", file: "ArialNarrow.ttf", aliases: ["arial narrow", "arial-narrow"] },
-  { id: "ArialNarrow-Bold", file: "ArialNarrow-Bold.ttf", aliases: ["arial narrow bold", "arial-narrow bold", "arial narrow-bold"] },
-  { id: "Audiowide-Regular", file: "Audiowide-Regular.ttf", aliases: ["audiowide"] },
+  {
+    id: "AbrilFatface-Regular",
+    file: "AbrilFatface-Regular.ttf",
+    aliases: ["abril fatface", "abril-fatface"],
+  },
+  {
+    id: "AlfaSlabOne-Regular",
+    file: "AlfaSlabOne-Regular.ttf",
+    aliases: ["alfa slab one", "alfa-slab-one"],
+  },
+  {
+    id: "ArialMT",
+    file: "ArialMT.ttf",
+    aliases: ["arial", "arialmt", "arial, sans-serif"],
+  },
+  {
+    id: "Arial-BoldMT",
+    file: "Arial-BoldMT.ttf",
+    aliases: ["arial bold", "arial-bold", "arial bold mt", "arial boldmt"],
+  },
+  {
+    id: "Arial-ItalicMT",
+    file: "Arial-ItalicMT.ttf",
+    aliases: ["arial italic", "arial-italic", "arial italic mt"],
+  },
+  {
+    id: "Arial-BoldItalicMT",
+    file: "Arial-BoldItalicMT.ttf",
+    aliases: ["arial bold italic", "arial-bold-italic", "arial bolditalic"],
+  },
+  {
+    id: "ArialNarrow",
+    file: "ArialNarrow.ttf",
+    aliases: ["arial narrow", "arial-narrow"],
+  },
+  {
+    id: "ArialNarrow-Bold",
+    file: "ArialNarrow-Bold.ttf",
+    aliases: ["arial narrow bold", "arial-narrow bold", "arial narrow-bold"],
+  },
+  {
+    id: "Audiowide-Regular",
+    file: "Audiowide-Regular.ttf",
+    aliases: ["audiowide"],
+  },
   { id: "Baloo-Regular", file: "Baloo-Regular.ttf", aliases: ["baloo"] },
-  { id: "Baloo2-Regular", file: "Baloo2-Regular.ttf", aliases: ["baloo 2", "baloo2"] },
-  { id: "Baloo2-Medium", file: "Baloo2-Medium.ttf", aliases: ["baloo 2 medium", "baloo2 medium", "baloo 2-medium"] },
-  { id: "Baloo2-Bold", file: "Baloo2-Bold.ttf", aliases: ["baloo 2 bold", "baloo2 bold", "baloo 2-bold"] },
-  { id: "BreeSerif-Regular", file: "BreeSerif-Regular.ttf", aliases: ["bree serif", "bree-serif"] },
-  { id: "ComicSansMS", file: "ComicSansMS.ttf", aliases: ["comic sans ms", "comic-sans-ms"] },
-  { id: "ComicSansMS-Bold", file: "ComicSansMS-Bold.ttf", aliases: ["comic sans ms bold", "comic-sans-ms bold"] },
-  { id: "ComicSansMS-BoldItalic", file: "ComicSansMS-BoldItalic.ttf", aliases: ["comic sans ms bold italic", "comic-sans-ms bold italic"] },
-  { id: "Courgette-Regular", file: "Courgette-Regular.ttf", aliases: ["courgette"] },
-  { id: "DancingScript-Bold", file: "DancingScript-Bold.ttf", aliases: ["dancing script", "dancing-script", "dancing script bold", "dancing-script bold"] },
-  { id: "Daniel-Bold", file: "Daniel-Bold.ttf", aliases: ["daniel", "daniel bold"] },
-  { id: "DIN1451Engschrift", file: "DIN1451Engschrift.ttf", aliases: ["din 1451 engschrift", "din1451 engschrift"] },
-  { id: "DIN1451Mittelschrift", file: "DIN1451Mittelschrift.ttf", aliases: ["din 1451 mittelschrift", "din1451 mittelschrift"] },
-  { id: "Exmouth", file: "exmouth_.ttf", aliases: ["exmouth", "exmouth script"] },
+  {
+    id: "Baloo2-Regular",
+    file: "Baloo2-Regular.ttf",
+    aliases: ["baloo 2", "baloo2"],
+  },
+  {
+    id: "Baloo2-Medium",
+    file: "Baloo2-Medium.ttf",
+    aliases: ["baloo 2 medium", "baloo2 medium", "baloo 2-medium"],
+  },
+  {
+    id: "Baloo2-Bold",
+    file: "Baloo2-Bold.ttf",
+    aliases: ["baloo 2 bold", "baloo2 bold", "baloo 2-bold"],
+  },
+  {
+    id: "BreeSerif-Regular",
+    file: "BreeSerif-Regular.ttf",
+    aliases: ["bree serif", "bree-serif"],
+  },
+  {
+    id: "ComicSansMS",
+    file: "ComicSansMS.ttf",
+    aliases: ["comic sans ms", "comic-sans-ms"],
+  },
+  {
+    id: "ComicSansMS-Bold",
+    file: "ComicSansMS-Bold.ttf",
+    aliases: ["comic sans ms bold", "comic-sans-ms bold"],
+  },
+  {
+    id: "ComicSansMS-BoldItalic",
+    file: "ComicSansMS-BoldItalic.ttf",
+    aliases: ["comic sans ms bold italic", "comic-sans-ms bold italic"],
+  },
+  {
+    id: "Courgette-Regular",
+    file: "Courgette-Regular.ttf",
+    aliases: ["courgette"],
+  },
+  {
+    id: "DancingScript-Bold",
+    file: "DancingScript-Bold.ttf",
+    aliases: [
+      "dancing script",
+      "dancing-script",
+      "dancing script bold",
+      "dancing-script bold",
+    ],
+  },
+  {
+    id: "Daniel-Bold",
+    file: "Daniel-Bold.ttf",
+    aliases: ["daniel", "daniel bold"],
+  },
+  {
+    id: "DIN1451Engschrift",
+    file: "DIN1451Engschrift.ttf",
+    aliases: ["din 1451 engschrift", "din1451 engschrift"],
+  },
+  {
+    id: "DIN1451Mittelschrift",
+    file: "DIN1451Mittelschrift.ttf",
+    aliases: ["din 1451 mittelschrift", "din1451 mittelschrift"],
+  },
+  {
+    id: "Exmouth",
+    file: "exmouth_.ttf",
+    aliases: ["exmouth", "exmouth script"],
+  },
   { id: "Exo2-Regular", file: "Exo2-Regular.ttf", aliases: ["exo 2", "exo2"] },
-  { id: "Exo2-Medium", file: "Exo2-Medium.ttf", aliases: ["exo 2 medium", "exo2 medium"] },
-  { id: "Exo2-Bold", file: "Exo2-Bold.ttf", aliases: ["exo 2 bold", "exo2 bold"] },
-  { id: "Exo2-MediumItalic", file: "Exo2-MediumItalic.ttf", aliases: ["exo 2 medium italic", "exo2 medium italic"] },
-  { id: "Exo2-BoldItalic", file: "Exo2-BoldItalic.ttf", aliases: ["exo 2 bold italic", "exo2 bold italic"] },
-  { id: "Gotham-Medium", file: "Gotham-Medium.ttf", aliases: ["gotham", "gotham medium"] },
+  {
+    id: "Exo2-Medium",
+    file: "Exo2-Medium.ttf",
+    aliases: ["exo 2 medium", "exo2 medium"],
+  },
+  {
+    id: "Exo2-Bold",
+    file: "Exo2-Bold.ttf",
+    aliases: ["exo 2 bold", "exo2 bold"],
+  },
+  {
+    id: "Exo2-MediumItalic",
+    file: "Exo2-MediumItalic.ttf",
+    aliases: ["exo 2 medium italic", "exo2 medium italic"],
+  },
+  {
+    id: "Exo2-BoldItalic",
+    file: "Exo2-BoldItalic.ttf",
+    aliases: ["exo 2 bold italic", "exo2 bold italic"],
+  },
+  {
+    id: "Gotham-Medium",
+    file: "Gotham-Medium.ttf",
+    aliases: ["gotham", "gotham medium"],
+  },
   { id: "Gotham-Bold", file: "Gotham-Bold.ttf", aliases: ["gotham bold"] },
-  { id: "Gotham-MediumItalic", file: "Gotham-MediumItalic.ttf", aliases: ["gotham medium italic"] },
-  { id: "Gotham-BoldItalic", file: "Gotham-BoldItalic.ttf", aliases: ["gotham bold italic"] },
-  { id: "GreatVibes-Regular", file: "GreatVibes-Regular.ttf", aliases: ["great vibes", "great-vibes"] },
+  {
+    id: "Gotham-MediumItalic",
+    file: "Gotham-MediumItalic.ttf",
+    aliases: ["gotham medium italic"],
+  },
+  {
+    id: "Gotham-BoldItalic",
+    file: "Gotham-BoldItalic.ttf",
+    aliases: ["gotham bold italic"],
+  },
+  {
+    id: "GreatVibes-Regular",
+    file: "GreatVibes-Regular.ttf",
+    aliases: ["great vibes", "great-vibes"],
+  },
   { id: "Handlee-Regular", file: "Handlee-Regular.ttf", aliases: ["handlee"] },
-  { id: "ImpactLTStd", file: "ImpactLTStd.ttf", aliases: ["impact", "impact lt std", "impactltstd"] },
+  {
+    id: "ImpactLTStd",
+    file: "ImpactLTStd.ttf",
+    aliases: ["impact", "impact lt std", "impactltstd"],
+  },
   { id: "Inter-Regular", file: "Inter-Regular.ttf", aliases: ["inter"] },
   { id: "Inter-Bold", file: "Inter-Bold.ttf", aliases: ["inter bold"] },
   { id: "Inter-Italic", file: "Inter-Italic.ttf", aliases: ["inter italic"] },
-  { id: "Inter-ExtraBoldItalic", file: "Inter-ExtraBoldItalic.ttf", aliases: ["inter extra bold italic", "inter extrabold italic"] },
+  {
+    id: "Inter-ExtraBoldItalic",
+    file: "Inter-ExtraBoldItalic.ttf",
+    aliases: ["inter extra bold italic", "inter extrabold italic"],
+  },
   { id: "Kalam-Regular", file: "Kalam-Regular.ttf", aliases: ["kalam"] },
   { id: "Kalam-Bold", file: "Kalam-Bold.ttf", aliases: ["kalam bold"] },
-  { id: "KeaniaOne-Regular", file: "KeaniaOne-Regular.ttf", aliases: ["keania one", "keania-one"] },
+  {
+    id: "KeaniaOne-Regular",
+    file: "KeaniaOne-Regular.ttf",
+    aliases: ["keania one", "keania-one"],
+  },
   { id: "Lobster-Regular", file: "Lobster-Regular.ttf", aliases: ["lobster"] },
-  { id: "Merriweather-Regular", file: "Merriweather-Regular.ttf", aliases: ["merriweather"] },
-  { id: "Merriweather-BoldItalic", file: "Merriweather-BoldItalic.ttf", aliases: ["merriweather bold italic", "merriweather bolditalic"] },
-  { id: "Merriweather-BlackItalic", file: "Merriweather-BlackItalic.ttf", aliases: ["merriweather black italic", "merriweather blackitalic"] },
+  {
+    id: "Merriweather-Regular",
+    file: "Merriweather-Regular.ttf",
+    aliases: ["merriweather"],
+  },
+  {
+    id: "Merriweather-BoldItalic",
+    file: "Merriweather-BoldItalic.ttf",
+    aliases: ["merriweather bold italic", "merriweather bolditalic"],
+  },
+  {
+    id: "Merriweather-BlackItalic",
+    file: "Merriweather-BlackItalic.ttf",
+    aliases: ["merriweather black italic", "merriweather blackitalic"],
+  },
   { id: "Oswald-Regular", file: "Oswald-Regular.ttf", aliases: ["oswald"] },
   { id: "Oswald-Bold", file: "Oswald-Bold.ttf", aliases: ["oswald bold"] },
-  { id: "Pacifico-Regular", file: "Pacifico-Regular.ttf", aliases: ["pacifico"] },
-  { id: "PatuaOne-Regular", file: "PatuaOne-Regular.ttf", aliases: ["patua one", "patua-one"] },
+  {
+    id: "Pacifico-Regular",
+    file: "Pacifico-Regular.ttf",
+    aliases: ["pacifico"],
+  },
+  {
+    id: "PatuaOne-Regular",
+    file: "PatuaOne-Regular.ttf",
+    aliases: ["patua one", "patua-one"],
+  },
   { id: "Roboto-Regular", file: "Roboto-Regular.ttf", aliases: ["roboto"] },
   { id: "Roboto-Bold", file: "Roboto-Bold.ttf", aliases: ["roboto bold"] },
-  { id: "Roboto-Italic", file: "Roboto-Italic.ttf", aliases: ["roboto italic"] },
-  { id: "Roboto-BoldItalic", file: "Roboto-BoldItalic.ttf", aliases: ["roboto bold italic", "roboto bolditalic"] },
+  {
+    id: "Roboto-Italic",
+    file: "Roboto-Italic.ttf",
+    aliases: ["roboto italic"],
+  },
+  {
+    id: "Roboto-BoldItalic",
+    file: "Roboto-BoldItalic.ttf",
+    aliases: ["roboto bold italic", "roboto bolditalic"],
+  },
   { id: "Rubik-Regular", file: "Rubik-Regular.ttf", aliases: ["rubik"] },
   { id: "Rubik-Bold", file: "Rubik-Bold.ttf", aliases: ["rubik bold"] },
-  { id: "Rubik-BoldItalic", file: "Rubik-BoldItalic.ttf", aliases: ["rubik bold italic", "rubik bolditalic"] },
-  { id: "Sacramento-Regular", file: "Sacramento-Regular.ttf", aliases: ["sacramento"] },
+  {
+    id: "Rubik-BoldItalic",
+    file: "Rubik-BoldItalic.ttf",
+    aliases: ["rubik bold italic", "rubik bolditalic"],
+  },
+  {
+    id: "Sacramento-Regular",
+    file: "Sacramento-Regular.ttf",
+    aliases: ["sacramento"],
+  },
   { id: "Satisfy-Regular", file: "Satisfy-Regular.ttf", aliases: ["satisfy"] },
-  { id: "StardosStencil-Regular", file: "StardosStencil-Regular.ttf", aliases: ["stardos stencil", "stardos-stencil"] },
-  { id: "StardosStencil-Bold", file: "StardosStencil-Bold.ttf", aliases: ["stardos stencil bold", "stardos-stencil bold"] },
+  {
+    id: "StardosStencil-Regular",
+    file: "StardosStencil-Regular.ttf",
+    aliases: ["stardos stencil", "stardos-stencil"],
+  },
+  {
+    id: "StardosStencil-Bold",
+    file: "StardosStencil-Bold.ttf",
+    aliases: ["stardos stencil bold", "stardos-stencil bold"],
+  },
   { id: "Teko-Regular", file: "Teko-Regular.ttf", aliases: ["teko"] },
-  { id: "Teko-SemiBold", file: "Teko-SemiBold.ttf", aliases: ["teko semibold", "teko semi bold"] },
+  {
+    id: "Teko-SemiBold",
+    file: "Teko-SemiBold.ttf",
+    aliases: ["teko semibold", "teko semi bold"],
+  },
   { id: "Teko-Bold", file: "Teko-Bold.ttf", aliases: ["teko bold"] },
-  { id: "TimesNewRomanMTStd", file: "TimesNewRomanMTStd.ttf", aliases: ["times", "times new roman", "timesnewroman"] },
-  { id: "TimesNewRomanMTStd-Bold", file: "TimesNewRomanMTStd-Bold.ttf", aliases: ["times new roman bold", "timesnewroman bold"] },
-  { id: "TimesNewRomanMTStd-Italic", file: "TimesNewRomanMTStd-Italic.ttf", aliases: ["times new roman italic", "timesnewroman italic"] },
-  { id: "TimesNewRomanMTStd-BoldIt", file: "TimesNewRomanMTStd-BoldIt.ttf", aliases: ["times new roman bold italic", "timesnewroman bold italic"] },
-  { id: "VT323-Regular", file: "VT323-Regular.ttf", aliases: ["vt323", "vt 323"] },
+  {
+    id: "TimesNewRomanMTStd",
+    file: "TimesNewRomanMTStd.ttf",
+    aliases: ["times", "times new roman", "timesnewroman"],
+  },
+  {
+    id: "TimesNewRomanMTStd-Bold",
+    file: "TimesNewRomanMTStd-Bold.ttf",
+    aliases: ["times new roman bold", "timesnewroman bold"],
+  },
+  {
+    id: "TimesNewRomanMTStd-Italic",
+    file: "TimesNewRomanMTStd-Italic.ttf",
+    aliases: ["times new roman italic", "timesnewroman italic"],
+  },
+  {
+    id: "TimesNewRomanMTStd-BoldIt",
+    file: "TimesNewRomanMTStd-BoldIt.ttf",
+    aliases: ["times new roman bold italic", "timesnewroman bold italic"],
+  },
+  {
+    id: "VT323-Regular",
+    file: "VT323-Regular.ttf",
+    aliases: ["vt323", "vt 323"],
+  },
 ];
 
 const fontkit = fontkitModule?.default || fontkitModule;
-const FONT_DEFINITION_MAP = new Map(FONT_DEFINITIONS.map((def) => [def.id, def]));
+const FONT_DEFINITION_MAP = new Map(
+  FONT_DEFINITIONS.map((def) => [def.id, def])
+);
 const FONTKIT_CACHE = new Map();
 
 const DEFAULT_FONT_ID = "ArialMT";
@@ -136,7 +345,10 @@ const getFontkitFont = (fontId) => {
     FONTKIT_CACHE.set(fontId, fontInstance);
     return fontInstance;
   } catch (error) {
-    console.warn(`Не вдалося завантажити шрифт ${fontId} через fontkit:`, error.message);
+    console.warn(
+      `Не вдалося завантажити шрифт ${fontId} через fontkit:`,
+      error.message
+    );
     FONTKIT_CACHE.set(fontId, null);
     return null;
   }
@@ -158,13 +370,19 @@ const fontSupportsCodePoint = (fontInstance, codePoint) => {
   return false;
 };
 
-const splitTextIntoFontRuns = (text = "", preferredFontId = DEFAULT_FONT_ID) => {
+const splitTextIntoFontRuns = (
+  text = "",
+  preferredFontId = DEFAULT_FONT_ID
+) => {
   if (!text) {
     return [];
   }
 
   const fallbackFontId = DEFAULT_FONT_ID;
-  const preferredFont = preferredFontId === fallbackFontId ? getFontkitFont(fallbackFontId) : getFontkitFont(preferredFontId);
+  const preferredFont =
+    preferredFontId === fallbackFontId
+      ? getFontkitFont(fallbackFontId)
+      : getFontkitFont(preferredFontId);
   const fallbackFont = getFontkitFont(fallbackFontId);
 
   const runs = [];
@@ -180,8 +398,12 @@ const splitTextIntoFontRuns = (text = "", preferredFontId = DEFAULT_FONT_ID) => 
 
   for (const char of text) {
     const codePoint = char.codePointAt(0);
-    const preferredSupports = preferredFont ? fontSupportsCodePoint(preferredFont, codePoint) : false;
-    const fallbackSupports = fallbackFont ? fontSupportsCodePoint(fallbackFont, codePoint) : false;
+    const preferredSupports = preferredFont
+      ? fontSupportsCodePoint(preferredFont, codePoint)
+      : false;
+    const fallbackSupports = fallbackFont
+      ? fontSupportsCodePoint(fallbackFont, codePoint)
+      : false;
 
     let targetFontId = preferredSupports ? preferredFontId : fallbackFontId;
 
@@ -225,7 +447,10 @@ const resolveFontId = (fontFamily, fontWeight = "", fontStyle = "") => {
   const normalizedFamily = normalizeFontFamily(fontFamily);
   const baseId = FONT_ALIAS_LOOKUP.get(normalizedFamily) || DEFAULT_FONT_ID;
 
-  const weight = typeof fontWeight === "string" ? fontWeight.toLowerCase() : String(fontWeight || "");
+  const weight =
+    typeof fontWeight === "string"
+      ? fontWeight.toLowerCase()
+      : String(fontWeight || "");
   const weightIsBold = weight.includes("bold") || Number(weight) >= 600;
   const style = (fontStyle || "").toLowerCase();
   const isItalic = style.includes("italic") || style.includes("oblique");
@@ -248,7 +473,9 @@ const decodeHtmlEntities = (input = "") =>
     .replace(/&quot;/gi, '"')
     .replace(/&apos;/gi, "'")
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    );
 
 const parseStyleStringValue = (styleAttr = "", property) => {
   if (!styleAttr) return null;
@@ -272,7 +499,11 @@ const parseNumericListValue = (value, fallback = 0) => {
   return fallback;
 };
 
-const extractSvgContentDimensions = (svgElement, fallbackWidth, fallbackHeight) => {
+const extractSvgContentDimensions = (
+  svgElement,
+  fallbackWidth,
+  fallbackHeight
+) => {
   let width = Number(fallbackWidth) || 0;
   let height = Number(fallbackHeight) || 0;
 
@@ -331,7 +562,14 @@ const parseTransformOperation = (operation) => {
   switch (type) {
     case "matrix": {
       if (params.length >= 6) {
-        return [params[0], params[1], params[2], params[3], params[4], params[5]];
+        return [
+          params[0],
+          params[1],
+          params[2],
+          params[3],
+          params[4],
+          params[5],
+        ];
       }
       break;
     }
@@ -355,7 +593,10 @@ const parseTransformOperation = (operation) => {
         const translateToOrigin = [1, 0, 0, 1, -cx, -cy];
         const rotation = [cos, sin, -sin, cos, 0, 0];
         const translateBack = [1, 0, 0, 1, cx, cy];
-        return multiplyMatrices(translateBack, multiplyMatrices(rotation, translateToOrigin));
+        return multiplyMatrices(
+          translateBack,
+          multiplyMatrices(rotation, translateToOrigin)
+        );
       }
       return [cos, sin, -sin, cos, 0, 0];
     }
@@ -451,8 +692,19 @@ const buildFallbackSvgMarkup = (placement, message) => {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
-  <rect x="${inset}" y="${inset}" width="${Math.max(width - inset * 2, 0)}" height="${Math.max(height - inset * 2, 0)}" fill="none" stroke="${OUTLINE_STROKE_COLOR}" stroke-width="${Math.min(inset * 2, 1)}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />
-  <text x="${inset * 2}" y="${textY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#404040">${label}</text>
+  <rect x="${inset}" y="${inset}" width="${Math.max(
+    width - inset * 2,
+    0
+  )}" height="${Math.max(
+    height - inset * 2,
+    0
+  )}" fill="none" stroke="${OUTLINE_STROKE_COLOR}" stroke-width="${Math.min(
+    inset * 2,
+    1
+  )}" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round" />
+  <text x="${
+    inset * 2
+  }" y="${textY}" font-family="Arial, sans-serif" font-size="${fontSize}" fill="#404040">${label}</text>
 </svg>`;
 };
 
@@ -461,10 +713,15 @@ app.post("/api/layout-pdf", async (req, res) => {
     const { sheets, sheetLabel = "sheet", timestamp } = req.body || {};
 
     if (!Array.isArray(sheets) || sheets.length === 0) {
-      return res.status(400).json({ error: "Очікуємо принаймні один аркуш для експорту." });
+      return res
+        .status(400)
+        .json({ error: "Очікуємо принаймні один аркуш для експорту." });
     }
 
-    const safeSheetLabel = String(sheetLabel || "sheet").replace(/[^a-z0-9-_]+/gi, "-");
+    const safeSheetLabel = String(sheetLabel || "sheet").replace(
+      /[^a-z0-9-_]+/gi,
+      "-"
+    );
     const fileNameParts = [safeSheetLabel || "sheet"];
     if (timestamp) {
       fileNameParts.push(String(timestamp).replace(/[^0-9-]+/g, ""));
@@ -483,8 +740,15 @@ app.post("/api/layout-pdf", async (req, res) => {
       const pageWidthPt = mmToPoints(sheet?.width);
       const pageHeightPt = mmToPoints(sheet?.height);
 
-      if (!Number.isFinite(pageWidthPt) || !Number.isFinite(pageHeightPt) || pageWidthPt <= 0 || pageHeightPt <= 0) {
-        console.warn(`Пропускаємо аркуш ${sheetIndex} через некоректні розміри.`);
+      if (
+        !Number.isFinite(pageWidthPt) ||
+        !Number.isFinite(pageHeightPt) ||
+        pageWidthPt <= 0 ||
+        pageHeightPt <= 0
+      ) {
+        console.warn(
+          `Пропускаємо аркуш ${sheetIndex} через некоректні розміри.`
+        );
         return;
       }
 
@@ -496,35 +760,49 @@ app.post("/api/layout-pdf", async (req, res) => {
         const xPt = mmToPoints(placement?.x);
         const yTopPt = mmToPoints(placement?.y || 0);
 
-        if (!Number.isFinite(widthPt) || !Number.isFinite(heightPt) || widthPt <= 0 || heightPt <= 0) {
-          console.warn(`Пропускаємо елемент ${placementIndex} на аркуші ${sheetIndex} через некоректні розміри.`);
+        if (
+          !Number.isFinite(widthPt) ||
+          !Number.isFinite(heightPt) ||
+          widthPt <= 0 ||
+          heightPt <= 0
+        ) {
+          console.warn(
+            `Пропускаємо елемент ${placementIndex} на аркуші ${sheetIndex} через некоректні розміри.`
+          );
           return;
         }
 
         if (!Number.isFinite(xPt) || !Number.isFinite(yTopPt)) {
-          console.warn(`Пропускаємо елемент ${placementIndex} на аркуші ${sheetIndex} через некоректні координати.`);
+          console.warn(
+            `Пропускаємо елемент ${placementIndex} на аркуші ${sheetIndex} через некоректні координати.`
+          );
           return;
         }
 
         if (placement?.svgMarkup) {
           try {
             const parser = new DOMParser();
-            const svgDocument = parser.parseFromString(placement.svgMarkup, "image/svg+xml");
+            const svgDocument = parser.parseFromString(
+              placement.svgMarkup,
+              "image/svg+xml"
+            );
             const svgElement = svgDocument.documentElement;
 
             if (!svgElement) {
               throw new Error("SVG markup не містить кореневого елемента");
             }
 
-            const { width: contentWidth, height: contentHeight } = extractSvgContentDimensions(
-              svgElement,
-              placement.sourceWidth || placement.width,
-              placement.sourceHeight || placement.height
-            );
+            const { width: contentWidth, height: contentHeight } =
+              extractSvgContentDimensions(
+                svgElement,
+                placement.sourceWidth || placement.width,
+                placement.sourceHeight || placement.height
+              );
 
             // Render background: clone SVG, remove text nodes, serialize
             const backgroundSvg = svgElement.cloneNode(true);
-            const backgroundTextNodes = backgroundSvg.getElementsByTagName("text");
+            const backgroundTextNodes =
+              backgroundSvg.getElementsByTagName("text");
             // HTMLCollection is live; remove iteratively
             while (backgroundTextNodes.length > 0) {
               const node = backgroundTextNodes[0];
@@ -532,7 +810,8 @@ app.post("/api/layout-pdf", async (req, res) => {
             }
 
             const serializer = new XMLSerializer();
-            const backgroundMarkup = serializer.serializeToString(backgroundSvg);
+            const backgroundMarkup =
+              serializer.serializeToString(backgroundSvg);
 
             if (backgroundMarkup) {
               try {
@@ -543,7 +822,10 @@ app.post("/api/layout-pdf", async (req, res) => {
                   preserveAspectRatio: "xMidYMid meet",
                 });
               } catch (backgroundError) {
-                console.warn("Не вдалося відрендерити фон SVG:", backgroundError.message);
+                console.warn(
+                  "Не вдалося відрендерити фон SVG:",
+                  backgroundError.message
+                );
               }
             }
 
@@ -556,11 +838,25 @@ app.post("/api/layout-pdf", async (req, res) => {
               const textNode = textNodes[idx];
               try {
                 const styleAttr = textNode.getAttribute("style") || "";
-                const fontFamilyAttr = textNode.getAttribute("font-family") || parseStyleStringValue(styleAttr, "font-family") || "";
-                const fontWeightAttr = textNode.getAttribute("font-weight") || parseStyleStringValue(styleAttr, "font-weight") || "";
-                const fontStyleAttr = textNode.getAttribute("font-style") || parseStyleStringValue(styleAttr, "font-style") || "";
-                const anchorAttr = textNode.getAttribute("text-anchor") || parseStyleStringValue(styleAttr, "text-anchor") || "start";
-                let fontSizeValue = textNode.getAttribute("font-size") || parseStyleStringValue(styleAttr, "font-size");
+                const fontFamilyAttr =
+                  textNode.getAttribute("font-family") ||
+                  parseStyleStringValue(styleAttr, "font-family") ||
+                  "";
+                const fontWeightAttr =
+                  textNode.getAttribute("font-weight") ||
+                  parseStyleStringValue(styleAttr, "font-weight") ||
+                  "";
+                const fontStyleAttr =
+                  textNode.getAttribute("font-style") ||
+                  parseStyleStringValue(styleAttr, "font-style") ||
+                  "";
+                const anchorAttr =
+                  textNode.getAttribute("text-anchor") ||
+                  parseStyleStringValue(styleAttr, "text-anchor") ||
+                  "start";
+                let fontSizeValue =
+                  textNode.getAttribute("font-size") ||
+                  parseStyleStringValue(styleAttr, "font-size");
 
                 let fontSize = parseFloat(fontSizeValue || "");
                 if (!Number.isFinite(fontSize)) {
@@ -573,10 +869,19 @@ app.post("/api/layout-pdf", async (req, res) => {
                 const baseY = parseNumericListValue(yAttr, 0);
 
                 const cumulativeMatrix = computeCumulativeMatrix(textNode);
-                const point = applyMatrixToPoint(cumulativeMatrix, baseX, baseY);
-                const { scaleX: matrixScaleX, scaleY: matrixScaleY } = extractScaleFromMatrix(cumulativeMatrix);
+                const point = applyMatrixToPoint(
+                  cumulativeMatrix,
+                  baseX,
+                  baseY
+                );
+                const { scaleX: matrixScaleX, scaleY: matrixScaleY } =
+                  extractScaleFromMatrix(cumulativeMatrix);
 
-                const fontId = resolveFontId(fontFamilyAttr, fontWeightAttr, fontStyleAttr);
+                const fontId = resolveFontId(
+                  fontFamilyAttr,
+                  fontWeightAttr,
+                  fontStyleAttr
+                );
 
                 let textContent = textNode.textContent || "";
                 textContent = decodeHtmlEntities(textContent.trim());
@@ -586,7 +891,8 @@ app.post("/api/layout-pdf", async (req, res) => {
                 const svgScaleY = heightPt / contentHeight;
                 const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
                 const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
-                const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+                const offsetYPt =
+                  yTopPt + (heightPt - contentHeight * svgScale) / 2;
                 const normalizedX = offsetXPt + point.x * svgScale;
                 const normalizedY = offsetYPt + point.y * svgScale;
 
@@ -596,7 +902,10 @@ app.post("/api/layout-pdf", async (req, res) => {
                 const fontScaleY = combinedScaleY || svgScale;
                 const averageScale = (fontScaleX + fontScaleY) / 2 || svgScale;
                 const scaledFontSize = fontSize * fontScaleY;
-                const strokeWidthPt = Math.max(TEXT_STROKE_WIDTH_PT * averageScale, 0.01);
+                const strokeWidthPt = Math.max(
+                  TEXT_STROKE_WIDTH_PT * averageScale,
+                  0.01
+                );
                 const anchorMode = (anchorAttr || "").trim().toLowerCase();
 
                 const fontRuns = splitTextIntoFontRuns(textContent, fontId);
@@ -611,7 +920,10 @@ app.post("/api/layout-pdf", async (req, res) => {
                   try {
                     doc.font(activeFontId);
                   } catch (fontError) {
-                    console.warn(`Шрифт ${activeFontId} недоступний, використаємо ${DEFAULT_FONT_ID}:`, fontError.message);
+                    console.warn(
+                      `Шрифт ${activeFontId} недоступний, використаємо ${DEFAULT_FONT_ID}:`,
+                      fontError.message
+                    );
                     activeFontId = DEFAULT_FONT_ID;
                     doc.font(DEFAULT_FONT_ID);
                   }
@@ -621,16 +933,39 @@ app.post("/api/layout-pdf", async (req, res) => {
                   return { ...run, fontId: activeFontId, width, lineHeight };
                 });
 
-                const textWidth = segmentMetrics.reduce((acc, segment) => acc + segment.width, 0);
-                const maxLineHeight = segmentMetrics.reduce((max, segment) => Math.max(max, segment.lineHeight), 0) || scaledFontSize;
+                const textWidth = segmentMetrics.reduce(
+                  (acc, segment) => acc + segment.width,
+                  0
+                );
+                const maxLineHeight =
+                  segmentMetrics.reduce(
+                    (max, segment) => Math.max(max, segment.lineHeight),
+                    0
+                  ) || scaledFontSize;
                 const halfLineHeight = maxLineHeight / 2;
 
                 console.log(
-                  `Text #${idx}: fontSize=${fontSize.toFixed(2)}, scaled=${scaledFontSize.toFixed(2)}, ` +
-                    `contentWidth=${contentWidth.toFixed(2)}, contentHeight=${contentHeight.toFixed(2)}, ` +
-                    `matrixScale=(${matrixScaleX.toFixed(3)}, ${matrixScaleY.toFixed(3)}), svgScale=${svgScale.toFixed(3)}, ` +
-                    `effectiveScale=(${fontScaleX.toFixed(3)}, ${fontScaleY.toFixed(3)}), point=(${point.x.toFixed(2)}, ${point.y.toFixed(2)}), ` +
-                    `anchor=${anchorMode || "(fallback-center)"}, runs=${segmentMetrics.map((run) => run.fontId).join(" -> ")}`
+                  `Text #${idx}: fontSize=${fontSize.toFixed(
+                    2
+                  )}, scaled=${scaledFontSize.toFixed(2)}, ` +
+                    `contentWidth=${contentWidth.toFixed(
+                      2
+                    )}, contentHeight=${contentHeight.toFixed(2)}, ` +
+                    `matrixScale=(${matrixScaleX.toFixed(
+                      3
+                    )}, ${matrixScaleY.toFixed(
+                      3
+                    )}), svgScale=${svgScale.toFixed(3)}, ` +
+                    `effectiveScale=(${fontScaleX.toFixed(
+                      3
+                    )}, ${fontScaleY.toFixed(3)}), point=(${point.x.toFixed(
+                      2
+                    )}, ${point.y.toFixed(2)}), ` +
+                    `anchor=${
+                      anchorMode || "(fallback-center)"
+                    }, runs=${segmentMetrics
+                      .map((run) => run.fontId)
+                      .join(" -> ")}`
                 );
 
                 let drawX = normalizedX;
@@ -681,17 +1016,28 @@ app.post("/api/layout-pdf", async (req, res) => {
 
                 doc.restore();
               } catch (textError) {
-                console.error("Не вдалося намалювати текстовий елемент:", textError.message);
+                console.error(
+                  "Не вдалося намалювати текстовий елемент:",
+                  textError.message
+                );
               }
             }
 
             return;
           } catch (error) {
-            console.error(`Не вдалося відрендерити SVG для ${placement?.id || placementIndex}`, error);
+            console.error(
+              `Не вдалося відрендерити SVG для ${
+                placement?.id || placementIndex
+              }`,
+              error
+            );
           }
         }
 
-        const fallbackMarkup = buildFallbackSvgMarkup(placement, placement?.svgMarkup ? "SVG недоступний" : "SVG відсутній");
+        const fallbackMarkup = buildFallbackSvgMarkup(
+          placement,
+          placement?.svgMarkup ? "SVG недоступний" : "SVG відсутній"
+        );
         if (fallbackMarkup) {
           try {
             svgToPdf(doc, fallbackMarkup, xPt, yTopPt, {
@@ -702,12 +1048,19 @@ app.post("/api/layout-pdf", async (req, res) => {
             });
             return;
           } catch (error) {
-            console.error(`Не вдалося відрендерити fallback SVG для ${placement?.id || placementIndex}`, error);
+            console.error(
+              `Не вдалося відрендерити fallback SVG для ${
+                placement?.id || placementIndex
+              }`,
+              error
+            );
           }
         }
 
         // Якщо fallback SVG теж не вдався, малюємо мінімальний прямокутник у класичній системі координат.
-        const yBottomPt = pageHeightPt - mmToPoints((placement?.y || 0) + (placement?.height || 0));
+        const yBottomPt =
+          pageHeightPt -
+          mmToPoints((placement?.y || 0) + (placement?.height || 0));
         doc.save();
         doc.lineWidth(1);
         doc.strokeColor(OUTLINE_STROKE_COLOR);

@@ -1,4 +1,5 @@
 import { decorateQrGroup } from "./qrFabricUtils";
+import { CUSTOM_FONT_FILES } from "../constants/fonts";
 
 // Lightweight IndexedDB storage for projects and their canvases (JSON + preview)
 // Store: projects (keyPath: id)
@@ -20,6 +21,218 @@ const DEFAULT_SIGN_SIZE_MM = {
   width: 120,
   height: 80,
 };
+
+const FONT_PUBLIC_PATH = "/fonts";
+const FONT_EXT_FORMAT_MAP = {
+  ttf: { mime: "font/ttf", format: "truetype" },
+  otf: { mime: "font/otf", format: "opentype" },
+  woff: { mime: "font/woff", format: "woff" },
+  woff2: { mime: "font/woff2", format: "woff2" },
+};
+
+const normalizeFontName = (name) =>
+  (name || "").trim().toLowerCase().replace(/"/g, "");
+
+const FONT_NAME_MAP = new Map();
+CUSTOM_FONT_FILES.forEach((font) => {
+  if (!font?.name || !font?.file) return;
+  FONT_NAME_MAP.set(normalizeFontName(font.name), font.file);
+});
+
+const FONT_DATA_URI_CACHE = new Map();
+
+const TEXT_OBJECT_TYPES = new Set(["i-text", "text", "textbox"]);
+
+const base64Encode = (binary) => {
+  if (typeof window !== "undefined" && typeof window.btoa === "function") {
+    return window.btoa(binary);
+  }
+  if (typeof btoa === "function") {
+    return btoa(binary);
+  }
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(binary, "binary").toString("base64");
+  }
+  return "";
+};
+
+const arrayBufferToBase64 = (buffer) => {
+  if (!buffer) return "";
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return base64Encode(binary);
+};
+
+const getFontFileByName = (fontName = "") => {
+  const normalized = normalizeFontName(fontName.split(",")[0]);
+  return FONT_NAME_MAP.get(normalized) || null;
+};
+
+const detectFontFormatMeta = (fileName = "") => {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "ttf";
+  return FONT_EXT_FORMAT_MAP[ext] || FONT_EXT_FORMAT_MAP.ttf;
+};
+
+const loadFontDataUri = async (fontName) => {
+  const fontFile = getFontFileByName(fontName);
+  if (!fontFile) return null;
+  if (FONT_DATA_URI_CACHE.has(fontFile)) {
+    return FONT_DATA_URI_CACHE.get(fontFile);
+  }
+  if (typeof fetch !== "function") {
+    return null;
+  }
+  try {
+    const response = await fetch(`${FONT_PUBLIC_PATH}/${fontFile}`);
+    if (!response.ok) {
+      console.warn("Failed to fetch font file", fontFile, response.status);
+      return null;
+    }
+    const blob = await response.blob();
+    const arrayBuffer = await blob.arrayBuffer();
+    const base64 = arrayBufferToBase64(arrayBuffer);
+    const meta = detectFontFormatMeta(fontFile);
+    const dataUri = `data:${meta.mime};base64,${base64}`;
+    const entry = { dataUri, format: meta.format };
+    FONT_DATA_URI_CACHE.set(fontFile, entry);
+    return entry;
+  } catch (error) {
+    console.error("Failed to load font for SVG embedding", fontFile, error);
+    return null;
+  }
+};
+
+const collectFontFamiliesFromCanvas = (canvas) => {
+  if (!canvas || typeof canvas.getObjects !== "function") return [];
+  const fonts = new Set();
+  try {
+    canvas.getObjects().forEach((obj) => {
+      if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+      if (!obj.fontFamily) return;
+      const family = String(obj.fontFamily)
+        .split(",")[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, "");
+      if (family) {
+        fonts.add(family);
+      }
+    });
+  } catch {}
+  return Array.from(fonts);
+};
+
+const embedFontsIntoSvgMarkup = async (svgMarkup, fontFamilies) => {
+  if (!svgMarkup || !fontFamilies?.length) {
+    return svgMarkup;
+  }
+  if (
+    typeof DOMParser === "undefined" ||
+    typeof XMLSerializer === "undefined"
+  ) {
+    return svgMarkup;
+  }
+  const cssChunks = [];
+  for (const family of fontFamilies) {
+    const fontData = await loadFontDataUri(family);
+    if (!fontData) continue;
+    cssChunks.push(
+      `@font-face { font-family: '${family.replace(/'/g, "\\'")}'; src: url(${
+        fontData.dataUri
+      }) format('${
+        fontData.format
+      }'); font-weight: normal; font-style: normal; font-display: block; }`
+    );
+  }
+  if (!cssChunks.length) {
+    return svgMarkup;
+  }
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgMarkup, "image/svg+xml");
+    const svgElement = doc.documentElement;
+    if (!svgElement || svgElement.nodeName.toLowerCase() !== "svg") {
+      return svgMarkup;
+    }
+    let defs = svgElement.querySelector("defs");
+    if (!defs) {
+      defs = doc.createElementNS(svgElement.namespaceURI, "defs");
+      svgElement.insertBefore(defs, svgElement.firstChild);
+    }
+    Array.from(
+      defs.querySelectorAll("style[data-embedded-fonts='true']")
+    ).forEach((node) => defs.removeChild(node));
+    const styleEl = doc.createElementNS(svgElement.namespaceURI, "style");
+    styleEl.setAttribute("type", "text/css");
+    styleEl.setAttribute("data-embedded-fonts", "true");
+    styleEl.textContent = cssChunks.join("\n");
+    defs.appendChild(styleEl);
+    const serializer = new XMLSerializer();
+    return serializer.serializeToString(svgElement);
+  } catch (error) {
+    console.error("Failed to embed fonts into SVG", error);
+    return svgMarkup;
+  }
+};
+
+export async function generateCanvasPreviews(canvas, options = {}) {
+  if (!canvas) {
+    return { previewSvg: "", previewPng: "" };
+  }
+  const width =
+    typeof options.width === "number"
+      ? options.width
+      : canvas.getWidth?.() || 0;
+  const height =
+    typeof options.height === "number"
+      ? options.height
+      : canvas.getHeight?.() || 0;
+
+  let previewSvg = "";
+  let previewPng = "";
+
+  try {
+    if (canvas.toSVG) {
+      const rawSvg = canvas.toSVG({
+        viewBox: {
+          x: 0,
+          y: 0,
+          width,
+          height,
+        },
+        width,
+        height,
+      });
+
+      const sanitized = rawSvg
+        .replace(/[\x00-\x1F\x7F]/g, "")
+        .replace(/[\uFFFE\uFFFF]/g, "");
+
+      const fontFamilies = collectFontFamiliesFromCanvas(canvas);
+      previewSvg = await embedFontsIntoSvgMarkup(sanitized, fontFamilies);
+      console.log("Generated SVG preview, length:", previewSvg.length);
+    }
+
+    if (canvas.toDataURL) {
+      previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+      console.log("Generated PNG preview as fallback");
+    }
+  } catch (error) {
+    console.error("Failed to generate preview:", error);
+    try {
+      if (canvas.toDataURL) {
+        previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+        console.log("Generated PNG preview as backup after SVG error");
+      }
+    } catch (pngError) {
+      console.error("Failed to generate PNG preview as backup:", pngError);
+    }
+  }
+
+  return { previewSvg, previewPng };
+}
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -158,7 +371,7 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
   return new Promise((resolve, reject) => {
     const store = txUnsaved(db, "readwrite");
     const getReq = store.get(id);
-    getReq.onsuccess = () => {
+    getReq.onsuccess = async () => {
       const existing = getReq.result;
       if (!existing) {
         console.warn("Unsaved sign not found for update:", id);
@@ -245,7 +458,7 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
           toolbarState
         );
 
-        const snap = exportCanvas(canvas, toolbarState);
+        const snap = await exportCanvas(canvas, toolbarState);
         if (!snap) {
           console.error("Failed to export canvas for unsaved sign update");
           resolve(null);
@@ -330,7 +543,7 @@ export function uuid() {
 }
 
 // Serialize current Fabric canvas to JSON + preview image + toolbar state
-export function exportCanvas(canvas, toolbarState = {}) {
+export async function exportCanvas(canvas, toolbarState = {}) {
   if (!canvas) return null;
   try {
     // Include ALL custom props used across the app to preserve element-specific data
@@ -415,8 +628,8 @@ export function exportCanvas(canvas, toolbarState = {}) {
       // Exclusion properties
       "excludeFromExport",
 
-  // QR internal preview stroke state
-  "qrExportStrokeWidth",
+      // QR internal preview stroke state
+      "qrExportStrokeWidth",
 
       // Custom hole properties
       "holeType",
@@ -657,48 +870,18 @@ export function exportCanvas(canvas, toolbarState = {}) {
       finalShapeType: canvasShapeType,
     });
 
-    // ВИПРАВЛЕННЯ: Генеруємо SVG preview замість PNG для кращої якості та розміру
+    // ВИПРАВЛЕННЯ: Генеруємо SVG preview з вбудованими шрифтами + PNG fallback
     let previewSvg = "";
     let previewPng = "";
-
     try {
-      // Генеруємо SVG preview для відображення в UI
-      if (canvas.toSVG) {
-        const rawSvg = canvas.toSVG({
-          viewBox: {
-            x: 0,
-            y: 0,
-            width: width,
-            height: height,
-          },
-          width: width,
-          height: height,
-        });
-
-        // ВИПРАВЛЕННЯ: Очищаємо SVG від потенційно проблемних символів
-        previewSvg = rawSvg
-          .replace(/[\x00-\x1F\x7F]/g, "") // Видаляємо control characters
-          .replace(/[\uFFFE\uFFFF]/g, ""); // Видаляємо non-characters
-
-        console.log("Generated SVG preview, length:", previewSvg.length);
-      }
-
-      // Також генеруємо PNG як fallback
-      if (canvas.toDataURL) {
-        previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
-        console.log("Generated PNG preview as fallback");
-      }
-    } catch (error) {
-      console.error("Failed to generate preview:", error);
-      // Якщо SVG генерація не вдалася, спробуємо хоча б PNG
-      try {
-        if (canvas.toDataURL) {
-          previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
-          console.log("Generated PNG preview as backup after SVG error");
-        }
-      } catch (pngError) {
-        console.error("Failed to generate PNG preview as backup:", pngError);
-      }
+      const previews = await generateCanvasPreviews(canvas, {
+        width,
+        height,
+      });
+      previewSvg = previews.previewSvg;
+      previewPng = previews.previewPng;
+    } catch (previewError) {
+      console.error("Failed to produce previews:", previewError);
     }
 
     // Store comprehensive toolbar state for each canvas
@@ -1119,7 +1302,7 @@ export function restoreElementProperties(canvas, toolbarState = null) {
 
 export async function saveNewProject(name, canvas) {
   const toolbarState = window.getCurrentToolbarState?.() || {};
-  const snap = exportCanvas(canvas, toolbarState);
+  const snap = await exportCanvas(canvas, toolbarState);
   const now = Date.now();
 
   // Отримуємо поточний ID незбереженого знаку
@@ -1236,7 +1419,7 @@ export async function saveCurrentProject(canvas) {
     activeProjectCanvasIndex >= 0;
 
   const toolbarState = window.getCurrentToolbarState?.() || {};
-  const snap = exportCanvas(canvas, toolbarState);
+  const snap = await exportCanvas(canvas, toolbarState);
   const now = Date.now();
   const canvases = Array.isArray(existing.canvases)
     ? existing.canvases.slice(0, 10).map((canvasEntry) => ({ ...canvasEntry }))
@@ -1557,7 +1740,7 @@ export async function updateCanvasInCurrentProject(canvasId, canvas) {
     const toolbarState = window.getCurrentToolbarState?.() || {};
     console.log("Capturing toolbar state for project canvas update");
 
-    const snap = exportCanvas(canvas, toolbarState);
+    const snap = await exportCanvas(canvas, toolbarState);
     if (!snap) {
       console.error("Failed to export canvas for project canvas update");
       return null;

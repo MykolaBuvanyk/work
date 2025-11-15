@@ -504,6 +504,183 @@ const recolorStrokeAttributes = (rootElement) => {
   });
 };
 
+const normalizeColorString = (value = "") =>
+  String(value).trim().toLowerCase().replace(/\s+/g, "");
+
+const isWhiteColorString = (value = "") => {
+  const normalized = normalizeColorString(value);
+  if (!normalized) return false;
+  return (
+    normalized === "#fff" ||
+    normalized === "#ffffff" ||
+    normalized === "white" ||
+    normalized === "rgb(255,255,255)" ||
+    normalized === "rgba(255,255,255,1)"
+  );
+};
+
+const nodeHasWhiteFill = (node) => {
+  if (!node || typeof node.getAttribute !== "function") return false;
+  const fillAttr = node.getAttribute("fill");
+  if (fillAttr && isWhiteColorString(fillAttr)) return true;
+  const styleAttr = node.getAttribute("style") || "";
+  const match = styleAttr.match(/fill\s*:\s*([^;]+)/i);
+  if (match && isWhiteColorString(match[1])) return true;
+  return false;
+};
+
+const stripStyleProperties = (styleAttr = "", properties = []) => {
+  if (!styleAttr) return "";
+  const props = properties.map((prop) => prop.toLowerCase());
+  return styleAttr
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .filter((declaration) => {
+      const [prop] = declaration.split(":");
+      if (!prop) return false;
+      return !props.includes(prop.trim().toLowerCase());
+    })
+    .join("; ");
+};
+
+const appendStyleDeclarations = (baseStyle = "", declarations = []) => {
+  const filtered = declarations.filter((declaration) => Boolean(declaration));
+  if (!baseStyle && !filtered.length) {
+    return "";
+  }
+  if (!filtered.length) {
+    return baseStyle;
+  }
+  return baseStyle
+    ? `${baseStyle}; ${filtered.join("; ")}`
+    : filtered.join("; ");
+};
+
+const filterBarcodeRects = (rects) => {
+  if (!Array.isArray(rects) || rects.length === 0) {
+    return [];
+  }
+  const widths = rects
+    .map((rect) => parseFloat(rect.getAttribute("width") || "0"))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const minWidth = widths.length ? Math.min(...widths) : null;
+  const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
+  return rects.filter((rect) => {
+    if (nodeHasWhiteFill(rect)) return false;
+    const width = parseFloat(rect.getAttribute("width") || "0");
+    if (!Number.isFinite(width) || width <= 0) return false;
+    if (widthThreshold !== Infinity && width > widthThreshold) return false;
+    return true;
+  });
+};
+
+const collectBarcodeRectDescendants = (node) => {
+  if (!node || node.nodeType !== 1) return [];
+  if (typeof node.querySelectorAll === "function") {
+    return Array.from(node.querySelectorAll("rect"));
+  }
+  const stack = Array.from(node.childNodes || []);
+  const result = [];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || current.nodeType !== 1) continue;
+    if ((current.nodeName || "").toLowerCase() === "rect") {
+      result.push(current);
+      continue;
+    }
+    if (current.childNodes && current.childNodes.length) {
+      stack.push(...current.childNodes);
+    }
+  }
+  return result;
+};
+
+// Heuristic: detect JsBarcode-like groups and convert their rects to stroke-only
+const isLikelyBarcodeGroupPreview = (node) => {
+  if (!node || node.nodeType !== 1) return false;
+  const tag = (node.nodeName || "").toLowerCase();
+  if (tag !== "g" && tag !== "svg") return false;
+  const rects = collectBarcodeRectDescendants(node);
+  if (rects.length < 12) return false;
+  const heights = [];
+  const widths = [];
+  for (const r of rects) {
+    const w = parseFloat(r.getAttribute("width"));
+    const h = parseFloat(r.getAttribute("height"));
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+      return false;
+    widths.push(w);
+    heights.push(h);
+  }
+  const minH = Math.min(...heights);
+  const maxH = Math.max(...heights);
+  if (maxH === 0) return false;
+  if ((maxH - minH) / maxH > 0.05) return false;
+  const avgW = widths.reduce((a, b) => a + b, 0) / widths.length;
+  if (maxH / avgW < 2) return false;
+  return true;
+};
+
+const BARCODE_STYLE_PROPS = [
+  "fill",
+  "stroke",
+  "stroke-width",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-opacity",
+];
+
+const outlineBarcodeRects = (rootElement) => {
+  if (!rootElement) return;
+
+  let outlinedGroups = 0;
+
+  const walk = (node) => {
+    if (!node || node.nodeType !== 1) return;
+
+    if (isLikelyBarcodeGroupPreview(node)) {
+      const rects = filterBarcodeRects(collectBarcodeRectDescendants(node));
+      if (rects.length) {
+        outlinedGroups += 1;
+        rects.forEach((rect) => {
+          const strokeWidth = rect.getAttribute("stroke-width") || "1";
+          rect.setAttribute("fill", "none");
+          rect.setAttribute("stroke", TEXT_STROKE_COLOR);
+          rect.setAttribute("stroke-width", strokeWidth);
+          rect.setAttribute("stroke-linejoin", "round");
+          rect.setAttribute("stroke-linecap", "round");
+
+          const baseStyle = stripStyleProperties(
+            rect.getAttribute("style") || "",
+            BARCODE_STYLE_PROPS
+          );
+          const style = appendStyleDeclarations(baseStyle, [
+            "fill: none",
+            `stroke: ${TEXT_STROKE_COLOR}`,
+            `stroke-width: ${strokeWidth}`,
+            "stroke-linejoin: round",
+            "stroke-linecap: round",
+          ]);
+          if (style) {
+            rect.setAttribute("style", style);
+          } else if (rect.hasAttribute("style")) {
+            rect.removeAttribute("style");
+          }
+        });
+      }
+    }
+
+    const children = node.childNodes || [];
+    for (let i = 0; i < children.length; i += 1) {
+      walk(children[i]);
+    }
+  };
+
+  walk(rootElement);
+  return outlinedGroups;
+};
+
 let textOutlineScope = null;
 
 const ensureTextOutlineScope = () => {
@@ -991,8 +1168,10 @@ const buildPlacementPreview = (placement) => {
 
       recolorStrokeAttributes(exportElement);
 
-      // Для PDF експорту НЕ конвертуємо текст в path, а просто застосовуємо stroke
-      // svg-to-pdfkit краще підтримує <text> елементи, ніж складні <path>
+      // Конвертуємо текст у контури, щоб шрифт збігався з оригіналом
+      convertTextToOutlinedPaths(exportElement);
+
+      // Якщо якісь <text> залишились (помилка конвертації) — застосовуємо stroke як fallback
       const textNodes = Array.from(exportElement.querySelectorAll("text"));
       textNodes.forEach((textNode) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
@@ -1012,14 +1191,32 @@ const buildPlacementPreview = (placement) => {
 
       recolorStrokeAttributes(previewElement);
 
-      // Для preview також використовуємо stroke замість складної конвертації в path
-      // Це простіше і надійніше
+      convertTextToOutlinedPaths(previewElement);
+
       const previewTextNodes = Array.from(
         previewElement.querySelectorAll("text")
       );
       previewTextNodes.forEach((textNode) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
       });
+
+      try {
+        outlineBarcodeRects(exportElement);
+      } catch (barcodeExportError) {
+        console.warn(
+          "Barcode outline (export) failed:",
+          barcodeExportError?.message || barcodeExportError
+        );
+      }
+
+      try {
+        outlineBarcodeRects(previewElement);
+      } catch (barcodePreviewError) {
+        console.warn(
+          "Barcode outline (preview) failed:",
+          barcodePreviewError?.message || barcodePreviewError
+        );
+      }
 
       const serializer = new XMLSerializer();
       const exportMarkup = serializer.serializeToString(exportElement);
@@ -1031,6 +1228,7 @@ const buildPlacementPreview = (placement) => {
       return {
         type: "svg",
         url: dataUri,
+        previewMarkup,
         exportMarkup,
         fileName: `${placement.baseId || placement.id}.svg`,
       };
@@ -1355,7 +1553,14 @@ const LayoutPlannerModal = ({
                             }}
                           >
                             <div className={styles.placementPreview}>
-                              {hasPreview ? (
+                              {previewData?.previewMarkup ? (
+                                <div
+                                  className={styles.inlineSvgWrapper}
+                                  dangerouslySetInnerHTML={{
+                                    __html: previewData.previewMarkup,
+                                  }}
+                                />
+                              ) : hasPreview ? (
                                 <img
                                   src={previewData?.url}
                                   alt={placement.name || "Полотно"}
@@ -1407,4 +1612,5 @@ const LayoutPlannerModal = ({
   );
 };
 
+export { buildPlacementPreview };
 export default LayoutPlannerModal;

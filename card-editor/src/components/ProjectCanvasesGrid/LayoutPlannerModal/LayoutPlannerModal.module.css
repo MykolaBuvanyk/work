@@ -225,6 +225,17 @@
   object-fit: contain;
 }
 
+.inlineSvgWrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.inlineSvgWrapper svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .placementPlaceholder {
   font-size: 10px;
   color: #475569;

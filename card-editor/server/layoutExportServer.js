@@ -5,7 +5,8 @@ import svgToPdf from "svg-to-pdfkit";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DOMParser, XMLSerializer } from "@xmldom/xmldom";
-import fontkitModule from "fontkit";
+import * as fontkitModule from "fontkit";
+import TextToSVG from "text-to-svg";
 
 const MM_TO_PT = 72 / 25.4;
 const DEFAULT_PORT = Number(process.env.LAYOUT_EXPORT_PORT || 4177);
@@ -304,6 +305,8 @@ const FONT_DEFINITION_MAP = new Map(
   FONT_DEFINITIONS.map((def) => [def.id, def])
 );
 const FONTKIT_CACHE = new Map();
+const TEXT_TO_SVG_CACHE = new Map();
+const TEXT_TO_SVG_ANCHOR = "left top";
 
 const DEFAULT_FONT_ID = "ArialMT";
 
@@ -350,6 +353,31 @@ const getFontkitFont = (fontId) => {
       error.message
     );
     FONTKIT_CACHE.set(fontId, null);
+    return null;
+  }
+};
+
+const getTextToSvgInstance = (fontId) => {
+  if (TEXT_TO_SVG_CACHE.has(fontId)) {
+    return TEXT_TO_SVG_CACHE.get(fontId);
+  }
+
+  const fontPath = resolveFontPath(fontId);
+  if (!fontPath) {
+    TEXT_TO_SVG_CACHE.set(fontId, null);
+    return null;
+  }
+
+  try {
+    const instance = TextToSVG.loadSync(fontPath);
+    TEXT_TO_SVG_CACHE.set(fontId, instance);
+    return instance;
+  } catch (error) {
+    console.warn(
+      `Не вдалося підготувати TextToSVG для ${fontId}:`,
+      error.message
+    );
+    TEXT_TO_SVG_CACHE.set(fontId, null);
     return null;
   }
 };
@@ -655,6 +683,202 @@ const extractScaleFromMatrix = (matrix = IDENTITY_MATRIX) => {
   return { scaleX, scaleY };
 };
 
+// Heuristic detection of JsBarcode-like groups: a <g> containing many <rect>
+// with same height and narrow varying widths. Keeps it conservative to avoid
+// touching arbitrary artwork.
+const normalizeColorString = (value = "") =>
+  String(value).trim().toLowerCase().replace(/\s+/g, "");
+
+const isWhiteColorString = (value = "") => {
+  const normalized = normalizeColorString(value);
+  if (!normalized) return false;
+  return (
+    normalized === "#fff" ||
+    normalized === "#ffffff" ||
+    normalized === "white" ||
+    normalized === "rgb(255,255,255)" ||
+    normalized === "rgba(255,255,255,1)"
+  );
+};
+
+const rectHasWhiteFill = (rect) => {
+  if (!rect || typeof rect.getAttribute !== "function") return false;
+  const fillAttr = rect.getAttribute("fill");
+  if (fillAttr && isWhiteColorString(fillAttr)) {
+    return true;
+  }
+  const styleAttr = rect.getAttribute("style") || "";
+  const match = styleAttr.match(/fill\s*:\s*([^;]+)/i);
+  if (match && isWhiteColorString(match[1])) {
+    return true;
+  }
+  return false;
+};
+
+const isLikelyBarcodeGroup = (node) => {
+  if (!node || node.nodeType !== 1) return false;
+  const tag = (node.nodeName || "").toLowerCase();
+  if (tag !== "g" && tag !== "svg") return false;
+  const rects = gatherBarcodeRects(node);
+  if (rects.length < 12) return false;
+  const heights = [];
+  const widths = [];
+  for (const r of rects) {
+    const w = parseFloat(r.getAttribute("width"));
+    const h = parseFloat(r.getAttribute("height"));
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+      return false;
+    widths.push(w);
+    heights.push(h);
+  }
+  const minH = Math.min(...heights);
+  const maxH = Math.max(...heights);
+  if (maxH === 0) return false;
+  // Heights should be almost equal
+  if ((maxH - minH) / maxH > 0.05) return false;
+  const avgW = widths.reduce((a, b) => a + b, 0) / widths.length;
+  // Bars are vertically tall vs width
+  if (maxH / avgW < 2) return false;
+  return true;
+};
+
+const collectBarcodeGroups = (root, { suppressLogs = false } = {}) => {
+  const results = [];
+  const walk = (n) => {
+    if (!n || n.nodeType !== 1) return;
+    if (isLikelyBarcodeGroup(n)) {
+      if (!suppressLogs) {
+        console.log(
+          `[layoutExportServer] Found barcode group:`,
+          n.nodeName,
+          "rects:",
+          Array.from(n.childNodes || []).filter(
+            (c) =>
+              c?.nodeType === 1 && (c.nodeName || "").toLowerCase() === "rect"
+          ).length
+        );
+      }
+      results.push(n);
+    }
+    const children = Array.from(n.childNodes || []);
+    children.forEach(walk);
+  };
+  walk(root);
+  if (!suppressLogs) {
+    console.log(
+      `[layoutExportServer] Total barcodes collected: ${results.length}`
+    );
+  }
+  return results;
+};
+
+const rectToTransformedQuad = (matrix, x, y, w, h) => {
+  const p1 = applyMatrixToPoint(matrix, x, y);
+  const p2 = applyMatrixToPoint(matrix, x + w, y);
+  const p3 = applyMatrixToPoint(matrix, x + w, y + h);
+  const p4 = applyMatrixToPoint(matrix, x, y + h);
+  return [p1, p2, p3, p4];
+};
+
+const gatherBarcodeRects = (node) => {
+  if (!node) return [];
+  if (typeof node.getElementsByTagName === "function") {
+    return Array.from(node.getElementsByTagName("rect"));
+  }
+  const rects = [];
+  const stack = Array.from(node.childNodes || []);
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || current.nodeType !== 1) continue;
+    if ((current.nodeName || "").toLowerCase() === "rect") {
+      rects.push(current);
+    }
+    if (current.childNodes && current.childNodes.length) {
+      stack.push(...current.childNodes);
+    }
+  }
+  return rects;
+};
+
+const drawBarcodePaths = (
+  doc,
+  barcodeGroups,
+  { xPt, yTopPt, widthPt, heightPt, contentWidth, contentHeight }
+) => {
+  if (!doc || !Array.isArray(barcodeGroups) || barcodeGroups.length === 0) {
+    return;
+  }
+
+  const svgScaleX = widthPt / contentWidth;
+  const svgScaleY = heightPt / contentHeight;
+  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
+  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
+  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+
+  doc.save();
+  doc.fillColor(TEXT_OUTLINE_COLOR);
+
+  barcodeGroups.forEach((group) => {
+    const rects = gatherBarcodeRects(group);
+    if (!rects.length) return;
+
+    const widths = rects
+      .map((rect) => parseFloat(rect.getAttribute("width") || "0"))
+      .filter((value) => Number.isFinite(value) && value > 0);
+    const minWidth = widths.length ? Math.min(...widths) : null;
+    const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
+
+    const barRects = rects.filter((rect) => {
+      if (rectHasWhiteFill(rect)) {
+        return false;
+      }
+      const width = parseFloat(rect.getAttribute("width") || "0");
+      if (!Number.isFinite(width) || width <= 0) return false;
+      if (widthThreshold !== Infinity && width > widthThreshold) {
+        return false;
+      }
+      return true;
+    });
+
+    if (!barRects.length) return;
+
+    const pathSegments = [];
+    const formatPoint = (point) =>
+      `${point.x.toFixed(3)} ${point.y.toFixed(3)}`;
+
+    barRects.forEach((rect) => {
+      const x = parseFloat(rect.getAttribute("x") || "0");
+      const y = parseFloat(rect.getAttribute("y") || "0");
+      const w = parseFloat(rect.getAttribute("width") || "0");
+      const h = parseFloat(rect.getAttribute("height") || "0");
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+        return;
+      }
+
+      const matrix = computeCumulativeMatrix(rect);
+      const quad = rectToTransformedQuad(matrix, x, y, w, h).map((point) => ({
+        x: offsetXPt + point.x * svgScale,
+        y: offsetYPt + point.y * svgScale,
+      }));
+
+      const segment = [
+        `M ${formatPoint(quad[0])}`,
+        `L ${formatPoint(quad[1])}`,
+        `L ${formatPoint(quad[2])}`,
+        `L ${formatPoint(quad[3])}`,
+        "Z",
+      ].join(" ");
+      pathSegments.push(segment);
+    });
+
+    if (pathSegments.length) {
+      doc.path(pathSegments.join(" ")).fill();
+    }
+  });
+
+  doc.restore();
+};
+
 const app = express();
 
 app.use(
@@ -799,7 +1023,7 @@ app.post("/api/layout-pdf", async (req, res) => {
                 placement.sourceHeight || placement.height
               );
 
-            // Render background: clone SVG, remove text nodes, serialize
+            // Render background: clone SVG, remove text nodes and barcode groups, serialize
             const backgroundSvg = svgElement.cloneNode(true);
             const backgroundTextNodes =
               backgroundSvg.getElementsByTagName("text");
@@ -808,6 +1032,16 @@ app.post("/api/layout-pdf", async (req, res) => {
               const node = backgroundTextNodes[0];
               node.parentNode?.removeChild(node);
             }
+
+            const backgroundBarcodeGroups = collectBarcodeGroups(
+              backgroundSvg,
+              {
+                suppressLogs: true,
+              }
+            );
+            backgroundBarcodeGroups.forEach((group) => {
+              group.parentNode?.removeChild(group);
+            });
 
             const serializer = new XMLSerializer();
             const backgroundMarkup =
@@ -829,8 +1063,29 @@ app.post("/api/layout-pdf", async (req, res) => {
               }
             }
 
+            // Collect barcode groups from original SVG for later outline rendering
+            const barcodeGroups = collectBarcodeGroups(svgElement);
+
             const textNodes = svgElement.getElementsByTagName("text");
             if (!textNodes || textNodes.length === 0) {
+              if (barcodeGroups && barcodeGroups.length) {
+                try {
+                  drawBarcodePaths(doc, barcodeGroups, {
+                    xPt,
+                    yTopPt,
+                    widthPt,
+                    heightPt,
+                    contentWidth,
+                    contentHeight,
+                  });
+                } catch (barcodeDrawError) {
+                  console.warn(
+                    "Не вдалося намалювати каркас штрихкоду:",
+                    barcodeDrawError.message
+                  );
+                }
+              }
+
               return;
             }
 
@@ -915,22 +1170,84 @@ app.post("/api/layout-pdf", async (req, res) => {
 
                 doc.save();
 
-                const segmentMetrics = fontRuns.map((run) => {
-                  let activeFontId = run.fontId;
+                const measureWithPdfkit = (requestedFontId, text) => {
+                  let resolvedFontId = requestedFontId;
                   try {
-                    doc.font(activeFontId);
+                    doc.font(resolvedFontId);
                   } catch (fontError) {
                     console.warn(
-                      `Шрифт ${activeFontId} недоступний, використаємо ${DEFAULT_FONT_ID}:`,
+                      `Шрифт ${resolvedFontId} недоступний, використаємо ${DEFAULT_FONT_ID}:`,
                       fontError.message
                     );
-                    activeFontId = DEFAULT_FONT_ID;
+                    resolvedFontId = DEFAULT_FONT_ID;
                     doc.font(DEFAULT_FONT_ID);
                   }
                   doc.fontSize(scaledFontSize);
-                  const width = doc.widthOfString(run.text);
+                  const width = doc.widthOfString(text);
                   const lineHeight = doc.currentLineHeight(true);
-                  return { ...run, fontId: activeFontId, width, lineHeight };
+                  return {
+                    width,
+                    lineHeight,
+                    fontId: resolvedFontId,
+                    textToSvg: null,
+                  };
+                };
+
+                const segmentMetrics = fontRuns.map((run) => {
+                  const requestedFontId = run.fontId;
+                  let textToSvgInstance = getTextToSvgInstance(requestedFontId);
+                  let activeFontId = requestedFontId;
+
+                  if (!textToSvgInstance) {
+                    textToSvgInstance = getTextToSvgInstance(DEFAULT_FONT_ID);
+                    if (textToSvgInstance) {
+                      activeFontId = DEFAULT_FONT_ID;
+                    }
+                  }
+
+                  if (!textToSvgInstance) {
+                    const fallback = measureWithPdfkit(activeFontId, run.text);
+                    return {
+                      ...run,
+                      fontId: fallback.fontId,
+                      width: fallback.width,
+                      lineHeight: fallback.lineHeight,
+                      textToSvg: null,
+                    };
+                  }
+
+                  try {
+                    const metrics = textToSvgInstance.getMetrics(
+                      run.text || "",
+                      {
+                        fontSize: scaledFontSize,
+                        anchor: TEXT_TO_SVG_ANCHOR,
+                      }
+                    );
+                    const width = metrics?.width ?? 0;
+                    const height = metrics?.height ?? scaledFontSize;
+                    return {
+                      ...run,
+                      fontId: activeFontId,
+                      width,
+                      lineHeight: height,
+                      textToSvg: textToSvgInstance,
+                    };
+                  } catch (metricsError) {
+                    console.warn(
+                      `TextToSVG metrics failed для ${activeFontId}:`,
+                      metricsError.message
+                    );
+                    TEXT_TO_SVG_CACHE.set(activeFontId, null);
+                    const fallback = measureWithPdfkit(activeFontId, run.text);
+                    return {
+                      ...run,
+                      fontId: fallback.fontId,
+                      width: fallback.width,
+                      lineHeight: fallback.lineHeight,
+                      textToSvg: null,
+                    };
+                  }
                 });
 
                 const textWidth = segmentMetrics.reduce(
@@ -999,18 +1316,47 @@ app.post("/api/layout-pdf", async (req, res) => {
 
                 let segmentX = drawX;
                 segmentMetrics.forEach((segment) => {
-                  if (!segment.text) return;
-                  try {
-                    doc.font(segment.fontId);
-                  } catch (segmentFontError) {
-                    doc.font(DEFAULT_FONT_ID);
+                  if (!segment.text) {
+                    return;
                   }
-                  doc.fontSize(scaledFontSize);
-                  doc.text(segment.text, segmentX, drawY, {
-                    lineBreak: false,
-                    stroke: true,
-                    fill: false,
-                  });
+
+                  const renderWithPdfkit = () => {
+                    try {
+                      doc.font(segment.fontId);
+                    } catch (segmentFontError) {
+                      doc.font(DEFAULT_FONT_ID);
+                    }
+                    doc.fontSize(scaledFontSize);
+                    doc.text(segment.text, segmentX, drawY, {
+                      lineBreak: false,
+                      stroke: true,
+                      fill: false,
+                    });
+                  };
+
+                  if (segment.textToSvg) {
+                    try {
+                      const pathData = segment.textToSvg.getD(segment.text, {
+                        fontSize: scaledFontSize,
+                        anchor: TEXT_TO_SVG_ANCHOR,
+                      });
+                      doc.save();
+                      doc.translate(segmentX, drawY);
+                      doc.path(pathData);
+                      doc.stroke();
+                      doc.restore();
+                    } catch (pathError) {
+                      console.warn(
+                        `TextToSVG path failed для ${segment.fontId}:`,
+                        pathError.message
+                      );
+                      TEXT_TO_SVG_CACHE.set(segment.fontId, null);
+                      renderWithPdfkit();
+                    }
+                  } else {
+                    renderWithPdfkit();
+                  }
+
                   segmentX += segment.width;
                 });
 
@@ -1019,6 +1365,25 @@ app.post("/api/layout-pdf", async (req, res) => {
                 console.error(
                   "Не вдалося намалювати текстовий елемент:",
                   textError.message
+                );
+              }
+            }
+
+            // After drawing text, draw barcode outlines if present
+            if (barcodeGroups && barcodeGroups.length) {
+              try {
+                drawBarcodePaths(doc, barcodeGroups, {
+                  xPt,
+                  yTopPt,
+                  widthPt,
+                  heightPt,
+                  contentWidth,
+                  contentHeight,
+                });
+              } catch (barcodeDrawError) {
+                console.warn(
+                  "Не вдалося намалювати каркас штрихкоду:",
+                  barcodeDrawError.message
                 );
               }
             }

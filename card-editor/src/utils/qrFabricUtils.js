@@ -3,6 +3,44 @@ export const QR_EXPORT_LAYER_ID = "qr-export-layer";
 export const DEFAULT_QR_CELL_SIZE = 4;
 
 /**
+ * Removes black background rectangles from SVG markup.
+ * @param {string} svgMarkup - SVG string to clean
+ * @returns {string} Cleaned SVG
+ */
+export const removeBlackBackgroundRects = (svgMarkup) => {
+  if (!svgMarkup || typeof svgMarkup !== 'string') return svgMarkup;
+  
+  // Видаляємо rect елементи з чорним фоном (різні варіанти запису)
+  let cleaned = svgMarkup;
+  
+  // Варіант 1: самозакриваючий rect з fill
+  cleaned = cleaned.replace(
+    /<rect[^>]*\s+fill\s*=\s*["']?(#000000|#000|black|rgb\(0,\s*0,\s*0\)|rgba\(0,\s*0,\s*0,\s*1\))["']?[^>]*\/>/gi,
+    ''
+  );
+  
+  // Варіант 2: rect з закриваючим тегом
+  cleaned = cleaned.replace(
+    /<rect[^>]*\s+fill\s*=\s*["']?(#000000|#000|black|rgb\(0,\s*0,\s*0\)|rgba\(0,\s*0,\s*0,\s*1\))["']?[^>]*>[\s\S]*?<\/rect>/gi,
+    ''
+  );
+  
+  // Варіант 3: rect зі style="fill: black"
+  cleaned = cleaned.replace(
+    /<rect[^>]*\s+style\s*=\s*["'][^"']*fill\s*:\s*(#000000|#000|black|rgb\(0,\s*0,\s*0\)|rgba\(0,\s*0,\s*0,\s*1\))[^"']*["'][^>]*\/>/gi,
+    ''
+  );
+  
+  // Варіант 4: rect зі style та закриваючим тегом
+  cleaned = cleaned.replace(
+    /<rect[^>]*\s+style\s*=\s*["'][^"']*fill\s*:\s*(#000000|#000|black|rgb\(0,\s*0,\s*0\)|rgba\(0,\s*0,\s*0,\s*1\))[^"']*["'][^>]*>[\s\S]*?<\/rect>/gi,
+    ''
+  );
+  
+  return cleaned;
+};
+
+/**
  * Builds display and export path data for a QR code instance.
  * @param {object} qr - qrcode-generator instance with matrix prepared via make().
  * @param {number} cellSize - Size of a single QR module in pixels.
@@ -79,7 +117,8 @@ export const buildQrSvgMarkup = ({
   strokeColor,
 }) => {
   const safeColor = strokeColor || "#000000";
-  let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">`;
+  // Додаємо fill="none" щоб SVG був без фону
+  let svg = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" fill="none">`;
 
   if (optimizedPath) {
     svg += `<path id="${QR_EXPORT_LAYER_ID}" d="${optimizedPath}" fill="none" stroke="${safeColor}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -119,6 +158,7 @@ export const decorateQrGroup = (group) => {
           strokeLineCap: child.strokeLineCap || "round",
           strokeLineJoin: child.strokeLineJoin || "round",
           fill: "none",
+          backgroundColor: null,
         });
         const storedStrokeWidth = child.qrExportStrokeWidth || child.strokeWidth || 1;
         child.qrExportStrokeWidth = storedStrokeWidth;
@@ -135,6 +175,7 @@ export const decorateQrGroup = (group) => {
           child.__qrPatchedToSVG = true;
         }
       } else {
+        // Всі інші елементи (включаючи прозорий rect) виключаємо з експорту
         child.set({
           excludeFromExport: true,
           selectable: false,
@@ -146,7 +187,34 @@ export const decorateQrGroup = (group) => {
 
   group.set({
     subTargetCheck: false,
+    backgroundColor: null,
+    fill: null,
+    stroke: null,
   });
+
+  // Патч toSVG методу групи щоб видалити всі rect backgrounds
+  if (!group.__qrPatchedGroupToSVG && typeof group.toSVG === "function") {
+    const originalGroupToSVG = group.toSVG.bind(group);
+    group.toSVG = (reviver) => {
+      let svgMarkup = originalGroupToSVG(reviver);
+      
+      // Видаляємо ВСІ rect елементи які можуть бути background
+      // Fabric.js може додавати rect для background групи
+      svgMarkup = svgMarkup.replace(
+        /<rect[^>]*?\/>/gi,
+        ''
+      );
+      
+      // Також видаляємо rect з закриваючим тегом
+      svgMarkup = svgMarkup.replace(
+        /<rect[^>]*>[\s\S]*?<\/rect>/gi,
+        ''
+      );
+      
+      return svgMarkup;
+    };
+    group.__qrPatchedGroupToSVG = true;
+  }
 
   // Preserve custom props during serialization
   if (!group.__qrPatchedToObject && typeof group.toObject === "function") {

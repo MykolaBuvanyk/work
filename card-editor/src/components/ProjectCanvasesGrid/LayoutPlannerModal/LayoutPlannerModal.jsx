@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import JSZip from "jszip";
+import * as paperNamespace from "paper";
+import * as ClipperLibNamespace from "clipper-lib";
 import styles from "./LayoutPlannerModal.module.css";
 
 const PX_PER_MM = 72 / 25.4;
@@ -20,6 +22,428 @@ const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
 const TEXT_STROKE_COLOR = "#008181";
 const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
 const BLACK_STROKE_STYLE_PATTERN = /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
+const CUT_FLAG_ATTRIBUTE = "data-shape-cut";
+const CUT_TYPE_ATTRIBUTE = "data-shape-cut-type";
+const CUT_FLAG_SELECTOR = `[${CUT_FLAG_ATTRIBUTE}="true"]`;
+const HOLE_CUT_TYPE = "hole";
+const HOLE_ID_PREFIX = "hole-";
+const HOLE_STROKE_COLOR = "#FD7714";
+const HOLE_FILL_COLOR = "#FFFFFF";
+const HOLE_SHAPE_TAGS = ["path", "rect", "circle", "ellipse", "polygon", "polyline", "line"];
+const HOLE_DATA_SELECTOR = `[${CUT_TYPE_ATTRIBUTE}="${HOLE_CUT_TYPE}"]`;
+const HOLE_ID_SELECTOR = `[id^="${HOLE_ID_PREFIX}"]`;
+const HOLE_NODE_SELECTOR = `${HOLE_DATA_SELECTOR}, ${HOLE_ID_SELECTOR}`;
+const HOLE_SHAPE_QUERY = HOLE_SHAPE_TAGS.join(", ");
+
+const paperLib = paperNamespace?.default ?? paperNamespace;
+const ClipperLib = ClipperLibNamespace?.default ?? ClipperLibNamespace;
+
+const CLIPPER_SCALE = 100;
+const CONTOUR_STROKE_WIDTH_PX = 4;
+const GEOMETRY_ATTRIBUTES_TO_SKIP = new Set([
+  "x",
+  "y",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "width",
+  "height",
+  "rx",
+  "ry",
+  "r",
+  "cx",
+  "cy",
+  "points",
+  "d",
+  "transform",
+  "pathLength",
+]);
+
+let cachedPaperScope = null;
+
+const ensurePaperScope = () => {
+  if (!paperLib || typeof window === "undefined" || typeof document === "undefined") {
+    return null;
+  }
+  if (cachedPaperScope) {
+    return cachedPaperScope;
+  }
+  try {
+    const scope = new paperLib.PaperScope();
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    scope.setup(canvas);
+    cachedPaperScope = scope;
+    return scope;
+  } catch (error) {
+    console.warn("Paper.js scope init failed", error);
+    cachedPaperScope = null;
+    return null;
+  }
+};
+
+const gatherPathItems = (scope, item, acc = []) => {
+  if (!item) return acc;
+  if (item instanceof scope.Path) {
+    acc.push(item);
+    return acc;
+  }
+  if (item instanceof scope.CompoundPath) {
+    item.children.forEach((child) => gatherPathItems(scope, child, acc));
+    return acc;
+  }
+  if (item.children && item.children.length) {
+    item.children.forEach((child) => gatherPathItems(scope, child, acc));
+  }
+  return acc;
+};
+
+const pathItemToClipperInput = (scope, pathItem) => {
+  if (!pathItem || !ClipperLib) return null;
+  const clone = pathItem.clone({ insert: false });
+  clone.closed = true;
+  if (clone.clockwise === false) {
+    clone.reverse();
+  }
+  const hasCurves =
+    Array.isArray(pathItem.curves) && pathItem.curves.some((curve) => !curve.isStraight());
+  const flattenTolerance = hasCurves ? 0.05 : 0.2;
+  clone.flatten(flattenTolerance);
+  const clipperPath = clone.segments.map((segment) => ({
+    X: Math.round(segment.point.x * CLIPPER_SCALE),
+    Y: Math.round(segment.point.y * CLIPPER_SCALE),
+  }));
+  clone.remove();
+  if (clipperPath.length < 3) {
+    return null;
+  }
+  const first = clipperPath[0];
+  const last = clipperPath[clipperPath.length - 1];
+  if (first && last && first.X === last.X && first.Y === last.Y) {
+    clipperPath.pop();
+  }
+  return {
+    clipperPath,
+    hasCurves,
+    joinType: hasCurves ? ClipperLib.JoinType.jtRound : ClipperLib.JoinType.jtMiter,
+  };
+};
+
+const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
+  if (!scope || !ClipperLib || !ClipperLib.ClipperOffset) return null;
+  if (!Number.isFinite(offsetDistancePx) || offsetDistancePx <= 0) return null;
+
+  try {
+    scope.project.clear();
+    const clone = shapeNode.cloneNode(true);
+    const imported = scope.project.importSVG(clone, {
+      applyMatrix: true,
+      expandShapes: true,
+      insert: true,
+    });
+
+    if (!imported) {
+      scope.project.clear();
+      return null;
+    }
+
+    const pathItems = gatherPathItems(scope, imported);
+    if (!pathItems.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    const clipperInputs = pathItems
+      .map((pathItem) => pathItemToClipperInput(scope, pathItem))
+      .filter(Boolean);
+
+    if (!clipperInputs.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    const arcTolerance = clipperInputs.some((entry) => entry.hasCurves) ? 0.05 : 0.25;
+    const offsetter = new ClipperLib.ClipperOffset(2, arcTolerance);
+
+    clipperInputs.forEach((entry) => {
+      offsetter.AddPath(entry.clipperPath, entry.joinType, ClipperLib.EndType.etClosedPolygon);
+    });
+
+  const offsetAmount = -offsetDistancePx * CLIPPER_SCALE;
+  const solution = ClipperLib.Paths ? new ClipperLib.Paths() : [];
+    offsetter.Execute(solution, offsetAmount);
+
+    if (!solution.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    const children = solution
+      .map((poly) => {
+        if (!poly?.length) return null;
+        const points = poly.map(
+          (point) => new scope.Point(point.X / CLIPPER_SCALE, point.Y / CLIPPER_SCALE)
+        );
+        if (points.length < 3) return null;
+        return new scope.Path({
+          segments: points,
+          closed: true,
+          insert: true,
+        });
+      })
+      .filter(Boolean);
+
+    if (!children.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    let offsetItem = null;
+    if (children.length === 1) {
+      offsetItem = children[0];
+    } else {
+      offsetItem = new scope.CompoundPath();
+      children.forEach((child) => offsetItem.addChild(child));
+    }
+
+    const exported = offsetItem.exportSVG({ asString: false, precision: 6 });
+    const pathData = exported?.getAttribute?.("d") || null;
+
+    scope.project.clear();
+    return pathData;
+  } catch (error) {
+    console.warn("Clipper offset failed", error);
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
+
+const sanitizeInnerContourStyle = (node) => {
+  if (!node) return;
+  const styleAttr = node.getAttribute("style");
+  if (!styleAttr) return;
+
+  const filtered = styleAttr
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => {
+      if (!part) return false;
+      if (/^fill\s*:/i.test(part)) return false;
+      if (/^stroke-width\s*:/i.test(part)) return false;
+      if (/^transform\s*:/i.test(part)) return false;
+      if (/^stroke\s*:\s*none/i.test(part)) return false;
+      if (/^stroke-opacity\s*:/i.test(part)) return false;
+      return true;
+    });
+
+  if (filtered.length) {
+    node.setAttribute("style", filtered.join("; "));
+  } else {
+    node.removeAttribute("style");
+  }
+};
+
+const applyContourStrokeWidth = (node, recursive = false) => {
+  if (!node) return;
+
+  const setWidth = (target) => {
+    if (!target) return;
+    target.setAttribute("stroke-width", CONTOUR_STROKE_WIDTH_PX.toString());
+    target.setAttribute("vector-effect", "non-scaling-stroke");
+    const styleAttr = target.getAttribute("style");
+    if (!styleAttr) return;
+    const filtered = styleAttr
+      .split(";")
+      .map((part) => part.trim())
+      .filter((part) => part && !/^stroke-width\s*:/i.test(part));
+    if (filtered.length) {
+      target.setAttribute("style", filtered.join("; "));
+    } else {
+      target.removeAttribute("style");
+    }
+  };
+
+  setWidth(node);
+
+  if (!recursive) {
+    return;
+  }
+
+  const shapeTags = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line"]);
+  Array.from(node.children || []).forEach((child) => {
+    if (!child || child.nodeType !== 1) return;
+    const tag = child.nodeName?.toLowerCase?.();
+    if (tag === "g") {
+      applyContourStrokeWidth(child, true);
+      return;
+    }
+    if (shapeTags.has(tag)) {
+      setWidth(child);
+    }
+  });
+};
+
+const extractStyleColor = (styleAttr, property) => {
+  if (!styleAttr || !property) return null;
+  const lowerProp = property.toLowerCase();
+  const parts = styleAttr.split(";");
+  for (const part of parts) {
+    if (!part) continue;
+    const [prop, value] = part.split(":");
+    if (!prop || !value) continue;
+    if (prop.trim().toLowerCase() === lowerProp) {
+      return value.trim();
+    }
+  }
+  return null;
+};
+
+const isVisiblePaint = (value) => {
+  if (!value) return false;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed) return false;
+  if (trimmed === "none") return false;
+  if (trimmed === "transparent") return false;
+  if (trimmed === "rgba(0,0,0,0)") return false;
+  if (trimmed === "hsla(0,0%,0%,0)") return false;
+  return true;
+};
+
+const hasVisibleFillPaint = (node, styleAttr) => {
+  if (!node || typeof node.getAttribute !== "function") return false;
+  const directFill = node.getAttribute("fill");
+  if (isVisiblePaint(directFill)) {
+    return true;
+  }
+  const styleFill = extractStyleColor(styleAttr || node.getAttribute("style"), "fill");
+  return isVisiblePaint(styleFill);
+};
+
+const isNodeInsideCutShape = (node) => {
+  if (!node) return false;
+
+  if (typeof node.getAttribute === "function" && node.getAttribute(CUT_FLAG_ATTRIBUTE) === "true") {
+    return true;
+  }
+
+  if (typeof node.closest === "function") {
+    const closest = node.closest(CUT_FLAG_SELECTOR);
+    if (closest) {
+      return true;
+    }
+  }
+
+  let parent = node.parentNode;
+  while (parent) {
+    if (
+      typeof parent.getAttribute === "function" &&
+      parent.getAttribute(CUT_FLAG_ATTRIBUTE) === "true"
+    ) {
+      return true;
+    }
+    parent = parent.parentNode;
+  }
+
+  return false;
+};
+
+const stripHoleStyleOverrides = (node) => {
+  if (!node || typeof node.getAttribute !== "function") return;
+  const styleAttr = node.getAttribute("style");
+  if (!styleAttr) return;
+  const filtered = styleAttr
+    .split(";")
+    .map((part) => part.trim())
+    .filter(
+      (part) =>
+        part &&
+        !/^stroke\s*:/i.test(part) &&
+        !/^fill\s*:/i.test(part) &&
+        !/^stroke-width\s*:/i.test(part) &&
+        !/^stroke-opacity\s*:/i.test(part) &&
+        !/^fill-opacity\s*:/i.test(part)
+    );
+
+  if (filtered.length) {
+    node.setAttribute("style", filtered.join("; "));
+  } else {
+    node.removeAttribute("style");
+  }
+};
+
+const applyHoleAppearance = (node) => {
+  if (!node || typeof node.setAttribute !== "function") return;
+  stripHoleStyleOverrides(node);
+  node.setAttribute("stroke", HOLE_STROKE_COLOR);
+  node.setAttribute("fill", HOLE_FILL_COLOR);
+  if (!node.getAttribute("stroke-width")) {
+    node.setAttribute("stroke-width", "1");
+  }
+  node.setAttribute("stroke-linejoin", node.getAttribute("stroke-linejoin") || "round");
+  node.setAttribute("stroke-linecap", node.getAttribute("stroke-linecap") || "round");
+  node.setAttribute("fill-opacity", "1");
+  node.setAttribute("stroke-opacity", "1");
+};
+
+const normalizeHoleShapes = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+  const nodes = rootElement.querySelectorAll(HOLE_NODE_SELECTOR);
+  nodes.forEach((node) => {
+    if (!node) return;
+    const tagName = node.nodeName?.toLowerCase?.();
+    if (tagName === "g" && typeof node.querySelectorAll === "function") {
+      const targets = node.querySelectorAll(HOLE_SHAPE_QUERY);
+      if (targets?.length) {
+        targets.forEach((child) => applyHoleAppearance(child));
+        return;
+      }
+    }
+    applyHoleAppearance(node);
+  });
+};
+
+const createInnerContourElement = (shapeNode, innerPathData) => {
+  if (!shapeNode || !innerPathData) return null;
+  if (typeof document === "undefined") return null;
+
+  const ns = shapeNode.namespaceURI || "http://www.w3.org/2000/svg";
+  const innerNode = document.createElementNS(ns, "path");
+
+  Array.from(shapeNode.attributes || []).forEach(({ name, value }) => {
+    if (name === "id") return;
+    if (GEOMETRY_ATTRIBUTES_TO_SKIP.has(name)) return;
+    innerNode.setAttribute(name, value);
+  });
+
+  const baseId = shapeNode.getAttribute("id");
+  if (baseId) {
+    innerNode.setAttribute("id", `${baseId}-inner`);
+  }
+
+  innerNode.setAttribute("d", innerPathData);
+  innerNode.setAttribute("data-inner-contour", "true");
+  innerNode.removeAttribute("data-inner-contour-added");
+  innerNode.setAttribute("fill", "none");
+  innerNode.removeAttribute("transform");
+
+  sanitizeInnerContourStyle(innerNode);
+  applyContourStrokeWidth(innerNode);
+
+  innerNode.setAttribute("stroke", TEXT_STROKE_COLOR);
+  innerNode.setAttribute("stroke-opacity", "1");
+  if (!innerNode.getAttribute("stroke-linejoin")) {
+    innerNode.setAttribute("stroke-linejoin", "round");
+  }
+  if (!innerNode.getAttribute("stroke-linecap")) {
+    innerNode.setAttribute("stroke-linecap", "round");
+  }
+
+  return innerNode;
+};
 
 const toMm = (px = 0) => (Number(px) || 0) / PX_PER_MM;
 
@@ -298,6 +722,92 @@ const convertPercentagesToAbsolute = (node, totals) => {
   });
 };
 
+const addInnerContoursForShapes = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+
+  const scope = ensurePaperScope();
+  if (!scope || !ClipperLib || !ClipperLib.ClipperOffset) {
+    return;
+  }
+
+  const shapeNodes = rootElement.querySelectorAll('[id^="shape-"]');
+
+  shapeNodes.forEach((shapeNode) => {
+    try {
+      if (!shapeNode || shapeNode.getAttribute('data-inner-contour-added') === 'true') {
+        return;
+      }
+
+      const nodeId = shapeNode.getAttribute('id') || '';
+      if (!nodeId || nodeId.endsWith('-inner')) {
+        return;
+      }
+
+      const thicknessMmAttr = shapeNode.getAttribute('data-shape-thickness-mm');
+      const thicknessData =
+        shapeNode.getAttribute('data-shape-thickness-px') ||
+        shapeNode.getAttribute('data-thickness-px') ||
+        shapeNode.getAttribute('stroke-width');
+      const styleAttr = shapeNode.getAttribute('style') || '';
+
+      if (isNodeInsideCutShape(shapeNode)) {
+        shapeNode.setAttribute('data-inner-contour-added', 'true');
+        return;
+      }
+
+      const hasFillAttr = shapeNode.getAttribute('data-shape-has-fill') === 'true';
+      const hasVisibleFill = hasVisibleFillPaint(shapeNode, styleAttr);
+
+      if (hasFillAttr || hasVisibleFill) {
+        shapeNode.setAttribute('data-inner-contour-added', 'true');
+        applyContourStrokeWidth(shapeNode, true);
+        return;
+      }
+
+      const thicknessMmValue = thicknessMmAttr ? parseFloat(thicknessMmAttr) : NaN;
+      let thicknessPx = Number.isFinite(thicknessMmValue)
+        ? thicknessMmValue * PX_PER_MM
+        : NaN;
+
+      if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
+        thicknessPx = thicknessData ? parseFloat(thicknessData) : NaN;
+
+        if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
+          const styleMatch = styleAttr.match(/stroke-width\s*:\s*([0-9.+-eE]+)\s*(px)?/i);
+          if (styleMatch) {
+            thicknessPx = parseFloat(styleMatch[1]);
+          }
+        }
+      }
+
+      if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
+        return;
+      }
+
+      const offsetDistancePx = thicknessPx + CONTOUR_STROKE_WIDTH_PX;
+      const innerPathData = buildInnerContourPathData(scope, shapeNode, offsetDistancePx);
+      if (!innerPathData) {
+        return;
+      }
+
+      const innerNode = createInnerContourElement(shapeNode, innerPathData);
+      if (!innerNode) {
+        return;
+      }
+
+      shapeNode.setAttribute('data-inner-contour-added', 'true');
+      applyContourStrokeWidth(shapeNode, true);
+
+      const parent = shapeNode.parentNode;
+      if (parent) {
+        parent.insertBefore(innerNode, shapeNode.nextSibling);
+      }
+    } catch (error) {
+      console.warn('Не вдалося додати внутрішній контур для фігури', error);
+    }
+  });
+};
+
 const normalizeStrokeValue = (value) => {
   if (typeof value !== "string") return "";
   const trimmed = value.trim().toLowerCase();
@@ -367,6 +877,12 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
 
   const elements = rootElement.querySelectorAll("*");
   elements.forEach((node) => {
+    if (isNodeInsideCutShape(node)) {
+      return;
+    }
+    if (node.getAttribute("data-shape-has-fill") === "true") {
+      return;
+    }
     // Перевіряємо stroke атрибут
     const strokeAttr = node.getAttribute("stroke");
     if (strokeAttr && colorsMatch(strokeAttr, themeStrokeColor)) {
@@ -436,6 +952,12 @@ const recolorStrokeAttributes = (rootElement) => {
 
   const elements = rootElement.querySelectorAll("*");
   elements.forEach((node) => {
+    if (isNodeInsideCutShape(node)) {
+      return;
+    }
+    if (node.getAttribute("data-shape-has-fill") === "true") {
+      return;
+    }
     const strokeAttr = node.getAttribute("stroke");
     if (strokeAttr && shouldRecolorStroke(strokeAttr)) {
       node.setAttribute("stroke", OUTLINE_STROKE_COLOR);
@@ -459,6 +981,9 @@ const convertTextToStrokeOnly = (rootElement) => {
 
   const textElements = rootElement.querySelectorAll("text, tspan");
   textElements.forEach((textNode) => {
+    if (isNodeInsideCutShape(textNode)) {
+      return;
+    }
     // Зберігаємо оригінальний fill або встановлюємо чорний за замовчуванням
     const currentFill = textNode.getAttribute("fill");
     if (!currentFill || currentFill === "none") {
@@ -483,6 +1008,27 @@ const convertTextToStrokeOnly = (rootElement) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(svg, "image/svg+xml");
       const svgElement = doc.documentElement.cloneNode(true);
+
+      // ВИДАЛЯЄМО всі rect елементи з чорним фоном на самому початку
+      const allRects = svgElement.querySelectorAll('rect');
+      allRects.forEach((rect) => {
+        const fill = rect.getAttribute('fill');
+        const fillStyle = rect.getAttribute('style')?.match(/fill\s*:\s*([^;]+)/)?.[1];
+        const fillValue = fill || fillStyle || '';
+        
+        // Перевіряємо чи це чорний фон
+        if (fillValue && (
+          fillValue === '#000' || 
+          fillValue === '#000000' || 
+          fillValue === 'black' ||
+          fillValue.toLowerCase() === 'rgb(0,0,0)' ||
+          fillValue.toLowerCase().includes('rgba(0,0,0') ||
+          fillValue.toLowerCase() === 'rgba(0, 0, 0, 1)'
+        )) {
+          // Видаляємо цей rect повністю
+          rect.remove();
+        }
+      });
 
       const rawWidth = parseFloat(svgElement.getAttribute("width"));
       const rawHeight = parseFloat(svgElement.getAttribute("height"));
@@ -555,9 +1101,11 @@ const convertTextToStrokeOnly = (rootElement) => {
       if (placement.themeStrokeColor) {
         convertThemeColorElementsToStroke(exportElement, placement.themeStrokeColor);
       }
-      
+
+      normalizeHoleShapes(exportElement);
       recolorStrokeAttributes(exportElement);
       convertTextToStrokeOnly(exportElement);
+      addInnerContoursForShapes(exportElement);
 
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
@@ -567,9 +1115,11 @@ const convertTextToStrokeOnly = (rootElement) => {
       if (placement.themeStrokeColor) {
         convertThemeColorElementsToStroke(previewElement, placement.themeStrokeColor);
       }
-      
+
+      normalizeHoleShapes(previewElement);
       recolorStrokeAttributes(previewElement);
       convertTextToStrokeOnly(previewElement);
+      addInnerContoursForShapes(previewElement);
 
       const serializer = new XMLSerializer();
       const exportMarkup = serializer.serializeToString(exportElement);

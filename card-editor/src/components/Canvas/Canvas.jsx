@@ -12,6 +12,7 @@ import {
   decorateQrGroup,
   DEFAULT_QR_CELL_SIZE,
 } from "../../utils/qrFabricUtils";
+import { ensureShapeSvgId } from "../../utils/shapeSvgId";
 
 // Відступи в межах viewport
 const MARGIN = 40;
@@ -2060,6 +2061,14 @@ const Canvas = () => {
         hardenHole(target);
         return; // не робимо активним
       }
+      try {
+        const fromShapeTab =
+          target.fromShapeTab === true ||
+          (target.data && target.data.fromShapeTab === true);
+        if (fromShapeTab) {
+          ensureShapeSvgId(target, fCanvas);
+        }
+      } catch {}
       // Правило шарів: текст завжди поверх усіх інших фігур
       try {
         if (isTextObj(target)) {

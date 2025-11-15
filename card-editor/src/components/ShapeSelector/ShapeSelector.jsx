@@ -7,6 +7,7 @@ import {
   /* ...existing code... */ makeRoundedSemiRoundPath,
 } from "../ShapeProperties/ShapeProperties";
 import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
+import { ensureShapeSvgId } from "../../utils/shapeSvgId";
 
 const DEFAULT_SHAPE_FILL = "#FFFFFF";
 const DEFAULT_SHAPE_STROKE = "#000000";
@@ -126,6 +127,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         followThemeStroke: true,
       });
       custom.pendingShapePropsDefaults = { fill: false, cut: false };
+      ensureShapeSvgId(custom, canvas);
       addObjectToCanvas(custom);
       setActiveObject(custom);
       setShapePropertiesOpen(true);
@@ -159,6 +161,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shapeType: "qrcode",
         selectable: true,
       });
+      ensureShapeSvgId(qr, canvas);
       addObjectToCanvas(qr);
       setActiveObject(qr);
       setShapePropertiesOpen(true);
@@ -463,6 +466,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       // Додаємо прапорець джерела (ShapeSelector)
       shape.fromShapeTab = true;
       shape.data = { ...(shape.data || {}), fromShapeTab: true };
+  ensureShapeSvgId(shape, canvas);
       addObjectToCanvas(shape);
       setActiveObject(shape);
       setShapePropertiesOpen(true);

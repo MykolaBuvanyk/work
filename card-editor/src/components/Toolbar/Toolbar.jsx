@@ -17,6 +17,7 @@ import CutSelector from "../CutSelector/CutSelector";
 import IconMenu from "../IconMenu/IconMenu";
 import UploadPreview from "../UploadPreview/UploadPreview";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
+import { ensureShapeSvgId } from "../../utils/shapeSvgId";
 import styles from "./Toolbar.module.css";
 import {
   buildQrSvgMarkup,
@@ -75,6 +76,9 @@ import {
 
 const DEFAULT_SHAPE_WIDTH_MM = 120;
 const DEFAULT_SHAPE_HEIGHT_MM = 80;
+const CUT_STROKE_COLOR = "#FD7714";
+const HOLE_FILL_COLOR = "#FFFFFF";
+const HOLE_ID_PREFIX = "hole";
 
 const Toolbar = () => {
   const {
@@ -5624,6 +5628,31 @@ const Toolbar = () => {
   // Фіксований відступ для прямокутних (квадратних) отворів — 2 мм
   const getRectHoleOffsetPx = () => mmToPx(2);
 
+  const registerHoleShape = (shape) => {
+    if (!shape) return shape;
+    try {
+      if (typeof shape.set === "function") {
+        shape.set({
+          stroke: shape.stroke || CUT_STROKE_COLOR,
+          fill: shape.fill || HOLE_FILL_COLOR,
+          isCutElement: true,
+          cutType: "hole",
+          preventThemeRecolor: true,
+        });
+      } else {
+        shape.stroke = shape.stroke || CUT_STROKE_COLOR;
+        shape.fill = shape.fill || HOLE_FILL_COLOR;
+        shape.isCutElement = true;
+        shape.cutType = "hole";
+        shape.preventThemeRecolor = true;
+      }
+      ensureShapeSvgId(shape, canvas, { prefix: HOLE_ID_PREFIX });
+    } catch (error) {
+      console.warn("Не вдалося призначити hole ID", error);
+    }
+    return shape;
+  };
+
   const createLockHoleCircle = () => {
     if (!canvas) return null;
     const canvasWidth = canvas.getWidth?.() || canvas.width || 0;
@@ -5646,12 +5675,13 @@ const Toolbar = () => {
     }
     semiCenterY = Math.max(holeRadiusPx, semiCenterY);
 
-    return new fabric.Circle({
+    return registerHoleShape(
+      new fabric.Circle({
       left: canvasWidth / 2,
       top: semiCenterY,
       radius: holeRadiusPx,
-      fill: "#FFFFFF",
-      stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
       strokeWidth: 1,
       originX: "center",
       originY: "center",
@@ -5665,9 +5695,10 @@ const Toolbar = () => {
       lockUniScaling: false,
       selectable: false,
       evented: false,
-      lockMovementX: true,
-      lockMovementY: true,
-    });
+        lockMovementX: true,
+        lockMovementY: true,
+      })
+    );
   };
 
   // Тип 1 - без отворів (по дефолту)
@@ -5731,12 +5762,12 @@ const Toolbar = () => {
         )} мм (тип 2, Ø ${holesDiameter} мм)`
       );
     } catch {}
-    const hole = new fabric.Circle({
+    const hole = registerHoleShape(new fabric.Circle({
       left: canvasWidth / 2,
       top: offsetPx,
       radius: mmToPx((holesDiameter || 2.5) / 2),
-      fill: "#FFFFFF", // Білий фон дирки
-      stroke: "#000000", // Чорний бордер
+      fill: HOLE_FILL_COLOR, // Білий фон дирки
+      stroke: CUT_STROKE_COLOR, // Оранжевий бордер
       strokeWidth: 1, // 1px
       originX: "center",
       originY: "center",
@@ -5753,7 +5784,7 @@ const Toolbar = () => {
       evented: false,
       lockMovementX: true,
       lockMovementY: true,
-    });
+    }));
     canvas.add(hole);
     canvas.renderAll();
   };
@@ -5776,12 +5807,12 @@ const Toolbar = () => {
       } catch {}
 
       // Лівий отвір
-      const leftHole = new fabric.Circle({
+      const leftHole = registerHoleShape(new fabric.Circle({
         left: offsetPx,
         top: canvasHeight / 2,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5797,15 +5828,15 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       // Правий отвір
-      const rightHole = new fabric.Circle({
+      const rightHole = registerHoleShape(new fabric.Circle({
         left: canvasWidth - offsetPx,
         top: canvasHeight / 2,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5821,7 +5852,7 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       canvas.add(leftHole);
       canvas.add(rightHole);
@@ -5847,12 +5878,12 @@ const Toolbar = () => {
       } catch {}
 
       // Верхній лівий
-      const topLeft = new fabric.Circle({
+      const topLeft = registerHoleShape(new fabric.Circle({
         left: offsetPx,
         top: offsetPx,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5868,15 +5899,15 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       // Верхній правий
-      const topRight = new fabric.Circle({
+      const topRight = registerHoleShape(new fabric.Circle({
         left: canvasWidth - offsetPx,
         top: offsetPx,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5892,15 +5923,15 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       // Нижній лівий
-      const bottomLeft = new fabric.Circle({
+      const bottomLeft = registerHoleShape(new fabric.Circle({
         left: offsetPx,
         top: canvasHeight - offsetPx,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5916,15 +5947,15 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       // Нижній правий
-      const bottomRight = new fabric.Circle({
+      const bottomRight = registerHoleShape(new fabric.Circle({
         left: canvasWidth - offsetPx,
         top: canvasHeight - offsetPx,
         radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         originX: "center",
         originY: "center",
@@ -5940,7 +5971,7 @@ const Toolbar = () => {
         evented: false,
         lockMovementX: true,
         lockMovementY: true,
-      });
+      }));
 
       canvas.add(topLeft);
       canvas.add(topRight);
@@ -5970,15 +6001,16 @@ const Toolbar = () => {
     const hwPx = toPx(holeWmm);
     const hhPx = toPx(holeHmm);
     const makeRect = (left, top) =>
-      new fabric.Rect({
+      registerHoleShape(
+        new fabric.Rect({
         left,
         top,
         width: hwPx,
         height: hhPx,
         originX: "center",
         originY: "center",
-        fill: "#FFFFFF",
-        stroke: "#000000",
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
         isCutElement: true,
         cutType: "hole",
@@ -5991,9 +6023,10 @@ const Toolbar = () => {
         lockUniScaling: false,
         selectable: false,
         evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      });
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
     const r1 = makeRect(cxLeft, cyTop);
     const r2 = makeRect(cxRight, cyTop);
     const r3 = makeRect(cxLeft, cyBottom);
@@ -6026,28 +6059,30 @@ const Toolbar = () => {
     // Динамічний відступ як у 7-ї дирки
     const offsetPx = getHoleOffsetPx();
     const centerY = hCanvasPx / 2;
-    const hole = new fabric.Circle({
-      left: offsetPx,
-      top: centerY,
-      radius: diameterPx / 2,
-      fill: "#FFFFFF",
-      stroke: "#000000",
-      strokeWidth: 1,
-      originX: "center",
-      originY: "center",
-      isCutElement: true,
-      cutType: "hole",
-      preventThemeRecolor: true,
-      hasControls: false,
-      hasBorders: true,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockUniScaling: true,
-      selectable: false,
-      evented: false,
-      lockMovementX: true,
-      lockMovementY: true,
-    });
+    const hole = registerHoleShape(
+      new fabric.Circle({
+        left: offsetPx,
+        top: centerY,
+        radius: diameterPx / 2,
+        fill: HOLE_FILL_COLOR,
+        stroke: CUT_STROKE_COLOR,
+        strokeWidth: 1,
+        originX: "center",
+        originY: "center",
+        isCutElement: true,
+        cutType: "hole",
+        preventThemeRecolor: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
+      })
+    );
     canvas.add(hole);
     hole.setCoords();
     try {
@@ -6077,28 +6112,30 @@ const Toolbar = () => {
         );
       } catch {}
 
-      const rightHole = new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 3) / 2),
-        fill: "#FFFFFF",
-        stroke: "#000000",
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      });
+      const rightHole = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: canvasHeight / 2,
+          radius: mmToPx((holesDiameter || 3) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       canvas.add(rightHole);
       canvas.renderAll();

@@ -152,6 +152,33 @@ const ShapeProperties = ({
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const roundMm = (mm) => Math.round((mm || 0) * 10) / 10;
 
+  const storeThicknessMetadata = (obj, thicknessMmValue) => {
+    if (!obj) return;
+    const numericMm = Number(thicknessMmValue);
+    if (!Number.isFinite(numericMm)) return;
+    const numericPx = mmToPx(numericMm);
+    obj.shapeThicknessMm = numericMm;
+    obj.shapeThicknessPx = numericPx;
+    if (!obj.data || typeof obj.data !== "object") {
+      obj.data = {};
+    }
+    obj.data.shapeThicknessMm = numericMm;
+    obj.data.shapeThicknessPx = numericPx;
+  };
+
+  const storeFillMetadata = (obj, hasFillEnabled) => {
+    if (!obj) return;
+    const normalized = !!hasFillEnabled;
+    obj.hasFillEnabled = normalized;
+    if (typeof obj.set === "function") {
+      obj.set("hasFillEnabled", normalized);
+    }
+    if (!obj.data || typeof obj.data !== "object") {
+      obj.data = {};
+    }
+    obj.data.hasFillEnabled = normalized;
+  };
+
   const buildRoundedPolygonPath = (points, radius, options) => {
     if (!points || points.length < 3) return "";
     const { clampFactor = 0.5 } = options || {};
@@ -712,6 +739,11 @@ const ShapeProperties = ({
             fillVal !== "" &&
             fillVal !== "transparent" &&
             fillVal !== "none";
+          storeThicknessMetadata(
+            activeObject,
+            pxToMm(activeObject.strokeWidth || 0)
+          );
+          storeFillMetadata(activeObject, !isManualCut && hasFill);
           setProperties({
             width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
             height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -781,6 +813,11 @@ const ShapeProperties = ({
           fillVal !== "" &&
           fillVal !== "transparent" &&
           fillVal !== "none";
+        storeThicknessMetadata(
+          activeObject,
+          pxToMm(activeObject.strokeWidth || 0)
+        );
+        storeFillMetadata(activeObject, !isManualCut && hasFill);
         setProperties({
           width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
           height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -843,6 +880,8 @@ const ShapeProperties = ({
       fillVal !== "" &&
       fillVal !== "transparent" &&
       fillVal !== "none";
+    storeThicknessMetadata(activeObject, pxToMm(activeObject.strokeWidth || 0));
+    storeFillMetadata(activeObject, !isManualCut && hasFill);
     setProperties({
       width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
       height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
@@ -875,6 +914,7 @@ const ShapeProperties = ({
     if (properties.fill) {
       try {
         obj.set({ fill: themeText, useThemeColor: true });
+        storeFillMetadata(obj, true);
         if (typeof obj.setCoords === "function") obj.setCoords();
         canvas.requestRenderAll();
       } catch {}
@@ -1028,6 +1068,7 @@ const ShapeProperties = ({
         const applied = Math.max(0, value || 0);
         holdCenterIfArrow((o) => {
           o.set("strokeWidth", mmToPx(applied));
+          storeThicknessMetadata(o, applied);
         });
         break;
       }
@@ -1036,8 +1077,10 @@ const ShapeProperties = ({
           if (value) {
             const themeFill = globalColors?.textColor || "#000000";
             o.set({ fill: themeFill, useThemeColor: true });
+            storeFillMetadata(o, true);
           } else {
             o.set({ fill: "transparent", useThemeColor: false });
+            storeFillMetadata(o, false);
           }
         });
         break;
@@ -1054,6 +1097,7 @@ const ShapeProperties = ({
             // Cut ON
             o.set("stroke", ORANGE);
             o.set({ fill: "#FFFFFF", useThemeColor: false });
+            storeFillMetadata(o, false);
             if (isCutShape) {
               // Не трогаем блокировки для врожденных CUT-элементов
               o.set({ isCutElement: true });
@@ -1088,8 +1132,10 @@ const ShapeProperties = ({
               // При включённом Fill заливаем цветом текста, иначе прозрачная заливка
               if (properties.fill) {
                 o.set({ fill: themeTextColor, useThemeColor: true });
+                storeFillMetadata(o, true);
               } else {
                 o.set({ fill: "transparent", useThemeColor: false });
+                storeFillMetadata(o, false);
               }
             }
           }

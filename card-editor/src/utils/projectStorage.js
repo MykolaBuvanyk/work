@@ -1,4 +1,4 @@
-import { decorateQrGroup } from "./qrFabricUtils";
+import { decorateQrGroup, removeBlackBackgroundRects } from "./qrFabricUtils";
 
 // Lightweight IndexedDB storage for projects and their canvases (JSON + preview)
 // Store: projects (keyPath: id)
@@ -673,10 +673,12 @@ export function exportCanvas(canvas, toolbarState = {}) {
           },
           width: width,
           height: height,
+          suppressPreamble: false, // Включаємо XML preamble для коректного SVG
         });
 
         // ВИПРАВЛЕННЯ: Очищаємо SVG від потенційно проблемних символів
-        previewSvg = rawSvg
+        // та видаляємо чорні rect backgrounds
+        previewSvg = removeBlackBackgroundRects(rawSvg)
           .replace(/[\x00-\x1F\x7F]/g, "") // Видаляємо control characters
           .replace(/[\uFFFE\uFFFF]/g, ""); // Видаляємо non-characters
 

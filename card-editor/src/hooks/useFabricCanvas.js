@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import * as fabric from "fabric";
 import { useCanvasContext } from "../contexts/CanvasContext";
+import { ensureShapeSvgId } from "../utils/shapeSvgId";
 
 const scheduleFrame = (fn) => {
   if (typeof window === "undefined") {
@@ -196,6 +197,7 @@ export const useFabricCanvas = () => {
                 obj.fromShapeTab === true ||
                 (obj.data && obj.data.fromShapeTab === true);
               if (fromShapeTab) {
+                  ensureShapeSvgId(obj, canvas);
                 if (obj.useThemeColor === undefined) {
                   obj.useThemeColor = false;
                 }

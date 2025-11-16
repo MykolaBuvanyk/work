@@ -9,11 +9,14 @@ import {
   addBlankUnsavedSign,
   updateCanvasInCurrentProject,
   deleteUnsavedSign,
+  generateCanvasPreviews,
 } from "../../utils/projectStorage";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
 import * as fabric from "fabric";
-import LayoutPlannerModal from "./LayoutPlannerModal/LayoutPlannerModal";
+import LayoutPlannerModal, {
+  buildPlacementPreview,
+} from "./LayoutPlannerModal/LayoutPlannerModal";
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
@@ -59,6 +62,7 @@ const ProjectCanvasesGrid = () => {
   const currentProjectCanvasIdRef = useRef(null); // track which project canvas is currently loaded
   const initialCanvasLoadRef = useRef(false);
   const openCanvasRef = useRef(null);
+  const sliderPreviewCacheRef = useRef(new Map());
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
@@ -372,11 +376,9 @@ const ProjectCanvasesGrid = () => {
               await updateUnsavedSignFromCanvas(activeUnsaved, canvas);
               console.log("Auto-saved with new preview for unsaved sign");
 
-              // Оновлюємо локальний state з новим preview
-              const newPreview =
-                canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
-              const newPreviewSvg = canvas.toSVG?.() || "";
-
+              const previews = await generateCanvasPreviews(canvas);
+              const newPreview = previews.previewPng;
+              const newPreviewSvg = previews.previewSvg;
               setUnsavedSigns((prev) =>
                 prev.map((sign) =>
                   sign.id === activeUnsaved
@@ -392,11 +394,9 @@ const ProjectCanvasesGrid = () => {
               await updateCanvasInCurrentProject(activeProjectCanvas, canvas);
               console.log("Auto-saved with new preview for project canvas");
 
-              // Оновлюємо локальний project state з новим preview
-              const newPreview =
-                canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
-              const newPreviewSvg = canvas.toSVG?.() || "";
-
+              const previews = await generateCanvasPreviews(canvas);
+              const newPreview = previews.previewPng;
+              const newPreviewSvg = previews.previewSvg;
               setProject((prev) => {
                 if (!prev) return prev;
                 return {
@@ -530,6 +530,42 @@ const ProjectCanvasesGrid = () => {
   const pxToMm = (px) => {
     const mm = (Number(px) || 0) / PX_PER_MM;
     return Math.round(mm);
+  };
+
+  const getSliderPreviewData = (canvasEntry) => {
+    if (!canvasEntry?.previewSvg) {
+      return null;
+    }
+
+    const cacheEntry = sliderPreviewCacheRef.current.get(canvasEntry.id);
+    if (cacheEntry && cacheEntry.svg === canvasEntry.previewSvg) {
+      return cacheEntry.data;
+    }
+
+    try {
+      const previewData = buildPlacementPreview({
+        id: canvasEntry.id,
+        name: canvasEntry.name,
+        width: pxToMm(canvasEntry.width),
+        height: pxToMm(canvasEntry.height),
+        sourceWidth: pxToMm(canvasEntry.width),
+        sourceHeight: pxToMm(canvasEntry.height),
+        svg: canvasEntry.previewSvg,
+        preview: canvasEntry.preview,
+        themeStrokeColor:
+          canvasEntry.toolbarState?.globalColors?.strokeColor || null,
+      });
+
+      sliderPreviewCacheRef.current.set(canvasEntry.id, {
+        svg: canvasEntry.previewSvg,
+        data: previewData,
+      });
+
+      return previewData;
+    } catch (error) {
+      console.error("Failed to prepare slider preview", error);
+      return null;
+    }
   };
 
   const openCanvas = async (canvasEntry) => {
@@ -1285,9 +1321,9 @@ const ProjectCanvasesGrid = () => {
             console.log("Auto-save completed for unsaved sign");
 
             // НОВЕ: Оновлюємо локальний state з новим preview
-            const newPreview =
-              canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
-            const newPreviewSvg = canvas.toSVG?.() || "";
+            const previews = await generateCanvasPreviews(canvas);
+            const newPreview = previews.previewPng;
+            const newPreviewSvg = previews.previewSvg;
 
             setUnsavedSigns((prev) =>
               prev.map((sign) =>
@@ -1315,9 +1351,9 @@ const ProjectCanvasesGrid = () => {
             console.log("Auto-save completed for project canvas");
 
             // НОВЕ: Оновлюємо локальний project state з новим preview
-            const newPreview =
-              canvas.toDataURL?.({ format: "png", multiplier: 0.5 }) || "";
-            const newPreviewSvg = canvas.toSVG?.() || "";
+            const previews = await generateCanvasPreviews(canvas);
+            const newPreview = previews.previewPng;
+            const newPreviewSvg = previews.previewSvg;
 
             setProject((prev) => {
               if (!prev) return prev;
@@ -1545,6 +1581,10 @@ const ProjectCanvasesGrid = () => {
                 c.preview &&
                 typeof c.preview === "string" &&
                 c.preview.trim().length > 0;
+              const sliderPreviewData = hasSvgPreview
+                ? getSliderPreviewData(c)
+                : null;
+              const inlinePreviewMarkup = sliderPreviewData?.previewMarkup;
 
               return (
                 <div
@@ -1568,15 +1608,21 @@ const ProjectCanvasesGrid = () => {
 
                   <div className={styles.thumb}>
                     {hasSvgPreview || hasPngPreview ? (
-                      hasSvgPreview ? (
-                        // ВИПРАВЛЕННЯ: Використовуємо URL encoding для SVG замість btoa
+                      inlinePreviewMarkup ? (
+                        <div
+                          className={styles.inlineSvgWrapper}
+                          dangerouslySetInnerHTML={{
+                            __html: inlinePreviewMarkup,
+                          }}
+                        />
+                      ) : hasSvgPreview ? (
+                        // Fallback: пряме відображення SVG якщо обробка не вдалась
                         <img
                           src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
                             c.previewSvg
                           )}`}
                           alt="preview"
                           onError={(e) => {
-                            // Fallback на PNG якщо SVG не завантажується
                             if (hasPngPreview) {
                               e.target.src = c.preview;
                             }

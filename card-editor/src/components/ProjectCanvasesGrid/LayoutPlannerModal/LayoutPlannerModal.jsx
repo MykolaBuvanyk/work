@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import JSZip from "jszip";
 import * as paperNamespace from "paper";
 import * as ClipperLibNamespace from "clipper-lib";
+import paper from "paper";
+import Shape from "clipper-js";
 import styles from "./LayoutPlannerModal.module.css";
 
 const PX_PER_MM = 72 / 25.4;
@@ -20,8 +22,8 @@ const ORIENTATION_LABELS = {
 const LAYOUT_OUTLINE_COLOR = "#0000FF";
 const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
 const TEXT_STROKE_COLOR = "#008181";
-const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
-const BLACK_STROKE_STYLE_PATTERN = /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
+// const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
+// const BLACK_STROKE_STYLE_PATTERN = /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
 const CUT_FLAG_ATTRIBUTE = "data-shape-cut";
 const CUT_TYPE_ATTRIBUTE = "data-shape-cut-type";
 const CUT_FLAG_SELECTOR = `[${CUT_FLAG_ATTRIBUTE}="true"]`;
@@ -444,6 +446,23 @@ const createInnerContourElement = (shapeNode, innerPathData) => {
 
   return innerNode;
 };
+const TEXT_OUTLINE_WIDTH = 0.5; // Зменшено для тонших ліній
+const TEXT_OUTLINE_HALF_WIDTH = TEXT_OUTLINE_WIDTH / 2;
+const TEXT_OUTLINE_SCALE = 256;
+const TEXT_OUTLINE_ROUND_PRECISION = 0.25;
+const TEXT_OUTLINE_FLATTEN_TOLERANCE = 0.25;
+const TEXT_OUTLINE_COORD_EPS = 1e-4;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const BLACK_STROKE_VALUES = new Set([
+  "#000",
+  "#000000",
+  "black",
+  "rgb(0,0,0)",
+  "rgba(0,0,0,1)",
+  "#000000ff",
+]);
+const BLACK_STROKE_STYLE_PATTERN =
+  /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
 
 const toMm = (px = 0) => (Number(px) || 0) / PX_PER_MM;
 
@@ -476,9 +495,10 @@ const normalizeDesigns = (designs = []) =>
 
       const copies = extractCopies(design);
       const svgContent = design?.previewSvg || null;
-      
+
       // Витягуємо strokeColor з toolbarState для відслідковування колірної теми
-      const themeStrokeColor = design?.toolbarState?.globalColors?.strokeColor || null;
+      const themeStrokeColor =
+        design?.toolbarState?.globalColors?.strokeColor || null;
 
       return {
         id: design.id ?? `design-${index}`,
@@ -495,7 +515,8 @@ const normalizeDesigns = (designs = []) =>
     })
     .filter(Boolean)
     .sort((a, b) => {
-      const largestSideDiff = Math.max(b.widthMm, b.heightMm) - Math.max(a.widthMm, a.heightMm);
+      const largestSideDiff =
+        Math.max(b.widthMm, b.heightMm) - Math.max(a.widthMm, a.heightMm);
       if (largestSideDiff !== 0) return largestSideDiff;
       return b.area - a.area;
     });
@@ -512,7 +533,10 @@ const planSheets = (items, sheetSize, spacingMm) => {
   const leftovers = [];
 
   const tryPlaceOnRow = (sheet, row, item, orientation) => {
-    if (orientation.width > sheetInnerWidth || orientation.height > sheetInnerHeight) {
+    if (
+      orientation.width > sheetInnerWidth ||
+      orientation.height > sheetInnerHeight
+    ) {
       return false;
     }
 
@@ -554,7 +578,10 @@ const planSheets = (items, sheetSize, spacingMm) => {
   };
 
   const tryPlaceOnNewRow = (sheet, item, orientation) => {
-    if (orientation.width > sheetInnerWidth || orientation.height > sheetInnerHeight) {
+    if (
+      orientation.width > sheetInnerWidth ||
+      orientation.height > sheetInnerHeight
+    ) {
       return false;
     }
 
@@ -603,7 +630,11 @@ const planSheets = (items, sheetSize, spacingMm) => {
     ];
 
     if (Math.abs(item.widthMm - item.heightMm) > 0.01) {
-      variants.push({ width: item.heightMm, height: item.widthMm, rotated: true });
+      variants.push({
+        width: item.heightMm,
+        height: item.widthMm,
+        rotated: true,
+      });
     }
 
     return variants;
@@ -693,7 +724,11 @@ const PERCENT_ATTR_HANDLERS = {
   r: (value, totals) => (value / 100) * Math.min(totals.width, totals.height),
 };
 
-const convertPercentAttributeValue = (attributeValue, totals, attributeName) => {
+const convertPercentAttributeValue = (
+  attributeValue,
+  totals,
+  attributeName
+) => {
   if (!attributeValue || typeof attributeValue !== "string") return null;
   const trimmed = attributeValue.trim();
   if (!trimmed.endsWith("%")) return null;
@@ -711,7 +746,11 @@ const convertPercentagesToAbsolute = (node, totals) => {
   if (!node || node.nodeType !== 1) return;
 
   Array.from(node.attributes || []).forEach((attribute) => {
-    const converted = convertPercentAttributeValue(attribute.value, totals, attribute.name);
+    const converted = convertPercentAttributeValue(
+      attribute.value,
+      totals,
+      attribute.name
+    );
     if (converted !== null) {
       node.setAttribute(attribute.name, String(converted));
     }
@@ -819,7 +858,12 @@ const normalizeStrokeValue = (value) => {
       .map((part) => part.trim());
     if (numbers.length >= 3) {
       const [r, g, b, a = "1"] = numbers;
-      if (Number(r) === 0 && Number(g) === 0 && Number(b) === 0 && Number(a) !== 0) {
+      if (
+        Number(r) === 0 &&
+        Number(g) === 0 &&
+        Number(b) === 0 &&
+        Number(a) !== 0
+      ) {
         return "rgb(0,0,0)";
       }
     }
@@ -836,7 +880,7 @@ const shouldRecolorStroke = (strokeValue) => {
 const normalizeColorValue = (color) => {
   if (typeof color !== "string") return "";
   const trimmed = color.trim().toLowerCase();
-  
+
   // Нормалізуємо rgb/rgba формати
   if (trimmed.startsWith("rgb")) {
     const numbers = trimmed
@@ -844,14 +888,14 @@ const normalizeColorValue = (color) => {
       .replace(/\)/, "")
       .split(",")
       .map((part) => part.trim());
-    
+
     if (numbers.length >= 3) {
-      const [r, g, b] = numbers.map(n => parseInt(n));
+      const [r, g, b] = numbers.map((n) => parseInt(n));
       // Конвертуємо в hex для порівняння
       return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
     }
   }
-  
+
   // Для hex кольорів - нормалізуємо до 6 символів
   if (trimmed.startsWith("#")) {
     if (trimmed.length === 4) {
@@ -861,7 +905,7 @@ const normalizeColorValue = (color) => {
     }
     return trimmed.slice(0, 7); // #RRGGBB
   }
-  
+
   return trimmed;
 };
 
@@ -883,15 +927,20 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
     if (node.getAttribute("data-shape-has-fill") === "true") {
       return;
     }
+    const tagName = node?.tagName ? node.tagName.toLowerCase() : "";
+    if (tagName === "text" || tagName === "tspan") {
+      return;
+    }
+
     // Перевіряємо stroke атрибут
     const strokeAttr = node.getAttribute("stroke");
     if (strokeAttr && colorsMatch(strokeAttr, themeStrokeColor)) {
       // Замінюємо на бірюзовий колір
       node.setAttribute("stroke", TEXT_STROKE_COLOR);
-      
+
       // Видаляємо fill, залишаємо тільки контур
       node.setAttribute("fill", "none");
-      
+
       // Додаємо властивості для кращого відображення
       if (!node.getAttribute("stroke-width")) {
         node.setAttribute("stroke-width", "1");
@@ -899,34 +948,37 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
       node.setAttribute("stroke-linejoin", "round");
       node.setAttribute("stroke-linecap", "round");
     }
-    
+
     // Перевіряємо fill атрибут
     const fillAttr = node.getAttribute("fill");
     if (fillAttr && colorsMatch(fillAttr, themeStrokeColor)) {
       // Конвертуємо fill в stroke
       node.setAttribute("stroke", TEXT_STROKE_COLOR);
       node.setAttribute("fill", "none");
-      
+
       if (!node.getAttribute("stroke-width")) {
         node.setAttribute("stroke-width", "1");
       }
       node.setAttribute("stroke-linejoin", "round");
       node.setAttribute("stroke-linecap", "round");
     }
-    
+
     // Перевіряємо style атрибут
     const styleAttr = node.getAttribute("style");
     if (styleAttr) {
       let updated = styleAttr;
       let hasThemeColor = false;
-      
+
       // Шукаємо stroke або fill з кольором теми в style
       const strokeMatch = styleAttr.match(/stroke\s*:\s*([^;]+)/i);
       if (strokeMatch && colorsMatch(strokeMatch[1], themeStrokeColor)) {
-        updated = updated.replace(/stroke\s*:\s*[^;]+/gi, `stroke: ${TEXT_STROKE_COLOR}`);
+        updated = updated.replace(
+          /stroke\s*:\s*[^;]+/gi,
+          `stroke: ${TEXT_STROKE_COLOR}`
+        );
         hasThemeColor = true;
       }
-      
+
       const fillMatch = styleAttr.match(/fill\s*:\s*([^;]+)/i);
       if (fillMatch && colorsMatch(fillMatch[1], themeStrokeColor)) {
         updated = updated.replace(/fill\s*:\s*[^;]+/gi, `fill: none`);
@@ -935,7 +987,7 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
         }
         hasThemeColor = true;
       }
-      
+
       if (hasThemeColor) {
         if (!updated.includes("stroke-width:")) {
           updated += `; stroke-width: 1`;
@@ -976,31 +1028,570 @@ const recolorStrokeAttributes = (rootElement) => {
   });
 };
 
-const convertTextToStrokeOnly = (rootElement) => {
-  if (!rootElement?.querySelectorAll) return;
+const normalizeColorString = (value = "") =>
+  String(value).trim().toLowerCase().replace(/\s+/g, "");
 
-  const textElements = rootElement.querySelectorAll("text, tspan");
-  textElements.forEach((textNode) => {
-    if (isNodeInsideCutShape(textNode)) {
+const isWhiteColorString = (value = "") => {
+  const normalized = normalizeColorString(value);
+  if (!normalized) return false;
+  return (
+    normalized === "#fff" ||
+    normalized === "#ffffff" ||
+    normalized === "white" ||
+    normalized === "rgb(255,255,255)" ||
+    normalized === "rgba(255,255,255,1)"
+  );
+};
+
+const nodeHasWhiteFill = (node) => {
+  if (!node || typeof node.getAttribute !== "function") return false;
+  const fillAttr = node.getAttribute("fill");
+  if (fillAttr && isWhiteColorString(fillAttr)) return true;
+  const styleAttr = node.getAttribute("style") || "";
+  const match = styleAttr.match(/fill\s*:\s*([^;]+)/i);
+  if (match && isWhiteColorString(match[1])) return true;
+  return false;
+};
+
+const stripStyleProperties = (styleAttr = "", properties = []) => {
+  if (!styleAttr) return "";
+  const props = properties.map((prop) => prop.toLowerCase());
+  return styleAttr
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .filter((declaration) => {
+      const [prop] = declaration.split(":");
+      if (!prop) return false;
+      return !props.includes(prop.trim().toLowerCase());
+    })
+    .join("; ");
+};
+
+const appendStyleDeclarations = (baseStyle = "", declarations = []) => {
+  const filtered = declarations.filter((declaration) => Boolean(declaration));
+  if (!baseStyle && !filtered.length) {
+    return "";
+  }
+  if (!filtered.length) {
+    return baseStyle;
+  }
+  return baseStyle
+    ? `${baseStyle}; ${filtered.join("; ")}`
+    : filtered.join("; ");
+};
+
+const filterBarcodeRects = (rects) => {
+  if (!Array.isArray(rects) || rects.length === 0) {
+    return [];
+  }
+  const widths = rects
+    .map((rect) => parseFloat(rect.getAttribute("width") || "0"))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const minWidth = widths.length ? Math.min(...widths) : null;
+  const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
+  return rects.filter((rect) => {
+    if (nodeHasWhiteFill(rect)) return false;
+    const width = parseFloat(rect.getAttribute("width") || "0");
+    if (!Number.isFinite(width) || width <= 0) return false;
+    if (widthThreshold !== Infinity && width > widthThreshold) return false;
+    return true;
+  });
+};
+
+const collectBarcodeRectDescendants = (node) => {
+  if (!node || node.nodeType !== 1) return [];
+  if (typeof node.querySelectorAll === "function") {
+    return Array.from(node.querySelectorAll("rect"));
+  }
+  const stack = Array.from(node.childNodes || []);
+  const result = [];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || current.nodeType !== 1) continue;
+    if ((current.nodeName || "").toLowerCase() === "rect") {
+      result.push(current);
+      continue;
+    }
+    if (current.childNodes && current.childNodes.length) {
+      stack.push(...current.childNodes);
+    }
+  }
+  return result;
+};
+
+// Heuristic: detect JsBarcode-like groups and convert their rects to stroke-only
+const isLikelyBarcodeGroupPreview = (node) => {
+  if (!node || node.nodeType !== 1) return false;
+  const tag = (node.nodeName || "").toLowerCase();
+  if (tag !== "g" && tag !== "svg") return false;
+  const rects = collectBarcodeRectDescendants(node);
+  if (rects.length < 12) return false;
+  const heights = [];
+  const widths = [];
+  for (const r of rects) {
+    const w = parseFloat(r.getAttribute("width"));
+    const h = parseFloat(r.getAttribute("height"));
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0)
+      return false;
+    widths.push(w);
+    heights.push(h);
+  }
+  const minH = Math.min(...heights);
+  const maxH = Math.max(...heights);
+  if (maxH === 0) return false;
+  if ((maxH - minH) / maxH > 0.05) return false;
+  const avgW = widths.reduce((a, b) => a + b, 0) / widths.length;
+  if (maxH / avgW < 2) return false;
+  return true;
+};
+
+const BARCODE_STYLE_PROPS = [
+  "fill",
+  "stroke",
+  "stroke-width",
+  "stroke-linecap",
+  "stroke-linejoin",
+  "stroke-opacity",
+];
+
+const outlineBarcodeRects = (rootElement) => {
+  if (!rootElement) return;
+
+  let outlinedGroups = 0;
+
+  const walk = (node) => {
+    if (!node || node.nodeType !== 1) return;
+
+    if (isLikelyBarcodeGroupPreview(node)) {
+      const rects = filterBarcodeRects(collectBarcodeRectDescendants(node));
+      if (rects.length) {
+        outlinedGroups += 1;
+        rects.forEach((rect) => {
+          const strokeWidth = rect.getAttribute("stroke-width") || "1";
+          rect.setAttribute("fill", "none");
+          rect.setAttribute("stroke", TEXT_STROKE_COLOR);
+          rect.setAttribute("stroke-width", strokeWidth);
+          rect.setAttribute("stroke-linejoin", "round");
+          rect.setAttribute("stroke-linecap", "round");
+
+          const baseStyle = stripStyleProperties(
+            rect.getAttribute("style") || "",
+            BARCODE_STYLE_PROPS
+          );
+          const style = appendStyleDeclarations(baseStyle, [
+            "fill: none",
+            `stroke: ${TEXT_STROKE_COLOR}`,
+            `stroke-width: ${strokeWidth}`,
+            "stroke-linejoin: round",
+            "stroke-linecap: round",
+          ]);
+          if (style) {
+            rect.setAttribute("style", style);
+          } else if (rect.hasAttribute("style")) {
+            rect.removeAttribute("style");
+          }
+        });
+      }
+    }
+
+    const children = node.childNodes || [];
+    for (let i = 0; i < children.length; i += 1) {
+      walk(children[i]);
+    }
+  };
+
+  walk(rootElement);
+  return outlinedGroups;
+};
+
+let textOutlineScope = null;
+
+const ensureTextOutlineScope = () => {
+  if (textOutlineScope) {
+    return textOutlineScope;
+  }
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    const scope = new paper.PaperScope();
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 1024;
+    scope.setup(canvas);
+    textOutlineScope = scope;
+    return textOutlineScope;
+  } catch (error) {
+    console.error("Failed to setup Paper.js scope for text outlines", error);
+    return null;
+  }
+};
+
+const parseStyleString = (styleAttr) => {
+  if (!styleAttr) return {};
+  return styleAttr
+    .split(";")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .reduce((acc, declaration) => {
+      const parts = declaration.split(":");
+      if (parts.length < 2) return acc;
+      const property = parts[0].trim();
+      const value = parts.slice(1).join(":").trim();
+      if (!property || !value) return acc;
+      acc[property] = value;
+      return acc;
+    }, {});
+};
+
+const collectStyleFromNode = (node) => {
+  if (!node) return {};
+  const style = parseStyleString(node.getAttribute("style") || "");
+  const trackedAttributes = [
+    "font-family",
+    "font-size",
+    "font-style",
+    "font-weight",
+    "text-anchor",
+    "letter-spacing",
+    "line-height",
+    "baseline-shift",
+    "fill",
+    "fill-opacity",
+    "opacity",
+  ];
+  trackedAttributes.forEach((attr) => {
+    const value = node.getAttribute(attr);
+    if (value != null) {
+      style[attr] = value;
+    }
+  });
+  return style;
+};
+
+const formatSvgNumber = (value) => {
+  if (!Number.isFinite(value)) return "0";
+  const rounded = Math.round(value * 1000) / 1000;
+  let str = rounded.toFixed(3);
+  str = str.replace(/\.?0+$/, "");
+  if (str === "-0") str = "0";
+  return str;
+};
+
+const sanitizePointsSequence = (points) => {
+  if (!Array.isArray(points)) return [];
+  const sanitized = [];
+  for (let idx = 0; idx < points.length; idx += 1) {
+    const pt = points[idx];
+    if (!pt) continue;
+    const prev = sanitized[sanitized.length - 1];
+    if (
+      prev &&
+      Math.abs(prev.X - pt.X) <= TEXT_OUTLINE_COORD_EPS &&
+      Math.abs(prev.Y - pt.Y) <= TEXT_OUTLINE_COORD_EPS
+    ) {
+      continue;
+    }
+    sanitized.push({ X: pt.X, Y: pt.Y });
+  }
+  if (sanitized.length > 1) {
+    const first = sanitized[0];
+    const last = sanitized[sanitized.length - 1];
+    if (
+      Math.abs(first.X - last.X) <= TEXT_OUTLINE_COORD_EPS &&
+      Math.abs(first.Y - last.Y) <= TEXT_OUTLINE_COORD_EPS
+    ) {
+      sanitized.pop();
+    }
+  }
+  return sanitized;
+};
+
+const ensureClosedPolygon = (points) => {
+  const sanitized = sanitizePointsSequence(points);
+  if (!sanitized.length) return [];
+  const closed = sanitized.map((pt) => ({ X: pt.X, Y: pt.Y }));
+  const first = closed[0];
+  const last = closed[closed.length - 1];
+  if (
+    Math.abs(first.X - last.X) > TEXT_OUTLINE_COORD_EPS ||
+    Math.abs(first.Y - last.Y) > TEXT_OUTLINE_COORD_EPS
+  ) {
+    closed.push({ X: first.X, Y: first.Y });
+  }
+  return closed;
+};
+
+const pointsToPathData = (points, closePath = false) => {
+  const sanitized = sanitizePointsSequence(points);
+  if (sanitized.length < 2) return "";
+  const move = `M${formatSvgNumber(sanitized[0].X)} ${formatSvgNumber(
+    sanitized[0].Y
+  )}`;
+  const draw = sanitized
+    .slice(1)
+    .map((pt) => `L${formatSvgNumber(pt.X)} ${formatSvgNumber(pt.Y)}`)
+    .join(" ");
+  const base = draw ? `${move} ${draw}` : move;
+  return closePath ? `${base} Z` : base;
+};
+
+const extractPolygonsFromPathItem = (scope, pathItem) => {
+  const polygons = [];
+  const traverse = (item) => {
+    if (!item) return;
+    const className =
+      typeof item.getClassName === "function"
+        ? item.getClassName()
+        : item.className;
+    if (className === "CompoundPath") {
+      (item.children || []).forEach(traverse);
       return;
     }
-    // Зберігаємо оригінальний fill або встановлюємо чорний за замовчуванням
-    const currentFill = textNode.getAttribute("fill");
-    if (!currentFill || currentFill === "none") {
-      textNode.setAttribute("fill", "#000000");
+    if (className !== "Path") {
+      return;
     }
-    
-    // Встановлюємо stroke (обводку) з кольором #008181
-    textNode.setAttribute("stroke", TEXT_STROKE_COLOR);
-    
-    // Встановлюємо ширину обводки
-    textNode.setAttribute("stroke-width", "1.5");
-    
-    // Додаємо додаткові властивості для кращого відображення
-    textNode.setAttribute("stroke-linejoin", "round");
-    textNode.setAttribute("stroke-linecap", "round");
+    try {
+      item.flatten?.(TEXT_OUTLINE_FLATTEN_TOLERANCE);
+    } catch {}
+    const segments = item.segments || [];
+    if (segments.length >= 2) {
+      const points = segments.map((seg) => ({
+        X: seg.point.x,
+        Y: seg.point.y,
+      }));
+      const openPoints = sanitizePointsSequence(points);
+      const clipperPoints = ensureClosedPolygon(points);
+      if (openPoints.length >= 2 && clipperPoints.length >= 3) {
+        polygons.push({ openPoints, clipperPoints });
+      }
+    }
+  };
+  traverse(pathItem);
+  return polygons;
+};
+
+const offsetPolygonPaths = (clipperPoints, delta) => {
+  if (!clipperPoints.length || delta === 0) {
+    return [];
+  }
+  const shape = new Shape([clipperPoints.map((pt) => ({ X: pt.X, Y: pt.Y }))]);
+  shape.scaleUp(TEXT_OUTLINE_SCALE);
+  const offsetShape = shape.offset(delta * TEXT_OUTLINE_SCALE, {
+    jointType: "jtRound",
+    endType: "etClosedPolygon",
+    roundPrecision: TEXT_OUTLINE_ROUND_PRECISION,
   });
-};const buildPlacementPreview = (placement) => {
+  offsetShape.scaleDown(TEXT_OUTLINE_SCALE);
+  return offsetShape.paths || [];
+};
+
+const buildOutlineElementsFromPathItem = (scope, doc, pathItem) => {
+  const polygons = extractPolygonsFromPathItem(scope, pathItem);
+  const elements = [];
+
+  polygons.forEach(({ openPoints, clipperPoints }) => {
+    // Замість складних контурів просто малюємо stroke - svg-to-pdfkit краще підтримує прості stroke
+    const strokePathData = pointsToPathData(openPoints, true);
+    if (strokePathData) {
+      const strokePath = doc.createElementNS(SVG_NS, "path");
+      strokePath.setAttribute("d", strokePathData);
+      strokePath.setAttribute("fill", "none");
+      strokePath.setAttribute("stroke", TEXT_STROKE_COLOR);
+      strokePath.setAttribute("stroke-width", `${TEXT_OUTLINE_WIDTH}`);
+      strokePath.setAttribute("stroke-linejoin", "round");
+      strokePath.setAttribute("stroke-linecap", "round");
+      elements.push(strokePath);
+    }
+  });
+
+  try {
+    pathItem.remove();
+  } catch {}
+
+  return elements;
+};
+
+const applyStrokeStyleRecursive = (node, color) => {
+  if (!node || node.nodeType !== 1) return;
+  const tagName = node.nodeName ? node.nodeName.toLowerCase() : "";
+  if (tagName === "text" || tagName === "tspan") {
+    node.setAttribute("fill", "none");
+    node.setAttribute("stroke", color);
+    node.setAttribute("stroke-width", `${TEXT_OUTLINE_WIDTH}`);
+    node.setAttribute("stroke-linejoin", "round");
+    node.setAttribute("stroke-linecap", "round");
+    // Видалили vector-effect, бо svg-to-pdfkit не підтримує
+  }
+  const children = node.childNodes || [];
+  for (let idx = 0; idx < children.length; idx += 1) {
+    applyStrokeStyleRecursive(children[idx], color);
+  }
+};
+
+const convertTextNodeWithPaper = (scope, doc, textNode) => {
+  const clone = textNode.cloneNode(true);
+  let imported;
+  try {
+    imported = scope.project.importSVG(clone, {
+      insert: true,
+      expandShapes: true,
+      applyMatrix: true,
+    });
+  } catch (error) {
+    console.error("Failed to import text node into Paper.js", error);
+    return [];
+  }
+
+  if (!imported) {
+    return [];
+  }
+
+  const itemsToExport = [];
+  const collectOutlines = (item) => {
+    if (!item) return;
+    const className =
+      typeof item.getClassName === "function"
+        ? item.getClassName()
+        : item.className;
+    const isPointText =
+      (scope.PointText && item instanceof scope.PointText) ||
+      className === "PointText";
+    const isPathLike =
+      (scope.PathItem && item instanceof scope.PathItem) ||
+      className === "CompoundPath" ||
+      className === "Path";
+
+    if (isPointText) {
+      try {
+        const outline = item.toPath(true);
+        if (outline) {
+          if (Array.isArray(outline)) {
+            outline.forEach(collectOutlines);
+          } else {
+            collectOutlines(outline);
+          }
+        }
+      } catch (error) {
+        console.error("Paper.js failed to convert PointText to path", error);
+      }
+      item.remove();
+      return;
+    }
+
+    if (isPathLike) {
+      itemsToExport.push(item);
+      return;
+    }
+
+    if (item.children && item.children.length) {
+      const children = Array.from(item.children);
+      children.forEach(collectOutlines);
+      item.remove();
+      return;
+    }
+
+    item.remove();
+  };
+
+  collectOutlines(imported);
+
+  if (typeof imported.remove === "function") {
+    imported.remove();
+  }
+
+  const nodes = [];
+  itemsToExport.forEach((pathItem) => {
+    try {
+      const outlineNodes =
+        buildOutlineElementsFromPathItem(scope, doc, pathItem) || [];
+      if (outlineNodes.length) {
+        nodes.push(...outlineNodes);
+      }
+    } catch (error) {
+      console.error("Failed to build outline for text path", error);
+    }
+  });
+
+  return nodes;
+};
+
+const convertTextToOutlinedPaths = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+
+  const scope = ensureTextOutlineScope();
+  if (!scope) return;
+
+  try {
+    scope.activate();
+  } catch (error) {
+    console.error("Failed to activate Paper.js scope", error);
+  }
+
+  if (scope.project && scope.project.activeLayer) {
+    scope.project.activeLayer.removeChildren();
+  }
+
+  const textNodes = Array.from(rootElement.querySelectorAll("text"));
+  const svgNamespace = "http://www.w3.org/2000/svg";
+
+  textNodes.forEach((textNode) => {
+    try {
+      const parent = textNode.parentNode;
+      if (!parent) return;
+
+      const doc = textNode.ownerDocument;
+      const baseStyle = collectStyleFromNode(textNode);
+      const transformAttr = textNode.getAttribute("transform") || "";
+      const opacityAttr = textNode.getAttribute("opacity") || baseStyle.opacity;
+      const fillOpacityAttr =
+        textNode.getAttribute("fill-opacity") || baseStyle["fill-opacity"];
+
+      const outlinedElements = convertTextNodeWithPaper(scope, doc, textNode);
+
+      if (!outlinedElements.length) {
+        applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+        return;
+      }
+
+      const needsGroup = Boolean(
+        transformAttr || opacityAttr || fillOpacityAttr
+      );
+      if (needsGroup) {
+        const group = doc.createElementNS(svgNamespace, "g");
+        if (transformAttr) {
+          group.setAttribute("transform", transformAttr);
+        }
+        if (opacityAttr != null) {
+          group.setAttribute("opacity", opacityAttr);
+        }
+        if (fillOpacityAttr != null) {
+          group.setAttribute("fill-opacity", fillOpacityAttr);
+        }
+        outlinedElements.forEach((element) => {
+          group.appendChild(element);
+        });
+        parent.insertBefore(group, textNode);
+      } else {
+        outlinedElements.forEach((element) => {
+          parent.insertBefore(element, textNode);
+        });
+      }
+
+      parent.removeChild(textNode);
+    } catch (error) {
+      console.error("Failed to convert text node to outline", error);
+      applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+    }
+  });
+
+  if (scope.project && scope.project.activeLayer) {
+    scope.project.activeLayer.removeChildren();
+  }
+};
+
+const buildPlacementPreview = (placement) => {
   const { svg, preview } = placement || {};
 
   if (svg && typeof window !== "undefined") {
@@ -1043,15 +1634,27 @@ const convertTextToStrokeOnly = (rootElement) => {
 
         if (viewBoxParts.length === 4) {
           const [minX, minY, vbWidth, vbHeight] = viewBoxParts;
-          if ((minX !== 0 || minY !== 0) && Number.isFinite(minX) && Number.isFinite(minY)) {
+          if (
+            (minX !== 0 || minY !== 0) &&
+            Number.isFinite(minX) &&
+            Number.isFinite(minY)
+          ) {
             const ns = svgElement.namespaceURI || "http://www.w3.org/2000/svg";
             const wrapper = doc.createElementNS(ns, "g");
 
-            const nodesToWrap = Array.from(svgElement.childNodes).filter((node) => {
-              if (node.nodeType !== 1) return false;
-              const tag = node.nodeName.toLowerCase();
-              return tag !== "defs" && tag !== "style" && tag !== "title" && tag !== "desc" && tag !== "metadata";
-            });
+            const nodesToWrap = Array.from(svgElement.childNodes).filter(
+              (node) => {
+                if (node.nodeType !== 1) return false;
+                const tag = node.nodeName.toLowerCase();
+                return (
+                  tag !== "defs" &&
+                  tag !== "style" &&
+                  tag !== "title" &&
+                  tag !== "desc" &&
+                  tag !== "metadata"
+                );
+              }
+            );
 
             nodesToWrap.forEach((node) => {
               wrapper.appendChild(node);
@@ -1074,7 +1677,10 @@ const convertTextToStrokeOnly = (rootElement) => {
         const intrinsicHeight = Number.isFinite(rawHeight)
           ? rawHeight
           : placement.sourceHeight || placement.height;
-        svgElement.setAttribute("viewBox", `0 0 ${intrinsicWidth} ${intrinsicHeight}`);
+        svgElement.setAttribute(
+          "viewBox",
+          `0 0 ${intrinsicWidth} ${intrinsicHeight}`
+        );
       }
 
       if (!svgElement.getAttribute("preserveAspectRatio")) {
@@ -1099,41 +1705,91 @@ const convertTextToStrokeOnly = (rootElement) => {
 
       // Конвертуємо елементи з кольором теми в бірюзовий stroke
       if (placement.themeStrokeColor) {
-        convertThemeColorElementsToStroke(exportElement, placement.themeStrokeColor);
+        convertThemeColorElementsToStroke(
+          exportElement,
+          placement.themeStrokeColor
+        );
       }
 
       normalizeHoleShapes(exportElement);
       recolorStrokeAttributes(exportElement);
-      convertTextToStrokeOnly(exportElement);
+      // convertTextToStrokeOnly(exportElement);
       addInnerContoursForShapes(exportElement);
+      // recolorStrokeAttributes(exportElement);
+
+      // Конвертуємо текст у контури, щоб шрифт збігався з оригіналом
+      convertTextToOutlinedPaths(exportElement);
+
+      // Якщо якісь <text> залишились (помилка конвертації) — застосовуємо stroke як fallback
+      const textNodes = Array.from(exportElement.querySelectorAll("text"));
+      textNodes.forEach((textNode) => {
+        applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+      });
 
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
-      
+
       // Конвертуємо елементи з кольором теми для preview також
       if (placement.themeStrokeColor) {
-        convertThemeColorElementsToStroke(previewElement, placement.themeStrokeColor);
+        convertThemeColorElementsToStroke(
+          previewElement,
+          placement.themeStrokeColor
+        );
       }
 
       normalizeHoleShapes(previewElement);
       recolorStrokeAttributes(previewElement);
-      convertTextToStrokeOnly(previewElement);
+      // convertTextToStrokeOnly(previewElement);
       addInnerContoursForShapes(previewElement);
+      // recolorStrokeAttributes(previewElement);
+
+      convertTextToOutlinedPaths(previewElement);
+
+      const previewTextNodes = Array.from(
+        previewElement.querySelectorAll("text")
+      );
+      previewTextNodes.forEach((textNode) => {
+        applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+      });
+
+      try {
+        outlineBarcodeRects(exportElement);
+      } catch (barcodeExportError) {
+        console.warn(
+          "Barcode outline (export) failed:",
+          barcodeExportError?.message || barcodeExportError
+        );
+      }
+
+      try {
+        outlineBarcodeRects(previewElement);
+      } catch (barcodePreviewError) {
+        console.warn(
+          "Barcode outline (preview) failed:",
+          barcodePreviewError?.message || barcodePreviewError
+        );
+      }
 
       const serializer = new XMLSerializer();
       const exportMarkup = serializer.serializeToString(exportElement);
       const previewMarkup = serializer.serializeToString(previewElement);
-      const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(previewMarkup)}`;
+      const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+        previewMarkup
+      )}`;
 
       return {
         type: "svg",
         url: dataUri,
+        previewMarkup,
         exportMarkup,
         fileName: `${placement.baseId || placement.id}.svg`,
       };
     } catch (error) {
-      console.error("Не вдалося підготувати SVG для попереднього перегляду", error);
+      console.error(
+        "Не вдалося підготувати SVG для попереднього перегляду",
+        error
+      );
     }
   }
 
@@ -1144,7 +1800,12 @@ const convertTextToStrokeOnly = (rootElement) => {
   return null;
 };
 
-const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) => {
+const LayoutPlannerModal = ({
+  isOpen,
+  onClose,
+  designs = [],
+  spacingMm = 5,
+}) => {
   const [formatKey, setFormatKey] = useState("A4");
   const [orientation, setOrientation] = useState("portrait");
   const [isExporting, setIsExporting] = useState(false);
@@ -1185,12 +1846,22 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
   const sheetArea = sheetSize.width * sheetSize.height;
   const totalUsedArea = sheets.reduce((acc, sheet) => acc + sheet.usedArea, 0);
   const sheetsCount = sheets.length;
-  const coverage = sheetsCount > 0 ? Math.round((totalUsedArea / (sheetArea * sheetsCount)) * 100) : 0;
+  const coverage =
+    sheetsCount > 0
+      ? Math.round((totalUsedArea / (sheetArea * sheetsCount)) * 100)
+      : 0;
   const totalRequestedCopies = useMemo(
-    () => normalizedItems.reduce((acc, item) => acc + Math.max(1, item.copies || 0), 0),
+    () =>
+      normalizedItems.reduce(
+        (acc, item) => acc + Math.max(1, item.copies || 0),
+        0
+      ),
     [normalizedItems]
   );
-  const placedCopies = sheets.reduce((acc, sheet) => acc + sheet.placements.length, 0);
+  const placedCopies = sheets.reduce(
+    (acc, sheet) => acc + sheet.placements.length,
+    0
+  );
   const leftoverCopies = leftovers.length;
   const nothingToPlace = totalRequestedCopies === 0;
 
@@ -1204,7 +1875,10 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
 
     setIsExporting(true);
     try {
-      const timestamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:T]/g, "-")
+        .slice(0, 19);
       const sheetLabel = FORMATS[formatKey]?.label || "sheet";
       const zip = new JSZip();
 
@@ -1214,7 +1888,9 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
 
           if (previewData?.type === "svg" && previewData.exportMarkup) {
             try {
-              const fileName = previewData.fileName || `${placement.baseId || placement.id}.svg`;
+              const fileName =
+                previewData.fileName ||
+                `${placement.baseId || placement.id}.svg`;
               zip.file(fileName, previewData.exportMarkup);
             } catch (zipError) {
               console.error("Не вдалося додати SVG у ZIP", zipError);
@@ -1231,7 +1907,10 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
             height: placement.height,
             copyIndex: placement.copyIndex ?? 1,
             copies: placement.copies ?? 1,
-            svgMarkup: previewData?.type === "svg" ? previewData.exportMarkup : null,
+            svgMarkup:
+              previewData?.type === "svg" ? previewData.exportMarkup : null,
+            sourceWidth: placement.sourceWidth || placement.width,
+            sourceHeight: placement.sourceHeight || placement.height,
           };
         });
 
@@ -1243,7 +1922,8 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
         };
       });
 
-      const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || "/api/layout-pdf";
+      const exportEndpoint =
+        import.meta.env.VITE_LAYOUT_EXPORT_URL || "/api/layout-pdf";
       const response = await fetch(exportEndpoint, {
         method: "POST",
         headers: {
@@ -1292,7 +1972,9 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
     } catch (error) {
       console.error("Failed to export PDF", error);
       if (typeof window !== "undefined" && typeof window.alert === "function") {
-        window.alert("Не вдалося зберегти PDF. Переконайтеся, що сервер експорту запущено та доступний.");
+        window.alert(
+          "Не вдалося зберегти PDF. Переконайтеся, що сервер експорту запущено та доступний."
+        );
       }
     } finally {
       setIsExporting(false);
@@ -1308,10 +1990,15 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
           <div>
             <h2>План друку полотен</h2>
             <p className={styles.subtitle}>
-              Формат {FORMATS[formatKey]?.label} · проміжок між полотнами {spacingMm} мм · {ORIENTATION_LABELS[orientation]}
+              Формат {FORMATS[formatKey]?.label} · проміжок між полотнами{" "}
+              {spacingMm} мм · {ORIENTATION_LABELS[orientation]}
             </p>
           </div>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="Закрити">
+          <button
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label="Закрити"
+          >
             ×
           </button>
         </div>
@@ -1319,7 +2006,10 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
         <div className={styles.controls}>
           <label className={styles.controlGroup}>
             <span>Формат аркуша</span>
-            <select value={formatKey} onChange={(event) => setFormatKey(event.target.value)}>
+            <select
+              value={formatKey}
+              onChange={(event) => setFormatKey(event.target.value)}
+            >
               {Object.entries(FORMATS).map(([key, format]) => (
                 <option key={key} value={key}>
                   {format.label} · {format.width}×{format.height} мм
@@ -1331,11 +2021,13 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
           <div className={styles.controlGroup}>
             <span>Орієнтація</span>
             <div className={styles.orientationToggle}>
-              {(["portrait", "landscape"]).map((value) => (
+              {["portrait", "landscape"].map((value) => (
                 <button
                   key={value}
                   type="button"
-                  className={value === orientation ? styles.orientationActive : ""}
+                  className={
+                    value === orientation ? styles.orientationActive : ""
+                  }
                   onClick={() => setOrientation(value)}
                 >
                   {ORIENTATION_LABELS[value]}
@@ -1378,13 +2070,17 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
           ) : (
             <div className={styles.sheetList}>
               {sheets.map((sheet, sheetIndex) => {
-                const scale = Math.min(1, 340 / Math.max(sheet.width, sheet.height));
+                const scale = Math.min(
+                  1,
+                  340 / Math.max(sheet.width, sheet.height)
+                );
                 return (
                   <div key={`sheet-${sheetIndex}`} className={styles.sheetCard}>
                     <div className={styles.sheetHeader}>
                       <h3>Аркуш {sheetIndex + 1}</h3>
                       <span>
-                        {sheet.width}×{sheet.height} мм · заповнення {Math.round((sheet.usedArea / sheetArea) * 100)}%
+                        {sheet.width}×{sheet.height} мм · заповнення{" "}
+                        {Math.round((sheet.usedArea / sheetArea) * 100)}%
                       </span>
                     </div>
                     <div
@@ -1410,19 +2106,31 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
                             }}
                           >
                             <div className={styles.placementPreview}>
-                              {hasPreview ? (
+                              {previewData?.previewMarkup ? (
+                                <div
+                                  className={styles.inlineSvgWrapper}
+                                  dangerouslySetInnerHTML={{
+                                    __html: previewData.previewMarkup,
+                                  }}
+                                />
+                              ) : hasPreview ? (
                                 <img
                                   src={previewData?.url}
                                   alt={placement.name || "Полотно"}
                                 />
                               ) : (
-                                <span className={styles.placementPlaceholder}>SVG відсутній</span>
+                                <span className={styles.placementPlaceholder}>
+                                  SVG відсутній
+                                </span>
                               )}
                             </div>
                             <div className={styles.placementMeta}>
-                              <span className={styles.placementName}>{placement.name}</span>
+                              <span className={styles.placementName}>
+                                {placement.name}
+                              </span>
                               <span className={styles.placementSize}>
-                                {round1(placement.width)}×{round1(placement.height)} мм
+                                {round1(placement.width)}×
+                                {round1(placement.height)} мм
                               </span>
                             </div>
                           </div>
@@ -1457,4 +2165,5 @@ const LayoutPlannerModal = ({ isOpen, onClose, designs = [], spacingMm = 5 }) =>
   );
 };
 
+export { buildPlacementPreview };
 export default LayoutPlannerModal;

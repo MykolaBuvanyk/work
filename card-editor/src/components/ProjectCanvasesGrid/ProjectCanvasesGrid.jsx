@@ -14,9 +14,7 @@ import {
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
 import * as fabric from "fabric";
-import LayoutPlannerModal, {
-  buildPlacementPreview,
-} from "./LayoutPlannerModal/LayoutPlannerModal";
+import LayoutPlannerModal from "./LayoutPlannerModal/LayoutPlannerModal";
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
@@ -62,7 +60,6 @@ const ProjectCanvasesGrid = () => {
   const currentProjectCanvasIdRef = useRef(null); // track which project canvas is currently loaded
   const initialCanvasLoadRef = useRef(false);
   const openCanvasRef = useRef(null);
-  const sliderPreviewCacheRef = useRef(new Map());
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
@@ -530,42 +527,6 @@ const ProjectCanvasesGrid = () => {
   const pxToMm = (px) => {
     const mm = (Number(px) || 0) / PX_PER_MM;
     return Math.round(mm);
-  };
-
-  const getSliderPreviewData = (canvasEntry) => {
-    if (!canvasEntry?.previewSvg) {
-      return null;
-    }
-
-    const cacheEntry = sliderPreviewCacheRef.current.get(canvasEntry.id);
-    if (cacheEntry && cacheEntry.svg === canvasEntry.previewSvg) {
-      return cacheEntry.data;
-    }
-
-    try {
-      const previewData = buildPlacementPreview({
-        id: canvasEntry.id,
-        name: canvasEntry.name,
-        width: pxToMm(canvasEntry.width),
-        height: pxToMm(canvasEntry.height),
-        sourceWidth: pxToMm(canvasEntry.width),
-        sourceHeight: pxToMm(canvasEntry.height),
-        svg: canvasEntry.previewSvg,
-        preview: canvasEntry.preview,
-        themeStrokeColor:
-          canvasEntry.toolbarState?.globalColors?.strokeColor || null,
-      });
-
-      sliderPreviewCacheRef.current.set(canvasEntry.id, {
-        svg: canvasEntry.previewSvg,
-        data: previewData,
-      });
-
-      return previewData;
-    } catch (error) {
-      console.error("Failed to prepare slider preview", error);
-      return null;
-    }
   };
 
   const openCanvas = async (canvasEntry) => {
@@ -1581,10 +1542,13 @@ const ProjectCanvasesGrid = () => {
                 c.preview &&
                 typeof c.preview === "string" &&
                 c.preview.trim().length > 0;
-              const sliderPreviewData = hasSvgPreview
-                ? getSliderPreviewData(c)
+              const previewSrc = hasSvgPreview
+                ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                    c.previewSvg
+                  )}`
+                : hasPngPreview
+                ? c.preview
                 : null;
-              const inlinePreviewMarkup = sliderPreviewData?.previewMarkup;
 
               return (
                 <div
@@ -1607,31 +1571,17 @@ const ProjectCanvasesGrid = () => {
                   </div>
 
                   <div className={styles.thumb}>
-                    {hasSvgPreview || hasPngPreview ? (
-                      inlinePreviewMarkup ? (
-                        <div
-                          className={styles.inlineSvgWrapper}
-                          dangerouslySetInnerHTML={{
-                            __html: inlinePreviewMarkup,
-                          }}
-                        />
-                      ) : hasSvgPreview ? (
-                        // Fallback: пряме відображення SVG якщо обробка не вдалась
-                        <img
-                          src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-                            c.previewSvg
-                          )}`}
-                          alt="preview"
-                          onError={(e) => {
-                            if (hasPngPreview) {
-                              e.target.src = c.preview;
-                            }
-                          }}
-                        />
-                      ) : (
-                        // Fallback на PNG preview
-                        <img src={c.preview} alt="preview" />
-                      )
+                    {previewSrc ? (
+                      <img
+                        src={previewSrc}
+                        alt="preview"
+                        onError={(e) => {
+                          if (hasSvgPreview && hasPngPreview) {
+                            e.target.onerror = null;
+                            e.target.src = c.preview;
+                          }
+                        }}
+                      />
                     ) : (
                       <span>Preview</span>
                     )}

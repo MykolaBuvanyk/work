@@ -72,6 +72,137 @@ const getFontFileByName = (fontName = "") => {
   return FONT_NAME_MAP.get(normalized) || null;
 };
 
+// Runtime fonts loader for the canvas (ensures correct font on initial render)
+export async function ensureFontsLoaded(fontFamilies = []) {
+  if (!Array.isArray(fontFamilies) || fontFamilies.length === 0) return true;
+  const hasDocumentFonts =
+    typeof document !== "undefined" &&
+    document.fonts &&
+    typeof document.fonts.load === "function";
+  const canUseFontFace = typeof FontFace !== "undefined";
+
+  const loadOne = async (family) => {
+    try {
+      if (!family || typeof family !== "string") return true;
+      const plain = family
+        .split(",")[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, "");
+
+      if (hasDocumentFonts) {
+        try {
+          // If already available, skip
+          if (
+            document.fonts.check(`12px ${plain}`) ||
+            document.fonts.check(`12px "${plain}"`)
+          ) {
+            return true;
+          }
+        } catch {}
+      }
+
+      const fontFile = getFontFileByName(plain);
+      if (canUseFontFace && fontFile) {
+        const srcUrl = `${FONT_PUBLIC_PATH}/${fontFile}`;
+        try {
+          const ff = new FontFace(plain, `url(${srcUrl})`);
+          const loaded = await ff.load();
+          if (hasDocumentFonts) {
+            try {
+              document.fonts.add(loaded);
+            } catch {}
+          }
+        } catch (e) {
+          // Fallback to document.fonts.load even if FontFace failed
+          if (hasDocumentFonts) {
+            try {
+              await document.fonts.load(`12px ${plain}`);
+            } catch {}
+          }
+        }
+      } else if (hasDocumentFonts) {
+        // No mapping or FontFace not available; try generic load
+        try {
+          await document.fonts.load(`12px ${plain}`);
+        } catch {}
+      }
+    } catch {}
+    return true;
+  };
+
+  try {
+    await Promise.all(fontFamilies.map(loadOne));
+  } catch {}
+  return true;
+}
+
+export async function loadCanvasFontsAndRerender(canvas) {
+  if (!canvas || typeof canvas.getObjects !== "function") return false;
+  try {
+    const families = collectFontFamiliesFromCanvas(canvas);
+    await ensureFontsLoaded(families);
+    try {
+      canvas.getObjects().forEach((obj) => {
+        if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+        try {
+          // Reapply font to trigger Fabric's metrics recalculation
+          if (obj.fontFamily) obj.set({ fontFamily: obj.fontFamily });
+          if (typeof obj.initDimensions === "function") obj.initDimensions();
+          if (typeof obj.setCoords === "function") obj.setCoords();
+          obj.dirty = true;
+        } catch {}
+      });
+    } catch {}
+    try {
+      canvas.renderAll?.();
+      canvas.requestRenderAll?.();
+    } catch {}
+    return true;
+  } catch (e) {
+    console.warn("Failed to load canvas fonts and rerender", e);
+    return false;
+  }
+}
+
+// Explicitly reapply all text styling properties after load to avoid Arial fallback until first click
+export function reapplyTextAttributes(canvas) {
+  if (!canvas || typeof canvas.getObjects !== "function") return false;
+  try {
+    canvas.getObjects().forEach((obj) => {
+      if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+      try {
+        const nextProps = {};
+        if (obj.fontFamily) nextProps.fontFamily = obj.fontFamily;
+        if (obj.fontSize) nextProps.fontSize = obj.fontSize;
+        if (obj.fontWeight) nextProps.fontWeight = obj.fontWeight;
+        if (obj.fontStyle) nextProps.fontStyle = obj.fontStyle;
+        if (typeof obj.underline !== "undefined")
+          nextProps.underline = obj.underline;
+        if (typeof obj.linethrough !== "undefined")
+          nextProps.linethrough = obj.linethrough;
+        if (obj.textAlign) nextProps.textAlign = obj.textAlign;
+        if (typeof obj.charSpacing === "number")
+          nextProps.charSpacing = obj.charSpacing;
+        if (typeof obj.lineHeight === "number")
+          nextProps.lineHeight = obj.lineHeight;
+        if (obj.fill) nextProps.fill = obj.fill;
+
+        if (Object.keys(nextProps).length) obj.set(nextProps);
+        if (typeof obj.initDimensions === "function") obj.initDimensions();
+        if (typeof obj.setCoords === "function") obj.setCoords();
+        obj.dirty = true;
+      } catch {}
+    });
+    try {
+      canvas.renderAll?.();
+      canvas.requestRenderAll?.();
+    } catch {}
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const detectFontFormatMeta = (fileName = "") => {
   const ext = fileName.split(".").pop()?.toLowerCase() || "ttf";
   return FONT_EXT_FORMAT_MAP[ext] || FONT_EXT_FORMAT_MAP.ttf;
@@ -120,6 +251,24 @@ const collectFontFamiliesFromCanvas = (canvas) => {
       if (family) {
         fonts.add(family);
       }
+    });
+  } catch {}
+  return Array.from(fonts);
+};
+
+export const collectFontFamiliesFromJson = (json) => {
+  const fonts = new Set();
+  try {
+    const objects = (json && json.objects) || [];
+    objects.forEach((obj) => {
+      if (!obj || !obj.type) return;
+      if (!TEXT_OBJECT_TYPES.has(obj.type)) return;
+      if (!obj.fontFamily) return;
+      const family = String(obj.fontFamily)
+        .split(",")[0]
+        .trim()
+        .replace(/^['"]|['"]$/g, "");
+      if (family) fonts.add(family);
     });
   } catch {}
   return Array.from(fonts);
@@ -369,135 +518,137 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
   );
 
   const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const store = txUnsaved(db, "readwrite");
-    const getReq = store.get(id);
-    getReq.onsuccess = async () => {
-      const existing = getReq.result;
-      if (!existing) {
-        console.warn("Unsaved sign not found for update:", id);
-        resolve(null);
-        return;
-      }
+  let existing;
+  try {
+    const readStore = txUnsaved(db);
+    const getReq = readStore.get(id);
+    existing = await new Promise((resolve, reject) => {
+      getReq.onsuccess = () => resolve(getReq.result);
+      getReq.onerror = () => reject(getReq.error);
+    });
+  } catch (error) {
+    console.error("Error fetching unsaved sign for update:", error);
+    throw error;
+  }
 
-      try {
-        // ВИПРАВЛЕННЯ: Отримуємо актуальний toolbar state з кількох джерел
-        let toolbarState = {};
+  if (!existing) {
+    console.warn("Unsaved sign not found for update:", id);
+    return null;
+  }
 
-        // Перевіряємо чи це новий порожній canvas
-        const isNewCanvas = canvas.getObjects().length === 0;
+  try {
+    // ВИПРАВЛЕННЯ: Отримуємо актуальний toolbar state з кількох джерел
+    let toolbarState = {};
 
-        // Спочатку намагаємося отримати з window функції
-        // НО для нових canvas НЕ використовуємо background з toolbar state
-        if (window.getCurrentToolbarState) {
-          toolbarState = window.getCurrentToolbarState() || {};
-          console.log("Got toolbar state from window function", {
-            isNewCanvas,
-            hasToolbarState: !!toolbarState,
-          });
-        }
+    // Перевіряємо чи це новий порожній canvas
+    const isNewCanvas = canvas.getObjects().length === 0;
 
-        // Додатково намагаємося отримати з canvas properties
-        // ВИПРАВЛЕННЯ: Обробка Pattern для текстур
-        let bgColor =
-          canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF";
-        const bgTextureUrl = canvas.get("backgroundTextureUrl");
-        const bgType = canvas.get("backgroundType") || "solid";
+    // Спочатку намагаємося отримати з window функції
+    // НО для нових canvas НЕ використовуємо background з toolbar state
+    if (window.getCurrentToolbarState) {
+      toolbarState = window.getCurrentToolbarState() || {};
+      console.log("Got toolbar state from window function", {
+        isNewCanvas,
+        hasToolbarState: !!toolbarState,
+      });
+    }
 
-        // Якщо це Pattern (текстура), використовуємо збережений URL
-        if (bgType === "texture" && bgTextureUrl) {
-          bgColor = bgTextureUrl;
-        } else if (typeof bgColor === "object" && bgColor !== null) {
-          // Якщо backgroundColor - це об'єкт Pattern, але немає URL, повертаємо білий
-          bgColor = "#FFFFFF";
-        }
+    // Додатково намагаємося отримати з canvas properties
+    // ВИПРАВЛЕННЯ: Обробка Pattern для текстур
+    let bgColor =
+      canvas.backgroundColor || canvas.get("backgroundColor") || "#FFFFFF";
+    const bgTextureUrl = canvas.get("backgroundTextureUrl");
+    const bgType = canvas.get("backgroundType") || "solid";
 
-        const canvasState = {
-          currentShapeType: canvas.get("shapeType") || "rectangle",
-          cornerRadius: canvas.get("cornerRadius") || 0,
+    // Якщо це Pattern (текстура), використовуємо збережений URL
+    if (bgType === "texture" && bgTextureUrl) {
+      bgColor = bgTextureUrl;
+    } else if (typeof bgColor === "object" && bgColor !== null) {
+      // Якщо backgroundColor - це об'єкт Pattern, але немає URL, повертаємо білий
+      bgColor = "#FFFFFF";
+    }
+
+    const canvasState = {
+      currentShapeType: canvas.get("shapeType") || "rectangle",
+      cornerRadius: canvas.get("cornerRadius") || 0,
+      backgroundColor: bgColor,
+      backgroundType: bgType,
+      width: canvas.getWidth(),
+      height: canvas.getHeight(),
+    };
+
+    // ВИПРАВЛЕННЯ: Мержимо toolbar state, але canvasState має вищий пріоритет
+    // Це гарантує, що фактичний стан canvas не буде перезаписаний старим toolbar state
+    // Для нових canvas ЗАВЖДИ використовуємо тільки canvasState (білий фон)
+    if (isNewCanvas) {
+      console.log(
+        "New canvas detected - using only canvas state (white background)"
+      );
+      toolbarState = {
+        ...canvasState,
+        globalColors: {
+          backgroundColor: "#FFFFFF",
+          backgroundType: "solid",
+        },
+      };
+    } else {
+      toolbarState = {
+        ...toolbarState,
+        ...canvasState,
+        // Також оновлюємо globalColors якщо вони є
+        globalColors: {
+          ...(toolbarState.globalColors || {}),
           backgroundColor: bgColor,
           backgroundType: bgType,
-          width: canvas.getWidth(),
-          height: canvas.getHeight(),
-        };
+        },
+      };
+    }
 
-        // ВИПРАВЛЕННЯ: Мержимо toolbar state, але canvasState має вищий пріоритет
-        // Це гарантує, що фактичний стан canvas не буде перезаписаний старим toolbar state
-        // Для нових canvas ЗАВЖДИ використовуємо тільки canvasState (білий фон)
-        if (isNewCanvas) {
-          console.log(
-            "New canvas detected - using only canvas state (white background)"
-          );
-          toolbarState = {
-            ...canvasState,
-            globalColors: {
-              backgroundColor: "#FFFFFF",
-              backgroundType: "solid",
-            },
-          };
-        } else {
-          toolbarState = {
-            ...toolbarState,
-            ...canvasState,
-            // Також оновлюємо globalColors якщо вони є
-            globalColors: {
-              ...(toolbarState.globalColors || {}),
-              backgroundColor: bgColor,
-              backgroundType: bgType,
-            },
-          };
-        }
-
-        // ВИПРАВЛЕННЯ: Синхронізуємо cornerRadius у sizeValues з актуальним значенням canvas
-        toolbarState.sizeValues = {
-          ...(toolbarState.sizeValues || {}),
-          cornerRadius: canvasState.cornerRadius,
-        };
-
-        console.log(
-          "Final toolbar state for unsaved sign update:",
-          toolbarState
-        );
-
-        const snap = await exportCanvas(canvas, toolbarState);
-        if (!snap) {
-          console.error("Failed to export canvas for unsaved sign update");
-          resolve(null);
-          return;
-        }
-
-        console.log(
-          "Exported canvas snapshot with",
-          snap.json?.objects?.length || 0,
-          "objects"
-        );
-
-        const updated = { ...existing, ...snap, updatedAt: Date.now() };
-
-        // ВИПРАВЛЕННЯ: Додаткова перевірка та очистка перед збереженням в IndexedDB
-        // Видаляємо всі можливі HTMLCanvasElement та інші non-serializable об'єкти
-        const safeUpdated = JSON.parse(JSON.stringify(updated));
-
-        const putReq = store.put(safeUpdated);
-        putReq.onsuccess = () => {
-          console.log("Successfully updated unsaved sign:", id);
-          broadcastUnsavedUpdate();
-          resolve(safeUpdated);
-        };
-        putReq.onerror = () => {
-          console.error("Failed to save updated unsaved sign:", putReq.error);
-          reject(putReq.error);
-        };
-      } catch (error) {
-        console.error("Error updating unsaved sign:", error);
-        reject(error);
-      }
+    // ВИПРАВЛЕННЯ: Синхронізуємо cornerRadius у sizeValues з актуальним значенням canvas
+    toolbarState.sizeValues = {
+      ...(toolbarState.sizeValues || {}),
+      cornerRadius: canvasState.cornerRadius,
     };
-    getReq.onerror = () => {
-      console.error("Error fetching unsaved sign for update:", getReq.error);
-      reject(getReq.error);
-    };
-  });
+
+    console.log("Final toolbar state for unsaved sign update:", toolbarState);
+
+    const snap = await exportCanvas(canvas, toolbarState);
+    if (!snap) {
+      console.error("Failed to export canvas for unsaved sign update");
+      return null;
+    }
+
+    console.log(
+      "Exported canvas snapshot with",
+      snap.json?.objects?.length || 0,
+      "objects"
+    );
+
+    const updated = { ...existing, ...snap, updatedAt: Date.now() };
+
+    // ВИПРАВЛЕННЯ: Додаткова перевірка та очистка перед збереженням в IndexedDB
+    // Видаляємо всі можливі HTMLCanvasElement та інші non-serializable об'єкти
+    const safeUpdated = JSON.parse(JSON.stringify(updated));
+
+    await new Promise((resolve, reject) => {
+      const writeStore = txUnsaved(db, "readwrite");
+      const putReq = writeStore.put(safeUpdated);
+      putReq.onsuccess = () => {
+        console.log("Successfully updated unsaved sign:", id);
+        resolve();
+      };
+      putReq.onerror = () => {
+        console.error("Failed to save updated unsaved sign:", putReq.error);
+        reject(putReq.error);
+      };
+    });
+
+    broadcastUnsavedUpdate();
+    return safeUpdated;
+  } catch (error) {
+    console.error("Error updating unsaved sign:", error);
+    throw error;
+  }
 }
 
 export async function getProject(id) {

@@ -197,7 +197,7 @@ export const useFabricCanvas = () => {
                 obj.fromShapeTab === true ||
                 (obj.data && obj.data.fromShapeTab === true);
               if (fromShapeTab) {
-                  ensureShapeSvgId(obj, canvas);
+                ensureShapeSvgId(obj, canvas);
                 if (obj.useThemeColor === undefined) {
                   obj.useThemeColor = false;
                 }

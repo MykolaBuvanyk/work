@@ -10,6 +10,10 @@ import {
   updateCanvasInCurrentProject,
   deleteUnsavedSign,
   generateCanvasPreviews,
+  loadCanvasFontsAndRerender,
+  reapplyTextAttributes,
+  ensureFontsLoaded,
+  collectFontFamiliesFromJson,
 } from "../../utils/projectStorage";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useFabricCanvas } from "../../hooks/useFabricCanvas";
@@ -743,7 +747,43 @@ const ProjectCanvasesGrid = () => {
           );
         }
 
+        // Preload fonts found in JSON before loading to avoid initial fallback
+        try {
+          const fontFamilies = collectFontFamiliesFromJson(
+            mappedDesign.jsonTemplate || canvasToLoad.json || null
+          );
+          if (fontFamilies && fontFamilies.length) {
+            await ensureFontsLoaded(fontFamilies);
+            if (document && document.fonts && document.fonts.ready) {
+              try {
+                await document.fonts.ready;
+              } catch {}
+            }
+          }
+        } catch {}
+
         await loadDesign(mappedDesign);
+
+        // FIX: Aggressively reapply fonts and attributes to ensure they render correctly
+        // This handles cases where the browser loads the font slightly after the initial render
+        const forceFontUpdate = async (attempt) => {
+          if (!canvas || canvas.__switching) return;
+          try {
+            await loadCanvasFontsAndRerender(canvas);
+            reapplyTextAttributes(canvas);
+            canvas.calcOffset();
+            canvas.requestRenderAll();
+          } catch (e) {
+            console.warn("Font update failed:", e);
+          }
+        };
+
+        await forceFontUpdate(0);
+
+        // Retry sequence to catch late font loads
+        [100, 300, 600, 1000].forEach((delay, i) => {
+          setTimeout(() => forceFontUpdate(i + 1), delay);
+        });
 
         // ВИПРАВЛЕННЯ: Відновлюємо фон з урахуванням текстур
         // Для нових карток завжди встановлюємо білий фон

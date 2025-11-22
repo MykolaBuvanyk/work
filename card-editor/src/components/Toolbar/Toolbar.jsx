@@ -5634,7 +5634,7 @@ const Toolbar = () => {
     try {
       if (typeof shape.set === "function") {
         shape.set({
-          stroke: shape.stroke || CUT_STROKE_COLOR,
+          stroke: CUT_STROKE_COLOR,
           fill: shape.fill || HOLE_FILL_COLOR,
           isCutElement: true,
           cutType: "hole",
@@ -5642,7 +5642,7 @@ const Toolbar = () => {
           id: "canvaShape",
         });
       } else {
-        shape.stroke = shape.stroke || CUT_STROKE_COLOR;
+        shape.stroke = CUT_STROKE_COLOR;
         shape.fill = shape.fill || HOLE_FILL_COLOR;
         shape.isCutElement = true;
         shape.cutType = "hole";
@@ -5680,24 +5680,24 @@ const Toolbar = () => {
 
     return registerHoleShape(
       new fabric.Circle({
-      left: canvasWidth / 2,
-      top: semiCenterY,
-      radius: holeRadiusPx,
+        left: canvasWidth / 2,
+        top: semiCenterY,
+        radius: holeRadiusPx,
         fill: HOLE_FILL_COLOR,
         stroke: CUT_STROKE_COLOR,
-      strokeWidth: 1,
-      originX: "center",
-      originY: "center",
-      isCutElement: true,
-      cutType: "hole",
-      preventThemeRecolor: true,
-      hasControls: false,
-      hasBorders: true,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockUniScaling: false,
-      selectable: false,
-      evented: false,
+        strokeWidth: 1,
+        originX: "center",
+        originY: "center",
+        isCutElement: true,
+        cutType: "hole",
+        preventThemeRecolor: true,
+        hasControls: false,
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: false,
+        selectable: false,
+        evented: false,
         lockMovementX: true,
         lockMovementY: true,
       })
@@ -8142,17 +8142,28 @@ const Toolbar = () => {
     }
   }, [sizeValues?.cornerRadius, isCornerEditing]);
 
-  // Гарантуємо що отвори (cutType: 'hole') завжди залишаються білими з чорним обводом, незалежно від теми.
+  // Гарантуємо що отвори (cutType: 'hole') завжди залишаються білими з оранжевим обводом, незалежно від теми.
   useEffect(() => {
     if (!canvas) return;
+    let didChange = false;
     (canvas.getObjects?.() || [])
       .filter((o) => o.isCutElement && o.cutType === "hole")
       .forEach((o) => {
-        if (o.fill !== "#FFFFFF" || o.stroke !== "#000000") {
-          o.set({ fill: "#FFFFFF", stroke: "#000000" });
+        const nextProps = {};
+        if (o.fill !== HOLE_FILL_COLOR) {
+          nextProps.fill = HOLE_FILL_COLOR;
+        }
+        if (o.stroke !== CUT_STROKE_COLOR) {
+          nextProps.stroke = CUT_STROKE_COLOR;
+        }
+        if (Object.keys(nextProps).length) {
+          o.set(nextProps);
+          didChange = true;
         }
       });
-    canvas.requestRenderAll?.();
+    if (didChange) {
+      canvas.requestRenderAll?.();
+    }
   }, [canvas, globalColors]);
 
   return (

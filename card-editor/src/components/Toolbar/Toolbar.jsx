@@ -460,6 +460,7 @@ const Toolbar = () => {
             isBorderShape: true,
             cardBorderMode: mode,
             cardBorderThicknessPx: thicknessPx,
+            id: "canvaShape",
           });
         }
       }
@@ -5638,6 +5639,7 @@ const Toolbar = () => {
           isCutElement: true,
           cutType: "hole",
           preventThemeRecolor: true,
+          id: "canvaShape",
         });
       } else {
         shape.stroke = shape.stroke || CUT_STROKE_COLOR;
@@ -5645,8 +5647,9 @@ const Toolbar = () => {
         shape.isCutElement = true;
         shape.cutType = "hole";
         shape.preventThemeRecolor = true;
+        shape.id = "canvaShape";
       }
-      ensureShapeSvgId(shape, canvas, { prefix: HOLE_ID_PREFIX });
+      // ensureShapeSvgId(shape, canvas, { prefix: HOLE_ID_PREFIX });
     } catch (error) {
       console.warn("Не вдалося призначити hole ID", error);
     }

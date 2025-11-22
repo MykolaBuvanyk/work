@@ -1600,9 +1600,33 @@ const buildPlacementPreview = (placement) => {
       const doc = parser.parseFromString(svg, "image/svg+xml");
       const svgElement = doc.documentElement.cloneNode(true);
 
+      const rawWidth = parseFloat(svgElement.getAttribute("width"));
+      const rawHeight = parseFloat(svgElement.getAttribute("height"));
+
       // ВИДАЛЯЄМО всі rect елементи з чорним фоном на самому початку
       const allRects = svgElement.querySelectorAll('rect');
       allRects.forEach((rect) => {
+        // 1. Видаляємо фон (rect на весь розмір)
+        const rectW = parseFloat(rect.getAttribute('width'));
+        const rectH = parseFloat(rect.getAttribute('height'));
+        const rectX = parseFloat(rect.getAttribute('x')) || 0;
+        const rectY = parseFloat(rect.getAttribute('y')) || 0;
+
+        const isFullSize =
+          (Number.isFinite(rawWidth) &&
+            Number.isFinite(rawHeight) &&
+            Math.abs(rectW - rawWidth) < 1 &&
+            Math.abs(rectH - rawHeight) < 1 &&
+            Math.abs(rectX) < 1 &&
+            Math.abs(rectY) < 1) ||
+          (rect.getAttribute("width") === "100%" &&
+            rect.getAttribute("height") === "100%");
+
+        if (isFullSize) {
+          rect.remove();
+          return;
+        }
+
         const fill = rect.getAttribute('fill');
         const fillStyle = rect.getAttribute('style')?.match(/fill\s*:\s*([^;]+)/)?.[1];
         const fillValue = fill || fillStyle || '';
@@ -1621,8 +1645,29 @@ const buildPlacementPreview = (placement) => {
         }
       });
 
-      const rawWidth = parseFloat(svgElement.getAttribute("width"));
-      const rawHeight = parseFloat(svgElement.getAttribute("height"));
+      // Фарбуємо елементи з id="canvaShape" в синій колір (#0000FF)
+      const canvaShapes = svgElement.querySelectorAll('[id="canvaShape"]');
+      canvaShapes.forEach((shape) => {
+        const BLUE_COLOR = "#0000FF";
+        
+        // Встановлюємо stroke на самому елементі
+        shape.setAttribute("stroke", BLUE_COLOR);
+        
+        // Очищаємо style від старого stroke і додаємо новий
+        const style = shape.getAttribute("style") || "";
+        const newStyle = style.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
+        shape.setAttribute("style", newStyle);
+        
+        // Також застосовуємо до всіх вкладених елементів (якщо це група)
+        const children = shape.querySelectorAll('*');
+        children.forEach(child => {
+             child.setAttribute("stroke", BLUE_COLOR);
+             const childStyle = child.getAttribute("style") || "";
+             const childNewStyle = childStyle.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
+             child.setAttribute("style", childNewStyle);
+        });
+      });
+
       const hasViewBox = !!svgElement.getAttribute("viewBox");
 
       if (hasViewBox) {

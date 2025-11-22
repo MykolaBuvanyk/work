@@ -117,7 +117,14 @@ const ShapeProperties = ({
           activeObject.useThemeColor = false;
         }
       }
-      if (defaults.cut === false) {
+      if (defaults.cut === true) {
+        try {
+          activeObject.set({ isCutElement: true, cutType: "manual" });
+        } catch {
+          activeObject.isCutElement = true;
+          activeObject.cutType = "manual";
+        }
+      } else if (defaults.cut === false) {
         try {
           activeObject.set({ isCutElement: false, cutType: null });
         } catch {

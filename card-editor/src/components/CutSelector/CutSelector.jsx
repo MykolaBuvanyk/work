@@ -48,6 +48,18 @@ const CutSelector = ({ isOpen, onClose }) => {
       hasCanvas: !!canvas,
       type: obj?.type,
     });
+
+    // Disable theme color following for shapes from CutSelector
+    if (typeof obj.set === "function") {
+      obj.set({
+        followThemeStroke: false,
+        useThemeColor: false,
+      });
+    }
+
+    // Set default properties for ShapeProperties modal: Cut enabled, Fill disabled
+    obj.pendingShapePropsDefaults = { fill: false, cut: true };
+
     // Помечаем объект как добавленный из вкладки SHAPE, чтобы не показывать Shape Properties
     try {
       obj.fromShapeTab = true;
@@ -79,7 +91,7 @@ const CutSelector = ({ isOpen, onClose }) => {
       top: centerY || 200,
       originX: "center",
       originY: "center",
-      fill: "transparent",
+      fill: "#FFFFFF",
       stroke: "#FD7714",
       strokeWidth: 1.5,
       strokeUniform: true,
@@ -790,7 +802,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M43 1a45 45 0 1 0 8 0M43 5h8M51 5V1M43 5V1"
                 />
@@ -809,7 +821,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M21 1h56M21 78h56M21 1a48 48 0 0 0 0 77M77 78a48 48 0 0 0 0-77"
                 />
@@ -828,7 +840,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.93"
+                  strokeMiterlimit="22.93"
                   stroke-width="1.5"
                   d="M10.47 71.22h65.65M76.12 71.22a42.52 42.52 0 1 0-65.65 0"
                 />
@@ -847,7 +859,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M2 26v37M78 26v37M78 26a43 43 0 0 0-76 0M2 63a43 43 0 0 0 76 0"
                 />
@@ -868,7 +880,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M1 33v38M95 33v38M1 71a51 51 0 0 0 94 0M95 33a51 51 0 0 0-94 0"
                 />
@@ -887,7 +899,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M39 3h7M39 3V1M46 3V1M39 1C19 3 3 18 2 38M84 38C82 18 66 3 46 1M46 83c20-2 36-17 38-37M2 46c1 20 17 35 37 37M4 46v-8M4 46H2M4 38H2M46 81h-7M46 81v2M39 81v2M81 38v8M81 38h3M81 46h3"
                 />
@@ -906,7 +918,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M52 91a45 45 0 1 0-12 0"
                 />
@@ -914,7 +926,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M52 91a6 6 0 0 0-12 0"
                 />
@@ -933,7 +945,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M1 18v39M61 18v39M61 18a36 36 0 0 0-60 0M1 57a36 36 0 0 0 60 0"
                 />
@@ -954,7 +966,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M25 60v-3M25 57h11M36 60v-3M36 60a30 30 0 1 0-11 0"
                 />
@@ -973,7 +985,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="m41 92 5-5M51 92l-5-5M51 92a45 45 0 1 0-10 0"
                 />
@@ -992,7 +1004,7 @@ const CutSelector = ({ isOpen, onClose }) => {
                   stroke="#FD7714"
                   stroke-linecap="round"
                   stroke-linejoin="bevel"
-                  stroke-miterlimit="22.9"
+                  strokeMiterlimit="22.9"
                   stroke-width="1.5"
                   d="M1 15v33M52 48V15M52 15a30 30 0 0 0-51 0M1 48a30 30 0 0 0 51 0"
                 />
@@ -1136,3 +1148,4 @@ const CutSelector = ({ isOpen, onClose }) => {
 };
 
 export default CutSelector;
+

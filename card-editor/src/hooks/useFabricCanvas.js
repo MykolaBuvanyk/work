@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import * as fabric from "fabric";
+import "../utils/CircleWithCut";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { ensureShapeSvgId } from "../utils/shapeSvgId";
 

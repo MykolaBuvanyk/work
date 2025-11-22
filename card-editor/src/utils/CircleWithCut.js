@@ -12,7 +12,6 @@ export class CircleWithCut extends (fabric?.Object || Object) {
 
   constructor(options = {}) {
     super(options);
-    this.type = "circle-with-cut";
     this.orientation =
       options.orientation === "horizontal" ? "horizontal" : "vertical"; // default vertical
     // Bounding box in object coordinates (Fabric will apply scaleX/scaleY)
@@ -83,6 +82,68 @@ export class CircleWithCut extends (fabric?.Object || Object) {
         if (this.canvas) this.canvas.requestRenderAll();
       } catch {}
     });
+  }
+
+  toObject(propertiesToInclude = []) {
+    return super.toObject([
+      "orientation",
+      "toleranceRatio",
+      "toleranceMin",
+      ...propertiesToInclude,
+    ]);
+  }
+
+  _toSVG(reviver) {
+    const w = this.width || 0;
+    const h = this.height || 0;
+    const r = h / 2;
+    const halfW = w / 2;
+    const tol = Math.max(
+      this.toleranceMin,
+      (this.toleranceRatio || 0) * (this.orientation === "vertical" ? h : w)
+    );
+    const isCircle =
+      this.orientation === "vertical" ? w >= h - tol : h >= w - tol;
+
+    let d = "";
+
+    if (isCircle) {
+      const radius = this.orientation === "vertical" ? h / 2 : w / 2;
+      d = `M 0 ${-radius} A ${radius} ${radius} 0 1 0 0 ${radius} A ${radius} ${radius} 0 1 0 0 ${-radius} Z`;
+    } else if (this.orientation === "vertical") {
+      const sq = Math.max(0, r * r - halfW * halfW);
+      const y0 = Math.sqrt(sq);
+      d = [
+        `M ${halfW} ${-y0}`,
+        `A ${r} ${r} 0 0 0 ${-halfW} ${-y0}`,
+        `L ${-halfW} ${y0}`,
+        `A ${r} ${r} 0 0 0 ${halfW} ${y0}`,
+        `L ${halfW} ${-y0}`,
+        "Z",
+      ].join(" ");
+    } else {
+      const halfH = h / 2;
+      const rH = w / 2;
+      const sq = Math.max(0, rH * rH - halfH * halfH);
+      const x0 = Math.sqrt(sq);
+      d = [
+        `M ${x0} ${-halfH}`,
+        `L ${-x0} ${-halfH}`,
+        `A ${rH} ${rH} 0 0 0 ${-x0} ${halfH}`,
+        `L ${x0} ${halfH}`,
+        `A ${rH} ${rH} 0 0 0 ${x0} ${-halfH}`,
+        "Z",
+      ].join(" ");
+    }
+
+    return [
+      '<path d="',
+      d,
+      '" style="',
+      this.getSvgStyles(),
+      '" stroke-linecap="round" ',
+      '/>',
+    ];
   }
 
   _render(ctx) {
@@ -156,5 +217,10 @@ export class CircleWithCut extends (fabric?.Object || Object) {
 export const createCircleWithCut = (options = {}) => {
   return new CircleWithCut(options);
 };
+
+if (fabric) {
+  fabric.classRegistry.setClass(CircleWithCut, "circle-with-cut");
+  fabric.classRegistry.setClass(CircleWithCut, "CircleWithCut");
+}
 
 export default CircleWithCut;

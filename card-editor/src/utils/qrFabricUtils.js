@@ -2,6 +2,26 @@ export const QR_DISPLAY_LAYER_ID = "qr-display-layer";
 export const QR_EXPORT_LAYER_ID = "qr-export-layer";
 export const DEFAULT_QR_CELL_SIZE = 4;
 
+const lockQrExportFill = (fabricObject) => {
+  if (!fabricObject) return;
+  if (!fabricObject.__qrFillLocked && typeof Object.defineProperty === "function") {
+    let lockedValue = null;
+    Object.defineProperty(fabricObject, "fill", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return lockedValue;
+      },
+      set() {
+        lockedValue = null;
+      },
+    });
+    fabricObject.__qrFillLocked = true;
+  }
+
+  fabricObject.fill = null;
+};
+
 /**
  * Removes black background rectangles from SVG markup.
  * @param {string} svgMarkup - SVG string to clean
@@ -157,9 +177,10 @@ export const decorateQrGroup = (group) => {
           evented: false,
           strokeLineCap: child.strokeLineCap || "round",
           strokeLineJoin: child.strokeLineJoin || "round",
-          fill: "none",
+          fill: null,
           backgroundColor: null,
         });
+        lockQrExportFill(child);
         const storedStrokeWidth = child.qrExportStrokeWidth || child.strokeWidth || 1;
         child.qrExportStrokeWidth = storedStrokeWidth;
         child.strokeWidth = Math.min(child.strokeWidth || storedStrokeWidth, 0.001);
@@ -167,9 +188,12 @@ export const decorateQrGroup = (group) => {
           const originalToSVG = child.toSVG.bind(child);
           child.toSVG = (reviver) => {
             const prevWidth = child.strokeWidth;
+            const prevFill = child.fill;
             child.strokeWidth = child.qrExportStrokeWidth || 1;
+            child.fill = null;
             const svgMarkup = originalToSVG(reviver);
             child.strokeWidth = prevWidth;
+            child.fill = prevFill;
             return svgMarkup;
           };
           child.__qrPatchedToSVG = true;

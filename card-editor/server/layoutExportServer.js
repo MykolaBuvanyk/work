@@ -816,7 +816,11 @@ const drawBarcodePaths = (
   const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
 
   doc.save();
-  doc.fillColor(TEXT_OUTLINE_COLOR);
+  doc.strokeColor(TEXT_OUTLINE_COLOR);
+  doc.lineJoin("round");
+  doc.lineCap("round");
+  doc.strokeOpacity(1);
+  doc.fillOpacity(0);
 
   barcodeGroups.forEach((group) => {
     const rects = gatherBarcodeRects(group);
@@ -842,10 +846,6 @@ const drawBarcodePaths = (
 
     if (!barRects.length) return;
 
-    const pathSegments = [];
-    const formatPoint = (point) =>
-      `${point.x.toFixed(3)} ${point.y.toFixed(3)}`;
-
     barRects.forEach((rect) => {
       const x = parseFloat(rect.getAttribute("x") || "0");
       const y = parseFloat(rect.getAttribute("y") || "0");
@@ -861,19 +861,46 @@ const drawBarcodePaths = (
         y: offsetYPt + point.y * svgScale,
       }));
 
-      const segment = [
-        `M ${formatPoint(quad[0])}`,
-        `L ${formatPoint(quad[1])}`,
-        `L ${formatPoint(quad[2])}`,
-        `L ${formatPoint(quad[3])}`,
-        "Z",
-      ].join(" ");
-      pathSegments.push(segment);
-    });
+      const edgeLength01 = Math.hypot(
+        quad[1].x - quad[0].x,
+        quad[1].y - quad[0].y
+      );
+      const edgeLength12 = Math.hypot(
+        quad[2].x - quad[1].x,
+        quad[2].y - quad[1].y
+      );
+      const barWidthPt = Math.min(edgeLength01, edgeLength12);
+      // Mirror client-side outline heuristics so PDF export matches preview.
+      const barWidthPx = barWidthPt / svgScale;
+      const defaultOutlinePx = 1;
+      const minOutlinePx = 0.3;
+      const maxByRectWidthPx =
+        Number.isFinite(barWidthPx) && barWidthPx > 0
+          ? barWidthPx * 0.5
+          : null;
 
-    if (pathSegments.length) {
-      doc.path(pathSegments.join(" ")).fill();
-    }
+      let outlineWidthPx = defaultOutlinePx;
+      if (Number.isFinite(maxByRectWidthPx) && maxByRectWidthPx > 0) {
+        outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
+      }
+      outlineWidthPx = Math.max(outlineWidthPx, minOutlinePx);
+      if (Number.isFinite(maxByRectWidthPx) && maxByRectWidthPx > 0) {
+        outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
+      }
+
+      const outlineWidthPt = Math.max(
+        outlineWidthPx * svgScale,
+        minOutlinePx * svgScale
+      );
+
+      doc.lineWidth(outlineWidthPt);
+      doc.moveTo(quad[0].x, quad[0].y);
+      doc.lineTo(quad[1].x, quad[1].y);
+      doc.lineTo(quad[2].x, quad[2].y);
+      doc.lineTo(quad[3].x, quad[3].y);
+      doc.closePath();
+      doc.stroke();
+    });
   });
 
   doc.restore();

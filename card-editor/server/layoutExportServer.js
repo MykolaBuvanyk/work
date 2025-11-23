@@ -875,9 +875,7 @@ const drawBarcodePaths = (
       const defaultOutlinePx = 1;
       const minOutlinePx = 0.3;
       const maxByRectWidthPx =
-        Number.isFinite(barWidthPx) && barWidthPx > 0
-          ? barWidthPx * 0.5
-          : null;
+        Number.isFinite(barWidthPx) && barWidthPx > 0 ? barWidthPx * 0.5 : null;
 
       let outlineWidthPx = defaultOutlinePx;
       if (Number.isFinite(maxByRectWidthPx) && maxByRectWidthPx > 0) {

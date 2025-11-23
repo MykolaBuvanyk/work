@@ -31,7 +31,15 @@ const HOLE_CUT_TYPE = "hole";
 const HOLE_ID_PREFIX = "hole-";
 const HOLE_STROKE_COLOR = "#FD7714";
 const HOLE_FILL_COLOR = "#FFFFFF";
-const HOLE_SHAPE_TAGS = ["path", "rect", "circle", "ellipse", "polygon", "polyline", "line"];
+const HOLE_SHAPE_TAGS = [
+  "path",
+  "rect",
+  "circle",
+  "ellipse",
+  "polygon",
+  "polyline",
+  "line",
+];
 const HOLE_DATA_SELECTOR = `[${CUT_TYPE_ATTRIBUTE}="${HOLE_CUT_TYPE}"]`;
 const HOLE_ID_SELECTOR = `[id^="${HOLE_ID_PREFIX}"]`;
 const HOLE_NODE_SELECTOR = `${HOLE_DATA_SELECTOR}, ${HOLE_ID_SELECTOR}`;
@@ -66,7 +74,11 @@ const GEOMETRY_ATTRIBUTES_TO_SKIP = new Set([
 let cachedPaperScope = null;
 
 const ensurePaperScope = () => {
-  if (!paperLib || typeof window === "undefined" || typeof document === "undefined") {
+  if (
+    !paperLib ||
+    typeof window === "undefined" ||
+    typeof document === "undefined"
+  ) {
     return null;
   }
   if (cachedPaperScope) {
@@ -111,7 +123,8 @@ const pathItemToClipperInput = (scope, pathItem) => {
     clone.reverse();
   }
   const hasCurves =
-    Array.isArray(pathItem.curves) && pathItem.curves.some((curve) => !curve.isStraight());
+    Array.isArray(pathItem.curves) &&
+    pathItem.curves.some((curve) => !curve.isStraight());
   const flattenTolerance = hasCurves ? 0.05 : 0.2;
   clone.flatten(flattenTolerance);
   const clipperPath = clone.segments.map((segment) => ({
@@ -130,7 +143,9 @@ const pathItemToClipperInput = (scope, pathItem) => {
   return {
     clipperPath,
     hasCurves,
-    joinType: hasCurves ? ClipperLib.JoinType.jtRound : ClipperLib.JoinType.jtMiter,
+    joinType: hasCurves
+      ? ClipperLib.JoinType.jtRound
+      : ClipperLib.JoinType.jtMiter,
   };
 };
 
@@ -167,15 +182,21 @@ const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
       return null;
     }
 
-    const arcTolerance = clipperInputs.some((entry) => entry.hasCurves) ? 0.05 : 0.25;
+    const arcTolerance = clipperInputs.some((entry) => entry.hasCurves)
+      ? 0.05
+      : 0.25;
     const offsetter = new ClipperLib.ClipperOffset(2, arcTolerance);
 
     clipperInputs.forEach((entry) => {
-      offsetter.AddPath(entry.clipperPath, entry.joinType, ClipperLib.EndType.etClosedPolygon);
+      offsetter.AddPath(
+        entry.clipperPath,
+        entry.joinType,
+        ClipperLib.EndType.etClosedPolygon
+      );
     });
 
-  const offsetAmount = -offsetDistancePx * CLIPPER_SCALE;
-  const solution = ClipperLib.Paths ? new ClipperLib.Paths() : [];
+    const offsetAmount = -offsetDistancePx * CLIPPER_SCALE;
+    const solution = ClipperLib.Paths ? new ClipperLib.Paths() : [];
     offsetter.Execute(solution, offsetAmount);
 
     if (!solution.length) {
@@ -187,7 +208,8 @@ const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
       .map((poly) => {
         if (!poly?.length) return null;
         const points = poly.map(
-          (point) => new scope.Point(point.X / CLIPPER_SCALE, point.Y / CLIPPER_SCALE)
+          (point) =>
+            new scope.Point(point.X / CLIPPER_SCALE, point.Y / CLIPPER_SCALE)
         );
         if (points.length < 3) return null;
         return new scope.Path({
@@ -276,7 +298,15 @@ const applyContourStrokeWidth = (node, recursive = false) => {
     return;
   }
 
-  const shapeTags = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line"]);
+  const shapeTags = new Set([
+    "path",
+    "rect",
+    "circle",
+    "ellipse",
+    "polygon",
+    "polyline",
+    "line",
+  ]);
   Array.from(node.children || []).forEach((child) => {
     if (!child || child.nodeType !== 1) return;
     const tag = child.nodeName?.toLowerCase?.();
@@ -322,14 +352,20 @@ const hasVisibleFillPaint = (node, styleAttr) => {
   if (isVisiblePaint(directFill)) {
     return true;
   }
-  const styleFill = extractStyleColor(styleAttr || node.getAttribute("style"), "fill");
+  const styleFill = extractStyleColor(
+    styleAttr || node.getAttribute("style"),
+    "fill"
+  );
   return isVisiblePaint(styleFill);
 };
 
 const isNodeInsideCutShape = (node) => {
   if (!node) return false;
 
-  if (typeof node.getAttribute === "function" && node.getAttribute(CUT_FLAG_ATTRIBUTE) === "true") {
+  if (
+    typeof node.getAttribute === "function" &&
+    node.getAttribute(CUT_FLAG_ATTRIBUTE) === "true"
+  ) {
     return true;
   }
 
@@ -386,8 +422,14 @@ const applyHoleAppearance = (node) => {
   if (!node.getAttribute("stroke-width")) {
     node.setAttribute("stroke-width", "1");
   }
-  node.setAttribute("stroke-linejoin", node.getAttribute("stroke-linejoin") || "round");
-  node.setAttribute("stroke-linecap", node.getAttribute("stroke-linecap") || "round");
+  node.setAttribute(
+    "stroke-linejoin",
+    node.getAttribute("stroke-linejoin") || "round"
+  );
+  node.setAttribute(
+    "stroke-linecap",
+    node.getAttribute("stroke-linecap") || "round"
+  );
   node.setAttribute("fill-opacity", "1");
   node.setAttribute("stroke-opacity", "1");
 };
@@ -774,37 +816,43 @@ const addInnerContoursForShapes = (rootElement) => {
 
   shapeNodes.forEach((shapeNode) => {
     try {
-      if (!shapeNode || shapeNode.getAttribute('data-inner-contour-added') === 'true') {
+      if (
+        !shapeNode ||
+        shapeNode.getAttribute("data-inner-contour-added") === "true"
+      ) {
         return;
       }
 
-      const nodeId = shapeNode.getAttribute('id') || '';
-      if (!nodeId || nodeId.endsWith('-inner')) {
+      const nodeId = shapeNode.getAttribute("id") || "";
+      if (!nodeId || nodeId.endsWith("-inner")) {
         return;
       }
 
-      const thicknessMmAttr = shapeNode.getAttribute('data-shape-thickness-mm');
+      const thicknessMmAttr = shapeNode.getAttribute("data-shape-thickness-mm");
       const thicknessData =
-        shapeNode.getAttribute('data-shape-thickness-px') ||
-        shapeNode.getAttribute('data-thickness-px') ||
-        shapeNode.getAttribute('stroke-width');
-      const styleAttr = shapeNode.getAttribute('style') || '';
+        shapeNode.getAttribute("data-shape-thickness-px") ||
+        shapeNode.getAttribute("data-thickness-px") ||
+        shapeNode.getAttribute("stroke-width");
+      const styleAttr = shapeNode.getAttribute("style") || "";
 
       if (isNodeInsideCutShape(shapeNode)) {
-        shapeNode.setAttribute('data-inner-contour-added', 'true');
+        shapeNode.setAttribute("data-inner-contour-added", "true");
         return;
       }
 
-      const hasFillAttr = shapeNode.getAttribute('data-shape-has-fill') === 'true';
+      const hasFillAttr =
+        shapeNode.getAttribute("data-shape-has-fill") === "true";
       const hasVisibleFill = hasVisibleFillPaint(shapeNode, styleAttr);
 
       if (hasFillAttr || hasVisibleFill) {
-        shapeNode.setAttribute('data-inner-contour-added', 'true');
+        shapeNode.setAttribute("data-inner-contour-added", "true");
         applyContourStrokeWidth(shapeNode, true);
         return;
       }
 
-      const thicknessMmValue = thicknessMmAttr ? parseFloat(thicknessMmAttr) : NaN;
+      const thicknessMmValue = thicknessMmAttr
+        ? parseFloat(thicknessMmAttr)
+        : NaN;
       let thicknessPx = Number.isFinite(thicknessMmValue)
         ? thicknessMmValue * PX_PER_MM
         : NaN;
@@ -813,7 +861,9 @@ const addInnerContoursForShapes = (rootElement) => {
         thicknessPx = thicknessData ? parseFloat(thicknessData) : NaN;
 
         if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
-          const styleMatch = styleAttr.match(/stroke-width\s*:\s*([0-9.+-eE]+)\s*(px)?/i);
+          const styleMatch = styleAttr.match(
+            /stroke-width\s*:\s*([0-9.+-eE]+)\s*(px)?/i
+          );
           if (styleMatch) {
             thicknessPx = parseFloat(styleMatch[1]);
           }
@@ -825,7 +875,11 @@ const addInnerContoursForShapes = (rootElement) => {
       }
 
       const offsetDistancePx = thicknessPx + CONTOUR_STROKE_WIDTH_PX;
-      const innerPathData = buildInnerContourPathData(scope, shapeNode, offsetDistancePx);
+      const innerPathData = buildInnerContourPathData(
+        scope,
+        shapeNode,
+        offsetDistancePx
+      );
       if (!innerPathData) {
         return;
       }
@@ -835,7 +889,7 @@ const addInnerContoursForShapes = (rootElement) => {
         return;
       }
 
-      shapeNode.setAttribute('data-inner-contour-added', 'true');
+      shapeNode.setAttribute("data-inner-contour-added", "true");
       applyContourStrokeWidth(shapeNode, true);
 
       const parent = shapeNode.parentNode;
@@ -843,7 +897,7 @@ const addInnerContoursForShapes = (rootElement) => {
         parent.insertBefore(innerNode, shapeNode.nextSibling);
       }
     } catch (error) {
-      console.warn('Не вдалося додати внутрішній контур для фігури', error);
+      console.warn("Не вдалося додати внутрішній контур для фігури", error);
     }
   });
 };
@@ -955,7 +1009,9 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
 
     // Перевіряємо fill атрибут
     const fillAttr = node.getAttribute("fill");
-    const isPatternFill = typeof fillAttr === "string" && fillAttr.trim().toLowerCase().startsWith("url(");
+    const isPatternFill =
+      typeof fillAttr === "string" &&
+      fillAttr.trim().toLowerCase().startsWith("url(");
     if (fillAttr && !isPatternFill && colorsMatch(fillAttr, themeStrokeColor)) {
       // Конвертуємо fill в stroke
       node.setAttribute("stroke", TEXT_STROKE_COLOR);
@@ -1114,7 +1170,12 @@ const approxZero = (value, reference) => {
 const markCanvasBackgrounds = (rootElement, dims = {}) => {
   if (!rootElement?.querySelectorAll) return;
   const { width, height } = dims;
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+  if (
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
     return;
   }
 
@@ -1131,7 +1192,10 @@ const markCanvasBackgrounds = (rootElement, dims = {}) => {
     const x = parseFloat(rawX);
     const y = parseFloat(rawY);
 
-    if (!approxZero(Number.isFinite(x) ? x : 0, width) || !approxZero(Number.isFinite(y) ? y : 0, height)) {
+    if (
+      !approxZero(Number.isFinite(x) ? x : 0, width) ||
+      !approxZero(Number.isFinite(y) ? y : 0, height)
+    ) {
       return;
     }
 
@@ -1236,9 +1300,10 @@ const outlineBarcodeRects = (rootElement) => {
         outlinedGroups += 1;
         rects.forEach((rect) => {
           const rectWidth = parseFloat(rect.getAttribute("width") || "0");
-          const maxByRectWidth = Number.isFinite(rectWidth) && rectWidth > 0
-            ? rectWidth * 0.5
-            : BARCODE_OUTLINE_WIDTH;
+          const maxByRectWidth =
+            Number.isFinite(rectWidth) && rectWidth > 0
+              ? rectWidth * 0.5
+              : BARCODE_OUTLINE_WIDTH;
 
           let outlineWidth = BARCODE_OUTLINE_WIDTH;
           if (Number.isFinite(maxByRectWidth) && maxByRectWidth > 0) {
@@ -1248,7 +1313,10 @@ const outlineBarcodeRects = (rootElement) => {
             outlineWidth = BARCODE_OUTLINE_WIDTH;
           }
           outlineWidth = Math.max(outlineWidth, BARCODE_OUTLINE_MIN_WIDTH);
-          if (Number.isFinite(maxByRectWidth) && maxByRectWidth > BARCODE_OUTLINE_MIN_WIDTH) {
+          if (
+            Number.isFinite(maxByRectWidth) &&
+            maxByRectWidth > BARCODE_OUTLINE_MIN_WIDTH
+          ) {
             outlineWidth = Math.min(outlineWidth, maxByRectWidth);
           }
 

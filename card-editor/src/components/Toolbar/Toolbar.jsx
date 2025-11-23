@@ -5765,29 +5765,31 @@ const Toolbar = () => {
         )} мм (тип 2, Ø ${holesDiameter} мм)`
       );
     } catch {}
-    const hole = registerHoleShape(new fabric.Circle({
-      left: canvasWidth / 2,
-      top: offsetPx,
-      radius: mmToPx((holesDiameter || 2.5) / 2),
-      fill: HOLE_FILL_COLOR, // Білий фон дирки
-      stroke: CUT_STROKE_COLOR, // Оранжевий бордер
-      strokeWidth: 1, // 1px
-      originX: "center",
-      originY: "center",
-      isCutElement: true, // Позначаємо як Cut елемент
-      cutType: "hole", // Додаємо тип cut елементу
-      preventThemeRecolor: true,
-      hasControls: false, // Забороняємо зміну розміру
-      hasBorders: true,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockUniScaling: true,
-      // Статичне розміщення: заборонити вибір/переміщення мишкою
-      selectable: false,
-      evented: false,
-      lockMovementX: true,
-      lockMovementY: true,
-    }));
+    const hole = registerHoleShape(
+      new fabric.Circle({
+        left: canvasWidth / 2,
+        top: offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: HOLE_FILL_COLOR, // Білий фон дирки
+        stroke: CUT_STROKE_COLOR, // Оранжевий бордер
+        strokeWidth: 1, // 1px
+        originX: "center",
+        originY: "center",
+        isCutElement: true, // Позначаємо як Cut елемент
+        cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        // Статичне розміщення: заборонити вибір/переміщення мишкою
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
+      })
+    );
     canvas.add(hole);
     canvas.renderAll();
   };
@@ -5810,52 +5812,56 @@ const Toolbar = () => {
       } catch {}
 
       // Лівий отвір
-      const leftHole = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const leftHole = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: canvasHeight / 2,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Правий отвір
-      const rightHole = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const rightHole = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: canvasHeight / 2,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       canvas.add(leftHole);
       canvas.add(rightHole);
@@ -5881,100 +5887,108 @@ const Toolbar = () => {
       } catch {}
 
       // Верхній лівий
-      const topLeft = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const topLeft = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Верхній правий
-      const topRight = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const topRight = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Нижній лівий
-      const bottomLeft = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: canvasHeight - offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const bottomLeft = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: canvasHeight - offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Нижній правий
-      const bottomRight = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: canvasHeight - offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const bottomRight = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: canvasHeight - offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       canvas.add(topLeft);
       canvas.add(topRight);
@@ -6006,26 +6020,26 @@ const Toolbar = () => {
     const makeRect = (left, top) =>
       registerHoleShape(
         new fabric.Rect({
-        left,
-        top,
-        width: hwPx,
-        height: hhPx,
-        originX: "center",
-        originY: "center",
+          left,
+          top,
+          width: hwPx,
+          height: hhPx,
+          originX: "center",
+          originY: "center",
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        isCutElement: true,
-        cutType: "hole",
-        preventThemeRecolor: true,
-        holeType5Rect: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: false,
-        selectable: false,
-        evented: false,
+          strokeWidth: 1,
+          isCutElement: true,
+          cutType: "hole",
+          preventThemeRecolor: true,
+          holeType5Rect: true,
+          hasControls: false,
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: false,
+          selectable: false,
+          evented: false,
           lockMovementX: true,
           lockMovementY: true,
         })

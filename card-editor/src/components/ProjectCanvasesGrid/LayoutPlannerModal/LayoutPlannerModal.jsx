@@ -36,6 +36,7 @@ const HOLE_DATA_SELECTOR = `[${CUT_TYPE_ATTRIBUTE}="${HOLE_CUT_TYPE}"]`;
 const HOLE_ID_SELECTOR = `[id^="${HOLE_ID_PREFIX}"]`;
 const HOLE_NODE_SELECTOR = `${HOLE_DATA_SELECTOR}, ${HOLE_ID_SELECTOR}`;
 const HOLE_SHAPE_QUERY = HOLE_SHAPE_TAGS.join(", ");
+const BACKGROUND_ATTR = "data-layout-background";
 
 const paperLib = paperNamespace?.default ?? paperNamespace;
 const ClipperLib = ClipperLibNamespace?.default ?? ClipperLibNamespace;
@@ -927,6 +928,9 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
     if (node.getAttribute("data-shape-has-fill") === "true") {
       return;
     }
+    if (node.getAttribute(BACKGROUND_ATTR) === "true") {
+      return;
+    }
     const tagName = node?.tagName ? node.tagName.toLowerCase() : "";
     if (tagName === "text" || tagName === "tspan") {
       return;
@@ -951,7 +955,8 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
 
     // Перевіряємо fill атрибут
     const fillAttr = node.getAttribute("fill");
-    if (fillAttr && colorsMatch(fillAttr, themeStrokeColor)) {
+    const isPatternFill = typeof fillAttr === "string" && fillAttr.trim().toLowerCase().startsWith("url(");
+    if (fillAttr && !isPatternFill && colorsMatch(fillAttr, themeStrokeColor)) {
       // Конвертуємо fill в stroke
       node.setAttribute("stroke", TEXT_STROKE_COLOR);
       node.setAttribute("fill", "none");
@@ -971,7 +976,12 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
 
       // Шукаємо stroke або fill з кольором теми в style
       const strokeMatch = styleAttr.match(/stroke\s*:\s*([^;]+)/i);
-      if (strokeMatch && colorsMatch(strokeMatch[1], themeStrokeColor)) {
+      if (
+        strokeMatch &&
+        strokeMatch[1] &&
+        !strokeMatch[1].trim().toLowerCase().startsWith("url(") &&
+        colorsMatch(strokeMatch[1], themeStrokeColor)
+      ) {
         updated = updated.replace(
           /stroke\s*:\s*[^;]+/gi,
           `stroke: ${TEXT_STROKE_COLOR}`
@@ -980,7 +990,12 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
       }
 
       const fillMatch = styleAttr.match(/fill\s*:\s*([^;]+)/i);
-      if (fillMatch && colorsMatch(fillMatch[1], themeStrokeColor)) {
+      if (
+        fillMatch &&
+        fillMatch[1] &&
+        !fillMatch[1].trim().toLowerCase().startsWith("url(") &&
+        colorsMatch(fillMatch[1], themeStrokeColor)
+      ) {
         updated = updated.replace(/fill\s*:\s*[^;]+/gi, `fill: none`);
         if (!updated.includes("stroke:")) {
           updated += `; stroke: ${TEXT_STROKE_COLOR}`;
@@ -1008,6 +1023,9 @@ const recolorStrokeAttributes = (rootElement) => {
       return;
     }
     if (node.getAttribute("data-shape-has-fill") === "true") {
+      return;
+    }
+    if (node.getAttribute(BACKGROUND_ATTR) === "true") {
       return;
     }
     const strokeAttr = node.getAttribute("stroke");
@@ -1081,6 +1099,48 @@ const appendStyleDeclarations = (baseStyle = "", declarations = []) => {
     : filtered.join("; ");
 };
 
+const approxEqual = (value, target, relative = 0.01, absolute = 0.5) => {
+  if (!Number.isFinite(value) || !Number.isFinite(target)) return false;
+  const tolerance = Math.max(absolute, Math.abs(target) * relative);
+  return Math.abs(value - target) <= tolerance;
+};
+
+const approxZero = (value, reference) => {
+  if (!Number.isFinite(value)) return false;
+  const tolerance = Math.max(0.5, Math.abs(reference || 0) * 0.01);
+  return Math.abs(value) <= tolerance;
+};
+
+const markCanvasBackgrounds = (rootElement, dims = {}) => {
+  if (!rootElement?.querySelectorAll) return;
+  const { width, height } = dims;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return;
+  }
+
+  const rects = Array.from(rootElement.querySelectorAll("rect"));
+  rects.forEach((rect) => {
+    const rectWidth = parseFloat(rect.getAttribute("width"));
+    const rectHeight = parseFloat(rect.getAttribute("height"));
+    if (!approxEqual(rectWidth, width) || !approxEqual(rectHeight, height)) {
+      return;
+    }
+
+    const rawX = rect.getAttribute("x") ?? rect.getAttribute("left") ?? "0";
+    const rawY = rect.getAttribute("y") ?? rect.getAttribute("top") ?? "0";
+    const x = parseFloat(rawX);
+    const y = parseFloat(rawY);
+
+    if (!approxZero(Number.isFinite(x) ? x : 0, width) || !approxZero(Number.isFinite(y) ? y : 0, height)) {
+      return;
+    }
+
+    rect.setAttribute(BACKGROUND_ATTR, "true");
+    rect.setAttribute("stroke", "none");
+    rect.removeAttribute("stroke-width");
+  });
+};
+
 const filterBarcodeRects = (rects) => {
   if (!Array.isArray(rects) || rects.length === 0) {
     return [];
@@ -1091,7 +1151,9 @@ const filterBarcodeRects = (rects) => {
   const minWidth = widths.length ? Math.min(...widths) : null;
   const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
   return rects.filter((rect) => {
-    if (nodeHasWhiteFill(rect)) return false;
+    if (rect?.getAttribute && rect.getAttribute(BACKGROUND_ATTR) === "true") {
+      return false;
+    }
     const width = parseFloat(rect.getAttribute("width") || "0");
     if (!Number.isFinite(width) || width <= 0) return false;
     if (widthThreshold !== Infinity && width > widthThreshold) return false;
@@ -1148,12 +1210,17 @@ const isLikelyBarcodeGroupPreview = (node) => {
 
 const BARCODE_STYLE_PROPS = [
   "fill",
+  "fill-opacity",
   "stroke",
   "stroke-width",
   "stroke-linecap",
   "stroke-linejoin",
   "stroke-opacity",
 ];
+
+const BARCODE_OUTLINE_COLOR = TEXT_STROKE_COLOR;
+const BARCODE_OUTLINE_WIDTH = 1;
+const BARCODE_OUTLINE_MIN_WIDTH = 0.3;
 
 const outlineBarcodeRects = (rootElement) => {
   if (!rootElement) return;
@@ -1168,12 +1235,31 @@ const outlineBarcodeRects = (rootElement) => {
       if (rects.length) {
         outlinedGroups += 1;
         rects.forEach((rect) => {
-          const strokeWidth = rect.getAttribute("stroke-width") || "1";
+          const rectWidth = parseFloat(rect.getAttribute("width") || "0");
+          const maxByRectWidth = Number.isFinite(rectWidth) && rectWidth > 0
+            ? rectWidth * 0.5
+            : BARCODE_OUTLINE_WIDTH;
+
+          let outlineWidth = BARCODE_OUTLINE_WIDTH;
+          if (Number.isFinite(maxByRectWidth) && maxByRectWidth > 0) {
+            outlineWidth = Math.min(outlineWidth, maxByRectWidth);
+          }
+          if (!Number.isFinite(outlineWidth) || outlineWidth <= 0) {
+            outlineWidth = BARCODE_OUTLINE_WIDTH;
+          }
+          outlineWidth = Math.max(outlineWidth, BARCODE_OUTLINE_MIN_WIDTH);
+          if (Number.isFinite(maxByRectWidth) && maxByRectWidth > BARCODE_OUTLINE_MIN_WIDTH) {
+            outlineWidth = Math.min(outlineWidth, maxByRectWidth);
+          }
+
           rect.setAttribute("fill", "none");
-          rect.setAttribute("stroke", TEXT_STROKE_COLOR);
-          rect.setAttribute("stroke-width", strokeWidth);
+          rect.setAttribute("fill-opacity", "0");
+          rect.removeAttribute("fill-rule");
+          rect.setAttribute("stroke", BARCODE_OUTLINE_COLOR);
+          rect.setAttribute("stroke-width", String(outlineWidth));
           rect.setAttribute("stroke-linejoin", "round");
           rect.setAttribute("stroke-linecap", "round");
+          rect.setAttribute("stroke-opacity", "1");
 
           const baseStyle = stripStyleProperties(
             rect.getAttribute("style") || "",
@@ -1181,10 +1267,12 @@ const outlineBarcodeRects = (rootElement) => {
           );
           const style = appendStyleDeclarations(baseStyle, [
             "fill: none",
-            `stroke: ${TEXT_STROKE_COLOR}`,
-            `stroke-width: ${strokeWidth}`,
+            "fill-opacity: 0",
+            `stroke: ${BARCODE_OUTLINE_COLOR}`,
+            `stroke-width: ${outlineWidth}`,
             "stroke-linejoin: round",
             "stroke-linecap: round",
+            "stroke-opacity: 1",
           ]);
           if (style) {
             rect.setAttribute("style", style);
@@ -1602,6 +1690,8 @@ const buildPlacementPreview = (placement) => {
 
       const rawWidth = parseFloat(svgElement.getAttribute("width"));
       const rawHeight = parseFloat(svgElement.getAttribute("height"));
+<<<<<<< HEAD
+=======
 
       // ВИДАЛЯЄМО всі rect елементи з чорним фоном на самому початку
       const allRects = svgElement.querySelectorAll('rect');
@@ -1668,6 +1758,7 @@ const buildPlacementPreview = (placement) => {
         });
       });
 
+>>>>>>> 4915bedcba6ae9061cbee4a892d968e8646edbee
       const hasViewBox = !!svgElement.getAttribute("viewBox");
 
       if (hasViewBox) {
@@ -1740,13 +1831,32 @@ const buildPlacementPreview = (placement) => {
         .map((value) => parseFloat(value))
         .filter((value) => Number.isFinite(value));
 
+      const mmValueToPx = (value) => {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric * PX_PER_MM : null;
+      };
+
+      let viewBoxWidth = Number.isFinite(rawWidth)
+        ? rawWidth
+        : mmValueToPx(placement.sourceWidth) ?? mmValueToPx(placement.width);
+      let viewBoxHeight = Number.isFinite(rawHeight)
+        ? rawHeight
+        : mmValueToPx(placement.sourceHeight) ?? mmValueToPx(placement.height);
+
       if (viewBoxParts && viewBoxParts.length === 4) {
         const [, , vbWidth, vbHeight] = viewBoxParts;
+        if (Number.isFinite(vbWidth)) viewBoxWidth = vbWidth;
+        if (Number.isFinite(vbHeight)) viewBoxHeight = vbHeight;
         convertPercentagesToAbsolute(exportElement, {
           width: vbWidth,
           height: vbHeight,
         });
       }
+
+      markCanvasBackgrounds(exportElement, {
+        width: viewBoxWidth,
+        height: viewBoxHeight,
+      });
 
       // Конвертуємо елементи з кольором теми в бірюзовий stroke
       if (placement.themeStrokeColor) {
@@ -1774,6 +1884,11 @@ const buildPlacementPreview = (placement) => {
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
+
+      markCanvasBackgrounds(previewElement, {
+        width: viewBoxWidth,
+        height: viewBoxHeight,
+      });
 
       // Конвертуємо елементи з кольором теми для preview також
       if (placement.themeStrokeColor) {

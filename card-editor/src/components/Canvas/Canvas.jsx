@@ -2366,7 +2366,7 @@ const Canvas = () => {
     const textColor = globalColors?.textColor || "#000000";
     const backgroundType = globalColors?.backgroundType || "solid";
     const barcodeBackground =
-      backgroundType === "texture"
+      backgroundType === "texture" || backgroundType === "gradient"
         ? "transparent"
         : globalColors?.backgroundColor || "#FFFFFF";
     const objs = canvas.getObjects?.() || [];

@@ -986,7 +986,7 @@ const ProjectCanvasesGrid = () => {
           };
           
           await waitForObjects();
-          restoreElementProperties(canvas);
+          await restoreElementProperties(canvas);
           console.log("Element properties restored, objects:", canvas.getObjects().length);
         } catch (e) {
           console.error("Failed to restore element properties:", e);

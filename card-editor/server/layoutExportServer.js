@@ -1147,12 +1147,12 @@ app.post("/api/layout-pdf", async (req, res) => {
 
             // Always draw the standard blue border outline first
             try {
-              drawStandardBorderOutline(doc, {
-                xPt,
-                yTopPt,
-                widthPt,
-                heightPt,
-              });
+              // drawStandardBorderOutline(doc, {
+              //   xPt,
+              //   yTopPt,
+              //   widthPt,
+              //   heightPt,
+              // });
             } catch (standardBorderError) {
               console.warn(
                 "Не вдалося намалювати стандартний бордер:",

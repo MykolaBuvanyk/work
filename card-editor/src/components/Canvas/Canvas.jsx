@@ -2363,6 +2363,14 @@ const Canvas = () => {
   // Авто-синхронізація кольорів QR/BarCode при зміні теми
   useEffect(() => {
     if (!canvas) return;
+    
+    // НЕ перегенеровуємо QR коди під час завантаження canvas з бази даних
+    // Це робиться в restoreElementProperties
+    if (canvas.__switching || canvas.__suspendUndoRedo) {
+      console.log('[Canvas] Skipping QR/BarCode sync - canvas switching or suspended');
+      return;
+    }
+    
     const textColor = globalColors?.textColor || "#000000";
     const backgroundType = globalColors?.backgroundType || "solid";
     const barcodeBackground =
@@ -2449,6 +2457,7 @@ const Canvas = () => {
               isQRCode: true,
               qrText: o.qrText,
               qrSize: qrSizePx || o.qrSize || obj.width || 0,
+              qrColor: textColor,
               backgroundColor: "transparent",
             });
             const arr = canvas.getObjects();

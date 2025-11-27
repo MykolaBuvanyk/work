@@ -788,6 +788,7 @@ export const useExcelImport = () => {
                       hasBorders: true,
                       isQRCode: true,
                       qrText: objData.qrText,
+                      qrColor: foreground,
                       backgroundColor: "transparent",
                     });
                   }

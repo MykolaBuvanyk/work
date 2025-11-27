@@ -2154,7 +2154,7 @@ const buildPlacementPreview = (placement) => {
       });
 
       // Видаляємо фони для експорту PDF
-      removeBackgroundsForExport(exportElement);
+      // removeBackgroundsForExport(exportElement);
 
       // Конвертуємо елементи з кольором теми в бірюзовий stroke
       if (placement.themeStrokeColor) {

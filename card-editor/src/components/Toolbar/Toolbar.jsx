@@ -5277,6 +5277,7 @@ const Toolbar = () => {
         isQRCode: true,
         qrText: text,
         qrSize: size || qrObj.qrSize || newObj.width || 0,
+        qrColor: newColor,
         selectable: true,
         hasControls: true,
         hasBorders: true,

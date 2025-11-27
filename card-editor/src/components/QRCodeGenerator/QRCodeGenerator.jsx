@@ -192,6 +192,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       decorateQrGroup(obj);
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
+      const fgColorUsed = globalColors?.textColor || "#000000";
       obj.set({
         left:
           left ??
@@ -212,6 +213,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         isQRCode: true,
         qrText: qrData,
         qrSize: generatedSize || obj.width || 0,
+        qrColor: fgColorUsed,
         backgroundColor: "transparent",
       });
       // Мінімальний розмір QR 10x10 мм; стандартний при створенні — 20x20 мм
@@ -356,6 +358,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         isQRCode: true,
         qrText: target.qrText,
         qrSize: target.qrSize,
+        qrColor: target.qrColor,
       });
       decorateQrGroup(clone);
       canvas.add(clone);

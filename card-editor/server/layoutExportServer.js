@@ -16,6 +16,8 @@ const ALLOWED_ORIGINS = process.env.LAYOUT_EXPORT_ORIGINS
       .filter(Boolean)
   : null;
 const OUTLINE_STROKE_COLOR = "#0000FF";
+const CUSTOM_BORDER_STROKE_COLOR = "#008181";
+const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = "#008181";
 const TEXT_STROKE_WIDTH_PT = 0.5;
 
@@ -780,6 +782,61 @@ const rectToTransformedQuad = (matrix, x, y, w, h) => {
   return [p1, p2, p3, p4];
 };
 
+/**
+ * Draws the standard blue border outline on the PDF.
+ * This is always present on every placement.
+ */
+const drawStandardBorderOutline = (doc, { xPt, yTopPt, widthPt, heightPt }) => {
+  if (!doc) {
+    return;
+  }
+
+  doc.save();
+  doc.strokeColor(OUTLINE_STROKE_COLOR);
+  doc.lineWidth(CUSTOM_BORDER_STROKE_WIDTH_PT);
+  doc.lineJoin("round");
+  doc.lineCap("round");
+  doc.strokeOpacity(1);
+  doc.fillOpacity(0);
+
+  // Draw a simple rectangle outline (stroke only, no fill)
+  doc.rect(xPt, yTopPt, widthPt, heightPt).stroke();
+
+  doc.restore();
+};
+
+/**
+ * Draws a custom border outline (teal, stroke only) on the PDF
+ * when the user has enabled the border feature.
+ * Uses the placement's bounding box to draw a simple rectangle outline.
+ */
+const drawCustomBorderOutline = (
+  doc,
+  { xPt, yTopPt, widthPt, heightPt, customBorder }
+) => {
+  if (!doc || !customBorder) {
+    return;
+  }
+
+  // Only draw if the custom border mode is "custom"
+  if (customBorder.mode !== "custom") {
+    return;
+  }
+
+  doc.save();
+  doc.strokeColor(CUSTOM_BORDER_STROKE_COLOR);
+  doc.lineWidth(CUSTOM_BORDER_STROKE_WIDTH_PT);
+  doc.lineJoin("round");
+  doc.lineCap("round");
+  doc.strokeOpacity(1);
+  doc.fillOpacity(0);
+
+  // Draw a simple rectangle outline (stroke only, no fill)
+  doc.rect(xPt, yTopPt, widthPt, heightPt).stroke();
+
+  doc.restore();
+};
+
 const gatherBarcodeRects = (node) => {
   if (!node) return [];
   if (typeof node.getElementsByTagName === "function") {
@@ -1084,6 +1141,39 @@ app.post("/api/layout-pdf", async (req, res) => {
                 console.warn(
                   "Не вдалося відрендерити фон SVG:",
                   backgroundError.message
+                );
+              }
+            }
+
+            // Always draw the standard blue border outline first
+            try {
+              drawStandardBorderOutline(doc, {
+                xPt,
+                yTopPt,
+                widthPt,
+                heightPt,
+              });
+            } catch (standardBorderError) {
+              console.warn(
+                "Не вдалося намалювати стандартний бордер:",
+                standardBorderError.message
+              );
+            }
+
+            // Draw custom border outline on top if enabled (teal stroke only)
+            if (placement.customBorder) {
+              try {
+                drawCustomBorderOutline(doc, {
+                  xPt,
+                  yTopPt,
+                  widthPt,
+                  heightPt,
+                  customBorder: placement.customBorder,
+                });
+              } catch (borderError) {
+                console.warn(
+                  "Не вдалося намалювати кастомний бордер:",
+                  borderError.message
                 );
               }
             }

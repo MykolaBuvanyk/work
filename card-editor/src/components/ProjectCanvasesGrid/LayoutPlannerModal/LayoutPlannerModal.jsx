@@ -8,6 +8,73 @@ import styles from "./LayoutPlannerModal.module.css";
 
 const PX_PER_MM = 72 / 25.4;
 
+const CUSTOM_BORDER_DEFAULT_EXPORT_COLOR = "#008181";
+const CUSTOM_BORDER_DEFAULT_FILL = "none";
+
+const extractCustomBorderMetadata = (design = {}) => {
+  if (design?.customBorder && typeof design.customBorder === "object") {
+    return design.customBorder;
+  }
+
+  const jsonTemplate =
+    design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
+
+  if (!jsonTemplate || !Array.isArray(jsonTemplate?.objects)) {
+    return null;
+  }
+
+  const borderObject =
+    jsonTemplate.objects.find(
+      (obj) => obj?.isBorderShape && obj?.cardBorderMode === "custom"
+    ) || jsonTemplate.objects.find((obj) => obj?.isBorderShape);
+
+  if (!borderObject) {
+    return null;
+  }
+
+  const exportStrokeColor =
+    typeof borderObject.cardBorderExportStrokeColor === "string" &&
+    borderObject.cardBorderExportStrokeColor
+      ? borderObject.cardBorderExportStrokeColor
+      : borderObject.cardBorderMode === "custom"
+      ? CUSTOM_BORDER_DEFAULT_EXPORT_COLOR
+      : borderObject.stroke || null;
+
+  const displayStrokeColor =
+    typeof borderObject.cardBorderDisplayStrokeColor === "string" &&
+    borderObject.cardBorderDisplayStrokeColor
+      ? borderObject.cardBorderDisplayStrokeColor
+      : borderObject.stroke || null;
+
+  const exportFillRaw =
+    borderObject.cardBorderExportFill !== undefined
+      ? borderObject.cardBorderExportFill
+      : borderObject.cardBorderMode === "custom"
+      ? CUSTOM_BORDER_DEFAULT_FILL
+      : borderObject.fill ?? null;
+
+  const exportFill =
+    typeof exportFillRaw === "string" && exportFillRaw.trim() !== ""
+      ? exportFillRaw
+      : borderObject.cardBorderMode === "custom"
+      ? CUSTOM_BORDER_DEFAULT_FILL
+      : exportFillRaw;
+
+  const thicknessPx = Number(borderObject.cardBorderThicknessPx);
+
+  return {
+    mode: borderObject.cardBorderMode || "default",
+    exportStrokeColor,
+    displayStrokeColor,
+    exportFill,
+    elementId:
+      typeof borderObject.id === "string" && borderObject.id
+        ? borderObject.id
+        : null,
+    thicknessPx: Number.isFinite(thicknessPx) ? thicknessPx : null,
+  };
+};
+
 const FORMATS = {
   A5: { label: "A5", width: 148, height: 210 },
   A4: { label: "A4", width: 210, height: 297 },
@@ -20,6 +87,7 @@ const ORIENTATION_LABELS = {
 };
 
 const LAYOUT_OUTLINE_COLOR = "#0000FF";
+const PREVIEW_OUTLINE_COLOR = "#0000FF";
 const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
 const TEXT_STROKE_COLOR = "#008181";
 // const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
@@ -539,6 +607,8 @@ const normalizeDesigns = (designs = []) =>
       const copies = extractCopies(design);
       const svgContent = design?.previewSvg || null;
 
+      const customBorder = extractCustomBorderMetadata(design);
+
       // Витягуємо strokeColor з toolbarState для відслідковування колірної теми
       const themeStrokeColor =
         design?.toolbarState?.globalColors?.strokeColor || null;
@@ -554,6 +624,7 @@ const normalizeDesigns = (designs = []) =>
         svg: svgContent,
         preview: design?.preview || null,
         themeStrokeColor, // Додаємо інформацію про колір теми
+        customBorder,
       };
     })
     .filter(Boolean)
@@ -610,6 +681,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       svg: item.svg || null,
       preview: item.preview || null,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
+      customBorder: item.customBorder || null,
     };
 
     row.items.push(placement);
@@ -650,6 +722,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       svg: item.svg || null,
       preview: item.preview || null,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
+      customBorder: item.customBorder || null,
     };
 
     const row = {
@@ -698,6 +771,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
         svg: item.svg || null,
         preview: item.preview || null,
         themeStrokeColor: item.themeStrokeColor || null, // Зберігаємо колір теми
+        customBorder: item.customBorder || null,
       });
     }
   });
@@ -1070,7 +1144,172 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
   });
 };
 
-const recolorStrokeAttributes = (rootElement) => {
+const GEOMETRY_TAG_SET = new Set(
+  HOLE_SHAPE_TAGS.map((tag) => tag.toLowerCase())
+);
+
+const escapeCssIdentifier = (value = "") => {
+  if (typeof value !== "string" || value === "") {
+    return "";
+  }
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+    return CSS.escape(value);
+  }
+  return value.replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
+};
+
+const normalizeFillForExport = (value) => {
+  if (value == null) {
+    return null;
+  }
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return "none";
+  }
+  const lower = trimmed.toLowerCase();
+  if (lower === "transparent") {
+    return "none";
+  }
+  return trimmed;
+};
+
+const applyStrokeFillAttributes = (node, stroke, fill) => {
+  if (!node || node.nodeType !== 1) return;
+
+  const sanitizedFill = normalizeFillForExport(fill);
+
+  if (stroke) {
+    node.setAttribute("stroke", stroke);
+  }
+
+  if (sanitizedFill !== null) {
+    node.setAttribute("fill", sanitizedFill);
+  }
+
+  const styleAttr = node.getAttribute("style");
+  if (!styleAttr) {
+    return;
+  }
+
+  const filtered = styleAttr
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((declaration) => {
+      const lower = declaration.toLowerCase();
+      if (stroke && lower.startsWith("stroke:")) {
+        return false;
+      }
+      if (sanitizedFill !== null && lower.startsWith("fill:")) {
+        return false;
+      }
+      return true;
+    });
+
+  if (filtered.length) {
+    node.setAttribute("style", filtered.join("; "));
+  } else {
+    node.removeAttribute("style");
+  }
+};
+
+const applyStrokeFillRecursive = (node, stroke, fill) => {
+  if (!node || node.nodeType !== 1) return;
+
+  const tag = node.nodeName?.toLowerCase?.() || "";
+  if (GEOMETRY_TAG_SET.has(tag)) {
+    applyStrokeFillAttributes(node, stroke, fill);
+    if (!node.getAttribute("stroke-width")) {
+      node.setAttribute("stroke-width", "1");
+    }
+    if (!node.getAttribute("stroke-linejoin")) {
+      node.setAttribute("stroke-linejoin", "round");
+    }
+    if (!node.getAttribute("stroke-linecap")) {
+      node.setAttribute("stroke-linecap", "round");
+    }
+    node.setAttribute("vector-effect", "non-scaling-stroke");
+  }
+
+  Array.from(node.children || []).forEach((child) =>
+    applyStrokeFillRecursive(child, stroke, fill)
+  );
+};
+
+const collectBorderCandidateNodes = (rootElement, metadata) => {
+  if (!rootElement?.querySelectorAll) return [];
+  const selectors = new Set();
+
+  const appendSelector = (id) => {
+    if (!id) return;
+    const escaped = escapeCssIdentifier(id);
+    if (escaped) {
+      selectors.add(`[id="${escaped}"]`);
+    }
+  };
+
+  appendSelector(metadata?.elementId);
+  appendSelector("canvaShapeCustom");
+  appendSelector("canvaShape");
+
+  const nodes = [];
+  selectors.forEach((selector) => {
+    try {
+      nodes.push(...rootElement.querySelectorAll(selector));
+    } catch {
+      // ignore selector issues silently
+    }
+  });
+
+  return nodes;
+};
+
+const applyCustomBorderOverrides = (rootElement, metadata) => {
+  if (!rootElement || !metadata) return;
+  if (metadata.mode && metadata.mode !== "custom") return;
+
+  const stroke = metadata.exportStrokeColor || TEXT_STROKE_COLOR;
+  const fill =
+    metadata.exportFill !== undefined && metadata.exportFill !== null
+      ? metadata.exportFill
+      : "none";
+
+  const processed = new Set();
+  const processNode = (node) => {
+    if (!node || processed.has(node)) return;
+    processed.add(node);
+    applyStrokeFillRecursive(node, stroke, fill);
+    node.setAttribute("data-export-border", metadata.mode || "custom");
+  };
+
+  const directMatches = collectBorderCandidateNodes(rootElement, metadata);
+  directMatches.forEach(processNode);
+
+  if (processed.size) {
+    return;
+  }
+
+  const candidates = rootElement.querySelectorAll(HOLE_SHAPE_TAGS.join(", "));
+
+  Array.from(candidates).forEach((node) => {
+    const strokeAttr = node.getAttribute("stroke");
+    const styleAttr = node.getAttribute("style");
+    const styleStroke = extractStyleColor(styleAttr, "stroke");
+
+    const matchesStroke =
+      (strokeAttr && colorsMatch(strokeAttr, metadata.displayStrokeColor)) ||
+      (styleStroke && colorsMatch(styleStroke, metadata.displayStrokeColor));
+
+    if (matchesStroke) {
+      processNode(node);
+    }
+  });
+};
+
+const recolorStrokeAttributes = (
+  rootElement,
+  outlineColor = OUTLINE_STROKE_COLOR
+) => {
   if (!rootElement?.querySelectorAll) return;
 
   const elements = rootElement.querySelectorAll("*");
@@ -1086,14 +1325,14 @@ const recolorStrokeAttributes = (rootElement) => {
     }
     const strokeAttr = node.getAttribute("stroke");
     if (strokeAttr && shouldRecolorStroke(strokeAttr)) {
-      node.setAttribute("stroke", OUTLINE_STROKE_COLOR);
+      node.setAttribute("stroke", outlineColor);
     }
 
     const styleAttr = node.getAttribute("style");
     if (styleAttr) {
       const updated = styleAttr.replace(
         BLACK_STROKE_STYLE_PATTERN,
-        `$1${OUTLINE_STROKE_COLOR}`
+        `$1${outlineColor}`
       );
       if (updated !== styleAttr) {
         node.setAttribute("style", updated);
@@ -1748,7 +1987,7 @@ const convertTextToOutlinedPaths = (rootElement) => {
 };
 
 const buildPlacementPreview = (placement) => {
-  const { svg, preview } = placement || {};
+  const { svg, preview, customBorder } = placement || {};
 
   if (svg && typeof window !== "undefined") {
     try {
@@ -1866,7 +2105,7 @@ const buildPlacementPreview = (placement) => {
       }
 
       normalizeHoleShapes(exportElement);
-      recolorStrokeAttributes(exportElement);
+      recolorStrokeAttributes(exportElement, OUTLINE_STROKE_COLOR);
       // convertTextToStrokeOnly(exportElement);
       addInnerContoursForShapes(exportElement);
       // recolorStrokeAttributes(exportElement);
@@ -1879,6 +2118,8 @@ const buildPlacementPreview = (placement) => {
       textNodes.forEach((textNode) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
       });
+
+      applyCustomBorderOverrides(exportElement, customBorder);
 
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
@@ -1898,7 +2139,7 @@ const buildPlacementPreview = (placement) => {
       }
 
       normalizeHoleShapes(previewElement);
-      recolorStrokeAttributes(previewElement);
+      recolorStrokeAttributes(previewElement, PREVIEW_OUTLINE_COLOR);
       // convertTextToStrokeOnly(previewElement);
       addInnerContoursForShapes(previewElement);
       // recolorStrokeAttributes(previewElement);
@@ -1911,6 +2152,8 @@ const buildPlacementPreview = (placement) => {
       previewTextNodes.forEach((textNode) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
       });
+
+      applyCustomBorderOverrides(previewElement, customBorder);
 
       try {
         outlineBarcodeRects(exportElement);
@@ -2070,6 +2313,7 @@ const LayoutPlannerModal = ({
               previewData?.type === "svg" ? previewData.exportMarkup : null,
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
+            customBorder: placement.customBorder || null,
           };
         });
 

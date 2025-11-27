@@ -30,6 +30,9 @@ const DEFAULT_SIGN_SIZE_MM = {
   height: 80,
 };
 
+const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
+const CUSTOM_BORDER_EXPORT_FILL = "none";
+
 const FONT_PUBLIC_PATH = "/fonts";
 const FONT_EXT_FORMAT_MAP = {
   ttf: { mime: "font/ttf", format: "truetype" },
@@ -352,16 +355,68 @@ export async function generateCanvasPreviews(canvas, options = {}) {
 
   try {
     if (canvas.toSVG) {
-      const rawSvg = canvas.toSVG({
-        viewBox: {
-          x: 0,
-          y: 0,
+      const borderTweaks = [];
+      if (typeof canvas.getObjects === "function") {
+        canvas.getObjects().forEach((obj) => {
+          if (!obj || !obj.isBorderShape || typeof obj.set !== "function") {
+            return;
+          }
+
+          borderTweaks.push({
+            target: obj,
+            stroke: obj.stroke,
+            fill: obj.fill,
+          });
+
+          const exportStroke =
+            obj.cardBorderExportStrokeColor ||
+            (obj.cardBorderMode === "custom"
+              ? CUSTOM_BORDER_EXPORT_COLOR
+              : obj.stroke);
+          const exportFill =
+            obj.cardBorderMode === "custom"
+              ? obj.cardBorderExportFill || CUSTOM_BORDER_EXPORT_FILL
+              : obj.fill;
+
+          const nextProps = {
+            stroke: exportStroke,
+          };
+
+          if (exportFill !== undefined) {
+            nextProps.fill =
+              obj.cardBorderMode === "custom"
+                ? exportFill || CUSTOM_BORDER_EXPORT_FILL
+                : exportFill;
+          }
+
+          obj.set(nextProps);
+        });
+      }
+
+      let rawSvg = "";
+      try {
+        rawSvg = canvas.toSVG({
+          viewBox: {
+            x: 0,
+            y: 0,
+            width,
+            height,
+          },
           width,
           height,
-        },
-        width,
-        height,
-      });
+        });
+      } finally {
+        borderTweaks.forEach(({ target, stroke, fill }) => {
+          try {
+            target.set({ stroke, fill });
+          } catch (restoreError) {
+            console.warn(
+              "Failed to restore border after SVG export",
+              restoreError
+            );
+          }
+        });
+      }
 
       const sanitized = rawSvg
         .replace(/[\x00-\x1F\x7F]/g, "")
@@ -731,6 +786,9 @@ export async function exportCanvas(canvas, toolbarState = {}) {
       "isBorderShape",
       "cardBorderMode",
       "cardBorderThicknessPx",
+      "cardBorderDisplayStrokeColor",
+      "cardBorderExportStrokeColor",
+      "cardBorderExportFill",
 
       // QR Code properties
       "isQRCode",
@@ -1490,6 +1548,18 @@ export function restoreElementProperties(canvas, toolbarState = null) {
 
       // Restore border element properties
       if (obj.isBorderShape) {
+        const displayStrokeColor =
+          obj.cardBorderDisplayStrokeColor || obj.stroke || "#000000";
+        const exportStrokeColor =
+          obj.cardBorderExportStrokeColor ||
+          (obj.cardBorderMode === "custom"
+            ? CUSTOM_BORDER_EXPORT_COLOR
+            : displayStrokeColor);
+        const exportFillValue =
+          obj.cardBorderMode === "custom"
+            ? obj.cardBorderExportFill || CUSTOM_BORDER_EXPORT_FILL
+            : obj.cardBorderExportFill || obj.fill || "transparent";
+
         obj.set({
           isBorderShape: true,
           cardBorderMode: obj.cardBorderMode || "default",
@@ -1497,7 +1567,17 @@ export function restoreElementProperties(canvas, toolbarState = null) {
             obj.cardBorderThicknessPx !== undefined
               ? obj.cardBorderThicknessPx
               : 2,
+          cardBorderDisplayStrokeColor: displayStrokeColor,
+          cardBorderExportStrokeColor: exportStrokeColor,
+          cardBorderExportFill: exportFillValue,
         });
+
+        if (obj.cardBorderMode === "custom") {
+          obj.set({
+            stroke: displayStrokeColor,
+            fill: "transparent",
+          });
+        }
       }
 
       // Ensure themed icons/shapes continue to follow theme after reload

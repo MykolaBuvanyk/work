@@ -173,18 +173,37 @@ const Toolbar = () => {
 
   const DEFAULT_BORDER_THICKNESS_PX = 2;
   const BORDER_STROKE_COLOR = "#000000";
+  const CUSTOM_BORDER_CANVAS_COLOR = "#000000";
+  const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
   const borderStateRef = useRef({
     mode: "default",
     thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
     customThicknessPx: mmToPx(1.6),
+    defaultThicknessPx: DEFAULT_BORDER_THICKNESS_PX,
   });
 
-  const findBorderObject = useCallback(() => {
-    if (!canvas || !canvas.getObjects) return null;
-    return canvas.getObjects().find((obj) => obj.isBorderShape);
-  }, [canvas]);
+  const findBorderObject = useCallback(
+    (mode) => {
+      if (!canvas || !canvas.getObjects) return null;
+      const objects = canvas.getObjects();
+      if (!Array.isArray(objects)) return null;
+      if (!mode) {
+        return objects.find((obj) => obj.isBorderShape) || null;
+      }
+      return (
+        objects.find(
+          (obj) => obj.isBorderShape && obj.cardBorderMode === mode
+        ) || null
+      );
+    },
+    [canvas]
+  );
 
-  const getBorderColor = useCallback(() => BORDER_STROKE_COLOR, []);
+  const getBorderColor = useCallback(
+    (mode = "default") =>
+      mode === "custom" ? CUSTOM_BORDER_CANVAS_COLOR : BORDER_STROKE_COLOR,
+    []
+  );
 
   const removeCanvasOutline = useCallback(() => {
     if (!canvas || !canvas.getObjects) return;
@@ -456,12 +475,30 @@ const Toolbar = () => {
             fill: "#000000",
           });
         } else {
+          const displayStrokeColor =
+            color ||
+            (mode === "custom"
+              ? CUSTOM_BORDER_CANVAS_COLOR
+              : BORDER_STROKE_COLOR);
+          const exportStrokeColor =
+            mode === "custom" ? CUSTOM_BORDER_EXPORT_COLOR : displayStrokeColor;
+          const exportFill =
+            mode === "custom" ? "none" : borderShape.fill ?? "transparent";
+
           borderShape.set({
             isBorderShape: true,
             cardBorderMode: mode,
             cardBorderThicknessPx: thicknessPx,
-            id: "canvaShape",
+            id: mode === "custom" ? "canvaShapeCustom" : "canvaShape",
+            isCustomBorder: mode === "custom",
+            cardBorderDisplayStrokeColor: displayStrokeColor,
+            cardBorderExportStrokeColor: exportStrokeColor,
+            cardBorderExportFill: exportFill,
           });
+
+          if (mode === "custom" && borderShape.fill !== "transparent") {
+            borderShape.set({ fill: "transparent" });
+          }
         }
       }
 
@@ -516,7 +553,7 @@ const Toolbar = () => {
         borderShape.clipPath = maskClip;
       }
 
-      const existing = findBorderObject();
+      const existing = findBorderObject(mode);
       if (existing) {
         canvas.remove(existing);
       }
@@ -524,7 +561,12 @@ const Toolbar = () => {
       // Прибираємо можливі дублікати, якщо лишились
       canvas
         .getObjects()
-        .filter((obj) => obj !== borderShape && obj.isBorderShape)
+        .filter(
+          (obj) =>
+            obj !== borderShape &&
+            obj.isBorderShape &&
+            (mode ? obj.cardBorderMode === mode : true)
+        )
         .forEach((obj) => canvas.remove(obj));
 
       canvas.add(borderShape);
@@ -535,20 +577,42 @@ const Toolbar = () => {
       } else if (typeof borderShape.bringToFront === "function") {
         borderShape.bringToFront();
       }
+      let hasCustomAfterUpdate = mode === "custom";
+      if (!hasCustomAfterUpdate) {
+        const customBorder = findBorderObject("custom");
+        if (customBorder) {
+          hasCustomAfterUpdate = true;
+          if (typeof canvas.bringToFront === "function") {
+            canvas.bringToFront(customBorder);
+          } else if (typeof canvas.bringObjectToFront === "function") {
+            canvas.bringObjectToFront(customBorder);
+          } else if (typeof customBorder.bringToFront === "function") {
+            customBorder.bringToFront();
+          }
+        }
+      }
       borderShape.setCoords();
-      borderStateRef.current = {
-        mode,
-        thicknessPx,
-        customThicknessPx:
-          mode === "custom"
-            ? thicknessPx
-            : borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
-      };
+      if (mode === "custom") {
+        borderStateRef.current = {
+          ...borderStateRef.current,
+          mode: "custom",
+          thicknessPx,
+          customThicknessPx: thicknessPx,
+        };
+      } else {
+        borderStateRef.current = {
+          ...borderStateRef.current,
+          defaultThicknessPx: thicknessPx,
+        };
+        if (!hasCustomAfterUpdate) {
+          borderStateRef.current.mode = "default";
+          borderStateRef.current.thicknessPx = thicknessPx;
+        }
+      }
       removeCanvasOutline();
-      const isCustomMode = mode === "custom";
-      trackBorderChange?.(isCustomMode);
+      trackBorderChange?.(hasCustomAfterUpdate);
       canvas.requestRenderAll();
-      setIsBorderActive(isCustomMode);
+      setIsBorderActive(hasCustomAfterUpdate);
       return borderShape;
     },
     [
@@ -557,7 +621,6 @@ const Toolbar = () => {
       findBorderObject,
       removeCanvasOutline,
       setIsBorderActive,
-      thickness,
       trackBorderChange,
     ]
   );
@@ -568,23 +631,30 @@ const Toolbar = () => {
       const clip = canvas.clipPath;
       const { forceRebuild = false } = opts;
 
-      if (!clip && !findBorderObject()) {
+      if (!clip && !findBorderObject("default")) {
         return replaceBorder(
           DEFAULT_BORDER_THICKNESS_PX,
-          getBorderColor(),
+          getBorderColor("default"),
           "default"
         );
       }
 
-      const existing = findBorderObject();
+      const fallbackExisting = findBorderObject();
       const resolvedMode =
         opts.mode ||
-        existing?.cardBorderMode ||
+        fallbackExisting?.cardBorderMode ||
         borderStateRef.current.mode ||
         "default";
+      const existing =
+        resolvedMode === "custom"
+          ? findBorderObject("custom")
+          : findBorderObject("default");
 
       const desiredCustomPx =
         borderStateRef.current.customThicknessPx ?? mmToPx(thickness);
+      const desiredDefaultPx =
+        borderStateRef.current.defaultThicknessPx ??
+        DEFAULT_BORDER_THICKNESS_PX;
 
       const resolvedThicknessPx =
         opts.thicknessPx !== undefined
@@ -593,10 +663,13 @@ const Toolbar = () => {
           ? existing.cardBorderThicknessPx
           : resolvedMode === "custom"
           ? desiredCustomPx
-          : DEFAULT_BORDER_THICKNESS_PX;
+          : desiredDefaultPx;
 
       const resolvedColor =
-        opts.color || existing?.stroke || getBorderColor() || "#000000";
+        opts.color ||
+        existing?.stroke ||
+        getBorderColor(resolvedMode) ||
+        "#000000";
 
       if (
         existing &&
@@ -605,15 +678,45 @@ const Toolbar = () => {
         (existing.stroke || "#000000") === resolvedColor &&
         existing.cardBorderMode === resolvedMode
       ) {
-        borderStateRef.current = {
-          mode: resolvedMode,
-          thicknessPx: resolvedThicknessPx,
-          customThicknessPx:
-            resolvedMode === "custom"
-              ? resolvedThicknessPx
-              : borderStateRef.current.customThicknessPx ?? desiredCustomPx,
-        };
-        setIsBorderActive(resolvedMode === "custom");
+        if (resolvedMode === "custom") {
+          existing.cardBorderExportStrokeColor = CUSTOM_BORDER_EXPORT_COLOR;
+          existing.cardBorderDisplayStrokeColor = getBorderColor("custom");
+          existing.cardBorderExportFill = "none";
+          if (existing.fill !== "transparent") {
+            existing.set({ fill: "transparent" });
+          }
+        } else {
+          const displayStroke =
+            resolvedColor || existing.stroke || BORDER_STROKE_COLOR;
+          existing.cardBorderExportStrokeColor =
+            existing.cardBorderExportStrokeColor || displayStroke;
+          existing.cardBorderDisplayStrokeColor =
+            existing.cardBorderDisplayStrokeColor || displayStroke;
+          if (!existing.cardBorderExportFill) {
+            existing.cardBorderExportFill = existing.fill ?? "transparent";
+          }
+        }
+
+        if (resolvedMode === "custom") {
+          borderStateRef.current = {
+            ...borderStateRef.current,
+            mode: "custom",
+            thicknessPx: resolvedThicknessPx,
+            customThicknessPx: resolvedThicknessPx,
+          };
+          setIsBorderActive(true);
+        } else {
+          const customBorderExists = !!findBorderObject("custom");
+          borderStateRef.current = {
+            ...borderStateRef.current,
+            defaultThicknessPx: resolvedThicknessPx,
+          };
+          if (!customBorderExists) {
+            borderStateRef.current.mode = "default";
+            borderStateRef.current.thicknessPx = resolvedThicknessPx;
+          }
+          setIsBorderActive(customBorderExists);
+        }
         return existing;
       }
 
@@ -625,6 +728,7 @@ const Toolbar = () => {
       getBorderColor,
       replaceBorder,
       setIsBorderActive,
+      mmToPx,
       thickness,
     ]
   );
@@ -647,12 +751,11 @@ const Toolbar = () => {
   }, []);
 
   const buildToolbarState = useCallback(() => {
-    const borderShape = canvas
-      ?.getObjects?.()
-      .find((obj) => obj?.isBorderShape);
+    const borderObjects =
+      canvas?.getObjects?.()?.filter((obj) => obj?.isBorderShape) || [];
     const hasBorder =
       borderStateRef.current.mode === "custom" ||
-      borderShape?.cardBorderMode === "custom";
+      borderObjects.some((obj) => obj.cardBorderMode === "custom");
     const safeSize = sizeValues || {};
     const safeColors = globalColors || {};
 
@@ -861,10 +964,37 @@ const Toolbar = () => {
         setIsBorderActive(enableCustom);
         if (enableCustom) {
           ensureBorderPresence({
+            mode: "default",
+            thicknessPx:
+              borderStateRef.current.defaultThicknessPx ??
+              DEFAULT_BORDER_THICKNESS_PX,
+            color: getBorderColor("default"),
+          });
+          ensureBorderPresence({
             mode: "custom",
             thicknessPx: borderStateRef.current.customThicknessPx ?? customPx,
+            color: getBorderColor("custom"),
             forceRebuild: true,
           });
+        } else {
+          const customBorders =
+            canvas
+              ?.getObjects?.()
+              ?.filter(
+                (obj) => obj.isBorderShape && obj.cardBorderMode === "custom"
+              ) || [];
+          if (customBorders.length) {
+            customBorders.forEach((borderShape) => canvas.remove(borderShape));
+          }
+          ensureBorderPresence({
+            mode: "default",
+            thicknessPx:
+              borderStateRef.current.defaultThicknessPx ??
+              DEFAULT_BORDER_THICKNESS_PX,
+            color: getBorderColor("default"),
+            forceRebuild: true,
+          });
+          canvas?.requestRenderAll?.();
         }
       }
     },
@@ -948,26 +1078,44 @@ const Toolbar = () => {
           thicknessPx: customThicknessPx,
           customThicknessPx,
         };
-        setIsBorderActive(true);
+        ensureBorderPresence({
+          mode: "default",
+          thicknessPx:
+            borderStateRef.current.defaultThicknessPx ??
+            DEFAULT_BORDER_THICKNESS_PX,
+          color: getBorderColor("default"),
+        });
         ensureBorderPresence({
           mode: "custom",
           thicknessPx: customThicknessPx,
-          color: getBorderColor(),
+          color: getBorderColor("custom"),
           forceRebuild: true,
         });
+        setIsBorderActive(true);
+        trackBorderChange?.(true);
       } else {
+        const customBorders =
+          canvas
+            ?.getObjects?.()
+            ?.filter(
+              (obj) => obj.isBorderShape && obj.cardBorderMode === "custom"
+            ) || [];
+        customBorders.forEach((borderShape) => canvas.remove(borderShape));
         borderStateRef.current = {
           ...borderStateRef.current,
           mode: "default",
           thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
+          defaultThicknessPx: DEFAULT_BORDER_THICKNESS_PX,
         };
         setIsBorderActive(false);
         ensureBorderPresence({
           mode: "default",
           thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
-          color: getBorderColor(),
+          color: getBorderColor("default"),
           forceRebuild: true,
         });
+        trackBorderChange?.(false);
+        canvas?.requestRenderAll?.();
       }
     };
 
@@ -1080,8 +1228,18 @@ const Toolbar = () => {
   }, [canvas, setCurrentShapeType, setSizeValues]);
 
   useEffect(() => {
-    ensureBorderPresence();
-  }, [ensureBorderPresence]);
+    ensureBorderPresence({ mode: "default" });
+    if (
+      borderStateRef.current.mode === "custom" ||
+      findBorderObject("custom")
+    ) {
+      ensureBorderPresence({
+        mode: "custom",
+        thicknessPx:
+          borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+      });
+    }
+  }, [ensureBorderPresence, findBorderObject, mmToPx, thickness]);
 
   useEffect(() => {
     if (!canvas || typeof canvas.on !== "function") {
@@ -1090,10 +1248,9 @@ const Toolbar = () => {
     }
 
     const syncBorderState = () => {
-      const borderShape = findBorderObject();
+      const customBorder = findBorderObject("custom");
       const isCustomMode =
-        borderStateRef.current.mode === "custom" ||
-        borderShape?.cardBorderMode === "custom";
+        borderStateRef.current.mode === "custom" || !!customBorder;
       setIsBorderActive(isCustomMode);
     };
 
@@ -2922,7 +3079,21 @@ const Toolbar = () => {
         // Оновлюємо контур
         updateCanvasOutline();
 
-        ensureBorderPresence({ forceRebuild: true });
+        ensureBorderPresence({
+          mode: "default",
+          forceRebuild: true,
+        });
+        if (
+          borderStateRef.current.mode === "custom" ||
+          findBorderObject("custom")
+        ) {
+          ensureBorderPresence({
+            mode: "custom",
+            thicknessPx:
+              borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+            forceRebuild: true,
+          });
+        }
 
         // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
         recomputeHolesAfterResize();
@@ -3715,7 +3886,21 @@ const Toolbar = () => {
       updateCanvasOutline();
       // Бордер відновлюється окремо у викликах-обробниках після resize/radius, щоб уникати подвійної перебудови
 
-      ensureBorderPresence({ forceRebuild: true });
+      ensureBorderPresence({
+        mode: "default",
+        forceRebuild: true,
+      });
+      if (
+        borderStateRef.current.mode === "custom" ||
+        findBorderObject("custom")
+      ) {
+        ensureBorderPresence({
+          mode: "custom",
+          thicknessPx:
+            borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+          forceRebuild: true,
+        });
+      }
 
       // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
       recomputeHolesAfterResize();
@@ -4091,8 +4276,19 @@ const Toolbar = () => {
 
   // Повне перезбирання відображення бордера при зміні розмірів / cornerRadius
   const updateExistingBorders = useCallback(() => {
-    ensureBorderPresence({ forceRebuild: true });
-  }, [ensureBorderPresence]);
+    ensureBorderPresence({ mode: "default", forceRebuild: true });
+    if (
+      borderStateRef.current.mode === "custom" ||
+      findBorderObject("custom")
+    ) {
+      ensureBorderPresence({
+        mode: "custom",
+        thicknessPx:
+          borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+        forceRebuild: true,
+      });
+    }
+  }, [ensureBorderPresence, findBorderObject, mmToPx, thickness]);
 
   // --- Hexagon / Octagon inner border helpers (rounded polygon sampling) ---
   const sampleRoundedPolygon = (basePts, r, segments) => {
@@ -4945,7 +5141,13 @@ const Toolbar = () => {
           vLine.setCoords();
         }
       }
-
+      ensureBorderPresence({
+        mode: "default",
+        thicknessPx:
+          borderStateRef.current.defaultThicknessPx ??
+          DEFAULT_BORDER_THICKNESS_PX,
+        color: getBorderColor("default"),
+      });
       ensureBorderPresence({
         mode: "custom",
         thicknessPx: customThicknessPx,
@@ -5212,7 +5414,22 @@ const Toolbar = () => {
 
     objects.forEach((obj) => {
       if (obj.isBorderShape) {
-        obj.set({ stroke: BORDER_STROKE_COLOR, fill: "transparent" });
+        const mode = obj.cardBorderMode === "custom" ? "custom" : "default";
+        const displayStroke = getBorderColor(mode);
+        const exportStroke =
+          mode === "custom" ? CUSTOM_BORDER_EXPORT_COLOR : displayStroke;
+        const exportFillValue =
+          mode === "custom"
+            ? "none"
+            : obj.cardBorderExportFill || obj.fill || "transparent";
+
+        obj.set({
+          stroke: displayStroke,
+          fill: "transparent",
+          cardBorderDisplayStrokeColor: displayStroke,
+          cardBorderExportStrokeColor: exportStroke,
+          cardBorderExportFill: exportFillValue,
+        });
         return;
       }
       // Cut елементи (manual): stroke = ORANGE, fill = білий (зберігаємо як раніше)
@@ -5487,45 +5704,63 @@ const Toolbar = () => {
       canvas.set("backgroundColor", fallbackBg);
     }
 
-    const existing = findBorderObject();
-    const currentMode = borderStateRef.current.mode || "default";
+    const customBorders =
+      canvas
+        ?.getObjects?.()
+        ?.filter(
+          (obj) => obj.isBorderShape && obj.cardBorderMode === "custom"
+        ) || [];
+
+    if (customBorders.length > 0) {
+      customBorders.forEach((borderShape) => canvas.remove(borderShape));
+      borderStateRef.current = {
+        ...borderStateRef.current,
+        mode: "default",
+        thicknessPx:
+          borderStateRef.current.defaultThicknessPx ??
+          DEFAULT_BORDER_THICKNESS_PX,
+      };
+      ensureBorderPresence({
+        mode: "default",
+        thicknessPx:
+          borderStateRef.current.defaultThicknessPx ??
+          DEFAULT_BORDER_THICKNESS_PX,
+        color: getBorderColor("default"),
+        forceRebuild: true,
+      });
+      canvas.requestRenderAll();
+      setIsBorderActive(false);
+      trackBorderChange?.(false);
+      return;
+    }
+
+    ensureBorderPresence({
+      mode: "default",
+      thicknessPx:
+        borderStateRef.current.defaultThicknessPx ??
+        DEFAULT_BORDER_THICKNESS_PX,
+      color: getBorderColor("default"),
+    });
 
     const storedCustomPx =
       borderStateRef.current.customThicknessPx ?? mmToPx(thickness);
 
-    const nextMode = existing
-      ? currentMode === "default"
-        ? "custom"
-        : "default"
-      : "default";
-
-    const nextThicknessPx =
-      nextMode === "custom" ? storedCustomPx : DEFAULT_BORDER_THICKNESS_PX;
-
-    borderStateRef.current = {
-      mode: nextMode,
-      thicknessPx: nextThicknessPx,
-      customThicknessPx: storedCustomPx,
-    };
-
-    const themeBorderColor = getBorderColor();
     const border = ensureBorderPresence({
-      mode: nextMode,
-      thicknessPx: nextThicknessPx,
-      color: themeBorderColor,
+      mode: "custom",
+      thicknessPx: storedCustomPx,
+      color: getBorderColor("custom"),
       forceRebuild: true,
     });
 
     if (border) {
-      setIsBorderActive(nextMode === "custom");
-    } else {
-      if (nextMode === "default" && !existing) {
-        updateCanvasOutline();
-      }
-      setIsBorderActive(false);
-      if (nextMode === "default") {
-        trackBorderChange?.(false);
-      }
+      borderStateRef.current = {
+        ...borderStateRef.current,
+        mode: "custom",
+        thicknessPx: storedCustomPx,
+        customThicknessPx: storedCustomPx,
+      };
+      setIsBorderActive(true);
+      trackBorderChange?.(true);
     }
   };
 
@@ -5765,29 +6000,31 @@ const Toolbar = () => {
         )} мм (тип 2, Ø ${holesDiameter} мм)`
       );
     } catch {}
-    const hole = registerHoleShape(new fabric.Circle({
-      left: canvasWidth / 2,
-      top: offsetPx,
-      radius: mmToPx((holesDiameter || 2.5) / 2),
-      fill: HOLE_FILL_COLOR, // Білий фон дирки
-      stroke: CUT_STROKE_COLOR, // Оранжевий бордер
-      strokeWidth: 1, // 1px
-      originX: "center",
-      originY: "center",
-      isCutElement: true, // Позначаємо як Cut елемент
-      cutType: "hole", // Додаємо тип cut елементу
-      preventThemeRecolor: true,
-      hasControls: false, // Забороняємо зміну розміру
-      hasBorders: true,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockUniScaling: true,
-      // Статичне розміщення: заборонити вибір/переміщення мишкою
-      selectable: false,
-      evented: false,
-      lockMovementX: true,
-      lockMovementY: true,
-    }));
+    const hole = registerHoleShape(
+      new fabric.Circle({
+        left: canvasWidth / 2,
+        top: offsetPx,
+        radius: mmToPx((holesDiameter || 2.5) / 2),
+        fill: HOLE_FILL_COLOR, // Білий фон дирки
+        stroke: CUT_STROKE_COLOR, // Оранжевий бордер
+        strokeWidth: 1, // 1px
+        originX: "center",
+        originY: "center",
+        isCutElement: true, // Позначаємо як Cut елемент
+        cutType: "hole", // Додаємо тип cut елементу
+        preventThemeRecolor: true,
+        hasControls: false, // Забороняємо зміну розміру
+        hasBorders: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockUniScaling: true,
+        // Статичне розміщення: заборонити вибір/переміщення мишкою
+        selectable: false,
+        evented: false,
+        lockMovementX: true,
+        lockMovementY: true,
+      })
+    );
     canvas.add(hole);
     canvas.renderAll();
   };
@@ -5810,52 +6047,56 @@ const Toolbar = () => {
       } catch {}
 
       // Лівий отвір
-      const leftHole = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const leftHole = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: canvasHeight / 2,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Правий отвір
-      const rightHole = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: canvasHeight / 2,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const rightHole = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: canvasHeight / 2,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       canvas.add(leftHole);
       canvas.add(rightHole);
@@ -5881,100 +6122,108 @@ const Toolbar = () => {
       } catch {}
 
       // Верхній лівий
-      const topLeft = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const topLeft = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Верхній правий
-      const topRight = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const topRight = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Нижній лівий
-      const bottomLeft = registerHoleShape(new fabric.Circle({
-        left: offsetPx,
-        top: canvasHeight - offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const bottomLeft = registerHoleShape(
+        new fabric.Circle({
+          left: offsetPx,
+          top: canvasHeight - offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       // Нижній правий
-      const bottomRight = registerHoleShape(new fabric.Circle({
-        left: canvasWidth - offsetPx,
-        top: canvasHeight - offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
-        fill: HOLE_FILL_COLOR,
-        stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        originX: "center",
-        originY: "center",
-        isCutElement: true, // Позначаємо як Cut елемент
-        cutType: "hole", // Додаємо тип cut елементу
-        preventThemeRecolor: true,
-        hasControls: false, // Забороняємо зміну розміру
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: true,
-        selectable: false,
-        evented: false,
-        lockMovementX: true,
-        lockMovementY: true,
-      }));
+      const bottomRight = registerHoleShape(
+        new fabric.Circle({
+          left: canvasWidth - offsetPx,
+          top: canvasHeight - offsetPx,
+          radius: mmToPx((holesDiameter || 2.5) / 2),
+          fill: HOLE_FILL_COLOR,
+          stroke: CUT_STROKE_COLOR,
+          strokeWidth: 1,
+          originX: "center",
+          originY: "center",
+          isCutElement: true, // Позначаємо як Cut елемент
+          cutType: "hole", // Додаємо тип cut елементу
+          preventThemeRecolor: true,
+          hasControls: false, // Забороняємо зміну розміру
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: true,
+          selectable: false,
+          evented: false,
+          lockMovementX: true,
+          lockMovementY: true,
+        })
+      );
 
       canvas.add(topLeft);
       canvas.add(topRight);
@@ -6006,26 +6255,26 @@ const Toolbar = () => {
     const makeRect = (left, top) =>
       registerHoleShape(
         new fabric.Rect({
-        left,
-        top,
-        width: hwPx,
-        height: hhPx,
-        originX: "center",
-        originY: "center",
+          left,
+          top,
+          width: hwPx,
+          height: hhPx,
+          originX: "center",
+          originY: "center",
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
-        strokeWidth: 1,
-        isCutElement: true,
-        cutType: "hole",
-        preventThemeRecolor: true,
-        holeType5Rect: true,
-        hasControls: false,
-        hasBorders: true,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockUniScaling: false,
-        selectable: false,
-        evented: false,
+          strokeWidth: 1,
+          isCutElement: true,
+          cutType: "hole",
+          preventThemeRecolor: true,
+          holeType5Rect: true,
+          hasControls: false,
+          hasBorders: true,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockUniScaling: false,
+          selectable: false,
+          evented: false,
           lockMovementX: true,
           lockMovementY: true,
         })

@@ -46,9 +46,12 @@ export const useExcelImport = () => {
           ? window.getCurrentToolbarState() || {}
           : {};
       const toolbarColors = toolbarState.globalColors || {};
-      const borderShape = canvas
-        ?.getObjects?.()
-        ?.find?.((obj) => obj?.isBorderShape);
+      const borderShape =
+        canvas
+          ?.getObjects?.()
+          ?.find?.(
+            (obj) => obj?.isBorderShape && obj.cardBorderMode === "custom"
+          ) || canvas?.getObjects?.()?.find?.((obj) => obj?.isBorderShape);
       const borderEnabled = !!toolbarState?.hasBorder;
       const borderThicknessMm =
         Number(toolbarState?.thickness) ||
@@ -56,6 +59,8 @@ export const useExcelImport = () => {
           ? pxToMm(borderShape.cardBorderThicknessPx)
           : 0);
       const borderColor =
+        (typeof borderShape?.cardBorderExportStrokeColor === "string" &&
+          borderShape.cardBorderExportStrokeColor) ||
         (typeof borderShape?.stroke === "string" && borderShape.stroke) ||
         "#000000";
       const globalColorsSnapshot = {

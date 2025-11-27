@@ -1601,7 +1601,13 @@ const ProjectCanvasesGrid = () => {
                 c.preview &&
                 typeof c.preview === "string" &&
                 c.preview.trim().length > 0;
-              const previewSrc = hasSvgPreview
+              const preferPngPreview = Boolean(
+                c.toolbarState?.hasBorder && hasPngPreview
+              );
+
+              const previewSrc = preferPngPreview
+                ? c.preview
+                : hasSvgPreview
                 ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
                     c.previewSvg
                   )}`

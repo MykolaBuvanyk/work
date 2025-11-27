@@ -1,6 +1,13 @@
-import { decorateQrGroup, removeBlackBackgroundRects } from "./qrFabricUtils";
+import { 
+  decorateQrGroup, 
+  removeBlackBackgroundRects,
+  buildQrSvgMarkup,
+  computeQrVectorData,
+  DEFAULT_QR_CELL_SIZE
+} from "./qrFabricUtils";
 // import { decorateQrGroup } from "./qrFabricUtils";
 import { CUSTOM_FONT_FILES } from "../constants/fonts";
+import qrGenerator from "qrcode-generator";
 
 // Lightweight IndexedDB storage for projects and their canvases (JSON + preview)
 // Store: projects (keyPath: id)
@@ -729,6 +736,7 @@ export async function exportCanvas(canvas, toolbarState = {}) {
       "isQRCode",
       "qrText",
       "qrSize",
+      "qrColor",
 
       // Barcode properties
       "isBarCode",
@@ -1249,9 +1257,139 @@ function getDefaultToolbarState() {
   };
 }
 
+// Helper function to regenerate QR code from saved data
+async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
+  if (!canvas || !oldObj || !qrText) return null;
+  
+  console.log('[regenerateQrCode] Перегенерація QR коду:', qrText);
+  
+  try {
+    // Зберігаємо позицію та розмір старого об'єкта
+    const preserved = {
+      left: oldObj.left,
+      top: oldObj.top,
+      scaleX: oldObj.scaleX,
+      scaleY: oldObj.scaleY,
+      angle: oldObj.angle,
+    };
+    
+    // Витягуємо оригінальний колір QR коду з дочірніх елементів
+    let originalColor = themeTextColor || "#000000";
+    
+    // Спробуємо знайти колір з дочірніх елементів групи
+    if (typeof oldObj.getObjects === 'function') {
+      const children = oldObj.getObjects();
+      for (const child of children) {
+        // Шукаємо fill або stroke колір (не чорний, не null, не transparent)
+        const fill = child.fill;
+        const stroke = child.stroke;
+        
+        if (fill && fill !== 'none' && fill !== 'transparent' && fill !== null) {
+          originalColor = fill;
+          console.log('[regenerateQrCode] Знайдено оригінальний колір (fill):', originalColor);
+          break;
+        }
+        if (stroke && stroke !== 'none' && stroke !== 'transparent' && stroke !== null) {
+          originalColor = stroke;
+          console.log('[regenerateQrCode] Знайдено оригінальний колір (stroke):', originalColor);
+          break;
+        }
+      }
+    }
+    
+    // Також перевіримо чи є збережений колір на самому об'єкті
+    if (oldObj.qrColor) {
+      originalColor = oldObj.qrColor;
+      console.log('[regenerateQrCode] Використовуємо збережений qrColor:', originalColor);
+    }
+    
+    console.log('[regenerateQrCode] Фінальний колір для QR:', originalColor);
+    
+    // Генеруємо новий QR код
+    const cellSize = DEFAULT_QR_CELL_SIZE;
+    const qr = qrGenerator(0, "M");
+    qr.addData(qrText);
+    qr.make();
+    
+    const { optimizedPath, displayPath, size } = computeQrVectorData(qr, cellSize);
+    
+    const svgText = buildQrSvgMarkup({
+      size,
+      displayPath,
+      optimizedPath,
+      strokeColor: originalColor,
+    });
+    
+    // Динамічний імпорт fabric
+    const fabric = await import('fabric');
+    
+    // Завантажуємо SVG
+    const result = await fabric.loadSVGFromString(svgText);
+    let newObj;
+    if (result?.objects?.length === 1) {
+      newObj = result.objects[0];
+    } else {
+      newObj = fabric.util.groupSVGElements(result.objects || [], result.options || {});
+    }
+    
+    // Застосовуємо decorateQrGroup
+    decorateQrGroup(newObj);
+    
+    // Відновлюємо позицію та розмір
+    newObj.set({
+      left: preserved.left,
+      top: preserved.top,
+      scaleX: preserved.scaleX,
+      scaleY: preserved.scaleY,
+      angle: preserved.angle,
+      originX: oldObj.originX || "center",
+      originY: oldObj.originY || "center",
+      selectable: true,
+      hasControls: true,
+      hasBorders: true,
+      isQRCode: true,
+      qrText: qrText,
+      qrSize: size,
+      qrColor: originalColor, // Зберігаємо колір для майбутніх перегенерацій
+      backgroundColor: "transparent",
+    });
+    
+    // Видаляємо старий об'єкт і додаємо новий
+    const oldIndex = canvas.getObjects().indexOf(oldObj);
+    console.log('[regenerateQrCode] Видаляємо старий QR, index:', oldIndex);
+    
+    // Спочатку видаляємо старий об'єкт
+    canvas.remove(oldObj);
+    
+    // Перевіряємо що об'єкт видалено
+    const stillExists = canvas.getObjects().includes(oldObj);
+    console.log('[regenerateQrCode] Старий QR ще існує:', stillExists);
+    
+    // Додаємо новий об'єкт
+    if (oldIndex >= 0 && oldIndex < canvas.getObjects().length) {
+      canvas.insertAt(oldIndex, newObj);
+    } else {
+      canvas.add(newObj);
+    }
+    
+    console.log('[regenerateQrCode] QR код успішно перегенеровано, всього об\'єктів:', canvas.getObjects().length);
+    return newObj;
+  } catch (error) {
+    console.error('[regenerateQrCode] Помилка перегенерації QR:', error);
+    return null;
+  }
+}
+
 // Helper function to restore element-specific properties after canvas load
 export function restoreElementProperties(canvas, toolbarState = null) {
-  if (!canvas || !canvas.getObjects) return;
+  console.log('========== [restoreElementProperties] ФУНКЦІЯ ВИКЛИКАНА ==========');
+  console.log('[restoreElementProperties] canvas:', canvas);
+  console.log('[restoreElementProperties] canvas.getObjects:', typeof canvas?.getObjects);
+  
+  if (!canvas || !canvas.getObjects) {
+    console.log('[restoreElementProperties] ВИХІД: canvas або getObjects відсутній');
+    return;
+  }
 
   try {
     const themeTextColor =
@@ -1261,14 +1399,44 @@ export function restoreElementProperties(canvas, toolbarState = null) {
       "#000000";
     const objects = canvas.getObjects();
 
-    objects.forEach((obj) => {
-      // Restore QR Code functionality
+    console.log('[restoreElementProperties] Всього об\'єктів:', objects.length);
+
+    objects.forEach((obj, index) => {
+      // Детальна діагностика - виводимо всі кастомні властивості
+      const customProps = {};
+      const keysToCheck = ['isQRCode', 'qrText', 'qrSize', 'isBarCode', 'barCodeText', 'type', 'id'];
+      keysToCheck.forEach(key => {
+        if (obj[key] !== undefined) customProps[key] = obj[key];
+      });
+      
+      // Також перевіряємо дочірні елементи якщо це група
+      let childrenInfo = null;
+      if (obj.type === 'group' && typeof obj.getObjects === 'function') {
+        const children = obj.getObjects();
+        childrenInfo = children.map((child, i) => ({
+          index: i,
+          type: child.type,
+          id: child.id,
+          fill: child.fill,
+          stroke: child.stroke
+        }));
+      }
+      
+      console.log(`[restoreElementProperties] Об'єкт ${index}:`, {
+        ...customProps,
+        childrenCount: childrenInfo ? childrenInfo.length : 0,
+        children: childrenInfo
+      });
+
+      // Restore QR Code functionality - просто застосовуємо decorateQrGroup
+      // НЕ перегенеровуємо, бо це створює дублікати
       if (obj.isQRCode && obj.qrText) {
-        // Ensure QR code can be regenerated
+        console.log('[restoreElementProperties] Знайдено QR код, застосовуємо decorateQrGroup:', obj.qrText);
         obj.set({
           isQRCode: true,
           qrText: obj.qrText,
           qrSize: obj.qrSize || 100,
+          backgroundColor: "transparent",
         });
         decorateQrGroup(obj);
       }

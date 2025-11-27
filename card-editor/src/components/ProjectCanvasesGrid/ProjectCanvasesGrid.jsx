@@ -967,8 +967,27 @@ const ProjectCanvasesGrid = () => {
         }
 
         try {
+          // ВИПРАВЛЕННЯ: Викликаємо restoreElementProperties з затримкою,
+          // щоб дочекатись завершення loadFromJSON
+          const waitForObjects = () => {
+            return new Promise((resolve) => {
+              const checkObjects = () => {
+                const objects = canvas.getObjects();
+                console.log('[waitForObjects] Перевірка об\'єктів:', objects.length);
+                if (objects.length > 0 || !canvasToLoad.json?.objects?.length) {
+                  resolve();
+                } else {
+                  setTimeout(checkObjects, 50);
+                }
+              };
+              // Почекаємо мінімум 100мс
+              setTimeout(checkObjects, 100);
+            });
+          };
+          
+          await waitForObjects();
           restoreElementProperties(canvas);
-          console.log("Element properties restored");
+          console.log("Element properties restored, objects:", canvas.getObjects().length);
         } catch (e) {
           console.error("Failed to restore element properties:", e);
         }

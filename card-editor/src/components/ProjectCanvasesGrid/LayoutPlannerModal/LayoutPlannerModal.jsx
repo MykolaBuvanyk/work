@@ -42,7 +42,7 @@ const paperLib = paperNamespace?.default ?? paperNamespace;
 const ClipperLib = ClipperLibNamespace?.default ?? ClipperLibNamespace;
 
 const CLIPPER_SCALE = 100;
-const CONTOUR_STROKE_WIDTH_PX = 4;
+const CONTOUR_STROKE_WIDTH_PX = 1;
 const GEOMETRY_ATTRIBUTES_TO_SKIP = new Set([
   "x",
   "y",
@@ -824,7 +824,9 @@ const addInnerContoursForShapes = (rootElement) => {
         return;
       }
 
-      const offsetDistancePx = thicknessPx + CONTOUR_STROKE_WIDTH_PX;
+      // Відстань між контурами = точно thickness (без додавання товщини stroke)
+      // LaserBurn працює з центром лінії, тому offset = thickness
+      const offsetDistancePx = thicknessPx;
       const innerPathData = buildInnerContourPathData(scope, shapeNode, offsetDistancePx);
       if (!innerPathData) {
         return;
@@ -1138,6 +1140,44 @@ const markCanvasBackgrounds = (rootElement, dims = {}) => {
     rect.setAttribute(BACKGROUND_ATTR, "true");
     rect.setAttribute("stroke", "none");
     rect.removeAttribute("stroke-width");
+  });
+};
+
+/**
+ * Видаляє всі фонові елементи (rect з data-layout-background="true") з SVG для експорту PDF
+ * @param {Element} rootElement - кореневий SVG елемент
+ */
+const removeBackgroundsForExport = (rootElement) => {
+  if (!rootElement?.querySelectorAll) return;
+  
+  // Видаляємо елементи з атрибутом data-layout-background="true"
+  const backgrounds = Array.from(rootElement.querySelectorAll(`[${BACKGROUND_ATTR}="true"]`));
+  backgrounds.forEach((bg) => {
+    bg.parentNode?.removeChild(bg);
+  });
+  
+  // Також видаляємо всі rect які мають білий fill і покривають весь canvas
+  // (можуть бути фони які не були помічені)
+  const rects = Array.from(rootElement.querySelectorAll("rect"));
+  rects.forEach((rect) => {
+    const fill = rect.getAttribute("fill") || "";
+    const fillLower = fill.toLowerCase().trim();
+    
+    // Перевіряємо чи це білий або прозорий фон
+    const isWhiteFill = 
+      fillLower === "#fff" || 
+      fillLower === "#ffffff" || 
+      fillLower === "white" ||
+      fillLower === "rgb(255,255,255)" ||
+      fillLower === "rgba(255,255,255,1)";
+    
+    // Якщо немає stroke і fill білий - ймовірно це фон
+    const stroke = rect.getAttribute("stroke");
+    const hasNoStroke = !stroke || stroke === "none" || stroke === "transparent";
+    
+    if (isWhiteFill && hasNoStroke) {
+      rect.parentNode?.removeChild(rect);
+    }
   });
 };
 
@@ -1691,7 +1731,28 @@ const buildPlacementPreview = (placement) => {
       const rawWidth = parseFloat(svgElement.getAttribute("width"));
       const rawHeight = parseFloat(svgElement.getAttribute("height"));
       const hasViewBox = !!svgElement.getAttribute("viewBox");
-
+      // Фарбуємо елементи з id="canvaShape" в синій колір (#0000FF)
+      const canvaShapes = svgElement.querySelectorAll('[id="canvaShape"]');
+      canvaShapes.forEach((shape) => {
+        const BLUE_COLOR = "#0000FF";
+        
+        // Встановлюємо stroke на самому елементі
+        shape.setAttribute("stroke", BLUE_COLOR);
+        
+        // Очищаємо style від старого stroke і додаємо новий
+        const style = shape.getAttribute("style") || "";
+        const newStyle = style.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
+        shape.setAttribute("style", newStyle);
+        
+        // Також застосовуємо до всіх вкладених елементів (якщо це група)
+        const children = shape.querySelectorAll('*');
+        children.forEach(child => {
+             child.setAttribute("stroke", BLUE_COLOR);
+             const childStyle = child.getAttribute("style") || "";
+             const childNewStyle = childStyle.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
+             child.setAttribute("style", childNewStyle);
+        });
+      });
       if (hasViewBox) {
         const viewBoxParts = svgElement
           .getAttribute("viewBox")
@@ -1788,6 +1849,9 @@ const buildPlacementPreview = (placement) => {
         width: viewBoxWidth,
         height: viewBoxHeight,
       });
+
+      // Видаляємо фони для експорту PDF
+      removeBackgroundsForExport(exportElement);
 
       // Конвертуємо елементи з кольором теми в бірюзовий stroke
       if (placement.themeStrokeColor) {

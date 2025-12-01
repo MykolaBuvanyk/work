@@ -1,20 +1,21 @@
 .topToolbar {
   display: flex;
   gap: 10px;
-  justify-content: center;
+  justify-content: space-between;
   align-items: flex-start;
   width: 100%;
 }
 
 .leftSide {
-  width: 100%;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .rightSide {
-  width: 250px;
+  flex: 0 0 250px;
 }
 
 .toolbarRow {
@@ -56,14 +57,14 @@
 }
 
 .toolbarList {
-  width: 445px;
+  width: 425px;
   list-style: none;
-  padding: 7px 10px;
+  padding: 6px 8px;
   margin: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   background-color: rgba(128, 128, 128, 0.19);
   border: 1px solid rgba(158, 158, 158, 1);
   border-radius: 8px;
@@ -81,6 +82,7 @@
   align-items: center;
   gap: 5px;
   cursor: pointer;
+  font-size: 15px;
 }
 
 .delete:hover {
@@ -152,13 +154,15 @@
   background-color: rgba(218, 218, 218, 1) !important;
   border: none;
   color: #000 !important;
-  padding: 0 4px;
-  width: 32px;
+  padding: 0;
+  padding-right: 0;
+  width: 28px;
   text-align: center;
   border-radius: 0;
   height: 29px;
   line-height: 29px;
 }
+
 
 .fontSizeInput::-webkit-inner-spin-button,
 .fontSizeInput::-webkit-outer-spin-button {
@@ -196,8 +200,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 2px;
+  padding: 0 5px;
+  padding-left: 0;
   color: #000;
   user-select: none;
   border-left: 1px solid rgba(125, 125, 125, 0);
 }
+

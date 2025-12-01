@@ -809,6 +809,10 @@ const ProjectCanvasesGrid = () => {
           canvas.set("backgroundType", "solid");
           canvas.renderAll();
 
+          // ВИПРАВЛЕННЯ: Встановлюємо прапорець ПЕРЕД оновленням globalColors
+          // щоб Canvas.jsx useEffect не застосував ці значення повторно
+          canvas.__ignoreNextBackgroundUpdate = true;
+          
           // ВИПРАВЛЕННЯ: Синхронізуємо globalColors для нової картки
           if (updateGlobalColors) {
             updateGlobalColors({
@@ -817,6 +821,11 @@ const ProjectCanvasesGrid = () => {
             });
             console.log("Set globalColors to white for new canvas");
           }
+          
+          // Скидаємо прапорець через затримку
+          setTimeout(() => {
+            canvas.__ignoreNextBackgroundUpdate = false;
+          }, 100);
         } else if (bgColor && bgColor !== "#FFFFFF") {
           console.log("Restoring canvas background:", {
             backgroundColor: bgColor,
@@ -828,8 +837,30 @@ const ProjectCanvasesGrid = () => {
             // Якщо це текстура, завантажуємо її через ту саму логіку
             const img = document.createElement("img");
             img.crossOrigin = "anonymous";
+            
+            // ВИПРАВЛЕННЯ: Зберігаємо ID canvas для перевірки в onload
+            const targetCanvasId = canvasToLoad.id;
+            const targetTextureUrl = canvasToLoad.backgroundColor;
+            
             img.onload = () => {
               try {
+                // ВИПРАВЛЕННЯ: Перевіряємо чи це все ще той самий canvas
+                const currentId = currentProjectCanvasIdRef.current || currentUnsavedIdRef.current;
+                if (currentId !== targetCanvasId) {
+                  console.log('[ProjectCanvasesGrid] Skipping stale texture load:', {
+                    targetCanvasId,
+                    currentId,
+                    targetTextureUrl
+                  });
+                  return;
+                }
+                
+                // Також перевіряємо чи canvas не перемикається
+                if (canvas.__switching) {
+                  console.log('[ProjectCanvasesGrid] Skipping texture load - canvas switching');
+                  return;
+                }
+                
                 const scaleX = canvas.width / img.width;
                 const scaleY = canvas.height / img.height;
 
@@ -855,30 +886,18 @@ const ProjectCanvasesGrid = () => {
                 canvas.set("backgroundColor", pattern);
                 canvas.set(
                   "backgroundTextureUrl",
-                  canvasToLoad.backgroundColor
+                  targetTextureUrl
                 );
                 canvas.set("backgroundType", "texture");
                 canvas.renderAll();
 
                 console.log(
                   "Texture background restored successfully:",
-                  canvasToLoad.backgroundColor
+                  targetTextureUrl
                 );
 
-                // ВИПРАВЛЕННЯ: Синхронізуємо globalColors з фактичним станом canvas
-                if (updateGlobalColors) {
-                  updateGlobalColors({
-                    backgroundColor: canvasToLoad.backgroundColor,
-                    backgroundType: "texture",
-                  });
-                  console.log(
-                    "Synchronized globalColors with canvas texture:",
-                    {
-                      backgroundColor: canvasToLoad.backgroundColor,
-                      backgroundType: "texture",
-                    }
-                  );
-                }
+                // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
+                // після завершення завантаження всього canvas
               } catch (error) {
                 console.error("Error restoring texture pattern:", error);
                 canvas.set("backgroundColor", "#FFFFFF");
@@ -903,17 +922,8 @@ const ProjectCanvasesGrid = () => {
 
             console.log("Solid background restored successfully:", bgColor);
 
-            // ВИПРАВЛЕННЯ: Синхронізуємо globalColors з фактичним станом canvas
-            if (updateGlobalColors) {
-              updateGlobalColors({
-                backgroundColor: bgColor,
-                backgroundType: bgType,
-              });
-              console.log("Synchronized globalColors with canvas background:", {
-                backgroundColor: bgColor,
-                backgroundType: bgType,
-              });
-            }
+            // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
+            // після завершення завантаження всього canvas
           }
         } else {
           // Якщо немає збереженого кольору, встановлюємо білий за замовчуванням
@@ -925,13 +935,7 @@ const ProjectCanvasesGrid = () => {
           canvas.set("backgroundType", "solid");
           canvas.renderAll();
 
-          if (updateGlobalColors) {
-            updateGlobalColors({
-              backgroundColor: "#FFFFFF",
-              backgroundType: "solid",
-            });
-            console.log("Set default white background in globalColors");
-          }
+          // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
         }
 
         // НОВЕ: Відновлюємо фон-картинку, якщо збережено backgroundImage
@@ -1000,9 +1004,38 @@ const ProjectCanvasesGrid = () => {
           canvas.getObjects().length
         );
 
+        // ВИПРАВЛЕННЯ: Оновлюємо globalColors ПІСЛЯ завершення завантаження canvas
+        // і ПІСЛЯ скидання __switching, щоб Canvas.jsx useEffect не намагався
+        // застосувати ці значення (бо ми вже встановили їх напряму на canvas)
+        const finalBgType = canvas.get("backgroundType") || "solid";
+        const finalBgUrl = canvas.get("backgroundTextureUrl");
+        let finalBgColor = canvas.get("backgroundColor");
+        
+        if (finalBgType === "texture" && finalBgUrl) {
+          finalBgColor = finalBgUrl;
+        } else if (typeof finalBgColor === "object" && finalBgColor !== null) {
+          finalBgColor = canvasToLoad.backgroundColor || "#FFFFFF";
+        }
+        
+        if (updateGlobalColors) {
+          // Встановлюємо прапорець щоб Canvas.jsx useEffect проігнорував цю зміну
+          canvas.__ignoreNextBackgroundUpdate = true;
+          updateGlobalColors({
+            backgroundColor: finalBgColor,
+            backgroundType: finalBgType,
+          });
+          console.log("Updated globalColors after canvas load:", {
+            backgroundColor: finalBgColor,
+            backgroundType: finalBgType,
+          });
+        }
+
         // ВИПРАВЛЕННЯ: restoreToolbarState вже викликається в loadDesign через canvas:loaded event
         // Тому тут ми лише додатково налаштовуємо canvas та логуємо інформацію
         setTimeout(() => {
+          // Скидаємо прапорець після затримки
+          canvas.__ignoreNextBackgroundUpdate = false;
+          
           const toolbarState = extractToolbarState(canvasToLoad);
 
           // ВИПРАВЛЕННЯ: Синхронізуємо backgroundColor в toolbarState з фактичним станом canvas
@@ -1441,7 +1474,13 @@ const ProjectCanvasesGrid = () => {
     canvas.set = function (property, value) {
       const result = originalSet.call(this, property, value);
       if (property === "backgroundColor") {
-        console.log("Canvas background color set to:", value);
+        // Виводимо stack trace якщо встановлюється Pattern (текстура)
+        if (typeof value === "object" && value !== null) {
+          console.log("Canvas background color set to Pattern:", value);
+          console.trace("Stack trace for Pattern background:");
+        } else {
+          console.log("Canvas background color set to:", value);
+        }
         handleCanvasPropertyChange();
       }
       return result;

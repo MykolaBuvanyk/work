@@ -48,12 +48,14 @@
 
 .topToolbar {
   width: 100%;
+  max-width: 860px;
   box-sizing: border-box;
   margin-bottom: 10px;
+  margin-left: auto;
 }
 
 .canvas {
-  flex: 1;
+  /* flex: 1; */
   width: 100%;
   border: none;
   box-sizing: border-box;
@@ -96,11 +98,11 @@
   color: #888;
 }
 
-header {
+/*header {
   position: relative;
   width: 100vw;
   left: 0;
   top: 0;
   display: block;
   z-index: 1000;
-}
+}*/

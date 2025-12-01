@@ -1,0 +1,84 @@
+.login-register-container {
+  margin-bottom: 3vh;
+  h2 {
+    font-family: Barlow;
+    font-weight: 600;
+    font-style: SemiBold;
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: #14213d;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 0;
+  }
+  padding: 20px;
+  background-color: #f4f8fa;
+  border-radius: 8px;
+  border: 1px solid #006ca4;
+  .type-register {
+    display: flex;
+    flex-direction: row;
+    gap: 17.5px;
+
+    .custom-radio {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: #14213d;
+      user-select: none;
+      position: relative; // Для позиціонування ::before та ::after
+      padding-left: 30px; // Забезпечуємо місце для візуального елемента
+
+      input[type='radio'] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      // 1. Зовнішнє коло (::before)
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        border: 2px solid #aebac7; // Сірий контур
+        border-radius: 50%;
+        background-color: white;
+        transition: border-color 0.2s;
+      }
+
+      // 2. Внутрішня синя крапка (::after)
+      &::after {
+        content: '';
+        position: absolute;
+        left: 5px; // Центруємо всередині кола
+        top: 50%;
+        transform: translateY(-50%) scale(0); // Сховано
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background-color: #007bff; // Синій
+        transition: transform 0.2s ease-in-out;
+      }
+
+      // Стан: коли інпут обрано (:checked)
+      // ВИКОРИСТОВУЄМО :has() для стилізації батьківського елемента
+      &:has(input[type='radio']:checked) {
+        &::before {
+          border-color: #007bff; // Синій контур
+        }
+        &::after {
+          transform: translateY(-50%) scale(1); // Показуємо крапку
+        }
+      }
+    }
+  }
+}

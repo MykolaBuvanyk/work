@@ -1,41 +1,20 @@
-import { CanvasProvider } from "./contexts/CanvasContext";
-import Canvas from "./components/Canvas/Canvas";
-import Toolbar from "./components/Toolbar/Toolbar";
-import TextList from "./components/TextList/TextList";
-import ProjectCanvasesGrid from "./components/ProjectCanvasesGrid/ProjectCanvasesGrid";
-import IconMenu from "./components/IconMenu/IconMenu";
-import TopToolbar from "./components/TopToolbar/TopToolbar";
-import Accessories from "./components/Accessories/Accessories";
-import ToolbarFooter from "./components/Toolbar/ToolbarFooter";
-import ShapeProperties from "./components/ShapeProperties/ShapeProperties";
-import "./App.css";
-import Header from "./components/Header/Header";
-import TopSidebar from "./components/TopSidebar/TopSidebar";
-import GlobalInputFormat from "./components/GlobalInputFormat";
+import { Route, Routes } from 'react-router-dom';
+import './App.css';
+import Home from './components/Home/Home';
+import { CanvasProvider } from './contexts/CanvasContext';
+import Login from './components/Login/Login';
+import Layout from './layout';
 
 function App() {
   return (
-    <CanvasProvider>
-      <div className="app">
-        <GlobalInputFormat />
-        <Header />
-        <div className="main-wrapper">
-          <div className="sidebar">
-            <TopSidebar />
-            <Toolbar />
-            <Accessories />
-            <ToolbarFooter />
-            {/* <IconMenu /> */}
-          </div>
-          <div className="main-content">
-            <TopToolbar className="topToolbar" />
-            <Canvas className="canvas" />
-            <TextList />
-            <ProjectCanvasesGrid />
-          </div>
-        </div>
-      </div>
-    </CanvasProvider>
+    <div className="app">
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+        </Route>
+      </Routes>
+    </div>
   );
 }
 

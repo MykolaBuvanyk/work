@@ -1,0 +1,50 @@
+.login-form-container {
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #006ca4;
+  h1 {
+    font-family: Barlow;
+    font-weight: 600;
+    font-style: SemiBold;
+    font-size: 24px;
+    line-height: 32px;
+    letter-spacing: 0%;
+    vertical-align: middle;
+    color: #14213d;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 0;
+  }
+  .form-log {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    .value {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      label {
+        font-family: Barlow;
+        font-weight: 600;
+        font-style: SemiBold;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0%;
+        vertical-align: middle;
+        color: #14213d;
+      }
+    }
+    button {
+      background-color: #0374e3;
+      border-radius: 4px;
+      width: 100%;
+      box-sizing: border-box;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+  }
+}

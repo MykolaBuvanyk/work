@@ -21,7 +21,7 @@ const DEFAULT_SHAPE_HEIGHT_MM = 80;
 
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
-  const { importFromExcel, exportToExcel } = useExcelImport();
+  const { importFromExcel } = useExcelImport(); // exportToExcel - disabled
   const { canvas } = useCanvasContext();
   const [zoom, setZoom] = useState(100); // legacy fabric zoom (kept for compatibility)
   const [displayScale, setDisplayScale] = useState(100); // viewport scale (auto-fit or CSS scaling) relative to design size
@@ -382,31 +382,6 @@ const TopToolbar = ({ className }) => {
                 </defs>
               </svg>
               Import via Excel
-            </li>
-            <li className={styles.toolbarItem} onClick={exportToExcel}>
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 3V15M12 15L8 11M12 15L16 11"
-                  stroke="#009951"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M4 17V19C4 20.1046 4.89543 21 6 21H18C19.1046 21 20 20.1046 20 19V17"
-                  stroke="#009951"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Export to Excel
             </li>
             <li className={styles.toolbarItem}>
               <svg

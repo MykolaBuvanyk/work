@@ -2,7 +2,7 @@
   position: static;
   top: unset;
   left: unset;
-  width: 1210px;
+  max-width: 1210px;
   height: 125px;
   z-index: 1000;
   display: flex;
@@ -42,7 +42,7 @@
   font-weight: 700;
   font-size: 15px;
 }
-.rightPart{
+.rightPart {
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -50,26 +50,26 @@
   font-size: 14px;
 }
 
-.rightPart p{
+.rightPart p {
   padding: 0;
   margin: 0;
 }
 
-.rightPartWrapper{
+.rightPartWrapper {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.name{
+.name {
   font-weight: 500;
   color: rgba(0, 108, 164, 1);
 }
-.secondPart{
+.secondPart {
   width: 100%;
   height: 30px;
 }
-.secondPartList{
+.secondPartList {
   width: 100%;
   list-style: none;
   display: flex;
@@ -81,11 +81,29 @@
   font-weight: 400;
   font-size: 16px;
 }
-.secondPartList li{
-  padding: 0 65px;
+.secondPartList li {
+  padding: 0 45px;
   white-space: nowrap;
 }
-.secondPartEl.current {
+
+.secondPartEl2 a {
+  text-decoration: none;
+  font-family: Inter;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 16px;
+  leading-trim: NONE;
+  line-height: 100%;
+  letter-spacing: 0%;
+  color: #000000;
+}
+
+.secondPartEl2.current {
+  text-decoration: none;
   color: #fff;
   background-color: rgba(0, 108, 164, 1);
+}
+
+.secondPartEl2.current a {
+  color: #fff;
 }

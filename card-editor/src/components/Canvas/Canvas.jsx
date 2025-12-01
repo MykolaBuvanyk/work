@@ -32,7 +32,7 @@ const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
 const OUTLINE_COLOR = "rgba(0, 108, 164, 1)"; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 
-const Canvas = () => {
+const Canvas = ({ className }) => {
   const canvasRef = useRef(null);
   const shadowHostRef = useRef(null);
   const outlineHostRef = useRef(null);
@@ -584,10 +584,34 @@ const Canvas = () => {
         const type = fCanvas.get && fCanvas.get("backgroundType");
         const url = fCanvas.get && fCanvas.get("backgroundTextureUrl");
         if (type !== "texture" || !url) return;
+        
+        // Зберігаємо URL для перевірки при onload
+        const requestedUrl = url;
+        
         const img = document.createElement("img");
         img.crossOrigin = "anonymous";
         img.onload = () => {
           try {
+            // ВИПРАВЛЕННЯ: Перевіряємо чи canvas все ще очікує цю текстуру
+            // Якщо backgroundType змінився або URL інший - не застосовуємо
+            const currentType = fCanvas.get && fCanvas.get("backgroundType");
+            const currentUrl = fCanvas.get && fCanvas.get("backgroundTextureUrl");
+            
+            if (currentType !== "texture" || currentUrl !== requestedUrl) {
+              console.log('[Canvas] Skipping stale texture rebuild:', {
+                requestedUrl,
+                currentType,
+                currentUrl
+              });
+              return;
+            }
+            
+            // Також перевіряємо чи canvas не в процесі перемикання
+            if (fCanvas.__switching || fCanvas.__suspendUndoRedo) {
+              console.log('[Canvas] Skipping texture rebuild - canvas switching');
+              return;
+            }
+            
             const scaleX = (fCanvas.width || 0) / (img.width || 1);
             const scaleY = (fCanvas.height || 0) / (img.height || 1);
             const patternCanvas = document.createElement("canvas");
@@ -2187,6 +2211,20 @@ const Canvas = () => {
 
   useEffect(() => {
     if (!canvas) return;
+    
+    // НЕ застосовуємо фон під час перемикання canvas
+    // Фон буде відновлено з збереженого стану в ProjectCanvasesGrid
+    if (canvas.__switching || canvas.__ignoreNextBackgroundUpdate || canvas.__suspendUndoRedo) {
+      console.log('[Canvas] Skipping background apply:', {
+        switching: canvas.__switching,
+        ignoreFlag: canvas.__ignoreNextBackgroundUpdate,
+        suspended: canvas.__suspendUndoRedo,
+        requestedBg: globalColors?.backgroundColor,
+        requestedType: globalColors?.backgroundType
+      });
+      return;
+    }
+    
     let disposed = false;
 
     const refreshActiveObject = () => {
@@ -2290,8 +2328,30 @@ const Canvas = () => {
 
       const img = document.createElement("img");
       img.crossOrigin = "anonymous";
+      
+      // ВИПРАВЛЕННЯ: Зберігаємо URL для перевірки при onload
+      const requestedUrl = url;
+      
       img.onload = () => {
         if (disposed) return;
+        
+        // ВИПРАВЛЕННЯ: Перевіряємо чи canvas все ще очікує цю текстуру
+        if (canvas.__switching || canvas.__suspendUndoRedo) {
+          console.log('[Canvas] applyTexture.onload - skipping, canvas switching');
+          return;
+        }
+        
+        // Перевіряємо чи URL все ще актуальний
+        const currentType = canvas.get("backgroundType");
+        const currentUrl = canvas.get("backgroundTextureUrl");
+        if (currentType === "texture" && currentUrl && currentUrl !== requestedUrl) {
+          console.log('[Canvas] applyTexture.onload - skipping stale texture:', {
+            requestedUrl,
+            currentUrl
+          });
+          return;
+        }
+        
         try {
           const canvasWidth =
             typeof canvas.getWidth === "function"
@@ -2346,6 +2406,27 @@ const Canvas = () => {
 
     const type = globalColors?.backgroundType;
     const color = globalColors?.backgroundColor;
+
+    // ВИПРАВЛЕННЯ: Перевіряємо чи globalColors відповідають поточному стану canvas
+    // Якщо canvas вже має правильний фон - не застосовуємо повторно
+    const currentCanvasBgType = canvas.get("backgroundType") || "solid";
+    const currentCanvasBgUrl = canvas.get("backgroundTextureUrl");
+    const currentCanvasBgColor = typeof canvas.backgroundColor === "string" 
+      ? canvas.backgroundColor 
+      : (currentCanvasBgUrl || null);
+    
+    // Якщо globalColors намагаються застосувати текстуру, а canvas вже має solid фон
+    // і це НЕ та сама текстура - пропускаємо (це може бути старий globalColors від іншого canvas)
+    if (type === "texture" && currentCanvasBgType === "solid") {
+      console.log('[Canvas] Skipping texture apply - canvas has solid background, might be stale globalColors');
+      return;
+    }
+    
+    // Якщо globalColors намагаються застосувати іншу текстуру ніж поточна
+    if (type === "texture" && currentCanvasBgType === "texture" && currentCanvasBgUrl && currentCanvasBgUrl !== color) {
+      console.log('[Canvas] Skipping texture apply - canvas already has different texture');
+      return;
+    }
 
     if (type === "gradient") {
       applyGradient();
@@ -2591,7 +2672,7 @@ const Canvas = () => {
   })();
 
   return (
-    <div className={styles.viewport} ref={viewportRef}>
+    <div className={`${styles.viewport} ${className || ""}`} ref={viewportRef}>
       <div className={styles.canvasWrapper}>
         <div ref={shadowHostRef} className={styles.shadowHost} />
         <canvas ref={canvasRef} className={styles.canvas} />

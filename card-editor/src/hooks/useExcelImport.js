@@ -33,6 +33,10 @@ const pxToMm = (px) => (Number(px) || 0) / PX_PER_MM;
 export const useExcelImport = () => {
   const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
 
+  /* ========== EXCEL EXPORT - DISABLED ==========
+   * Функція exportToExcel закоментована.
+   * Збережена для можливого використання в майбутньому.
+   * 
   // Експорт шаблону в Excel
   const exportToExcel = async () => {
     if (!canvas) {
@@ -363,7 +367,12 @@ export const useExcelImport = () => {
       alert(`Помилка при експорті шаблону: ${error.message}`);
     }
   };
+  ========== END EXCEL EXPORT ========== */
 
+  /* ========== EXCEL IMPORT (legacy) ==========
+   * Стара реалізація імпорту Excel.
+   *
+  // Новий імпорт тексту з Excel: об'єднуємо комірки рядка пробілами та додаємо рядки окремими текстами
   const importFromExcel = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1122,6 +1131,120 @@ export const useExcelImport = () => {
 
     input.click();
   };
+  ========== END EXCEL IMPORT (legacy) ========== */
 
-  return { importFromExcel, exportToExcel };
+  const importFromExcel = () => {
+    if (!canvas) {
+      alert("Canvas не ініціалізований");
+      return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xlsx,.xls";
+
+    input.onchange = (event) => {
+      const file = event?.target?.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = (loadEvent) => {
+        try {
+          const arrayBuffer = loadEvent?.target?.result;
+          if (!(arrayBuffer instanceof ArrayBuffer)) {
+            throw new Error("Невідомий формат файлу");
+          }
+
+          const workbook = XLSX.read(new Uint8Array(arrayBuffer), {
+            type: "array",
+          });
+
+          const sheetName = workbook.SheetNames?.[0];
+          if (!sheetName) {
+            throw new Error("Файл не містить аркушів");
+          }
+
+          const worksheet = workbook.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            blankrows: false,
+          });
+
+          const texts = rows
+            .map((row) =>
+              Array.isArray(row)
+                ? row
+                    .map((cell) =>
+                      cell === null || cell === undefined
+                        ? ""
+                        : String(cell).trim()
+                    )
+                    .filter(Boolean)
+                : []
+            )
+            .map((cells) => cells.join(" "))
+            .map((text) => text.trim())
+            .filter((text) => text.length > 0);
+
+          if (texts.length === 0) {
+            throw new Error("Файл не містить текстових даних");
+          }
+
+          const canvasWidth = canvas.getWidth();
+          const canvasHeight = canvas.getHeight();
+          const FONT_SIZE_MM = 5;
+          const fontSize = Math.round(FONT_SIZE_MM * PX_PER_MM);
+          const lineSpacing = Math.round(2 * PX_PER_MM);
+          const totalHeight =
+            texts.length * fontSize + (texts.length - 1) * lineSpacing;
+          let currentTop = canvasHeight / 2 - totalHeight / 2;
+          const createdObjects = [];
+
+          canvas.discardActiveObject?.();
+
+          const textColor = globalColors?.textColor || "#000000";
+
+          texts.forEach((text) => {
+            const textObject = new fabric.IText(text, {
+              left: canvasWidth / 2,
+              top: currentTop,
+              originX: "center",
+              originY: "top",
+              fontSize,
+              fill: textColor,
+              selectable: true,
+            });
+
+            currentTop += fontSize + lineSpacing;
+            canvas.add(textObject);
+            createdObjects.push(textObject);
+          });
+
+          canvas.renderAll();
+
+          if (createdObjects.length > 0) {
+            canvas.setActiveObject(createdObjects[0]);
+          }
+
+          alert(`Імпортовано ${createdObjects.length} текстових рядків`);
+        } catch (error) {
+          console.error("Помилка імпорту тексту з Excel:", error);
+          alert(`Не вдалося імпортувати текст: ${error.message}`);
+        }
+      };
+
+      reader.onerror = (error) => {
+        console.error("Помилка читання файлу Excel:", error);
+        alert("Не вдалося прочитати файл Excel");
+      };
+
+      reader.readAsArrayBuffer(file);
+    };
+
+    input.click();
+  };
+
+  // exportToExcel - закоментовано, функція збережена вище для можливого використання в майбутньому
+  return { importFromExcel /* , exportToExcel */ };
 };

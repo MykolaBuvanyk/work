@@ -358,30 +358,30 @@ const CutSelector = ({ isOpen, onClose }) => {
       const { centerX, centerY } = getCenterCoordinates();
 
       // Створюємо замкнений path тільки для областей, які мають бути білими (виключаємо всі впадини)
-      const filledPath = new fabric.Path(
+      // const filledPath = new fabric.Path(
+      //   "M39 3L46 3L46 1C66 3 81 18 83 38L81 38L81 46L83 46C81 66 66 81 46 83L46 81L39 81L39 83C19 81 4 66 2 46L4 46L4 38L2 38C4 18 19 3 39 1L39 3Z",
+      //   {
+      //     left: centerX,
+      //     top: centerY,
+      //     originX: "center",
+      //     originY: "center",
+      //     fill: "#FFFFFF",
+      //     stroke: "transparent",
+      //     strokeWidth: 0,
+      //     selectable: false,
+      //     evented: false,
+      //   }
+      // );
+
+      // Оригінальний бордер з впадинами
+      const border = new fabric.Path(
         "M39 3L46 3L46 1C66 3 81 18 83 38L81 38L81 46L83 46C81 66 66 81 46 83L46 81L39 81L39 83C19 81 4 66 2 46L4 46L4 38L2 38C4 18 19 3 39 1L39 3Z",
         {
           left: centerX,
           top: centerY,
           originX: "center",
           originY: "center",
-          fill: "#FFFFFF",
-          stroke: "transparent",
-          strokeWidth: 0,
-          selectable: false,
-          evented: false,
-        }
-      );
-
-      // Оригінальний бордер з впадинами
-      const border = new fabric.Path(
-        "M39 3h7M39 3V1M46 3V1M39 1C19 3 3 18 2 38M84 38C82 18 66 3 46 1M46 83c20-2 36-17 38-37M2 46c1 20 17 35 37 37M4 46v-8M4 46H2M4 38H2M46 81h-7M46 81v2M39 81v2M81 38v8M81 38h3M81 46h3",
-        {
-          left: centerX,
-          top: centerY,
-          originX: "center",
-          originY: "center",
-          fill: "transparent",
+          fill: "white",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -391,7 +391,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         }
       );
 
-      const group = new fabric.Group([filledPath, border], {
+      const group = new fabric.Group([border], {
         left: centerX,
         top: centerY,
         originX: "center",
@@ -519,33 +519,33 @@ const CutSelector = ({ isOpen, onClose }) => {
     if (canvas) {
       // Коло з трикутним вирізом знизу
       const { centerX, centerY } = getCenterCoordinates();
-      const filledPath = new fabric.Path(
-        // Круг, описаний кубічними кривими (той самий, що й бордер), + трикутник для вирізу
-        // Використовуємо точні координати, щоб заповнення і бордер співпадали.
-        "M41.3126 91.8812C17.387 89.22 -0.291335 68.3305 1.04133 44.2942C2.37399 20.258 22.2531 1.45068 46.3265 1.45068C70.3994 1.45068 90.2786 20.2583 91.6109 44.2942C92.9436 68.3305 75.2652 89.2204 51.3397 91.8812Z M41.3126 91.8813L46.3257 86.8682L51.3397 91.8813L41.3126 91.8813Z",
+      // const filledPath = new fabric.Path(
+      //   // Круг, описаний кубічними кривими (той самий, що й бордер), + трикутник для вирізу
+      //   // Використовуємо точні координати, щоб заповнення і бордер співпадали.
+      //   "M41.3126 91.8812C17.387 89.22 -0.291335 68.3305 1.04133 44.2942C2.37399 20.258 22.2531 1.45068 46.3265 1.45068C70.3994 1.45068 90.2786 20.2583 91.6109 44.2942C92.9436 68.3305 75.2652 89.2204 51.3397 91.8812Z M41.3126 91.8813L46.3257 86.8682L51.3397 91.8813L41.3126 91.8813Z",
+      //   {
+      //     left: centerX,
+      //     top: centerY,
+      //     originX: "center",
+      //     originY: "center",
+      //     fill: "#FFFFFF",
+      //     fillRule: "evenodd",
+      //     stroke: "transparent",
+      //     strokeWidth: 0,
+      //     selectable: false,
+      //     evented: false,
+      //   }
+      // );
+
+      const borderPath = new fabric.Path(
+        // Бордер скопійований за формою з наданого SVG: дві короткі лінії + довга дуга кола
+        "M41 92C17.387 89.22-.2913 68.3305 1.0413 44.2942 2.374 20.258 22.2531 1.4507 46.3265 1.4507c24.0729 0 43.9521 18.8076 45.2844 42.8435 1.3327 24.0363-16.3457 44.9262-40.6109 47.7058L46 87Z",
         {
           left: centerX,
           top: centerY,
           originX: "center",
           originY: "center",
           fill: "#FFFFFF",
-          fillRule: "evenodd",
-          stroke: "transparent",
-          strokeWidth: 0,
-          selectable: false,
-          evented: false,
-        }
-      );
-
-      const borderPath = new fabric.Path(
-        // Бордер скопійований за формою з наданого SVG: дві короткі лінії + довга дуга кола
-        "M41.3125 91.8813L46.3257 86.8682 M51.3397 91.8813L46.3262 86.8682 M51.3397 91.8812C75.2652 89.2204 92.9436 68.3305 91.6109 44.2942C90.2786 20.2583 70.3994 1.45068 46.3265 1.45068C22.2531 1.45068 2.37399 20.258 1.04133 44.2942C-0.291335 68.3305 17.387 89.22 41.3126 91.8812",
-        {
-          left: centerX,
-          top: centerY,
-          originX: "center",
-          originY: "center",
-          fill: "transparent",
           stroke: "#FD7714",
           strokeWidth: 1.5,
           strokeLineCap: "round",
@@ -555,7 +555,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         }
       );
 
-      const group = new fabric.Group([filledPath, borderPath], {
+      const group = new fabric.Group([borderPath], {
         left: centerX,
         top: centerY,
         originX: "center",
@@ -583,7 +583,7 @@ const CutSelector = ({ isOpen, onClose }) => {
       // Компактні вертикальні напівкруглі вирізи — робимо тільки білий фон (без stroke)
       // Основна форма (бордер + прозоре всередині) залишаємо як path
       const path = new fabric.Path(
-        "M1 15v33M52 48V15M52 15a30 30 0 0 0-51 0M1 48a30 30 0 0 0 51 0",
+        "M1 15V48a30 30 0 0051 0V15a30 30 0 00-51 0Z",
         {
           left: centerX,
           top: centerY,
@@ -607,23 +607,23 @@ const CutSelector = ({ isOpen, onClose }) => {
 
       // Додаємо окремий прямокутник-підкладку, щоб весь центр був білим
       // Розміри прямокутника підібрані приблизно під іконку; можна підправити
-      const bgRect = new fabric.Path(
-        // Прямокутник шириною ~56 і висотою ~36, розміщений відносно центру іконки (збільшена ширина)
-        "M2 26h50v36H2z",
-        {
-          left: centerX,
-          top: centerY,
-          originX: "center",
-          originY: "center",
-          fill: "#FFFFFF",
-          stroke: "transparent",
-          selectable: false,
-          evented: false,
-        }
-      );
+      // const bgRect = new fabric.Path(
+      //   // Прямокутник шириною ~56 і висотою ~36, розміщений відносно центру іконки (збільшена ширина)
+      //   "M2 26h50v36H2z",
+      //   {
+      //     left: centerX,
+      //     top: centerY,
+      //     originX: "center",
+      //     originY: "center",
+      //     fill: "#FFFFFF",
+      //     stroke: "transparent",
+      //     selectable: false,
+      //     evented: false,
+      //   }
+      // );
 
       // Групуємо фон і бордер разом (фон буде внизу завдяки порядку)
-      const group = new fabric.Group([bgRect, path], {
+      const group = new fabric.Group([path], {
         left: centerX,
         top: centerY,
         originX: "center",

@@ -137,7 +137,7 @@ const Toolbar = () => {
   const [copiesCount, setCopiesCount] = useState(1);
   const [holesDiameter, setHolesDiameter] = useState(2.5);
 
-  // Для lock: по умолчанию 5мм, тип дырки 2 (сверху), ограничения 2-7мм
+  // Для lock: по умолчанию 5мм, тип дырки 2 (сверху), ограничения 2-6мм
   useEffect(() => {
     if (currentShapeType === "lock") {
       setIsHolesSelected(true);
@@ -149,7 +149,7 @@ const Toolbar = () => {
   // Хардкодим ограничения только для lock и дырки сверху
   const getHolesDiameterLimits = () => {
     if (currentShapeType === "lock" && activeHolesType === 2) {
-      return { min: 2, max: 7, defaultValue: 5 };
+      return { min: 2, max: 6, defaultValue: 5 };
     }
     // ...оставить текущие ограничения для других случаев...
     return { min: 2.5, max: 10, defaultValue: 2.5 };
@@ -9284,7 +9284,7 @@ const Toolbar = () => {
                     <input
                       type="number"
                       min={currentShapeType === "lock" ? 2 : 2.5}
-                      max={currentShapeType === "lock" ? 7 : 10}
+                      max={currentShapeType === "lock" ? 6 : 10}
                       step={0.5}
                       value={holesDiameter}
                       onChange={(e) => {
@@ -9295,7 +9295,7 @@ const Toolbar = () => {
                           currentShapeType === "lock" &&
                           activeHolesType === 2
                         ) {
-                          val = Math.max(2, Math.min(7, val));
+                          val = Math.max(2, Math.min(6, val));
                         }
                         setHolesDiameter(val);
                       }}
@@ -9310,7 +9310,7 @@ const Toolbar = () => {
                               currentShapeType === "lock" &&
                               activeHolesType === 2
                             ) {
-                              next = Math.min(7, next);
+                              next = Math.min(6, next);
                               next = Math.max(2, next);
                             } else {
                               next = Math.min(10, next);
@@ -9330,7 +9330,7 @@ const Toolbar = () => {
                               activeHolesType === 2
                             ) {
                               next = Math.max(2, next);
-                              next = Math.min(7, next);
+                              next = Math.min(6, next);
                             } else {
                               next = Math.max(2.5, next);
                               next = Math.min(10, next);

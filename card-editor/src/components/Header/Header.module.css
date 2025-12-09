@@ -3,7 +3,6 @@
   top: unset;
   left: unset;
   max-width: 1210px;
-  height: 125px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
@@ -45,25 +44,83 @@
 .rightPart {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 5px;
   font-weight: 400;
   font-size: 14px;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 
 .rightPart p {
   padding: 0;
   margin: 0;
 }
+.logOut {
+  font-weight: 600;
+  cursor: pointer;
+}
 
 .rightPartWrapper {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0px;
+}
+
+.lang {
+  position: relative;
+  cursor: pointer;
+  font-family: Roboto;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  leading-trim: NONE;
+  line-height: 21px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #000000;
+}
+
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 7.5px;
+  position: absolute;
+  top: 100%;
+  z-index: 5;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 73px;
+  padding: 7.5px 0;
+}
+
+.countries {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: Roboto;
+  font-weight: 400;
+  font-style: Regular;
+  font-size: 14px;
+  leading-trim: NONE;
+  line-height: 21px;
+  letter-spacing: 0%;
+  vertical-align: middle;
+  color: #000000;
+  padding-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.open {
+  display: none;
 }
 
 .name {
   font-weight: 500;
   color: rgba(0, 108, 164, 1);
+  text-align: end;
 }
 .secondPart {
   width: 100%;
@@ -84,6 +141,7 @@
 .secondPartList li {
   padding: 0 45px;
   white-space: nowrap;
+  width: 100%;
 }
 
 .secondPartEl2 a {

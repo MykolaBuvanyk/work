@@ -265,7 +265,10 @@ input[type="number"]:focus {
   align-items: center;
   margin-bottom: 5px;
 }
-
+.colors svg{
+  width: 38px;
+  border-radius: 4px;
+}
 
 .elementsList {
   display: flex;

@@ -1,0 +1,85 @@
+.admin-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+    .left{
+        width: 50%;
+        .selects{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+            .select-cont{
+                width: 50%;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 15px;
+                align-items: center;
+                p{
+                    width: 47px;
+                    margin:10px 0;
+                    font-family: Inter;
+                    font-weight: 500;
+                    font-style: Medium;
+                    font-size: 14px;
+                    leading-trim: NONE;
+                    line-height: 100%;
+                    letter-spacing: 0%;
+                    color: #000000;
+                }
+                select,input {
+                    width: 165px;
+                    height: 25px;
+                    background-color: transparent;
+                    border-radius: 8px;
+                    border: 1px solid #7D7D7D;
+                }
+            }
+        }
+        table{
+            width: 100%;
+            border-collapse: collapse; // Прибираємо подвійні лінії
+            font-size: 14px;
+            margin-top: 25px;
+
+            // Стилі для заголовка таблиці
+            thead th {
+                background-color: #D5D5D5; 
+                border: 2px solid #ffffff;
+                padding: 10px 5px;
+                text-align: left;
+                font-weight: bold;
+                white-space: nowrap;
+            }
+
+            // Стилі для тіла таблиці
+            tbody td {
+                background-color: #F0F0F0;
+                padding: 8px 5px;
+                border: 2px solid #ffffff;
+                text-align: left;
+                white-space: nowrap; // Запобігає переносу тексту
+            }
+
+            // Стиль для рядків з чергуванням фону (як на зображенні: сірий/білий)
+            tr:nth-child(odd) {
+                background-color: #f9f9f9; // Дуже світло-сірий для непарних
+            }
+
+            // Стиль для першої колонки Order No (помаранчевий фон, як на зображенні)
+            .order-no {
+                background-color: #ff9933; /* Яскраво-помаранчевий */
+                color: white;
+                font-weight: bold;
+                text-align: center;
+                // Забезпечуємо помаранчевий фон для всієї висоти клітинки
+                &.highlight-row {
+                    background-color: #ff9933; 
+                }
+            }
+        }
+    }
+}

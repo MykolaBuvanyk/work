@@ -6,6 +6,7 @@ import Login from './components/Login/Login';
 import Layout from './layout';
 import TermsOfPurchasing from './components/TermsOfPurchasing/TermsOfPurchasing';
 import PrivacyPolicy from './components/PrivacyPolicy/PrivacyPolicy';
+import Admin from './Admin/Admin';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/login" element={<Login />} />
           <Route path="/terms-of-purchasing" element={<TermsOfPurchasing />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />

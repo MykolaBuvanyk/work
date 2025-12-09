@@ -127,7 +127,7 @@ const UploadPreview = ({
             fillRule: "evenodd",
             combineToSinglePath: true,
             scale: 2,
-            fillColor: themeColor,
+            fillColor: "black",
           });
         } else if (mode === "svg" && svgText) {
           resultSVG = svgText;

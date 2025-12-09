@@ -1,31 +1,22 @@
 class ErrorApi extends Error {
-  constructor(code, message) {
-    super();
-    this.code = code;
-    this.message = message;
+  constructor(status, message) {
+    super(message);
+    this.status = status;
   }
 
-  static badRequest(err = 'bad request') {
-    return new ErrorApi(400, {
-      status: 400,
-      message: err,
-      text: err
-    });
+  static badRequest(message) {
+    return new ErrorApi(400, message);
   }
 
   static internalServerError(err) {
-    return new ErrorApi(500, {
-      status: 500,
-      message: 'Internal Server Error',
-      text: err
-    });
+    return new ErrorApi(500, err.message || err);
   }
 
   static unauthorized(err) {
     return new ErrorApi(401, {
       status: 401,
       message: 'Unauthorized',
-      text: err
+      text: err,
     });
   }
 
@@ -37,16 +28,16 @@ class ErrorApi extends Error {
     return new ErrorApi(404, {
       status: 404,
       message: 'Unauthorized',
-      text: err
+      text: err,
     });
   }
   static noAuth(err) {
     return new ErrorApi(401, {
       status: 401,
       message: 'Authentication Required',
-      text: err
+      text: err,
     });
   }
 }
 
-module.exports = ErrorApi;
+export default ErrorApi;

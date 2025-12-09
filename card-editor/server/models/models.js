@@ -1,10 +1,10 @@
 import { DataTypes, Sequelize } from 'sequelize'; // Імпортуємо DataTypes
-import sequelize from '../db'; // Імпортуємо ваш екземпляр sequelize
+import sequelize from '../db.js'; // Імпортуємо ваш екземпляр sequelize
 
 const User = sequelize.define('users', {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   email: { type: DataTypes.STRING, allowNull: false, unique: true },
-  eMailInvoice: { type: DataTypes.state, allowNull: true },
+  eMailInvoice: { type: DataTypes.STRING, allowNull: true },
   type: {
     type: DataTypes.ENUM('Consumer', 'Business', 'Admin'),
     defaultValue: 'Consumer',
@@ -26,18 +26,18 @@ const User = sequelize.define('users', {
   isDifferent: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   isSubscribe: { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: false }, //чи підписується на розсилку
   company2: { type: DataTypes.STRING, allowNull: true },
-  firstName2: { type: DataTypes.STRING, allowNull: false },
-  surname2: { type: DataTypes.STRING, allowNull: false },
-  phone2: { type: DataTypes.STRING, allowNull: false },
-  address3: { type: DataTypes.STRING, allowNull: false },
-  address4: { type: DataTypes.STRING, allowNull: false },
-  postcode2: { type: DataTypes.STRING, allowNull: false },
-  city2: { type: DataTypes.STRING, allowNull: false },
-  country2: { type: DataTypes.STRING, allowNull: false },
-  state2: { type: DataTypes.STRING, allowNull: false },
+  firstName2: { type: DataTypes.STRING, allowNull: true },
+  surname2: { type: DataTypes.STRING, allowNull: true },
+  phone2: { type: DataTypes.STRING, allowNull: true },
+  address3: { type: DataTypes.STRING, allowNull: true },
+  address4: { type: DataTypes.STRING, allowNull: true },
+  postcode2: { type: DataTypes.STRING, allowNull: true },
+  city2: { type: DataTypes.STRING, allowNull: true },
+  country2: { type: DataTypes.STRING, allowNull: true },
+  state2: { type: DataTypes.STRING, allowNull: true },
 
   password: { type: DataTypes.STRING, allowNull: false },
-  timePasswordUpdate: { type: DataTypes.DATE, allowNull: false, defaultValue: 'NOW()' },
+  timePasswordUpdate: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   //codeFor
 });
 

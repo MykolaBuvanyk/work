@@ -4,6 +4,7 @@ import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
 import { countries, states } from './countries';
 import { Link } from 'react-router-dom';
+import { $host } from '../../http';
 
 const RegisterBussines = () => {
   const [formData, setFormData] = useState({
@@ -29,16 +30,22 @@ const RegisterBussines = () => {
     city2: '',
     country2: '',
     state2: '',
+    type: 'Business',
   });
-  const sumbit = () => {
+  const sumbit = async e => {
     try {
-    } catch (err) {}
+      e.preventDefault();
+      const res = await $host.post('auth/register', formData);
+      disptach(setUser({ token: res.data.token }));
+      navigate('/');
+    } catch (err) {
+      alert('error');
+    }
   };
   const handleInput = fieldName => value => {
     console.log('Field:', fieldName, 'Value:', value);
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
-  console.log(434, formData);
 
   return (
     <form className="register-bussines-container" onSubmit={sumbit}>

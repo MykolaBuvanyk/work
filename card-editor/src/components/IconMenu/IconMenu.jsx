@@ -8,6 +8,7 @@ const IconMenu = ({ isOpen, onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState("Animals");
   const [isLoading, setIsLoading] = useState(false);
   const [availableIcons, setAvailableIcons] = useState({});
+  const [expandedCategories, setExpandedCategories] = useState({});
   const dropdownRef = useRef(null);
   const mountedRef = useRef(false);
 
@@ -92,6 +93,14 @@ const IconMenu = ({ isOpen, onClose }) => {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  };
+
+  // Функція для переключення розгортання категорії
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
   };
 
   // Просто використовуємо всі іконки без перевірки доступності
@@ -365,64 +374,71 @@ const IconMenu = ({ isOpen, onClose }) => {
               <path
                 d="M12.0008 12.0001L14.8292 14.8285M9.17236 14.8285L12.0008 12.0001L9.17236 14.8285ZM14.8292 9.17163L12.0008 12.0001L14.8292 9.17163ZM12.0008 12.0001L9.17236 9.17163L12.0008 12.0001Z"
                 stroke="#006CA4"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
                 stroke="#006CA4"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </button>
         </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className={styles.categorySelect}
-        >
+        <div className={styles.categoriesContainer}>
           {categories.map((category) => (
-            <option key={category} value={category}>
-              {formatCategoryName(category)} ({availableIcons[category]?.length || 0})
-            </option>
-          ))}
-        </select>
-        <div className={styles.iconGrid}>
-          {(availableIcons[selectedCategory] || []).map((icon) => (
-            <div
-              key={icon}
-              className={styles.iconItem}
-              onClick={() => addIcon(icon)}
-              title={icon}
-            >
-              <div className={styles.iconPreview}>
-                <img
-                  src={getPreviewUrl(icon)}
-                  alt={icon}
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "flex";
-                  }}
-                />
-                <div className={styles.iconPlaceholder}>
-                  <span>{icon.split(".")[0].replace(/_/g, ' ')}</span>
-                </div>
+            <div key={category} className={styles.categorySection}>
+              <div 
+                className={styles.categoryHeader}
+                onClick={() => toggleCategory(category)}
+              >
+                <span className={styles.categoryName}>
+                  {formatCategoryName(category)} ({availableIcons[category]?.length || 0})
+                </span>
+                <span className={`${styles.categoryArrow} ${expandedCategories[category] ? styles.expanded : ''}`}>
+                  ▼
+                </span>
               </div>
-              <span className={styles.iconName}>
-                {icon.replace(".svg", "").replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-              </span>
+              {expandedCategories[category] && (
+                <div className={styles.iconGrid}>
+                  {(availableIcons[category] || []).map((icon) => (
+                    <div
+                      key={icon}
+                      className={styles.iconItem}
+                      onClick={() => addIcon(icon)}
+                      title={icon}
+                    >
+                      <div className={styles.iconPreview}>
+                        <img
+                          src={getPreviewUrl(icon)}
+                          alt={icon}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                            e.target.nextSibling.style.display = "flex";
+                          }}
+                        />
+                        <div className={styles.iconPlaceholder}>
+                          <span>{icon.split(".")[0].replace(/_/g, ' ')}</span>
+                        </div>
+                      </div>
+                      <span className={styles.iconName}>
+                        {icon.replace(".svg", "").replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {expandedCategories[category] && (!availableIcons[category] || availableIcons[category].length === 0) && (
+                <div className={styles.noIcons}>
+                  Іконки в цій категорії недоступні
+                </div>
+              )}
             </div>
           ))}
         </div>
-        {(!availableIcons[selectedCategory] ||
-          availableIcons[selectedCategory].length === 0) && (
-          <div className={styles.noIcons}>
-            Іконки в цій категорії недоступні
-          </div>
-        )}
       </div>
     </div>
   );

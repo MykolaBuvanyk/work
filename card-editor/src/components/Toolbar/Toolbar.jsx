@@ -171,7 +171,7 @@ const Toolbar = () => {
   const [thickness, setThickness] = useState(1.6); // товщина (мм) для блоку 3
   const [isBorderActive, setIsBorderActive] = useState(false);
 
-  const DEFAULT_BORDER_THICKNESS_PX = 2;
+  const DEFAULT_BORDER_THICKNESS_PX = 0.67; // зменшено в 3 рази (було 2)
   const BORDER_STROKE_COLOR = "#000000";
   const CUSTOM_BORDER_CANVAS_COLOR = "#000000";
   const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
@@ -310,7 +310,7 @@ const Toolbar = () => {
       const baseHeight = metrics?.height || 0;
       const centerX = metrics?.centerX || 0;
       const centerY = metrics?.centerY || 0;
-      const strokeForBorder = makeMask ? 0 : effectiveStroke * 2;
+      const strokeForBorder = makeMask ? 0 : effectiveStroke * 2 / 3; // зменшено в 3 рази
       if (!clip) {
         const fallback = new fabric.Rect({
           left: centerX,
@@ -3911,7 +3911,11 @@ const Toolbar = () => {
         // Лінія
         const lineObj = canvas
           .getObjects()
-          .find((o) => o.isCircleWithLineCenterLine);
+          .find(
+            (o) =>
+              o.isCircleWithLineCenterLine ||
+              o.name === "circleWithLineCenterLine"
+          );
         if (lineObj) {
           const diameterMm = pxToMm(diameterPx);
           const lineWidthMm = diameterMm * 0.65;
@@ -3934,10 +3938,17 @@ const Toolbar = () => {
         // Тексти
         const topText = canvas
           .getObjects()
-          .find((o) => o.isCircleWithLineTopText);
+          .find(
+            (o) =>
+              o.isCircleWithLineTopText || o.name === "circleWithLineTopText"
+          );
         const bottomText = canvas
           .getObjects()
-          .find((o) => o.isCircleWithLineBottomText);
+          .find(
+            (o) =>
+              o.isCircleWithLineBottomText ||
+              o.name === "circleWithLineBottomText"
+          );
         // Фіксоване співвідношення 100/5 => 1:20 (fontSizeMm = widthMm / 20)
         const widthMmNow = pxToMm(diameterPx);
         const desiredFontPx = mmToPx(widthMmNow / 20);
@@ -3965,7 +3976,10 @@ const Toolbar = () => {
           const gapMm = (radiusMm - lineThicknessMm / 2) / 6;
           const centerY = canvas.height / 2;
           if (topText) {
-            topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
+            topText.set({ 
+              left: diameterPx / 2, 
+              top: centerY - mmToPx(gapMm) 
+            });
             topText.setCoords();
           }
           if (bottomText) {
@@ -3985,10 +3999,18 @@ const Toolbar = () => {
         // Лінії «Т» — перебудова
         const hLine = canvas
           .getObjects()
-          .find((o) => o.isCircleWithCrossHorizontalLine);
+          .find(
+            (o) =>
+              o.isCircleWithCrossHorizontalLine ||
+              o.name === "circleWithCrossHorizontalLine"
+          );
         const vLine = canvas
           .getObjects()
-          .find((o) => o.isCircleWithCrossVerticalLine);
+          .find(
+            (o) =>
+              o.isCircleWithCrossVerticalLine ||
+              o.name === "circleWithCrossVerticalLine"
+          );
         const lineWidthMm = diameterMm * 0.65;
         // Обчислюємо актуальну пропорцію товщини до розміру картки за наявними лініями
         const deriveThickRatio = () => {
@@ -4006,6 +4028,12 @@ const Toolbar = () => {
         const lineThicknessPx = mmToPx(lineThicknessMm);
         const lineWidthPx = mmToPx(lineWidthMm);
         const paddingPx = mmToPx(0.5); // зменшений відступ для ближчого розташування до лінії
+        
+        // Відступ від лінії як в оригіналі
+        const radiusMm = diameterMm / 2;
+        const gapMm = (radiusMm - lineThicknessMm / 2) / 6;
+        const gapPx = mmToPx(gapMm);
+        
         const hTop = canvasH / 2 - lineThicknessPx / 2;
         const hBottom = canvasH / 2 + lineThicknessPx / 2;
         const vLeft = centerX - lineThicknessPx / 2;
@@ -4026,7 +4054,7 @@ const Toolbar = () => {
             width: lineThicknessPx,
             height: mmToPx(vHeightMm),
             left: centerX,
-            top: canvasH / 2,
+            top: canvasH / 2 + 2,
           });
           vLine.setCoords();
         }
@@ -4034,13 +4062,24 @@ const Toolbar = () => {
         // Тексти — детермінована прив'язка до «Т» і меж круга
         const topText = canvas
           .getObjects()
-          .find((o) => o.isCircleWithCrossTopText);
+          .find(
+            (o) =>
+              o.isCircleWithCrossTopText || o.name === "circleWithCrossTopText"
+          );
         const blText = canvas
           .getObjects()
-          .find((o) => o.isCircleWithCrossBottomLeftText);
+          .find(
+            (o) =>
+              o.isCircleWithCrossBottomLeftText ||
+              o.name === "circleWithCrossBottomLeftText"
+          );
         const brText = canvas
           .getObjects()
-          .find((o) => o.isCircleWithCrossBottomRightText);
+          .find(
+            (o) =>
+              o.isCircleWithCrossBottomRightText ||
+              o.name === "circleWithCrossBottomRightText"
+          );
         // Фіксоване співвідношення 100/5 => 1:20 (fontSizeMm = widthMm / 20)
         const widthMmNow2 = pxToMm(canvasW);
         const desiredFontPx2 = Math.max(
@@ -4069,9 +4108,9 @@ const Toolbar = () => {
             fontSize: desiredFontPx2,
           });
           topText.initDimensions && topText.initDimensions();
-          const topH = topText.height || 0;
-          const desiredTop = Math.max(0, hTop - paddingPx - topH / 2);
-          topText.set({ top: desiredTop });
+          // Використовуємо ту ж логіку що й при створенні
+          const topY = canvasH / 2 - gapPx;
+          topText.set({ top: topY });
           topText.setCoords();
         }
 
@@ -4086,9 +4125,9 @@ const Toolbar = () => {
             fontSize: desiredFontPx2,
           });
           blText.initDimensions && blText.initDimensions();
-          const h = blText.height || 0;
-          const desiredTop = hBottom + paddingPx + h / 2;
-          blText.set({ top: desiredTop });
+          // Використовуємо ту ж логіку що й при створенні
+          const bottomY = canvasH / 2 + gapPx;
+          blText.set({ top: bottomY });
           blText.setCoords();
         }
 
@@ -4103,9 +4142,9 @@ const Toolbar = () => {
             fontSize: desiredFontPx2,
           });
           brText.initDimensions && brText.initDimensions();
-          const h = brText.height || 0;
-          const desiredTop = hBottom + paddingPx + h / 2;
-          brText.set({ top: desiredTop });
+          // Використовуємо ту ж логіку що й при створенні
+          const bottomY = canvasH / 2 + gapPx;
+          brText.set({ top: bottomY });
           brText.setCoords();
         }
 
@@ -5414,6 +5453,22 @@ const Toolbar = () => {
     const objects = canvas.getObjects();
 
     objects.forEach((obj) => {
+      // Оновлення кольору ліній для фігур "Коло з лінією" та "Коло з хрестом"
+      if (
+        obj.isCircleWithLineCenterLine ||
+        obj.isCircleWithCrossHorizontalLine ||
+        obj.isCircleWithCrossVerticalLine
+      ) {
+        // Індекси (0-based): 0, 1, 2, 7, 8, 12 -> чорний, інакше білий
+        const isBlackTheme = [0, 1, 2, 7, 8, 12].includes(colorIndex);
+        const lineColor = isBlackTheme ? "#000000" : "#FFFFFF";
+        obj.set({
+          stroke: lineColor,
+          fill: lineColor,
+        });
+        return;
+      }
+
       if (obj.isBorderShape) {
         const mode = obj.cardBorderMode === "custom" ? "custom" : "default";
         const displayStroke = getBorderColor(mode);
@@ -7192,7 +7247,13 @@ const Toolbar = () => {
       // Додаємо горизонтальну лінію по центру (65% ширини кола)
       const diameterMm = 100;
       const lineWidthMm = diameterMm * 0.65;
-      const lineThicknessMm = thickness; // поточний state товщини у мм
+      const lineThicknessMm = 1; // Fixed 1mm thickness
+
+      // Визначаємо колір ліній відповідно до теми (1, 2, 3, 8, 9, 13 -> чорний, інакше білий)
+      // Індекси (0-based): 0, 1, 2, 7, 8, 12
+      const isBlackTheme = [0, 1, 2, 7, 8, 12].includes(selectedColorIndex);
+      const lineColor = isBlackTheme ? "#000000" : "#FFFFFF";
+
       const centerLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2,
@@ -7200,7 +7261,8 @@ const Toolbar = () => {
         originY: "center",
         width: mmToPx(lineWidthMm),
         height: mmToPx(lineThicknessMm),
-        fill: globalColors?.textColor || "#000",
+        fill: lineColor,
+        stroke: lineColor,
         selectable: false,
         evented: false,
         hasControls: false,
@@ -7216,6 +7278,8 @@ const Toolbar = () => {
         moveCursor: "default",
         strokeUniform: true,
         isCircleWithLineCenterLine: true,
+        name: "circleWithLineCenterLine",
+        id: "LineFromCircle",
       });
       canvas.add(centerLine);
 
@@ -7239,18 +7303,15 @@ const Toolbar = () => {
         top: topY,
         ...commonText,
         isCircleWithLineTopText: true,
+        name: "circleWithLineTopText",
       });
       const bottomText = new fabric.IText("TEXT BOTTOM", {
         left: mmToPx(100) / 2,
         top: bottomY,
         ...commonText,
         isCircleWithLineBottomText: true,
+        name: "circleWithLineBottomText",
       });
-      // Якорі для пропорційного масштабування шрифту при зміні розміру картки
-      topText.__fontAnchorW = canvas.width;
-      topText.__fontAnchorH = canvas.height;
-      bottomText.__fontAnchorW = canvas.width;
-      bottomText.__fontAnchorH = canvas.height;
       canvas.add(topText, bottomText);
       canvas.sendObjectToBack(centerLine);
 
@@ -7299,7 +7360,13 @@ const Toolbar = () => {
       // Додаємо горизонтальну лінію (як у icon4)
       const diameterMm = 100;
       const lineWidthMm = diameterMm * 0.65;
-      const lineThicknessMm = thickness; // поточна товщина
+      const lineThicknessMm = 1; // Fixed 1mm thickness
+
+      // Визначаємо колір ліній відповідно до теми (1, 2, 3, 8, 9, 13 -> чорний, інакше білий)
+      // Індекси (0-based): 0, 1, 2, 7, 8, 12
+      const isBlackTheme = [0, 1, 2, 7, 8, 12].includes(selectedColorIndex);
+      const lineColor = isBlackTheme ? "#000000" : "#FFFFFF";
+
       const hLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2,
@@ -7307,7 +7374,8 @@ const Toolbar = () => {
         originY: "center",
         width: mmToPx(lineWidthMm),
         height: mmToPx(lineThicknessMm),
-        fill: globalColors?.textColor || "#000",
+        fill: lineColor,
+        stroke: lineColor,
         selectable: false,
         evented: false,
         hasControls: false,
@@ -7323,18 +7391,21 @@ const Toolbar = () => {
         moveCursor: "default",
         strokeUniform: true,
         isCircleWithCrossHorizontalLine: true,
+        name: "circleWithCrossHorizontalLine",
+        id: "LineFromCircle",
       });
       canvas.add(hLine);
       // Додаємо вертикальну лінію: висота 33% діаметра, починається від центру вниз
       const vHeightMm = diameterMm * 0.33;
       const vLine = new fabric.Rect({
         left: mmToPx(100) / 2,
-        top: mmToPx(100) / 2, // верх вертикальної лінії у центрі
+        top: mmToPx(100) / 2+2, // верх вертикальної лінії у центрі
         originX: "center",
         originY: "top",
         width: mmToPx(lineThicknessMm),
         height: mmToPx(vHeightMm),
-        fill: globalColors?.textColor || "#000",
+        fill: lineColor,
+        stroke: lineColor,
         selectable: false,
         evented: false,
         hasControls: false,
@@ -7350,6 +7421,8 @@ const Toolbar = () => {
         moveCursor: "default",
         strokeUniform: true,
         isCircleWithCrossVerticalLine: true,
+        name: "circleWithCrossVerticalLine",
+        id: "LineFromCircle",
       });
       canvas.add(vLine);
       // Тексти як Textbox: top center, bottom left, bottom right
@@ -7379,6 +7452,7 @@ const Toolbar = () => {
         originX: "center",
         ...commonTextbox,
         isCircleWithCrossTopText: true,
+        name: "circleWithCrossTopText",
       });
       const bottomLeftText = new fabric.Textbox("TEXT L", {
         left: paddingPx, // стартова позиція, можна рухати по X
@@ -7387,6 +7461,7 @@ const Toolbar = () => {
         originX: "left",
         ...commonTextbox,
         isCircleWithCrossBottomLeftText: true,
+        name: "circleWithCrossBottomLeftText",
       });
       const bottomRightText = new fabric.Textbox("TEXT R", {
         left: centerX + lineThicknessPx / 2 + paddingPx, // старт справа від вертикалі, можна рухати по X
@@ -7396,19 +7471,13 @@ const Toolbar = () => {
         ...commonTextbox,
         splitByGrapheme: true, // перенос по буквах завжди
         isCircleWithCrossBottomRightText: true,
+        name: "circleWithCrossBottomRightText",
       });
       // Зафіксувати стартовий валідний розмір = 5мм
       const startPx = mmToPx(5);
       topText._lastValidFontSize = startPx;
       bottomLeftText._lastValidFontSize = startPx;
       bottomRightText._lastValidFontSize = startPx;
-      // Якорі для масштабування шрифту при зміні розміру картки
-      topText.__fontAnchorW = canvas.width;
-      topText.__fontAnchorH = canvas.height;
-      bottomLeftText.__fontAnchorW = canvas.width;
-      bottomLeftText.__fontAnchorH = canvas.height;
-      bottomRightText.__fontAnchorW = canvas.width;
-      bottomRightText.__fontAnchorH = canvas.height;
       canvas.add(topText, bottomLeftText, bottomRightText);
       canvas.sendObjectToBack(hLine);
       canvas.sendObjectToBack(vLine);
@@ -7507,200 +7576,110 @@ const Toolbar = () => {
           return best;
         };
 
-        // Підігнати розмір шрифту, щоб не виходити за межі круга (строгий режим)
+        // Підігнати розмір шрифту, щоб не виходити за межі круга
         const fitInsideCircle = (tb) => {
           if (!tb) return;
-          if (tb.__fitting) return; // захист від рекурсії
+          if (tb.__fitting) return;
           tb.__fitting = true;
-          let minFont = Math.floor(mmToPx(5)); // мінімум 5мм по стандарту
+          
+          let minFont = Math.floor(mmToPx(5));
           if (typeof tb.__minFontPx === "number") {
             minFont = Math.max(1, Math.round(tb.__minFontPx));
           }
           const current = Math.max(minFont, Math.round(tb.fontSize || minFont));
-          const lastValid =
-            typeof tb._lastValidFontSize === "number"
-              ? Math.max(minFont, Math.round(tb._lastValidFontSize))
-              : current;
-          // Детермінована підгонка позиції до ліній
+          
           tb.initDimensions && tb.initDimensions();
+          
+          // Перевіряємо чи текст виходить за межі canvas
           let rect = tb.getBoundingRect(true, true);
-          const pad = paddingPx;
-          if (tb.isCircleWithCrossTopText) {
-            const bottomY = rect.top + rect.height;
-            const maxBottom = hTop - pad;
-            if (bottomY > maxBottom) {
-              const delta = bottomY - maxBottom;
-              tb.top -= delta; // підтягуємо рівно до межі
-              tb.initDimensions && tb.initDimensions();
-            }
-          } else {
-            // нижні
-            const topY = rect.top;
-            const minTop = hBottom + pad;
-            if (topY < minTop) {
-              const delta = minTop - topY;
-              tb.top += delta;
-              tb.initDimensions && tb.initDimensions();
-            }
-          }
-          // Після позиційної підгонки — остаточна перевірка і фіксація
-          if (fitsNow(tb)) {
-            tb._lastValidFontSize = Math.max(minFont, tb.fontSize | 0);
-          } else {
-            // Намагаємось трохи розслабити тільки позицію в межах canvas, без зменшення шрифта
-            rect = tb.getBoundingRect(true, true);
-            if (rect.top < 0) tb.top += -rect.top;
-            if (rect.left < 0) tb.left += -rect.left;
-            if (rect.left + rect.width > canvasW)
-              tb.left -= rect.left + rect.width - canvasW;
-            if (rect.top + rect.height > canvasH)
-              tb.top -= rect.top + rect.height - canvasH;
-            tb.initDimensions && tb.initDimensions();
-            // Більше не скидаємо fontSize до 5мм, користувач керує сам
-          }
+          if (rect.top < 0) tb.top += -rect.top;
+          if (rect.left < 0) tb.left += -rect.left;
+          if (rect.left + rect.width > canvasW)
+            tb.left -= rect.left + rect.width - canvasW;
+          if (rect.top + rect.height > canvasH)
+            tb.top -= rect.top + rect.height - canvasH;
+          tb.initDimensions && tb.initDimensions();
+          
           tb.__fitting = false;
         };
 
-        // Верхній текст: ширина по горизонтальній лінії, тримаємо над нею з відступом
+        // Верхній текст: ширина по горизонтальній лінії, вільно рухається
         topText.set({
           width: Math.max(20, lineWidthPx - paddingPx * 2),
-          left: cX,
           originX: "center",
           textAlign: "center",
         });
-        // Після зміни ширини оновлюємо розміри, щоб отримати правильну висоту
         topText.initDimensions && topText.initDimensions();
-        const topH = topText.height || 0;
-        const desiredTop = Math.max(0, hTop - paddingPx - topH / 2);
-        if (topText.top > desiredTop) topText.top = desiredTop;
-        // Фітінг в колі
         fitInsideCircle(topText);
 
-        // Лівий нижній бокс: від лівого краю до вертикальної лінії з полями
-        // Не фіксуємо left, дозволяємо користувачу рухати по X
-        const leftW = Math.max(
-          20,
-          vLeft - paddingPx - (bottomLeftText.left || 0)
-        );
-        bottomLeftText.set({ width: leftW, originX: "left" });
-        // Позиція нижче горизонтальної лінії
-        const minCenterBelow =
-          hBottom + paddingPx + (bottomLeftText.height || 0) / 2;
-        if (bottomLeftText.top < minCenterBelow)
-          bottomLeftText.top = minCenterBelow;
+        // Лівий нижній бокс: динамічна ширина до вертикальної лінії
+        const leftW = Math.max(20, vLeft - paddingPx - (bottomLeftText.left || 0));
+        bottomLeftText.set({ 
+          width: leftW, 
+          originX: "left",
+        });
         bottomLeftText.initDimensions && bottomLeftText.initDimensions();
         fitInsideCircle(bottomLeftText);
 
-        // Правий нижній бокс: від правого краю вертикальної до правої межі
-        // Не фіксуємо left, дозволяємо користувачу рухати по X
-        // Дзеркальна логіка: ліва межа не повинна перетинати центральну лінію
+        // Правий нижній бокс: динамічна ширина до правого краю
         let rightTextLeft = bottomRightText.left || vRight + paddingPx;
-        // Дзеркальна поведінка: left — від центральної лінії, width — до правого краю
-        // left = vRight + paddingPx + delta (delta — зміщення вправо)
-        let delta =
-          (bottomRightText.left || vRight + paddingPx) - (vRight + paddingPx);
         let minLeft = vRight + paddingPx;
         let maxRight = canvasW - paddingPx;
         rightTextLeft = Math.max(minLeft, bottomRightText.left || minLeft);
-        // width — від лівого краю тексту до правого краю
         let rightW = Math.max(20, maxRight - rightTextLeft);
-        // Якщо рамка виходить за межі правого краю — зсуваємо left вліво
         if (rightTextLeft + rightW > maxRight) {
           rightTextLeft = maxRight - rightW;
         }
-        bottomRightText.left = rightTextLeft;
         bottomRightText.set({
+          left: rightTextLeft,
           width: rightW,
           originX: "left",
         });
-        const minCenterBelowR =
-          hBottom + paddingPx + (bottomRightText.height || 0) / 2;
-        if (bottomRightText.top < minCenterBelowR)
-          bottomRightText.top = minCenterBelowR;
         bottomRightText.initDimensions && bottomRightText.initDimensions();
         fitInsideCircle(bottomRightText);
-
-        // Фінальний guard: якщо будь-який текст вийшов за межі видимої зони — повертаємо в безпечне положення
-        const ensureVisible = (tb, zone) => {
-          if (!tb) return;
-          tb.initDimensions && tb.initDimensions();
-          const r = tb.getBoundingRect(true, true);
-          let changed = false;
-          if (r.top < 0) {
-            tb.top += -r.top;
-            changed = true;
-          }
-          if (r.left < 0) {
-            tb.left += -r.left;
-            changed = true;
-          }
-          if (r.left + r.width > canvasW) {
-            tb.left -= r.left + r.width - canvasW;
-            changed = true;
-          }
-          if (r.top + r.height > canvasH) {
-            tb.top -= r.top + r.height - canvasH;
-            changed = true;
-          }
-          if (zone === "top") {
-            // не ниже допустимой границы
-            const maxBottom = hTop - paddingPx;
-            const newRect = tb.getBoundingRect(true, true);
-            const bottomY = newRect.top + newRect.height;
-            if (bottomY > maxBottom) {
-              tb.top -= bottomY - maxBottom;
-              changed = true;
-            }
-          } else if (zone === "bottomL" || zone === "bottomR") {
-            const minTop = hBottom + paddingPx;
-            const newRect = tb.getBoundingRect(true, true);
-            if (newRect.top < minTop) {
-              tb.top += minTop - newRect.top;
-              changed = true;
-            }
-          }
-          if (changed) tb.initDimensions && tb.initDimensions();
-        };
-
-        ensureVisible(topText, "top");
-        ensureVisible(bottomLeftText, "bottomL");
-        ensureVisible(bottomRightText, "bottomR");
 
         canvas.requestRenderAll();
       };
 
-      // Події для автоперерозкладки під час редагування/руху
-      const attachAutoLayout = (obj) => {
-        const handler = () => enforceCircleCrossLayout();
-        obj.on("changed", handler);
-        obj.on("editing:entered", handler);
-        obj.on("editing:exited", handler);
-        obj.on("moving", handler);
-        obj.on("modified", handler);
-        // Переводимо масштаб у fontSize з клампом по вміщенню
+      // Події для нормалізації масштабу в fontSize (без автоперерозкладки)
+      const attachScaleHandler = (obj) => {
         obj.on("scaling", () => {
           try {
             const scale = Math.max(obj.scaleX || 1, obj.scaleY || 1);
             if (scale !== 1) {
               const base = Math.round(obj.fontSize || mmToPx(5));
               const desired = Math.max(6, Math.round(base * scale));
-              // шукаємо максимально допустимий до desired
-              obj.set({ scaleX: 1, scaleY: 1 });
-              // тимчасово виставляємо бажаний, далі fit відклацне до валідного
-              obj.set({ fontSize: desired });
+              obj.set({ scaleX: 1, scaleY: 1, fontSize: desired });
+              obj.initDimensions && obj.initDimensions();
+              canvas.requestRenderAll();
             }
           } catch (e) {}
-          enforceCircleCrossLayout();
         });
-        // Коли користувач змінює fontSize іншими шляхами — підтягнемо назад
-        obj.on("changed", () => enforceCircleCrossLayout());
       };
-      attachAutoLayout(topText);
-      attachAutoLayout(bottomLeftText);
-      attachAutoLayout(bottomRightText);
+      attachScaleHandler(topText);
+      attachScaleHandler(bottomLeftText);
+      attachScaleHandler(bottomRightText);
 
-      // Початкова розкладка
-      enforceCircleCrossLayout();
+      // Встановлюємо початкові позиції (без прижимання)
+      const canvasW = mmToPx(100);
+      const canvasH = mmToPx(100);
+      const centerX2 = canvasW / 2;
+      
+      topText.set({
+        left: centerX2,
+        top: topY,
+        width: Math.max(20, lineWidthPx - paddingPx * 2),
+      });
+      bottomLeftText.set({
+        left: paddingPx,
+        top: bottomY,
+        width: Math.max(20, centerX2 - lineThicknessPx / 2 - paddingPx * 2),
+      });
+      bottomRightText.set({
+        left: centerX2 + lineThicknessPx / 2 + paddingPx,
+        top: bottomY,
+        width: Math.max(20, canvasW - (centerX2 + lineThicknessPx / 2 + paddingPx) - paddingPx),
+      });
 
       canvas.renderAll();
 

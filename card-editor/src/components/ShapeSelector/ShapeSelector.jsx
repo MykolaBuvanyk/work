@@ -92,14 +92,15 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           : canvas?.height || 0;
       const centerX = (canvasW || 0) / 2;
       const centerY = (canvasH || 0) / 2;
+      const themeStroke =
+        globalColors.strokeColor ||
+        globalColors.textColor ||
+        DEFAULT_SHAPE_STROKE;
       const baseOptions = {
         left: centerX,
         top: centerY,
-        fill: DEFAULT_SHAPE_FILL,
-        stroke:
-          globalColors.strokeColor ||
-          globalColors.textColor ||
-          DEFAULT_SHAPE_STROKE,
+        fill: "transparent", // прозора заливка за замовчуванням
+        stroke: themeStroke,
         strokeWidth: 2,
         originX: "center",
         originY: "center",
@@ -119,11 +120,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         hasControls: true,
         selectable: true,
         useThemeColor: false,
-        initialFillColor: DEFAULT_SHAPE_FILL,
-        initialStrokeColor:
-          globalColors.strokeColor ||
-          globalColors.textColor ||
-          DEFAULT_SHAPE_STROKE,
+        initialFillColor: themeStroke, // зберігаємо stroke для майбутнього увімкнення fill
+        initialStrokeColor: themeStroke,
         followThemeStroke: true,
       });
       custom.pendingShapePropsDefaults = { fill: false, cut: false };
@@ -178,7 +176,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     const baseOptions = {
       left: centerX,
       top: centerY,
-      fill: DEFAULT_SHAPE_FILL,
+      fill: "transparent", // прозора заливка за замовчуванням, оскільки fill вимкнений
       stroke: themeStroke,
       strokeWidth: 2,
       originX: "center",
@@ -318,7 +316,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           width: 60,
           height: 74,
           orientation: "vertical",
-          fill: DEFAULT_SHAPE_FILL,
+          fill: "transparent", // прозора заливка, як і в інших фігур
         });
         break;
       }
@@ -436,17 +434,18 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         });
       }
 
-      // Початкове заповнення: нові фігури мають білу заливку та не синхронізуються з темою, доки користувач явно не увімкне Fill
+      // Початкове заповнення: нові фігури мають прозору заливку за замовчуванням
       if (shapeType === "text") {
         shape.set({ useThemeColor: true });
       } else if (shapeType === "line" || shapeType === "dashedLine") {
         shape.set({ useThemeColor: true });
       } else {
+        // Для звичайних фігур встановлюємо прозору заливку, оскільки fill вимкнений за замовчуванням
         shape.set({
-          fill: DEFAULT_SHAPE_FILL,
+          fill: "transparent",
           useThemeColor: false,
-          initialFillColor: DEFAULT_SHAPE_FILL,
-          initialStrokeColor: DEFAULT_SHAPE_STROKE,
+          initialFillColor: themeStroke, // зберігаємо stroke для майбутнього увімкнення fill
+          initialStrokeColor: themeStroke,
         });
       }
 

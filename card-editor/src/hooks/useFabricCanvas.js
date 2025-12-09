@@ -48,6 +48,14 @@ const CUSTOM_PROPS = [
   "useThemeColor",
   "initialFillColor",
   "initialStrokeColor",
+  "isCircleWithLineCenterLine",
+  "isCircleWithLineTopText",
+  "isCircleWithLineBottomText",
+  "isCircleWithCrossHorizontalLine",
+  "isCircleWithCrossVerticalLine",
+  "isCircleWithCrossTopText",
+  "isCircleWithCrossBottomLeftText",
+  "isCircleWithCrossBottomRightText",
   "followThemeStroke",
 ];
 

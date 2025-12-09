@@ -94,13 +94,72 @@
   padding: 8px;
 }
 
+.categoriesContainer {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.categoriesContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.categoriesContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.categoriesContainer::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.categoriesContainer::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.categorySection {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.categoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  background: white;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.categoryHeader:hover {
+  background: #f8f9fa;
+}
+
+.categoryName {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+.categoryArrow {
+  font-size: 10px;
+  color: #6c757d;
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+}
+
+.categoryArrow.expanded {
+  transform: rotate(0deg);
+}
+
 .iconGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   gap: 15px;
   padding: 20px;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: visible;
 }
 
 .iconGrid::-webkit-scrollbar {

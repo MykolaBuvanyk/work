@@ -904,7 +904,7 @@ const ShapeProperties = ({
     });
   }, [activeObject]);
 
-  // Реакция на смену цветовой темы: если Fill активен у фигуры (не cut shape), обновить fill под новый textColor
+  // Реакция на смену цветовой темы: если Fill активен у фигуры (не cut shape), обновить fill під поточний stroke
   useEffect(() => {
     if (!canvas || !activeObject) return;
     const obj = canvas.getActiveObject();
@@ -916,17 +916,17 @@ const ShapeProperties = ({
     if (obj.isCutElement && obj.cutType === "manual") return;
     // Якщо фігура відмовилась від темної заливки — не примушуємо зміну кольору
     if (obj.useThemeColor !== true) return;
-    // Якщо у об'єкта активний Fill — синхронізуємо із темою
-    const themeText = globalColors?.textColor || "#000000";
+    // Якщо у об'єкта активний Fill — синхронізуємо із поточним stroke
+    const currentStroke = obj.stroke || globalColors?.strokeColor || globalColors?.textColor || "#000000";
     if (properties.fill) {
       try {
-        obj.set({ fill: themeText, useThemeColor: true });
+        obj.set({ fill: currentStroke, useThemeColor: true });
         storeFillMetadata(obj, true);
         if (typeof obj.setCoords === "function") obj.setCoords();
         canvas.requestRenderAll();
       } catch {}
     }
-  }, [canvas, activeObject, globalColors?.textColor, properties.fill]);
+  }, [canvas, activeObject, globalColors?.strokeColor, globalColors?.textColor, properties.fill]);
 
   // Оновлення властивостей активного об'єкта
   const updateProperty = (property, value) => {
@@ -1082,8 +1082,9 @@ const ShapeProperties = ({
       case "fill": {
         holdCenterIfArrow((o) => {
           if (value) {
-            const themeFill = globalColors?.textColor || "#000000";
-            o.set({ fill: themeFill, useThemeColor: true });
+            // Використовуємо поточний колір stroke об'єкта для заливки
+            const currentStroke = o.stroke || globalColors?.strokeColor || globalColors?.textColor || "#000000";
+            o.set({ fill: currentStroke, useThemeColor: true });
             storeFillMetadata(o, true);
           } else {
             o.set({ fill: "transparent", useThemeColor: false });
@@ -1136,9 +1137,10 @@ const ShapeProperties = ({
                 lockScalingY: false,
                 lockUniScaling: false,
               });
-              // При включённом Fill заливаем цветом текста, иначе прозрачная заливка
+              // При включённом Fill заливаем поточним кольором stroke, иначе прозрачная заливка
               if (properties.fill) {
-                o.set({ fill: themeTextColor, useThemeColor: true });
+                const currentStroke = o.stroke || themeStrokeColor;
+                o.set({ fill: currentStroke, useThemeColor: true });
                 storeFillMetadata(o, true);
               } else {
                 o.set({ fill: "transparent", useThemeColor: false });

@@ -3,9 +3,13 @@ import './RegisterConsumer.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
 import { countries, states } from './countries';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { $host } from '../../http';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/reducers/user';
 
 const RegisterConsumer = () => {
+  const disptach = useDispatch();
   const [formData, setFormData] = useState({
     firstName: '',
     surname: '',
@@ -30,16 +34,25 @@ const RegisterConsumer = () => {
     country2: '',
     state2: '',
     isSubscribe: false,
+    type: 'Consumer',
   });
-  const sumbit = () => {
+
+  const navigate = useNavigate();
+
+  const sumbit = async e => {
     try {
-    } catch (err) {}
+      e.preventDefault();
+      const res = await $host.post('auth/register', formData);
+      disptach(setUser({ token: res.data.token }));
+      navigate('/');
+    } catch (err) {
+      alert('error');
+    }
   };
   const handleInput = fieldName => value => {
     console.log('Field:', fieldName, 'Value:', value);
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
-  console.log(434, formData);
 
   return (
     <form className="register-consumer-container" onSubmit={sumbit}>

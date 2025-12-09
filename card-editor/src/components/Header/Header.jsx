@@ -1,42 +1,115 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import styles from './Header.module.css';
 import { Link, useLocation } from 'react-router-dom';
+import Flag from 'react-flagkit';
+import { SlArrowDown } from 'react-icons/sl';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../store/reducers/user';
 
-const urls = [
-  {
-    name: 'Home',
-    url: '/home',
-  },
-  {
-    name: 'Registration',
-    url: '/login',
-  },
-  {
-    name: 'Templates',
-    url: '/templates',
-  },
-  {
-    name: 'New Project',
-    url: '/',
-  },
-  {
-    name: 'Products',
-    url: '/products',
-  },
-  {
-    name: 'Quick Guide',
-    url: '/quick-guide',
-  },
-  {
-    name: 'Contacts',
-    url: '/contacts',
-  },
+const languages = [
+  { countryCode: 'GB', label: 'EN' }, // Використовуємо GB для UK/EN
+  { countryCode: 'FR', label: 'FR' },
+  { countryCode: 'IT', label: 'IT' },
+  { countryCode: 'ES', label: 'ES' },
+  { countryCode: 'PL', label: 'PL' },
+  { countryCode: 'CZ', label: 'CS' }, // Чехія
+  { countryCode: 'NL', label: 'NL' },
+  { countryCode: 'SE', label: 'SV' }, // Швеція
+  { countryCode: 'NO', label: 'NO' },
+  { countryCode: 'DK', label: 'DA' }, // Данія
+  { countryCode: 'HU', label: 'HU' },
+  { countryCode: 'HR', label: 'HR' }, // Хорватія
+  { countryCode: 'UA', label: 'UK' }, // Україна
+  { countryCode: 'RU', label: 'RU' },
 ];
 
 const Header = () => {
   const { pathname } = useLocation(); // <-- тут шлях
+  const [isLangOpen, setIsLangOpen] = useState(false);
+
+  const [urls, setUrls] = useState([
+    {
+      name: 'Home',
+      url: '/home',
+    },
+    {
+      name: 'Registration',
+      url: '/login',
+    },
+    {
+      name: 'New Project',
+      url: '/',
+    },
+    {
+      name: 'Templates',
+      url: '/templates',
+    },
+    {
+      name: 'Products',
+      url: '/products',
+    },
+    {
+      name: 'Quick Guide',
+      url: '/quick-guide',
+    },
+    {
+      name: 'Contacts',
+      url: '/contacts',
+    },
+  ]);
+  const { isAuth, isAdmin, user } = useSelector(state => state.user);
+
+  useEffect(() => {
+    const newUrls = [
+      {
+        name: 'Home',
+        url: '/home',
+      },
+    ];
+    if (!isAuth)
+      newUrls.push({
+        name: 'Registration',
+        url: '/login',
+      });
+    newUrls.push(
+      ...[
+        {
+          name: 'New Project',
+          url: '/',
+        },
+        {
+          name: 'Templates',
+          url: '/templates',
+        },
+        {
+          name: 'Products',
+          url: '/products',
+        },
+        {
+          name: 'Quick Guide',
+          url: '/quick-guide',
+        },
+        {
+          name: 'Contacts',
+          url: '/contacts',
+        },
+      ]
+    );
+    if (isAdmin)
+      newUrls.push({
+        name: 'Admin',
+        url: '/admin',
+      });
+    setUrls(newUrls);
+  }, [isAuth, isAdmin]);
+
+  const dispatch = useDispatch();
+
+  const exit = () => dispatch(logout());
+
+  console.log(432432, user, isAuth, isAdmin);
 
   return (
     <div className={styles.header}>
@@ -223,10 +296,35 @@ const Header = () => {
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
-            <p className={styles.name}>Joe Doe</p>
+            <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>
             <p>Water Design Solution GMbH</p>
           </div>
-          <p>Log out</p>
+          <p onClick={exit} className={styles.logOut} style={{ margin: 0 }}>
+            {isAuth && 'Log out'}
+          </p>
+
+          <div className={styles.lang}>
+            <div
+              style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+              onClick={() => setIsLangOpen(!isLangOpen)}
+            >
+              <Flag country="DE" size={32} />
+              DE
+              <SlArrowDown size={14} />
+            </div>
+            <div className={isLangOpen ? styles.dropdown : styles.open}>
+              {languages.map(lang => (
+                <div
+                  key={lang.countryCode}
+                  onClick={() => setIsLangOpen(false)}
+                  className={styles.countries}
+                >
+                  <Flag country={lang.countryCode} size={32} />
+                  {lang.countryCode}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
       <div className={styles.secondPart}>

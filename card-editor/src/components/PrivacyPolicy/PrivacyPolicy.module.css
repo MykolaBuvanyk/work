@@ -1,50 +1,51 @@
 .terms_page_title h1 {
-    font-weight: 700;
-    font-style: Bold;
-    font-size: 36px;
-    line-height: 100%;
-    letter-spacing: 0%;
-    text-align: center;
-    align-items: center;
-    /* margin-top: 55px; */
-    font-family: 'Inter', sans-serif;
-    margin-bottom: 10px;
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 36px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: center;
+  align-items: center;
+  /* margin-top: 55px; */
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 10px;
 }
-.terms_page_wrapper{
-    margin-top: 55px;
-    margin-bottom: 55px;
+.terms_page_wrapper {
+  margin-top: 55px;
+  margin-bottom: 55px;
 }
-.terms_page_subtitle h2{
-    font-weight: 700;
-    font-style: Bold;
-    font-size: 20px;
-    line-height: 100%;
-    letter-spacing: 0%;
-    text-align: left;
-    margin-top: 55px;
-    font-family: 'Inter', sans-serif;
-    margin-top: 20px;
+.terms_page_subtitle h2 {
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 20px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  text-align: left;
+  margin-top: 55px;
+  font-family: 'Inter', sans-serif;
+  margin-top: 20px;
 }
-.term_page_content p,.term_page_content a {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 150%;
-    letter-spacing: 0%;
-    text-align: left;
-    margin-top: 20px;
-    font-family: 'Inter', sans-serif;
+.term_page_content p,
+.term_page_content a {
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 150%;
+  letter-spacing: 0%;
+  text-align: left;
+  margin-top: 20px;
+  font-family: 'Inter', sans-serif;
 }
-a{
-    color: #127fde;
-    font-weight: 600;
+a {
+  color: #127fde;
+  font-weight: 600;
 }
 .term_page_btn button {
-    background: #117EDE;
-    border-radius: 5px;
-    color: #fff;
-    width: fit-content;
-    padding: 10px 15px;
-    margin-top: 15px;
-    font-size: 14px;
-    font-weight: 600;
+  background: #117ede;
+  border-radius: 5px;
+  color: #fff;
+  width: fit-content;
+  padding: 10px 15px;
+  margin-top: 15px;
+  font-size: 14px;
+  font-weight: 600;
 }

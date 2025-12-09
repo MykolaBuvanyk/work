@@ -2022,6 +2022,25 @@ const convertTextToOutlinedPaths = (rootElement) => {
   }
 };
 
+const styleLineFromCircleElements = (svgElement) => {
+  const ids = [
+    "LineFromCircle",
+  ];
+  ids.forEach((id) => {
+    const elements = svgElement.querySelectorAll(`[id="${id}"]`);
+    elements.forEach((el) => {
+      el.setAttribute("stroke", "#008181");
+      el.setAttribute("fill", "none");
+      const style = el.getAttribute("style") || "";
+      const newStyle =
+        style
+          .replace(/stroke\s*:[^;]+;?/gi, "")
+          .replace(/fill\s*:[^;]+;?/gi, "") + ";stroke:#008181;fill:none;";
+      el.setAttribute("style", newStyle);
+    });
+  });
+};
+
 const buildPlacementPreview = (placement) => {
   const { svg, preview, customBorder } = placement || {};
 
@@ -2180,6 +2199,7 @@ const buildPlacementPreview = (placement) => {
       });
 
       applyCustomBorderOverrides(exportElement, customBorder);
+      styleLineFromCircleElements(exportElement);
 
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
@@ -2214,6 +2234,7 @@ const buildPlacementPreview = (placement) => {
       });
 
       applyCustomBorderOverrides(previewElement, customBorder);
+      styleLineFromCircleElements(previewElement);
 
       try {
         outlineBarcodeRects(exportElement);

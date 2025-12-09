@@ -4,14 +4,26 @@ import MyTextInput from '../MyInput/MyTextInput';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import ForgotPass from '../ForgotPass/ForgotPass';
 import FormFogotPass from '../FormFogotPass/FormFogotPass';
+import { $host } from '../../http';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/reducers/user';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isForgotPass, setIsForgotPass] = useState(false);
-  const sumbit = () => {
+  const disptach = useDispatch();
+  const navigate = useNavigate();
+  const sumbit = async e => {
     try {
-    } catch (err) {}
+      e.preventDefault();
+      const res = await $host.post('auth/login', { email, password });
+      disptach(setUser({ token: res.data.token }));
+      navigate('/');
+    } catch (err) {
+      alert('error');
+    }
   };
   const setForgotPass = () => {
     setIsForgotPass(!isForgotPass);

@@ -2,22 +2,27 @@ import { Outlet } from 'react-router-dom';
 import Header from './components/Header/Header';
 import { CanvasProvider } from './contexts/CanvasContext';
 import CookieConsent from './components/CookieConsent/CookieConsent';
+import Footer from './components/Footer/Footer';
+import Providers from './store/provider';
 
 export default function Layout() {
   return (
-    <CanvasProvider>
-      <header>
-        <Header />
-      </header>
+    <Providers>
+      <CanvasProvider>
+        <header>
+          <Header />
+        </header>
 
-      <main>
-        <Outlet /> {/* Тут рендеряться внутрішні сторінки */}
-      </main>
+        <main>
+          <Outlet /> {/* Тут рендеряться внутрішні сторінки */}
+        </main>
 
-      {/*<footer>FOOTER</footer>
-       */}
-      
-      <CookieConsent />
-    </CanvasProvider>
+        <footer>
+          <Footer />
+        </footer>
+
+        <CookieConsent />
+      </CanvasProvider>
+    </Providers>
   );
 }

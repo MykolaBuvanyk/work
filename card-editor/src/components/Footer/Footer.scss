@@ -1,0 +1,111 @@
+footer {
+  margin: 0;
+  padding: 0;
+
+  .footer-container {
+    .up {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #e4e4e4;
+      border-bottom: 1px solid #e4e4e4;
+      padding: 20px 0;
+      .logo-and-lang {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        .lang {
+          display: flex;
+          select {
+            margin-top: 7.5px;
+            background-color: transparent;
+            width: 215px;
+            height: 40px;
+            cursor: pointer;
+          }
+        }
+      }
+      .list-urls {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        a {
+          color: #14213d;
+          font-family: Inter;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 16px;
+          leading-trim: NONE;
+          line-height: 24px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+        }
+      }
+      .log {
+        display: flex;
+        flex-direction: column;
+        gap: 7.5px;
+        .user {
+          font-family: Segoe UI;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 14px;
+          leading-trim: NONE;
+          line-height: 21px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+          color: #006ca4;
+        }
+        .log-out {
+          font-family: Segoe UI;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 14px;
+          leading-trim: NONE;
+          line-height: 21px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+          color: #000000;
+        }
+      }
+    }
+    .down {
+      padding-top: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding-bottom: 30px;
+      .add-urls {
+        display: flex;
+        flex-direction: row;
+        gap: 12.5px;
+        a {
+          font-family: Segoe UI;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 14px;
+          leading-trim: NONE;
+          line-height: 20px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+          color: #313e52;
+          text-decoration: none;
+        }
+      }
+      .info {
+        font-family: Inter;
+        font-weight: 400;
+        font-style: Regular;
+        font-size: 14px;
+        leading-trim: NONE;
+        line-height: 20px;
+        letter-spacing: 0%;
+        vertical-align: middle;
+
+        color: #313e52;
+      }
+    }
+  }
+}

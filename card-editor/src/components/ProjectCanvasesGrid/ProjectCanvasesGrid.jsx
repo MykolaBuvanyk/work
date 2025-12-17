@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import styles from "./ProjectCanvasesGrid.module.css";
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import styles from './ProjectCanvasesGrid.module.css';
 import {
   getProject,
   getAllUnsavedSigns,
@@ -14,18 +14,18 @@ import {
   reapplyTextAttributes,
   ensureFontsLoaded,
   collectFontFamiliesFromJson,
-} from "../../utils/projectStorage";
-import { useCanvasContext } from "../../contexts/CanvasContext";
-import { useFabricCanvas } from "../../hooks/useFabricCanvas";
-import * as fabric from "fabric";
-import LayoutPlannerModal from "./LayoutPlannerModal/LayoutPlannerModal";
+} from '../../utils/projectStorage';
+import { useCanvasContext } from '../../contexts/CanvasContext';
+import { useFabricCanvas } from '../../hooks/useFabricCanvas';
+import * as fabric from 'fabric';
+import LayoutPlannerModal from './LayoutPlannerModal/LayoutPlannerModal';
 
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
 
-const mapEntryToDesign = (entry) => {
+const mapEntryToDesign = entry => {
   if (!entry) return null;
 
   const jsonTemplate = entry.jsonTemplate || entry.json || null;
@@ -45,14 +45,13 @@ const mapEntryToDesign = (entry) => {
     copiesCount: entry.copiesCount ?? entry.toolbarState?.copiesCount ?? null,
     meta: {
       isUnsaved: !!entry._unsaved,
-      sourceType: entry._unsaved ? "unsaved" : "project",
+      sourceType: entry._unsaved ? 'unsaved' : 'project',
     },
   };
 };
 
 const ProjectCanvasesGrid = () => {
-  const { setDesigns: setContextDesigns, updateGlobalColors } =
-    useCanvasContext();
+  const { setDesigns: setContextDesigns, updateGlobalColors } = useCanvasContext();
   const { canvas, loadDesign, selectDesign } = useFabricCanvas();
   const [project, setProject] = useState(null);
   const [unsavedSigns, setUnsavedSigns] = useState([]); // persisted unsaved signs from dedicated store
@@ -66,13 +65,15 @@ const ProjectCanvasesGrid = () => {
   const openCanvasRef = useRef(null);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
+  const prevCanvasCountRef = useRef(null);
+  const paginationReadyRef = useRef(false);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
 
   useEffect(() => {
     const load = () => {
       let id = null;
       try {
-        id = localStorage.getItem("currentProjectId");
+        id = localStorage.getItem('currentProjectId');
       } catch {}
       if (!id) {
         setProject({ id: null, canvases: [] });
@@ -80,7 +81,7 @@ const ProjectCanvasesGrid = () => {
         return;
       }
       getProject(id)
-        .then((p) => {
+        .then(p => {
           setProject(p || { id, canvases: [] });
           setIsProjectLoaded(true);
         })
@@ -91,15 +92,15 @@ const ProjectCanvasesGrid = () => {
     };
     const loadUnsaved = () => {
       getAllUnsavedSigns()
-        .then((list) => {
-          const mapped = list.map((s) => ({ ...s, _unsaved: true }));
+        .then(list => {
+          const mapped = list.map(s => ({ ...s, _unsaved: true }));
           setUnsavedSigns(mapped);
           setIsUnsavedLoaded(true);
           // Maintain selection of current unsaved after refresh
           try {
-            const active = localStorage.getItem("currentUnsavedSignId");
+            const active = localStorage.getItem('currentUnsavedSignId');
             if (active) {
-              const exists = mapped.find((x) => x.id === active);
+              const exists = mapped.find(x => x.id === active);
               if (exists) {
                 setSelectedId(active);
               }
@@ -113,11 +114,11 @@ const ProjectCanvasesGrid = () => {
     };
     loadUnsaved();
     load();
-    const updated = (e) => {
+    const updated = e => {
       const pid = e?.detail?.projectId;
       const currentId = (() => {
         try {
-          return localStorage.getItem("currentProjectId");
+          return localStorage.getItem('currentProjectId');
         } catch {
           return null;
         }
@@ -129,22 +130,18 @@ const ProjectCanvasesGrid = () => {
       const detail = e?.detail || {};
       const activeId = detail.activeCanvasId ?? null;
       const activeIndex =
-        typeof detail.activeCanvasIndex === "number" &&
-        detail.activeCanvasIndex >= 0
+        typeof detail.activeCanvasIndex === 'number' && detail.activeCanvasIndex >= 0
           ? detail.activeCanvasIndex
           : null;
 
       try {
         if (activeId) {
           window.__currentProjectCanvasId = activeId;
-          localStorage.setItem("currentProjectCanvasId", activeId);
+          localStorage.setItem('currentProjectCanvasId', activeId);
         }
         if (activeIndex !== null) {
           window.__currentProjectCanvasIndex = activeIndex;
-          localStorage.setItem(
-            "currentProjectCanvasIndex",
-            String(activeIndex)
-          );
+          localStorage.setItem('currentProjectCanvasIndex', String(activeIndex));
         }
       } catch {}
     };
@@ -161,29 +158,28 @@ const ProjectCanvasesGrid = () => {
     const unsavedUpdated = () => loadUnsaved();
 
     // Новий обробник для відкриття проекту
-    const handleProjectOpened = async (e) => {
-      console.log("Project opened event received, resetting canvas load flag");
+    const handleProjectOpened = async e => {
+      console.log('Project opened event received, resetting canvas load flag');
       const projectIdFromEvent = e?.detail?.projectId;
       initialCanvasLoadRef.current = false;
 
       // Відкриваємо перше полотно проекту
       setTimeout(async () => {
         try {
-          const projectId =
-            projectIdFromEvent || localStorage.getItem("currentProjectId");
+          const projectId = projectIdFromEvent || localStorage.getItem('currentProjectId');
           if (!projectId) {
-            console.log("No project ID found after project opened");
+            console.log('No project ID found after project opened');
             return;
           }
 
           const currentProject = await getProject(projectId);
           if (!currentProject) {
-            console.log("Project not found:", projectId);
+            console.log('Project not found:', projectId);
             return;
           }
 
           const canvases = currentProject.canvases || [];
-          console.log("Project loaded, canvases count:", canvases.length);
+          console.log('Project loaded, canvases count:', canvases.length);
 
           // Оновлюємо локальний state
           setProject(currentProject);
@@ -192,92 +188,81 @@ const ProjectCanvasesGrid = () => {
           // Також завантажуємо unsaved signs
           try {
             const unsavedList = await getAllUnsavedSigns();
-            const mapped = unsavedList.map((s) => ({ ...s, _unsaved: true }));
+            const mapped = unsavedList.map(s => ({ ...s, _unsaved: true }));
             setUnsavedSigns(mapped);
             setIsUnsavedLoaded(true);
           } catch (err) {
-            console.error("Failed to load unsaved signs:", err);
+            console.error('Failed to load unsaved signs:', err);
             setUnsavedSigns([]);
             setIsUnsavedLoaded(true);
           }
 
           if (canvases.length > 0) {
             const firstCanvas = canvases[0];
-            console.log(
-              "Auto-opening first project canvas after save:",
-              firstCanvas.id
-            );
+            console.log('Auto-opening first project canvas after save:', firstCanvas.id);
 
             // Встановлюємо його як активний
             try {
-              localStorage.setItem("currentCanvasId", firstCanvas.id);
-              localStorage.setItem("currentProjectCanvasId", firstCanvas.id);
-              localStorage.setItem("currentProjectCanvasIndex", "0");
-              localStorage.removeItem("currentUnsavedSignId");
+              localStorage.setItem('currentCanvasId', firstCanvas.id);
+              localStorage.setItem('currentProjectCanvasId', firstCanvas.id);
+              localStorage.setItem('currentProjectCanvasIndex', '0');
+              localStorage.removeItem('currentUnsavedSignId');
             } catch {}
             try {
-              if (typeof window !== "undefined") {
+              if (typeof window !== 'undefined') {
                 window.__currentProjectCanvasId = firstCanvas.id;
                 window.__currentProjectCanvasIndex = 0;
               }
             } catch {}
 
             // Даємо час на оновлення state
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Відкриваємо його
             if (openCanvasRef.current && canvas) {
               await openCanvasRef.current(firstCanvas);
-              console.log("Canvas opened successfully");
+              console.log('Canvas opened successfully');
             } else {
-              console.log("openCanvasRef or canvas not available");
+              console.log('openCanvasRef or canvas not available');
             }
           } else {
-            console.log("No canvases in project");
+            console.log('No canvases in project');
             try {
-              localStorage.removeItem("currentProjectCanvasId");
-              localStorage.removeItem("currentProjectCanvasIndex");
+              localStorage.removeItem('currentProjectCanvasId');
+              localStorage.removeItem('currentProjectCanvasIndex');
             } catch {}
             try {
-              if (typeof window !== "undefined") {
+              if (typeof window !== 'undefined') {
                 window.__currentProjectCanvasId = null;
                 window.__currentProjectCanvasIndex = null;
               }
             } catch {}
           }
         } catch (error) {
-          console.error(
-            "Failed to auto-open canvas after project opened:",
-            error
-          );
+          console.error('Failed to auto-open canvas after project opened:', error);
         }
       }, 200); // Даємо час на оновлення після події
     };
 
     // Новий обробник для автоматичного відкриття полотна
-    const handleCanvasAutoOpen = async (e) => {
+    const handleCanvasAutoOpen = async e => {
       const canvasId = e?.detail?.canvasId;
       const isUnsaved = e?.detail?.isUnsaved;
 
       if (!canvasId) {
-        console.log("No canvas ID provided for auto-open");
+        console.log('No canvas ID provided for auto-open');
         return;
       }
 
-      console.log(
-        "Canvas auto-open event received:",
-        canvasId,
-        "isUnsaved:",
-        isUnsaved
-      );
+      console.log('Canvas auto-open event received:', canvasId, 'isUnsaved:', isUnsaved);
 
       // Чекаємо поки canvas буде готовий
       if (!canvas) {
-        console.log("Canvas not ready yet, waiting...");
+        console.log('Canvas not ready yet, waiting...');
         // Повторюємо спробу через 100мс
         setTimeout(() => {
           window.dispatchEvent(
-            new CustomEvent("canvas:autoOpen", {
+            new CustomEvent('canvas:autoOpen', {
               detail: { canvasId, isUnsaved },
             })
           );
@@ -295,27 +280,25 @@ const ProjectCanvasesGrid = () => {
           if (isUnsaved) {
             // Завантажуємо свіжі unsaved signs
             const unsavedList = await getAllUnsavedSigns();
-            const mapped = unsavedList.map((s) => ({ ...s, _unsaved: true }));
+            const mapped = unsavedList.map(s => ({ ...s, _unsaved: true }));
 
-            canvasToOpen = mapped.find((s) => s.id === canvasId);
+            canvasToOpen = mapped.find(s => s.id === canvasId);
 
             if (canvasToOpen) {
-              console.log("Found unsaved sign to open:", canvasId);
+              console.log('Found unsaved sign to open:', canvasId);
               setUnsavedSigns(mapped);
               setIsUnsavedLoaded(true);
             }
           } else {
             // Завантажуємо проект
-            const projectId = localStorage.getItem("currentProjectId");
+            const projectId = localStorage.getItem('currentProjectId');
             if (projectId) {
               const currentProject = await getProject(projectId);
               if (currentProject) {
-                canvasToOpen = currentProject.canvases?.find(
-                  (c) => c.id === canvasId
-                );
+                canvasToOpen = currentProject.canvases?.find(c => c.id === canvasId);
 
                 if (canvasToOpen) {
-                  console.log("Found project canvas to open:", canvasId);
+                  console.log('Found project canvas to open:', canvasId);
                   setProject(currentProject);
                   setIsProjectLoaded(true);
                 }
@@ -324,36 +307,34 @@ const ProjectCanvasesGrid = () => {
           }
 
           if (!canvasToOpen) {
-            console.log(
-              `Canvas not found yet, attempt ${attempts + 1}/${maxAttempts}`
-            );
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            console.log(`Canvas not found yet, attempt ${attempts + 1}/${maxAttempts}`);
+            await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
           }
         }
 
         if (canvasToOpen && openCanvasRef.current) {
-          console.log("Auto-opening canvas:", canvasId);
+          console.log('Auto-opening canvas:', canvasId);
 
           // Чекаємо ще трохи щоб state оновився
-          await new Promise((resolve) => setTimeout(resolve, 150));
+          await new Promise(resolve => setTimeout(resolve, 150));
 
           await openCanvasRef.current(canvasToOpen);
-          console.log("Canvas auto-opened successfully");
+          console.log('Canvas auto-opened successfully');
         } else {
-          console.log("Canvas not found after all attempts:", canvasId);
+          console.log('Canvas not found after all attempts:', canvasId);
         }
       } catch (error) {
-        console.error("Failed to auto-open canvas:", error);
+        console.error('Failed to auto-open canvas:', error);
       }
     };
 
-    window.addEventListener("project:canvasesUpdated", updated);
-    window.addEventListener("project:switched", switched);
-    window.addEventListener("project:reset", reset);
-    window.addEventListener("project:opened", handleProjectOpened);
-    window.addEventListener("canvas:autoOpen", handleCanvasAutoOpen);
-    window.addEventListener("unsaved:signsUpdated", unsavedUpdated);
+    window.addEventListener('project:canvasesUpdated', updated);
+    window.addEventListener('project:switched', switched);
+    window.addEventListener('project:reset', reset);
+    window.addEventListener('project:opened', handleProjectOpened);
+    window.addEventListener('canvas:autoOpen', handleCanvasAutoOpen);
+    window.addEventListener('unsaved:signsUpdated', unsavedUpdated);
 
     // Listen for toolbar/canvas property changes
     const handleToolbarChange = () => {
@@ -362,9 +343,7 @@ const ProjectCanvasesGrid = () => {
       const activeProjectCanvas = currentProjectCanvasIdRef.current;
 
       if (activeUnsaved || activeProjectCanvas) {
-        console.log(
-          "Toolbar change detected, triggering auto-save with preview update"
-        );
+        console.log('Toolbar change detected, triggering auto-save with preview update');
 
         // ВИПРАВЛЕННЯ: Замість live preview, одразу тригеримо auto-save з новим preview
         if (updateDebounceRef.current) {
@@ -375,13 +354,13 @@ const ProjectCanvasesGrid = () => {
           try {
             if (activeUnsaved) {
               await updateUnsavedSignFromCanvas(activeUnsaved, canvas);
-              console.log("Auto-saved with new preview for unsaved sign");
+              console.log('Auto-saved with new preview for unsaved sign');
 
               const previews = await generateCanvasPreviews(canvas);
               const newPreview = previews.previewPng;
               const newPreviewSvg = previews.previewSvg;
-              setUnsavedSigns((prev) =>
-                prev.map((sign) =>
+              setUnsavedSigns(prev =>
+                prev.map(sign =>
                   sign.id === activeUnsaved
                     ? {
                         ...sign,
@@ -393,17 +372,17 @@ const ProjectCanvasesGrid = () => {
               );
             } else if (activeProjectCanvas) {
               await updateCanvasInCurrentProject(activeProjectCanvas, canvas);
-              console.log("Auto-saved with new preview for project canvas");
+              console.log('Auto-saved with new preview for project canvas');
 
               const previews = await generateCanvasPreviews(canvas);
               const newPreview = previews.previewPng;
               const newPreviewSvg = previews.previewSvg;
-              setProject((prev) => {
+              setProject(prev => {
                 if (!prev) return prev;
                 return {
                   ...prev,
                   canvases:
-                    prev.canvases?.map((canv) =>
+                    prev.canvases?.map(canv =>
                       canv.id === activeProjectCanvas
                         ? {
                             ...canv,
@@ -416,18 +395,18 @@ const ProjectCanvasesGrid = () => {
               });
             }
           } catch (error) {
-            console.error("Auto-save failed after toolbar change:", error);
+            console.error('Auto-save failed after toolbar change:', error);
           }
         }, 1000); // Debounce для уникнення занадто частих updates
       }
     };
 
     // Listen for various canvas/toolbar change events
-    window.addEventListener("canvas:propertyChanged", handleToolbarChange);
-    window.addEventListener("toolbar:changed", handleToolbarChange);
-    window.addEventListener("canvas:backgroundChanged", handleToolbarChange);
-    window.addEventListener("canvas:dimensionsChanged", handleToolbarChange);
-    window.addEventListener("canvas:shapeChanged", handleToolbarChange);
+    window.addEventListener('canvas:propertyChanged', handleToolbarChange);
+    window.addEventListener('toolbar:changed', handleToolbarChange);
+    window.addEventListener('canvas:backgroundChanged', handleToolbarChange);
+    window.addEventListener('canvas:dimensionsChanged', handleToolbarChange);
+    window.addEventListener('canvas:shapeChanged', handleToolbarChange);
 
     // Save current canvas when component unmounts or page unloads
     const handleBeforeUnload = async () => {
@@ -442,31 +421,25 @@ const ProjectCanvasesGrid = () => {
           await updateCanvasInCurrentProject(currentProjectCanvasId, canvas);
         }
       } catch (e) {
-        console.error("Failed to save before unload:", e);
+        console.error('Failed to save before unload:', e);
       }
     };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      window.removeEventListener("project:canvasesUpdated", updated);
-      window.removeEventListener("project:switched", switched);
-      window.removeEventListener("project:reset", reset);
-      window.removeEventListener("project:opened", handleProjectOpened);
-      window.removeEventListener("canvas:autoOpen", handleCanvasAutoOpen);
-      window.removeEventListener("unsaved:signsUpdated", unsavedUpdated);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("canvas:propertyChanged", handleToolbarChange);
-      window.removeEventListener("toolbar:changed", handleToolbarChange);
-      window.removeEventListener(
-        "canvas:backgroundChanged",
-        handleToolbarChange
-      );
-      window.removeEventListener(
-        "canvas:dimensionsChanged",
-        handleToolbarChange
-      );
-      window.removeEventListener("canvas:shapeChanged", handleToolbarChange);
+      window.removeEventListener('project:canvasesUpdated', updated);
+      window.removeEventListener('project:switched', switched);
+      window.removeEventListener('project:reset', reset);
+      window.removeEventListener('project:opened', handleProjectOpened);
+      window.removeEventListener('canvas:autoOpen', handleCanvasAutoOpen);
+      window.removeEventListener('unsaved:signsUpdated', unsavedUpdated);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('canvas:propertyChanged', handleToolbarChange);
+      window.removeEventListener('toolbar:changed', handleToolbarChange);
+      window.removeEventListener('canvas:backgroundChanged', handleToolbarChange);
+      window.removeEventListener('canvas:dimensionsChanged', handleToolbarChange);
+      window.removeEventListener('canvas:shapeChanged', handleToolbarChange);
 
       // Save current state when component unmounts
       handleBeforeUnload();
@@ -490,15 +463,12 @@ const ProjectCanvasesGrid = () => {
     return [...storedCanvases, ...sortedUnsavedSigns];
   }, [storedCanvases, sortedUnsavedSigns]);
 
-  const designPayloads = useMemo(
-    () => canvases.map(mapEntryToDesign).filter(Boolean),
-    [canvases]
-  );
+  const designPayloads = useMemo(() => canvases.map(mapEntryToDesign).filter(Boolean), [canvases]);
 
   useEffect(() => {
-    if (typeof setContextDesigns !== "function") return;
+    if (typeof setContextDesigns !== 'function') return;
 
-    setContextDesigns((prev) => {
+    setContextDesigns(prev => {
       const prevArray = Array.isArray(prev) ? prev : [];
       if (prevArray.length === designPayloads.length) {
         const identical = prevArray.every(
@@ -527,13 +497,39 @@ const ProjectCanvasesGrid = () => {
   const startIndex = (page - 1) * PAGE_SIZE;
   const current = canvases.slice(startIndex, startIndex + PAGE_SIZE);
 
+  useEffect(() => {
+    if (!isProjectLoaded || !isUnsavedLoaded) {
+      paginationReadyRef.current = false;
+      prevCanvasCountRef.current = null;
+      return;
+    }
+
+    if (!paginationReadyRef.current) {
+      prevCanvasCountRef.current = canvases.length;
+      paginationReadyRef.current = true;
+      return;
+    }
+
+    const previousCount = prevCanvasCountRef.current ?? 0;
+    const increased = canvases.length > previousCount;
+    const decreased = canvases.length < previousCount;
+
+    if (increased && totalPages > 1) {
+      setPage(totalPages);
+    } else if (decreased && page > totalPages) {
+      setPage(totalPages);
+    }
+
+    prevCanvasCountRef.current = canvases.length;
+  }, [canvases.length, totalPages, isProjectLoaded, isUnsavedLoaded, page]);
+
   const PX_PER_MM = 72 / 25.4;
-  const pxToMm = (px) => {
+  const pxToMm = px => {
     const mm = (Number(px) || 0) / PX_PER_MM;
     return Math.round(mm);
   };
 
-  const openCanvas = async (canvasEntry) => {
+  const openCanvas = async canvasEntry => {
     if (!canvasEntry || !canvas) return;
 
     // Check if this canvas is already active - don't reload it
@@ -545,20 +541,20 @@ const ProjectCanvasesGrid = () => {
       (!canvasEntry._unsaved && currentProjectCanvasId === canvasEntry.id);
 
     if (isAlreadyActive) {
-      console.log("Canvas already active, skipping reload:", canvasEntry.id);
+      console.log('Canvas already active, skipping reload:', canvasEntry.id);
       setSelectedId(canvasEntry.id); // Just update the selection UI
       return;
     }
 
-    const entryIndex = canvases.findIndex((c) => c.id === canvasEntry.id);
+    const entryIndex = canvases.findIndex(c => c.id === canvasEntry.id);
 
     console.log(
-      "Opening canvas:",
+      'Opening canvas:',
       canvasEntry.id,
-      "Type:",
-      canvasEntry._unsaved ? "unsaved" : "project"
+      'Type:',
+      canvasEntry._unsaved ? 'unsaved' : 'project'
     );
-    console.log("Canvas entry details:", {
+    console.log('Canvas entry details:', {
       id: canvasEntry.id,
       canvasType: canvasEntry.canvasType,
       width: canvasEntry.width,
@@ -566,8 +562,7 @@ const ProjectCanvasesGrid = () => {
       hasJson: !!canvasEntry.json,
       objectCount: canvasEntry.json?.objects?.length || 0,
       hasToolbarState: !!canvasEntry.toolbarState,
-      shapeType:
-        canvasEntry.toolbarState?.currentShapeType || canvasEntry.canvasType,
+      shapeType: canvasEntry.toolbarState?.currentShapeType || canvasEntry.canvasType,
     });
 
     try {
@@ -588,67 +583,62 @@ const ProjectCanvasesGrid = () => {
       // Save current canvas if it's different from the one we're opening
       if (currentUnsavedId && currentUnsavedId !== canvasEntry.id) {
         console.log(
-          "Saving current unsaved sign before switch:",
+          'Saving current unsaved sign before switch:',
           currentUnsavedId,
-          "with",
+          'with',
           canvas.getObjects().length,
-          "objects"
+          'objects'
         );
         try {
           await updateUnsavedSignFromCanvas(currentUnsavedId, canvas);
-          console.log("Saved unsaved sign successfully");
+          console.log('Saved unsaved sign successfully');
           if (!canvasEntry._unsaved) {
             try {
               await deleteUnsavedSign(currentUnsavedId);
-              setUnsavedSigns((prev) =>
-                prev.filter((sign) => sign.id !== currentUnsavedId)
-              );
+              setUnsavedSigns(prev => prev.filter(sign => sign.id !== currentUnsavedId));
               try {
-                localStorage.removeItem("currentUnsavedSignId");
+                localStorage.removeItem('currentUnsavedSignId');
               } catch {}
               try {
-                window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+                window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
               } catch {}
               console.log(
-                "Removed unsaved sign after switching to project canvas:",
+                'Removed unsaved sign after switching to project canvas:',
                 currentUnsavedId
               );
             } catch (cleanupError) {
-              console.error(
-                "Failed to remove unsaved sign after switch:",
-                cleanupError
-              );
+              console.error('Failed to remove unsaved sign after switch:', cleanupError);
             }
             try {
-              if (typeof window !== "undefined") {
+              if (typeof window !== 'undefined') {
                 window.__pendingUnsavedCleanupId = null;
               }
             } catch {}
           } else {
-            if (typeof window !== "undefined") {
+            if (typeof window !== 'undefined') {
               try {
                 window.__pendingUnsavedCleanupId = currentUnsavedId;
               } catch {}
             }
           }
         } catch (e) {
-          console.error("Failed to save unsaved sign:", e);
+          console.error('Failed to save unsaved sign:', e);
         }
       }
 
       if (currentProjectCanvasId && currentProjectCanvasId !== canvasEntry.id) {
         console.log(
-          "Saving current project canvas before switch:",
+          'Saving current project canvas before switch:',
           currentProjectCanvasId,
-          "with",
+          'with',
           canvas.getObjects().length,
-          "objects"
+          'objects'
         );
         try {
           await updateCanvasInCurrentProject(currentProjectCanvasId, canvas);
-          console.log("Saved project canvas successfully");
+          console.log('Saved project canvas successfully');
         } catch (e) {
-          console.error("Failed to save project canvas:", e);
+          console.error('Failed to save project canvas:', e);
         }
       }
 
@@ -656,43 +646,38 @@ const ProjectCanvasesGrid = () => {
       let canvasToLoad = null;
 
       if (canvasEntry._unsaved) {
-        console.log("Fetching fresh unsaved sign from database");
+        console.log('Fetching fresh unsaved sign from database');
         const unsavedList = await getAllUnsavedSigns();
-        const freshUnsaved = unsavedList.find((x) => x.id === canvasEntry.id);
+        const freshUnsaved = unsavedList.find(x => x.id === canvasEntry.id);
         if (freshUnsaved) {
           canvasToLoad = { ...freshUnsaved, _unsaved: true };
           console.log(
-            "Found fresh unsaved sign with",
+            'Found fresh unsaved sign with',
             freshUnsaved.json?.objects?.length || 0,
-            "objects"
+            'objects'
           );
         } else {
-          console.warn("Unsaved sign not found in database:", canvasEntry.id);
+          console.warn('Unsaved sign not found in database:', canvasEntry.id);
           canvasToLoad = canvasEntry;
         }
       } else {
-        console.log("Fetching fresh project canvas from database");
+        console.log('Fetching fresh project canvas from database');
         let projectId = null;
         try {
-          projectId = localStorage.getItem("currentProjectId");
+          projectId = localStorage.getItem('currentProjectId');
         } catch {}
         if (projectId) {
           const project = await getProject(projectId);
-          const freshCanvas = project?.canvases?.find(
-            (c) => c.id === canvasEntry.id
-          );
+          const freshCanvas = project?.canvases?.find(c => c.id === canvasEntry.id);
           if (freshCanvas) {
             canvasToLoad = freshCanvas;
             console.log(
-              "Found fresh project canvas with",
+              'Found fresh project canvas with',
               freshCanvas.json?.objects?.length || 0,
-              "objects"
+              'objects'
             );
           } else {
-            console.warn(
-              "Project canvas not found in database:",
-              canvasEntry.id
-            );
+            console.warn('Project canvas not found in database:', canvasEntry.id);
             canvasToLoad = canvasEntry;
           }
         } else {
@@ -701,7 +686,7 @@ const ProjectCanvasesGrid = () => {
       }
 
       // Completely reset canvas state
-      console.log("Resetting canvas state...");
+      console.log('Resetting canvas state...');
 
       const mappedDesign = mapEntryToDesign(canvasToLoad) || {
         id: canvasEntry.id,
@@ -713,12 +698,10 @@ const ProjectCanvasesGrid = () => {
       };
 
       const registerDesignInContext = () => {
-        if (typeof setContextDesigns !== "function") return;
-        setContextDesigns((prev) => {
+        if (typeof setContextDesigns !== 'function') return;
+        setContextDesigns(prev => {
           const prevArray = Array.isArray(prev) ? prev : [];
-          const existingIndex = prevArray.findIndex(
-            (design) => design?.id === mappedDesign.id
-          );
+          const existingIndex = prevArray.findIndex(design => design?.id === mappedDesign.id);
           if (existingIndex === -1) {
             return [...prevArray, mappedDesign];
           }
@@ -740,11 +723,8 @@ const ProjectCanvasesGrid = () => {
 
         // ВИПРАВЛЕННЯ: Відновлюємо shapeType на canvas ПЕРЕД завантаженням design
         if (canvasToLoad.canvasType) {
-          canvas.set("shapeType", canvasToLoad.canvasType);
-          console.log(
-            "Set canvas shapeType BEFORE loadDesign:",
-            canvasToLoad.canvasType
-          );
+          canvas.set('shapeType', canvasToLoad.canvasType);
+          console.log('Set canvas shapeType BEFORE loadDesign:', canvasToLoad.canvasType);
         }
 
         // Preload fonts found in JSON before loading to avoid initial fallback
@@ -766,7 +746,7 @@ const ProjectCanvasesGrid = () => {
 
         // FIX: Aggressively reapply fonts and attributes to ensure they render correctly
         // This handles cases where the browser loads the font slightly after the initial render
-        const forceFontUpdate = async (attempt) => {
+        const forceFontUpdate = async attempt => {
           if (!canvas || canvas.__switching) return;
           try {
             await loadCanvasFontsAndRerender(canvas);
@@ -774,7 +754,7 @@ const ProjectCanvasesGrid = () => {
             canvas.calcOffset();
             canvas.requestRenderAll();
           } catch (e) {
-            console.warn("Font update failed:", e);
+            console.warn('Font update failed:', e);
           }
         };
 
@@ -791,57 +771,54 @@ const ProjectCanvasesGrid = () => {
           !canvasToLoad.json ||
           !canvasToLoad.json.objects ||
           canvasToLoad.json.objects.length === 0;
-        const bgColor = canvasToLoad.backgroundColor || "#FFFFFF";
-        const bgType = canvasToLoad.backgroundType || "solid";
+        const bgColor = canvasToLoad.backgroundColor || '#FFFFFF';
+        const bgType = canvasToLoad.backgroundType || 'solid';
 
         // ВИПРАВЛЕННЯ: Завжди встановлюємо білий фон для нових карток або якщо збережений фон білий
-        if (isNewCanvas || (bgColor === "#FFFFFF" && bgType === "solid")) {
-          console.log(
-            "New canvas or white background detected, forcing white background",
-            {
-              isNewCanvas,
-              bgColor,
-              bgType,
-            }
-          );
-          canvas.set("backgroundColor", "#FFFFFF");
-          canvas.set("backgroundTextureUrl", null);
-          canvas.set("backgroundType", "solid");
+        if (isNewCanvas || (bgColor === '#FFFFFF' && bgType === 'solid')) {
+          console.log('New canvas or white background detected, forcing white background', {
+            isNewCanvas,
+            bgColor,
+            bgType,
+          });
+          canvas.set('backgroundColor', '#FFFFFF');
+          canvas.set('backgroundTextureUrl', null);
+          canvas.set('backgroundType', 'solid');
           canvas.renderAll();
 
           // ВИПРАВЛЕННЯ: Встановлюємо прапорець ПЕРЕД оновленням globalColors
           // щоб Canvas.jsx useEffect не застосував ці значення повторно
           canvas.__ignoreNextBackgroundUpdate = true;
-          
+
           // ВИПРАВЛЕННЯ: Синхронізуємо globalColors для нової картки
           if (updateGlobalColors) {
             updateGlobalColors({
-              backgroundColor: "#FFFFFF",
-              backgroundType: "solid",
+              backgroundColor: '#FFFFFF',
+              backgroundType: 'solid',
             });
-            console.log("Set globalColors to white for new canvas");
+            console.log('Set globalColors to white for new canvas');
           }
-          
+
           // Скидаємо прапорець через затримку
           setTimeout(() => {
             canvas.__ignoreNextBackgroundUpdate = false;
           }, 100);
-        } else if (bgColor && bgColor !== "#FFFFFF") {
-          console.log("Restoring canvas background:", {
+        } else if (bgColor && bgColor !== '#FFFFFF') {
+          console.log('Restoring canvas background:', {
             backgroundColor: bgColor,
             backgroundType: bgType,
             canvasId: canvasToLoad.id,
           });
 
-          if (bgType === "texture") {
+          if (bgType === 'texture') {
             // Якщо це текстура, завантажуємо її через ту саму логіку
-            const img = document.createElement("img");
-            img.crossOrigin = "anonymous";
-            
+            const img = document.createElement('img');
+            img.crossOrigin = 'anonymous';
+
             // ВИПРАВЛЕННЯ: Зберігаємо ID canvas для перевірки в onload
             const targetCanvasId = canvasToLoad.id;
             const targetTextureUrl = canvasToLoad.backgroundColor;
-            
+
             img.onload = () => {
               try {
                 // ВИПРАВЛЕННЯ: Перевіряємо чи це все ще той самий canvas
@@ -850,89 +827,72 @@ const ProjectCanvasesGrid = () => {
                   console.log('[ProjectCanvasesGrid] Skipping stale texture load:', {
                     targetCanvasId,
                     currentId,
-                    targetTextureUrl
+                    targetTextureUrl,
                   });
                   return;
                 }
-                
+
                 // Також перевіряємо чи canvas не перемикається
                 if (canvas.__switching) {
                   console.log('[ProjectCanvasesGrid] Skipping texture load - canvas switching');
                   return;
                 }
-                
+
                 const scaleX = canvas.width / img.width;
                 const scaleY = canvas.height / img.height;
 
-                const patternCanvas = document.createElement("canvas");
-                const ctx = patternCanvas.getContext("2d");
+                const patternCanvas = document.createElement('canvas');
+                const ctx = patternCanvas.getContext('2d');
 
                 patternCanvas.width = img.width * scaleX;
                 patternCanvas.height = img.height * scaleY;
 
-                ctx.drawImage(
-                  img,
-                  0,
-                  0,
-                  patternCanvas.width,
-                  patternCanvas.height
-                );
+                ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
 
                 const pattern = new fabric.Pattern({
                   source: patternCanvas,
-                  repeat: "repeat",
+                  repeat: 'repeat',
                 });
 
-                canvas.set("backgroundColor", pattern);
-                canvas.set(
-                  "backgroundTextureUrl",
-                  targetTextureUrl
-                );
-                canvas.set("backgroundType", "texture");
+                canvas.set('backgroundColor', pattern);
+                canvas.set('backgroundTextureUrl', targetTextureUrl);
+                canvas.set('backgroundType', 'texture');
                 canvas.renderAll();
 
-                console.log(
-                  "Texture background restored successfully:",
-                  targetTextureUrl
-                );
+                console.log('Texture background restored successfully:', targetTextureUrl);
 
                 // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
                 // після завершення завантаження всього canvas
               } catch (error) {
-                console.error("Error restoring texture pattern:", error);
-                canvas.set("backgroundColor", "#FFFFFF");
+                console.error('Error restoring texture pattern:', error);
+                canvas.set('backgroundColor', '#FFFFFF');
                 canvas.renderAll();
               }
             };
             img.onerror = () => {
-              console.error(
-                "Error loading texture image:",
-                canvasToLoad.backgroundColor
-              );
-              canvas.set("backgroundColor", "#FFFFFF");
+              console.error('Error loading texture image:', canvasToLoad.backgroundColor);
+              canvas.set('backgroundColor', '#FFFFFF');
               canvas.renderAll();
             };
             img.src = canvasToLoad.backgroundColor;
           } else {
             // Звичайний колір
-            canvas.set("backgroundColor", bgColor);
-            canvas.set("backgroundTextureUrl", null);
-            canvas.set("backgroundType", bgType);
+            canvas.set('backgroundColor', bgColor);
+            canvas.set('backgroundTextureUrl', null);
+            canvas.set('backgroundType', bgType);
             canvas.renderAll();
 
-            console.log("Solid background restored successfully:", bgColor);
+            console.log('Solid background restored successfully:', bgColor);
 
             // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
             // після завершення завантаження всього canvas
           }
         } else {
           // Якщо немає збереженого кольору, встановлюємо білий за замовчуванням
-          console.log(
-            "No background color in saved data, setting white default"
-          );
-          canvas.set("backgroundColor", "#FFFFFF");
-          canvas.set("backgroundTextureUrl", null);
-          canvas.set("backgroundType", "solid");
+          console.log('No background color in saved data, setting white default');
+          canvas.set('backgroundColor', '#FFFFFF');
+          canvas.set('backgroundTextureUrl', null);
+          canvas.set('backgroundType', 'solid');
           canvas.renderAll();
 
           // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
@@ -942,14 +902,14 @@ const ProjectCanvasesGrid = () => {
         try {
           const bgImgData = canvasToLoad.backgroundImage;
           if (bgImgData && bgImgData.src) {
-            console.log("Restoring canvas background image", bgImgData);
+            console.log('Restoring canvas background image', bgImgData);
             fabric.FabricImage.fromURL(bgImgData.src)
-              .then((img) => {
+              .then(img => {
                 try {
                   img.set({
                     opacity: bgImgData.opacity ?? 1,
-                    originX: bgImgData.originX ?? "left",
-                    originY: bgImgData.originY ?? "top",
+                    originX: bgImgData.originX ?? 'left',
+                    originY: bgImgData.originY ?? 'top',
                     scaleX: bgImgData.scaleX ?? 1,
                     scaleY: bgImgData.scaleY ?? 1,
                     left: bgImgData.left ?? 0,
@@ -959,25 +919,28 @@ const ProjectCanvasesGrid = () => {
                   canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
                   // Не змінюємо backgroundType, щоб текстури/solid могли співіснувати як резервний фон
                 } catch (e) {
-                  console.warn("Failed to apply background image:", e);
+                  console.warn('Failed to apply background image:', e);
                 }
               })
-              .catch((e) => {
-                console.warn("Failed to load background image:", e);
+              .catch(e => {
+                console.warn('Failed to load background image:', e);
               });
           }
         } catch (bgImgErr) {
-          console.warn("Background image restore error:", bgImgErr);
+          console.warn('Background image restore error:', bgImgErr);
         }
+
+
+        const savedToolbarState = extractToolbarState(canvasToLoad);
 
         try {
           // ВИПРАВЛЕННЯ: Викликаємо restoreElementProperties з затримкою,
           // щоб дочекатись завершення loadFromJSON
           const waitForObjects = () => {
-            return new Promise((resolve) => {
+            return new Promise(resolve => {
               const checkObjects = () => {
                 const objects = canvas.getObjects();
-                console.log('[waitForObjects] Перевірка об\'єктів:', objects.length);
+                console.log("[waitForObjects] Перевірка об'єктів:", objects.length);
                 if (objects.length > 0 || !canvasToLoad.json?.objects?.length) {
                   resolve();
                 } else {
@@ -988,35 +951,32 @@ const ProjectCanvasesGrid = () => {
               setTimeout(checkObjects, 100);
             });
           };
-          
+
           await waitForObjects();
-          await restoreElementProperties(canvas);
-          console.log("Element properties restored, objects:", canvas.getObjects().length);
+          await restoreElementProperties(canvas, savedToolbarState);
+          console.log('Element properties restored, objects:', canvas.getObjects().length);
         } catch (e) {
-          console.error("Failed to restore element properties:", e);
+          console.error('Failed to restore element properties:', e);
         }
 
         canvas.__suspendUndoRedo = false;
         canvas.__switching = false;
 
-        console.log(
-          "Canvas loading completed successfully, objects:",
-          canvas.getObjects().length
-        );
+        console.log('Canvas loading completed successfully, objects:', canvas.getObjects().length);
 
         // ВИПРАВЛЕННЯ: Оновлюємо globalColors ПІСЛЯ завершення завантаження canvas
         // і ПІСЛЯ скидання __switching, щоб Canvas.jsx useEffect не намагався
         // застосувати ці значення (бо ми вже встановили їх напряму на canvas)
-        const finalBgType = canvas.get("backgroundType") || "solid";
-        const finalBgUrl = canvas.get("backgroundTextureUrl");
-        let finalBgColor = canvas.get("backgroundColor");
-        
-        if (finalBgType === "texture" && finalBgUrl) {
+        const finalBgType = canvas.get('backgroundType') || 'solid';
+        const finalBgUrl = canvas.get('backgroundTextureUrl');
+        let finalBgColor = canvas.get('backgroundColor');
+
+        if (finalBgType === 'texture' && finalBgUrl) {
           finalBgColor = finalBgUrl;
-        } else if (typeof finalBgColor === "object" && finalBgColor !== null) {
-          finalBgColor = canvasToLoad.backgroundColor || "#FFFFFF";
+        } else if (typeof finalBgColor === 'object' && finalBgColor !== null) {
+          finalBgColor = canvasToLoad.backgroundColor || '#FFFFFF';
         }
-        
+
         if (updateGlobalColors) {
           // Встановлюємо прапорець щоб Canvas.jsx useEffect проігнорував цю зміну
           canvas.__ignoreNextBackgroundUpdate = true;
@@ -1024,7 +984,7 @@ const ProjectCanvasesGrid = () => {
             backgroundColor: finalBgColor,
             backgroundType: finalBgType,
           });
-          console.log("Updated globalColors after canvas load:", {
+          console.log('Updated globalColors after canvas load:', {
             backgroundColor: finalBgColor,
             backgroundType: finalBgType,
           });
@@ -1035,28 +995,24 @@ const ProjectCanvasesGrid = () => {
         setTimeout(() => {
           // Скидаємо прапорець після затримки
           canvas.__ignoreNextBackgroundUpdate = false;
-          
-          const toolbarState = extractToolbarState(canvasToLoad);
 
+          const toolbarState = savedToolbarState;
           // ВИПРАВЛЕННЯ: Синхронізуємо backgroundColor в toolbarState з фактичним станом canvas
           // Це потрібно, щоб уникнути перезапису фону при застосуванні toolbar state
-          const actualCanvasBg = canvas.get("backgroundColor");
-          const actualCanvasBgType = canvas.get("backgroundType") || "solid";
-          const actualCanvasBgUrl = canvas.get("backgroundTextureUrl");
+          const actualCanvasBg = canvas.get('backgroundColor');
+          const actualCanvasBgType = canvas.get('backgroundType') || 'solid';
+          const actualCanvasBgUrl = canvas.get('backgroundTextureUrl');
 
           // Якщо на canvas вже є фон, використовуємо його замість збереженого в toolbarState
           if (actualCanvasBg) {
             let bgColorToUse = actualCanvasBg;
 
             // Якщо це Pattern (текстура), використовуємо URL
-            if (actualCanvasBgType === "texture" && actualCanvasBgUrl) {
+            if (actualCanvasBgType === 'texture' && actualCanvasBgUrl) {
               bgColorToUse = actualCanvasBgUrl;
-            } else if (
-              typeof actualCanvasBg === "object" &&
-              actualCanvasBg !== null
-            ) {
+            } else if (typeof actualCanvasBg === 'object' && actualCanvasBg !== null) {
               // Якщо backgroundColor - це об'єкт Pattern, але немає URL
-              bgColorToUse = canvasToLoad.backgroundColor || "#FFFFFF";
+              bgColorToUse = canvasToLoad.backgroundColor || '#FFFFFF';
             }
 
             // Оновлюємо toolbarState, щоб він відповідав фактичному стану canvas
@@ -1066,19 +1022,16 @@ const ProjectCanvasesGrid = () => {
               backgroundType: actualCanvasBgType,
             };
 
-            console.log(
-              "Synchronized toolbarState backgroundColor with canvas:",
-              {
-                canvasBg: actualCanvasBg,
-                canvasBgType: actualCanvasBgType,
-                canvasBgUrl: actualCanvasBgUrl,
-                finalBg: bgColorToUse,
-              }
-            );
+            console.log('Synchronized toolbarState backgroundColor with canvas:', {
+              canvasBg: actualCanvasBg,
+              canvasBgType: actualCanvasBgType,
+              canvasBgUrl: actualCanvasBgUrl,
+              finalBg: bgColorToUse,
+            });
           }
 
-          console.log("Canvas loaded, toolbar state:", toolbarState);
-          console.log("Canvas data loaded:", {
+          console.log('Canvas loaded, toolbar state:', toolbarState);
+          console.log('Canvas data loaded:', {
             canvasType: canvasToLoad.canvasType,
             width: canvasToLoad.width,
             height: canvasToLoad.height,
@@ -1088,36 +1041,35 @@ const ProjectCanvasesGrid = () => {
           });
 
           // ВИПРАВЛЕННЯ: Переконуємося, що shapeType на canvas відповідає збереженому
-          const actualShapeType =
-            canvasToLoad.canvasType || toolbarState.currentShapeType;
-          if (actualShapeType && canvas.get("shapeType") !== actualShapeType) {
-            canvas.set("shapeType", actualShapeType);
-            console.log("Corrected canvas shapeType:", actualShapeType);
+          const actualShapeType = canvasToLoad.canvasType || toolbarState.currentShapeType;
+          if (actualShapeType && canvas.get('shapeType') !== actualShapeType) {
+            canvas.set('shapeType', actualShapeType);
+            console.log('Corrected canvas shapeType:', actualShapeType);
           }
 
           // НОВИЙ: Примусово відновлюємо форму canvas
           if (window.forceRestoreCanvasShape) {
-            console.log("Force restoring canvas shape with toolbarState");
+            console.log('Force restoring canvas shape with toolbarState');
             window.forceRestoreCanvasShape(toolbarState);
           }
 
           // Після відновлення форми — синхронізуємо інпуты тулбара з фактичними значеннями canvas
           setTimeout(() => {
             try {
-              if (typeof window.syncToolbarSizeFromCanvas === "function") {
+              if (typeof window.syncToolbarSizeFromCanvas === 'function') {
                 window.syncToolbarSizeFromCanvas();
               }
             } catch {}
           }, 120);
 
           window.dispatchEvent(
-            new CustomEvent("canvas:loaded", {
+            new CustomEvent('canvas:loaded', {
               detail: { canvasId: canvasEntry.id, toolbarState },
             })
           );
         }, 150); // Збільшили таймаут для надійності
       } catch (error) {
-        console.error("Error loading canvas via fabric loader:", error);
+        console.error('Error loading canvas via fabric loader:', error);
         canvas.__suspendUndoRedo = false;
         canvas.__switching = false;
       }
@@ -1129,51 +1081,47 @@ const ProjectCanvasesGrid = () => {
       // Update tracking state
       setSelectedId(canvasEntry.id);
       try {
-        localStorage.setItem("currentCanvasId", canvasEntry.id);
+        localStorage.setItem('currentCanvasId', canvasEntry.id);
       } catch {}
 
       if (canvasEntry._unsaved) {
         currentUnsavedIdRef.current = canvasEntry.id;
         currentProjectCanvasIdRef.current = null;
         try {
-          localStorage.setItem("currentUnsavedSignId", canvasEntry.id);
-          localStorage.removeItem("currentProjectCanvasId");
-          localStorage.removeItem("currentProjectCanvasIndex");
+          localStorage.setItem('currentUnsavedSignId', canvasEntry.id);
+          localStorage.removeItem('currentProjectCanvasId');
+          localStorage.removeItem('currentProjectCanvasIndex');
         } catch {}
         try {
-          if (typeof window !== "undefined") {
+          if (typeof window !== 'undefined') {
             window.__currentProjectCanvasId = null;
             window.__currentProjectCanvasIndex = null;
           }
         } catch {}
-        console.log("Set current unsaved sign to:", canvasEntry.id);
+        console.log('Set current unsaved sign to:', canvasEntry.id);
       } else {
         currentUnsavedIdRef.current = null;
         currentProjectCanvasIdRef.current = canvasEntry.id;
         try {
-          localStorage.removeItem("currentUnsavedSignId");
-          localStorage.setItem("currentProjectCanvasId", canvasEntry.id);
+          localStorage.removeItem('currentUnsavedSignId');
+          localStorage.setItem('currentProjectCanvasId', canvasEntry.id);
           if (entryIndex !== -1) {
-            localStorage.setItem(
-              "currentProjectCanvasIndex",
-              String(entryIndex)
-            );
+            localStorage.setItem('currentProjectCanvasIndex', String(entryIndex));
           }
         } catch {}
         try {
-          if (typeof window !== "undefined") {
+          if (typeof window !== 'undefined') {
             window.__currentProjectCanvasId = canvasEntry.id;
-            window.__currentProjectCanvasIndex =
-              entryIndex !== -1 ? entryIndex : null;
+            window.__currentProjectCanvasIndex = entryIndex !== -1 ? entryIndex : null;
             if (!canvasEntry._unsaved) {
               window.__pendingUnsavedCleanupId = null;
             }
           }
         } catch {}
-        console.log("Set current project canvas to:", canvasEntry.id);
+        console.log('Set current project canvas to:', canvasEntry.id);
       }
     } catch (error) {
-      console.error("Failed to open canvas:", error);
+      console.error('Failed to open canvas:', error);
       canvas.__suspendUndoRedo = false;
       canvas.__switching = false;
     }
@@ -1184,14 +1132,14 @@ const ProjectCanvasesGrid = () => {
   // Expose navigation helpers for ToolbarFooter
   useEffect(() => {
     // Open canvas by id and scroll page if needed
-    window.openCanvasById = async (id) => {
+    window.openCanvasById = async id => {
       if (!id) return;
-      const idx = canvases.findIndex((c) => c.id === id);
+      const idx = canvases.findIndex(c => c.id === id);
       if (idx === -1) return;
       const targetPage = Math.floor(idx / PAGE_SIZE) + 1;
       if (targetPage !== page) setPage(targetPage);
       const entry = canvases[idx];
-      if (typeof openCanvasRef.current === "function") {
+      if (typeof openCanvasRef.current === 'function') {
         try {
           await openCanvasRef.current(entry);
         } catch (e) {
@@ -1202,18 +1150,16 @@ const ProjectCanvasesGrid = () => {
 
     // Get ordered list and selection index for footer
     window.getCanvasOrderInfo = () => {
-      const order = canvases.map((c) => c.id);
+      const order = canvases.map(c => c.id);
       const idx = order.findIndex(
-        (id) =>
-          id ===
-          (currentUnsavedIdRef.current || currentProjectCanvasIdRef.current)
+        id => id === (currentUnsavedIdRef.current || currentProjectCanvasIdRef.current)
       );
       return { order, index: idx, total: order.length };
     };
 
     // Notify listeners that grid navigation helpers are ready
     try {
-      window.dispatchEvent(new CustomEvent("grid:navigationReady"));
+      window.dispatchEvent(new CustomEvent('grid:navigationReady'));
     } catch {}
 
     return () => {
@@ -1237,18 +1183,18 @@ const ProjectCanvasesGrid = () => {
     let storedProjectCanvasId = null;
 
     try {
-      storedUnsavedId = localStorage.getItem("currentUnsavedSignId");
+      storedUnsavedId = localStorage.getItem('currentUnsavedSignId');
     } catch {}
 
     try {
-      storedProjectCanvasId = localStorage.getItem("currentCanvasId");
+      storedProjectCanvasId = localStorage.getItem('currentCanvasId');
     } catch {}
 
     const unsavedEntry = storedUnsavedId
-      ? sortedUnsavedSigns.find((entry) => entry.id === storedUnsavedId)
+      ? sortedUnsavedSigns.find(entry => entry.id === storedUnsavedId)
       : null;
     const projectEntry = storedProjectCanvasId
-      ? storedCanvases.find((entry) => entry.id === storedProjectCanvasId)
+      ? storedCanvases.find(entry => entry.id === storedProjectCanvasId)
       : null;
 
     // ВИПРАВЛЕННЯ: Пріоритет - проектні полотна, потім unsaved, потім fallback
@@ -1260,20 +1206,20 @@ const ProjectCanvasesGrid = () => {
     if (hasProject) {
       // Якщо є збережене полотно проекту - відкриваємо його
       entryToOpen = projectEntry || storedCanvases[0];
-      console.log("Auto-loading project canvas:", entryToOpen?.id);
+      console.log('Auto-loading project canvas:', entryToOpen?.id);
     } else if (unsavedEntry) {
       // Інакше беремо unsaved sign
       entryToOpen = unsavedEntry;
-      console.log("Auto-loading unsaved sign:", entryToOpen?.id);
+      console.log('Auto-loading unsaved sign:', entryToOpen?.id);
     } else {
       // Fallback - перше доступне полотно
       entryToOpen = canvases[0] || null;
-      console.log("Auto-loading fallback canvas:", entryToOpen?.id);
+      console.log('Auto-loading fallback canvas:', entryToOpen?.id);
     }
 
     if (!entryToOpen) {
       initialCanvasLoadRef.current = true;
-      console.log("No canvas to auto-load");
+      console.log('No canvas to auto-load');
       return;
     }
 
@@ -1284,12 +1230,12 @@ const ProjectCanvasesGrid = () => {
         setSelectedId(entryToOpen.id);
       } catch {}
 
-      if (typeof openCanvasRef.current === "function") {
+      if (typeof openCanvasRef.current === 'function') {
         try {
-          console.log("Auto-opening canvas:", entryToOpen.id);
+          console.log('Auto-opening canvas:', entryToOpen.id);
           await openCanvasRef.current(entryToOpen);
         } catch (error) {
-          console.error("Failed to auto-load initial canvas", error);
+          console.error('Failed to auto-load initial canvas', error);
         }
       }
     };
@@ -1310,24 +1256,20 @@ const ProjectCanvasesGrid = () => {
     if (!canvas) return;
 
     const events = [
-      "object:added",
-      "object:modified",
-      "object:removed",
-      "object:skewing",
-      "object:scaling",
-      "object:rotating",
-      "object:moving",
-      "path:created",
-      "selection:cleared",
-      "selection:created",
+      'object:added',
+      'object:modified',
+      'object:removed',
+      'object:skewing',
+      'object:scaling',
+      'object:rotating',
+      'object:moving',
+      'path:created',
+      'selection:cleared',
+      'selection:created',
     ];
 
     // Canvas property change events
-    const canvasEvents = [
-      "canvas:background-changed",
-      "canvas:resized",
-      "canvas:shape-changed",
-    ];
+    const canvasEvents = ['canvas:background-changed', 'canvas:resized', 'canvas:shape-changed'];
 
     const handleCanvasChange = () => {
       const activeUnsaved = currentUnsavedIdRef.current;
@@ -1335,13 +1277,13 @@ const ProjectCanvasesGrid = () => {
 
       // ВИПРАВЛЕННЯ: Додаємо перевірку, чи справді є зміни
       if (!activeUnsaved && !activeProjectCanvas) {
-        console.log("Skipping auto-save - no active canvas");
+        console.log('Skipping auto-save - no active canvas');
         return; // Немає активного полотна для збереження
       }
 
       // ВИПРАВЛЕННЯ: Перевіряємо чи полотно не в процесі переключення
       if (canvas.__suspendUndoRedo || canvas.__switching) {
-        console.log("Skipping auto-save - canvas switching in progress");
+        console.log('Skipping auto-save - canvas switching in progress');
         return; // Не зберігаємо під час переключення
       }
 
@@ -1354,32 +1296,32 @@ const ProjectCanvasesGrid = () => {
       updateDebounceRef.current = setTimeout(async () => {
         // Подвійна перевірка перед збереженням
         if (canvas.__suspendUndoRedo || canvas.__switching) {
-          console.log("Skipping delayed auto-save - canvas switching detected");
+          console.log('Skipping delayed auto-save - canvas switching detected');
           return;
         }
 
         const currentObjects = canvas.getObjects().length;
-        console.log("Auto-saving with", currentObjects, "objects");
+        console.log('Auto-saving with', currentObjects, 'objects');
 
         try {
           if (activeUnsaved && currentUnsavedIdRef.current === activeUnsaved) {
             console.log(
-              "Auto-saving unsaved sign:",
+              'Auto-saving unsaved sign:',
               activeUnsaved,
-              "with",
+              'with',
               currentObjects,
-              "objects"
+              'objects'
             );
             await updateUnsavedSignFromCanvas(activeUnsaved, canvas);
-            console.log("Auto-save completed for unsaved sign");
+            console.log('Auto-save completed for unsaved sign');
 
             // НОВЕ: Оновлюємо локальний state з новим preview
             const previews = await generateCanvasPreviews(canvas);
             const newPreview = previews.previewPng;
             const newPreviewSvg = previews.previewSvg;
 
-            setUnsavedSigns((prev) =>
-              prev.map((sign) =>
+            setUnsavedSigns(prev =>
+              prev.map(sign =>
                 sign.id === activeUnsaved
                   ? {
                       ...sign,
@@ -1394,26 +1336,26 @@ const ProjectCanvasesGrid = () => {
             currentProjectCanvasIdRef.current === activeProjectCanvas
           ) {
             console.log(
-              "Auto-saving project canvas:",
+              'Auto-saving project canvas:',
               activeProjectCanvas,
-              "with",
+              'with',
               currentObjects,
-              "objects"
+              'objects'
             );
             await updateCanvasInCurrentProject(activeProjectCanvas, canvas);
-            console.log("Auto-save completed for project canvas");
+            console.log('Auto-save completed for project canvas');
 
             // НОВЕ: Оновлюємо локальний project state з новим preview
             const previews = await generateCanvasPreviews(canvas);
             const newPreview = previews.previewPng;
             const newPreviewSvg = previews.previewSvg;
 
-            setProject((prev) => {
+            setProject(prev => {
               if (!prev) return prev;
               return {
                 ...prev,
                 canvases:
-                  prev.canvases?.map((canv) =>
+                  prev.canvases?.map(canv =>
                     canv.id === activeProjectCanvas
                       ? {
                           ...canv,
@@ -1426,21 +1368,19 @@ const ProjectCanvasesGrid = () => {
             });
           }
         } catch (error) {
-          console.error("Auto-save failed:", error);
+          console.error('Auto-save failed:', error);
         }
       }, 1000); // Increased debounce time to 1 second
     };
 
     // Handle canvas property changes
     const handleCanvasPropertyChange = () => {
-      console.log("Canvas property changed, updating preview and saving");
+      console.log('Canvas property changed, updating preview and saving');
       handleCanvasChange(); // Use same logic as object changes
     };
 
-    events.forEach((event) => canvas.on(event, handleCanvasChange));
-    canvasEvents.forEach((event) =>
-      canvas.on(event, handleCanvasPropertyChange)
-    );
+    events.forEach(event => canvas.on(event, handleCanvasChange));
+    canvasEvents.forEach(event => canvas.on(event, handleCanvasPropertyChange));
 
     // Watch for canvas dimension changes
     const originalSetWidth = canvas.setWidth;
@@ -1450,14 +1390,14 @@ const ProjectCanvasesGrid = () => {
 
     canvas.setWidth = function (value) {
       const result = originalSetWidth.call(this, value);
-      console.log("Canvas width changed to:", value);
+      console.log('Canvas width changed to:', value);
       handleCanvasPropertyChange();
       return result;
     };
 
     canvas.setHeight = function (value) {
       const result = originalSetHeight.call(this, value);
-      console.log("Canvas height changed to:", value);
+      console.log('Canvas height changed to:', value);
       handleCanvasPropertyChange();
       return result;
     };
@@ -1465,7 +1405,7 @@ const ProjectCanvasesGrid = () => {
     if (originalSetBackgroundColor) {
       canvas.setBackgroundColor = function (color, callback) {
         const result = originalSetBackgroundColor.call(this, color, callback);
-        console.log("Canvas background color changed to:", color);
+        console.log('Canvas background color changed to:', color);
         handleCanvasPropertyChange();
         return result;
       };
@@ -1473,13 +1413,13 @@ const ProjectCanvasesGrid = () => {
 
     canvas.set = function (property, value) {
       const result = originalSet.call(this, property, value);
-      if (property === "backgroundColor") {
+      if (property === 'backgroundColor') {
         // Виводимо stack trace якщо встановлюється Pattern (текстура)
-        if (typeof value === "object" && value !== null) {
-          console.log("Canvas background color set to Pattern:", value);
-          console.trace("Stack trace for Pattern background:");
+        if (typeof value === 'object' && value !== null) {
+          console.log('Canvas background color set to Pattern:', value);
+          console.trace('Stack trace for Pattern background:');
         } else {
-          console.log("Canvas background color set to:", value);
+          console.log('Canvas background color set to:', value);
         }
         handleCanvasPropertyChange();
       }
@@ -1489,17 +1429,13 @@ const ProjectCanvasesGrid = () => {
     // Watch canvas element for attribute changes (size, style, etc.)
     let observer = null;
     if (canvas.getElement && canvas.getElement()) {
-      observer = new MutationObserver((mutations) => {
+      observer = new MutationObserver(mutations => {
         let shouldUpdate = false;
-        mutations.forEach((mutation) => {
-          if (mutation.type === "attributes") {
+        mutations.forEach(mutation => {
+          if (mutation.type === 'attributes') {
             const attrName = mutation.attributeName;
-            if (
-              attrName === "width" ||
-              attrName === "height" ||
-              attrName === "style"
-            ) {
-              console.log("Canvas DOM attribute changed:", attrName);
+            if (attrName === 'width' || attrName === 'height' || attrName === 'style') {
+              console.log('Canvas DOM attribute changed:', attrName);
               shouldUpdate = true;
             }
           }
@@ -1511,15 +1447,13 @@ const ProjectCanvasesGrid = () => {
 
       observer.observe(canvas.getElement(), {
         attributes: true,
-        attributeFilter: ["width", "height", "style"],
+        attributeFilter: ['width', 'height', 'style'],
       });
     }
 
     return () => {
-      events.forEach((event) => canvas.off(event, handleCanvasChange));
-      canvasEvents.forEach((event) =>
-        canvas.off(event, handleCanvasPropertyChange)
-      );
+      events.forEach(event => canvas.off(event, handleCanvasChange));
+      canvasEvents.forEach(event => canvas.off(event, handleCanvasPropertyChange));
 
       // Restore original methods
       canvas.setWidth = originalSetWidth;
@@ -1544,12 +1478,10 @@ const ProjectCanvasesGrid = () => {
     try {
       let currentUnsavedId = null;
       try {
-        currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+        currentUnsavedId = localStorage.getItem('currentUnsavedSignId');
       } catch {}
       if (currentUnsavedId && canvas) {
-        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
-          () => {}
-        );
+        await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(() => {});
       }
 
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
@@ -1560,24 +1492,24 @@ const ProjectCanvasesGrid = () => {
       const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
       try {
-        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+        window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
       } catch {}
 
       // Автоматично відкриваємо новостворене полотно
       setTimeout(() => {
         try {
           window.dispatchEvent(
-            new CustomEvent("canvas:autoOpen", {
+            new CustomEvent('canvas:autoOpen', {
               detail: { canvasId: newSign.id, isUnsaved: true },
             })
           );
-          console.log("Auto-opening new canvas:", newSign.id);
+          console.log('Auto-opening new canvas:', newSign.id);
         } catch (err) {
-          console.error("Failed to auto-open new canvas:", err);
+          console.error('Failed to auto-open new canvas:', err);
         }
       }, 300);
     } catch (e) {
-      console.error("New Sign failed", e);
+      console.error('New Sign failed', e);
     }
   };
 
@@ -1590,16 +1522,14 @@ const ProjectCanvasesGrid = () => {
           <button
             className={styles.navBtn}
             disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
           >
             &lt;&lt;
           </button>
-          {ranges.map((r) => (
+          {ranges.map(r => (
             <button
               key={r.page}
-              className={`${styles.rangesBtn} ${
-                page === r.page ? styles.rangesBtnActive : ""
-              }`}
+              className={`${styles.rangesBtn} ${page === r.page ? styles.rangesBtnActive : ''}`}
               onClick={() => setPage(r.page)}
             >
               <div className={styles.layoutControls}>
@@ -1617,7 +1547,7 @@ const ProjectCanvasesGrid = () => {
           <button
             className={styles.navBtn}
             disabled={page === totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
           >
             &gt;&gt;
           </button>
@@ -1633,42 +1563,31 @@ const ProjectCanvasesGrid = () => {
 
               // ВИПРАВЛЕННЯ: Використовуємо тільки збережені preview (SVG або PNG) з безпечною перевіркою
               const hasSvgPreview =
-                c.previewSvg &&
-                typeof c.previewSvg === "string" &&
-                c.previewSvg.trim().length > 0;
+                c.previewSvg && typeof c.previewSvg === 'string' && c.previewSvg.trim().length > 0;
               const hasPngPreview =
-                c.preview &&
-                typeof c.preview === "string" &&
-                c.preview.trim().length > 0;
-              const preferPngPreview = Boolean(
-                c.toolbarState?.hasBorder && hasPngPreview
-              );
+                c.preview && typeof c.preview === 'string' && c.preview.trim().length > 0;
+              const preferPngPreview = Boolean(c.toolbarState?.hasBorder && hasPngPreview);
 
               const previewSrc = preferPngPreview
                 ? c.preview
                 : hasSvgPreview
-                ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-                    c.previewSvg
-                  )}`
-                : hasPngPreview
-                ? c.preview
-                : null;
+                  ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(c.previewSvg)}`
+                  : hasPngPreview
+                    ? c.preview
+                    : null;
 
               return (
                 <div
                   key={c.id}
-                  className={`${styles.item} ${
-                    selectedId === c.id ? styles.selected : ""
-                  }`}
+                  className={`${styles.item} ${selectedId === c.id ? styles.selected : ''}`}
                   onClick={() => openCanvas(c)}
                 >
                   {/* Нумерація слайду */}
                   <div
                     className={styles.slideNumber}
                     style={{
-                      backgroundColor:
-                        selectedId === c.id ? "#159DFF" : "#ffffff",
-                      color: selectedId === c.id ? "#ffffff" : "#000000",
+                      backgroundColor: selectedId === c.id ? '#159DFF' : '#ffffff',
+                      color: selectedId === c.id ? '#ffffff' : '#000000',
                     }}
                   >
                     {globalIndex}
@@ -1679,7 +1598,7 @@ const ProjectCanvasesGrid = () => {
                       <img
                         src={previewSrc}
                         alt="preview"
-                        onError={(e) => {
+                        onError={e => {
                           if (hasSvgPreview && hasPngPreview) {
                             e.target.onerror = null;
                             e.target.src = c.preview;
@@ -1694,9 +1613,7 @@ const ProjectCanvasesGrid = () => {
                     <span>
                       {pxToMm(c.width)} × {pxToMm(c.height)} (mm)
                     </span>
-                    <span>
-                      {c.copiesCount || c.toolbarState?.copiesCount || 1} pcs
-                    </span>
+                    <span>{c.copiesCount || c.toolbarState?.copiesCount || 1} pcs</span>
                   </div>
                 </div>
               );
@@ -1716,7 +1633,7 @@ const ProjectCanvasesGrid = () => {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
-                  <g style={{ mixBlendMode: "plus-darker" }}>
+                  <g style={{ mixBlendMode: 'plus-darker' }}>
                     <path
                       d="M12.75 85V17C12.75 13.6185 14.0943 10.3764 16.4854 7.98535C18.8764 5.59426 22.1185 4.25 25.5 4.25H59.5L59.9192 4.27075C60.8924 4.36718 61.8073 4.79751 62.5049 5.49512L88.0049 30.9951C88.8019 31.7922 89.25 32.8728 89.25 34V85C89.25 88.3815 87.9057 91.6236 85.5146 94.0147C83.1236 96.4057 79.8815 97.75 76.5 97.75H25.5C22.1185 97.75 18.8764 96.4057 16.4854 94.0147C14.0943 91.6236 12.75 88.3815 12.75 85ZM21.25 85C21.25 86.1272 21.6981 87.2079 22.4951 88.0049C23.2921 88.8019 24.3728 89.25 25.5 89.25H76.5C77.6272 89.25 78.7078 88.8019 79.5049 88.0049C80.3019 87.2079 80.75 86.1272 80.75 85V35.7598L57.7402 12.75H25.5C24.3728 12.75 23.2921 13.1981 22.4951 13.9951C21.6981 14.7921 21.25 15.8728 21.25 17V85Z"
                       fill="#138E32"
@@ -1736,9 +1653,7 @@ const ProjectCanvasesGrid = () => {
                   </g>
                 </svg>
               </div>
-              <div className={styles.newSignButtonLabel}>
-                Create the new sign
-              </div>
+              <div className={styles.newSignButtonLabel}>Create the new sign</div>
             </div>
           </div>
         )}

@@ -757,7 +757,7 @@ export function uuid() {
 }
 
 // Serialize current Fabric canvas to JSON + preview image + toolbar state
-export async function exportCanvas(canvas, toolbarState = {}) {
+export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
   if (!canvas) return null;
   try {
     // Include ALL custom props used across the app to preserve element-specific data
@@ -1029,7 +1029,7 @@ export async function exportCanvas(canvas, toolbarState = {}) {
 
     if (json && Array.isArray(json.objects)) {
       json.objects = json.objects.map((obj) => {
-        if (obj?.isBorderShape && obj.clipPath) {
+        if (obj?.isBorderShape && obj.clipPath && !options.keepClipPath) {
           // ClipPath використовується лише для внутрішнього відмалювання рамки, не зберігаємо його в snapshot.
           delete obj.clipPath;
         }

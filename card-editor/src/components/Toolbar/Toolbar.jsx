@@ -93,7 +93,12 @@ const Toolbar = () => {
   const PX_PER_MM = 72 / 25.4;
   const LOCK_ARCH_HEIGHT_MM = 8;
   const MIN_LOCK_HOLE_TOP_GAP_MM = 1.5;
-  const LOCK_HOLE_EXTRA_DOWN_MM = 1;
+  const LOCK_HOLE_DOWN_SHIFT_MM = 2; // додатково опускаємо отвір
+  const LOCK_HOLE_EXTRA_DOWN_MM = 3; // дозволяємо трохи більше простору вниз
+  const RECT_HOLE_WIDTH_MM = 5;
+  const RECT_HOLE_HEIGHT_MM = 2;
+  const RECT_HOLE_MIN_OFFSET_X_MM = 3;
+  const RECT_HOLE_MIN_OFFSET_Y_MM = 2;
   const mmToPx = (mm) =>
     typeof mm === "number" ? Math.round(mm * PX_PER_MM) : 0;
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
@@ -310,7 +315,7 @@ const Toolbar = () => {
       const baseHeight = metrics?.height || 0;
       const centerX = metrics?.centerX || 0;
       const centerY = metrics?.centerY || 0;
-      const strokeForBorder = makeMask ? 0 : effectiveStroke * 2 / 3; // зменшено в 3 рази
+      const strokeForBorder = makeMask ? 0 : effectiveStroke * 1.8; // зменшено в 3 рази
       if (!clip) {
         const fallback = new fabric.Rect({
           left: centerX,
@@ -569,6 +574,9 @@ const Toolbar = () => {
         )
         .forEach((obj) => canvas.remove(obj));
 
+      // Додаємо SVG ID для borderShape
+      ensureShapeSvgId(borderShape, canvas, { prefix: 'border' });
+      
       canvas.add(borderShape);
       if (typeof canvas.bringToFront === "function") {
         canvas.bringToFront(borderShape);
@@ -4192,16 +4200,26 @@ const Toolbar = () => {
     }
 
     // Обчислюємо відступ і логуємо його в мм
-    const offsetPx =
-      activeHolesType === 5 ? getRectHoleOffsetPx() : getHoleOffsetPx();
-    const offsetMm = pxToMm(offsetPx);
-    try {
-      console.log(
-        `Відступ отворів: ${offsetMm.toFixed(
-          2
-        )} мм (тип ${activeHolesType}, Ø ${holesDiameter} мм)`
-      );
-    } catch {}
+    if (activeHolesType === 5) {
+      const { offsetXpx, offsetYpx } = getRectHoleOffsetsPx();
+      try {
+        console.log(
+          `Відступ прямокутних отворів: X=${pxToMm(offsetXpx).toFixed(
+            2
+          )} мм, Y=${pxToMm(offsetYpx).toFixed(2)} мм (тип 5, 5x2мм)`
+        );
+      } catch {}
+    } else {
+      const offsetPx = getHoleOffsetPx();
+      const offsetMm = pxToMm(offsetPx);
+      try {
+        console.log(
+          `Відступ отворів: ${offsetMm.toFixed(
+            2
+          )} мм (тип ${activeHolesType}, Ø ${holesDiameter} мм)`
+        );
+      } catch {}
+    }
 
     // Переставляємо отвори відповідно до активного типу
     switch (activeHolesType) {
@@ -5616,6 +5634,7 @@ const Toolbar = () => {
           const pattern = new fabric.Pattern({
             source: patternCanvas,
             repeat: "no-repeat", // не дублюємо текстуру
+            id: "canvasBackgroundTexture", // ID для ідентифікації в SVG
           });
 
           // Зберігаємо оригінальний URL текстури для серіалізації
@@ -5897,19 +5916,31 @@ const Toolbar = () => {
     return { minMm, maxMm };
   };
 
+  const HOLE_OFFSET_BASE_MULTIPLIER = 0.04; // трохи агресивніше віддаляємо від країв
+  const HOLE_OFFSET_CAP_MM = 9; // попереднє значення 7.5 мм
+  const HOLE_OFFSET_ADDITIVE_MIN = 1.2; // попереднє значення 0.8 мм
+  const HOLE_OFFSET_ADDITIVE_MAX = 4.0; // попереднє значення 3.2 мм
+  const HOLE_OFFSET_DIAMETER_BASE = 5.4; // попереднє значення 4.8
+  const HOLE_OFFSET_DIAMETER_DIVISOR = 16; // попереднє значення 18
+  const HOLE_EDGE_CLEARANCE_MM = 3.5; // попередньо 2 мм
+
   // Емпірична формула відступу (з ескізів):
-  // offsetMm = clamp(0, 7.5, 0.03 * maxSideMm + clamp(0.8, 3.2, 4.8 - 18/diameterMm))
-  const getHoleOffsetPx = () => {
+  // offsetMm = clamp(0, cap, baseMultiplier * maxSideMm + clamp(additiveMin, additiveMax, base - divisor/diameterMm))
+  const getHoleOffsetPx = (overrideDiameterMm = null) => {
     const { maxMm, minMm } = getFigureDimsMm();
-    const d = Math.max(holesDiameter || 0, 0.1);
-    let additive = 4.8 - 18 / d; // зменшується при збільшенні діаметра
+    const diameterSource =
+      typeof overrideDiameterMm === "number"
+        ? overrideDiameterMm
+        : holesDiameter;
+    const d = Math.max(diameterSource || 0, 0.1);
+    let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
     if (!isFinite(additive)) additive = 0;
-    additive = Math.max(0.8, Math.min(additive, 3.2));
-    const base = 0.03 * (maxMm || 0);
-    let offsetMm = Math.min(base + additive, 7.5);
-    // Мінімальна відстань від краю дирки до краю фігури: 2мм
-    // Тобто offset >= 2мм + радіус дирки
-    const minOffsetMm = 2 + (d || 0.1) / 2;
+    additive = Math.max(HOLE_OFFSET_ADDITIVE_MIN, Math.min(additive, HOLE_OFFSET_ADDITIVE_MAX));
+    const base = HOLE_OFFSET_BASE_MULTIPLIER * (maxMm || 0);
+    let offsetMm = Math.min(base + additive, HOLE_OFFSET_CAP_MM);
+    // Мінімальна відстань від краю дирки до краю фігури: 3.5мм
+    // Тобто offset >= 3.5мм + радіус дирки
+    const minOffsetMm = HOLE_EDGE_CLEARANCE_MM + (d || 0.1) / 2;
     // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
     const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
     offsetMm = Math.max(offsetMm, minOffsetMm);
@@ -5917,12 +5948,27 @@ const Toolbar = () => {
     return mmToPx(offsetMm);
   };
 
-  // Фіксований відступ для прямокутних (квадратних) отворів — 2 мм
-  const getRectHoleOffsetPx = () => mmToPx(2);
+  // Прямокутні (квадратні) отвори використовують ту ж динамічну евристику відступів
+  const getRectHoleOffsetsPx = () => {
+    const baseOffsetPx = getHoleOffsetPx(
+      Math.max(RECT_HOLE_WIDTH_MM, RECT_HOLE_HEIGHT_MM)
+    );
+    const minOffsetXpx = mmToPx(
+      RECT_HOLE_MIN_OFFSET_X_MM + RECT_HOLE_WIDTH_MM / 2
+    );
+    const minOffsetYpx = mmToPx(
+      RECT_HOLE_MIN_OFFSET_Y_MM + RECT_HOLE_HEIGHT_MM / 2
+    );
+    return {
+      offsetXpx: Math.max(baseOffsetPx, minOffsetXpx),
+      offsetYpx: Math.max(baseOffsetPx, minOffsetYpx),
+    };
+  };
 
   const registerHoleShape = (shape) => {
     if (!shape) return shape;
     try {
+      const holeId = `hole-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       if (typeof shape.set === "function") {
         shape.set({
           stroke: CUT_STROKE_COLOR,
@@ -5930,7 +5976,7 @@ const Toolbar = () => {
           isCutElement: true,
           cutType: "hole",
           preventThemeRecolor: true,
-          id: "canvaShape",
+          id: holeId,
         });
       } else {
         shape.stroke = CUT_STROKE_COLOR;
@@ -5938,7 +5984,7 @@ const Toolbar = () => {
         shape.isCutElement = true;
         shape.cutType = "hole";
         shape.preventThemeRecolor = true;
-        shape.id = "canvaShape";
+        shape.id = holeId;
       }
       // ensureShapeSvgId(shape, canvas, { prefix: HOLE_ID_PREFIX });
     } catch (error) {
@@ -5956,7 +6002,12 @@ const Toolbar = () => {
     const minTopGapPx = mmToPx(MIN_LOCK_HOLE_TOP_GAP_MM);
     const extraAllowancePx = mmToPx(LOCK_HOLE_EXTRA_DOWN_MM);
     const baseCenterY = semicircleRadiusPx / 2;
-    const desiredCenterY = Math.max(baseCenterY, holeRadiusPx + minTopGapPx);
+    const downShiftPx = mmToPx(LOCK_HOLE_DOWN_SHIFT_MM);
+    const desiredCenterYBase = Math.max(
+      baseCenterY,
+      holeRadiusPx + minTopGapPx
+    );
+    const desiredCenterY = desiredCenterYBase + downShiftPx;
     const canvasHeightPx = canvas.getHeight?.() || canvas.height || 0;
     let maxCenterY = chordY - holeRadiusPx;
     if (extraAllowancePx > 0) maxCenterY += extraAllowancePx;
@@ -6289,25 +6340,23 @@ const Toolbar = () => {
     }
   };
 
-  // Тип 5 - 4 ПРЯМОКУТНІ отвори 5x2мм у кутах (відступи від країв: X=3мм, Y=2мм)
+  // Тип 5 - 4 ПРЯМОКУТНІ отвори 5x2мм у кутах (динамічний відступ як у решти)
   const addHoleType5 = () => {
     if (!canvas) return;
     clearExistingHoles();
     setIsHolesSelected(true);
     setActiveHolesType(5);
-    const holeWmm = 5;
-    const holeHmm = 2;
-    const offXmm = 3; // до лівого/правого краю
-    const offYmm = 2; // до верху/низу
+    const holeWmm = RECT_HOLE_WIDTH_MM;
+    const holeHmm = RECT_HOLE_HEIGHT_MM;
     const wPx = canvas.getWidth();
     const hPx = canvas.getHeight();
-    const toPx = (mm) => mmToPx(mm);
-    const cxLeft = toPx(offXmm + holeWmm / 2);
-    const cxRight = wPx - toPx(offXmm + holeWmm / 2);
-    const cyTop = toPx(offYmm + holeHmm / 2);
-    const cyBottom = hPx - toPx(offYmm + holeHmm / 2);
-    const hwPx = toPx(holeWmm);
-    const hhPx = toPx(holeHmm);
+    const { offsetXpx, offsetYpx } = getRectHoleOffsetsPx();
+    const cxLeft = offsetXpx;
+    const cxRight = wPx - offsetXpx;
+    const cyTop = offsetYpx;
+    const cyBottom = hPx - offsetYpx;
+    const hwPx = mmToPx(holeWmm);
+    const hhPx = mmToPx(holeHmm);
     const makeRect = (left, top) =>
       registerHoleShape(
         new fabric.Rect({
@@ -6343,11 +6392,9 @@ const Toolbar = () => {
     canvas.requestRenderAll();
     try {
       console.log(
-        `Тип5: 4 прямокутні 5x2мм. Центри X(left/right)=${
-          offXmm + holeWmm / 2
-        }мм / ${pxToMm(wPx) - (offXmm + holeWmm / 2)}мм, Y(top/bottom)=${
-          offYmm + holeHmm / 2
-        }мм / ${pxToMm(hPx) - (offYmm + holeHmm / 2)}мм`
+        `Тип5: 4 прямокутні 5x2мм. Горизонтальний відступ центру=${pxToMm(
+          offsetXpx
+        ).toFixed(2)}мм, вертикальний=${pxToMm(offsetYpx).toFixed(2)}мм`
       );
     } catch {}
   };

@@ -1,0 +1,77 @@
+.modal {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.25);
+  z-index: 2000;
+  border-radius: 8px;
+  width: 1000px;
+  padding: 30px 40px;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.header {
+  position: relative;
+  text-align: center;
+  padding: 10px 40px;
+}
+
+.header svg {
+  position: absolute;
+  top: -22px;
+  right: -22px;
+  cursor: pointer;
+}
+
+.title {
+  font-weight: 700;
+  color: rgba(0, 108, 164, 1);
+  text-decoration: underline;
+  margin: 0 0 18px;
+}
+
+.table {
+  border-collapse: separate;
+  width: 100%;
+}
+
+.tr {
+  color: #0f172a;
+}
+
+.td {
+  padding: 10px 8px;
+}
+
+.previewImg {
+  max-height: 54px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.actionBtn {
+  background-color: #fff;
+  border: 1px solid rgba(125, 125, 125, 1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dangerBtn {
+  border-color: rgba(255, 0, 0, 1);
+  color: rgba(255, 0, 0, 1);
+}
+
+.empty {
+  text-align: center;
+  padding: 18px 0;
+  color: rgba(15, 23, 42, 0.7);
+}

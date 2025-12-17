@@ -6,15 +6,20 @@ import * as fabric from "fabric";
 import styles from "./TopToolbar.module.css";
 import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
+import SaveAsTemplateModal from "../SaveAsTemplateModal/SaveAsTemplateModal";
+import TemplatesModal from "../TemplatesModal/TemplatesModal";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
+import { useSelector } from "react-redux";
 import {
   saveCurrentProject,
   saveNewProject,
   clearAllUnsavedSigns,
   addBlankUnsavedSign,
+  exportCanvas,
 } from "../../utils/projectStorage";
+import { createTemplate } from "../../http/templates";
 
 const DEFAULT_SHAPE_WIDTH_MM = 120;
 const DEFAULT_SHAPE_HEIGHT_MM = 80;
@@ -23,14 +28,27 @@ const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel } = useExcelImport(); // exportToExcel - disabled
   const { canvas } = useCanvasContext();
+  const isAdmin = useSelector((state) => state?.user?.isAdmin);
   const [zoom, setZoom] = useState(100); // legacy fabric zoom (kept for compatibility)
   const [displayScale, setDisplayScale] = useState(100); // viewport scale (auto-fit or CSS scaling) relative to design size
   const [zoomInput, setZoomInput] = useState("100"); // editable input string
   const [isSaveAsModalOpen, setSaveAsModalOpen] = useState(false);
+  const [isSaveAsTemplateModalOpen, setSaveAsTemplateModalOpen] = useState(false);
+  const [isTemplatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [isProjectsModalOpen, setProjectsModalOpen] = useState(false);
   const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveAsTemplate = () => {
+    if (!isAdmin) return;
+    if (!canvas) return;
+    setSaveAsTemplateModalOpen(true);
+  };
+
+  const handleOpenTemplates = () => {
+    setTemplatesModalOpen(true);
+  };
 
   const handleSave = async () => {
     if (!canvas || isSaving) return;
@@ -383,7 +401,7 @@ const TopToolbar = ({ className }) => {
               </svg>
               Import via Excel
             </li>
-            <li className={styles.toolbarItem}>
+            <li className={styles.toolbarItem} onClick={handleSaveAsTemplate}>
               <svg
                 width="24"
                 height="24"
@@ -409,7 +427,7 @@ const TopToolbar = ({ className }) => {
               </svg>
               Save as Template
             </li>
-            <li className={styles.toolbarItem}>
+            <li className={styles.toolbarItem} onClick={handleOpenTemplates}>
               <svg
                 width="21"
                 height="24"
@@ -755,6 +773,36 @@ const TopToolbar = ({ className }) => {
             }
           }}
         />
+      )}
+      {isSaveAsTemplateModalOpen && (
+        <SaveAsTemplateModal
+          onClose={() => setSaveAsTemplateModalOpen(false)}
+          onSave={async (name) => {
+            if (!canvas) return;
+            setIsSaving(true);
+            try {
+              const toolbarState =
+                typeof window !== "undefined" && window.getCurrentToolbarState
+                  ? window.getCurrentToolbarState() || {}
+                  : {};
+
+              const snapshot = await exportCanvas(canvas, toolbarState, {
+                keepClipPath: true,
+              });
+
+              if (!snapshot) {
+                throw new Error("Failed to export canvas");
+              }
+
+              await createTemplate(name, snapshot);
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+        />
+      )}
+      {isTemplatesModalOpen && (
+        <TemplatesModal onClose={() => setTemplatesModalOpen(false)} />
       )}
       {isPreviewOpen && (
         <PreviewModal canvas={canvas} onClose={() => setPreviewOpen(false)} />

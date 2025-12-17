@@ -12,6 +12,8 @@ import sequelize from './db.js';
 import './models/models.js';
 import router from './router/index.js';
 import AuthController from './Controller/AuthController.js';
+import { connectMongo } from './mongo.js';
+import errorMiddleware from './middleware/errorMiddleware.js';
 
 dotenv.config();
 
@@ -687,6 +689,61 @@ const rectHasWhiteFill = rect => {
   return false;
 };
 
+const BARCODE_EXPORT_ATTR = 'data-layout-barcode';
+const BARCODE_BAR_ATTR = 'data-layout-barcode-bar';
+
+const collectMarkedBarcodeRects = (root, { suppressLogs = false } = {}) => {
+  if (!root || typeof root.querySelectorAll !== 'function') return [];
+  const rects = Array.from(root.querySelectorAll(`rect[${BARCODE_BAR_ATTR}="true"]`));
+  if (!suppressLogs && rects.length) {
+    console.log(`[layoutExportServer] Using marked barcode rects: ${rects.length}`);
+  }
+  return rects;
+};
+
+const stripMarkedBarcodeRectsFromRoot = (root, { suppressLogs = false } = {}) => {
+  const rects = collectMarkedBarcodeRects(root, { suppressLogs });
+  rects.forEach(rect => {
+    try {
+      rect.parentNode?.removeChild(rect);
+    } catch {}
+  });
+  return rects.length;
+};
+
+const filterBarcodeBarRects = rects => {
+  if (!Array.isArray(rects) || rects.length === 0) return [];
+
+  const widths = rects
+    .map(rect => parseFloat(rect.getAttribute('width') || '0'))
+    .filter(value => Number.isFinite(value) && value > 0);
+  const minWidth = widths.length ? Math.min(...widths) : null;
+  const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
+
+  return rects.filter(rect => {
+    if (rectHasWhiteFill(rect)) {
+      return false;
+    }
+    const width = parseFloat(rect.getAttribute('width') || '0');
+    if (!Number.isFinite(width) || width <= 0) return false;
+    if (widthThreshold !== Infinity && width > widthThreshold) {
+      return false;
+    }
+    return true;
+  });
+};
+
+const stripBarcodeRectsFromNode = node => {
+  const rects = gatherBarcodeRects(node);
+  const bars = filterBarcodeBarRects(rects);
+  bars.forEach(rect => {
+    try {
+      rect.parentNode?.removeChild(rect);
+    } catch {}
+  });
+  return bars.length;
+};
+
 const isLikelyBarcodeGroup = node => {
   if (!node || node.nodeType !== 1) return false;
   const tag = (node.nodeName || '').toLowerCase();
@@ -715,6 +772,18 @@ const isLikelyBarcodeGroup = node => {
 
 const collectBarcodeGroups = (root, { suppressLogs = false } = {}) => {
   const results = [];
+
+  // Prefer explicit markers from the client export markup.
+  if (root && typeof root.querySelectorAll === 'function') {
+    const marked = Array.from(root.querySelectorAll(`[${BARCODE_EXPORT_ATTR}="true"]`));
+    if (marked.length) {
+      if (!suppressLogs) {
+        console.log(`[layoutExportServer] Using marked barcode containers: ${marked.length}`);
+      }
+      return marked;
+    }
+  }
+
   const walk = n => {
     if (!n || n.nodeType !== 1) return;
     if (isLikelyBarcodeGroup(n)) {
@@ -795,7 +864,7 @@ const drawCustomBorderOutline = (doc, { xPt, yTopPt, widthPt, heightPt, customBo
   doc.fillOpacity(0);
 
   // Draw a simple rectangle outline (stroke only, no fill)
-  doc.rect(xPt, yTopPt, widthPt, heightPt).stroke();
+  // doc.rect(xPt, yTopPt, widthPt, heightPt).stroke();
 
   doc.restore();
 };
@@ -846,23 +915,7 @@ const drawBarcodePaths = (
     const rects = gatherBarcodeRects(group);
     if (!rects.length) return;
 
-    const widths = rects
-      .map(rect => parseFloat(rect.getAttribute('width') || '0'))
-      .filter(value => Number.isFinite(value) && value > 0);
-    const minWidth = widths.length ? Math.min(...widths) : null;
-    const widthThreshold = Number.isFinite(minWidth) ? minWidth * 4 : Infinity;
-
-    const barRects = rects.filter(rect => {
-      if (rectHasWhiteFill(rect)) {
-        return false;
-      }
-      const width = parseFloat(rect.getAttribute('width') || '0');
-      if (!Number.isFinite(width) || width <= 0) return false;
-      if (widthThreshold !== Infinity && width > widthThreshold) {
-        return false;
-      }
-      return true;
-    });
+    const barRects = filterBarcodeBarRects(rects);
 
     if (!barRects.length) return;
 
@@ -915,6 +968,74 @@ const drawBarcodePaths = (
   doc.restore();
 };
 
+const drawBarcodeRectsDirect = (
+  doc,
+  rects,
+  { xPt, yTopPt, widthPt, heightPt, contentWidth, contentHeight }
+) => {
+  if (!doc || !Array.isArray(rects) || rects.length === 0) return;
+
+  const svgScaleX = widthPt / contentWidth;
+  const svgScaleY = heightPt / contentHeight;
+  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
+  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
+  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+
+  doc.save();
+  doc.strokeColor(TEXT_OUTLINE_COLOR);
+  doc.lineJoin('round');
+  doc.lineCap('round');
+  doc.strokeOpacity(1);
+  doc.fillOpacity(0);
+
+  rects.forEach(rect => {
+    const x = parseFloat(rect.getAttribute('x') || '0');
+    const y = parseFloat(rect.getAttribute('y') || '0');
+    const w = parseFloat(rect.getAttribute('width') || '0');
+    const h = parseFloat(rect.getAttribute('height') || '0');
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+      return;
+    }
+
+    const matrix = computeCumulativeMatrix(rect);
+    const quad = rectToTransformedQuad(matrix, x, y, w, h).map(point => ({
+      x: offsetXPt + point.x * svgScale,
+      y: offsetYPt + point.y * svgScale,
+    }));
+
+    const edgeLength01 = Math.hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y);
+    const edgeLength12 = Math.hypot(quad[2].x - quad[1].x, quad[2].y - quad[1].y);
+    const barWidthPt = Math.min(edgeLength01, edgeLength12);
+
+    const barWidthPx = barWidthPt / svgScale;
+    const defaultOutlinePx = 1;
+    const minOutlinePx = 0.3;
+    const maxByRectWidthPx =
+      Number.isFinite(barWidthPx) && barWidthPx > 0 ? barWidthPx * 0.5 : null;
+
+    let outlineWidthPx = defaultOutlinePx;
+    if (Number.isFinite(maxByRectWidthPx) && maxByRectWidthPx > 0) {
+      outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
+    }
+    outlineWidthPx = Math.max(outlineWidthPx, minOutlinePx);
+    if (Number.isFinite(maxByRectWidthPx) && maxByRectWidthPx > 0) {
+      outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
+    }
+
+    const outlineWidthPt = Math.max(outlineWidthPx * svgScale, minOutlinePx * svgScale);
+
+    doc.lineWidth(outlineWidthPt);
+    doc.moveTo(quad[0].x, quad[0].y);
+    doc.lineTo(quad[1].x, quad[1].y);
+    doc.lineTo(quad[2].x, quad[2].y);
+    doc.lineTo(quad[3].x, quad[3].y);
+    doc.closePath();
+    doc.stroke();
+  });
+
+  doc.restore();
+};
+
 const app = express();
 
 app.use(
@@ -928,6 +1049,9 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 
 app.use('/api', router);
+
+// API error handler (must be after routes)
+app.use(errorMiddleware);
 
 const mmToPoints = (valueMm = 0) => (Number(valueMm) || 0) * MM_TO_PT;
 
@@ -1059,9 +1183,50 @@ app.post('/api/layout-pdf', async (req, res) => {
             const backgroundBarcodeGroups = collectBarcodeGroups(backgroundSvg, {
               suppressLogs: true,
             });
-            backgroundBarcodeGroups.forEach(group => {
-              group.parentNode?.removeChild(group);
+            // Prefer explicit markers from the client export markup.
+            // This avoids heuristics accidentally stripping unrelated artwork.
+            const strippedMarkedBarcodeRects = stripMarkedBarcodeRectsFromRoot(backgroundSvg, {
+              suppressLogs: true,
             });
+
+            if (!strippedMarkedBarcodeRects) {
+              // Fallback: heuristic stripping (older exports without markers)
+              // Important: do NOT remove whole groups (barcode may be grouped with other artwork).
+              // Strip only the barcode bar rects so the rest of the SVG still renders.
+              backgroundBarcodeGroups.forEach(group => {
+                stripBarcodeRectsFromNode(group);
+              });
+            }
+
+            // NOTE: Do not recolor border elements on the server.
+            // Client-side export markup already contains:
+            // - standard blue outline
+            // - green overlay (#008181) + inner green offset
+            // Recoloring here would break the expected "blue + green" stacking.
+            const allElements = backgroundSvg.getElementsByTagName('*');
+
+            // Видаляємо фоновий rect (canvas background) за атрибутом data-layout-background="true"
+            const backgroundRects = [];
+            for (let i = 0; i < allElements.length; i++) {
+              const el = allElements[i];
+              if (el.getAttribute('data-layout-background') === 'true') {
+                backgroundRects.push(el);
+              }
+            }
+            backgroundRects.forEach(rect => rect.parentNode?.removeChild(rect));
+
+            // Також видаляємо rect які посилаються на pattern (текстурні фони - дерево, карбон)
+            const rectsWithPattern = backgroundSvg.getElementsByTagName('rect');
+            const rectsToRemove = [];
+            for (let i = 0; i < rectsWithPattern.length; i++) {
+              const rect = rectsWithPattern[i];
+              const fill = rect.getAttribute('fill') || '';
+              // Якщо fill посилається на url(#...) - це може бути pattern
+              if (fill.startsWith('url(#') || fill.includes('url(')) {
+                rectsToRemove.push(rect);
+              }
+            }
+            rectsToRemove.forEach(rect => rect.parentNode?.removeChild(rect));
 
             const serializer = new XMLSerializer();
             const backgroundMarkup = serializer.serializeToString(backgroundSvg);
@@ -1109,12 +1274,26 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
             }
 
-            // Collect barcode groups from original SVG for later outline rendering
-            const barcodeGroups = collectBarcodeGroups(svgElement);
+            // Collect barcode bars from original SVG for later outline rendering
+            const markedBarcodeRects = collectMarkedBarcodeRects(svgElement);
+            const barcodeGroups = markedBarcodeRects.length ? [] : collectBarcodeGroups(svgElement);
 
             const textNodes = svgElement.getElementsByTagName('text');
             if (!textNodes || textNodes.length === 0) {
-              if (barcodeGroups && barcodeGroups.length) {
+              if (markedBarcodeRects && markedBarcodeRects.length) {
+                try {
+                  drawBarcodeRectsDirect(doc, markedBarcodeRects, {
+                    xPt,
+                    yTopPt,
+                    widthPt,
+                    heightPt,
+                    contentWidth,
+                    contentHeight,
+                  });
+                } catch (barcodeDrawError) {
+                  console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
+                }
+              } else if (barcodeGroups && barcodeGroups.length) {
                 try {
                   drawBarcodePaths(doc, barcodeGroups, {
                     xPt,
@@ -1386,7 +1565,20 @@ app.post('/api/layout-pdf', async (req, res) => {
             }
 
             // After drawing text, draw barcode outlines if present
-            if (barcodeGroups && barcodeGroups.length) {
+            if (markedBarcodeRects && markedBarcodeRects.length) {
+              try {
+                drawBarcodeRectsDirect(doc, markedBarcodeRects, {
+                  xPt,
+                  yTopPt,
+                  widthPt,
+                  heightPt,
+                  contentWidth,
+                  contentHeight,
+                });
+              } catch (barcodeDrawError) {
+                console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
+              }
+            } else if (barcodeGroups && barcodeGroups.length) {
               try {
                 drawBarcodePaths(doc, barcodeGroups, {
                   xPt,
@@ -1458,8 +1650,19 @@ app.get('/health', (req, res) => {
 
 const start = async () => {
   try {
-    await sequelize.authenticate();
-    await sequelize.sync();
+    // Mongo is required for templates API
+    await connectMongo();
+    console.log('Mongo connected');
+
+    // MySQL is used for auth; do not block server startup during local dev
+    try {
+      await sequelize.authenticate();
+      await sequelize.sync();
+      console.log('MySQL connected');
+    } catch (mysqlError) {
+      console.log('MySQL connection failed (server will still run):', mysqlError);
+    }
+
     app.listen(DEFAULT_PORT, () => {
       console.log(`Layout export server запущено на порту ${DEFAULT_PORT}`);
       if (ALLOWED_ORIGINS) {

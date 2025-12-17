@@ -1,6 +1,7 @@
 import React from 'react';
 import './AdminContainer.scss';
 import Order from './Order';
+import { NavLink } from 'react-router-dom';
 
 const Admin = () => {
   const orderData = [
@@ -66,63 +67,66 @@ const Admin = () => {
     },
   ];
   return (
-    <div className="admin-container">
-      <div className="left">
-        <div className="selects">
-          <div className="select-cont">
-            <p>Status</p>
-            <select>
-              <option>All</option>
-              <option>Received</option>
-              <option>Printed</option>
-              <option>Manufact.</option>
-              <option>Delivered</option>
-              <option>Returned</option>
-              <option>Waiting</option>
-            </select>
+    <>
+      <NavLink style={{alignItems:'flex-end',display:'flex',justifyContent:'right',marginBottom:'15px'}} to={'/admin/update-avaible'}>update avaible</NavLink>
+      <div className="admin-container">
+        <div className="left">
+          <div className="selects">
+            <div className="select-cont">
+              <p>Status</p>
+              <select>
+                <option>All</option>
+                <option>Received</option>
+                <option>Printed</option>
+                <option>Manufact.</option>
+                <option>Delivered</option>
+                <option>Returned</option>
+                <option>Waiting</option>
+              </select>
+            </div>
+            <div className="select-cont">
+              <p>Filter</p>
+              <input />
+            </div>
           </div>
-          <div className="select-cont">
-            <p>Filter</p>
-            <input />
-          </div>
-        </div>
-        <table>
-          {/* Заголовок таблиці */}
-          <thead>
-            <tr>
-              <th>Order No</th>
-              <th>Cust No</th>
-              <th>Signs</th>
-              <th>Order Sum</th>
-              <th>Country</th>
-              <th>Status</th>
-              <th>Order Date</th>
-              <th>Delivery Type</th>
-            </tr>
-          </thead>
-
-          {/* Тіло таблиці */}
-          <tbody>
-            {orderData.map((order, index) => (
-              <tr key={order.orderNo}>
-                {/* Перша колонка Order No з помаранчевим фоном */}
-                <td className="order-no">{order.orderNo}</td>
-                <td>{order.custNo}</td>
-                <td>{order.signs}</td>
-                <td>{order.orderSum}</td>
-                <td>{order.country}</td>
-                <td>{order.status}</td>
-                <td>{order.orderDate}</td>
-                <td>{order.deliveryType}</td>
+          <table>
+            {/* Заголовок таблиці */}
+            <thead>
+              <tr>
+                <th>Order No</th>
+                <th>Cust No</th>
+                <th>Signs</th>
+                <th>Order Sum</th>
+                <th>Country</th>
+                <th>Status</th>
+                <th>Order Date</th>
+                <th>Delivery Type</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            {/* Тіло таблиці */}
+            <tbody>
+              {orderData.map((order, index) => (
+                <tr key={order.orderNo}>
+                  {/* Перша колонка Order No з помаранчевим фоном */}
+                  <td className="order-no">{order.orderNo}</td>
+                  <td>{order.custNo}</td>
+                  <td>{order.signs}</td>
+                  <td>{order.orderSum}</td>
+                  <td>{order.country}</td>
+                  <td>{order.status}</td>
+                  <td>{order.orderDate}</td>
+                  <td>{order.deliveryType}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="right">
+          <Order />
+        </div>
       </div>
-      <div className="right">
-        <Order />
-      </div>
-    </div>
+    </>
   );
 };
 

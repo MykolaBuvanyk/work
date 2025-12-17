@@ -878,7 +878,7 @@ const convertPercentagesToAbsolute = (node, totals) => {
   });
 };
 
-const addInnerContoursForShapes = (rootElement) => {
+const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, borderThicknessPx = null } = {}) => {
   if (!rootElement?.querySelectorAll) return;
 
   const scope = ensurePaperScope();
@@ -886,9 +886,58 @@ const addInnerContoursForShapes = (rootElement) => {
     return;
   }
 
-  const shapeNodes = rootElement.querySelectorAll('[id^="shape-"]');
+  const shapeNodes = Array.from(
+    rootElement.querySelectorAll('[id^="shape-"]')
+  );
+  const borderNodes = [];
+  if (enableBorderContours) {
+    // NOTE: `#canvaShape` is the main blue outline and must NOT be duplicated.
+    // We only add inner contours for dedicated border nodes.
+    // IMPORTANT: Some templates may contain multiple `border-*` nodes (duplicates).
+    // We keep ONLY ONE border node to avoid creating multiple green contours.
+    const preferredBorderNode = rootElement.querySelector?.('#canvaShapeCustom') || null;
+    const borderCandidates = preferredBorderNode
+      ? [preferredBorderNode]
+      : Array.from(rootElement.querySelectorAll('[id^="border"]'));
 
-  shapeNodes.forEach((shapeNode) => {
+    // Choose the last one (usually the newest/topmost in exported SVG).
+    const primaryBorderNode = borderCandidates.length
+      ? borderCandidates[borderCandidates.length - 1]
+      : null;
+
+    // Remove other duplicate border nodes (and their existing inner contours) so they can't render as extra green contours.
+    if (!preferredBorderNode && borderCandidates.length > 1 && primaryBorderNode) {
+      borderCandidates.forEach((candidate) => {
+        if (!candidate || candidate === primaryBorderNode) return;
+        const candidateId = candidate.getAttribute?.('id') || '';
+        try {
+          candidate.parentNode?.removeChild(candidate);
+        } catch {
+          // ignore
+        }
+        if (candidateId && rootElement?.querySelector) {
+          const innerId = `${candidateId}-inner`;
+          const escapedInnerId = escapeCssIdentifier(innerId);
+          const existingInner = escapedInnerId
+            ? rootElement.querySelector(`[id="${escapedInnerId}"]`)
+            : null;
+          if (existingInner) {
+            try {
+              existingInner.parentNode?.removeChild(existingInner);
+            } catch {
+              // ignore
+            }
+          }
+        }
+      });
+    }
+
+    if (primaryBorderNode) {
+      borderNodes.push(primaryBorderNode);
+    }
+  }
+
+  const processNodeWithInnerContour = (shapeNode, { doubleInnerContour = false, overrideThicknessPx = null } = {}) => {
     try {
       if (
         !shapeNode ||
@@ -898,8 +947,22 @@ const addInnerContoursForShapes = (rootElement) => {
       }
 
       const nodeId = shapeNode.getAttribute("id") || "";
-      if (!nodeId || nodeId.endsWith("-inner")) {
+      // Prevent re-processing generated inner contours (e.g. "-inner" or "-inner-2")
+      if (!nodeId || nodeId.includes("-inner")) {
         return;
+      }
+
+      // Avoid creating duplicate inner contours if they already exist in the markup.
+      if (rootElement?.querySelector) {
+        const innerId = `${nodeId}-inner`;
+        const escapedInnerId = escapeCssIdentifier(innerId);
+        if (escapedInnerId) {
+          const existingInner = rootElement.querySelector(`[id="${escapedInnerId}"]`);
+          if (existingInner) {
+            shapeNode.setAttribute("data-inner-contour-added", "true");
+            return;
+          }
+        }
       }
 
       const thicknessMmAttr = shapeNode.getAttribute("data-shape-thickness-mm");
@@ -924,22 +987,30 @@ const addInnerContoursForShapes = (rootElement) => {
         return;
       }
 
-      const thicknessMmValue = thicknessMmAttr
-        ? parseFloat(thicknessMmAttr)
-        : NaN;
-      let thicknessPx = Number.isFinite(thicknessMmValue)
-        ? thicknessMmValue * PX_PER_MM
+      // If overrideThicknessPx is provided (for border nodes), use it directly.
+      let thicknessPx = Number.isFinite(overrideThicknessPx) && overrideThicknessPx > 0
+        ? overrideThicknessPx
         : NaN;
 
+      // Otherwise, read from element attributes (for shape nodes).
       if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
-        thicknessPx = thicknessData ? parseFloat(thicknessData) : NaN;
+        const thicknessMmValue = thicknessMmAttr
+          ? parseFloat(thicknessMmAttr)
+          : NaN;
+        thicknessPx = Number.isFinite(thicknessMmValue)
+          ? thicknessMmValue * PX_PER_MM
+          : NaN;
 
         if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
-          const styleMatch = styleAttr.match(
-            /stroke-width\s*:\s*([0-9.+-eE]+)\s*(px)?/i
-          );
-          if (styleMatch) {
-            thicknessPx = parseFloat(styleMatch[1]);
+          thicknessPx = thicknessData ? parseFloat(thicknessData) : NaN;
+
+          if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {
+            const styleMatch = styleAttr.match(
+              /stroke-width\s*:\s*([0-9.+-eE]+)\s*(px)?/i
+            );
+            if (styleMatch) {
+              thicknessPx = parseFloat(styleMatch[1]);
+            }
           }
         }
       }
@@ -951,14 +1022,33 @@ const addInnerContoursForShapes = (rootElement) => {
       // Відстань між контурами = точно thickness (без додавання товщини stroke)
       // LaserBurn працює з центром лінії, тому offset = thickness
       const offsetDistancePx = thicknessPx;
-      const innerPathData = buildInnerContourPathData(scope, shapeNode, offsetDistancePx);
-      if (!innerPathData) {
-        return;
-      }
+      const innerPathData = buildInnerContourPathData(
+        scope,
+        shapeNode,
+        offsetDistancePx
+      );
+      if (!innerPathData) return;
 
       const innerNode = createInnerContourElement(shapeNode, innerPathData);
-      if (!innerNode) {
-        return;
+      if (!innerNode) return;
+
+      let secondInnerNode = null;
+      if (doubleInnerContour) {
+        const innerPathData2 = buildInnerContourPathData(
+          scope,
+          shapeNode,
+          offsetDistancePx * 2
+        );
+        if (innerPathData2) {
+          secondInnerNode = createInnerContourElement(shapeNode, innerPathData2);
+          if (secondInnerNode) {
+            const baseId = shapeNode.getAttribute("id");
+            if (baseId) {
+              secondInnerNode.setAttribute("id", `${baseId}-inner-2`);
+            }
+            secondInnerNode.setAttribute("data-inner-contour-level", "2");
+          }
+        }
       }
 
       shapeNode.setAttribute("data-inner-contour-added", "true");
@@ -967,11 +1057,26 @@ const addInnerContoursForShapes = (rootElement) => {
       const parent = shapeNode.parentNode;
       if (parent) {
         parent.insertBefore(innerNode, shapeNode.nextSibling);
+        if (secondInnerNode) {
+          parent.insertBefore(secondInnerNode, innerNode.nextSibling);
+        }
       }
     } catch (error) {
       console.warn("Не вдалося додати внутрішній контур для фігури", error);
     }
-  });
+  };
+
+  shapeNodes.forEach((shapeNode) =>
+    processNodeWithInnerContour(shapeNode, { doubleInnerContour: false })
+  );
+  // For border: keep green overlay on the same geometry as blue,
+  // PLUS add exactly one inner green contour with an inward offset equal to border thickness.
+  borderNodes.forEach((borderNode) =>
+    processNodeWithInnerContour(borderNode, {
+      doubleInnerContour: false,
+      overrideThicknessPx: borderThicknessPx,
+    })
+  );
 };
 
 const normalizeStrokeValue = (value) => {
@@ -1248,7 +1353,6 @@ const collectBorderCandidateNodes = (rootElement, metadata) => {
 
   appendSelector(metadata?.elementId);
   appendSelector("canvaShapeCustom");
-  appendSelector("canvaShape");
 
   const nodes = [];
   selectors.forEach((selector) => {
@@ -1276,8 +1380,64 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
   const processNode = (node) => {
     if (!node || processed.has(node)) return;
     processed.add(node);
+
+    // If the template does not contain an explicit blue outline node (usually `#canvaShape`),
+    // we must keep a blue contour AND a green contour on the same geometry.
+    // In that case, create a blue copy of this border node before recoloring it to green.
+    const hasBlueMainOutline = Boolean(rootElement.querySelector?.('[id="canvaShape"]'));
+    const baseId = node.getAttribute("id") || "";
+    if (!hasBlueMainOutline) {
+      try {
+        const blueCopy = node.cloneNode(true);
+        if (blueCopy && typeof blueCopy.setAttribute === "function") {
+          if (baseId) {
+            blueCopy.setAttribute("id", `${baseId}-blue`);
+          }
+          applyStrokeFillRecursive(blueCopy, OUTLINE_STROKE_COLOR, "none");
+          blueCopy.setAttribute("data-export-border-blue", "true");
+          if (!blueCopy.getAttribute("stroke-width")) {
+            blueCopy.setAttribute("stroke-width", "1");
+          }
+          blueCopy.setAttribute(
+            "stroke-linejoin",
+            blueCopy.getAttribute("stroke-linejoin") || "round"
+          );
+          blueCopy.setAttribute(
+            "stroke-linecap",
+            blueCopy.getAttribute("stroke-linecap") || "round"
+          );
+          blueCopy.setAttribute("vector-effect", "non-scaling-stroke");
+          node.parentNode?.insertBefore(blueCopy, node);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Requirement: keep exactly ONE green contour that sits on the same geometry as the blue contour.
+    // So we recolor the custom border node itself and DO NOT create/keep any extra inner contour.
     applyStrokeFillRecursive(node, stroke, fill);
     node.setAttribute("data-export-border", metadata.mode || "custom");
+
+    // Ensure the inward offset contour (generated as `-inner`) is also green.
+    if (baseId && rootElement?.querySelector) {
+      const innerId = `${baseId}-inner`;
+      const escapedInnerId = escapeCssIdentifier(innerId);
+      const inner = escapedInnerId
+        ? rootElement.querySelector(`[id="${escapedInnerId}"]`)
+        : null;
+      if (inner && typeof inner.setAttribute === "function") {
+        inner.setAttribute("stroke", stroke);
+        inner.setAttribute("fill", fill);
+        inner.setAttribute("stroke-opacity", "1");
+        inner.setAttribute("fill-opacity", "1");
+        if (!inner.getAttribute("stroke-width")) {
+          inner.setAttribute("stroke-width", "1");
+        }
+        inner.setAttribute("vector-effect", "non-scaling-stroke");
+        inner.setAttribute("data-export-border", metadata.mode || "custom");
+      }
+    }
   };
 
   const directMatches = collectBorderCandidateNodes(rootElement, metadata);
@@ -1310,8 +1470,21 @@ const recolorStrokeAttributes = (
 ) => {
   if (!rootElement?.querySelectorAll) return;
 
+  const isOutlineNode = (node) => {
+    if (!node || typeof node.getAttribute !== "function") return false;
+    const id = node.getAttribute("id") || "";
+    if (id === "canvaShape") return true;
+    if (node.getAttribute("data-export-border-blue") === "true") return true;
+    if (id.endsWith("-blue")) return true;
+    return false;
+  };
+
   const elements = rootElement.querySelectorAll("*");
   elements.forEach((node) => {
+    // Only recolor the canvas outer outline. Do not touch regular artwork strokes.
+    if (!isOutlineNode(node)) {
+      return;
+    }
     if (isNodeInsideCutShape(node)) {
       return;
     }
@@ -1440,6 +1613,20 @@ const markCanvasBackgrounds = (rootElement, dims = {}) => {
     rect.setAttribute("stroke", "none");
     rect.removeAttribute("stroke-width");
   });
+
+  // Позначаємо pattern та image елементи, які є фоновими текстурами
+  const defs = rootElement.querySelector("defs");
+  if (defs) {
+    const patterns = Array.from(defs.querySelectorAll("pattern"));
+    patterns.forEach((pattern) => {
+      pattern.setAttribute(BACKGROUND_ATTR, "true");
+      // Також позначаємо всі image всередині pattern
+      const images = Array.from(pattern.querySelectorAll("image"));
+      images.forEach((img) => {
+        img.setAttribute(BACKGROUND_ATTR, "true");
+      });
+    });
+  }
 };
 
 /**
@@ -1453,6 +1640,16 @@ const removeBackgroundsForExport = (rootElement) => {
   const backgrounds = Array.from(rootElement.querySelectorAll(`[${BACKGROUND_ATTR}="true"]`));
   backgrounds.forEach((bg) => {
     bg.parentNode?.removeChild(bg);
+  });
+  
+  // Видаляємо rect які посилаються на pattern (текстурні фони)
+  const rectsWithPattern = Array.from(rootElement.querySelectorAll("rect"));
+  rectsWithPattern.forEach((rect) => {
+    const fill = rect.getAttribute("fill") || "";
+    // Якщо fill посилається на url(#...) - це може бути pattern
+    if (fill.startsWith("url(#")) {
+      rect.parentNode?.removeChild(rect);
+    }
   });
   
   // Також видаляємо всі rect які мають білий fill і покривають весь canvas
@@ -1557,6 +1754,9 @@ const BARCODE_STYLE_PROPS = [
   "stroke-opacity",
 ];
 
+const BARCODE_EXPORT_ATTR = "data-layout-barcode";
+const BARCODE_BAR_ATTR = "data-layout-barcode-bar";
+
 const BARCODE_OUTLINE_COLOR = TEXT_STROKE_COLOR;
 const BARCODE_OUTLINE_WIDTH = 1;
 const BARCODE_OUTLINE_MIN_WIDTH = 0.3;
@@ -1570,10 +1770,20 @@ const outlineBarcodeRects = (rootElement) => {
     if (!node || node.nodeType !== 1) return;
 
     if (isLikelyBarcodeGroupPreview(node)) {
+      // Mark the container so the server can reliably strip/render barcode bars.
+      // This is safe because the server strips only the narrow bar rects (not the whole group).
+      try {
+        node.setAttribute(BARCODE_EXPORT_ATTR, "true");
+      } catch {}
+
       const rects = filterBarcodeRects(collectBarcodeRectDescendants(node));
       if (rects.length) {
         outlinedGroups += 1;
         rects.forEach((rect) => {
+          try {
+            rect.setAttribute(BARCODE_BAR_ATTR, "true");
+          } catch {}
+
           const rectWidth = parseFloat(rect.getAttribute("width") || "0");
           const maxByRectWidth =
             Number.isFinite(rectWidth) && rectWidth > 0
@@ -1637,6 +1847,7 @@ const outlineBarcodeRects = (rootElement) => {
 };
 
 let textOutlineScope = null;
+let warnedPointTextOutlineUnsupported = false;
 
 const ensureTextOutlineScope = () => {
   if (textOutlineScope) {
@@ -1896,18 +2107,34 @@ const convertTextNodeWithPaper = (scope, doc, textNode) => {
 
     if (isPointText) {
       try {
-        const outline = item.toPath(true);
+        const toPathFn = typeof item.toPath === "function" ? item.toPath : null;
+        const createPathFn =
+          typeof item.createPath === "function" ? item.createPath : null;
+
+        const outline = toPathFn
+          ? toPathFn.call(item, true)
+          : createPathFn
+          ? createPathFn.call(item)
+          : null;
+
+        if (!outline && !warnedPointTextOutlineUnsupported) {
+          warnedPointTextOutlineUnsupported = true;
+          console.warn(
+            "Paper.js cannot outline PointText in this build; falling back to stroked <text> elements during PDF export."
+          );
+        }
+
         if (outline) {
-          if (Array.isArray(outline)) {
-            outline.forEach(collectOutlines);
-          } else {
-            collectOutlines(outline);
-          }
+          if (Array.isArray(outline)) outline.forEach(collectOutlines);
+          else collectOutlines(outline);
         }
       } catch (error) {
-        console.error("Paper.js failed to convert PointText to path", error);
+        // This is a non-fatal best-effort conversion step.
+        console.warn("Paper.js failed to convert PointText to path", error);
       }
-      item.remove();
+      try {
+        item.remove();
+      } catch {}
       return;
     }
 
@@ -2050,30 +2277,131 @@ const buildPlacementPreview = (placement) => {
       const doc = parser.parseFromString(svg, "image/svg+xml");
       const svgElement = doc.documentElement.cloneNode(true);
 
+      // Ensure there is always an explicit outer-canvas outline element (`#canvaShape`).
+      // Some templates only provide border nodes (e.g. `#canvaShapeCustom` / `border-*`).
+      // We create a dedicated blue outline from those nodes so the canvas outline never disappears.
+      const ensureCanvaShapeOutline = () => {
+        if (!svgElement?.querySelector) return;
+        if (svgElement.querySelector('[id="canvaShape"]')) {
+          return;
+        }
+
+        // Do NOT pick hole elements as the canvas outline candidate.
+        const findValidCandidate = (selector) => {
+          const nodes = svgElement.querySelectorAll(selector);
+          return Array.from(nodes).find((node) => {
+            const nodeId = node.getAttribute("id") || "";
+            if (nodeId.startsWith("hole-")) return false;
+            if (node.getAttribute(CUT_TYPE_ATTRIBUTE) === HOLE_CUT_TYPE) return false;
+            return true;
+          }) || null;
+        };
+
+        const candidate =
+          findValidCandidate('[id="canvaShapeCustom"]') ||
+          findValidCandidate('[id^="border"]');
+        if (!candidate) {
+          return;
+        }
+
+        try {
+          const BLUE_COLOR = "#0000FF";
+          const clone = candidate.cloneNode(true);
+          if (!clone || typeof clone.setAttribute !== "function") return;
+
+          clone.setAttribute("id", "canvaShape");
+          clone.setAttribute("data-canvas-outline", "true");
+
+          // Apply blue stroke to any geometry within the cloned outline.
+          const applyBlueToGeometry = (node) => {
+            if (!node || node.nodeType !== 1) return;
+            const tag = node.tagName ? node.tagName.toLowerCase() : "";
+            if (GEOMETRY_TAG_SET.has(tag)) {
+              node.setAttribute("stroke", BLUE_COLOR);
+              node.setAttribute("fill", "none");
+              node.setAttribute(
+                "stroke-linejoin",
+                node.getAttribute("stroke-linejoin") || "round"
+              );
+              node.setAttribute(
+                "stroke-linecap",
+                node.getAttribute("stroke-linecap") || "round"
+              );
+              node.setAttribute("vector-effect", "non-scaling-stroke");
+              const style = node.getAttribute("style") || "";
+              const cleaned = style
+                .replace(/stroke\s*:[^;]+;?/gi, "")
+                .replace(/fill\s*:[^;]+;?/gi, "");
+              node.setAttribute(
+                "style",
+                `${cleaned};stroke:${BLUE_COLOR};fill:none;`
+              );
+            }
+            Array.from(node.children || []).forEach(applyBlueToGeometry);
+          };
+          applyBlueToGeometry(clone);
+
+          // Put the outline early in the tree so it renders underneath the green border.
+          svgElement.insertBefore(clone, svgElement.firstChild);
+        } catch {
+          // ignore
+        }
+      };
+
+      ensureCanvaShapeOutline();
+
       const rawWidth = parseFloat(svgElement.getAttribute("width"));
       const rawHeight = parseFloat(svgElement.getAttribute("height"));
       const hasViewBox = !!svgElement.getAttribute("viewBox");
-      // Фарбуємо елементи з id="canvaShape" в синій колір (#0000FF)
+      // Ensure the outer canvas outline stays blue, without recoloring the whole artwork.
       const canvaShapes = svgElement.querySelectorAll('[id="canvaShape"]');
       canvaShapes.forEach((shape) => {
         const BLUE_COLOR = "#0000FF";
-        
-        // Встановлюємо stroke на самому елементі
-        shape.setAttribute("stroke", BLUE_COLOR);
-        
-        // Очищаємо style від старого stroke і додаємо новий
-        const style = shape.getAttribute("style") || "";
-        const newStyle = style.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
-        shape.setAttribute("style", newStyle);
-        
-        // Також застосовуємо до всіх вкладених елементів (якщо це група)
-        const children = shape.querySelectorAll('*');
-        children.forEach(child => {
-             child.setAttribute("stroke", BLUE_COLOR);
-             const childStyle = child.getAttribute("style") || "";
-             const childNewStyle = childStyle.replace(/stroke\s*:[^;]+;?/gi, "") + `;stroke:${BLUE_COLOR};`;
-             child.setAttribute("style", childNewStyle);
+        const tag = shape?.tagName ? shape.tagName.toLowerCase() : "";
+
+        const setBlueStroke = (node) => {
+          if (!node || typeof node.setAttribute !== "function") return;
+          node.setAttribute("data-canvas-outline", "true");
+          node.setAttribute("stroke", BLUE_COLOR);
+          const style = node.getAttribute("style") || "";
+          const cleaned = style
+            .replace(/stroke\s*:[^;]+;?/gi, "")
+            .replace(/fill\s*:[^;]+;?/gi, "");
+          node.setAttribute("style", `${cleaned};stroke:${BLUE_COLOR};fill:none;`);
+          node.setAttribute("fill", "none");
+          node.setAttribute("vector-effect", "non-scaling-stroke");
+        };
+
+        // Skip if this node is a hole element – holes should NOT become the blue outline.
+        const shapeId = shape.getAttribute("id") || "";
+        const isHole =
+          shapeId.startsWith("hole-") ||
+          shape.getAttribute(CUT_TYPE_ATTRIBUTE) === HOLE_CUT_TYPE;
+        if (isHole) {
+          return;
+        }
+
+        if (GEOMETRY_TAG_SET.has(tag)) {
+          setBlueStroke(shape);
+          return;
+        }
+
+        // If it's a group, recolor only ONE geometry descendant that is NOT a hole.
+        const geometries = shape.querySelectorAll?.(
+          "path,rect,circle,ellipse,polygon,polyline,line"
+        );
+        const geometry = Array.from(geometries || []).find((el) => {
+          const elId = el.getAttribute("id") || "";
+          if (elId.startsWith("hole-")) return false;
+          if (el.getAttribute(CUT_TYPE_ATTRIBUTE) === HOLE_CUT_TYPE) return false;
+          // Also skip elements that are nested inside a hole group.
+          const holeParent = el.closest?.(HOLE_NODE_SELECTOR);
+          if (holeParent) return false;
+          return true;
         });
+        if (geometry) {
+          setBlueStroke(geometry);
+        }
       });
       if (hasViewBox) {
         const viewBoxParts = svgElement
@@ -2137,7 +2465,32 @@ const buildPlacementPreview = (placement) => {
         svgElement.setAttribute("preserveAspectRatio", "xMidYMid meet");
       }
 
+      // If border is disabled, remove border nodes so only the single blue canvas outline remains.
+      // Important: do not remove anything inside `#canvaShape` (it may be a clone of border nodes).
+      const stripBorderNodesWhenDisabled = (rootElement) => {
+        if (!rootElement?.querySelectorAll) return;
+        if (customBorder?.mode === "custom") return;
+
+        const canvaShape = rootElement.querySelector?.('#canvaShape') || null;
+        const candidates = Array.from(
+          rootElement.querySelectorAll(
+            '[id="canvaShapeCustom"], [id^="border"], [data-export-border], [data-export-border-blue="true"]'
+          )
+        );
+
+        candidates.forEach((node) => {
+          if (!node || node.nodeType !== 1) return;
+          if (node === canvaShape) return;
+          if (canvaShape && canvaShape.contains(node)) return;
+
+          const parent = node.parentNode;
+          if (parent) parent.removeChild(node);
+        });
+      };
+
       const exportElement = svgElement.cloneNode(true);
+
+      stripBorderNodesWhenDisabled(exportElement);
 
       const viewBoxParts = exportElement
         .getAttribute("viewBox")
@@ -2173,7 +2526,7 @@ const buildPlacementPreview = (placement) => {
       });
 
       // Видаляємо фони для експорту PDF
-      // removeBackgroundsForExport(exportElement);
+      removeBackgroundsForExport(exportElement);
 
       // Конвертуємо елементи з кольором теми в бірюзовий stroke
       if (placement.themeStrokeColor) {
@@ -2186,7 +2539,10 @@ const buildPlacementPreview = (placement) => {
       normalizeHoleShapes(exportElement);
       recolorStrokeAttributes(exportElement, OUTLINE_STROKE_COLOR);
       // convertTextToStrokeOnly(exportElement);
-      addInnerContoursForShapes(exportElement);
+      addInnerContoursForShapes(exportElement, {
+        enableBorderContours: customBorder?.mode === "custom",
+        borderThicknessPx: customBorder?.thicknessPx ?? null,
+      });
       // recolorStrokeAttributes(exportElement);
 
       // Конвертуємо текст у контури, щоб шрифт збігався з оригіналом
@@ -2205,6 +2561,8 @@ const buildPlacementPreview = (placement) => {
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
 
+      stripBorderNodesWhenDisabled(previewElement);
+
       markCanvasBackgrounds(previewElement, {
         width: viewBoxWidth,
         height: viewBoxHeight,
@@ -2221,7 +2579,10 @@ const buildPlacementPreview = (placement) => {
       normalizeHoleShapes(previewElement);
       recolorStrokeAttributes(previewElement, PREVIEW_OUTLINE_COLOR);
       // convertTextToStrokeOnly(previewElement);
-      addInnerContoursForShapes(previewElement);
+      addInnerContoursForShapes(previewElement, {
+        enableBorderContours: customBorder?.mode === "custom",
+        borderThicknessPx: customBorder?.thicknessPx ?? null,
+      });
       // recolorStrokeAttributes(previewElement);
 
       convertTextToOutlinedPaths(previewElement);

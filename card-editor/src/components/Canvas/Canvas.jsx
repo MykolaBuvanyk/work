@@ -16,7 +16,7 @@ import { ensureShapeSvgId } from "../../utils/shapeSvgId";
 
 // Відступи в межах viewport
 const MARGIN = 40;
-const DEFAULT_DESIGN = { width: 1200, height: 800 };
+const DEFAULT_DESIGN = { width: 340.5, height: 227 };
 // Unit conversion (96 DPI)
 const PX_PER_MM = 72 / 25.4;
 const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);

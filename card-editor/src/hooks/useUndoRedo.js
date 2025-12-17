@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { UndoRedoKeyboardHandler } from "../utils/undoRedoKeyboardHandler";
+import { exportCanvas } from "../utils/projectStorage";
 
 export const useUndoRedo = () => {
   const { canvas } = useCanvasContext();
@@ -41,7 +42,7 @@ export const useUndoRedo = () => {
   };
 
   // Покращена функція збереження стану
-  const saveState = useCallback(() => {
+  const saveState = useCallback(async (description) => {
     // МНОЖИННІ ПЕРЕВІРКИ для запобігання збереженню під час undo/redo
     if (!canvas || 
         isSavingRef.current || 
@@ -55,74 +56,31 @@ export const useUndoRedo = () => {
       console.log('Saving canvas state...');
       isSavingRef.current = true;
 
-      // Отримуємо поточний стан канвасу з усіма необхідними властивостями
-      const extraProps = [
-        "shapeType",
-        "baseCornerRadius", 
-        "displayCornerRadiusMm",
-        "cornerRadiusMm",
-        "isCutElement",
-        "cutType",
-        "strokeUniform",
-        "strokeLineJoin",
-        "strokeMiterLimit",
-        "isCircle",
-        "selectable",
-        "evented",
-        "hasControls",
-        "hasBorders",
-        "lockMovementX",
-        "lockMovementY",
-        "lockRotation",
-        "lockScalingX",
-        "lockScalingY",
-        "customProperties",
-        "id",
-        "name",
-        "originalSrc",
-        "filters"
-      ];
+      // Використовуємо exportCanvas з projectStorage для повної сумісності
+      // Отримуємо toolbarState так само як в projectStorage
+      let toolbarState = {};
+      if (window.getCurrentToolbarState) {
+        toolbarState = window.getCurrentToolbarState() || {};
+      }
 
-      const currentState = canvas.toJSON(extraProps);
+      // Експортуємо стан використовуючи стандартну функцію
+      // keepClipPath: true - важливо для збереження подвійних контурів та масок при undo/redo
+      const stateWithMetadata = await exportCanvas(canvas, toolbarState, { keepClipPath: true });
       
-      // Додаємо розширені метадані для полотна
-      const stateWithMetadata = {
-        ...currentState,
-        timestamp: Date.now(),
-        canvasProperties: {
-          // Розміри полотна
-          width: canvas.width,
-          height: canvas.height,
-          // Кольори та фон
-          backgroundColor: canvas.backgroundColor || canvas.get("backgroundColor") || "#ffffff",
-          // Viewport налаштування
-          zoom: canvas.getZoom(),
-          center: canvas.getCenter(),
-          viewportTransform: canvas.viewportTransform ? canvas.viewportTransform.slice() : null,
-          // Додаткові властивості полотна
-          overlayColor: canvas.overlayColor || null,
-          overlayOpacity: canvas.overlayOpacity || null,
-          backgroundImage: canvas.backgroundImage ? {
-            src: canvas.backgroundImage.src,
-            opacity: canvas.backgroundImage.opacity,
-            originX: canvas.backgroundImage.originX,
-            originY: canvas.backgroundImage.originY,
-            scaleX: canvas.backgroundImage.scaleX,
-            scaleY: canvas.backgroundImage.scaleY
-          } : null,
-          // Сітка та направляючі (якщо є)
-          gridEnabled: canvas.gridEnabled || false,
-          snapToGrid: canvas.snapToGrid || false,
-          gridSize: canvas.gridSize || 10,
-          // Інші користувацькі властивості
-          customCanvasProperties: canvas.customCanvasProperties || {}
-        }
-      };
+      if (!stateWithMetadata) {
+        console.error('Failed to export canvas state');
+        return null;
+      }
+
+      // Додаємо timestamp якщо його немає (хоча exportCanvas додає lastSaved)
+      if (!stateWithMetadata.timestamp) {
+        stateWithMetadata.timestamp = Date.now();
+      }
 
       // Перевіряємо, чи відрізняється новий стан від останнього збереженого
       if (lastStateRef.current && statesAreEqual(stateWithMetadata, lastStateRef.current)) {
         console.log('State unchanged, skipping save');
-        return;
+        return stateWithMetadata;
       }
 
       lastStateRef.current = stateWithMetadata;
@@ -144,8 +102,11 @@ export const useUndoRedo = () => {
         console.log(`History updated: ${newHistory.length} states, current index: ${newHistory.length - 1}`);
         return newHistory;
       });
+
+      return stateWithMetadata;
     } catch (error) {
       console.error('Error saving canvas state:', error);
+      return null;
     } finally {
       // КРИТИЧНО: скидаємо прапорець збереження
       setTimeout(() => {
@@ -180,8 +141,12 @@ export const useUndoRedo = () => {
       return;
     }
 
+    // Визначаємо структуру стану (старий формат або новий від exportCanvas)
+    const jsonState = state.json || state;
+    const canvasProps = state.canvasProperties || state; // Fallback для старого формату
+
     console.log('Starting state restoration...', {
-      objectsInState: state.objects ? state.objects.length : 0,
+      objectsInState: jsonState.objects ? jsonState.objects.length : 0,
       currentObjects: canvas.getObjects().length
     });
 
@@ -215,91 +180,82 @@ export const useUndoRedo = () => {
       canvas.clear();
 
       // Завантажуємо новий стан
-      canvas.loadFromJSON(state, () => {
+      canvas.loadFromJSON(jsonState, () => {
         try {
           console.log('JSON loaded successfully, objects:', canvas.getObjects().length);
 
           // Відновлюємо властивості полотна
-          if (state.canvasProperties) {
-            const canvasProps = state.canvasProperties;
-            
-            // Відновлюємо розміри полотна
-            if (canvasProps.width && canvasProps.height) {
-              canvas.setDimensions({
-                width: canvasProps.width,
-                height: canvasProps.height
-              });
-            }
-            
-            // Відновлюємо фон полотна
-            if (canvasProps.backgroundColor) {
-              canvas.set("backgroundColor", canvasProps.backgroundColor);
-            }
-            
-            // Відновлюємо overlay колір якщо є
-            if (canvasProps.overlayColor) {
-              canvas.set("overlayColor", canvasProps.overlayColor);
-            }
-            if (canvasProps.overlayOpacity !== null && canvasProps.overlayOpacity !== undefined) {
-              canvas.set("overlayOpacity", canvasProps.overlayOpacity);
-            }
-            
-            // Відновлюємо фонове зображення якщо є
-            if (canvasProps.backgroundImage) {
-              const bgImg = canvasProps.backgroundImage;
-              fabric.util.loadImage(bgImg.src, (img) => {
-                if (img) {
-                  const fabricImg = new fabric.Image(img, {
-                    opacity: bgImg.opacity || 1,
-                    originX: bgImg.originX || 'left',
-                    originY: bgImg.originY || 'top',
-                    scaleX: bgImg.scaleX || 1,
-                    scaleY: bgImg.scaleY || 1
-                  });
-                  canvas.setBackgroundImage(fabricImg, canvas.renderAll.bind(canvas));
-                }
-              });
-            }
-            
-            // Відновлюємо viewport налаштування
-            if (canvasProps.zoom) {
-              canvas.setZoom(canvasProps.zoom);
-            } else if (currentZoom) {
-              canvas.setZoom(currentZoom);
-            }
+          // Підтримка обох форматів (старого і нового від exportCanvas)
+          
+          // 1. Розміри
+          if (state.width && state.height) {
+             canvas.setDimensions({ width: state.width, height: state.height });
+          } else if (canvasProps.width && canvasProps.height) {
+             canvas.setDimensions({ width: canvasProps.width, height: canvasProps.height });
+          }
 
-            if (canvasProps.viewportTransform) {
-              canvas.setViewportTransform(canvasProps.viewportTransform);
-            } else if (currentVpTransform && (!canvasProps.zoom)) {
-              canvas.setViewportTransform(currentVpTransform);
-            }
-            
-            // Відновлюємо налаштування сітки якщо є
-            if (canvasProps.gridEnabled !== undefined) {
-              canvas.gridEnabled = canvasProps.gridEnabled;
-            }
-            if (canvasProps.snapToGrid !== undefined) {
-              canvas.snapToGrid = canvasProps.snapToGrid;
-            }
-            if (canvasProps.gridSize !== undefined) {
-              canvas.gridSize = canvasProps.gridSize;
-            }
-            
-            // Відновлюємо користувацькі властивості
-            if (canvasProps.customCanvasProperties) {
-              canvas.customCanvasProperties = canvasProps.customCanvasProperties;
-            }
-          } else {
-            // Backward compatibility - старий формат
-            if (state.viewport && state.viewport.zoom) {
-              canvas.setZoom(state.viewport.zoom);
-            } else if (currentZoom) {
-              canvas.setZoom(currentZoom);
-            }
+          // 2. Фон
+          const bgColor = state.backgroundColor || canvasProps.backgroundColor;
+          if (bgColor) {
+            canvas.set("backgroundColor", bgColor);
+          }
+          
+          // 3. Overlay
+          if (canvasProps.overlayColor) {
+            canvas.set("overlayColor", canvasProps.overlayColor);
+          }
+          if (canvasProps.overlayOpacity !== null && canvasProps.overlayOpacity !== undefined) {
+            canvas.set("overlayOpacity", canvasProps.overlayOpacity);
+          }
+          
+          // 4. Background Image
+          const bgImgData = state.backgroundImage || canvasProps.backgroundImage;
+          if (bgImgData) {
+            fabric.util.loadImage(bgImgData.src, (img) => {
+              if (img) {
+                const fabricImg = new fabric.Image(img, {
+                  opacity: bgImgData.opacity || 1,
+                  originX: bgImgData.originX || 'left',
+                  originY: bgImgData.originY || 'top',
+                  scaleX: bgImgData.scaleX || 1,
+                  scaleY: bgImgData.scaleY || 1,
+                  left: bgImgData.left || 0,
+                  top: bgImgData.top || 0
+                });
+                canvas.setBackgroundImage(fabricImg, canvas.renderAll.bind(canvas));
+              }
+            });
+          }
+          
+          // 5. Viewport (Zoom/Pan)
+          // exportCanvas не зберігає viewport явно, тому ми намагаємося зберегти поточний
+          // або відновити зі старого формату якщо є
+          if (canvasProps.zoom) {
+            canvas.setZoom(canvasProps.zoom);
+          } else if (currentZoom) {
+            canvas.setZoom(currentZoom);
+          }
 
-            if (currentVpTransform && (!state.viewport || !state.viewport.zoom)) {
-              canvas.setViewportTransform(currentVpTransform);
-            }
+          if (canvasProps.viewportTransform) {
+            canvas.setViewportTransform(canvasProps.viewportTransform);
+          } else if (currentVpTransform && (!canvasProps.zoom)) {
+            canvas.setViewportTransform(currentVpTransform);
+          }
+          
+          // 6. Grid
+          if (canvasProps.gridEnabled !== undefined) {
+            canvas.gridEnabled = canvasProps.gridEnabled;
+          }
+          if (canvasProps.snapToGrid !== undefined) {
+            canvas.snapToGrid = canvasProps.snapToGrid;
+          }
+          if (canvasProps.gridSize !== undefined) {
+            canvas.gridSize = canvasProps.gridSize;
+          }
+          
+          // 7. Custom Props
+          if (canvasProps.customCanvasProperties) {
+            canvas.customCanvasProperties = canvasProps.customCanvasProperties;
           }
 
           // Переконуємось що всі об'єкти правильно налаштовані
@@ -310,6 +266,38 @@ export const useUndoRedo = () => {
             // Переконуємося що об'єкт видимий
             if (obj && obj.visible === undefined) {
               obj.visible = true;
+            }
+
+            // FIX: Відновлюємо властивості для cut elements (контурів та вирізів)
+            // Це виправляє проблему, коли після undo контур стає звичайним елементом
+            if (obj.isCutElement) {
+              // Для основного контуру (shape)
+              if (obj.cutType === "shape") {
+                obj.set({
+                  hasControls: false,     // Забороняємо зміну розміру
+                  lockScalingX: true,
+                  lockScalingY: true,
+                  lockUniScaling: true,
+                  hasBorders: true,       // Рамка виділення має бути
+                  perPixelTargetFind: true // Щоб клік всередині порожнього контуру не виділяв його
+                });
+              }
+            }
+
+            // FIX: Відновлюємо властивості для canvaShape (обводка/контур полотна)
+            // Користувач повідомив, що ці елементи стають звичайними після undo
+            if ((obj.id === "canvaShape" || obj.id === "canvaShapeCustom") && obj.isBorderShape) {
+              obj.set({
+                selectable: false,
+                evented: false,
+                hasControls: false,
+                lockMovementX: true,
+                lockMovementY: true,
+                lockScalingX: true,
+                lockScalingY: true,
+                lockRotation: true,
+                perPixelTargetFind: false // Для обводки це зазвичай false
+              });
             }
           });
 
@@ -439,7 +427,7 @@ export const useUndoRedo = () => {
   }, [forceUnlockUndoRedo]);
 
   // Функція для ручного збереження стану (коли полотно змінює властивості)
-  const saveCanvasPropertiesState = useCallback((description = 'Canvas properties changed') => {
+  const saveCanvasPropertiesState = useCallback(async (description = 'Canvas properties changed') => {
     if (!canvas) return;
     
     console.log('🎨 Saving canvas properties state:', description);
@@ -448,7 +436,7 @@ export const useUndoRedo = () => {
     isRestoringRef.current = true;
     
     try {
-      const newState = saveState(description);
+      const newState = await saveState(description);
       if (newState) {
         console.log('✅ Canvas properties state saved successfully');
         // Генеруємо кастомну подію для повідомлення компонентів

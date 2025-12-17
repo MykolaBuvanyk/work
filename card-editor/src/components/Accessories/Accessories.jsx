@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { useExcelImport } from "../../hooks/useExcelImport";
 import {
   updateUnsavedSignFromCanvas,
   getAllUnsavedSigns,
@@ -24,6 +25,7 @@ import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
 
 const TopToolbar = ({ className }) => {
   const { canvas } = useCanvasContext();
+  const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
   const [isAccessoriesOpen, setAccessoriesOpen] = useState(false);
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
@@ -518,7 +520,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Delete sign
           </li>
-          <li className={styles.toolbarItem}>
+          <li className={styles.toolbarItem} onClick={importFromExcel}>
             <svg
               width="24"
               height="24"

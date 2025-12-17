@@ -30,6 +30,7 @@
     "jszip": "^3.10.1",
     "jwt-decode": "^4.0.0",
     "mysql2": "^3.15.3",
+    "mongoose": "^8.18.2",
     "paper": "^0.12.18",
     "pdfkit": "^0.15.0",
     "potrace": "^2.1.8",
@@ -60,6 +61,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "prettier": "^3.7.4",
     "vite": "^7.0.4"
   }
 }

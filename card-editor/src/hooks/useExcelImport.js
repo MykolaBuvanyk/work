@@ -22,7 +22,7 @@ const resolveFillColor = (object) => {
           if (candidate) return candidate;
         }
       }
-    } catch {}
+    } catch { }
   }
   return null;
 };
@@ -1175,12 +1175,12 @@ export const useExcelImport = () => {
             .map((row) =>
               Array.isArray(row)
                 ? row
-                    .map((cell) =>
-                      cell === null || cell === undefined
-                        ? ""
-                        : String(cell).trim()
-                    )
-                    .filter(Boolean)
+                  .map((cell) =>
+                    cell === null || cell === undefined
+                      ? ""
+                      : String(cell).trim()
+                  )
+                  .filter(Boolean)
                 : []
             )
             .map((cells) => cells.join(" "))
@@ -1214,6 +1214,7 @@ export const useExcelImport = () => {
               fontSize,
               fill: textColor,
               selectable: true,
+              fontFamily: "Arial",
             });
 
             currentTop += fontSize + lineSpacing;

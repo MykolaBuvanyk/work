@@ -10,6 +10,7 @@ import {
   decorateQrGroup,
   DEFAULT_QR_CELL_SIZE,
 } from "../../utils/qrFabricUtils";
+import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
   // Закриття по клику вне модального окна
@@ -258,6 +259,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       };
       clampQrMinSize(obj);
       canvas.add(obj);
+
+        // Auto-fit newly added QR to canvas (max 60%).
+        try {
+          fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+        } catch {}
+
       // Стабілізуємо координати і активуємо QR, щоб уникнути падінь при рендері контролів
       try {
         if (typeof obj.setCoords === "function") obj.setCoords();
@@ -278,6 +285,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
             if (keepSelection || !auto) canvas.setActiveObject(obj);
             if (typeof obj.setCoords === "function") obj.setCoords();
             clampQrMinSize(obj);
+              try {
+                fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+              } catch {}
             canvas.requestRenderAll();
           } catch {}
         });

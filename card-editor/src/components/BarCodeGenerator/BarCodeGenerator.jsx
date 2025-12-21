@@ -3,6 +3,7 @@ import { useCanvasContext } from "../../contexts/CanvasContext";
 import JsBarcode from "jsbarcode";
 import * as fabric from "fabric";
 import styles from "./BarCodeGenerator.module.css";
+import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const BarCodeGenerator = ({ isOpen, onClose }) => {
   const { canvas, globalColors } = useCanvasContext();
@@ -154,6 +155,12 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         barCodeColor: globalColors?.textColor || "#000000",
       });
       canvas.add(obj);
+
+      // Auto-fit newly added barcode to canvas (max 60%).
+      try {
+        fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+      } catch {}
+
       // Стабілізуємо координати та активуємо перед відмальовкою
       try {
         if (typeof obj.setCoords === "function") obj.setCoords();
@@ -171,6 +178,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
             if (!canvas || !obj) return;
             canvas.setActiveObject(obj);
             if (typeof obj.setCoords === "function") obj.setCoords();
+            try {
+              fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+            } catch {}
             canvas.requestRenderAll();
           } catch {}
         });

@@ -1,0 +1,331 @@
+{
+  "colour16": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": true
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "colour08": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": false
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": false
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "colour32": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": true
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "listAccessories": [
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/CableTies 1.png",
+      "text": "Cable ties",
+      "number": 0.05,
+      "info": "Сable ties, size 3.6 x 140 mm"
+    },
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
+      "text": "Screws",
+      "number": 0.1,
+      "info": "Size 2.9 x 9.5 mm"
+    },
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
+      "text": "Size 2.9 x 13 mm",
+      "number": 0.1,
+      "info": "Size 2.9 x 13 mm"
+    },
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/S-Hook.png",
+      "text": "S-Hooks",
+      "number": 0.25,
+      "info": "Nickel plated"
+    },
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/Keyring 1.png",
+      "text": "Keyrings",
+      "number": 0.7,
+      "info": "30 mm"
+    },
+    {
+      "isAvaible": true,
+      "img": "/images/accessories/Ballchain 1.png",
+      "text": "Ball chains",
+      "number": 0.25,
+      "info": "Nickel plated, length 10 cm"
+    }
+  ],
+  "listThinkness": {
+    "thinkness16": {
+      "isSelect": true,
+      "materialArea": [
+        0.2,
+        0.22
+      ],
+      "engravingArea": [
+        0.15,
+        0.15
+      ],
+      "holesPerimeter": [
+        0.1,
+        0.1
+      ]
+    },
+    "thinkness08": {
+      "isSelect": true,
+      "materialArea": [
+        0.2,
+        0.22
+      ],
+      "engravingArea": [
+        0.15,
+        0.15
+      ],
+      "holesPerimeter": [
+        0.1,
+        0.1
+      ]
+    },
+    "thinkness32": {
+      "isSelect": false,
+      "materialArea": [
+        0.2,
+        0.22
+      ],
+      "engravingArea": [
+        0.15,
+        0.15
+      ],
+      "holesPerimeter": [
+        0.1,
+        0.1
+      ]
+    }
+  },
+  "discount": [
+    {
+      "price": "30 - 50",
+      "discount": "5"
+    },
+    {
+      "price": "50 - 100",
+      "discount": "10"
+    },
+    {
+      "price": "100 - 200",
+      "discount": "15"
+    },
+    {
+      "price": "200 - 500",
+      "discount": "20"
+    },
+    {
+      "price": "500 - 10000",
+      "discount": "25"
+    }
+  ]
+}

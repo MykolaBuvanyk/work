@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
+import { NumericFormat } from "react-number-format";
 import styles from "./ShapeProperties.module.css";
 
 // Semiround: новая логика заокругления — как у прямоугольника (roundedCorners), но с верхней дугой
@@ -81,10 +82,59 @@ const ShapeProperties = ({
   });
 
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
+  const commitHistoryTimerRef = useRef(null);
   // Запам'ятовуємо попередню товщину перед увімкненням Cut, щоб відновити її після вимкнення Cut
   const [prevThicknessBeforeCut, setPrevThicknessBeforeCut] = useState(null);
 
   const activeObject = activeShape || canvas?.getActiveObject();
+
+  // Комміт змін у history (undo/redo) для програмних оновлень властивостей.
+  // Баг: якщо зміна (наприклад fill) не генерує жодної fabric події, то history не пишеться,
+  // і перший undo відкатує до стану ДО додавання об’єкта (фігура зникає повністю).
+  const commitObjectChangeToHistory = (obj, meta = {}, opts = {}) => {
+    if (!canvas || !obj) return;
+    if (canvas.__suspendUndoRedo) return;
+
+    const immediate = opts.immediate === true;
+    const delay = Number.isFinite(opts.delay) ? opts.delay : 150;
+
+    const fire = () => {
+      try {
+        // useUndoRedo слухає object:modified як “одна дія”.
+        canvas.fire("object:modified", {
+          target: obj,
+          isProgrammatic: true,
+          ...meta,
+        });
+      } catch {
+        // no-op
+      }
+    };
+
+    if (commitHistoryTimerRef.current) {
+      clearTimeout(commitHistoryTimerRef.current);
+      commitHistoryTimerRef.current = null;
+    }
+
+    if (immediate) {
+      fire();
+      return;
+    }
+
+    commitHistoryTimerRef.current = setTimeout(() => {
+      commitHistoryTimerRef.current = null;
+      fire();
+    }, delay);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (commitHistoryTimerRef.current) {
+        clearTimeout(commitHistoryTimerRef.current);
+        commitHistoryTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Якщо фігура прийшла з ShapeSelector і ще не визначила режим темної заливки — відключаємо її
   useEffect(() => {
@@ -158,6 +208,50 @@ const ShapeProperties = ({
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const roundMm = (mm) => Math.round((mm || 0) * 10) / 10;
+
+  const getOuterSizePx = (obj) => {
+    if (!obj) return { width: 0, height: 0 };
+    const baseW = Number(obj.width) || 0;
+    const baseH = Number(obj.height) || 0;
+    const scaleX = Math.abs(Number(obj.scaleX) || 1);
+    const scaleY = Math.abs(Number(obj.scaleY) || 1);
+    const strokeWidth = Math.max(0, Number(obj.strokeWidth) || 0);
+    const strokeUniform = obj.strokeUniform === true;
+    const strokeW = strokeUniform ? strokeWidth : strokeWidth * scaleX;
+    const strokeH = strokeUniform ? strokeWidth : strokeWidth * scaleY;
+
+    return {
+      width: Math.max(0, baseW * scaleX + strokeW),
+      height: Math.max(0, baseH * scaleY + strokeH),
+    };
+  };
+
+  const solveScaleForOuterSize = (opts) => {
+    const {
+      targetOuterPx,
+      baseSizePx,
+      strokeWidthPx,
+      strokeUniform,
+      currentScale,
+    } = opts;
+    const base = Math.max(0.000001, Number(baseSizePx) || 0.000001);
+    const sw = Math.max(0, Number(strokeWidthPx) || 0);
+    const target = Math.max(0, Number(targetOuterPx) || 0);
+
+    // outer = base*s + (strokeUniform ? sw : sw*s)
+    // strokeUniform: s = (target - sw) / base
+    // else: s = target / (base + sw)
+    let next;
+    if (strokeUniform) {
+      next = (target - sw) / base;
+    } else {
+      next = target / (base + sw);
+    }
+
+    // Preserve sign separately in caller; clamp to >=0
+    if (!Number.isFinite(next)) next = Math.abs(Number(currentScale) || 1);
+    return Math.max(0, next);
+  };
 
   const storeThicknessMetadata = (obj, thicknessMmValue) => {
     if (!obj) return;
@@ -752,8 +846,8 @@ const ShapeProperties = ({
           );
           storeFillMetadata(activeObject, !isManualCut && hasFill);
           setProperties({
-            width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
-            height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
+            width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
+            height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius:
               activeObject.type === "rect" ||
@@ -826,8 +920,8 @@ const ShapeProperties = ({
         );
         storeFillMetadata(activeObject, !isManualCut && hasFill);
         setProperties({
-          width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
-          height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
+          width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
+          height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
           rotation: Math.round(activeObject.angle || 0),
           cornerRadius:
             activeObject.type === "rect" ||
@@ -890,8 +984,8 @@ const ShapeProperties = ({
     storeThicknessMetadata(activeObject, pxToMm(activeObject.strokeWidth || 0));
     storeFillMetadata(activeObject, !isManualCut && hasFill);
     setProperties({
-      width: roundMm(pxToMm(activeObject.getScaledWidth() || 0)),
-      height: roundMm(pxToMm(activeObject.getScaledHeight() || 0)),
+      width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
+      height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
       rotation: Math.round(activeObject.angle || 0),
       cornerRadius:
         activeObject.type === "rect" ||
@@ -981,47 +1075,62 @@ const ShapeProperties = ({
 
     switch (property) {
       case "width": {
-        const targetPx = Math.max(0, mmToPx(value));
-        // Для halfCircle використовуємо стабільну базу ширини (bbox), щоб уникати стрибка
-        const isHalf = obj.shapeType === "halfCircle";
-        const baseW = isHalf
-          ? obj.__baseBBoxW || obj.width || obj.getScaledWidth() || 1
-          : obj.width || obj.getScaledWidth() || 1;
-        const newScaleX = targetPx / baseW;
+        const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
-          o.set({ scaleX: newScaleX });
-          // Для кругових фігур дзеркалимо масштаб по Y, щоб зберегти 1:1
+          const baseW = Number(o.width) || 1;
+          const sw = Number(o.strokeWidth) || 0;
+          const strokeUniform = o.strokeUniform === true;
+          const signX = (o.scaleX || 1) < 0 ? -1 : 1;
+          const signY = (o.scaleY || 1) < 0 ? -1 : 1;
+
+          const nextAbsScaleX = solveScaleForOuterSize({
+            targetOuterPx,
+            baseSizePx: baseW,
+            strokeWidthPx: sw,
+            strokeUniform,
+            currentScale: o.scaleX || 1,
+          });
+
+          o.set({ scaleX: signX * nextAbsScaleX });
+
+          // Для кругових фігур зберігаємо 1:1 (outer size по ширині керує обома осями)
           if (
             o.isCircle === true ||
             o.type === "circle" ||
             o.shapeType === "round" ||
             o.shapeType === "halfCircle"
           ) {
-            const sx = Math.abs(o.scaleX || 1);
-            o.set({ scaleY: sx });
+            o.set({ scaleY: signY * nextAbsScaleX });
           }
         });
         break;
       }
       case "height": {
-        const targetPx = Math.max(0, mmToPx(value));
-        const isHalf = obj.shapeType === "halfCircle";
-        // Для halfCircle стабільна база висоти (bbox) — це початковий радіус
-        const baseH = isHalf
-          ? obj.__baseBBoxH || obj.height || obj.getScaledHeight() || 1
-          : obj.height || obj.getScaledHeight() || 1;
-        const newScaleY = targetPx / baseH;
+        const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
-          o.set({ scaleY: newScaleY });
-          // Для кругових фігур дзеркалимо масштаб по X, щоб зберегти 1:1
+          const baseH = Number(o.height) || 1;
+          const sw = Number(o.strokeWidth) || 0;
+          const strokeUniform = o.strokeUniform === true;
+          const signX = (o.scaleX || 1) < 0 ? -1 : 1;
+          const signY = (o.scaleY || 1) < 0 ? -1 : 1;
+
+          const nextAbsScaleY = solveScaleForOuterSize({
+            targetOuterPx,
+            baseSizePx: baseH,
+            strokeWidthPx: sw,
+            strokeUniform,
+            currentScale: o.scaleY || 1,
+          });
+
+          o.set({ scaleY: signY * nextAbsScaleY });
+
           if (
             o.isCircle === true ||
             o.type === "circle" ||
             o.shapeType === "round" ||
             o.shapeType === "halfCircle"
           ) {
-            const sy = Math.abs(o.scaleY || 1);
-            o.set({ scaleX: sy });
+            o.set({ scaleX: signX * nextAbsScaleY });
           }
         });
         break;
@@ -1162,13 +1271,28 @@ const ShapeProperties = ({
     if (current && typeof current.setCoords === "function") current.setCoords();
     canvas.requestRenderAll();
 
+    // Створюємо запис в історії для програмних змін.
+    // Для toggle-дій (fill/cut) робимо одразу, щоб undo одразу відміняв саме цей крок.
+    commitObjectChangeToHistory(current || obj, { property, value }, {
+      immediate: property === "fill" || property === "cut",
+      delay: 150,
+    });
+
     // Не сбрасываем ручной режим здесь, чтобы не перетирать ввод пользователя во время печати
     // Режим завершается в onBlur соответствующих инпутов
   };
 
   const incrementValue = (property, increment = 1) => {
     setIsManuallyEditing(true);
-    const currentValue = properties[property];
+    const toNumber = (v, fallback = 0) => {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      const n = parseFloat(String(v ?? "").replace(/,/g, "."));
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const currentValue = toNumber(
+      properties[property],
+      property === "thickness" ? 0.5 : 0
+    );
     const newValue = currentValue + increment;
     if (isCircle && (property === "width" || property === "height")) {
       // Для кола оновлюємо обидва
@@ -1181,7 +1305,15 @@ const ShapeProperties = ({
 
   const decrementValue = (property, decrement = 1) => {
     setIsManuallyEditing(true);
-    const currentValue = properties[property];
+    const toNumber = (v, fallback = 0) => {
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      const n = parseFloat(String(v ?? "").replace(/,/g, "."));
+      return Number.isFinite(n) ? n : fallback;
+    };
+    const currentValue = toNumber(
+      properties[property],
+      property === "thickness" ? 0.5 : 0
+    );
     let newValue;
 
     if (property === "rotation") {
@@ -1197,6 +1329,56 @@ const ShapeProperties = ({
       updateProperty("height", newValue);
     } else {
       updateProperty(property, newValue);
+    }
+  };
+
+  const getFreshPropertyValue = (property) => {
+    const obj =
+      canvas && typeof canvas.getActiveObject === "function"
+        ? canvas.getActiveObject()
+        : null;
+    if (!obj) return 0;
+
+    const isManualCut = !!obj.isCutElement || obj.cutType === "manual";
+    const supportedPathShapes = new Set([
+      "roundedCorners",
+      "rectangle",
+      "hexagon",
+      "octagon",
+      "triangle",
+      "warningTriangle",
+      "semiround",
+      "roundTop",
+      "turnLeft",
+      "turnRight",
+    ]);
+    const fillVal = obj.fill;
+    const hasFill =
+      typeof fillVal === "string" &&
+      fillVal !== "" &&
+      fillVal !== "transparent" &&
+      fillVal !== "none";
+
+    switch (property) {
+      case "width":
+        return roundMm(pxToMm(getOuterSizePx(obj).width));
+      case "height":
+        return roundMm(pxToMm(getOuterSizePx(obj).height));
+      case "rotation":
+        return Math.round(obj.angle || 0);
+      case "cornerRadius":
+        return
+          obj.type === "rect" || supportedPathShapes.has(obj.shapeType)
+            ? getCornerRadiusMmForRounded(obj)
+            : 0;
+      case "thickness":
+        return roundMm(pxToMm(obj.strokeWidth || 2));
+      case "fill":
+        return !isManualCut && hasFill;
+      case "cut":
+        return isManualCut;
+      default:
+        return 0;
     }
   };
 
@@ -1274,37 +1456,36 @@ const ShapeProperties = ({
           <label className={styles.label}>
             Width:
             <div className={styles.inputGroup}>
-              <input
-                type="number"
+              <NumericFormat
+                value={properties.width === 0 ? "" : properties.width}
                 className={styles.input}
-                value={
-                  typeof properties.width === "string"
-                    ? properties.width
-                    : properties.width === 0
-                    ? ""
-                    : properties.width
-                }
-                step={0.1}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  // Дозволяємо вводити будь-який текст, включаючи порожній
-                  if (val === "") {
+                decimalSeparator=","
+                allowedDecimalSeparators={[",", "."]}
+                thousandSeparator={false}
+                allowNegative={false}
+                decimalScale={1}
+                fixedDecimalScale={false}
+                inputMode="decimal"
+                onValueChange={(values, sourceInfo) => {
+                  if (sourceInfo?.source !== "event") return;
+                  if (values.value === "") {
                     setProperties((prev) => ({ ...prev, width: "" }));
-                    updateProperty("width", 0);
-                  } else {
-                    // Дозволяємо вводити коми, крапки, поки не завершено
-                    setProperties((prev) => ({ ...prev, width: val }));
-                    // Якщо це валідне число — оновлюємо розмір
-                    const parsed = parseFloat(val.replace(",", "."));
-                    if (!isNaN(parsed)) {
-                      updateProperty("width", parsed);
-                    }
+                    return;
+                  }
+                  if (typeof values.floatValue === "number") {
+                    updateProperty("width", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() =>
-                  setTimeout(() => setIsManuallyEditing(false), 100)
-                }
+                onBlur={() => {
+                  setProperties((prev) => {
+                    if (prev.width === "") {
+                      return { ...prev, width: getFreshPropertyValue("width") };
+                    }
+                    return prev;
+                  });
+                  setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -1321,33 +1502,38 @@ const ShapeProperties = ({
           <label className={styles.label}>
             Rotate:
             <div className={styles.inputGroup}>
-              <input
-                type="number"
+              <NumericFormat
+                value={properties.rotation === 0 ? "" : properties.rotation}
                 className={styles.input}
-                value={
-                  typeof properties.rotation === "string"
-                    ? properties.rotation
-                    : properties.rotation === 0
-                    ? ""
-                    : properties.rotation
-                }
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "") {
+                decimalSeparator=","
+                thousandSeparator={false}
+                allowNegative={true}
+                decimalScale={0}
+                fixedDecimalScale={false}
+                inputMode="numeric"
+                onValueChange={(values, sourceInfo) => {
+                  if (sourceInfo?.source !== "event") return;
+                  if (values.value === "") {
                     setProperties((prev) => ({ ...prev, rotation: "" }));
-                    updateProperty("rotation", 0);
-                  } else {
-                    setProperties((prev) => ({ ...prev, rotation: val }));
-                    const parsed = parseInt(val);
-                    if (!isNaN(parsed)) {
-                      updateProperty("rotation", parsed);
-                    }
+                    return;
+                  }
+                  if (typeof values.floatValue === "number") {
+                    updateProperty("rotation", Math.trunc(values.floatValue));
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() =>
-                  setTimeout(() => setIsManuallyEditing(false), 100)
-                }
+                onBlur={() => {
+                  setProperties((prev) => {
+                    if (prev.rotation === "") {
+                      return {
+                        ...prev,
+                        rotation: getFreshPropertyValue("rotation"),
+                      };
+                    }
+                    return prev;
+                  });
+                  setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -1364,34 +1550,39 @@ const ShapeProperties = ({
           <label className={styles.label}>
             Height:
             <div className={styles.inputGroup}>
-              <input
-                type="number"
+              <NumericFormat
+                value={properties.height === 0 ? "" : properties.height}
                 className={styles.input}
-                value={
-                  typeof properties.height === "string"
-                    ? properties.height
-                    : properties.height === 0
-                    ? ""
-                    : properties.height
-                }
-                step={0.1}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === "") {
+                decimalSeparator=","
+                allowedDecimalSeparators={[",", "."]}
+                thousandSeparator={false}
+                allowNegative={false}
+                decimalScale={1}
+                fixedDecimalScale={false}
+                inputMode="decimal"
+                onValueChange={(values, sourceInfo) => {
+                  if (sourceInfo?.source !== "event") return;
+                  if (values.value === "") {
                     setProperties((prev) => ({ ...prev, height: "" }));
-                    updateProperty("height", 0);
-                  } else {
-                    setProperties((prev) => ({ ...prev, height: val }));
-                    const parsed = parseFloat(val.replace(",", "."));
-                    if (!isNaN(parsed)) {
-                      updateProperty("height", parsed);
-                    }
+                    return;
+                  }
+                  if (typeof values.floatValue === "number") {
+                    updateProperty("height", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() =>
-                  setTimeout(() => setIsManuallyEditing(false), 100)
-                }
+                onBlur={() => {
+                  setProperties((prev) => {
+                    if (prev.height === "") {
+                      return {
+                        ...prev,
+                        height: getFreshPropertyValue("height"),
+                      };
+                    }
+                    return prev;
+                  });
+                  setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -1415,47 +1606,53 @@ const ShapeProperties = ({
           >
             Corner Radius:
             <div className={styles.inputGroup}>
-              <input
-                type="number"
-                className={styles.input}
+              <NumericFormat
                 value={
-                  typeof properties.cornerRadius === "string"
-                    ? properties.cornerRadius
-                    : properties.cornerRadius === 0
-                    ? ""
-                    : properties.cornerRadius
+                  properties.cornerRadius === 0 ? "" : properties.cornerRadius
                 }
+                className={styles.input}
+                decimalSeparator=","
+                thousandSeparator={false}
+                allowNegative={false}
+                decimalScale={0}
+                fixedDecimalScale={false}
+                inputMode="numeric"
                 disabled={isCircle || !supportsCornerRadius}
                 style={{
                   cursor:
                     isCircle || !supportsCornerRadius ? "not-allowed" : "text",
                 }}
-                step={1}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (!isCircle && supportsCornerRadius) {
-                    if (val === "") {
-                      setProperties((prev) => ({ ...prev, cornerRadius: "" }));
-                      updateProperty("cornerRadius", 0);
-                    } else {
-                      setProperties((prev) => ({ ...prev, cornerRadius: val }));
-                      const parsed = parseInt(val);
-                      if (!isNaN(parsed)) {
-                        updateProperty("cornerRadius", parsed);
-                      }
-                    }
+                onValueChange={(values, sourceInfo) => {
+                  if (sourceInfo?.source !== "event") return;
+                  if (isCircle || !supportsCornerRadius) return;
+                  if (values.value === "") {
+                    setProperties((prev) => ({ ...prev, cornerRadius: "" }));
+                    return;
+                  }
+                  if (typeof values.floatValue === "number") {
+                    updateProperty(
+                      "cornerRadius",
+                      Math.max(0, Math.trunc(values.floatValue))
+                    );
                   }
                 }}
                 onFocus={() =>
-                  !isCircle &&
-                  supportsCornerRadius &&
-                  setIsManuallyEditing(true)
+                  !isCircle && supportsCornerRadius && setIsManuallyEditing(true)
                 }
-                onBlur={() =>
-                  !isCircle &&
-                  supportsCornerRadius &&
-                  setTimeout(() => setIsManuallyEditing(false), 100)
-                }
+                onBlur={() => {
+                  if (!isCircle && supportsCornerRadius) {
+                    setProperties((prev) => {
+                      if (prev.cornerRadius === "") {
+                        return {
+                          ...prev,
+                          cornerRadius: getFreshPropertyValue("cornerRadius"),
+                        };
+                      }
+                      return prev;
+                    });
+                    setTimeout(() => setIsManuallyEditing(false), 100);
+                  }
+                }}
               />
               <div
                 className={styles.arrows}
@@ -1487,72 +1684,43 @@ const ShapeProperties = ({
           <label className={styles.label}>
             Thickness:
             <div className={styles.inputGroup}>
-              <input
-                type="number"
+              <NumericFormat
+                value={properties.thickness === 0.5 ? "" : properties.thickness}
                 className={styles.input}
+                decimalSeparator=","
+                allowedDecimalSeparators={[",", "."]}
+                thousandSeparator={false}
+                allowNegative={false}
+                decimalScale={1}
+                fixedDecimalScale={false}
+                inputMode="decimal"
                 disabled={properties.fill || properties.cut}
                 style={{
                   cursor:
                     properties.fill || properties.cut ? "not-allowed" : "text",
                   opacity: properties.fill || properties.cut ? 0.7 : 1,
                 }}
-                value={
-                  typeof properties.thickness === "string"
-                    ? properties.thickness
-                    : properties.thickness === 0.5
-                    ? ""
-                    : properties.thickness
-                }
-                step={0.5}
-                onKeyDown={(e) => {
-                  if (e.key === ".") {
-                    e.preventDefault();
-                    const el = e.currentTarget;
-                    const start = el.selectionStart ?? el.value.length;
-                    const end = el.selectionEnd ?? start;
-                    const v = String(el.value || "");
-                    if (v.includes(",") || v.includes(".")) return;
-                    const newV = v.slice(0, start) + "," + v.slice(end);
-                    el.value = newV;
-                    try {
-                      el.setSelectionRange(start + 1, start + 1);
-                    } catch {}
-                    try {
-                      const evt = new Event("input", { bubbles: true });
-                      el.dispatchEvent(evt);
-                    } catch {}
-                  }
-                }}
-                onChange={(e) => {
-                  const raw = String(e.target.value || "");
-                  if (raw === "") {
-                    setIsManuallyEditing(true);
+                onValueChange={(values, sourceInfo) => {
+                  if (sourceInfo?.source !== "event") return;
+                  if (values.value === "") {
                     setProperties((prev) => ({ ...prev, thickness: "" }));
-                    updateProperty("thickness", 0.5);
                     return;
                   }
-                  if (/[,\.]$/.test(raw)) {
-                    setIsManuallyEditing(true);
-                    setProperties((prev) => ({ ...prev, thickness: raw }));
-                    return;
+                  if (typeof values.floatValue === "number") {
+                    updateProperty("thickness", values.floatValue);
                   }
-                  const normalized = raw.replace(/,/g, ".");
-                  const num = parseFloat(normalized);
-                  if (isNaN(num)) {
-                    setIsManuallyEditing(true);
-                    setProperties((prev) => ({ ...prev, thickness: raw }));
-                    return;
-                  }
-                  updateProperty("thickness", num);
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={(e) => {
-                  // При потере фокуса коммитим значение: пустое трактуем как 1
-                  const raw = String(e.target.value || "");
-                  const normalized = raw.replace(/,/g, ".");
-                  const num = parseFloat(normalized);
-                  const finalVal = raw.trim() === "" || isNaN(num) ? 0.5 : num;
-                  updateProperty("thickness", finalVal);
+                onBlur={() => {
+                  setProperties((prev) => {
+                    if (prev.thickness === "") {
+                      return {
+                        ...prev,
+                        thickness: getFreshPropertyValue("thickness"),
+                      };
+                    }
+                    return prev;
+                  });
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
               />

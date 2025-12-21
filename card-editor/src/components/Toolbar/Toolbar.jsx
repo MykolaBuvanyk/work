@@ -18,6 +18,7 @@ import IconMenu from "../IconMenu/IconMenu";
 import UploadPreview from "../UploadPreview/UploadPreview";
 import ShapeProperties from "../ShapeProperties/ShapeProperties";
 import { ensureShapeSvgId } from "../../utils/shapeSvgId";
+import { fitObjectToCanvas } from "../../utils/canvasFit";
 import styles from "./Toolbar.module.css";
 import {
   buildQrSvgMarkup,
@@ -183,7 +184,8 @@ const Toolbar = () => {
   const borderStateRef = useRef({
     mode: "default",
     thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
-    customThicknessPx: mmToPx(1.6),
+    // Border button must always create a 2mm custom border (independent from thickness slider)
+    customThicknessPx: mmToPx(2),
     defaultThicknessPx: DEFAULT_BORDER_THICKNESS_PX,
   });
 
@@ -205,9 +207,17 @@ const Toolbar = () => {
   );
 
   const getBorderColor = useCallback(
-    (mode = "default") =>
-      mode === "custom" ? CUSTOM_BORDER_CANVAS_COLOR : BORDER_STROKE_COLOR,
-    []
+    (mode = "default") => {
+      // Default thin outline must always be black (do not theme-color it).
+      if (mode !== "custom") return BORDER_STROKE_COLOR;
+
+      // Custom Border-button outline follows the current theme (strokeColor/textColor).
+      const themeStroke =
+        globalColors?.strokeColor || globalColors?.textColor || null;
+      if (themeStroke) return themeStroke;
+      return CUSTOM_BORDER_CANVAS_COLOR;
+    },
+    [globalColors]
   );
 
   const removeCanvasOutline = useCallback(() => {
@@ -315,7 +325,12 @@ const Toolbar = () => {
       const baseHeight = metrics?.height || 0;
       const centerX = metrics?.centerX || 0;
       const centerY = metrics?.centerY || 0;
-      const strokeForBorder = makeMask ? 0 : effectiveStroke * 1.8; // зменшено в 3 рази
+      // Custom border (created via Border button) must be exactly 2mm; keep default scaling as-is.
+      const strokeForBorder = makeMask
+        ? 0
+        : mode === "custom"
+        ? effectiveStroke
+        : effectiveStroke * 1.8; // зменшено в 3 рази
       if (!clip) {
         const fallback = new fabric.Rect({
           left: centerX,
@@ -658,8 +673,7 @@ const Toolbar = () => {
           ? findBorderObject("custom")
           : findBorderObject("default");
 
-      const desiredCustomPx =
-        borderStateRef.current.customThicknessPx ?? mmToPx(thickness);
+      const desiredCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
       const desiredDefaultPx =
         borderStateRef.current.defaultThicknessPx ??
         DEFAULT_BORDER_THICKNESS_PX;
@@ -737,7 +751,6 @@ const Toolbar = () => {
       replaceBorder,
       setIsBorderActive,
       mmToPx,
-      thickness,
     ]
   );
 
@@ -870,21 +883,6 @@ const Toolbar = () => {
           const parsed = Number(incoming.thickness);
           return Number.isFinite(parsed) ? parsed : prev;
         });
-        const parsed = Number(incoming.thickness);
-        if (Number.isFinite(parsed)) {
-          const customPx = mmToPx(parsed);
-          borderStateRef.current = {
-            ...borderStateRef.current,
-            customThicknessPx: customPx,
-          };
-          if (borderStateRef.current.mode === "custom") {
-            ensureBorderPresence({
-              mode: "custom",
-              thicknessPx: customPx,
-              forceRebuild: true,
-            });
-          }
-        }
       }
 
       if (incoming.globalColors) {
@@ -955,12 +953,8 @@ const Toolbar = () => {
 
       if (incoming.hasBorder !== undefined) {
         const enableCustom = !!incoming.hasBorder;
-        const parsedThickness = Number(incoming.thickness);
-        const thicknessMm = Number.isFinite(parsedThickness)
-          ? parsedThickness
-          : thickness;
-        const customPx =
-          borderStateRef.current.customThicknessPx ?? mmToPx(thicknessMm);
+        // Border is always 2mm and must not depend on thickness.
+        const customPx = mmToPx(2);
         borderStateRef.current = {
           ...borderStateRef.current,
           mode: enableCustom ? "custom" : "default",
@@ -980,7 +974,7 @@ const Toolbar = () => {
           });
           ensureBorderPresence({
             mode: "custom",
-            thicknessPx: borderStateRef.current.customThicknessPx ?? customPx,
+            thicknessPx: customPx,
             color: getBorderColor("custom"),
             forceRebuild: true,
           });
@@ -1063,23 +1057,14 @@ const Toolbar = () => {
 
     const recreateBorder = (incoming = {}) => {
       const enableCustom = !!incoming.hasBorder;
-      const fallbackPx =
-        borderStateRef.current.customThicknessPx ?? mmToPxLocal(thickness);
       const restoredThicknessMm = Number(incoming.thickness);
-      const customThicknessPx = enableCustom
-        ? mmToPxLocal(
-            Number.isFinite(restoredThicknessMm)
-              ? restoredThicknessMm
-              : pxToMmLocal(fallbackPx)
-          )
-        : DEFAULT_BORDER_THICKNESS_PX;
+      const customThicknessPx = enableCustom ? mmToPxLocal(2) : DEFAULT_BORDER_THICKNESS_PX;
 
       if (enableCustom) {
-        setThickness(
-          Number.isFinite(restoredThicknessMm)
-            ? restoredThicknessMm
-            : pxToMmLocal(customThicknessPx)
-        );
+        // Restore thickness only for internal elements; border thickness is fixed.
+        if (Number.isFinite(restoredThicknessMm)) {
+          setThickness(restoredThicknessMm);
+        }
         borderStateRef.current = {
           ...borderStateRef.current,
           mode: "custom",
@@ -1182,6 +1167,15 @@ const Toolbar = () => {
 
       // Викликаємо updateSize для перебудови clipPath
       setTimeout(() => {
+        const hasApprovedCustomShape = !!toolbarState.isCustomShapeApplied;
+        const hasClipPath = !!canvas.clipPath;
+        if (hasApprovedCustomShape && hasClipPath) {
+          try {
+            setIsCustomShapeApplied(true);
+          } catch {}
+          canvas.requestRenderAll();
+          return;
+        }
         if (updateSize) {
           updateSize({
             widthMm: widthMm,
@@ -1243,11 +1237,10 @@ const Toolbar = () => {
     ) {
       ensureBorderPresence({
         mode: "custom",
-        thicknessPx:
-          borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
       });
     }
-  }, [ensureBorderPresence, findBorderObject, mmToPx, thickness]);
+  }, [ensureBorderPresence, findBorderObject, mmToPx]);
 
   useEffect(() => {
     if (!canvas || typeof canvas.on !== "function") {
@@ -2153,6 +2146,19 @@ const Toolbar = () => {
         if (isShapePropertiesOpen) setIsShapePropertiesOpen(false);
         canvas.discardActiveObject();
         canvas.requestRenderAll();
+        return;
+      }
+      if (t && t.isQRCode) {
+        try {
+          canvas.setActiveObject(t);
+        } catch {}
+        try {
+          setActiveObject(t);
+        } catch {}
+        try {
+          if (isShapePropertiesOpen) setIsShapePropertiesOpen(false);
+        } catch {}
+        setIsQrOpen(true);
       }
     };
     canvas.on("mouse:dblclick", onDblClick);
@@ -2964,8 +2970,72 @@ const Toolbar = () => {
 
     // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
     if (canvas && effectiveShapeType) {
+      const repositionObjectsForResize = (prevW, prevH, nextW, nextH) => {
+        if (!canvas || typeof canvas.getObjects !== "function") return;
+        const oldW = Number(prevW) || 0;
+        const oldH = Number(prevH) || 0;
+        const newW = Number(nextW) || 0;
+        const newH = Number(nextH) || 0;
+        if (oldW <= 0 || oldH <= 0 || newW <= 0 || newH <= 0) return;
+        const sx = newW / oldW;
+        const sy = newH / oldH;
+        if (!Number.isFinite(sx) || !Number.isFinite(sy)) return;
+        if (Math.abs(sx - 1) < 1e-6 && Math.abs(sy - 1) < 1e-6) return;
+
+        const objects = canvas.getObjects() || [];
+        objects.forEach((obj) => {
+          if (!obj) return;
+
+          // Skip system/service objects.
+          if (obj.isBorderShape || obj.isBorderMask || obj.isCanvasOutline) return;
+          if (obj.isCutElement && obj.cutType === "hole") return;
+          if (typeof obj.id === "string" && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
+
+          const left = obj.left;
+          const top = obj.top;
+          if (typeof left !== "number" || typeof top !== "number") return;
+
+          try {
+            obj.set({ left: left * sx, top: top * sy });
+            obj.setCoords?.();
+          } catch {}
+        });
+      };
+
+      const enforceAutoFitObjects = () => {
+        if (!canvas || typeof canvas.getObjects !== "function") return;
+        const objects = canvas.getObjects() || [];
+        objects.forEach((obj) => {
+          if (!obj) return;
+          // Skip system/service objects.
+          if (obj.isBorderShape || obj.isBorderMask || obj.isCanvasOutline) return;
+          if (obj.isCutElement && obj.cutType === "hole") return;
+          if (
+            typeof obj.id === "string" &&
+            obj.id.startsWith(`${HOLE_ID_PREFIX}-`)
+          )
+            return;
+
+          const isCandidate =
+            !!obj.fromIconMenu ||
+            !!obj.isQRCode ||
+            !!obj.isBarCode ||
+            !!obj.shapeSvgId ||
+            !!obj.shapeType ||
+            !!obj.isUploadedImage;
+
+          if (!isCandidate) return;
+
+          try {
+            fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+          } catch {}
+        });
+      };
+
       // Спеціальна обробка для адаптивного трикутника
       if (effectiveShapeType === "adaptiveTriangle") {
+        const prevW = canvas.getWidth?.() || canvas.width || 0;
+        const prevH = canvas.getHeight?.() || canvas.height || 0;
         const refW = mmToPx(190);
         const refH = mmToPx(165);
         const refRatio = refW / refH;
@@ -3000,6 +3070,12 @@ const Toolbar = () => {
 
         // Встановлюємо розміри canvas
         canvas.setDimensions({ width: finalWidth, height: finalHeight });
+
+  // Keep elements in the same relative position after resize.
+  repositionObjectsForResize(prevW, prevH, finalWidth, finalHeight);
+
+          // Keep certain newly-added elements within 60% of canvas after resize.
+          enforceAutoFitObjects();
 
         // Створюємо clipPath з оновленими розмірами
         const triData = getAdaptiveTriangleData(finalWidth, finalHeight);
@@ -3098,7 +3174,7 @@ const Toolbar = () => {
           ensureBorderPresence({
             mode: "custom",
             thicknessPx:
-              borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+              borderStateRef.current.customThicknessPx ?? mmToPx(2),
             forceRebuild: true,
           });
         }
@@ -3171,8 +3247,17 @@ const Toolbar = () => {
       const height = mmToPx(effHeightMm);
       const cr = Math.max(0, Number(mmToPx(cornerRadiusMm)) || 0);
 
+      const prevW = canvas.getWidth?.() || canvas.width || 0;
+      const prevH = canvas.getHeight?.() || canvas.height || 0;
+
       // Встановлюємо нові розміри canvas
       canvas.setDimensions({ width, height });
+
+      // Keep elements in the same relative position after resize.
+      repositionObjectsForResize(prevW, prevH, width, height);
+
+      // Keep certain newly-added elements within 60% of canvas after resize.
+      enforceAutoFitObjects();
 
       // Створюємо новий clipPath з новими розмірами
       let newClipPath = null;
@@ -3905,7 +3990,7 @@ const Toolbar = () => {
         ensureBorderPresence({
           mode: "custom",
           thicknessPx:
-            borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+            borderStateRef.current.customThicknessPx ?? mmToPx(2),
           forceRebuild: true,
         });
       }
@@ -4162,10 +4247,37 @@ const Toolbar = () => {
       canvas.renderAll();
     } else if (canvas) {
       // Якщо нічого не вибрано і немає фігури - просто змінюємо розміри canvas
+      const prevW = canvas.getWidth?.() || canvas.width || 0;
+      const prevH = canvas.getHeight?.() || canvas.height || 0;
+      const nextW = mmToPx(widthMm);
+      const nextH = mmToPx(heightMm);
       canvas.setDimensions({
-        width: mmToPx(widthMm),
-        height: mmToPx(heightMm),
+        width: nextW,
+        height: nextH,
       });
+
+      // Keep elements in the same relative position after resize.
+      try {
+        const oldW = Number(prevW) || 0;
+        const oldH = Number(prevH) || 0;
+        const newW = Number(nextW) || 0;
+        const newH = Number(nextH) || 0;
+        if (oldW > 0 && oldH > 0 && newW > 0 && newH > 0) {
+          const sx = newW / oldW;
+          const sy = newH / oldH;
+          if (Number.isFinite(sx) && Number.isFinite(sy)) {
+            (canvas.getObjects?.() || []).forEach((obj) => {
+              if (!obj) return;
+              if (obj.isBorderShape || obj.isBorderMask || obj.isCanvasOutline) return;
+              if (obj.isCutElement && obj.cutType === "hole") return;
+              if (typeof obj.id === "string" && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
+              if (typeof obj.left !== "number" || typeof obj.top !== "number") return;
+              obj.set?.({ left: obj.left * sx, top: obj.top * sy });
+              obj.setCoords?.();
+            });
+          }
+        }
+      } catch {}
       updateCanvasOutline();
 
       // Перерахунок і перевстановлення дирок після зміни розміру + лог відступу
@@ -4340,12 +4452,11 @@ const Toolbar = () => {
     ) {
       ensureBorderPresence({
         mode: "custom",
-        thicknessPx:
-          borderStateRef.current.customThicknessPx ?? mmToPx(thickness),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
         forceRebuild: true,
       });
     }
-  }, [ensureBorderPresence, findBorderObject, mmToPx, thickness]);
+  }, [ensureBorderPresence, findBorderObject, mmToPx]);
 
   // --- Hexagon / Octagon inner border helpers (rounded polygon sampling) ---
   const sampleRoundedPolygon = (basePts, r, segments) => {
@@ -5161,14 +5272,7 @@ const Toolbar = () => {
 
   // Оновлення товщини обводки
   const updateThickness = (value) => {
-    const customThicknessPx = mmToPx(value);
-    borderStateRef.current = {
-      ...borderStateRef.current,
-      mode: "custom",
-      customThicknessPx,
-      thicknessPx: customThicknessPx,
-    };
-    setIsBorderActive(true);
+    // Thickness slider must not toggle Border and must not affect border thickness.
 
     // Пункт 3 (товщина) стосується лише внутрішніх бордерів/елементів картки, не змінює активні об'єкти
     // Якщо вже додано внутрішній бордер – оновлюємо його товщину без потреби вимикати/вмикати
@@ -5198,18 +5302,6 @@ const Toolbar = () => {
           vLine.setCoords();
         }
       }
-      ensureBorderPresence({
-        mode: "default",
-        thicknessPx:
-          borderStateRef.current.defaultThicknessPx ??
-          DEFAULT_BORDER_THICKNESS_PX,
-        color: getBorderColor("default"),
-      });
-      ensureBorderPresence({
-        mode: "custom",
-        thicknessPx: customThicknessPx,
-        forceRebuild: true,
-      });
       // Також оновлюємо позицію текстів у circleWithLine при зміні товщини
       if (currentShapeType === "circleWithLine") {
         const diameterPx = canvas.width;
@@ -5489,7 +5581,10 @@ const Toolbar = () => {
 
       if (obj.isBorderShape) {
         const mode = obj.cardBorderMode === "custom" ? "custom" : "default";
-        const displayStroke = getBorderColor(mode);
+        // Use the newly chosen theme color immediately (state update is async).
+        // IMPORTANT: default thin outline stays black.
+        const displayStroke =
+          mode === "custom" ? textColor || "#000000" : "#000000";
         const exportStroke =
           mode === "custom" ? CUSTOM_BORDER_EXPORT_COLOR : displayStroke;
         const exportFillValue =
@@ -5817,8 +5912,7 @@ const Toolbar = () => {
       color: getBorderColor("default"),
     });
 
-    const storedCustomPx =
-      borderStateRef.current.customThicknessPx ?? mmToPx(thickness);
+    const storedCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
 
     const border = ensureBorderPresence({
       mode: "custom",
@@ -8998,7 +9092,7 @@ const Toolbar = () => {
             />
           </span>
           <span
-            onClick={() => handleColorPick(6, "#FFFFFF", "#00FF00", "solid")}
+            onClick={() => handleColorPick(6, "#FFFFFF", "#018001", "solid")}
             title="Green / White"
           >
             <A7
@@ -9257,19 +9351,12 @@ const Toolbar = () => {
                 }
               } catch {}
 
+              // Tag as uploaded element so resize auto-fit can pick it up.
+              try {
+                obj.set && obj.set({ isUploadedImage: true });
+              } catch {}
+
               // Center and scale
-              const bounds = obj.getBoundingRect
-                ? obj.getBoundingRect()
-                : { width: 100, height: 100 };
-              const maxWidth = 300,
-                maxHeight = 300;
-              if (bounds.width > maxWidth || bounds.height > maxHeight) {
-                const s = Math.min(
-                  maxWidth / bounds.width,
-                  maxHeight / bounds.height
-                );
-                obj.scale(s);
-              }
               obj.set({
                 left: canvas.width / 2,
                 top: canvas.height / 2,
@@ -9279,7 +9366,13 @@ const Toolbar = () => {
                 hasControls: true,
                 hasBorders: true,
               });
+
               canvas.add(obj);
+
+              // Auto-fit uploaded element to canvas (max 60%).
+              try {
+                fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+              } catch {}
               try {
                 obj.setCoords && obj.setCoords();
               } catch {}

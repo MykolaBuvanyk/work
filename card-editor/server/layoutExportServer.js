@@ -1048,6 +1048,39 @@ app.use(
 
 app.use(express.json({ limit: '50mb' }));
 
+// Optional: receive client diagnostics and print them in server terminal.
+// Enable with: ENABLE_CLIENT_DIAG_LOGS=1
+app.post('/api/client-log', (req, res) => {
+  try {
+    if (String(process.env.ENABLE_CLIENT_DIAG_LOGS || '') !== '1') {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    const payload = req.body;
+    const entries = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.entries)
+        ? payload.entries
+        : [payload];
+
+    entries
+      .filter(Boolean)
+      .slice(0, 200)
+      .forEach((entry) => {
+        try {
+          console.error('[CLIENT_DIAG]', entry);
+        } catch {}
+      });
+
+    return res.json({ ok: true, count: entries.length });
+  } catch (e) {
+    try {
+      console.error('[CLIENT_DIAG] handler error', e);
+    } catch {}
+    return res.status(500).json({ ok: false });
+  }
+});
+
 app.use('/api', router);
 
 // API error handler (must be after routes)

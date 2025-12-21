@@ -219,7 +219,8 @@ const pathItemToClipperInput = (scope, pathItem) => {
 
 const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
   if (!scope || !ClipperLib || !ClipperLib.ClipperOffset) return null;
-  if (!Number.isFinite(offsetDistancePx) || offsetDistancePx <= 0) return null;
+  // Positive = inward offset, Negative = outward offset.
+  if (!Number.isFinite(offsetDistancePx) || offsetDistancePx === 0) return null;
 
   try {
     scope.project.clear();
@@ -313,6 +314,50 @@ const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
     } catch {}
     return null;
   }
+};
+
+const createOffsetContourElement = (shapeNode, pathData, { id, isInner }) => {
+  if (!shapeNode || !pathData) return null;
+  if (typeof document === "undefined") return null;
+
+  const ns = shapeNode.namespaceURI || "http://www.w3.org/2000/svg";
+  const node = document.createElementNS(ns, "path");
+
+  Array.from(shapeNode.attributes || []).forEach(({ name, value }) => {
+    if (name === "id") return;
+    if (GEOMETRY_ATTRIBUTES_TO_SKIP.has(name)) return;
+    node.setAttribute(name, value);
+  });
+
+  if (id) {
+    node.setAttribute("id", id);
+  }
+
+  node.setAttribute("d", pathData);
+  node.setAttribute("fill", "none");
+  node.removeAttribute("transform");
+
+  sanitizeInnerContourStyle(node);
+  applyContourStrokeWidth(node);
+
+  if (isInner) {
+    node.setAttribute("data-inner-contour", "true");
+    node.removeAttribute("data-inner-contour-added");
+  } else {
+    node.setAttribute("data-outer-contour", "true");
+    node.removeAttribute("data-inner-contour");
+  }
+
+  node.setAttribute("stroke", TEXT_STROKE_COLOR);
+  node.setAttribute("stroke-opacity", "1");
+  if (!node.getAttribute("stroke-linejoin")) {
+    node.setAttribute("stroke-linejoin", "round");
+  }
+  if (!node.getAttribute("stroke-linecap")) {
+    node.setAttribute("stroke-linecap", "round");
+  }
+
+  return node;
 };
 
 const sanitizeInnerContourStyle = (node) => {
@@ -520,42 +565,11 @@ const normalizeHoleShapes = (rootElement) => {
 };
 
 const createInnerContourElement = (shapeNode, innerPathData) => {
-  if (!shapeNode || !innerPathData) return null;
-  if (typeof document === "undefined") return null;
-
-  const ns = shapeNode.namespaceURI || "http://www.w3.org/2000/svg";
-  const innerNode = document.createElementNS(ns, "path");
-
-  Array.from(shapeNode.attributes || []).forEach(({ name, value }) => {
-    if (name === "id") return;
-    if (GEOMETRY_ATTRIBUTES_TO_SKIP.has(name)) return;
-    innerNode.setAttribute(name, value);
+  const baseId = shapeNode?.getAttribute?.("id") || "";
+  return createOffsetContourElement(shapeNode, innerPathData, {
+    id: baseId ? `${baseId}-inner` : null,
+    isInner: true,
   });
-
-  const baseId = shapeNode.getAttribute("id");
-  if (baseId) {
-    innerNode.setAttribute("id", `${baseId}-inner`);
-  }
-
-  innerNode.setAttribute("d", innerPathData);
-  innerNode.setAttribute("data-inner-contour", "true");
-  innerNode.removeAttribute("data-inner-contour-added");
-  innerNode.setAttribute("fill", "none");
-  innerNode.removeAttribute("transform");
-
-  sanitizeInnerContourStyle(innerNode);
-  applyContourStrokeWidth(innerNode);
-
-  innerNode.setAttribute("stroke", TEXT_STROKE_COLOR);
-  innerNode.setAttribute("stroke-opacity", "1");
-  if (!innerNode.getAttribute("stroke-linejoin")) {
-    innerNode.setAttribute("stroke-linejoin", "round");
-  }
-  if (!innerNode.getAttribute("stroke-linecap")) {
-    innerNode.setAttribute("stroke-linecap", "round");
-  }
-
-  return innerNode;
 };
 const TEXT_OUTLINE_WIDTH = 0.5; // Зменшено для тонших ліній
 const TEXT_OUTLINE_HALF_WIDTH = TEXT_OUTLINE_WIDTH / 2;
@@ -1019,30 +1033,58 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         return;
       }
 
-      // Відстань між контурами = точно thickness (без додавання товщини stroke)
-      // LaserBurn працює з центром лінії, тому offset = thickness
+      // IMPORTANT: account for stroke thickness so the resulting outer size matches UI.
+      // We treat the original geometry as the stroke centerline.
+      // Therefore: outer boundary = +thickness/2, inner boundary = -thickness/2.
+      // To keep the gap between contours exactly = thickness, we:
+      // 1) replace the original node with an outward-offset contour (+thickness/2)
+      // 2) generate the inner contour inward by full thickness from that outer contour.
+      const halfThicknessPx = thicknessPx / 2;
+      if (!Number.isFinite(halfThicknessPx) || halfThicknessPx <= 0) return;
+
+      const parent = shapeNode.parentNode;
+      let workingNode = shapeNode;
+
+      const outerPathData = buildInnerContourPathData(
+        scope,
+        workingNode,
+        -halfThicknessPx
+      );
+
+      if (outerPathData && parent) {
+        const outerNode = createOffsetContourElement(workingNode, outerPathData, {
+          id: nodeId || null,
+          isInner: false,
+        });
+        if (outerNode) {
+          parent.replaceChild(outerNode, workingNode);
+          workingNode = outerNode;
+        }
+      }
+
+      // Gap between contours must equal thickness.
       const offsetDistancePx = thicknessPx;
       const innerPathData = buildInnerContourPathData(
         scope,
-        shapeNode,
+        workingNode,
         offsetDistancePx
       );
       if (!innerPathData) return;
 
-      const innerNode = createInnerContourElement(shapeNode, innerPathData);
+      const innerNode = createInnerContourElement(workingNode, innerPathData);
       if (!innerNode) return;
 
       let secondInnerNode = null;
       if (doubleInnerContour) {
         const innerPathData2 = buildInnerContourPathData(
           scope,
-          shapeNode,
+          workingNode,
           offsetDistancePx * 2
         );
         if (innerPathData2) {
-          secondInnerNode = createInnerContourElement(shapeNode, innerPathData2);
+          secondInnerNode = createInnerContourElement(workingNode, innerPathData2);
           if (secondInnerNode) {
-            const baseId = shapeNode.getAttribute("id");
+            const baseId = workingNode.getAttribute("id");
             if (baseId) {
               secondInnerNode.setAttribute("id", `${baseId}-inner-2`);
             }
@@ -1051,12 +1093,11 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         }
       }
 
-      shapeNode.setAttribute("data-inner-contour-added", "true");
-      applyContourStrokeWidth(shapeNode, true);
+      workingNode.setAttribute("data-inner-contour-added", "true");
+      applyContourStrokeWidth(workingNode, true);
 
-      const parent = shapeNode.parentNode;
       if (parent) {
-        parent.insertBefore(innerNode, shapeNode.nextSibling);
+        parent.insertBefore(innerNode, workingNode.nextSibling);
         if (secondInnerNode) {
           parent.insertBefore(secondInnerNode, innerNode.nextSibling);
         }

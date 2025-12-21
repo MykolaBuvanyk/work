@@ -3,6 +3,8 @@ import {
   removeBlackBackgroundRects,
   buildQrSvgMarkup,
   computeQrVectorData,
+  QR_DISPLAY_LAYER_ID,
+  QR_EXPORT_LAYER_ID,
   DEFAULT_QR_CELL_SIZE
 } from "./qrFabricUtils";
 // import { decorateQrGroup } from "./qrFabricUtils";
@@ -353,6 +355,24 @@ export async function generateCanvasPreviews(canvas, options = {}) {
   let previewSvg = "";
   let previewPng = "";
 
+  const pngMultiplier =
+    typeof options.pngMultiplier === "number" && isFinite(options.pngMultiplier)
+      ? options.pngMultiplier
+      : 0.5;
+
+  const maxPngDimension =
+    typeof options.maxPngDimension === "number" &&
+    isFinite(options.maxPngDimension) &&
+    options.maxPngDimension > 0
+      ? options.maxPngDimension
+      : null;
+
+  const baseMaxSide = Math.max(1, Number(width) || 1, Number(height) || 1);
+  const capMultiplier =
+    maxPngDimension != null ? Math.max(0.1, maxPngDimension / baseMaxSide) : null;
+  const effectivePngMultiplier =
+    capMultiplier != null ? Math.max(0.1, Math.min(pngMultiplier, capMultiplier)) : pngMultiplier;
+
   try {
     if (canvas.toSVG) {
       const borderTweaks = [];
@@ -428,14 +448,14 @@ export async function generateCanvasPreviews(canvas, options = {}) {
     }
 
     if (canvas.toDataURL) {
-      previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+      previewPng = canvas.toDataURL({ format: "png", multiplier: effectivePngMultiplier });
       console.log("Generated PNG preview as fallback");
     }
   } catch (error) {
     console.error("Failed to generate preview:", error);
     try {
       if (canvas.toDataURL) {
-        previewPng = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+        previewPng = canvas.toDataURL({ format: "png", multiplier: effectivePngMultiplier });
         console.log("Generated PNG preview as backup after SVG error");
       }
     } catch (pngError) {
@@ -1095,6 +1115,14 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       const previews = await generateCanvasPreviews(canvas, {
         width,
         height,
+        pngMultiplier:
+          typeof options.previewPngMultiplier === "number"
+            ? options.previewPngMultiplier
+            : undefined,
+        maxPngDimension:
+          typeof options.previewPngMaxDimension === "number"
+            ? options.previewPngMaxDimension
+            : undefined,
       });
       previewSvg = previews.previewSvg;
       previewPng = previews.previewPng;
@@ -1337,9 +1365,16 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
     // Витягуємо оригінальний колір QR коду
     // Пріоритет: qrColor > display-layer fill > export-layer stroke > themeTextColor
     let originalColor = null;
-    
+    const isUsableColor = (c) => {
+      if (typeof c !== 'string') return false;
+      const v = c.trim().toLowerCase();
+      if (!v) return false;
+      if (v === 'none') return false;
+      if (v === 'transparent') return false;
+      return true;
+    };
     // 1. Спочатку перевіряємо збережений qrColor
-    if (oldObj.qrColor) {
+    if (isUsableColor(oldObj.qrColor)) {
       originalColor = oldObj.qrColor;
       console.log('[regenerateQrCode] Використовуємо збережений qrColor:', originalColor);
     }
@@ -1425,16 +1460,25 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
       strokeColor: originalColor,
     });
     
+    
     // Динамічний імпорт fabric
-    const fabric = await import('fabric');
+    const fabricModule = await import('fabric');
+    const fabricLib = fabricModule?.fabric || fabricModule?.default || fabricModule;
+    
     
     // Завантажуємо SVG
-    const result = await fabric.loadSVGFromString(svgText);
+    if (!fabricLib || typeof fabricLib.loadSVGFromString !== 'function') {
+      throw new Error('Fabric loadSVGFromString is not available');
+    }
+    const result = await fabricLib.loadSVGFromString(svgText);
     let newObj;
     if (result?.objects?.length === 1) {
       newObj = result.objects[0];
     } else {
-      newObj = fabric.util.groupSVGElements(result.objects || [], result.options || {});
+      if (!fabricLib.util?.groupSVGElements) {
+        throw new Error('Fabric util.groupSVGElements is not available');
+      }
+      newObj = fabricLib.util.groupSVGElements(result.objects || [], result.options || {});
     }
     
     // Застосовуємо decorateQrGroup
@@ -1499,7 +1543,30 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
 
     // Збираємо QR коди для перегенерації окремо
     const qrCodesToRegenerate = [];
+    const isQrLayerChild = (child) =>
+      !!child && (child.id === QR_DISPLAY_LAYER_ID || child.id === QR_EXPORT_LAYER_ID);
 
+    const objectLooksLikeQrGroup = (obj) => {
+      if (!obj) return false;
+      if (obj.isQRCode === true) return true;
+      if (obj.data && obj.data.isQRCode === true) return true;
+      if (obj.type === "group" && typeof obj.getObjects === "function") {
+        try {
+          const children = obj.getObjects() || [];
+          return children.some(isQrLayerChild);
+        } catch {}
+      }
+      return false;
+    };
+
+    const getQrTextFromObject = (obj) => {
+      if (!obj) return null;
+      if (typeof obj.qrText === "string" && obj.qrText.trim()) return obj.qrText.trim();
+      if (obj.data && typeof obj.data.qrText === "string" && obj.data.qrText.trim()) {
+        return obj.data.qrText.trim();
+      }
+      return null;
+    };
     for (let index = 0; index < objects.length; index++) {
       const obj = objects[index];
       
@@ -1530,14 +1597,17 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
       });
 
       // Збираємо QR коди для перегенерації (видалимо старі та додамо нові)
-      if (obj.isQRCode && obj.qrText) {
-        console.log('[restoreElementProperties] Знайдено QR код для перегенерації:', obj.qrText);
-        qrCodesToRegenerate.push({
-          oldObj: obj,
-          qrText: obj.qrText,
-          index: index
-        });
-      }
+      try {
+        const qrText = getQrTextFromObject(obj);
+        if (qrText && objectLooksLikeQrGroup(obj)) {
+          console.log('[restoreElementProperties] Знайдено QR код для перегенерації:', qrText);
+          qrCodesToRegenerate.push({
+            oldObj: obj,
+            qrText,
+            index: index,
+          });
+        }
+      } catch {}
 
       // Restore Barcode functionality
       if (obj.isBarCode && obj.barCodeText && obj.barCodeType) {

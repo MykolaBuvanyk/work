@@ -8,6 +8,7 @@ import {
 } from "../ShapeProperties/ShapeProperties";
 import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
 import { ensureShapeSvgId } from "../../utils/shapeSvgId";
+import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const DEFAULT_SHAPE_FILL = "#FFFFFF";
 const DEFAULT_SHAPE_STROKE = "#000000";
@@ -62,6 +63,11 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   const addObjectToCanvas = (obj) => {
     if (!canvas || !obj) return;
     canvas.add(obj);
+
+    try {
+      fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
+    } catch {}
+
     if (typeof obj.setCoords === "function") obj.setCoords();
     canvas.setActiveObject(obj);
     if (obj.bringToFront) obj.bringToFront();

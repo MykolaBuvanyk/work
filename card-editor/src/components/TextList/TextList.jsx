@@ -867,12 +867,62 @@ const TextList = () => {
                   </svg>
                 </button>
                 <button
-                  onClick={() => {
-                    if (text.object) {
-                      canvas.remove(text.object);
-                      canvas.renderAll();
+                  onClick={(e) => {
+                    // Важливо: не даємо кліку піднятись на рядок списку,
+                    // інакше рядок зробить setActiveObject для вже видаленого об'єкта
+                    // і з'являється "примара/розмиття" до наступного кліку.
+                    e.stopPropagation();
+
+                    if (!canvas || !text.object) return;
+                    const target = text.object;
+
+                    // Якщо текст зараз в режимі редагування — коректно виходимо з нього
+                    try {
+                      if (target.isEditing && typeof target.exitEditing === "function") {
+                        target.exitEditing();
+                      }
+                    } catch {}
+                    try {
+                      if (target.hiddenTextarea && typeof target.hiddenTextarea.blur === "function") {
+                        target.hiddenTextarea.blur();
+                      }
+                    } catch {}
+
+                    const active = canvas.getActiveObject?.();
+                    const isActiveTarget = active === target;
+                    const isInActiveSelection =
+                      active?.type === "activeSelection" &&
+                      typeof active.getObjects === "function" &&
+                      active.getObjects().includes(target);
+
+                    // Якщо видаляємо елемент з multi-select — спочатку скидаємо selection
+                    if (isInActiveSelection) {
+                      try {
+                        canvas.discardActiveObject?.();
+                      } catch {}
                     }
+
+                    // Логіка як у Delete на полотні: remove + (за потреби) discard + render
+                    try {
+                      canvas.remove(target);
+                    } catch {}
+
+                    if (isActiveTarget) {
+                      try {
+                        canvas.discardActiveObject?.();
+                      } catch {}
+                    }
+
+                    try {
+                      canvas.requestRenderAll?.();
+                    } catch {}
+                    try {
+                      canvas.renderAll?.();
+                    } catch {}
+
+                    if (selectedTextId === text.id) setSelectedTextId(null);
                   }}
+
                   className={styles.deleteButton}
                 >
                   <svg

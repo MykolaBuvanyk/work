@@ -2,6 +2,12 @@ import { User } from '../models/models.js';
 import ErrorApi from '../error/ErrorApi.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const secretKey = process.env.secretKey;
 
@@ -138,6 +144,60 @@ class AuthController {
       return next(ErrorApi.badRequest(err));
     }
   };
+  
+  static SaveDATE = (req, res, next) => {
+    try {
+      const { formData } = req.body;
+      if (!formData) return next(ErrorApi.badRequest('Дані не отримано'));
+
+      const dirPath = path.join(__dirname, '../data');
+      const filePath = path.join(dirPath, 'formData.json');
+
+      // 1. Перевіряємо чи є папка, якщо ні — створюємо
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+
+      const jsonString = JSON.stringify(formData, null, 2);
+
+      // 2. Записуємо файл
+      fs.writeFile(filePath, jsonString, 'utf8', (err) => {
+        if (err) return next(ErrorApi.internal('Помилка запису: ' + err.message));
+        return res.status(200).json({ message: 'Дані успішно збережені' });
+      });
+
+    } catch (err) {
+      return next(ErrorApi.badRequest(err.message));
+    }
+  }
+
+  static GetDATE = (req, res, next) => {
+    try {
+      console.log(43242);
+      const filePath = path.join(__dirname, '../data/formData.json');
+
+      if (!fs.existsSync(filePath)) {
+        // Якщо файлу немає, повертаємо null або пустий об'єкт, щоб фронтенд не ламався
+        return res.status(200).json(null); 
+      }
+
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) return next(ErrorApi.internal('Помилка читання'));
+        
+        try {
+          const formData = JSON.parse(data);
+          console.log(434,formData);
+          return res.status(200).json(formData);
+        } catch (e) {
+          console.log(343,e);
+          return next(ErrorApi.internal('Помилка парсингу JSON'));
+        }
+      });
+    } catch (err) {
+      console.log(4234324,err);
+      return next(ErrorApi.badRequest(err.message));
+    }
+  }
 }
 
 export default AuthController;

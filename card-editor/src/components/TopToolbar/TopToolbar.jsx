@@ -788,6 +788,9 @@ const TopToolbar = ({ className }) => {
 
               const snapshot = await exportCanvas(canvas, toolbarState, {
                 keepClipPath: true,
+                // Max-quality PNG preview for template tiles (capped to avoid huge data URLs)
+                previewPngMultiplier: 8,
+                previewPngMaxDimension: 500,
               });
 
               if (!snapshot) {

@@ -631,6 +631,59 @@ const Canvas = ({ className }) => {
         img.src = url;
       } catch {}
     };
+
+    // Перегенерація фону-градієнта під поточні розміри canvasa
+    // (інакше при збільшенні полотна можуть зʼявлятися білі ділянки, бо Pattern має repeat: 'no-repeat')
+    const rebuildBackgroundGradient = () => {
+      try {
+        const type = fCanvas.get && fCanvas.get("backgroundType");
+        if (type !== "gradient") return;
+
+        if (fCanvas.__switching || fCanvas.__suspendUndoRedo) return;
+
+        const W =
+          typeof fCanvas.getWidth === "function"
+            ? fCanvas.getWidth()
+            : fCanvas.width || 0;
+        const H =
+          typeof fCanvas.getHeight === "function"
+            ? fCanvas.getHeight()
+            : fCanvas.height || 0;
+
+        const off = document.createElement("canvas");
+        off.width = Math.max(1, W);
+        off.height = Math.max(1, H);
+        const ctx = off.getContext("2d");
+        if (!ctx) return;
+
+        const cssDeg = 152.22;
+        const rad = (cssDeg * Math.PI) / 180;
+        const dirX = Math.sin(rad);
+        const dirY = -Math.cos(rad);
+        const cx = W / 2;
+        const cy = H / 2;
+        const L = Math.abs(W * dirX) + Math.abs(H * dirY);
+        const x0 = cx - (dirX * L) / 2;
+        const y0 = cy - (dirY * L) / 2;
+        const x1 = cx + (dirX * L) / 2;
+        const y1 = cy + (dirY * L) / 2;
+
+        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+        grad.addColorStop(0.2828, "#B5B5B5");
+        grad.addColorStop(0.5241, "#F5F5F5");
+        grad.addColorStop(0.7414, "#979797");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        const pattern = new fabric.Pattern({
+          source: off,
+          repeat: "no-repeat",
+        });
+
+        fCanvas.set("backgroundColor", pattern);
+        fCanvas.requestRenderAll && fCanvas.requestRenderAll();
+      } catch {}
+    };
     const resizeToViewport = () => {
       if (!viewportRef.current) return;
       const { width: baseW, height: baseH } = designRef.current;
@@ -797,6 +850,10 @@ const Canvas = ({ className }) => {
           // Якщо фон є текстурою — регенеруємо під новий розмір, щоб не дублювався
           try {
             rebuildBackgroundTexture();
+          } catch {}
+          // Якщо фон є градієнтом — регенеруємо під новий розмір, щоб не лишались білі ділянки
+          try {
+            rebuildBackgroundGradient();
           } catch {}
         } finally {
           resizingRef.current = false;
@@ -1188,6 +1245,91 @@ const Canvas = ({ className }) => {
           o.shapeType === "round" ||
           o.shapeType === "halfCircle");
 
+      // Mid-handle scaling: our handles are AABB-aligned, so for 90/270deg rotation
+      // we must scale along the screen axis (drag right -> wider on screen).
+      const normalizeDegLocal = (ang) => ((ang % 360) + 360) % 360;
+      const isVertical90 = (o) => {
+        const a = normalizeDegLocal(o?.angle || 0);
+        return Math.abs(a - 90) < 0.0001 || Math.abs(a - 270) < 0.0001;
+      };
+
+      const makeMidAABBScaleHandler = ({ axis, side }) => {
+        return (eventData, transform, x, y) => {
+          const t = transform?.target;
+          if (!t) return false;
+
+          // Default Fabric behavior for non-vertical rotations
+          if (!isVertical90(t)) {
+            if (axis === "x") return cu.scalingX(eventData, transform, x, y);
+            return cu.scalingY(eventData, transform, x, y);
+          }
+
+          // For 90/270deg: screen-X scaling maps to scaleY, screen-Y scaling maps to scaleX.
+          // Use AABB to keep the opposite side anchored.
+          const key = `__aabbMidScale_${axis}_${side}`;
+          if (!transform[key]) {
+            try {
+              if (typeof t.setCoords === "function") t.setCoords();
+            } catch {}
+            const b = getAABB(t);
+            if (!b) return false;
+            const center = t.getCenterPoint ? t.getCenterPoint() : null;
+            transform[key] = {
+              startAABB: b,
+              startCenter: center || { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 },
+              startScaleX: t.scaleX || 1,
+              startScaleY: t.scaleY || 1,
+            };
+          }
+
+          const state = transform[key];
+          const b0 = state.startAABB;
+          const c0 = state.startCenter;
+
+          if (axis === "x") {
+            const startW = Math.max(0.000001, b0.maxX - b0.minX);
+            const boundaryX = side === "right" ? b0.maxX : b0.minX;
+            const dx = (x || 0) - boundaryX;
+            const nextW = Math.max(0.000001, startW + (side === "right" ? dx : -dx));
+            const factor = nextW / startW;
+
+            const signY = (state.startScaleY || 1) < 0 ? -1 : 1;
+            const nextAbsScaleY = Math.abs(state.startScaleY || 1) * factor;
+            t.set({ scaleY: signY * nextAbsScaleY });
+
+            const nextCenter = new fabric.Point(c0.x + dx / 2, c0.y);
+            try {
+              t.setPositionByOrigin(nextCenter, "center", "center");
+            } catch {
+              // fallback if setPositionByOrigin isn't available
+              t.left = (t.left || 0) + dx / 2;
+            }
+          } else {
+            const startH = Math.max(0.000001, b0.maxY - b0.minY);
+            const boundaryY = side === "bottom" ? b0.maxY : b0.minY;
+            const dy = (y || 0) - boundaryY;
+            const nextH = Math.max(0.000001, startH + (side === "bottom" ? dy : -dy));
+            const factor = nextH / startH;
+
+            const signX = (state.startScaleX || 1) < 0 ? -1 : 1;
+            const nextAbsScaleX = Math.abs(state.startScaleX || 1) * factor;
+            t.set({ scaleX: signX * nextAbsScaleX });
+
+            const nextCenter = new fabric.Point(c0.x, c0.y + dy / 2);
+            try {
+              t.setPositionByOrigin(nextCenter, "center", "center");
+            } catch {
+              t.top = (t.top || 0) + dy / 2;
+            }
+          }
+
+          try {
+            t.setCoords();
+          } catch {}
+          return true;
+        };
+      };
+
       // Resize handles: skip for Cut elements (only show action panel + rotate)
       if (!obj.isCutElement) {
         const circleLock = isCircleLike(obj);
@@ -1205,14 +1347,26 @@ const Canvas = ({ className }) => {
         obj.controls.blc.positionHandler = corner("lb");
         obj.controls.brc = makeDotControl(cu.scalingEqually, "nwse-resize");
         obj.controls.brc.positionHandler = corner("rb");
-        // 4 середини — залишаємо осьове масштабування (рівномірність забезпечимо в object:scaling)
-        obj.controls.mtc = makeDotControl(cu.scalingY, "ns-resize");
+        // 4 середини — AABB-aligned handles; for 90/270deg we scale along screen axis.
+        obj.controls.mtc = makeDotControl(
+          makeMidAABBScaleHandler({ axis: "y", side: "top" }),
+          "ns-resize"
+        );
         obj.controls.mtc.positionHandler = mid("x");
-        obj.controls.mbc = makeDotControl(cu.scalingY, "ns-resize");
+        obj.controls.mbc = makeDotControl(
+          makeMidAABBScaleHandler({ axis: "y", side: "bottom" }),
+          "ns-resize"
+        );
         obj.controls.mbc.positionHandler = mid("x2");
-        obj.controls.mlc = makeDotControl(cu.scalingX, "ew-resize");
+        obj.controls.mlc = makeDotControl(
+          makeMidAABBScaleHandler({ axis: "x", side: "left" }),
+          "ew-resize"
+        );
         obj.controls.mlc.positionHandler = mid("y");
-        obj.controls.mrc = makeDotControl(cu.scalingX, "ew-resize");
+        obj.controls.mrc = makeDotControl(
+          makeMidAABBScaleHandler({ axis: "x", side: "right" }),
+          "ew-resize"
+        );
         obj.controls.mrc.positionHandler = mid("y2");
       }
 
@@ -2646,6 +2800,7 @@ const Canvas = ({ className }) => {
         canvas.requestRenderAll();
       }
     };
+
     run();
     return () => {
       disposed = true;
@@ -2676,7 +2831,7 @@ const Canvas = ({ className }) => {
       <div className={styles.canvasWrapper}>
         <div ref={shadowHostRef} className={styles.shadowHost} />
         <canvas ref={canvasRef} className={styles.canvas} />
-        <div ref={outlineHostRef} className={styles.outlineHost} />
+        {/* <div ref={outlineHostRef} className={styles.outlineHost} /> */}
         <div className={styles.widthLabel}>
           <span>{pxToMm(displayWidth).toFixed(0)} mm</span>
         </div>

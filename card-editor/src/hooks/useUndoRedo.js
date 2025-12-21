@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { UndoRedoKeyboardHandler } from "../utils/undoRedoKeyboardHandler";
-import { exportCanvas } from "../utils/projectStorage";
+import { exportCanvas, restoreElementProperties } from "../utils/projectStorage";
+import * as fabric from "fabric";
+import "../utils/CircleWithCut";
+import { ensureShapeSvgId } from "../utils/shapeSvgId";
+import {
+  buildQrSvgMarkup,
+  computeQrVectorData,
+  decorateQrGroup,
+  DEFAULT_QR_CELL_SIZE,
+  QR_DISPLAY_LAYER_ID,
+  QR_EXPORT_LAYER_ID,
+} from "../utils/qrFabricUtils";
 
 export const useUndoRedo = () => {
   const { canvas } = useCanvasContext();
@@ -15,11 +26,65 @@ export const useUndoRedo = () => {
   const historyRef = useRef([]);
   const historyIndexRef = useRef(-1);
   const lastStateRef = useRef(null);
+  const lastComparableStateRef = useRef(null);
   const keyboardHandlerRef = useRef(null);
+  const ignoreSavesUntilRef = useRef(0);
 
   // Конфігурація
-  const MAX_HISTORY_SIZE = 100;
+  const MAX_HISTORY_SIZE = 3;
   const SAVE_DELAY = 300;
+
+  const postProcessLoadedObjects = useCallback(() => {
+    if (!canvas || typeof canvas.getObjects !== "function") return;
+
+    try {
+      canvas.getObjects().forEach((obj) => {
+        if (!obj) return;
+        try {
+          // Як в useFabricCanvas: для фігур з Shape tab гарантуємо shapeSvgId + theme-follow пропи.
+          const fromShapeTab =
+            obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
+
+          if (fromShapeTab) {
+            try {
+              ensureShapeSvgId(obj, canvas);
+            } catch {}
+
+            if (obj.useThemeColor === undefined) {
+              obj.useThemeColor = false;
+            }
+            if (obj.followThemeStroke === undefined) {
+              obj.followThemeStroke = true;
+            }
+            if (
+              obj.initialFillColor === undefined &&
+              typeof obj.fill === "string" &&
+              obj.fill !== "" &&
+              obj.fill !== "transparent"
+            ) {
+              obj.initialFillColor = obj.fill;
+            }
+            if (
+              obj.initialStrokeColor === undefined &&
+              typeof obj.stroke === "string" &&
+              obj.stroke !== ""
+            ) {
+              obj.initialStrokeColor = obj.stroke;
+            }
+          }
+
+          obj.dirty = true;
+          obj.setCoords?.();
+          if (obj.group) {
+            obj.group.dirty = true;
+          }
+        } catch {}
+      });
+
+      canvas.renderAll?.();
+      canvas.requestRenderAll?.();
+    } catch {}
+  }, [canvas]);
 
   // Синхронізуємо refs з state
   useEffect(() => {
@@ -30,19 +95,66 @@ export const useUndoRedo = () => {
     historyIndexRef.current = historyIndex;
   }, [historyIndex]);
 
-  // Функція для глибокого порівняння станів
+  // Порівняння станів: exportCanvas додає багато волатильних полів (preview/toolbarState/timestamp),
+  // через які історія створюється навіть без реальних змін полотна.
+  const normalizeSnapshotForCompare = (snapshot) => {
+    if (!snapshot || typeof snapshot !== "object") return snapshot;
+
+    const normalized = {
+      ...snapshot,
+      preview: undefined,
+      previewSvg: undefined,
+      toolbarState: undefined,
+      timestamp: undefined,
+      lastSaved: undefined,
+      updatedAt: undefined,
+      createdAt: undefined,
+    };
+
+    if (normalized.json && typeof normalized.json === "object") {
+      const json = { ...normalized.json };
+      json.preview = undefined;
+      json.previewSvg = undefined;
+      json.timestamp = undefined;
+      json.lastSaved = undefined;
+      json.updatedAt = undefined;
+      json.createdAt = undefined;
+
+      if (Array.isArray(json.objects)) {
+        json.objects = json.objects.map((obj) => {
+          if (!obj || typeof obj !== "object") return obj;
+          const clean = { ...obj };
+          // toolbarSnapshot переприсвоюється під час export і може змінюватися від selection/toolbar
+          delete clean.toolbarSnapshot;
+          return clean;
+        });
+      }
+
+      normalized.json = json;
+    }
+
+    return normalized;
+  };
+
   const statesAreEqual = (state1, state2) => {
     if (!state1 || !state2) return false;
     try {
-      return JSON.stringify(state1) === JSON.stringify(state2);
+      return (
+        JSON.stringify(normalizeSnapshotForCompare(state1)) ===
+        JSON.stringify(normalizeSnapshotForCompare(state2))
+      );
     } catch (error) {
-      console.warn('Error comparing states:', error);
+      console.warn("Error comparing states:", error);
       return false;
     }
   };
 
   // Покращена функція збереження стану
   const saveState = useCallback(async (description) => {
+    if (Date.now() < (ignoreSavesUntilRef.current || 0)) {
+      return;
+    }
+
     // МНОЖИННІ ПЕРЕВІРКИ для запобігання збереженню під час undo/redo
     if (!canvas || 
         isSavingRef.current || 
@@ -78,12 +190,14 @@ export const useUndoRedo = () => {
       }
 
       // Перевіряємо, чи відрізняється новий стан від останнього збереженого
-      if (lastStateRef.current && statesAreEqual(stateWithMetadata, lastStateRef.current)) {
+      const comparable = normalizeSnapshotForCompare(stateWithMetadata);
+      if (lastComparableStateRef.current && statesAreEqual(comparable, lastComparableStateRef.current)) {
         console.log('State unchanged, skipping save');
         return stateWithMetadata;
       }
 
       lastStateRef.current = stateWithMetadata;
+      lastComparableStateRef.current = comparable;
 
       setHistory((prevHistory) => {
         const currentIndex = historyIndexRef.current;
@@ -145,10 +259,103 @@ export const useUndoRedo = () => {
     const jsonState = state.json || state;
     const canvasProps = state.canvasProperties || state; // Fallback для старого формату
 
-    console.log('Starting state restoration...', {
-      objectsInState: jsonState.objects ? jsonState.objects.length : 0,
-      currentObjects: canvas.getObjects().length
-    });
+    // ВАЖЛИВО: exportCanvas може мати backgroundColor як Pattern (texture/gradient),
+    // який не є стабільно серіалізованим у JSON. Якщо він потрапляє в loadFromJSON,
+    // Fabric інколи абортить відновлення і на канвасі залишаються лише базові елементи.
+    // Ми відновлюємо фон окремо (нижче), тому прибираємо background* поля з json перед loadFromJSON.
+    let jsonToLoad = jsonState;
+    // QR-specific undo/redo fix:
+    // При loadFromJSON інколи QR (SVG group) відновлюється з битими fill/stroke і стає прозорим.
+    // Для QR ми не довіряємо десеріалізації: видаляємо QR з JSON і перегенеровуємо його заново
+    // з тих самих параметрів (як при натисканні кнопки створення QR).
+    let qrToRecreate = [];
+    try {
+      if (jsonState && typeof jsonState === "object") {
+        jsonToLoad = { ...jsonState };
+        delete jsonToLoad.backgroundColor;
+        delete jsonToLoad.backgroundImage;
+        delete jsonToLoad.overlayColor;
+        delete jsonToLoad.overlayImage;
+        delete jsonToLoad.overlay;
+
+        // Extract QR objects from snapshot JSON
+        try {
+          const objects = Array.isArray(jsonToLoad.objects) ? jsonToLoad.objects : null;
+          if (objects && objects.length) {
+            const isUsableColor = (c) => {
+              if (typeof c !== "string") return false;
+              const v = c.trim().toLowerCase();
+              if (!v) return false;
+              if (v === "none") return false;
+              if (v === "transparent") return false;
+              return true;
+            };
+            const looksLikeQrGroup = (obj) => {
+              if (!obj || typeof obj !== "object") return false;
+              if (obj.isQRCode === true) return true;
+              const qrText =
+                (typeof obj.qrText === "string" && obj.qrText.trim())
+                  ? obj.qrText.trim()
+                  : (typeof obj?.data?.qrText === "string" && obj.data.qrText.trim())
+                    ? obj.data.qrText.trim()
+                    : null;
+              if (!qrText) return false;
+              const children = Array.isArray(obj.objects) ? obj.objects : null;
+              if (!children || children.length === 0) return false;
+              return children.some(
+                (c) => c && (c.id === QR_DISPLAY_LAYER_ID || c.id === QR_EXPORT_LAYER_ID)
+              );
+            };
+
+            const kept = [];
+            qrToRecreate = [];
+            for (let i = 0; i < objects.length; i++) {
+              const obj = objects[i];
+              if (!looksLikeQrGroup(obj)) {
+                kept.push(obj);
+                continue;
+              }
+              const qrText =
+                (typeof obj.qrText === "string" && obj.qrText.trim())
+                  ? obj.qrText.trim()
+                  : (typeof obj?.data?.qrText === "string" && obj.data.qrText.trim())
+                    ? obj.data.qrText.trim()
+                    : null;
+              if (!qrText) {
+                kept.push(obj);
+                continue;
+              }
+
+              const rawColor = obj.qrColor ?? obj?.data?.qrColor;
+              const qrColor = isUsableColor(rawColor) ? rawColor : null;
+
+              qrToRecreate.push({
+                zIndex: i,
+                qrText,
+                qrColor,
+                left: obj.left,
+                top: obj.top,
+                scaleX: obj.scaleX,
+                scaleY: obj.scaleY,
+                angle: obj.angle,
+                originX: obj.originX,
+                originY: obj.originY,
+              });
+            }
+
+            if (qrToRecreate.length) {
+              jsonToLoad.objects = kept;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to extract QR objects from snapshot JSON:", e);
+          qrToRecreate = [];
+        }
+      }
+    } catch {
+      jsonToLoad = jsonState;
+      qrToRecreate = [];
+    }
 
     // Встановлюємо всі блокування
     isRestoringRef.current = true;
@@ -180,9 +387,10 @@ export const useUndoRedo = () => {
       canvas.clear();
 
       // Завантажуємо новий стан
-      canvas.loadFromJSON(jsonState, () => {
+      canvas.loadFromJSON(jsonToLoad, () => {
         try {
-          console.log('JSON loaded successfully, objects:', canvas.getObjects().length);
+          // Вирівнюємо стан об'єктів так само, як при завантаженні з projectStorage (useFabricCanvas).
+          postProcessLoadedObjects();
 
           // Відновлюємо властивості полотна
           // Підтримка обох форматів (старого і нового від exportCanvas)
@@ -195,9 +403,124 @@ export const useUndoRedo = () => {
           }
 
           // 2. Фон
-          const bgColor = state.backgroundColor || canvasProps.backgroundColor;
-          if (bgColor) {
-            canvas.set("backgroundColor", bgColor);
+          const toolbarBgType =
+            state?.toolbarState?.globalColors?.backgroundType ||
+            canvasProps?.toolbarState?.globalColors?.backgroundType;
+          const bgType =
+            state.backgroundType ||
+            canvasProps.backgroundType ||
+            toolbarBgType ||
+            canvas.get?.("backgroundType") ||
+            "solid";
+
+          const toolbarBgColor =
+            state?.toolbarState?.globalColors?.backgroundColor ||
+            canvasProps?.toolbarState?.globalColors?.backgroundColor;
+          const bgColor = state.backgroundColor || canvasProps.backgroundColor || toolbarBgColor;
+
+          const toolbarTextColor =
+            state?.toolbarState?.globalColors?.textColor ||
+            canvasProps?.toolbarState?.globalColors?.textColor;
+          const themeTextColor = toolbarTextColor || "#000000";
+
+          // Для texture режиму в snapshot backgroundColor зберігається як URL.
+          const bgTextureUrl =
+            state.backgroundTextureUrl ||
+            canvasProps.backgroundTextureUrl ||
+            (bgType === "texture" && typeof bgColor === "string" ? bgColor : null);
+
+
+          // Завжди виставляємо backgroundType/URL на canvas, щоб Canvas.jsx ефекти не вважали globalColors “stale”.
+          try {
+            canvas.set?.("backgroundType", bgType);
+            canvas.set?.("backgroundTextureUrl", bgType === "texture" ? bgTextureUrl : null);
+          } catch {}
+
+          // Відновлюємо фон залежно від типу
+          let bgTexturePromise = Promise.resolve();
+          if (bgType === "texture" && bgTextureUrl && fabric?.Pattern) {
+            bgTexturePromise = new Promise((resolve) => {
+              try {
+                const img = document.createElement("img");
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                  try {
+                    const canvasWidth =
+                      typeof canvas.getWidth === "function"
+                        ? canvas.getWidth()
+                        : canvas.width || 0;
+                    const canvasHeight =
+                      typeof canvas.getHeight === "function"
+                        ? canvas.getHeight()
+                        : canvas.height || 0;
+
+                    const scaleX = canvasWidth && img.width ? canvasWidth / img.width : 1;
+                    const scaleY =
+                      canvasHeight && img.height ? canvasHeight / img.height : 1;
+
+                    const patternCanvas = document.createElement("canvas");
+                    patternCanvas.width = img.width * scaleX;
+                    patternCanvas.height = img.height * scaleY;
+                    const ctx = patternCanvas.getContext("2d");
+                    if (!ctx) {
+                      // fallback
+                      canvas.set?.("backgroundColor", "#FFFFFF");
+                      resolve();
+                      return;
+                    }
+                    ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
+
+                    const pattern = new fabric.Pattern({
+                      source: patternCanvas,
+                      repeat: "no-repeat",
+                      id: "canvasBackgroundTexture",
+                    });
+                    canvas.set?.("backgroundColor", pattern);
+                    canvas.set?.("backgroundTextureUrl", bgTextureUrl);
+                    canvas.set?.("backgroundType", "texture");
+                  } catch (e) {
+                    console.warn("Failed to restore texture background:", e);
+                    try {
+                      canvas.set?.("backgroundColor", "#FFFFFF");
+                      canvas.set?.("backgroundTextureUrl", null);
+                      canvas.set?.("backgroundType", "solid");
+                    } catch {}
+                  } finally {
+                    resolve();
+                  }
+                };
+                img.onerror = () => {
+                  try {
+                    canvas.set?.("backgroundColor", "#FFFFFF");
+                    canvas.set?.("backgroundTextureUrl", null);
+                    canvas.set?.("backgroundType", "solid");
+                  } catch {}
+                  resolve();
+                };
+                img.src = bgTextureUrl;
+              } catch (err) {
+                console.warn("Failed to init texture restore:", err);
+                resolve();
+              }
+            });
+          } else if (bgType === "gradient") {
+            // Градієнт зберігаємо як backgroundType=gradient; сам pattern перегенерується в Canvas.jsx,
+            // але виставимо хоч якийсь color як fallback.
+            if (typeof bgColor === "string" && bgColor) {
+              canvas.set?.("backgroundColor", bgColor);
+            } else {
+              canvas.set?.("backgroundColor", "#FFFFFF");
+            }
+            canvas.set?.("backgroundTextureUrl", null);
+            canvas.set?.("backgroundType", "gradient");
+          } else {
+            if (typeof bgColor === "string" && bgColor) {
+              canvas.set?.("backgroundColor", bgColor);
+            } else {
+              canvas.set?.("backgroundColor", "#FFFFFF");
+            }
+            canvas.set?.("backgroundTextureUrl", null);
+            canvas.set?.("backgroundType", "solid");
           }
           
           // 3. Overlay
@@ -210,21 +533,53 @@ export const useUndoRedo = () => {
           
           // 4. Background Image
           const bgImgData = state.backgroundImage || canvasProps.backgroundImage;
-          if (bgImgData) {
-            fabric.util.loadImage(bgImgData.src, (img) => {
-              if (img) {
-                const fabricImg = new fabric.Image(img, {
-                  opacity: bgImgData.opacity || 1,
-                  originX: bgImgData.originX || 'left',
-                  originY: bgImgData.originY || 'top',
-                  scaleX: bgImgData.scaleX || 1,
-                  scaleY: bgImgData.scaleY || 1,
-                  left: bgImgData.left || 0,
-                  top: bgImgData.top || 0
+          let bgImagePromise = Promise.resolve();
+          if (bgImgData && bgImgData.src && fabric?.util?.loadImage) {
+            bgImagePromise = new Promise((resolve) => {
+              try {
+                fabric.util.loadImage(bgImgData.src, (img) => {
+                  try {
+                    if (img) {
+                      const fabricImg = new fabric.Image(img, {
+                        opacity: bgImgData.opacity ?? 1,
+                        originX: bgImgData.originX ?? 'left',
+                        originY: bgImgData.originY ?? 'top',
+                        scaleX: bgImgData.scaleX ?? 1,
+                        scaleY: bgImgData.scaleY ?? 1,
+                        left: bgImgData.left ?? 0,
+                        top: bgImgData.top ?? 0,
+                        angle: bgImgData.angle ?? 0
+                      });
+                      canvas.setBackgroundImage(fabricImg, canvas.renderAll.bind(canvas));
+                    }
+                  } finally {
+                    resolve();
+                  }
                 });
-                canvas.setBackgroundImage(fabricImg, canvas.renderAll.bind(canvas));
+              } catch (e) {
+                console.warn('Failed to restore background image:', e);
+                resolve();
               }
             });
+          }
+
+          // Відновлюємо стан тулбара (в т.ч. globalColors/backgroundType), щоб після redo UI/ефекти
+          // не перетирали фон і властивості “старим” станом.
+          try {
+            if (state?.toolbarState && typeof window !== "undefined" && typeof window.restoreToolbarState === "function") {
+              window.restoreToolbarState(state.toolbarState);
+            }
+          } catch (e) {
+            console.warn("restoreToolbarState failed during undo/redo:", e);
+          }
+
+          // Примусово відновлюємо форму полотна (triangle/hex/etc) за збереженим shapeType/size.
+          try {
+            if (state?.toolbarState && typeof window !== "undefined" && typeof window.forceRestoreCanvasShape === "function") {
+              window.forceRestoreCanvasShape(state.toolbarState);
+            }
+          } catch (e) {
+            console.warn("forceRestoreCanvasShape failed during undo/redo:", e);
           }
           
           // 5. Viewport (Zoom/Pan)
@@ -301,35 +656,156 @@ export const useUndoRedo = () => {
             }
           });
 
-          // Очищаємо виділення та рендеримо
-          canvas.discardActiveObject();
-          canvas.renderAll();
-          canvas.requestRenderAll();
-          
-          console.log('State restoration completed successfully');
-          
-          // Відновлюємо event listeners та скидаємо блокування
-          const clearAllFlags = () => {
-            eventsToDisable.forEach(eventName => {
-              if (eventListeners[eventName]) {
-                eventListeners[eventName].forEach(listener => {
-                  canvas.on(eventName, listener);
-                });
-              }
+          // Важливо: дочекаємося відновлення backgroundImage/texture,
+          // інакше після undo/redo може зберегтися “новий” state і redo перестане працювати.
+          // Також відновлюємо element-specific проперті як при звичайному project load
+          // (зокрема QR коди перегенеровуються, щоб не лишатися “невидимими але хіттестабельними”).
+          const restoreElementsPromise = Promise.resolve()
+            .then(() =>
+              restoreElementProperties(
+                canvas,
+                state?.toolbarState || canvasProps?.toolbarState || null
+              )
+            )
+            .catch(() => {
+              // ignore
             });
 
-            // Скидаємо всі блокування
-            isRestoringRef.current = false;
-            isSavingRef.current = false;
-            canvas.__suspendUndoRedo = false;
-            
-            console.log('All restoration flags cleared');
-            
-            if (callback) callback();
-          };
+          // QR-only: recreate QR codes from extracted snapshot params
+          const recreateQrPromise = Promise.resolve().then(async () => {
+            if (!qrToRecreate || qrToRecreate.length === 0) return;
+            const fabricLib = fabric?.fabric || fabric?.default || fabric;
+            if (!fabricLib || typeof fabricLib.loadSVGFromString !== "function") {
+              console.warn("[undo/redo][qr] Fabric loadSVGFromString not available; skipping QR rebuild");
+              return;
+            }
 
-          // Скидаємо блокування з короткою затримкою
-          setTimeout(clearAllFlags, 50);
+            let qrGenerator;
+            try {
+              qrGenerator = (await import("qrcode-generator")).default;
+            } catch (e) {
+              console.warn("[undo/redo][qr] Failed to import qrcode-generator:", e);
+              return;
+            }
+
+            const isUsableColor = (c) => {
+              if (typeof c !== "string") return false;
+              const v = c.trim().toLowerCase();
+              if (!v) return false;
+              if (v === "none") return false;
+              if (v === "transparent") return false;
+              return true;
+            };
+
+            for (const q of qrToRecreate) {
+              try {
+                const qr = qrGenerator(0, "M");
+                qr.addData(q.qrText);
+                qr.make();
+
+                const { optimizedPath, displayPath, size } = computeQrVectorData(
+                  qr,
+                  DEFAULT_QR_CELL_SIZE
+                );
+
+                const color = isUsableColor(q.qrColor) ? q.qrColor : themeTextColor;
+                const svgText = buildQrSvgMarkup({
+                  size,
+                  displayPath,
+                  optimizedPath,
+                  strokeColor: color,
+                });
+
+                const res = await fabricLib.loadSVGFromString(svgText);
+                const obj =
+                  res?.objects?.length === 1
+                    ? res.objects[0]
+                    : fabricLib.util.groupSVGElements(
+                        res.objects || [],
+                        res.options || {}
+                      );
+
+                decorateQrGroup(obj);
+                obj.set({
+                  left: q.left,
+                  top: q.top,
+                  scaleX: q.scaleX ?? 1,
+                  scaleY: q.scaleY ?? 1,
+                  angle: q.angle ?? 0,
+                  originX: q.originX || "center",
+                  originY: q.originY || "center",
+                  selectable: true,
+                  hasControls: true,
+                  hasBorders: true,
+                  isQRCode: true,
+                  qrText: q.qrText,
+                  qrSize: size || obj.width || 0,
+                  qrColor: color,
+                  backgroundColor: "transparent",
+                });
+
+                canvas.add(obj);
+                try {
+                  if (typeof obj.setCoords === "function") obj.setCoords();
+                } catch {}
+                try {
+                  if (typeof canvas.moveTo === "function") {
+                    const maxIndex = Math.max(0, (canvas.getObjects()?.length || 1) - 1);
+                    canvas.moveTo(obj, Math.min(q.zIndex ?? maxIndex, maxIndex));
+                  }
+                } catch {}
+              } catch (e) {
+                console.warn("[undo/redo][qr] Failed to rebuild QR:", e);
+              }
+            }
+          });
+
+          Promise.allSettled([
+            bgImagePromise,
+            bgTexturePromise,
+            restoreElementsPromise,
+            recreateQrPromise,
+          ]).finally(() => {
+            // Очищаємо виділення та рендеримо
+            canvas.discardActiveObject();
+            canvas.renderAll();
+            canvas.requestRenderAll();
+
+            // Синхронізуємо інпути тулбара з фактичними значеннями canvas після відновлення
+            try {
+              if (typeof window !== "undefined" && typeof window.syncToolbarSizeFromCanvas === "function") {
+                window.syncToolbarSizeFromCanvas();
+              }
+            } catch {}
+
+            // Відновлюємо event listeners та скидаємо блокування
+            const clearAllFlags = () => {
+              eventsToDisable.forEach(eventName => {
+                if (eventListeners[eventName]) {
+                  eventListeners[eventName].forEach(listener => {
+                    canvas.on(eventName, listener);
+                  });
+                }
+              });
+
+              // Скидаємо всі блокування
+              isRestoringRef.current = false;
+              isSavingRef.current = false;
+              canvas.__suspendUndoRedo = false;
+
+              // Після restore часто відпрацьовують відкладені ефекти (toolbar/canvas trackers),
+              // які можуть викликати saveState і тим самим обрізати redo-стек.
+              // Даємо коротке вікно, в якому ігноруємо saveState.
+              ignoreSavesUntilRef.current = Date.now() + 1400;
+
+              console.log('All restoration flags cleared');
+
+              if (callback) callback();
+            };
+
+            // Скидаємо блокування з короткою затримкою
+            setTimeout(clearAllFlags, 50);
+          });
 
         } catch (renderError) {
           console.error('Error during canvas render after state restore:', renderError);
@@ -366,10 +842,13 @@ export const useUndoRedo = () => {
       const newIndex = currentIndex - 1;
       const stateToRestore = currentHistory[newIndex];
 
+      // Синхронізуємо індекс одразу (UI + refs)
+      historyIndexRef.current = newIndex;
+      setHistoryIndex(newIndex);
+
       console.log(`Undo: moving from index ${currentIndex} to ${newIndex}`);
 
       restoreState(stateToRestore, () => {
-        setHistoryIndex(newIndex);
         console.log(`Undo completed: restored state at index ${newIndex}`);
       });
     } else {
@@ -386,10 +865,12 @@ export const useUndoRedo = () => {
       const newIndex = currentIndex + 1;
       const stateToRestore = currentHistory[newIndex];
 
+      historyIndexRef.current = newIndex;
+      setHistoryIndex(newIndex);
+
       console.log(`Redo: moving from index ${currentIndex} to ${newIndex}`);
 
       restoreState(stateToRestore, () => {
-        setHistoryIndex(newIndex);
         console.log(`Redo completed: restored state at index ${newIndex}`);
       });
     } else {
@@ -432,9 +913,6 @@ export const useUndoRedo = () => {
     
     console.log('🎨 Saving canvas properties state:', description);
     
-    // Блокуємо обробку подій під час збереження
-    isRestoringRef.current = true;
-    
     try {
       const newState = await saveState(description);
       if (newState) {
@@ -445,10 +923,7 @@ export const useUndoRedo = () => {
     } catch (error) {
       console.error('❌ Error saving canvas properties state:', error);
     } finally {
-      // Розблоковуємо через короткий час
-      setTimeout(() => {
-        isRestoringRef.current = false;
-      }, 100);
+      // saveState сам керує прапорцями блокування
     }
   }, [canvas, saveState]);
 
@@ -473,6 +948,7 @@ export const useUndoRedo = () => {
     setHistory([]);
     setHistoryIndex(-1);
     lastStateRef.current = null;
+    lastComparableStateRef.current = null;
     console.log('History cleared');
   }, []);
 
@@ -541,18 +1017,13 @@ export const useUndoRedo = () => {
       initializeHistory();
 
       // Розширений список подій для відстеження
+      // Важливо: selection:* події не є “дією” на полотні, але можуть міняти toolbarState,
+      // що створює фейкові записи в історії та ламає очікування “undo = 1 крок”.
       const eventsToSave = [
         'object:added',
-        'object:removed', 
+        'object:removed',
         'object:modified',
-        'object:skewing',
-        'object:scaling',
-        'object:rotating',
-        'object:moving',
         'path:created',
-        'selection:created',
-        'selection:updated',
-        'selection:cleared',
         'text:changed',
         // Додаємо події для властивостей полотна
         'canvas:changed',
@@ -564,6 +1035,7 @@ export const useUndoRedo = () => {
       const immediateEvents = [
         'object:added',
         'object:removed',
+        'object:modified',
         'path:created',
         'canvas:changed',
         'background:changed',

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import styles from "./IconMenu.module.css";
+import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const IconMenu = ({ isOpen, onClose }) => {
   const { canvas, globalColors } = useCanvasContext();
@@ -167,6 +168,10 @@ const IconMenu = ({ isOpen, onClose }) => {
         scaleX: scale,
         scaleY: scale,
       });
+
+      try {
+        fitObjectToCanvas(canvas, svgObject, { maxRatio: 0.6 });
+      } catch {}
       return svgObject;
     } catch (error) {
       throw new Error(`Не вдалося розпарсити SVG: ${error.message}`);
@@ -219,6 +224,9 @@ const IconMenu = ({ isOpen, onClose }) => {
               originX: "center",
               originY: "center",
             });
+            try {
+              fitObjectToCanvas(canvas, imgObj, { maxRatio: 0.6 });
+            } catch {}
             resolve(imgObj);
           },
           { crossOrigin: "anonymous" }
@@ -251,6 +259,9 @@ const IconMenu = ({ isOpen, onClose }) => {
         } catch {}
         canvas.add(svgObject);
         try {
+          fitObjectToCanvas(canvas, svgObject, { maxRatio: 0.6 });
+        } catch {}
+        try {
           if (typeof svgObject.setCoords === "function") svgObject.setCoords();
         } catch {}
         try {
@@ -277,6 +288,9 @@ const IconMenu = ({ isOpen, onClose }) => {
           imageObject.set && imageObject.set({ fromIconMenu: true });
         } catch {}
         canvas.add(imageObject);
+        try {
+          fitObjectToCanvas(canvas, imageObject, { maxRatio: 0.6 });
+        } catch {}
         try {
           if (typeof imageObject.setCoords === "function")
             imageObject.setCoords();
@@ -347,6 +361,10 @@ const IconMenu = ({ isOpen, onClose }) => {
       group.set && group.set({ fromIconMenu: true, useThemeColor: true });
       rect.set && rect.set({ useThemeColor: true });
       text.set && text.set({ useThemeColor: true });
+    } catch {}
+
+    try {
+      fitObjectToCanvas(canvas, group, { maxRatio: 0.6 });
     } catch {}
 
     canvas.add(group);

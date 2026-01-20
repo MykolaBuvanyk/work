@@ -30,9 +30,11 @@
   margin: 0px;
   font-weight: bold;
 }
+
 .fieldAdhesive input {
   margin-top: 4px !important;
 }
+
 .icons {
   display: flex;
   gap: 3px;
@@ -52,10 +54,12 @@
   cursor: pointer;
   transition: all ease 0.3s;
 }
+
 .icons :first-child {
   margin-right: auto;
 }
-.icons svg:hover > * {
+
+.icons svg:hover>* {
   stroke: rgba(0, 108, 164, 1) !important;
 }
 
@@ -64,6 +68,7 @@
   opacity: 0.45;
   cursor: not-allowed !important;
 }
+
 .disabledIcon svg {
   pointer-events: none;
 }
@@ -130,12 +135,15 @@ input[type="checkbox"] {
 .cornerRadiusDisabled label {
   opacity: 0.5;
 }
+
 .cornerRadiusDisabled input {
   cursor: not-allowed;
 }
+
 .cornerRadiusDisabled .arrows i {
   pointer-events: none;
 }
+
 .inputGroup input::-webkit-inner-spin-button,
 .inputGroup input::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -154,6 +162,7 @@ input[type="checkbox"] {
   color: #444;
   transition: color 0.2s;
 }
+
 .arrows i:hover {
   color: #000;
 }
@@ -175,9 +184,12 @@ input[type="number"] {
   text-align: center;
   padding: 5px;
 }
+
 input[type="number"]:focus {
-  outline: none; /* Прибирає стандартний контур */
-  border: none; /* Переконуємось, що бордер відсутній */
+  outline: none;
+  /* Прибирає стандартний контур */
+  border: none;
+  /* Переконуємось, що бордер відсутній */
 }
 
 .unitLabel {
@@ -194,14 +206,17 @@ input[type="number"]:focus {
   justify-content: space-between;
   align-items: center;
 }
+
 .thicknessWrapper h3 {
   margin-right: 10px;
 }
-.thicknessWrapper > div {
+
+.thicknessWrapper>div {
   display: flex;
   justify-content: center;
   gap: 5px;
 }
+
 /* Стилізація radio */
 .thicknessWrapper input[type="radio"],
 .thicknessWrapper input[type="checkbox"] {
@@ -249,6 +264,81 @@ input[type="number"]:focus {
   align-items: center;
 }
 
+/* Copies section */
+.copiesWrapper {
+  gap: 16px;
+  align-items: center;
+  flex-wrap: nowrap;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  /* justify-content: space-between; */
+}
+
+.copyItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #2f2f2f;
+  border-radius: 10px;
+  padding: 10px 10px;
+  background: #fff;
+}
+
+.copyTitle {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  /* font-family: Inter; */
+  font-weight: 700;
+  font-style: Bold;
+  font-size: 16px;
+  line-height: 121%;
+  letter-spacing: 0%;
+
+}
+
+.copyTitleTop {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.copyField {
+  margin: 0;
+}
+
+.copyInputGroup {
+  gap: 0;
+  /* border: 1px solid #2f2f2f; */
+  /* border-radius: 8px; */
+  overflow: hidden;
+}
+
+.copyInputGroup input {
+  width: 36px !important;
+  height: 28px;
+  padding: 4px 0;
+  font-size: 13px;
+  border-radius: 4px 0 0 4px;
+}
+
+.copyArrows {
+  padding: 0 6px;
+  /* border-left: 1px solid #2f2f2f; */
+  background: #fff;
+  justify-content: center;
+}
+
+.copyArrows i {
+  font-size: 10px;
+  color: #222;
+}
+
+.copyArrowsDisabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .colors {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -265,7 +355,8 @@ input[type="number"]:focus {
   align-items: center;
   margin-bottom: 5px;
 }
-.colors svg{
+
+.colors svg {
   width: 38px;
   border-radius: 4px;
 }
@@ -314,7 +405,7 @@ input[type="number"]:focus {
   border: 1px solid #888;
 }
 
-.elementsList > :nth-last-child(-n + 2) {
+.elementsList> :nth-last-child(-n + 2) {
   flex: 0 0 105px;
   width: 105px;
 }
@@ -324,17 +415,19 @@ input[type="number"]:focus {
   width: 100%;
   justify-content: space-evenly;
 }
-.holes span svg > :nth-child(2) {
+
+.holes span svg> :nth-child(2) {
   transition: all ease 0.3s;
 }
-.holes span:hover svg > :nth-child(2) {
+
+.holes span:hover svg> :nth-child(2) {
   stroke: rgba(0, 108, 164, 1);
   stroke-width: 2;
   stroke-opacity: 1;
 }
 
 /* Активний вибраний тип дирок: світліший синій бордер (аналог hover, трохи світліший) */
-.holeActive svg > :nth-child(2) {
+.holeActive svg> :nth-child(2) {
   stroke: rgba(0, 140, 190, 1);
   stroke-width: 2;
   stroke-opacity: 1;
@@ -350,29 +443,35 @@ input[type="number"]:focus {
   display: grid;
   gap: 10px;
 }
+
 .uploadRow {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .uploadRow label {
   font-size: 13px;
   min-width: 70px;
 }
+
 .uploadValue {
   min-width: 28px;
   text-align: right;
   font-weight: 600;
 }
+
 .uploadCheck {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 .uploadActions {
   display: flex;
   justify-content: flex-end;
 }
+
 .uploadActions button {
   background: rgba(0, 108, 164, 1);
   color: #fff;
@@ -381,18 +480,23 @@ input[type="number"]:focus {
   padding: 6px 10px;
   cursor: pointer;
 }
+
 .uploadActions button:hover {
   background: rgba(0, 108, 164, 0.85);
 }
+
 .customShapeOverlay {
-  position: absolute; /* скроллиться разом із вмістом сторінки */
+  position: absolute;
+  /* скроллиться разом із вмістом сторінки */
   left: 0;
   top: 0;
-  width: 0; /* не займає місця; хендли позиціонуються напряму */
+  width: 0;
+  /* не займає місця; хендли позиціонуються напряму */
   height: 0;
   pointer-events: none;
   z-index: 3000;
 }
+
 .customShapeHandle {
   position: absolute;
   background: #ff3232;
@@ -403,10 +507,12 @@ input[type="number"]:focus {
   pointer-events: auto;
   transition: background-color 0.15s, transform 0.15s;
 }
+
 .customShapeHandle:hover {
   background: #ff6565;
   transform: scale(1.05);
 }
+
 .customShapeHandle:active {
   background: #d90000;
   transform: scale(0.95);
@@ -421,7 +527,8 @@ input[type="number"]:focus {
 .toolbarFooter {
   margin: 60px 0 30px;
   display: flex;
-  flex-direction: column; /* колонкою, щоб note був нижче всього */
+  flex-direction: column;
+  /* колонкою, щоб note був нижче всього */
   gap: 10px;
 }
 
@@ -446,7 +553,8 @@ input[type="number"]:focus {
   font-weight: 400;
   display: inline-flex;
   align-items: center;
-  gap: 6px; /* контрольований відступ між 2, /, 10 */
+  gap: 6px;
+  /* контрольований відступ між 2, /, 10 */
 }
 
 .footerButtons {
@@ -463,6 +571,7 @@ input[type="number"]:focus {
 .footerButtons svg:hover {
   opacity: 0.8;
 }
+
 /* Footer note section */
 .footerNoteSection {
   display: flex;

@@ -31,7 +31,8 @@ export const useUndoRedo = () => {
   const ignoreSavesUntilRef = useRef(0);
 
   // Конфігурація
-  const MAX_HISTORY_SIZE = 3;
+  // Історія містить також “Initial state”, тому для 3 кроків Undo потрібно 4 стани.
+  const MAX_HISTORY_SIZE = 4;
   const SAVE_DELAY = 300;
 
   const postProcessLoadedObjects = useCallback(() => {

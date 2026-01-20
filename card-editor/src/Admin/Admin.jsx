@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './AdminContainer.scss';
 import Order from './Order';
 import { NavLink } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const Admin = () => {
+  const { isAdmin } = useSelector(state => state.user);
+
   const orderData = [
     {
       orderNo: 1,
@@ -66,9 +69,21 @@ const Admin = () => {
       deliveryType: 'UPS Next Day',
     },
   ];
+  useEffect(() => {}, [isAdmin]);
+  if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
     <>
-      <NavLink style={{alignItems:'flex-end',display:'flex',justifyContent:'right',marginBottom:'15px'}} to={'/admin/update-avaible'}>update avaible</NavLink>
+      <NavLink
+        style={{
+          alignItems: 'flex-end',
+          display: 'flex',
+          justifyContent: 'right',
+          marginBottom: '15px',
+        }}
+        to={'/admin/update-avaible'}
+      >
+        update avaible
+      </NavLink>
       <div className="admin-container">
         <div className="left">
           <div className="selects">

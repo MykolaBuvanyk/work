@@ -76,12 +76,14 @@ const ShapeProperties = ({
     height: 0, // mm
     rotation: 0,
     cornerRadius: 0,
-    thickness: 1, // mm
+    thickness: 0.5, // mm
+    frame: true,
     fill: false,
     cut: false,
   });
 
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
+  const [isEditingThickness, setIsEditingThickness] = useState(false);
   const commitHistoryTimerRef = useRef(null);
   // Запам'ятовуємо попередню товщину перед увімкненням Cut, щоб відновити її після вимкнення Cut
   const [prevThicknessBeforeCut, setPrevThicknessBeforeCut] = useState(null);
@@ -182,6 +184,23 @@ const ShapeProperties = ({
           activeObject.cutType = null;
         }
       }
+
+      if (defaults.frame === true) {
+        try {
+          activeObject.set({
+            fill: "transparent",
+            useThemeColor: false,
+          });
+        } catch {
+          activeObject.fill = "transparent";
+          activeObject.useThemeColor = false;
+        }
+        storeFillMetadata(activeObject, false);
+        storeFrameMetadata(activeObject, true);
+      } else if (defaults.frame === false) {
+        storeFrameMetadata(activeObject, false);
+      }
+
       delete activeObject.pendingShapePropsDefaults;
       if (canvas && typeof canvas.requestRenderAll === "function") {
         canvas.requestRenderAll();
@@ -208,6 +227,9 @@ const ShapeProperties = ({
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const roundMm = (mm) => Math.round((mm || 0) * 10) / 10;
+
+  const DEFAULT_THICKNESS_MM = 0.5;
+  const DEFAULT_THICKNESS_PX = mmToPx(DEFAULT_THICKNESS_MM);
 
   const getOuterSizePx = (obj) => {
     if (!obj) return { width: 0, height: 0 };
@@ -278,6 +300,22 @@ const ShapeProperties = ({
       obj.data = {};
     }
     obj.data.hasFillEnabled = normalized;
+  };
+
+  const storeFrameMetadata = (obj, hasFrameEnabled) => {
+    if (!obj) return;
+    const normalized = !!hasFrameEnabled;
+    obj.hasFrameEnabled = normalized;
+    obj.isFrameElement = normalized;
+    if (typeof obj.set === "function") {
+      obj.set("hasFrameEnabled", normalized);
+      obj.set("isFrameElement", normalized);
+    }
+    if (!obj.data || typeof obj.data !== "object") {
+      obj.data = {};
+    }
+    obj.data.hasFrameEnabled = normalized;
+    obj.data.isFrameElement = normalized;
   };
 
   const buildRoundedPolygonPath = (points, radius, options) => {
@@ -748,7 +786,7 @@ const ShapeProperties = ({
           pathOffset: temp.pathOffset,
           baseCornerRadius: rLocal,
         });
-      } catch {}
+      } catch { }
       return;
     }
     const builder = roundedBuilders[obj.shapeType];
@@ -790,7 +828,7 @@ const ShapeProperties = ({
         pathOffset: temp.pathOffset,
         baseCornerRadius: rLocal,
       });
-    } catch {}
+    } catch { }
   };
 
   // Поточний радіус кутів у мм: для Rect беремо rx з урахуванням масштабу
@@ -840,9 +878,46 @@ const ShapeProperties = ({
             fillVal !== "" &&
             fillVal !== "transparent" &&
             fillVal !== "none";
+
+          const frameMeta =
+            typeof activeObject.hasFrameEnabled === "boolean"
+              ? activeObject.hasFrameEnabled
+              : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+                ? activeObject.data.hasFrameEnabled
+                : null;
+
+          const fromShapeTab =
+            activeObject.fromShapeTab === true ||
+            (activeObject.data && activeObject.data.fromShapeTab === true);
+
+          // Frame is ON by default for contour-only shapes.
+          // Apply it once by writing metadata to the object.
+          if (frameMeta === null && fromShapeTab && !isManualCut && !hasFill) {
+            try {
+              activeObject.set({
+                fill: "transparent",
+                useThemeColor: false,
+              });
+              storeFillMetadata(activeObject, false);
+              storeFrameMetadata(activeObject, true);
+              if (typeof activeObject.setCoords === "function") {
+                activeObject.setCoords();
+              }
+              canvas?.requestRenderAll?.();
+            } catch {
+              // no-op
+            }
+          }
+
+          const hasFrameEnabled =
+            typeof activeObject.hasFrameEnabled === "boolean"
+              ? activeObject.hasFrameEnabled
+              : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+                ? activeObject.data.hasFrameEnabled
+                : !isManualCut && !hasFill;
           storeThicknessMetadata(
             activeObject,
-            pxToMm(activeObject.strokeWidth || 0)
+            pxToMm(activeObject.strokeWidth ?? 0)
           );
           storeFillMetadata(activeObject, !isManualCut && hasFill);
           setProperties({
@@ -851,11 +926,14 @@ const ShapeProperties = ({
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius:
               activeObject.type === "rect" ||
-              supportedPathShapes.has(activeObject.shapeType)
+                supportedPathShapes.has(activeObject.shapeType)
                 ? getCornerRadiusMmForRounded(activeObject)
                 : 0,
-            thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+            thickness: roundMm(
+              pxToMm(activeObject.strokeWidth ?? DEFAULT_THICKNESS_PX)
+            ),
             // При активному Cut (manual) считаем Fill выключенным в UI
+            frame: !!hasFrameEnabled,
             fill: !isManualCut && hasFill,
             cut: isManualCut,
           });
@@ -914,9 +992,43 @@ const ShapeProperties = ({
           fillVal !== "" &&
           fillVal !== "transparent" &&
           fillVal !== "none";
+
+        const frameMeta =
+          typeof activeObject.hasFrameEnabled === "boolean"
+            ? activeObject.hasFrameEnabled
+            : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+              ? activeObject.data.hasFrameEnabled
+              : null;
+
+        const fromShapeTab =
+          activeObject.fromShapeTab === true ||
+          (activeObject.data && activeObject.data.fromShapeTab === true);
+
+        if (frameMeta === null && fromShapeTab && !isManualCut && !hasFill) {
+          try {
+            activeObject.set({
+              fill: "transparent",
+              useThemeColor: false,
+            });
+            storeFillMetadata(activeObject, false);
+            storeFrameMetadata(activeObject, true);
+            if (typeof activeObject.setCoords === "function") {
+              activeObject.setCoords();
+            }
+          } catch {
+            // no-op
+          }
+        }
+
+        const hasFrameEnabled =
+          typeof activeObject.hasFrameEnabled === "boolean"
+            ? activeObject.hasFrameEnabled
+            : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+              ? activeObject.data.hasFrameEnabled
+              : !isManualCut && !hasFill;
         storeThicknessMetadata(
           activeObject,
-          pxToMm(activeObject.strokeWidth || 0)
+          pxToMm(activeObject.strokeWidth ?? 0)
         );
         storeFillMetadata(activeObject, !isManualCut && hasFill);
         setProperties({
@@ -925,10 +1037,13 @@ const ShapeProperties = ({
           rotation: Math.round(activeObject.angle || 0),
           cornerRadius:
             activeObject.type === "rect" ||
-            supportedPathShapes.has(activeObject.shapeType)
+              supportedPathShapes.has(activeObject.shapeType)
               ? getCornerRadiusMmForRounded(activeObject)
               : 0,
-          thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+          thickness: roundMm(
+            pxToMm(activeObject.strokeWidth ?? DEFAULT_THICKNESS_PX)
+          ),
+          frame: !!hasFrameEnabled,
           fill: !isManualCut && hasFill,
           cut: isManualCut,
         });
@@ -981,7 +1096,38 @@ const ShapeProperties = ({
       fillVal !== "" &&
       fillVal !== "transparent" &&
       fillVal !== "none";
-    storeThicknessMetadata(activeObject, pxToMm(activeObject.strokeWidth || 0));
+
+    const frameMeta =
+      typeof activeObject.hasFrameEnabled === "boolean"
+        ? activeObject.hasFrameEnabled
+        : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+          ? activeObject.data.hasFrameEnabled
+          : null;
+
+    const fromShapeTab =
+      activeObject.fromShapeTab === true ||
+      (activeObject.data && activeObject.data.fromShapeTab === true);
+
+    if (frameMeta === null && fromShapeTab && !isManualCut && !hasFill) {
+      try {
+        activeObject.set({
+          fill: "transparent",
+          useThemeColor: false,
+        });
+        storeFillMetadata(activeObject, false);
+        storeFrameMetadata(activeObject, true);
+      } catch {
+        // no-op
+      }
+    }
+
+    const hasFrameEnabled =
+      typeof activeObject.hasFrameEnabled === "boolean"
+        ? activeObject.hasFrameEnabled
+        : typeof activeObject?.data?.hasFrameEnabled === "boolean"
+          ? activeObject.data.hasFrameEnabled
+          : !isManualCut && !hasFill;
+    storeThicknessMetadata(activeObject, pxToMm(activeObject.strokeWidth ?? 0));
     storeFillMetadata(activeObject, !isManualCut && hasFill);
     setProperties({
       width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
@@ -989,10 +1135,13 @@ const ShapeProperties = ({
       rotation: Math.round(activeObject.angle || 0),
       cornerRadius:
         activeObject.type === "rect" ||
-        supportedPathShapes.has(activeObject.shapeType)
+          supportedPathShapes.has(activeObject.shapeType)
           ? getCornerRadiusMmForRounded(activeObject)
           : 0,
-      thickness: roundMm(pxToMm(activeObject.strokeWidth || 2)),
+      thickness: roundMm(
+        pxToMm(activeObject.strokeWidth ?? DEFAULT_THICKNESS_PX)
+      ),
+      frame: !!hasFrameEnabled,
       fill: !isManualCut && hasFill,
       cut: isManualCut,
     });
@@ -1018,7 +1167,7 @@ const ShapeProperties = ({
         storeFillMetadata(obj, true);
         if (typeof obj.setCoords === "function") obj.setCoords();
         canvas.requestRenderAll();
-      } catch {}
+      } catch { }
     }
   }, [canvas, activeObject, globalColors?.strokeColor, globalColors?.textColor, properties.fill]);
 
@@ -1149,20 +1298,24 @@ const ShapeProperties = ({
         const rPxScaled = Math.max(0, mmToPx(rMmInt) * RADIUS_DAMPING);
         if (obj.type === "rect" || shapeType === "roundedCorners") {
           holdCenterIfArrow((o) => {
-            const currentScale = Math.min(o.scaleX || 1, o.scaleY || 1);
-            const baseRx = rPxScaled / (currentScale || 1);
-            const maxBaseRx = Math.max(
-              0,
-              Math.min(o.width || 0, o.height || 0) / 2 - 0.001
-            );
+            // Keep the visible radius equal on both axes (circular corners),
+            // like the canvas clipPath rounding (defined in canvas coordinates).
+            const sx = Math.max(1e-6, Math.abs(Number(o.scaleX) || 1));
+            const sy = Math.max(1e-6, Math.abs(Number(o.scaleY) || 1));
+            const baseRx = rPxScaled / sx;
+            const baseRy = rPxScaled / sy;
+            const maxBaseRx = Math.max(0, (Number(o.width) || 0) / 2 - 0.001);
+            const maxBaseRy = Math.max(0, (Number(o.height) || 0) / 2 - 0.001);
             const clampedBaseRx = Math.max(0, Math.min(baseRx, maxBaseRx));
+            const clampedBaseRy = Math.max(0, Math.min(baseRy, maxBaseRy));
             o.set({
               rx: clampedBaseRx,
-              ry: clampedBaseRx,
+              ry: clampedBaseRy,
               displayCornerRadiusMm: rMmInt,
               cornerRadiusMm: rMmInt,
             });
           });
+
           break;
         }
         // Підтримувані path-фігури — оновлюємо in-place
@@ -1185,6 +1338,45 @@ const ShapeProperties = ({
         holdCenterIfArrow((o) => {
           o.set("strokeWidth", mmToPx(applied));
           storeThicknessMetadata(o, applied);
+
+          // Важливо: зміна thickness впливає на outer size (width/height).
+          // Оновлюємо UI одразу, не чекаючи подій/перевибору об'єкта.
+          const outer = getOuterSizePx(o);
+          setProperties((prev) => ({
+            ...prev,
+            thickness: roundMm(applied),
+            width: roundMm(pxToMm(outer.width)),
+            height: roundMm(pxToMm(outer.height)),
+          }));
+        });
+        break;
+      }
+      case "frame": {
+        const themeStrokeColor =
+          globalColors?.strokeColor || globalColors?.textColor || "#000000";
+
+        holdCenterIfArrow((o) => {
+          const isCutShape = o?.cutType === "shape";
+          if (isCutShape) return;
+
+          if (value) {
+            o.set({
+              fill: "transparent",
+              useThemeColor: false,
+              isCutElement: false,
+              cutType: null,
+            });
+            storeFillMetadata(o, false);
+            storeFrameMetadata(o, true);
+          } else {
+            const restoreStroke =
+              (typeof o.initialStrokeColor === "string" && o.initialStrokeColor) ||
+              (typeof o?.data?.initialStrokeColor === "string" &&
+                o.data.initialStrokeColor) ||
+              themeStrokeColor;
+            o.set({ stroke: restoreStroke });
+            storeFrameMetadata(o, false);
+          }
         });
         break;
       }
@@ -1274,7 +1466,7 @@ const ShapeProperties = ({
     // Створюємо запис в історії для програмних змін.
     // Для toggle-дій (fill/cut) робимо одразу, щоб undo одразу відміняв саме цей крок.
     commitObjectChangeToHistory(current || obj, { property, value }, {
-      immediate: property === "fill" || property === "cut",
+      immediate: property === "fill" || property === "cut" || property === "frame",
       delay: 150,
     });
 
@@ -1368,11 +1560,11 @@ const ShapeProperties = ({
         return Math.round(obj.angle || 0);
       case "cornerRadius":
         return
-          obj.type === "rect" || supportedPathShapes.has(obj.shapeType)
-            ? getCornerRadiusMmForRounded(obj)
-            : 0;
+        obj.type === "rect" || supportedPathShapes.has(obj.shapeType)
+          ? getCornerRadiusMmForRounded(obj)
+          : 0;
       case "thickness":
-        return roundMm(pxToMm(obj.strokeWidth || 2));
+        return roundMm(pxToMm(obj.strokeWidth ?? DEFAULT_THICKNESS_PX));
       case "fill":
         return !isManualCut && hasFill;
       case "cut":
@@ -1681,70 +1873,11 @@ const ShapeProperties = ({
               </div>
             </div>
           </label>
-          <label className={styles.label}>
-            Thickness:
-            <div className={styles.inputGroup}>
-              <NumericFormat
-                value={properties.thickness === 0.5 ? "" : properties.thickness}
-                className={styles.input}
-                decimalSeparator=","
-                allowedDecimalSeparators={[",", "."]}
-                thousandSeparator={false}
-                allowNegative={false}
-                decimalScale={1}
-                fixedDecimalScale={false}
-                inputMode="decimal"
-                disabled={properties.fill || properties.cut}
-                style={{
-                  cursor:
-                    properties.fill || properties.cut ? "not-allowed" : "text",
-                  opacity: properties.fill || properties.cut ? 0.7 : 1,
-                }}
-                onValueChange={(values, sourceInfo) => {
-                  if (sourceInfo?.source !== "event") return;
-                  if (values.value === "") {
-                    setProperties((prev) => ({ ...prev, thickness: "" }));
-                    return;
-                  }
-                  if (typeof values.floatValue === "number") {
-                    updateProperty("thickness", values.floatValue);
-                  }
-                }}
-                onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => {
-                  setProperties((prev) => {
-                    if (prev.thickness === "") {
-                      return {
-                        ...prev,
-                        thickness: getFreshPropertyValue("thickness"),
-                      };
-                    }
-                    return prev;
-                  });
-                  setTimeout(() => setIsManuallyEditing(false), 100);
-                }}
-              />
-              <div
-                className={styles.arrows}
-                style={{
-                  pointerEvents:
-                    properties.fill || properties.cut ? "none" : "auto",
-                  opacity: properties.fill || properties.cut ? 0.6 : 1,
-                }}
-              >
-                <i
-                  className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue("thickness", 0.5)}
-                ></i>
-                <i
-                  className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue("thickness", 0.5)}
-                ></i>
-              </div>
-            </div>
-          </label>
-          <label className={styles.cutFillWrapper}>
-            <div className={styles.cutFillWrapperEl}>
+
+          <div aria-hidden="true" />
+
+          <div className={styles.cutFillWrapper}>
+            <div className={`${styles.cutFillWrapperEl} ${styles.fillEl}`}>
               Fill
               <input
                 type="checkbox"
@@ -1752,19 +1885,22 @@ const ShapeProperties = ({
                 onChange={(e) => {
                   if (e.target.checked) {
                     updateProperty("cut", false);
+                    updateProperty("frame", false);
                     updateProperty("fill", true);
                     // При активному Fill товщина має бути 0 та поле неактивне
                     updateProperty("thickness", 0);
                   } else {
                     updateProperty("fill", false);
-                    // Після вимкнення Fill: повертаємо товщину до 0.5 і показуємо її в інпуті
+                    // Після вимкнення Fill: повертаємо товщину до 0.5 і вмикаємо Frame
                     setProperties((prev) => ({ ...prev, thickness: "0.5" }));
                     updateProperty("thickness", 0.5);
+                    updateProperty("frame", true);
                   }
                 }}
               />
             </div>
-            <div className={styles.cutFillWrapperEl}>
+
+            <div className={`${styles.cutFillWrapperEl} ${styles.cutEl}`}>
               Cut
               <input
                 type="checkbox"
@@ -1780,13 +1916,14 @@ const ShapeProperties = ({
                     })();
                     setPrevThicknessBeforeCut(currentTh);
                     updateProperty("fill", false);
+                    updateProperty("frame", false);
                     updateProperty("cut", true);
                     // Під час Cut товщина завжди 0.5 мм
                     setProperties((prev) => ({ ...prev, thickness: "0.5" }));
                     updateProperty("thickness", 0.5);
                   } else {
                     updateProperty("cut", false);
-                    // Відновлюємо попередню товщину, якщо Fill не активний
+                    // Відновлюємо попередню товщину (якщо Fill не активний) і вмикаємо Frame
                     const thToRestore = prevThicknessBeforeCut;
                     if (!properties.fill) {
                       const restoreVal =
@@ -1795,13 +1932,135 @@ const ShapeProperties = ({
                           : 0.5;
                       updateProperty("thickness", restoreVal);
                     }
+                    updateProperty("frame", true);
                     // Скидаємо запам'ятоване значення
                     setPrevThicknessBeforeCut(null);
                   }
                 }}
               />
             </div>
-          </label>
+          </div>
+
+          <div className={styles.bottomRow}>
+            <div className={styles.bottomRowThickness}>
+              <div className={styles.thicknessInline}>
+                <span className={styles.thicknessLabel}>Thickness</span>
+                <div className={styles.inputGroup}>
+                  <NumericFormat
+                    value={
+                      properties.fill || properties.cut
+                        ? 0
+                        : isEditingThickness
+                          ? properties.thickness
+                          : getFreshPropertyValue("thickness")
+                    }
+                    className={styles.input}
+                    decimalSeparator=","
+                    allowedDecimalSeparators={[",", "."]}
+                    thousandSeparator={false}
+                    allowNegative={false}
+                    decimalScale={1}
+                    fixedDecimalScale={false}
+                    inputMode="decimal"
+                    disabled={!properties.frame || properties.fill || properties.cut}
+                    style={{
+                      cursor:
+                        !properties.frame || properties.fill || properties.cut
+                          ? "not-allowed"
+                          : "text",
+                      opacity:
+                        !properties.frame || properties.fill || properties.cut
+                          ? 0.7
+                          : 1,
+                    }}
+                    onValueChange={(values, sourceInfo) => {
+                      if (sourceInfo?.source !== "event") return;
+                      if (values.value === "") {
+                        setProperties((prev) => ({ ...prev, thickness: "" }));
+                        return;
+                      }
+                      if (typeof values.floatValue === "number") {
+                        setProperties((prev) => ({
+                          ...prev,
+                          thickness: values.floatValue,
+                        }));
+                        updateProperty("thickness", values.floatValue);
+                      }
+                    }}
+                    onFocus={() => {
+                      setIsEditingThickness(true);
+                      setIsManuallyEditing(true);
+                    }}
+                    onBlur={() => {
+                      setIsEditingThickness(false);
+                      // Гарантуємо, що поле ніколи не залишиться пустим,
+                      // і синхронізуємо width/height після зміни strokeWidth.
+                      const freshThickness = getFreshPropertyValue("thickness");
+                      const freshWidth = getFreshPropertyValue("width");
+                      const freshHeight = getFreshPropertyValue("height");
+                      setProperties((prev) => ({
+                        ...prev,
+                        thickness: freshThickness,
+                        width: freshWidth,
+                        height: freshHeight,
+                      }));
+                      setTimeout(() => setIsManuallyEditing(false), 100);
+                    }}
+                  />
+                  <div
+                    className={styles.arrows}
+                    style={{
+                      pointerEvents:
+                        !properties.frame || properties.fill || properties.cut
+                          ? "none"
+                          : "auto",
+                      opacity:
+                        !properties.frame || properties.fill || properties.cut
+                          ? 0.6
+                          : 1,
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-chevron-up"
+                      onClick={() => incrementValue("thickness", 0.5)}
+                    ></i>
+                    <i
+                      className="fa-solid fa-chevron-down"
+                      onClick={() => decrementValue("thickness", 0.5)}
+                    ></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.bottomRowFrame}>
+              <div className={`${styles.cutFillWrapperEl} ${styles.frameEl}`}>
+                Frame
+                <input
+                  type="checkbox"
+                  checked={properties.frame}
+                  disabled={properties.frame}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      updateProperty("fill", false);
+                      updateProperty("cut", false);
+                      updateProperty("frame", true);
+                      const currentTh = (() => {
+                        const t = properties.thickness;
+                        if (typeof t === "number") return t;
+                        const parsed = parseFloat(String(t).replace(/,/g, "."));
+                        return isNaN(parsed) ? 0 : parsed;
+                      })();
+                      if (properties.fill || currentTh === 0) {
+                        setProperties((prev) => ({ ...prev, thickness: "0.5" }));
+                        updateProperty("thickness", 0.5);
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

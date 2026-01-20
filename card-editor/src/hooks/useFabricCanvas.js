@@ -128,6 +128,31 @@ export const useFabricCanvas = () => {
           });
         }
 
+        const applySavedThemeToCircleLines = () => {
+          const savedStroke =
+            design?.toolbarState?.globalColors?.strokeColor ||
+            design?.toolbarState?.globalColors?.textColor ||
+            null;
+          if (!savedStroke || typeof savedStroke !== "string") return;
+
+          canvas.forEachObject?.((obj) => {
+            try {
+              const isCircleLineElement =
+                obj.isCircleWithLineCenterLine === true ||
+                obj.isCircleWithCrossHorizontalLine === true ||
+                obj.isCircleWithCrossVerticalLine === true ||
+                obj.name === "circleWithLineCenterLine" ||
+                obj.name === "circleWithCrossHorizontalLine" ||
+                obj.name === "circleWithCrossVerticalLine";
+
+              if (!isCircleLineElement) return;
+              obj.set({ stroke: savedStroke, fill: savedStroke });
+            } catch {
+              // no-op
+            }
+          });
+        };
+
         const forceRender = () => {
           canvas.forEachObject?.((obj) => {
             try {
@@ -229,10 +254,16 @@ export const useFabricCanvas = () => {
                   obj.initialStrokeColor = obj.stroke;
                 }
               }
+
             } catch (innerErr) {
               console.warn("Failed to refresh canvas object", innerErr);
             }
           });
+
+          // After JSON hydration: make sure circle-line elements follow saved theme color
+          // so their stroke/fill doesn't revert until user toggles the theme again.
+          applySavedThemeToCircleLines();
+
           canvas.renderAll?.();
           canvas.requestRenderAll?.();
         };

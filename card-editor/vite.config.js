@@ -9,6 +9,10 @@ export default defineConfig({
     include: ['fabric'],
   },
   server: {
-    allowedHosts: ['localhost', '45.94.158.166'],
+    host: '0.0.0.0',
+    allowedHosts: [
+      'localhost',
+      'talk-identifies-changing-angela.trycloudflare.com',
+    ],
   },
 });

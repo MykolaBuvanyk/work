@@ -3,7 +3,7 @@
     {
       "beck": "#FFFFFF",
       "color": "#000000",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#FFFFFF",
@@ -18,7 +18,7 @@
     {
       "beck": "#000000",
       "color": "#FFFFFF",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#2928FF",
@@ -48,12 +48,12 @@
     {
       "beck": "#964B21",
       "color": "#FFFFFF",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#FD7714",
       "color": "#FFFFFF",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#808080",
@@ -157,7 +157,7 @@
     {
       "beck": "#FFFFFF",
       "color": "#FE0000",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#000000",
@@ -182,7 +182,7 @@
     {
       "beck": "#FFFF01",
       "color": "#000000",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
@@ -197,7 +197,7 @@
     {
       "beck": "#FD7714",
       "color": "#FFFFFF",
-      "isSelect": true
+      "isSelect": false
     },
     {
       "beck": "#808080",
@@ -217,7 +217,7 @@
   ],
   "listAccessories": [
     {
-      "isAvaible": true,
+      "isAvaible": false,
       "img": "/images/accessories/CableTies 1.png",
       "text": "Cable ties",
       "number": 0.05,
@@ -227,18 +227,18 @@
       "isAvaible": true,
       "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
       "text": "Screws",
-      "number": 0.1,
+      "number": 0.11,
       "info": "Size 2.9 x 9.5 mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
-      "text": "Size 2.9 x 13 mm",
-      "number": 0.1,
+      "text": "Screws 13 mm",
+      "number": 0.11,
       "info": "Size 2.9 x 13 mm"
     },
     {
-      "isAvaible": true,
+      "isAvaible": false,
       "img": "/images/accessories/S-Hook.png",
       "text": "S-Hooks",
       "number": 0.25,
@@ -291,7 +291,7 @@
       ]
     },
     "thinkness32": {
-      "isSelect": false,
+      "isSelect": true,
       "materialArea": [
         0.2,
         0.22

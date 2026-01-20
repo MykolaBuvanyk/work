@@ -11,7 +11,6 @@ import TextToSVG from 'text-to-svg';
 import sequelize from './db.js';
 import './models/models.js';
 import router from './router/index.js';
-import AuthController from './Controller/AuthController.js';
 import { connectMongo } from './mongo.js';
 import errorMiddleware from './middleware/errorMiddleware.js';
 
@@ -1038,13 +1037,16 @@ const drawBarcodeRectsDirect = (
 
 const app = express();
 
-app.use(
-  cors(
-    ALLOWED_ORIGINS
-      ? { origin: ALLOWED_ORIGINS, credentials: true }
-      : { origin: true, credentials: true }
-  )
-);
+app.use(cors());
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Дозволити всім
+  res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+app.use('/images', express.static(path.join(__dirname, 'static')));
 
 app.use(express.json({ limit: '50mb' }));
 
@@ -1066,7 +1068,7 @@ app.post('/api/client-log', (req, res) => {
     entries
       .filter(Boolean)
       .slice(0, 200)
-      .forEach((entry) => {
+      .forEach(entry => {
         try {
           console.error('[CLIENT_DIAG]', entry);
         } catch {}

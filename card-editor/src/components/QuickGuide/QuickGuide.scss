@@ -1,0 +1,113 @@
+.quick-guide-container{
+    h1 {
+        font-weight: 600;
+        font-style: Semi Bold;
+        font-size: 30px;
+        line-height: 100%;
+        letter-spacing: 0%;
+        text-align: center;
+        color: #000000;
+        margin: 40px 0;
+    }
+    ul {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        flex-wrap: wrap;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        justify-content: space-between;
+        li {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 7.5px;
+            .svg {
+                display: flex;
+                align-items: center;
+            }
+            .a {
+                font-family: Inter;
+                font-weight: 700;
+                font-style: Italic;
+                font-size: 20px;
+                line-height: 100%;
+                letter-spacing: 0%;
+                color: #006CA4;
+            }
+            p {
+                margin: 0;
+                font-family: Inter;
+                font-weight: 500;
+                font-style: Medium;
+                font-size: 20px;
+                line-height: 100%;
+                letter-spacing: 0%;
+                color: #000000;
+            }
+            span {
+                background-color: #006CA4;
+                border: 1px solid #7D7D7D;
+                border-radius: 8px;
+                padding: 3px;
+                font-family: Inter;
+                font-weight: 500;
+                font-style: Medium;
+                font-size: 20px;
+                line-height: 100%;
+                letter-spacing: 0%;
+                color: #FFFFFF;
+            }
+        }
+    }
+    .how-start {
+        margin-top: 30px;
+    }
+    h2 {
+        margin-top: 61px;
+        margin-bottom: 37px;
+        font-weight: 600;
+        font-style: Semi Bold;
+        font-size: 30px;
+        line-height: 100%;
+        letter-spacing: 0%;
+        text-align: center;
+        color: #000000;
+    }
+    .how-start {
+        img {
+            width: 100%;
+            height: auto;
+        }
+    }
+    .instruction{
+        margin-top: 40px;
+        img {
+            width: 100%;
+            height: auto;
+        }
+    }
+    .butons-url{
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        gap: 30px;
+        margin: 58px 0;
+        a {
+            border: 1px solid #7D7D7D;
+            border-radius: 8px;
+            padding: 4px 30px;
+            font-weight: 600;
+            font-style: Semi Bold;
+            font-size: 13px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            text-align: center;
+            color: #006CA4;
+        }
+    }
+}

@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Footer.scss';
 import { Link } from 'react-router-dom';
+import { logout } from '../../store/reducers/user';
+import { useDispatch, useSelector } from 'react-redux';
+import Flag from 'react-flagkit';
+import { SlArrowDown } from 'react-icons/sl';
 
 const urls = [
   { title: 'Home', url: '/home' },
@@ -14,13 +18,38 @@ const urls = [
 const addUrls = [
   { title: 'Privacy policy', url: '/privacy-policy' },
   { title: 'Terms of purchasing', url: '/terms-of-purchasing' },
-  { title: 'Cookie settings', url: '/cookie' },
-  { title: 'Business / Consumer', url: '/consumer' },
+  { title: 'Cookie settings', url: '/privacy-policy#cookie' },
+  { title: 'Business / Consumer', url: '/login' },
 ];
 
-const language = [{ title: 'Німецька' }];
+const languages = [
+  { countryCode: 'GB', label: 'EN', description: 'United Kingdom' },
+  { countryCode: 'FR', label: 'FR', description: 'France' },
+  { countryCode: 'IT', label: 'IT', description: 'Italia' },
+  { countryCode: 'ES', label: 'ES', description: 'España' },
+  { countryCode: 'PL', label: 'PL', description: 'Polska' },
+  { countryCode: 'CZ', label: 'CS', description: 'Česko' },
+  { countryCode: 'NL', label: 'NL', description: 'Nederland' },
+  { countryCode: 'SE', label: 'SV', description: 'Sverige' },
+  { countryCode: 'NO', label: 'NO', description: 'Norge' },
+  { countryCode: 'DK', label: 'DA', description: 'Danmark' },
+  { countryCode: 'HU', label: 'HU', description: 'Magyarország' },
+  { countryCode: 'HR', label: 'HR', description: 'Hrvatska' },
+  { countryCode: 'UA', label: 'UK', description: 'Україна' },
+  { countryCode: 'RU', label: 'RU', description: 'Россия' },
+];
+
 
 const Footer = () => {
+
+  const { isAuth, isAdmin, user } = useSelector(state => state.user);
+
+  const dispatch = useDispatch();
+
+  const exit = () => dispatch(logout());
+
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  
   return (
     <div className="footer-container">
       <div className="up">
@@ -162,12 +191,30 @@ const Footer = () => {
               fill="#262626"
             />
           </svg>
-          <div className="lang">
-            <select>
-              {language.map(x => (
-                <option key={x.title}>{x.title}</option>
+          <div className={'lang'}>
+            <div
+              className='lang-select'
+              style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+              onClick={() => setIsLangOpen(!isLangOpen)}
+            >
+              <Flag country="GB" size={32} />
+              United Kingdom
+              <div className="svg">
+                <SlArrowDown size={14} />
+              </div>
+            </div>
+            <div className={isLangOpen ? 'dropdown' : 'open'}>
+              {languages.map(lang => (
+                <div
+                  key={lang.countryCode}
+                  onClick={() => setIsLangOpen(false)}
+                  className={'countries'}
+                >
+                  <Flag country={lang.countryCode} size={32} />
+                  {lang.description}
+                </div>
               ))}
-            </select>
+            </div>
           </div>
         </div>
         <div className="list-urls">
@@ -178,17 +225,17 @@ const Footer = () => {
           ))}
         </div>
         <div className="log">
-          <div className="user">Joe Doe</div>
-          <div className="log-out">Log out</div>
+          <div className="user">{isAuth && user.firstName + ' ' + user.surname}</div>
+          <div onClick={exit} className="log-out">{isAuth && 'Log out'}</div>
         </div>
       </div>
       <div className="down">
         <div className="add-urls">
           {addUrls.map(x => (
-            <Link to={`${x.url}`}>{x.title}</Link>
+            <Link key={x.url} to={`${x.url}`}>{x.title}</Link>
           ))}
         </div>
-        <div className="info">© 2025, Signomatic. All rights reserved.</div>
+        <div className="info">© 2026, Signomatic. All rights reserved.</div>
       </div>
     </div>
   );

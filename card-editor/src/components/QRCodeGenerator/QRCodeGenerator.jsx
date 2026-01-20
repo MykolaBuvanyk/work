@@ -361,22 +361,54 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         : canvas.getObjects().find((o) => o.isQRCode);
     if (!target) return;
     try {
-      const clone = await target.clone();
-      clone.set({
-        left: target.left + 30,
-        top: target.top + 30,
-        isQRCode: true,
-        qrText: target.qrText,
-        qrSize: target.qrSize,
-        qrColor: target.qrColor,
+      const qrText = target.qrText;
+      if (!qrText) return;
+
+      const fgColor = target.qrColor || globalColors?.textColor || "#000000";
+      const cellSize = DEFAULT_QR_CELL_SIZE;
+      const qr = qrGenerator(0, "M");
+      qr.addData(qrText);
+      qr.make();
+      const { optimizedPath, displayPath, size } = computeQrVectorData(
+        qr,
+        cellSize
+      );
+      const svgText = buildQrSvgMarkup({
+        size,
+        displayPath,
+        optimizedPath,
+        strokeColor: fgColor,
       });
-      decorateQrGroup(clone);
-      canvas.add(clone);
+
+      const result = await fabric.loadSVGFromString(svgText);
+      const obj =
+        result?.objects?.length === 1
+          ? result.objects[0]
+          : fabric.util.groupSVGElements(result.objects || [], result.options || {});
+      decorateQrGroup(obj);
+      obj.set({
+        left: (target.left || 0) + 30,
+        top: (target.top || 0) + 30,
+        scaleX: target.scaleX ?? 1,
+        scaleY: target.scaleY ?? 1,
+        angle: target.angle ?? 0,
+        originX: target.originX || "center",
+        originY: target.originY || "center",
+        selectable: true,
+        hasControls: true,
+        hasBorders: true,
+        isQRCode: true,
+        qrText,
+        qrSize: size || target.qrSize || obj.width || 0,
+        qrColor: fgColor,
+        backgroundColor: "transparent",
+      });
+      canvas.add(obj);
       try {
-        if (typeof clone.setCoords === "function") clone.setCoords();
+        if (typeof obj.setCoords === "function") obj.setCoords();
       } catch {}
       try {
-        canvas.setActiveObject(clone);
+        canvas.setActiveObject(obj);
       } catch {}
       try {
         canvas.requestRenderAll();
@@ -384,9 +416,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       try {
         requestAnimationFrame(() => {
           try {
-            if (!canvas || !clone) return;
-            canvas.setActiveObject(clone);
-            if (typeof clone.setCoords === "function") clone.setCoords();
+            if (!canvas || !obj) return;
+            canvas.setActiveObject(obj);
+            if (typeof obj.setCoords === "function") obj.setCoords();
             canvas.requestRenderAll();
           } catch {}
         });

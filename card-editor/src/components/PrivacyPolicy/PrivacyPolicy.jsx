@@ -1,8 +1,10 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import styles from './PrivacyPolicy.module.css';
 
 const PrivacyPolicy = () => {
+  const openCookie = () => {
+    localStorage.removeItem('cookieConsent');
+    window.location.reload()
+  }
   return (
     <div className={styles.terms_page}>
       <div className={styles.terms_page_wrapper}>
@@ -371,8 +373,8 @@ const PrivacyPolicy = () => {
         <div className={styles.terms_page_subtitle}>
           <h2>8.1 Which cookies are used?</h2>
         </div>
-        <div className={styles.term_page_btn}>
-          <button>Cookie settings</button>
+        <div id='cookie' className={styles.term_page_btn}>
+          <button onClick={openCookie}>Cookie settings</button>
         </div>
       </div>
     </div>

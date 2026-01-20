@@ -12,6 +12,15 @@ import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const DEFAULT_SHAPE_FILL = "#FFFFFF";
 const DEFAULT_SHAPE_STROKE = "#000000";
+const DEFAULT_ROUNDED_CORNERS_MM = 4;
+const DEFAULT_SHAPE_THICKNESS_MM = 0.5;
+
+// Unit conversion (keep consistent with Toolbar/Canvas)
+const PX_PER_MM = 72 / 25.4;
+const mmToPx = (mm) =>
+  typeof mm === "number" && Number.isFinite(mm) ? Math.round(mm * PX_PER_MM) : 0;
+
+const DEFAULT_SHAPE_STROKE_WIDTH_PX = DEFAULT_SHAPE_THICKNESS_MM * PX_PER_MM;
 
 const ShapeSelector = ({ isOpen, onClose }) => {
   const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
@@ -66,7 +75,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     try {
       fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
-    } catch {}
+    } catch { }
 
     if (typeof obj.setCoords === "function") obj.setCoords();
     canvas.setActiveObject(obj);
@@ -107,7 +116,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         top: centerY,
         fill: "transparent", // прозора заливка за замовчуванням
         stroke: themeStroke,
-        strokeWidth: 2,
+        strokeWidth: DEFAULT_SHAPE_STROKE_WIDTH_PX,
         originX: "center",
         originY: "center",
         strokeUniform: true,
@@ -128,9 +137,15 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         useThemeColor: false,
         initialFillColor: themeStroke, // зберігаємо stroke для майбутнього увімкнення fill
         initialStrokeColor: themeStroke,
-        followThemeStroke: true,
       });
-      custom.pendingShapePropsDefaults = { fill: false, cut: false };
+      custom.pendingShapePropsDefaults = { fill: false, cut: false, frame: true };
+      custom.hasFrameEnabled = true;
+      custom.isFrameElement = true;
+      custom.data = {
+        ...(custom.data || {}),
+        hasFrameEnabled: true,
+        isFrameElement: true,
+      };
       ensureShapeSvgId(custom, canvas);
       addObjectToCanvas(custom);
       setActiveObject(custom);
@@ -159,7 +174,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         height: 80,
         fill: "#fff",
         stroke: "#000",
-        strokeWidth: 2,
+        strokeWidth: DEFAULT_SHAPE_STROKE_WIDTH_PX,
         originX: "center",
         originY: "center",
         shapeType: "qrcode",
@@ -184,7 +199,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       top: centerY,
       fill: "transparent", // прозора заливка за замовчуванням, оскільки fill вимкнений
       stroke: themeStroke,
-      strokeWidth: 2,
+      strokeWidth: DEFAULT_SHAPE_STROKE_WIDTH_PX,
       originX: "center",
       originY: "center",
       strokeUniform: true, // утримує товщину контуру при масштабуванні
@@ -240,14 +255,33 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "roundedCorners":
-        shape = new fabric.Rect({
-          ...baseOptions,
-          width: 52,
-          height: 52,
-          rx: 12,
-          ry: 12,
-        });
+        {
+          const w = 52;
+          const h = 52;
+          const cornerMm = DEFAULT_ROUNDED_CORNERS_MM;
+          const rPx = mmToPx(cornerMm);
+          const maxR = Math.max(0, Math.min(w, h) / 2 - 0.001);
+          const rClamped = Math.max(0, Math.min(rPx, maxR));
+          shape = new fabric.Rect({
+            ...baseOptions,
+            width: w,
+            height: h,
+            rx: rClamped,
+            ry: rClamped,
+          });
+          // Keep the same metadata convention as other rounded shapes
+          try {
+            shape.set({
+              displayCornerRadiusMm: cornerMm,
+              cornerRadiusMm: cornerMm,
+            });
+          } catch {
+            shape.displayCornerRadiusMm = cornerMm;
+            shape.cornerRadiusMm = cornerMm;
+          }
+        }
         break;
+
 
       case "round":
         shape = new fabric.Circle({
@@ -463,15 +497,21 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         shapeType !== "line" &&
         shapeType !== "dashedLine"
       ) {
-        shape.pendingShapePropsDefaults = { fill: false, cut: false };
-        shape.followThemeStroke = true;
+        shape.pendingShapePropsDefaults = { fill: false, cut: false, frame: true };
         shape.initialStrokeColor = themeStroke;
+        shape.hasFrameEnabled = true;
+        shape.isFrameElement = true;
+        shape.data = {
+          ...(shape.data || {}),
+          hasFrameEnabled: true,
+          isFrameElement: true,
+        };
       }
 
       // Додаємо прапорець джерела (ShapeSelector)
       shape.fromShapeTab = true;
       shape.data = { ...(shape.data || {}), fromShapeTab: true };
-  ensureShapeSvgId(shape, canvas);
+      ensureShapeSvgId(shape, canvas);
       addObjectToCanvas(shape);
       setActiveObject(shape);
       setShapePropertiesOpen(true);
@@ -887,9 +927,8 @@ const ShapeSelector = ({ isOpen, onClose }) => {
                     <React.Fragment key={shape.id}>
                       {breakBefore && <div className={styles.rowBreak} />}
                       <div
-                        className={`${styles.shapeItem} ${
-                          isLine ? styles.lineItem : ""
-                        }`}
+                        className={`${styles.shapeItem} ${isLine ? styles.lineItem : ""
+                          }`}
                         onClick={() => addShape(shape.id)}
                         title={shape.name}
                       >

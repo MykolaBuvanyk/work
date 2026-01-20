@@ -653,6 +653,7 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
     const canvasState = {
       currentShapeType: canvas.get("shapeType") || "rectangle",
       cornerRadius: canvas.get("cornerRadius") || 0,
+      hasUserEditedCanvasCornerRadius: !!canvas.get("hasUserEditedCanvasCornerRadius"),
       backgroundColor: bgColor,
       backgroundType: bgType,
       width: canvas.getWidth(),
@@ -691,6 +692,10 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
       ...(toolbarState.sizeValues || {}),
       cornerRadius: canvasState.cornerRadius,
     };
+
+    // Ensure the explicit "user edited" flag persists per design/canvas
+    toolbarState.hasUserEditedCanvasCornerRadius =
+      !!canvasState.hasUserEditedCanvasCornerRadius;
 
     console.log("Final toolbar state for unsaved sign update:", toolbarState);
 
@@ -1200,11 +1205,13 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       backgroundImage, // НОВЕ: фон як зображення, якщо було встановлено
       canvasType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
       cornerRadius: canvas.get("cornerRadius") || 0,
+      hasUserEditedCanvasCornerRadius: !!canvas.get("hasUserEditedCanvasCornerRadius"),
 
       // ВИПРАВЛЕННЯ: Зберігаємо повний toolbar state з canvas properties
       toolbarState: {
         ...toolbarState,
         cornerRadius: canvas.get("cornerRadius") || 0,
+        hasUserEditedCanvasCornerRadius: !!canvas.get("hasUserEditedCanvasCornerRadius"),
         // ВИПРАВЛЕННЯ: Зберігаємо актуальний тип фігури з canvas
         currentShapeType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
         // Оновлюємо розміри в toolbar state
@@ -1282,6 +1289,7 @@ export function extractToolbarState(canvasData) {
   return {
     currentShapeType: actualShapeType,
     cornerRadius: savedState.cornerRadius || 0,
+      hasUserEditedCanvasCornerRadius: !!savedState.hasUserEditedCanvasCornerRadius,
     sizeValues: savedState.sizeValues || {
       width: canvasData.width
         ? Math.round((canvasData.width * 25.4) / 72)
@@ -1317,6 +1325,7 @@ function getDefaultToolbarState() {
   return {
     currentShapeType: "rectangle",
     cornerRadius: 0,
+    hasUserEditedCanvasCornerRadius: false,
     sizeValues: {
       width: DEFAULT_SIGN_SIZE_MM.width,
       height: DEFAULT_SIGN_SIZE_MM.height,

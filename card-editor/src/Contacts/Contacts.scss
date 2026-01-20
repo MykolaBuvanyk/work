@@ -1,0 +1,138 @@
+.contacts-container{
+    font-family: Inter;
+    font-weight: 600;
+    font-style: Semi Bold;
+    font-size: 24px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #000000;
+    h1{
+        font-family: Inter;
+        font-weight: 600;
+        font-style: Semi Bold;
+        font-size: 24px;
+        line-height: 100%;
+        letter-spacing: 0%;
+        text-align: center;
+        color: #000000;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+    h2{
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        font-family: Inter;
+        font-weight: 600;
+        font-style: Semi Bold;
+        font-size: 16px;
+        line-height: 121%;
+        letter-spacing: 0%;
+        text-decoration: underline;
+        text-decoration-style: solid;
+        text-decoration-thickness: 0%;
+        text-decoration-skip-ink: auto;
+        align-items: center;
+    }
+    .contact {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        .info{
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: left;
+            width: 50%;
+            .number {
+                padding: 0;
+                margin: 0;
+                margin-block-start: 0;
+                margin-block-end: 0;
+                font-family: Inter;
+                font-weight: 400;
+                font-style: Regular;
+                font-size: 16px;
+                leading-trim: NONE;
+                line-height: 121%;
+                letter-spacing: 0%;
+                color: #000000;
+                margin-top: 5px;
+                margin-bottom: 20px;
+                text-align: left;
+            }
+            a{
+                font-family: Inter;
+                font-weight: 400;
+                font-style: Regular;
+                font-size: 16px;
+                line-height: 16px;
+                letter-spacing: 0%;
+                text-decoration: underline;
+                text-decoration-style: solid;
+                text-decoration-thickness: 0%;
+                text-decoration-skip-ink: auto;
+                color: #1900FF;
+                text-align: left;
+                align-items: flex-start;
+                margin-top: 5px;
+            }
+            .address{
+                font-family: Inter;
+                font-weight: 400;
+                font-style: Regular;
+                font-size: 16px;
+                leading-trim: NONE;
+                line-height: 24px;
+                letter-spacing: 0%;
+                color: #000000;
+                max-width: 120px;
+                text-align: left;
+                margin-top: 3px;
+            }
+            .time-work{
+                font-family: Inter;
+                font-weight: 400;
+                font-style: Regular;
+                font-size: 16px;
+                leading-trim: NONE;
+                line-height: 100%;
+                letter-spacing: 0%;
+                color: #000000;
+            }
+        }
+        .form{
+            width: 45%;
+            form{
+                label{
+                    display: flex;
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 7.5px;
+                    font-family: Inter;
+                    font-weight: 400;
+                    font-style: Regular;
+                    font-size: 16px;
+                    leading-trim: NONE;
+                    line-height: 100%;
+                    letter-spacing: 0%;
+                    text-align: left;
+                    color: #000000;
+                    margin-top: 20px;
+                    input,textarea {
+                        width: 100%;
+                        background-color: transparent;
+                        box-sizing: border-box;
+                        border-radius: 8px;
+                        border: 1px solid #7D7D7D;
+                        padding-left: 7.5px;
+                    }
+                    input{
+                        height: 29px;
+                    }
+                }
+            }
+        }
+    }
+}

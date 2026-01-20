@@ -16,15 +16,76 @@ footer {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        
         .lang {
-          display: flex;
-          select {
-            margin-top: 7.5px;
-            background-color: transparent;
-            width: 215px;
-            height: 40px;
-            cursor: pointer;
+          position: relative;
+          cursor: pointer;
+          font-family: Roboto;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 14px;
+          leading-trim: NONE;
+          line-height: 21px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+          color: #000000;
+          width: 195px;
+          margin-top: 10px;
+          .lang-select{
+            display: flex;
+            flex-direction: row;
+            padding: 0 10px;
+            //justify-content: space-between;
+            .svg{
+              display: flex;
+              align-items: center;
+              margin-left: auto;
+            }
           }
+        }
+
+        .dropdown {
+          display: flex;
+          flex-direction: column;
+          gap: 7.5px;
+          position: absolute;
+          bottom: 100%;
+          z-index: 5;
+          background-color: #fff;
+          border-radius: 6px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          width: 195px;
+          padding: 7.5px 0;
+          z-index: 99;
+          align-items: flex-start;
+          justify-content: left;
+          padding: 0 10px;
+          box-sizing: border-box;
+          padding: 10px;
+        }
+
+        .countries {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-family: Roboto;
+          font-weight: 400;
+          font-style: Regular;
+          font-size: 14px;
+          leading-trim: NONE;
+          line-height: 21px;
+          letter-spacing: 0%;
+          vertical-align: middle;
+          color: #000000;
+          padding-right: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .open {
+          display: none;
+          z-index: 99;
         }
       }
       .list-urls {

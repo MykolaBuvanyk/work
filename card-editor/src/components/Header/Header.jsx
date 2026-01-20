@@ -109,8 +109,6 @@ const Header = () => {
 
   const exit = () => dispatch(logout());
 
-  console.log(432432, user, isAuth, isAdmin);
-
   return (
     <div className={styles.header}>
       <div className={styles.firstPart}>

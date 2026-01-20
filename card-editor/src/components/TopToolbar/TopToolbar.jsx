@@ -448,7 +448,7 @@ const TopToolbar = ({ className }) => {
             </li>
           </ul>
           <div
-            className={styles.topToolbarEL}
+            className={`${styles.topToolbarEL} ${styles.previewEl}`}
             onClick={() => setPreviewOpen(true)}
             style={{ cursor: "pointer" }}
           >
@@ -532,7 +532,7 @@ const TopToolbar = ({ className }) => {
             </svg>
             Preview
           </div>
-          <div className={styles.topToolbarEL}>
+          {/* <div className={styles.topToolbarEL}>
             <div className={styles.fontSizeControl}>
               <button className={styles.sizeButton} onClick={handleZoomOut}>
                 -
@@ -553,7 +553,7 @@ const TopToolbar = ({ className }) => {
                 +
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
         <div className={styles.toolbarRow}>
           <div className={styles.buttonWrapper}>

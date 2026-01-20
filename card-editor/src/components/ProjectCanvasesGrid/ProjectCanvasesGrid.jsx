@@ -1491,6 +1491,22 @@ const ProjectCanvasesGrid = () => {
 
       const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
+      // IMPORTANT: mark this sign as the active unsaved canvas immediately.
+      // Otherwise, an autosave/project update (e.g. after canvas duplication) can transfer
+      // and delete the unsaved entry before the delayed auto-open runs.
+      try {
+        localStorage.setItem('currentCanvasId', newSign.id);
+        localStorage.setItem('currentUnsavedSignId', newSign.id);
+        localStorage.removeItem('currentProjectCanvasId');
+        localStorage.removeItem('currentProjectCanvasIndex');
+      } catch {}
+      try {
+        if (typeof window !== 'undefined') {
+          window.__currentProjectCanvasId = null;
+          window.__currentProjectCanvasIndex = null;
+        }
+      } catch {}
+
       try {
         window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
       } catch {}

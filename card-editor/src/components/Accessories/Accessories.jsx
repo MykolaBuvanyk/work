@@ -23,7 +23,7 @@ import imgSHookSign from "/images/accessories/S-hook+sign 1.png";
 import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
 import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
 
-const TopToolbar = ({ className }) => {
+const TopToolbar = ({ className, formData }) => {
   const { canvas } = useCanvasContext();
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
@@ -469,6 +469,17 @@ const TopToolbar = ({ className }) => {
       window.removeEventListener("unsaved:signsUpdated", handleCanvasCreated);
     };
   }, [canvas, hasCheckedCanvases, working]);
+
+  useEffect(() => {
+      let filterAccessories = accessories.filter(
+        (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
+      );
+      filterAccessories = filterAccessories.map((x) => ({
+        ...x,
+        price: formData.listAccessories.find((y) => x.name == y.text).number,
+      }));
+      setAccessories(filterAccessories);
+  }, [formData]);
 
   return (
     <div className={`${styles.accessories} ${className}`}>

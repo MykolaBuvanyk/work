@@ -2,16 +2,20 @@ input[type="checkbox"][disabled] {
   cursor: not-allowed;
   opacity: 0.7;
 }
-
+input[type="checkbox"] {
+  margin: 0 !important
+}
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
 .modalOverlay {
   position: absolute;
   top: 0;
@@ -28,13 +32,12 @@ input[type="number"] {
 
 .modalContent {
   top: -8%;
-  left: -4.5%;
+  left: -3.5%;
   pointer-events: auto;
   background: #bdffd1;
   border-radius: 8px;
-  padding: 20px 30px;
-  min-width: 340px;
-  max-width: 340px;
+  padding: 20px 20px;
+  width: 405px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   border: 1px solid #e3e3e3;
   position: relative;
@@ -80,7 +83,7 @@ input[type="number"] {
   font-weight: 700;
 }
 
-.propertyGroup > .label:nth-child(5) {
+.propertyGroup>.label:nth-child(5) {
   color: rgba(0, 108, 164, 1);
 }
 
@@ -105,7 +108,7 @@ input[type="number"] {
 }
 
 .input {
-  width: 40px;
+  width: 50px;
   padding: 6px;
   /* border: 1px solid #d1d5db; */
   border: none;
@@ -157,20 +160,55 @@ input[type="number"] {
   align-items: center;
   justify-content: center;
   gap: 10px;
+  margin-top: 10px;
+}
+
+.bottomRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  /* margin-top: 20px; */
+  width: 100%;
+  gap: 20px;
+}
+
+.bottomRowThickness {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.bottomRowFrame {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.cutFillWrapperRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.thicknessInline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thicknessLabel {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1900FF;
 }
 
 .cutFillWrapperEl {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 25px;
+  gap: 10px;
   width: 100%;
-}
-
-/* Додаємо відступ перед третім рядом */
-.label:nth-child(5),
-.cutFillWrapper {
-  margin-top: 20px;
 }
 
 .titleWrapper {
@@ -194,13 +232,20 @@ input[type="number"] {
   justify-content: center;
 }
 
-.cutFillWrapperEl:first-child {
+
+.frameEl {
+  color: #1900ff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.fillEl {
   color: rgba(0, 109, 45, 1);
   font-weight: 700;
   font-size: 14px;
 }
 
-.cutFillWrapperEl:last-child {
+.cutEl {
   color: rgba(253, 47, 20, 1);
   font-weight: 700;
   font-size: 14px;

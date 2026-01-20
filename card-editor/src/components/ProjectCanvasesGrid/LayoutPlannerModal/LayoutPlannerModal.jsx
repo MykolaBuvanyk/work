@@ -8,6 +8,12 @@ import styles from "./LayoutPlannerModal.module.css";
 
 const PX_PER_MM = 72 / 25.4;
 
+// Requirement: gap between the outer and inner custom border contours must be exactly 2mm.
+const CUSTOM_BORDER_CONTOUR_GAP_MM = 2;
+const CUSTOM_BORDER_CONTOUR_GAP_PX = CUSTOM_BORDER_CONTOUR_GAP_MM * PX_PER_MM;
+const OUTLINE_CENTER_GAP_MM = 0.33;
+const OUTLINE_CENTER_GAP_PX = OUTLINE_CENTER_GAP_MM * PX_PER_MM;
+
 const CUSTOM_BORDER_DEFAULT_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_DEFAULT_FILL = "none";
 
@@ -915,9 +921,64 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
       : Array.from(rootElement.querySelectorAll('[id^="border"]'));
 
     // Choose the last one (usually the newest/topmost in exported SVG).
-    const primaryBorderNode = borderCandidates.length
+    let primaryBorderNode = borderCandidates.length
       ? borderCandidates[borderCandidates.length - 1]
       : null;
+
+    // PDF/Laser requirement:
+    // In LightBurn the path centerlines matter, not the visual stroke thickness.
+    // Our Fabric custom border node can be geometrically inset to keep a thick stroke inside the canvas,
+    // which makes its centerline differ from the standard blue outline (`#canvaShape`).
+    // For export we want the OUTER custom-border path to match the blue outline exactly.
+    if (primaryBorderNode) {
+      const mainOutline = rootElement.querySelector?.('#canvaShape') || null;
+      const baseId = primaryBorderNode.getAttribute?.('id') || '';
+      if (mainOutline && baseId && mainOutline !== primaryBorderNode) {
+        try {
+          const synced = mainOutline.cloneNode(true);
+          if (synced && typeof synced.setAttribute === 'function') {
+            synced.setAttribute('id', baseId);
+
+            // Preserve non-geometry attributes from the original border node.
+            const geometryAttrs = new Set([
+              'x',
+              'y',
+              'x1',
+              'y1',
+              'x2',
+              'y2',
+              'width',
+              'height',
+              'rx',
+              'ry',
+              'r',
+              'cx',
+              'cy',
+              'points',
+              'd',
+              'transform',
+              'pathLength',
+            ]);
+
+            Array.from(primaryBorderNode.attributes || []).forEach((attr) => {
+              if (!attr || !attr.name) return;
+              if (attr.name === 'id') return;
+              if (geometryAttrs.has(attr.name)) return;
+              try {
+                synced.setAttribute(attr.name, attr.value);
+              } catch {
+                // ignore
+              }
+            });
+
+            primaryBorderNode.parentNode?.replaceChild(synced, primaryBorderNode);
+            primaryBorderNode = synced;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     // Remove other duplicate border nodes (and their existing inner contours) so they can't render as extra green contours.
     if (!preferredBorderNode && borderCandidates.length > 1 && primaryBorderNode) {
@@ -951,7 +1012,14 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
     }
   }
 
-  const processNodeWithInnerContour = (shapeNode, { doubleInnerContour = false, overrideThicknessPx = null } = {}) => {
+  const processNodeWithInnerContour = (
+    shapeNode,
+    {
+      doubleInnerContour = false,
+      overrideThicknessPx = null,
+      applyStrokeCenterCompensation = true,
+    } = {}
+  ) => {
     try {
       if (
         !shapeNode ||
@@ -1033,36 +1101,38 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         return;
       }
 
-      // IMPORTANT: account for stroke thickness so the resulting outer size matches UI.
-      // We treat the original geometry as the stroke centerline.
-      // Therefore: outer boundary = +thickness/2, inner boundary = -thickness/2.
-      // To keep the gap between contours exactly = thickness, we:
-      // 1) replace the original node with an outward-offset contour (+thickness/2)
-      // 2) generate the inner contour inward by full thickness from that outer contour.
-      const halfThicknessPx = thicknessPx / 2;
-      if (!Number.isFinite(halfThicknessPx) || halfThicknessPx <= 0) return;
-
       const parent = shapeNode.parentNode;
       let workingNode = shapeNode;
 
-      const outerPathData = buildInnerContourPathData(
-        scope,
-        workingNode,
-        -halfThicknessPx
-      );
+      // IMPORTANT:
+      // - For ShapeSelector shapes, we compensate for SVG/PDF stroke being centered on the path.
+      //   We treat original geometry as the stroke centerline and replace it with the outer edge.
+      // - For other nodes (e.g. border), DO NOT replace geometry; only add inner contour.
+      if (applyStrokeCenterCompensation) {
+        const halfThicknessPx = thicknessPx / 2;
+        if (!Number.isFinite(halfThicknessPx) || halfThicknessPx <= 0) return;
 
-      if (outerPathData && parent) {
-        const outerNode = createOffsetContourElement(workingNode, outerPathData, {
-          id: nodeId || null,
-          isInner: false,
-        });
-        if (outerNode) {
-          parent.replaceChild(outerNode, workingNode);
-          workingNode = outerNode;
+        const outerPathData = buildInnerContourPathData(
+          scope,
+          workingNode,
+          -halfThicknessPx
+        );
+
+        if (outerPathData && parent) {
+          const outerNode = createOffsetContourElement(workingNode, outerPathData, {
+            id: nodeId || null,
+            isInner: false,
+          });
+          if (outerNode) {
+            parent.replaceChild(outerNode, workingNode);
+            workingNode = outerNode;
+          }
         }
       }
 
       // Gap between contours must equal thickness.
+      // If we replaced the node with its outer edge, the inner offset is full thickness.
+      // If we kept original geometry, we still offset inward by thickness (legacy border behavior).
       const offsetDistancePx = thicknessPx;
       const innerPathData = buildInnerContourPathData(
         scope,
@@ -1108,7 +1178,10 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
   };
 
   shapeNodes.forEach((shapeNode) =>
-    processNodeWithInnerContour(shapeNode, { doubleInnerContour: false })
+    processNodeWithInnerContour(shapeNode, {
+      doubleInnerContour: false,
+      applyStrokeCenterCompensation: true,
+    })
   );
   // For border: keep green overlay on the same geometry as blue,
   // PLUS add exactly one inner green contour with an inward offset equal to border thickness.
@@ -1116,6 +1189,7 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
     processNodeWithInnerContour(borderNode, {
       doubleInnerContour: false,
       overrideThicknessPx: borderThicknessPx,
+      applyStrokeCenterCompensation: false,
     })
   );
 };
@@ -1427,7 +1501,7 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     // In that case, create a blue copy of this border node before recoloring it to green.
     const hasBlueMainOutline = Boolean(rootElement.querySelector?.('[id="canvaShape"]'));
     const baseId = node.getAttribute("id") || "";
-    if (!hasBlueMainOutline) {
+    if (!hasBlueMainOutline || baseId === "canvaShape") {
       try {
         const blueCopy = node.cloneNode(true);
         if (blueCopy && typeof blueCopy.setAttribute === "function") {
@@ -2020,6 +2094,911 @@ const pointsToPathData = (points, closePath = false) => {
   return closePath ? `${base} Z` : base;
 };
 
+const addCurveToCommands = (curve, commands) => {
+  if (!curve || !commands) return;
+  const p2 = curve.point2;
+  if (curve.isStraight()) {
+    commands.push(`L${formatSvgNumber(p2.x)} ${formatSvgNumber(p2.y)}`);
+  } else {
+    const p1 = curve.point1;
+    const h1 = curve.handle1;
+    const h2 = curve.handle2;
+    const cp1 = p1.add(h1);
+    const cp2 = p2.add(h2);
+    commands.push(
+      `C${formatSvgNumber(cp1.x)} ${formatSvgNumber(cp1.y)} ${formatSvgNumber(
+        cp2.x
+      )} ${formatSvgNumber(cp2.y)} ${formatSvgNumber(p2.x)} ${formatSvgNumber(
+        p2.y
+      )}`
+    );
+  }
+};
+
+const generateGappedPathData = (scope, node, gapPx) => {
+  if (!scope || !node) return null;
+
+  try {
+    scope.project.clear();
+    const imported = scope.project.importSVG(node.cloneNode(true), {
+      applyMatrix: true,
+      expandShapes: true,
+      insert: true,
+    });
+
+    if (!imported) {
+      scope.project.clear();
+      return null;
+    }
+
+    const pathItems = gatherPathItems(scope, imported);
+    if (!pathItems.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    // Composite outlines (e.g. lock = body + shackle) sometimes import as multiple path items,
+    // but sometimes come as a single compound path. We detect lock-like geometry later too.
+    const isCompositeOutline = pathItems.length > 1;
+
+    const commands = [];
+
+    const angleDistance = (a, b) => {
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return Infinity;
+      let d = a - b;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      return Math.abs(d);
+    };
+
+    const isHorizontalAngle = (angle, toleranceRad) => {
+      if (!Number.isFinite(angle)) return false;
+      const d0 = angleDistance(angle, 0);
+      const dPi = angleDistance(angle, Math.PI);
+      return Math.min(d0, dPi) <= toleranceRad;
+    };
+
+    const median = (values) => {
+      if (!Array.isArray(values) || values.length === 0) return 0;
+      const sorted = values.slice().sort((x, y) => x - y);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    };
+
+    const buildTwoGapIntervals = (totalLen) => {
+      if (!Number.isFinite(totalLen) || totalLen <= 0) return [];
+      const gap = Number.isFinite(gapPx) && gapPx > 0 ? gapPx : 0;
+      if (!gap) return [];
+      const effectiveGap = Math.min(gap, totalLen * 0.9);
+      if (totalLen <= effectiveGap + 0.01) {
+        // Too short: fall back to a single center gap
+        const start = Math.max(0, totalLen / 2 - effectiveGap / 2);
+        const end = Math.min(totalLen, totalLen / 2 + effectiveGap / 2);
+        return end > start + 1e-6 ? [{ start, end }] : [];
+      }
+
+      const make = (center) => {
+        const start = Math.max(0, center - effectiveGap / 2);
+        const end = Math.min(totalLen, center + effectiveGap / 2);
+        return end > start + 1e-6 ? { start, end } : null;
+      };
+
+      const i1 = make(totalLen / 3);
+      const i2 = make((2 * totalLen) / 3);
+      if (!i1 || !i2) {
+        const i = make(totalLen / 2);
+        return i ? [i] : [];
+      }
+      if (i1.end >= i2.start - 1e-3) {
+        const i = make(totalLen / 2);
+        return i ? [i] : [];
+      }
+      return [i1, i2];
+    };
+
+    const appendCurveWithIntervalList = (curve, meta, intervals, offsetInGroup) => {
+      if (!curve) return;
+      if (!meta || !Number.isFinite(meta.length) || meta.length <= 0) {
+        addCurveToCommands(curve, commands);
+        return;
+      }
+      if (!Array.isArray(intervals) || intervals.length === 0) {
+        addCurveToCommands(curve, commands);
+        return;
+      }
+
+      const localIntervals = intervals
+        .map((it) => {
+          const start = Math.max(0, it.start - offsetInGroup);
+          const end = Math.min(meta.length, it.end - offsetInGroup);
+          return end > start + 1e-6 ? { start, end } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+
+      if (!localIntervals.length) {
+        addCurveToCommands(curve, commands);
+        return;
+      }
+
+      let cursorT = 0;
+      for (const it of localIntervals) {
+        const tStart = curve.getTimeAt(it.start);
+        const tEnd = curve.getTimeAt(it.end);
+        if (!Number.isFinite(tStart) || !Number.isFinite(tEnd) || tEnd <= tStart) {
+          continue;
+        }
+
+        if (tStart > cursorT + 1e-6) {
+          const before = curve.getPart(cursorT, tStart);
+          if (before) addCurveToCommands(before, commands);
+        }
+
+        const resumePoint = typeof curve.getPointAt === "function" ? curve.getPointAt(it.end) : null;
+        if (resumePoint && Number.isFinite(resumePoint.x) && Number.isFinite(resumePoint.y)) {
+          commands.push(`M${formatSvgNumber(resumePoint.x)} ${formatSvgNumber(resumePoint.y)}`);
+        }
+
+        cursorT = tEnd;
+      }
+
+      if (cursorT < 1 - 1e-6) {
+        const after = curve.getPart(cursorT, 1);
+        if (after) addCurveToCommands(after, commands);
+      }
+    };
+
+    pathItems.forEach((path) => {
+      const curves = path.curves;
+      if (!curves || curves.length === 0) return;
+
+      const gap = Number.isFinite(gapPx) && gapPx > 0 ? gapPx : 0;
+
+      // Start point
+      const startPoint = curves[0].point1;
+      commands.push(
+        `M${formatSvgNumber(startPoint.x)} ${formatSvgNumber(startPoint.y)}`
+      );
+
+      if (!gap) {
+        curves.forEach((curve) => addCurveToCommands(curve, commands));
+        return;
+      }
+
+      const curveMeta = curves.map((curve) => {
+        const isStraight = typeof curve?.isStraight === "function" ? curve.isStraight() : false;
+        const p1 = curve?.point1;
+        const p2 = curve?.point2;
+        const dx = Number(p2?.x) - Number(p1?.x);
+        const dy = Number(p2?.y) - Number(p1?.y);
+        const angle = Number.isFinite(dx) && Number.isFinite(dy) ? Math.atan2(dy, dx) : NaN;
+        const length = Number.isFinite(curve?.length) ? curve.length : 0;
+        return { curve, isStraight, angle, length };
+      });
+
+      const hasStraight = curveMeta.some((m) => m.isStraight);
+      const hasCurved = curveMeta.some((m) => m.curve && !m.isStraight);
+
+      // For composite outlines (lock body + shackle): never gap the shackle/arc item.
+      if (isCompositeOutline && !hasStraight) {
+        curveMeta.forEach((m) => addCurveToCommands(m.curve, commands));
+        return;
+      }
+
+      // Helper: gap a single curve (used for pure curved shapes like circle/ellipse)
+      const gapSingleCurve = (curve) => {
+        if (!curve) return;
+        const length = curve.length;
+        if (!Number.isFinite(length) || length <= 0) return;
+        const effectiveGap = Math.min(gap, length * 0.9);
+        if (length <= effectiveGap + 0.01) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+        const offset1 = length / 2 - effectiveGap / 2;
+        const offset2 = length / 2 + effectiveGap / 2;
+        const t1 = curve.getTimeAt(offset1);
+        const t2 = curve.getTimeAt(offset2);
+        if (!Number.isFinite(t1) || !Number.isFinite(t2)) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+        const part1 = curve.getPart(0, t1);
+        const part2 = curve.getPart(t2, 1);
+        if (!part1 || !part2) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+        addCurveToCommands(part1, commands);
+        const resume = part2.point1;
+        commands.push(`M${formatSvgNumber(resume.x)} ${formatSvgNumber(resume.y)}`);
+        addCurveToCommands(part2, commands);
+      };
+
+      // Pure curved shape (circle/ellipse/half-circle built from arcs): gap each arc curve.
+      if (!hasStraight) {
+        curveMeta.forEach((m) => gapSingleCurve(m.curve));
+        return;
+      }
+
+      // Mixed shapes (e.g. lock):
+      // - do NOT gap true curved segments
+      // - and also avoid creating many tiny gaps on polyline-approximated arcs.
+      // We insert ONE gap per *selected straight run* (normally 1 per side),
+      // with a special case for lock top near the shackle: 2 gaps.
+      const ANGLE_DRIFT_TOLERANCE_RAD = (3 * Math.PI) / 180; // 3 degrees
+
+      const runs = [];
+      let currentRun = null;
+      let currentOffset = 0;
+      const runIdByCurveIndex = new Array(curves.length).fill(null);
+      const offsetBeforeCurveInRun = new Array(curves.length).fill(0);
+
+      for (let i = 0; i < curveMeta.length; i += 1) {
+        const meta = curveMeta[i];
+        const isStraight = meta.isStraight;
+        const angle = meta.angle;
+
+        if (!isStraight || !Number.isFinite(meta.length) || meta.length <= 0) {
+          if (currentRun) {
+            currentRun.end = i - 1;
+            runs.push(currentRun);
+            currentRun = null;
+          }
+          continue;
+        }
+
+        if (!currentRun) {
+          currentRun = {
+            start: i,
+            end: i,
+            baseAngle: angle,
+            length: 0,
+          };
+          currentOffset = 0;
+        } else {
+          const drift = angleDistance(angle, currentRun.baseAngle);
+          if (!Number.isFinite(drift) || drift > ANGLE_DRIFT_TOLERANCE_RAD) {
+            currentRun.end = i - 1;
+            runs.push(currentRun);
+            currentRun = {
+              start: i,
+              end: i,
+              baseAngle: angle,
+              length: 0,
+            };
+            currentOffset = 0;
+          }
+        }
+
+        runIdByCurveIndex[i] = runs.length; // tentative id (finalized later)
+        offsetBeforeCurveInRun[i] = currentOffset;
+        currentOffset += meta.length;
+        currentRun.length = currentOffset;
+      }
+
+      if (currentRun) {
+        runs.push(currentRun);
+      }
+
+      // Fix run ids now that we pushed runs.
+      // Rebuild runIdByCurveIndex based on runs ranges.
+      runIdByCurveIndex.fill(null);
+      offsetBeforeCurveInRun.fill(0);
+      runs.forEach((run, runId) => {
+        let off = 0;
+        for (let i = run.start; i <= run.end; i += 1) {
+          runIdByCurveIndex[i] = runId;
+          offsetBeforeCurveInRun[i] = off;
+          off += curveMeta[i]?.length || 0;
+        }
+        run.length = off;
+      });
+
+      const runLengths = runs.map((r) => r.length).filter((v) => Number.isFinite(v) && v > 0);
+      const maxRun = runLengths.length ? Math.max(...runLengths) : 0;
+      const medRun = median(runLengths);
+      const isMixedWithPolylineArc = maxRun > 0 && medRun > 0 && maxRun / medRun >= 3;
+
+      // RECTANGLE rule (with or without rounded corners):
+      // Find exactly 4 straight sides and apply 1 centered gap per side.
+      // Corner arcs (from corner radius) get no gaps.
+      const straightCurveIndices = [];
+      const straightCurveLengths = [];
+      curveMeta.forEach((m, i) => {
+        if (m.isStraight && Number.isFinite(m.length) && m.length > 0) {
+          straightCurveIndices.push(i);
+          straightCurveLengths.push(m.length);
+        }
+      });
+
+      // Check: exactly 4 straight sides (typical rectangle/rounded rectangle)
+      if (straightCurveIndices.length === 4) {
+        const minLen = Math.min(...straightCurveLengths);
+        const maxLen = Math.max(...straightCurveLengths);
+        // Check if this looks like a rectangle (4 straight sides, reasonable proportions)
+        const isRectangle = minLen > 0 && maxLen / minLen <= 5 && straightCurveLengths.every((len) => len >= gap * 2);
+
+        if (isRectangle) {
+          const straightSet = new Set(straightCurveIndices);
+
+          // Apply one centered gap per straight side, pass through arcs unchanged
+          curves.forEach((curve, i) => {
+            const meta = curveMeta[i];
+            if (!curve || !meta) return;
+
+            // If not a straight side, just draw it (corner arc)
+            if (!straightSet.has(i)) {
+              addCurveToCommands(curve, commands);
+              return;
+            }
+
+            const curveLen = meta.length;
+            if (!Number.isFinite(curveLen) || curveLen <= 0) {
+              addCurveToCommands(curve, commands);
+              return;
+            }
+
+            // One centered gap on THIS straight side
+            const gapCenter = curveLen / 2;
+            const effectiveGap = Math.min(gap, curveLen * 0.8);
+            const gapStart = Math.max(0, gapCenter - effectiveGap / 2);
+            const gapEnd = Math.min(curveLen, gapCenter + effectiveGap / 2);
+
+            if (gapEnd <= gapStart + 1e-6) {
+              addCurveToCommands(curve, commands);
+              return;
+            }
+
+            const tStart = curve.getTimeAt(gapStart);
+            const tEnd = curve.getTimeAt(gapEnd);
+
+            if (!Number.isFinite(tStart) || !Number.isFinite(tEnd) || tEnd <= tStart) {
+              addCurveToCommands(curve, commands);
+              return;
+            }
+
+            // Draw before gap
+            if (tStart > 1e-6) {
+              const before = curve.getPart(0, tStart);
+              if (before) addCurveToCommands(before, commands);
+            }
+
+            // Move to resume point (after gap)
+            const resumePoint = curve.getPointAt(gapEnd);
+            if (resumePoint && Number.isFinite(resumePoint.x) && Number.isFinite(resumePoint.y)) {
+              commands.push(`M${formatSvgNumber(resumePoint.x)} ${formatSvgNumber(resumePoint.y)}`);
+            }
+
+            // Draw after gap
+            if (tEnd < 1 - 1e-6) {
+              const after = curve.getPart(tEnd, 1);
+              if (after) addCurveToCommands(after, commands);
+            }
+          });
+          return;
+        }
+      }
+
+      // HALF-CIRCLE / EXTENDED-HALF-CIRCLE rule (canvas shapes):
+      // If the outline has ONE dominant bottom horizontal base line and the rest is arc,
+      // then we want:
+      // - base (bottom straight): TWO gaps
+      // - arc (the rest of the outline): TWO gaps
+      // This avoids per-segment gaps on the arc polyline.
+      {
+        const HORIZONTAL_TOLERANCE_RAD = (12 * Math.PI) / 180; // 12 degrees
+
+        // Compute runStats here (avgY/avgX/baseAngle) for base detection.
+        const runStatsLocal = runs.map(() => ({ avgY: 0, count: 0, baseAngle: NaN }));
+        runs.forEach((run, runId) => {
+          if (!run) return;
+          let sumY = 0;
+          let count = 0;
+          let angleSum = 0;
+          let angleCount = 0;
+          for (let i = run.start; i <= run.end; i += 1) {
+            const meta = curveMeta[i];
+            const c = meta?.curve;
+            if (!c) continue;
+            const p1 = c.point1;
+            const p2 = c.point2;
+            if (Number.isFinite(p1?.y)) {
+              sumY += p1.y;
+              count += 1;
+            }
+            if (Number.isFinite(p2?.y)) {
+              sumY += p2.y;
+              count += 1;
+            }
+            if (Number.isFinite(meta?.angle)) {
+              angleSum += meta.angle;
+              angleCount += 1;
+            }
+          }
+          runStatsLocal[runId].avgY = count ? sumY / count : 0;
+          runStatsLocal[runId].count = count;
+          runStatsLocal[runId].baseAngle = angleCount ? angleSum / angleCount : run.baseAngle;
+        });
+
+        const sortedRuns = runs
+          .map((run, runId) => ({ runId, run }))
+          .filter(({ run }) => run && Number.isFinite(run.length) && run.length > 0)
+          .sort((a, b) => b.run.length - a.run.length);
+
+        const longest = sortedRuns[0] || null;
+        const second = sortedRuns[1] || null;
+
+        const longestLen = longest?.run?.length || 0;
+        const secondLen = second?.run?.length || 0;
+
+        // Require one clearly dominant run (the base) to avoid matching lock/rectangles.
+        const isDominantBase =
+          Number.isFinite(longestLen) &&
+          longestLen > 0 &&
+          (secondLen <= longestLen * 0.45 || secondLen <= (Number.isFinite(medRun) ? medRun * 1.5 : longestLen * 0.45));
+
+        const longestStat = longest ? runStatsLocal[longest.runId] : null;
+        const isHorizontalBase =
+          Boolean(longestStat?.count) && isHorizontalAngle(longestStat.baseAngle, HORIZONTAL_TOLERANCE_RAD);
+
+        // "Bottom" base: in SVG coords, bottom has larger Y.
+        let baseRunId = null;
+        if (isDominantBase && isHorizontalBase) {
+          baseRunId = longest.runId;
+        }
+
+        if (baseRunId != null) {
+          const baseRun = runs[baseRunId];
+          const baseLen = baseRun?.length || 0;
+
+          // Arc group = everything not in the base run.
+          const arcIndexList = [];
+          const arcOffsetBefore = new Array(curveMeta.length).fill(0);
+          let arcCum = 0;
+
+          for (let i = 0; i < curveMeta.length; i += 1) {
+            const rid = runIdByCurveIndex[i];
+            const isBaseMember = rid === baseRunId;
+            if (isBaseMember) continue;
+            const len = curveMeta[i]?.length || 0;
+            if (!Number.isFinite(len) || len <= 0) continue;
+            arcOffsetBefore[i] = arcCum;
+            arcIndexList.push(i);
+            arcCum += len;
+          }
+
+          const arcLen = arcCum;
+          const baseIntervals = buildTwoGapIntervals(baseLen);
+          const arcIntervals = buildTwoGapIntervals(arcLen);
+
+          // Only apply if we have both base+arc to gap.
+          if (baseIntervals.length && arcIntervals.length) {
+            // Draw curves in order, applying group intervals.
+            curves.forEach((curve, i) => {
+              const meta = curveMeta[i];
+              if (!curve || !meta) return;
+
+              const rid = runIdByCurveIndex[i];
+              if (rid === baseRunId && meta.isStraight) {
+                const off0 = offsetBeforeCurveInRun[i] || 0;
+                appendCurveWithIntervalList(curve, meta, baseIntervals, off0);
+                return;
+              }
+
+              // Arc (includes curved segments and polyline approximations)
+              if (arcIndexList.includes(i)) {
+                const offA = arcOffsetBefore[i] || 0;
+                appendCurveWithIntervalList(curve, meta, arcIntervals, offA);
+                return;
+              }
+
+              addCurveToCommands(curve, commands);
+            });
+
+            return;
+          }
+        }
+      }
+
+      const selectedRunIds = new Set();
+      runs.forEach((run, runId) => {
+        if (!Number.isFinite(run.length) || run.length <= 0) return;
+
+        // For lock/rounded/mixed outlines: only gap the long straight sides.
+        if (hasCurved || isMixedWithPolylineArc) {
+          if (run.length >= Math.max(maxRun * 0.6, gap * 4)) {
+            selectedRunIds.add(runId);
+          }
+          return;
+        }
+
+        // For normal polygons (few straight runs): gap every side/run.
+        if (run.length >= gap * 2) {
+          selectedRunIds.add(runId);
+        }
+      });
+
+      // Determine which straight run is the TOP edge (horizontal + smallest Y),
+      // so we can add TWO gaps near the shackle (lock requirement).
+      const HORIZONTAL_TOLERANCE_RAD = (12 * Math.PI) / 180; // 12 degrees
+      const runStats = runs.map(() => ({ avgY: 0, avgX: 0, count: 0, baseAngle: NaN }));
+      runs.forEach((run, runId) => {
+        if (!run) return;
+        let sumY = 0;
+        let sumX = 0;
+        let count = 0;
+        let angleSum = 0;
+        let angleCount = 0;
+        for (let i = run.start; i <= run.end; i += 1) {
+          const meta = curveMeta[i];
+          const c = meta?.curve;
+          if (!c) continue;
+          const p1 = c.point1;
+          const p2 = c.point2;
+          if (Number.isFinite(p1?.x)) {
+            sumX += p1.x;
+          }
+          if (Number.isFinite(p1?.y)) {
+            sumY += p1.y;
+            count += 1;
+          }
+          if (Number.isFinite(p2?.x)) {
+            sumX += p2.x;
+          }
+          if (Number.isFinite(p2?.y)) {
+            sumY += p2.y;
+            count += 1;
+          }
+          if (Number.isFinite(meta?.angle)) {
+            angleSum += meta.angle;
+            angleCount += 1;
+          }
+        }
+        runStats[runId].avgY = count ? sumY / count : 0;
+        runStats[runId].avgX = count ? sumX / count : 0;
+        runStats[runId].count = count;
+        runStats[runId].baseAngle = angleCount ? angleSum / angleCount : run.baseAngle;
+      });
+
+      // Enable the special "two gaps on the top side" for lock-like outlines.
+      // - composite (multiple items) => very likely lock
+      // - or polyline-arc heuristic (many tiny straight segments) => likely lock shackle approximation
+      const enableTwoTopGaps = isCompositeOutline || isMixedWithPolylineArc;
+
+      // LOCK requirement:
+      // "two gaps above the shackle" usually means the TOP edge is split into 2 horizontal runs
+      // (left and right of the shackle opening). We add ONE gap per each of those two runs.
+      // We never put two gaps on the bottom edge.
+      const specialOneGapTopRunIds = new Set();
+      if (enableTwoTopGaps) {
+        const collectY = (point, acc) => {
+          if (!point) return;
+          const y = point.y;
+          if (Number.isFinite(y)) acc.push(y);
+        };
+
+        const collectX = (point, acc) => {
+          if (!point) return;
+          const x = point.x;
+          if (Number.isFinite(x)) acc.push(x);
+        };
+
+        const shackleYs = [];
+        const shackleXs = [];
+
+        if (hasCurved) {
+          // True curves: use their Y as the shackle reference.
+          curveMeta.forEach((m) => {
+            if (!m?.curve || m.isStraight) return;
+            collectY(m.curve.point1, shackleYs);
+            collectY(m.curve.point2, shackleYs);
+            collectX(m.curve.point1, shackleXs);
+            collectX(m.curve.point2, shackleXs);
+          });
+        } else if (isMixedWithPolylineArc) {
+          // Polyline-arc approximation: use short straight segments that are NOT part of selected long runs.
+          curveMeta.forEach((m, idx) => {
+            if (!m?.curve || !m.isStraight) return;
+            const runId = runIdByCurveIndex[idx];
+            if (runId != null && selectedRunIds.has(runId)) return;
+            // Prefer tiny segments (typical for arc polylines)
+            if (Number.isFinite(m.length) && m.length <= medRun * 1.2) {
+              collectY(m.curve.point1, shackleYs);
+              collectY(m.curve.point2, shackleYs);
+              collectX(m.curve.point1, shackleXs);
+              collectX(m.curve.point2, shackleXs);
+            }
+          });
+        }
+
+        const shackleY = shackleYs.length
+          ? shackleYs.reduce((a, b) => a + b, 0) / shackleYs.length
+          : NaN;
+        const shackleX = shackleXs.length
+          ? shackleXs.reduce((a, b) => a + b, 0) / shackleXs.length
+          : NaN;
+
+        // Candidate horizontal runs: include even if they were not selected as "longest".
+        const minRunLenForTop = Math.max(gap * 3, medRun * 1.5);
+        const horizontalCandidates = runs
+          .map((run, runId) => ({ run, runId }))
+          .filter(({ run }) => run && Number.isFinite(run.length) && run.length >= minRunLenForTop)
+          .filter(({ runId }) => {
+            const stat = runStats[runId];
+            if (!stat || !stat.count) return false;
+            return isHorizontalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD);
+          })
+          .map(({ runId, run }) => ({
+            runId,
+            length: run.length,
+            avgY: runStats[runId].avgY,
+            avgX: runStats[runId].avgX,
+          }));
+
+        if (horizontalCandidates.length) {
+          // In SVG coordinates, "top" is the smallest Y.
+          const minY = Math.min(...horizontalCandidates.map((c) => c.avgY));
+          const topBand = horizontalCandidates.filter((c) => Math.abs(c.avgY - minY) <= 2);
+
+          // Pick two runs: left and right of shackleX if known, else two longest from the top band.
+          let picked = [];
+          if (Number.isFinite(shackleX)) {
+            const left = topBand
+              .filter((c) => Number.isFinite(c.avgX) && c.avgX < shackleX)
+              .sort((a, b) => Math.abs(a.avgX - shackleX) - Math.abs(b.avgX - shackleX))[0];
+            const right = topBand
+              .filter((c) => Number.isFinite(c.avgX) && c.avgX > shackleX)
+              .sort((a, b) => Math.abs(a.avgX - shackleX) - Math.abs(b.avgX - shackleX))[0];
+
+            if (left) picked.push(left);
+            if (right) picked.push(right);
+          }
+
+          if (picked.length < 2) {
+            const byLen = topBand.slice().sort((a, b) => b.length - a.length);
+            byLen.forEach((c) => {
+              if (picked.length >= 2) return;
+              if (!picked.some((p) => p.runId === c.runId)) picked.push(c);
+            });
+          }
+
+          // If still only one top run exists, we'll still gap it once (better than nothing).
+          picked.slice(0, 2).forEach((c) => specialOneGapTopRunIds.add(c.runId));
+        }
+
+        // As a fallback, if we couldn't detect the shackle and no top runs were found,
+        // pick the top-most selected horizontal run.
+        if (!specialOneGapTopRunIds.size) {
+          let bestRunId = null;
+          let bestScore = Infinity;
+          selectedRunIds.forEach((runId) => {
+            const stat = runStats[runId];
+            if (!stat || !stat.count) return;
+            const angle = stat.baseAngle;
+            if (!isHorizontalAngle(angle, HORIZONTAL_TOLERANCE_RAD)) return;
+            const score = Number.isFinite(shackleY)
+              ? Math.abs(stat.avgY - shackleY)
+              : stat.avgY;
+            if (score < bestScore) {
+              bestScore = score;
+              bestRunId = runId;
+            }
+          });
+          if (bestRunId != null) specialOneGapTopRunIds.add(bestRunId);
+        }
+      }
+
+      const buildIntervalsForRun = (runLen, twoGaps) => {
+        if (!Number.isFinite(runLen) || runLen <= 0) return [];
+        const effectiveGap = Math.min(gap, runLen * 0.9);
+        if (runLen <= effectiveGap + 0.01) return [];
+
+        const makeInterval = (center) => {
+          const start = Math.max(0, center - effectiveGap / 2);
+          const end = Math.min(runLen, center + effectiveGap / 2);
+          return end > start + 1e-6 ? { start, end } : null;
+        };
+
+        if (twoGaps) {
+          // Two gaps on the top edge near the shackle: slightly closer to center than 1/3 & 2/3.
+          // This tends to match the shackle legs position better across templates.
+          const i1 = makeInterval(runLen * (0.5 - 0.18));
+          const i2 = makeInterval(runLen * (0.5 + 0.18));
+          if (!i1 || !i2) {
+            const i = makeInterval(runLen / 2);
+            return i ? [i] : [];
+          }
+          // If gaps overlap (too short run), fall back to a single center gap.
+          if (i1.end >= i2.start - 1e-3) {
+            const i = makeInterval(runLen / 2);
+            return i ? [i] : [];
+          }
+          return [i1, i2];
+        }
+
+        const i = makeInterval(runLen / 2);
+        return i ? [i] : [];
+      };
+
+      const intervalsByRunId = new Map();
+      const forcedRunIds = new Set([...specialOneGapTopRunIds]);
+      const runIdsToProcess = new Set([...selectedRunIds, ...forcedRunIds]);
+
+      runIdsToProcess.forEach((runId) => {
+        const run = runs[runId];
+        const runLen = run?.length || 0;
+        const twoGaps = false;
+
+        // Lock-top runs: always single gap per run (two runs => two gaps).
+        const intervals = buildIntervalsForRun(runLen, twoGaps);
+        if (intervals.length) {
+          intervalsByRunId.set(runId, intervals);
+        }
+      });
+
+      const appendCurveWithIntervals = (curve, meta, runId, off0) => {
+        if (!curve || !meta || !Number.isFinite(meta.length) || meta.length <= 0) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+        const intervals = intervalsByRunId.get(runId);
+        if (!intervals || intervals.length === 0) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+
+        const localIntervals = intervals
+          .map((it) => {
+            const start = Math.max(0, it.start - off0);
+            const end = Math.min(meta.length, it.end - off0);
+            return end > start + 1e-6 ? { start, end } : null;
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.start - b.start);
+
+        if (!localIntervals.length) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+
+        let cursorT = 0;
+        for (const it of localIntervals) {
+          const tStart = curve.getTimeAt(it.start);
+          const tEnd = curve.getTimeAt(it.end);
+          if (!Number.isFinite(tStart) || !Number.isFinite(tEnd) || tEnd <= tStart) {
+            continue;
+          }
+
+          if (tStart > cursorT + 1e-6) {
+            const before = curve.getPart(cursorT, tStart);
+            if (before) {
+              addCurveToCommands(before, commands);
+            }
+          }
+
+          // Move to the point right after the gap.
+          const resumePoint =
+            typeof curve.getPointAt === "function" ? curve.getPointAt(it.end) : null;
+          if (resumePoint && Number.isFinite(resumePoint.x) && Number.isFinite(resumePoint.y)) {
+            commands.push(
+              `M${formatSvgNumber(resumePoint.x)} ${formatSvgNumber(resumePoint.y)}`
+            );
+          }
+
+          cursorT = tEnd;
+        }
+
+        if (cursorT < 1 - 1e-6) {
+          const after = curve.getPart(cursorT, 1);
+          if (after) {
+            addCurveToCommands(after, commands);
+          }
+        }
+      };
+
+      curves.forEach((curve, i) => {
+        const meta = curveMeta[i];
+        if (!curve || !meta) return;
+
+        // Never gap true curved segments when we also have straight runs.
+        if (hasCurved && !meta.isStraight) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+
+        const runId = runIdByCurveIndex[i];
+        if (runId == null || !meta.isStraight || !intervalsByRunId.has(runId)) {
+          addCurveToCommands(curve, commands);
+          return;
+        }
+
+        const off0 = offsetBeforeCurveInRun[i] || 0;
+        appendCurveWithIntervals(curve, meta, runId, off0);
+      });
+    });
+
+    scope.project.clear();
+    return commands.join(" ");
+  } catch (error) {
+    console.warn("Error generating gapped path", error);
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
+
+const replaceNodeWithPathData = (node, pathData) => {
+  if (!node || !pathData) return null;
+  const parent = node.parentNode;
+  if (!parent || typeof document === "undefined") return null;
+
+  const ns = node.namespaceURI || "http://www.w3.org/2000/svg";
+  const path = document.createElementNS(ns, "path");
+
+  Array.from(node.attributes || []).forEach(({ name, value }) => {
+    if (!name) return;
+    if (GEOMETRY_ATTRIBUTES_TO_SKIP.has(name)) return;
+    if (name === "points" || name === "d") return;
+    path.setAttribute(name, value);
+  });
+
+  path.setAttribute("d", pathData);
+  path.setAttribute("fill", "none");
+  path.setAttribute("vector-effect", "non-scaling-stroke");
+  path.setAttribute("stroke", node.getAttribute("stroke") || OUTLINE_STROKE_COLOR);
+  path.setAttribute(
+    "stroke-linejoin",
+    node.getAttribute("stroke-linejoin") || "round"
+  );
+  path.setAttribute(
+    "stroke-linecap",
+    node.getAttribute("stroke-linecap") || "round"
+  );
+
+  parent.replaceChild(path, node);
+  return path;
+};
+
+const applyCenteredGapsToCanvasOutline = (rootElement, gapPx = OUTLINE_CENTER_GAP_PX) => {
+  if (!rootElement?.querySelectorAll) return;
+  if (!Number.isFinite(gapPx) || gapPx <= 0) return;
+
+  const scope = ensurePaperScope();
+  if (!scope) return;
+
+  const selectors = [
+    '[id="canvaShape"]',
+    '[data-canvas-outline="true"]',
+    '[data-export-border-blue="true"]',
+  ];
+
+  const nodes = [];
+  selectors.forEach((selector) => {
+    try {
+      nodes.push(...rootElement.querySelectorAll(selector));
+    } catch {
+      // ignore selector issues silently
+    }
+  });
+
+  const uniqueNodes = Array.from(new Set(nodes));
+
+  uniqueNodes.forEach((node) => {
+    if (!node || node.getAttribute?.("data-inner-contour") === "true") return;
+    if (node.getAttribute?.("data-export-border")) return;
+    const nodeId = node.getAttribute?.("id") || "";
+    if (nodeId.startsWith(HOLE_ID_PREFIX)) return;
+    if (node.getAttribute?.(CUT_TYPE_ATTRIBUTE) === HOLE_CUT_TYPE) return;
+
+    const pathData = generateGappedPathData(scope, node, gapPx);
+    if (!pathData) return;
+
+    replaceNodeWithPathData(node, pathData);
+  });
+};
+
 const extractPolygonsFromPathItem = (scope, pathItem) => {
   const polygons = [];
   const traverse = (item) => {
@@ -2309,7 +3288,8 @@ const styleLineFromCircleElements = (svgElement) => {
   });
 };
 
-const buildPlacementPreview = (placement) => {
+const buildPlacementPreview = (placement, options = {}) => {
+  const { enableGaps = true } = options;
   const { svg, preview, customBorder } = placement || {};
 
   if (svg && typeof window !== "undefined") {
@@ -2582,7 +3562,8 @@ const buildPlacementPreview = (placement) => {
       // convertTextToStrokeOnly(exportElement);
       addInnerContoursForShapes(exportElement, {
         enableBorderContours: customBorder?.mode === "custom",
-        borderThicknessPx: customBorder?.thicknessPx ?? null,
+        borderThicknessPx:
+          customBorder?.mode === "custom" ? CUSTOM_BORDER_CONTOUR_GAP_PX : null,
       });
       // recolorStrokeAttributes(exportElement);
 
@@ -2596,6 +3577,9 @@ const buildPlacementPreview = (placement) => {
       });
 
       applyCustomBorderOverrides(exportElement, customBorder);
+      if (enableGaps) {
+        applyCenteredGapsToCanvasOutline(exportElement, OUTLINE_CENTER_GAP_PX);
+      }
       styleLineFromCircleElements(exportElement);
 
       const previewElement = svgElement.cloneNode(true);
@@ -2622,7 +3606,8 @@ const buildPlacementPreview = (placement) => {
       // convertTextToStrokeOnly(previewElement);
       addInnerContoursForShapes(previewElement, {
         enableBorderContours: customBorder?.mode === "custom",
-        borderThicknessPx: customBorder?.thicknessPx ?? null,
+        borderThicknessPx:
+          customBorder?.mode === "custom" ? CUSTOM_BORDER_CONTOUR_GAP_PX : null,
       });
       // recolorStrokeAttributes(previewElement);
 
@@ -2693,6 +3678,7 @@ const LayoutPlannerModal = ({
 }) => {
   const [formatKey, setFormatKey] = useState("A4");
   const [orientation, setOrientation] = useState("portrait");
+  const [enableGaps, setEnableGaps] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
@@ -2769,7 +3755,7 @@ const LayoutPlannerModal = ({
 
       const preparedSheets = sheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
-          const previewData = buildPlacementPreview(placement);
+          const previewData = buildPlacementPreview(placement, { enableGaps });
 
           if (previewData?.type === "svg" && previewData.exportMarkup) {
             try {
@@ -2865,7 +3851,7 @@ const LayoutPlannerModal = ({
     } finally {
       setIsExporting(false);
     }
-  }, [formatKey, isExporting, sheets, spacingMm]);
+  }, [formatKey, isExporting, sheets, spacingMm, enableGaps]);
 
   if (!isOpen) return null;
 
@@ -2920,6 +3906,25 @@ const LayoutPlannerModal = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className={styles.controlGroup}>
+            <span>Розриви контуру</span>
+            <button
+              type="button"
+              className={enableGaps ? styles.orientationActive : ""}
+              onClick={() => setEnableGaps(!enableGaps)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "4px",
+                border: "1px solid #ccc",
+                background: enableGaps ? "#e6f7ff" : "#fff",
+                cursor: "pointer",
+                marginLeft: "10px"
+              }}
+            >
+              {enableGaps ? "Увімкнено" : "Вимкнено"}
+            </button>
           </div>
 
           <div className={styles.summary}>
@@ -2977,7 +3982,9 @@ const LayoutPlannerModal = ({
                       }}
                     >
                       {sheet.placements.map((placement) => {
-                        const previewData = buildPlacementPreview(placement);
+                        const previewData = buildPlacementPreview(placement, {
+                          enableGaps,
+                        });
                         const hasPreview = !!previewData;
 
                         return (

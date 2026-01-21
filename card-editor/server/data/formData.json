@@ -3,7 +3,7 @@
     {
       "beck": "#FFFFFF",
       "color": "#000000",
-      "isSelect": false
+      "isSelect": true
     },
     {
       "beck": "#FFFFFF",
@@ -18,7 +18,7 @@
     {
       "beck": "#000000",
       "color": "#FFFFFF",
-      "isSelect": false
+      "isSelect": true
     },
     {
       "beck": "#2928FF",
@@ -48,12 +48,12 @@
     {
       "beck": "#964B21",
       "color": "#FFFFFF",
-      "isSelect": false
+      "isSelect": true
     },
     {
       "beck": "#FD7714",
       "color": "#FFFFFF",
-      "isSelect": false
+      "isSelect": true
     },
     {
       "beck": "#808080",
@@ -144,6 +144,222 @@
     }
   ],
   "colour32": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": true
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": false
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "Acolour16": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": true
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "Acolour08": [
+    {
+      "beck": "#FFFFFF",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#0179D0",
+      "isSelect": true
+    },
+    {
+      "beck": "#FFFFFF",
+      "color": "#FE0000",
+      "isSelect": false
+    },
+    {
+      "beck": "#000000",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#2928FF",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#FD0100",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#017F01",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#FFFF01",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)",
+      "color": "#000000",
+      "isSelect": false
+    },
+    {
+      "beck": "#964B21",
+      "color": "#FFFFFF",
+      "isSelect": true
+    },
+    {
+      "beck": "#FD7714",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#808080",
+      "color": "#FFFFFF",
+      "isSelect": false
+    },
+    {
+      "beck": "#E6CCB2",
+      "color": "#000000",
+      "isSelect": true
+    },
+    {
+      "beck": "#36454F",
+      "color": "#FFFFFF",
+      "isSelect": true
+    }
+  ],
+  "Acolour32": [
     {
       "beck": "#FFFFFF",
       "color": "#000000",
@@ -327,5 +543,20 @@
       "price": "500 - 10000",
       "discount": "25"
     }
-  ]
+  ],
+  "GB": "22%",
+  "FR": "1%",
+  "IT": "",
+  "ES": "",
+  "PL": "",
+  "CZ": "5%",
+  "NL": "",
+  "SE": "30%",
+  "NO": "",
+  "DK": "",
+  "HU": "",
+  "HR": "",
+  "UA": "19%",
+  "RU": "",
+  "code": "19%"
 }

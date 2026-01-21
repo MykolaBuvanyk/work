@@ -73,17 +73,24 @@ const Admin = () => {
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
     <>
-      <NavLink
-        style={{
-          alignItems: 'flex-end',
-          display: 'flex',
-          justifyContent: 'right',
-          marginBottom: '15px',
-        }}
-        to={'/admin/update-avaible'}
-      >
-        update avaible
-      </NavLink>
+      <div style={{
+            alignItems: 'flex-end',
+            display: 'flex',
+            justifyContent: 'right',
+            marginBottom: '15px',
+            gap:'30px'
+          }} className="end">
+        <NavLink
+          to={'/admin/update-avaible'}
+        >
+          update avaible
+        </NavLink>
+        <NavLink
+          to={'/admin/update-avaible/icon'}
+        >
+          update icons
+        </NavLink>
+      </div>
       <div className="admin-container">
         <div className="left">
           <div className="selects">

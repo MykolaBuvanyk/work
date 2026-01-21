@@ -2,9 +2,32 @@ import React, { useEffect, useState } from 'react';
 import './UpdateAvaible.scss';
 import { $authHost } from '../../http';
 import { useSelector } from 'react-redux';
+import Flag from 'react-flagkit';
+import { SlArrowDown } from 'react-icons/sl';
+
+const languages = [
+  { countryCode: 'GB', label: 'EN' }, // Використовуємо GB для UK/EN
+  { countryCode: 'FR', label: 'FR' },
+  { countryCode: 'IT', label: 'IT' },
+  { countryCode: 'ES', label: 'ES' },
+  { countryCode: 'PL', label: 'PL' },
+  { countryCode: 'CZ', label: 'CS' }, // Чехія
+  { countryCode: 'NL', label: 'NL' },
+  { countryCode: 'SE', label: 'SV' }, // Швеція
+  { countryCode: 'NO', label: 'NO' },
+  { countryCode: 'DK', label: 'DA' }, // Данія
+  { countryCode: 'HU', label: 'HU' },
+  { countryCode: 'HR', label: 'HR' }, // Хорватія
+  { countryCode: 'UA', label: 'UK' }, // Україна
+  { countryCode: 'RU', label: 'RU' },
+];
 
 const UpdateAvaible = () => {
   const { isAdmin } = useSelector(state => state.user);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [langInput, setLangInput2]=useState('');
+  const [langSelect, setLangSelect]=useState('GB');
+
 
   const [formData, setFormData] = useState({
     // Тут залишайте ваші початкові дефолтні значення як "скелет"
@@ -29,6 +52,16 @@ const UpdateAvaible = () => {
 
   // Обробник для кольорів, аксесуарів та знижок (масиви)
   const handleArrayUpdate = (arrayName, index, field, value) => {
+    if(arrayName[0]=='A'&&value){
+      if(!formData[arrayName.slice(1)][index].isSelect)return;
+    }
+    if(arrayName[0]!='A'&&!value){
+      setFormData(prev => {
+        const updatedArray = [...prev['A'+arrayName]];
+        updatedArray[index] = { ...updatedArray[index], [field]: value };
+        return { ...prev, ['A'+arrayName]: updatedArray };
+      });
+    }
     setFormData(prev => {
       const updatedArray = [...prev[arrayName]];
       updatedArray[index] = { ...updatedArray[index], [field]: value };
@@ -64,7 +97,7 @@ const UpdateAvaible = () => {
   };
 
   // Компонент для списку кольорів, щоб не дублювати код
-  const ColorGrid = ({ listName }) => (
+  const ColorGrid = ({ listName,isA }) => (
     <div className="list-colors">
       {formData[listName].map((x, idx) => (
         <div
@@ -84,7 +117,20 @@ const UpdateAvaible = () => {
     </div>
   );
 
+  const setSelectLang=(code)=>{
+    setLangSelect(code)
+    setIsLangOpen(false)
+    setLangInput2(formData[code]);
+  }
+
   useEffect(() => {}, [isAdmin]);
+
+  const setLangInput=(value)=>{
+    setFormData((prev)=>{
+      return {...prev,[langSelect]:value}
+    });
+    setLangInput2(value)
+  }
   if (!isAdmin) return <>У вас не достатньо прав</>;
 
   if (formData.colour16.length == 0) return <>...loading</>;
@@ -118,7 +164,7 @@ const UpdateAvaible = () => {
         </div>
       </div>
 
-      <div className="list">
+      <div style={{marginTop:'60px'}} className="list">
         <div className="row">
           <div className="title" style={{ whiteSpace: 'nowrap' }}>
             Adhesive Tape:
@@ -135,6 +181,13 @@ const UpdateAvaible = () => {
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+      <div className="list">
+        <div className="list-list-colors">
+          <ColorGrid listName="Acolour16" />
+          <ColorGrid listName="Acolour08" />
+          <ColorGrid listName="Acolour32" />
         </div>
       </div>
 
@@ -169,6 +222,32 @@ const UpdateAvaible = () => {
           </ul>
 
           <div className="bonuses">
+            <div className="lang-cont">
+              <span>VAT</span>
+              <div className='lang'>
+                <div
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                >
+                  <Flag country={langSelect} size={32} />
+                  {langSelect}
+                  <SlArrowDown size={14} />
+                </div>
+                <div className={isLangOpen ? 'dropdown' : 'open'}>
+                  {languages.map(lang => (
+                    <div
+                      key={lang.countryCode}
+                      onClick={() => setSelectLang(lang.countryCode)}
+                      className={'countries'}
+                    >
+                      <Flag country={lang.countryCode} size={32} />
+                      {lang.countryCode}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <input type="text" value={langInput} onChange={(e)=>setLangInput(e.target.value)} />
+            </div>
             <div className="bunuses-text">
               <div className="bonuses-title">
                 <p>Bonuses: </p> <span>€</span>

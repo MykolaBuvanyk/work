@@ -9309,7 +9309,7 @@ const Toolbar = ({ formData }) => {
           <h3>Colour</h3>
         </div>
         <div className={styles.colors}>
-          {formData[`colour${thickness.toString().replace('.', '')}`][0].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][0].isSelect && (
             <span
               onClick={() => handleColorPick(0, '#000000', '#FFFFFF', 'solid')}
               title="White / Black"
@@ -9322,7 +9322,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][1].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][1].isSelect && (
             <span
               onClick={() => handleColorPick(1, '#0000FF', '#FFFFFF', 'solid')}
               title="White / Blue"
@@ -9335,7 +9335,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][2].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][2].isSelect && (
             <span
               onClick={() => handleColorPick(2, '#FF0000', '#FFFFFF', 'solid')}
               title="White / Red"
@@ -9348,7 +9348,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][3].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][3].isSelect && (
             <span
               onClick={() => handleColorPick(3, '#FFFFFF', '#000000', 'solid')}
               title="Black / White"
@@ -9360,7 +9360,7 @@ const Toolbar = ({ formData }) => {
               />
             </span>
           )}
-          {formData[`colour${thickness.toString().replace('.', '')}`][4].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][4].isSelect && (
             <span
               onClick={() => handleColorPick(4, '#FFFFFF', '#0000FF', 'solid')}
               title="Blue / White"
@@ -9373,7 +9373,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][5].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][5].isSelect && (
             <span
               onClick={() => handleColorPick(5, '#FFFFFF', '#FF0000', 'solid')}
               title="Red / White"
@@ -9386,7 +9386,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][6].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][6].isSelect && (
             <span
               onClick={() => handleColorPick(6, '#FFFFFF', '#00FF00', 'solid')}
               title="Green / White"
@@ -9399,7 +9399,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][7].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][7].isSelect && (
             <span
               onClick={() => handleColorPick(7, '#000000', '#FFFF00', 'solid')}
               title="Yellow / Black"
@@ -9412,7 +9412,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][8].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][8].isSelect && (
             <span
               onClick={() => handleColorPick(8, '#000000', '#F0F0F0', 'gradient')}
               title="Silver / Black"
@@ -9425,7 +9425,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][9].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][9].isSelect && (
             <span
               onClick={() => handleColorPick(9, '#FFFFFF', '#8B4513', 'solid')}
               title="Brown / White"
@@ -9438,7 +9438,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][10].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][10].isSelect && (
             <span
               onClick={() => handleColorPick(10, '#FFFFFF', '#FFA500', 'solid')}
               title="Orange / White"
@@ -9450,7 +9450,7 @@ const Toolbar = ({ formData }) => {
               />
             </span>
           )}
-          {formData[`colour${thickness.toString().replace('.', '')}`][11].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][11].isSelect && (
             <span
               onClick={() => handleColorPick(11, '#FFFFFF', '#808080', 'solid')}
               title="Gray / White"
@@ -9462,7 +9462,7 @@ const Toolbar = ({ formData }) => {
               />
             </span>
           )}
-          {formData[`colour${thickness.toString().replace('.', '')}`][12].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][12].isSelect && (
             <span
               onClick={() => handleColorPick(12, '#000000', '/textures/Wood.jpg', 'texture')}
               title="Maple (“Wood”) / Black"
@@ -9475,7 +9475,7 @@ const Toolbar = ({ formData }) => {
             </span>
           )}
 
-          {formData[`colour${thickness.toString().replace('.', '')}`][13].isSelect && (
+          {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][13].isSelect && (
             <span
               onClick={() => handleColorPick(13, '#FFFFFF', '/textures/Carbon.jpg', 'texture')}
               title="Carbon / White"

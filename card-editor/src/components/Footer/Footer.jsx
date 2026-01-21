@@ -19,7 +19,9 @@ const addUrls = [
   { title: 'Privacy policy', url: '/privacy-policy' },
   { title: 'Terms of purchasing', url: '/terms-of-purchasing' },
   { title: 'Cookie settings', url: '/privacy-policy#cookie' },
-  { title: 'Business / Consumer', url: '/login' },
+  { title: 'Business', url: '/login#Business' },
+  { title: 'Consumer', url: '/login' },
+
 ];
 
 const languages = [

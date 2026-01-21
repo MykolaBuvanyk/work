@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './LoginRegister.scss';
 import RegisterConsumer from '../RegisterConsumer/RegisterConsumer';
 import RegisterBussines from '../RegisterBussines/RegisterBussines';
+import { useLocation } from 'react-router-dom';
 
 const LoginRegister = () => {
-  const [selectedType, setSelectedType] = useState('Consumer');
-
+  const location=useLocation();
+  console.log(434,location);
+  const [selectedType, setSelectedType] = useState(location.hash?'Business':'Consumer');
+  useEffect(()=>{
+    if(location.hash){
+      setSelectedType('Business')
+    }else setSelectedType('Consumer')
+  },[location.hash])
   const handleChange = event => {
     setSelectedType(event.target.value);
   };

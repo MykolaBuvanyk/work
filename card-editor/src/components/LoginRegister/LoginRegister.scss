@@ -60,7 +60,7 @@
       &::after {
         content: '';
         position: absolute;
-        left: 5px; // Центруємо всередині кола
+        left: 4.5px; // Центруємо всередині кола
         top: 50%;
         transform: translateY(-50%) scale(0); // Сховано
         width: 14px;

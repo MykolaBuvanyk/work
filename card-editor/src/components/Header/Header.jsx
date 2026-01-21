@@ -294,6 +294,9 @@ const Header = () => {
             <li>Delivery</li>
           </ul>
         </div>
+        <div className={styles.headerBaner}>
+          <img className={styles.headerBanerImg} src='/images/headerBaner.png'/>
+        </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
             <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>

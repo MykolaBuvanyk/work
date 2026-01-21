@@ -152,6 +152,85 @@
         }
       }
       .bonuses{
+        .lang-cont {
+          display: flex;
+          flex-direction: row;
+          gap: 12px;
+          position: relative;
+          height: 19px;
+          align-items: center;
+          margin-right: 60px;
+          span {
+            font-family: Inter;
+            font-weight: 500;
+            font-style: Medium;
+            font-size: 14px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            color: #006CA4;
+          }
+          input {
+            background-color: transparent;
+            border-radius: 8px;
+            width: 69px;
+            text-align: center;
+            height: 18px;
+          }
+
+          .lang {
+            position: relative;
+            cursor: pointer;
+            font-family: Roboto;
+            font-weight: 400;
+            font-style: Regular;
+            font-size: 14px;
+            leading-trim: NONE;
+            line-height: 21px;
+            letter-spacing: 0%;
+            vertical-align: middle;
+            color: #000000;
+          }
+
+          .dropdown {
+            display: flex;
+            flex-direction: column;
+            gap: 7.5px;
+            position: absolute;
+            bottom: 150%;
+            z-index: 5;
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 73px;
+            padding: 7.5px 0;
+            z-index: 99;
+          }
+
+          .countries {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: Roboto;
+            font-weight: 400;
+            font-style: Regular;
+            font-size: 14px;
+            leading-trim: NONE;
+            line-height: 21px;
+            letter-spacing: 0%;
+            vertical-align: middle;
+            color: #000000;
+            padding-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .open {
+            display: none;
+            z-index: 99;
+          }
+
+        }
         border-top: 1px solid #006CA4;
         display: flex;
         justify-content: right;
@@ -191,6 +270,7 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            margin-right: 20px;
             .proc{
               display: flex;
               flex-direction: row;

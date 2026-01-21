@@ -33,10 +33,123 @@
   margin: 0 0 18px;
 }
 
+.subtitle {
+  font-style: italic;
+  color: rgba(15, 23, 42, 0.8);
+  margin: 0 0 16px;
+}
+
+.sectionTitle {
+  color: rgba(0, 108, 164, 1);
+  text-decoration: underline;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.sectionTitleBtn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(0, 108, 164, 1);
+  text-decoration: underline;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 0 12px;
+}
+
+.categoriesWrap {
+  padding: 0 10px;
+}
+
+.categoryList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconOnlyBtn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  color: #0f172a;
+}
+
+.iconDanger {
+  color: rgba(255, 0, 0, 1);
+}
+
+.categoryLink {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.addIconBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.plusCircle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(0, 153, 81, 1);
+  color: rgba(0, 153, 81, 1);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.addNewBtn {
+  height: 26px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 125, 125, 1);
+  background: #fff;
+  padding: 0 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: rgba(0, 108, 164, 1);
+  font-weight: 600;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+
+
+.emptyInner {
+  padding: 10px 0 0;
 }
 
 .card {

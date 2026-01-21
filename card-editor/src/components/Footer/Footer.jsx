@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './Footer.scss';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../store/reducers/user';
 import { useDispatch, useSelector } from 'react-redux';
 import Flag from 'react-flagkit';
@@ -49,6 +49,8 @@ const Footer = () => {
   const exit = () => dispatch(logout());
 
   const [isLangOpen, setIsLangOpen] = useState(false);
+
+  const navigate=useNavigate();
   
   return (
     <div className="footer-container">
@@ -226,7 +228,7 @@ const Footer = () => {
         </div>
         <div className="log">
           <div className="user">{isAuth && user.firstName + ' ' + user.surname}</div>
-          <div onClick={exit} className="log-out">{isAuth && 'Log out'}</div>
+          <div style={{cursor:'pointer'}} onClick={()=>isAuth? exit():navigate('login')} className="log-out">{isAuth ? 'Log out' : 'Log in'}</div>
         </div>
       </div>
       <div className="down">

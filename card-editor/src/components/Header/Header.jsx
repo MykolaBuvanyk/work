@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import styles from './Header.module.css';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -108,6 +108,8 @@ const Header = () => {
   const dispatch = useDispatch();
 
   const exit = () => dispatch(logout());
+
+  const navigate=useNavigate();
 
   return (
     <div className={styles.header}>
@@ -297,8 +299,8 @@ const Header = () => {
             <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>
             <p>Water Design Solution GMbH</p>
           </div>
-          <p onClick={exit} className={styles.logOut} style={{ margin: 0 }}>
-            {isAuth && 'Log out'}
+          <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
+            {isAuth ? 'Log out' : 'Log in'}
           </p>
 
           <div className={styles.lang}>

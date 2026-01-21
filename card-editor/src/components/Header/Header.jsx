@@ -114,7 +114,7 @@ const Header = () => {
   return (
     <div className={styles.header}>
       <div className={styles.firstPart}>
-        <div className={styles.leftPart}>
+        <div onClick={()=>navigate('/')} style={{cursor:'pointer'}} className={styles.leftPart}>
           <svg
             width="315"
             height="80"

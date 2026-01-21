@@ -1,23 +1,23 @@
 {
   "Animals": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Animals"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Animals"
     },
-    "icons": [
+    "icons":[
       "Animals_0.svg",
       "Animals_1.svg",
       "Animals_2.svg",
@@ -63,24 +63,24 @@
     ]
   },
   "Arrows": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Arrows"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Arrows"
     },
-    "icons": [
+    "icons":[
       "Arrows_0.svg",
       "Arrows_1.svg",
       "Arrows_2.svg",
@@ -91,65 +91,65 @@
     ]
   },
   "Basic_Shapes": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Basic_Shapes"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Basic_Shapes"
     },
-    "icons": [
-      "Basic_Shapes_0.svg",
-      "Basic_Shapes_1.svg",
-      "Basic_Shapes_2.svg",
-      "Basic_Shapes_3.svg",
-      "Basic_Shapes_4.svg",
-      "Basic_Shapes_5.svg",
-      "Basic_Shapes_6.svg",
-      "Basic_Shapes_7.svg",
-      "Basic_Shapes_8.svg",
-      "Basic_Shapes_9.svg",
-      "Basic_Shapes_10.svg",
-      "Basic_Shapes_11.svg",
-      "Basic_Shapes_12.svg",
-      "Basic_Shapes_13.svg",
-      "Basic_Shapes_14.svg",
-      "Basic_Shapes_15.svg",
-      "Basic_Shapes_16.svg",
-      "Basic_Shapes_17.svg",
-      "Basic_Shapes_18.svg",
-      "Basic_Shapes_19.svg"
-    ]
+    "icons":[
+    "Basic_Shapes_0.svg",
+    "Basic_Shapes_1.svg",
+    "Basic_Shapes_2.svg",
+    "Basic_Shapes_3.svg",
+    "Basic_Shapes_4.svg",
+    "Basic_Shapes_5.svg",
+    "Basic_Shapes_6.svg",
+    "Basic_Shapes_7.svg",
+    "Basic_Shapes_8.svg",
+    "Basic_Shapes_9.svg",
+    "Basic_Shapes_10.svg",
+    "Basic_Shapes_11.svg",
+    "Basic_Shapes_12.svg",
+    "Basic_Shapes_13.svg",
+    "Basic_Shapes_14.svg",
+    "Basic_Shapes_15.svg",
+    "Basic_Shapes_16.svg",
+    "Basic_Shapes_17.svg",
+    "Basic_Shapes_18.svg",
+    "Basic_Shapes_19.svg"
+  ]
   },
   "Building": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Building"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Building"
     },
-    "icons": [
+    "icons":[
       "building_1.svg",
       "building_2.svg",
       "building_3.svg",
@@ -160,24 +160,24 @@
     ]
   },
   "Celebrations": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Celebrations"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Celebrations"
     },
-    "icons": [
+    "icons":[
       "Celebrations_0.svg",
       "Celebrations_1.svg",
       "Celebrations_2.svg",
@@ -231,24 +231,24 @@
     ]
   },
   "Chapter_Calendar": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Chapter_Calendar"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Chapter_Calendar"
     },
-    "icons": [
+    "icons":[
       "Chapter_Calendar_2.svg",
       "Chapter_Calendar_3.svg",
       "Chapter_Calendar_4.svg",
@@ -257,24 +257,24 @@
     ]
   },
   "Children": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Children"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Children"
     },
-    "icons": [
+    "icons":[
       "Children_0.svg",
       "Children_1.svg",
       "Children_2.svg",
@@ -289,24 +289,24 @@
     ]
   },
   "Electronics": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Electronics"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Electronics"
     },
-    "icons": [
+    "icons":[
       "Electronics_0.svg",
       "Electronics_1.svg",
       "Electronics_2.svg",
@@ -344,24 +344,24 @@
     ]
   },
   "Emoji": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Emoji"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Emoji"
     },
-    "icons": [
+    "icons":[
       "Emoji_0.svg",
       "Emoji_1.svg",
       "Emoji_2.svg",
@@ -415,24 +415,24 @@
     ]
   },
   "Fire_Safety": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Fire_Safety"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Fire_Safety"
     },
-    "icons": [
+    "icons":[
       "Fire_Safety_0.svg",
       "Fire_Safety_1.svg",
       "Fire_Safety_2.svg",
@@ -453,24 +453,24 @@
     ]
   },
   "First_Aid": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "First_Aid"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"First_Aid"
     },
-    "icons": [
+    "icons":[
       "First_Aid_0.svg",
       "First_Aid_1.svg",
       "First_Aid_2.svg",
@@ -507,24 +507,24 @@
     ]
   },
   "Food": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Food"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Food"
     },
-    "icons": [
+    "icons":[
       "Food_0.svg",
       "Food_1.svg",
       "Food_2.svg",
@@ -578,24 +578,24 @@
     ]
   },
   "Frames": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Frames"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Frames"
     },
-    "icons": [
+    "icons":[
       "frame_1.svg",
       "frames_2.svg",
       "frames_3.svg",
@@ -644,24 +644,24 @@
     ]
   },
   "Horoscope": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Horoscope"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Horoscope"
     },
-    "icons": [
+    "icons":[
       "Horoscope_1.svg",
       "Horoscope_2.svg",
       "Horoscope_3.svg",
@@ -677,24 +677,24 @@
     ]
   },
   "Mandatory": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Mandatory"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Mandatory"
     },
-    "icons": [
+    "icons":[
       "Mandatory_0.svg",
       "Mandatory_1.svg",
       "Mandatory_2.svg",
@@ -732,24 +732,24 @@
     ]
   },
   "Maritime": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Maritime"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Maritime"
     },
-    "icons": [
+    "icons":[
       "Maritime_1.svg",
       "Maritime_2.svg",
       "Maritime_3.svg",
@@ -773,24 +773,24 @@
     ]
   },
   "Nature": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Nature"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Nature"
     },
-    "icons": [
+    "icons":[
       "Nature_0.svg",
       "Nature_1.svg",
       "Nature_2.svg",
@@ -844,24 +844,24 @@
     ]
   },
   "People": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "People"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"People"
     },
-    "icons": [
+    "icons":[
       "People_0.svg",
       "People_1.svg",
       "People_2.svg",
@@ -909,24 +909,24 @@
     ]
   },
   "Prohibition": {
-    "title": {
-      "ua": "авіа",
-      "de": "аіва",
-      "fr": "атдтва",
-      "it": " дотдова",
-      "es": "даівтад",
-      "pl": "тдлаівтда",
-      "cz": "тдлавітадл",
-      "nl": "таівтад",
-      "se": "тлаівдалт",
-      "no": "длтаівдлат",
-      "dk": "лдтавділта",
-      "hu": "лтаідвлта",
-      "hr": "лдаівдлат",
-      "ru": "тлавідла",
-      "en": "Prohibition"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Prohibition"
     },
-    "icons": [
+    "icons":[
       "Prohibition_0.svg",
       "Prohibition_1.svg",
       "Prohibition_2.svg",
@@ -935,24 +935,24 @@
     ]
   },
   "Tools": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Tools"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Tools"
     },
-    "icons": [
+    "icons":[
       "Tools_0.svg",
       "Tools_1.svg",
       "Tools_2.svg",
@@ -1006,24 +1006,24 @@
     ]
   },
   "Transport": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Transport"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Transport"
     },
-    "icons": [
+    "icons":[
       "Transport_0.svg",
       "Transport_1.svg",
       "Transport_2.svg",
@@ -1049,24 +1049,24 @@
     ]
   },
   "Warning": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Warning"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Warning"
     },
-    "icons": [
+    "icons":[
       "Warning_0.svg",
       "Warning_1.svg",
       "Warning_2.svg",
@@ -1118,24 +1118,24 @@
     ]
   },
   "Work_and_School": {
-    "title": {
-      "ua": "",
-      "de": "",
-      "fr": "",
-      "it": "",
-      "es": "",
-      "pl": "",
-      "cz": "",
-      "nl": "",
-      "se": "",
-      "no": "",
-      "dk": "",
-      "hu": "",
-      "hr": "",
-      "ru": "",
-      "en": "Work_and_School"
+    "title":{
+      "ua":"",
+      "de":"",
+      "fr":"",
+      "it":"",
+      "es":"",
+      "pl":"",
+      "cz":"",
+      "nl":"",
+      "se":"",
+      "no":"",
+      "dk":"",
+      "hu":"",
+      "hr":"",
+      "ru":"",
+      "en":"Work_and_School"
     },
-    "icons": [
+    "icons":[
       "Work_and_School_0.svg",
       "Work_and_School_1.svg",
       "Work_and_School_2.svg",

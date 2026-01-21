@@ -12,7 +12,7 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: [
       'localhost',
-      'talk-identifies-changing-angela.trycloudflare.com',
+      'likewise-bat-warning-dat.trycloudflare.com',
     ],
   },
 });

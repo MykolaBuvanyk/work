@@ -5,6 +5,9 @@ import styles from './IconMenu.module.css';
 import { fitObjectToCanvas } from '../../utils/canvasFit';
 import axios from 'axios';
 
+
+const currentLang = 'de';
+
 const IconMenu = ({ isOpen, onClose }) => {
   const { canvas, globalColors } = useCanvasContext();
   const [selectedCategory, setSelectedCategory] = useState('Animals');
@@ -43,7 +46,7 @@ const IconMenu = ({ isOpen, onClose }) => {
         // Завантажуємо JSON з вашого сервера
         const response = await fetch(`${import.meta.env.VITE_LAYOUT_API_SERVER}icons/get`);
         const data = await response.json();
-        console.log(9423432443243, data);
+
         setAvailableIcons(data);
       } catch (err) {
         console.error('Помилка завантаження конфігу:', err);
@@ -57,11 +60,13 @@ const IconMenu = ({ isOpen, onClose }) => {
   const categories = Object.keys(availableIcons).sort();
 
   // Функція для форматування назв категорій для відображення
-  const formatCategoryName = category => {
-    return category
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+  const formatCategoryName = (categoryKey) => {
+    const categoryData = availableIcons[categoryKey];
+    if (categoryData && categoryData.title) {
+      // Повертаємо назву поточною мовою, або англійську, або сам ключ як запасний варіант
+      return categoryData.title[currentLang] || categoryData.title['en'] || categoryKey;
+    }
+    return categoryKey;
   };
 
   // Функція для переключення розгортання категорії
@@ -332,6 +337,13 @@ const IconMenu = ({ isOpen, onClose }) => {
     }
   };
 
+  const sortedCategoryKeys = Object.keys(availableIcons).sort((a, b) => {
+    const nameA = availableIcons[a]?.title?.[currentLang] || availableIcons[a]?.title?.['en'] || a;
+    const nameB = availableIcons[b]?.title?.[currentLang] || availableIcons[b]?.title?.['en'] || b;
+    
+    return nameA.localeCompare(nameB, currentLang);
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -365,58 +377,58 @@ const IconMenu = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className={styles.categoriesContainer}>
-          {categories.map(category => (
-            <div key={category} className={styles.categorySection}>
-              <div className={styles.categoryHeader} onClick={() => toggleCategory(category)}>
-                <span className={styles.categoryName}>
-                  {formatCategoryName(category)} ({availableIcons[category]?.length || 0})
-                </span>
-                <span
-                  className={`${styles.categoryArrow} ${expandedCategories[category] ? styles.expanded : ''}`}
-                >
-                  ▼
-                </span>
-              </div>
-              {expandedCategories[category] && (
-                <div className={styles.iconGrid}>
-                  {(availableIcons[category] || []).map(icon => (
-                    <div
-                      key={icon}
-                      className={styles.iconItem}
-                      onClick={() => addIcon(icon)}
-                      title={icon}
-                    >
-                      <div className={styles.iconPreview}>
-                        <img
-                          src={`${import.meta.env.VITE_LAYOUT_SERVER}images/icon/${icon}`}
-                          alt={icon}
-                          onError={e => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div className={styles.iconPlaceholder}>
-                          <span>{icon.split('.')[0].replace(/_/g, ' ')}</span>
-                        </div>
-                      </div>
-                      <span className={styles.iconName}>
-                        {icon
-                          .replace('.svg', '')
-                          .replace(/_/g, ' ')
-                          .split(' ')
-                          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                          .join(' ')}
-                      </span>
-                    </div>
-                  ))}
+          {sortedCategoryKeys.map(categoryKey => {
+            const categoryData = availableIcons[categoryKey];
+            const icons = categoryData?.icons || [];
+            
+            return (
+              <div key={categoryKey} className={styles.categorySection}>
+                <div className={styles.categoryHeader} onClick={() => toggleCategory(categoryKey)}>
+                  <span className={styles.categoryName}>
+                    {formatCategoryName(categoryKey)} ({icons.length})
+                  </span>
+                  <span className={`${styles.categoryArrow} ${expandedCategories[categoryKey] ? styles.expanded : ''}`}>
+                    ▼
+                  </span>
                 </div>
-              )}
-              {expandedCategories[category] &&
-                (!availableIcons[category] || availableIcons[category].length === 0) && (
-                  <div className={styles.noIcons}>Іконки в цій категорії недоступні</div>
+
+                {expandedCategories[categoryKey] && (
+                  <div className={styles.iconGrid}>
+                    {icons.length > 0 ? (
+                      icons.map(icon => (
+                        <div
+                          key={icon}
+                          className={styles.iconItem}
+                          onClick={() => addIcon(icon)}
+                          title={icon}
+                        >
+                          <div className={styles.iconPreview}>
+                            <img
+                              src={`${import.meta.env.VITE_LAYOUT_SERVER}images/icon/${icon}`}
+                              alt={icon}
+                              loading="lazy" // Оптимізація завантаження
+                              onError={e => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                            <div className={styles.iconPlaceholder}>
+                              <span>{icon.split('.')[0].replace(/_/g, ' ')}</span>
+                            </div>
+                          </div>
+                          <span className={styles.iconName}>
+                            {icon.replace('.svg', '').replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={styles.noIcons}>Іконки недоступні</div>
+                    )}
+                  </div>
                 )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

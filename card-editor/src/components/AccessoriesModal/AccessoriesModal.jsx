@@ -11,6 +11,7 @@ const AccessoriesModal = ({
   onInc,
   onDec,
 }) => {
+  console.log(832843284,items);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -144,7 +145,7 @@ const AccessoriesModal = ({
                     </div>
                   </div>
                 </div>
-                <div className={styles.colPrice}>€ {it.price.toFixed(2)}</div>
+                <div className={styles.colPrice}>€ {it.price}</div>
                 <div className={styles.colDesc}>{it.desc}</div>
                 <div className={styles.colExtra}>
                   {it.hasExtra && it.extraImg ? (

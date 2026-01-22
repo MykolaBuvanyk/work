@@ -192,7 +192,6 @@ class AuthController {
         }
       });
     } catch (err) {
-      console.log(4234324, err);
       return next(ErrorApi.badRequest(err.message));
     }
   };

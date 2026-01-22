@@ -11,6 +11,7 @@ import LanguageGuard from './LanguageGuard';
 import './App.css';
 import Contacts from './components/Contacts/Contacts';
 import QuickGuide from './components/QuickGuide/QuickGuide';
+import UpdateBaner from './components/UpdateBaner/UpdateBaner';
 
 
 
@@ -27,6 +28,7 @@ function App() {
       <Route path="admin" element={<Admin />} />
       <Route path="admin/update-avaible" element={<UpdateAvaible />} />
       <Route path="admin/update-avaible/icon" element={<UpdateIcons />} />
+      <Route path="admin/update-baner" element={<UpdateBaner />} />
     </>
   );
 

@@ -30,6 +30,37 @@ const storage = multer.diskStorage({
 const router = new Router();
 const upload = multer({ storage });
 
+const banerStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dest = path.join(__dirname, '../static/baner/');
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+    cb(null, dest);
+  },
+  filename: (req, file, cb) => {
+    console.log(32434,req.body)
+    // Отримуємо код мови з тіла запиту (req.body.lang)
+    const lang = req.body.lang || 'default';
+    cb(null, `${lang}.jpeg`); // Завжди зберігаємо як lang.jpeg
+  },
+});
+
+const uploadBaner = multer({ 
+  storage: banerStorage,
+  fileFilter: (req, file, cb) => {
+    // Дозволяємо тільки jpeg/jpg
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/jpg') {
+      cb(null, true);
+    } else {
+      cb(new Error('Тільки формат JPEG дозволено!'), false);
+    }
+  }
+});
+
+// Роут
+router.post('/upload-baner', IsAdminMiddware, uploadBaner.single('file'), (req, res) => {
+  res.status(200).json({ message: 'Банер оновлено', fileName: req.file.filename });
+});
+
 router.get('/get', IconsController.Get);
 
 router.post('/save', IsAdminMiddware, IconsController.Save);

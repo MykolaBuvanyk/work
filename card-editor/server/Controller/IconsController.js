@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_PATH = path.join(__dirname, '../data/icons.json');
 const ICONS_DIR = path.join(__dirname, '../static/icon');
+const BANER_DIR = path.join(__dirname, '../static/baner');
 
 class IconsController {
   // Отримання списку з JSON
@@ -45,6 +46,21 @@ class IconsController {
     } catch (err) {
       // Якщо тут немає console.log, ви не побачите причину 500-ї помилки
       console.error('DEBUG UPLOAD ERROR:', err);
+      next(err);
+    }
+  };
+  // Додайте до класу IconsController
+  static UploadBaner = (req, res, next) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'Фото банера не отримано' });
+      }
+      // Повертаємо ім'я файлу, щоб фронтенд міг його використовувати
+      return res.status(200).json({
+        fileName: req.file.filename,
+      });
+    } catch (err) {
+      console.error('BANER UPLOAD ERROR:', err);
       next(err);
     }
   };

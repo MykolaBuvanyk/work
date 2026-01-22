@@ -1,0 +1,126 @@
+.update-baner-container {
+  padding: 40px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+
+  .header-section {
+    margin-bottom: 40px;
+    text-align: left;
+    h1 {
+      font-size: 28px;
+      color: #1a1a1b;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    p {
+      color: #65676b;
+      font-size: 15px;
+    }
+  }
+
+  .banners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .banner-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e4e6eb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #f0f2f5;
+
+      .flag-wrapper {
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+      }
+
+      .lang-info {
+        display: flex;
+        flex-direction: column;
+        .lang-name {
+          font-weight: 600;
+          color: #1c1e21;
+          font-size: 15px;
+        }
+        .file-spec {
+          font-size: 12px;
+          color: #8a8d91;
+          font-family: monospace;
+        }
+      }
+    }
+
+    .preview-container {
+      position: relative;
+      height: 180px;
+      background: #f0f2f5;
+
+      .image-wrapper {
+        width: 100%;
+        height: 100%;
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain; // Зберігає пропорції товару на банері
+          padding: 10px;
+        }
+      }
+
+      .upload-label {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        cursor: pointer;
+
+        .upload-btn {
+          background: #ffffff;
+          padding: 10px 20px;
+          border-radius: 50px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #1c1e21;
+          font-weight: 600;
+          font-size: 14px;
+          transform: translateY(10px);
+          transition: transform 0.3s ease;
+
+          svg {
+            font-size: 20px;
+            color: #006CA4;
+          }
+        }
+      }
+
+      &:hover .upload-label {
+        opacity: 1;
+        .upload-btn {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}

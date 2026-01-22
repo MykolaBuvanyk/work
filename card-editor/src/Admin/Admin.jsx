@@ -81,6 +81,11 @@ const Admin = () => {
             gap:'30px'
           }} className="end">
         <NavLink
+          to={'/admin/update-baner'}
+        >
+          update baner
+        </NavLink>
+        <NavLink
           to={'/admin/update-avaible'}
         >
           update avaible

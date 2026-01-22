@@ -52,7 +52,7 @@ const UpdateAvaible = () => {
 
   // Обробник для кольорів, аксесуарів та знижок (масиви)
   const handleArrayUpdate = (arrayName, index, field, value) => {
-    if(arrayName[0]=='A'&&value){
+    /*if(arrayName[0]=='A'&&value){
       if(!formData[arrayName.slice(1)][index].isSelect)return;
     }
     if(arrayName[0]!='A'&&!value){
@@ -61,7 +61,7 @@ const UpdateAvaible = () => {
         updatedArray[index] = { ...updatedArray[index], [field]: value };
         return { ...prev, ['A'+arrayName]: updatedArray };
       });
-    }
+    }*/
     setFormData(prev => {
       const updatedArray = [...prev[arrayName]];
       updatedArray[index] = { ...updatedArray[index], [field]: value };
@@ -75,7 +75,9 @@ const UpdateAvaible = () => {
       const updatedThickness = { ...prev.listThinkness[thicknessKey] };
       if (subIndex !== null) {
         const newArray = [...updatedThickness[field]];
-        newArray[subIndex] = value === '' ? 0 : parseFloat(value);
+        // Зберігаємо як рядок в стейті під час вводу, 
+        // щоб не було проблем з крапкою або порожнім полем
+        newArray[subIndex] = value; 
         updatedThickness[field] = newArray;
       } else {
         updatedThickness[field] = value;
@@ -213,7 +215,7 @@ const UpdateAvaible = () => {
                   step="0.01"
                   value={x.number}
                   onChange={e =>
-                    handleArrayUpdate('listAccessories', idx, 'number', parseFloat(e.target.value))
+                    handleArrayUpdate('listAccessories', idx, 'number', e.target.value)
                   }
                 />
                 <div className="info">{x.info}</div>

@@ -6,7 +6,7 @@ const UpdateIcons = () => {
   const [iconsData, setIconsData] = useState({});
   const [newCatName, setNewCatName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [expandedLangs, setExpandedLangs] = useState({}); // Для відкриття/закриття списку мов
+  const [expandedLangs, setExpandedLangs] = useState({});
 
   const API_URL = import.meta.env.VITE_LAYOUT_API_SERVER;
   const IMG_URL = import.meta.env.VITE_LAYOUT_SERVER;
@@ -44,6 +44,14 @@ const UpdateIcons = () => {
       }
     });
     setNewCatName('');
+  };
+
+  const handleDeleteCategory = (catKey) => {
+    if (window.confirm(`Ви впевнені, що хочете видалити категорію "${catKey}"?`)) {
+      const newData = { ...iconsData };
+      delete newData[catKey];
+      setIconsData(newData);
+    }
   };
 
   const handleTitleChange = (catKey, lang, value) => {
@@ -112,13 +120,13 @@ const UpdateIcons = () => {
         <div className="top-bar">
           <input
             type="text"
-            placeholder="Назва нової категорії (ID)..."
+            placeholder="Назва нової категорії (напр. auto_parts)..."
             value={newCatName}
             onChange={e => setNewCatName(e.target.value)}
           />
-          <button onClick={handleAddCategory}>+ Створити</button>
+          <button className="btn-add" onClick={handleAddCategory}>+ Створити категорію</button>
           <button className="save-all" onClick={handleSaveAll} disabled={loading}>
-            {loading ? 'Збереження...' : 'ЗБЕРЕГТИ ВСЕ (JSON)'}
+            {loading ? 'Збереження...' : 'ЗБЕРЕГТИ ВСІ ЗМІНИ'}
           </button>
         </div>
       </header>
@@ -128,15 +136,24 @@ const UpdateIcons = () => {
           <section key={catKey} className="category-block">
             <div className="cat-head">
               <div className="cat-info">
-                <h2>{catKey} <span>({data.icons?.length || 0})</span></h2>
+                <h2>{catKey} <span>({data.icons?.length || 0} іконок)</span></h2>
                 <button className="btn-edit-langs" onClick={() => toggleLangSection(catKey)}>
-                  {expandedLangs[catKey] ? '▲ Сховати назви' : '▼ Редагувати переклади'}
+                  {expandedLangs[catKey] ? '▲ Сховати переклади' : '▼ Редагувати переклади назви'}
                 </button>
               </div>
+              
               <div className="cat-actions">
                 <label className="upload-btn">
-                  + SVG <input type="file" accept=".svg" hidden onChange={e => handleFileUpload(e, catKey)} />
+                  <span>+ Додати SVG</span>
+                  <input type="file" accept=".svg" hidden onChange={e => handleFileUpload(e, catKey)} />
                 </label>
+                <button 
+                  className="btn-delete-cat" 
+                  onClick={() => handleDeleteCategory(catKey)}
+                  title="Видалити всю категорію"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
 
@@ -144,9 +161,10 @@ const UpdateIcons = () => {
               <div className="langs-edit-grid">
                 {LANGUAGES.map(lang => (
                   <div key={lang} className="lang-field">
-                    <label>{lang.toUpperCase()}:</label>
+                    <label>{lang.toUpperCase()}</label>
                     <input
                       type="text"
+                      placeholder={`Назва (${lang})`}
                       value={data.title[lang] || ''}
                       onChange={(e) => handleTitleChange(catKey, lang, e.target.value)}
                     />
@@ -156,15 +174,25 @@ const UpdateIcons = () => {
             )}
 
             <div className="icons-list">
-              {data.icons?.map(icon => (
-                <div key={icon} className="icon-card">
-                  <div className="preview">
-                    <img src={`${IMG_URL}images/icon/${icon}`} alt="" />
+              {data.icons?.length > 0 ? (
+                data.icons.map(icon => (
+                  <div key={icon} className="icon-card">
+                    <div className="preview">
+                      <img src={`${IMG_URL}images/icon/${icon}`} alt={icon} />
+                    </div>
+                    <p title={icon}>{icon}</p>
+                    <button 
+                      className="btn-del" 
+                      onClick={() => handleDeleteIcon(catKey, icon)}
+                      title="Видалити іконку"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <p>{icon}</p>
-                  <button className="btn-del" onClick={() => handleDeleteIcon(catKey, icon)}>×</button>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="empty-msg">В цій категорії ще немає іконок</div>
+              )}
             </div>
           </section>
         ))}

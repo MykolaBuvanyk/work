@@ -230,7 +230,7 @@ const Footer = () => {
         </div>
         <div className="log">
           <div className="user">{isAuth && user.firstName + ' ' + user.surname}</div>
-          <div style={{cursor:'pointer'}} onClick={()=>isAuth? exit():navigate('login')} className="log-out">{isAuth ? 'Log out' : 'Log in'}</div>
+          <div style={{cursor:'pointer',fontWeight:600}} onClick={()=>isAuth? exit():navigate('login')} className="log-out">{isAuth ? 'Log out' : 'Log in'}</div>
         </div>
       </div>
       <div className="down">

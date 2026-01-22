@@ -177,7 +177,7 @@ const UpdateAvaible = () => {
                 <input
                   type="checkbox"
                   checked={formData.listThinkness[key].isSelect}
-                  onChange={e => handleThicknessUpdate(key, 'isSelect', e.target.checked)}
+                  //onChange={e => handleThicknessUpdate(key, 'isSelect', e.target.checked)}
                 />
                 {['1,6', '0,8', '3,2'][i]}
               </li>
@@ -304,7 +304,7 @@ const UpdateAvaible = () => {
                     <input
                       type="checkbox"
                       checked={formData.listThinkness[tKey].isSelect}
-                      onChange={e => handleThicknessUpdate(tKey, 'isSelect', e.target.checked)}
+                      //onChange={e => handleThicknessUpdate(tKey, 'isSelect', e.target.checked)}
                     />
                   </div>
                 </div>

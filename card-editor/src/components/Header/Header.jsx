@@ -110,6 +110,10 @@ const Header = () => {
   const exit = () => dispatch(logout());
 
   const navigate=useNavigate();
+  
+  const IMG_URL = import.meta.env.VITE_LAYOUT_SERVER;
+
+  console.log(99234324, IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'de' : location.pathname.slice(1, 3)}.jpeg`)
 
   return (
     <div className={styles.header}>
@@ -295,7 +299,7 @@ const Header = () => {
           </ul>
         </div>
         <div className={styles.headerBaner}>
-          <img className={styles.headerBanerImg} src='/images/headerBaner.png'/>
+          <img className={styles.headerBanerImg} src={IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'de' : location.pathname.slice(1, 3)}.jpeg`}/>
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>

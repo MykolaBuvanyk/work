@@ -5,8 +5,7 @@ import en from './locales/en.json';
 
 // Список мов, які мають префікс у URL (всі, крім англійської)
 export const prefixedLngs = [
-  'ua',
-  'de',
+  'en',
   'fr',
   'it',
   'es',
@@ -18,7 +17,9 @@ export const prefixedLngs = [
   'dk',
   'hu',
   'hr',
+  'ua',
   'ru',
+  'de'
 ];
 
 i18n.use(initReactI18next).init({
@@ -27,8 +28,8 @@ i18n.use(initReactI18next).init({
     ua: { translation: ua },
     de: { translation: ua }, // тимчасово
   },
-  lng: 'en',
-  fallbackLng: 'en',
+  lng: 'de',
+  fallbackLng: 'de',
   interpolation: { escapeValue: false },
 });
 

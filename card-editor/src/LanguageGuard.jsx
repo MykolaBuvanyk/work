@@ -10,7 +10,7 @@ const LanguageGuard = ({ isDefault }) => {
   useEffect(() => {
     if (isDefault) {
       // Якщо ми на маршруті без префікса — ставимо англійську
-      i18n.changeLanguage('en');
+      i18n.changeLanguage('de');
     } else if (prefixedLngs.includes(lng)) {
       // Якщо мова в списку префіксів — ставимо її
       i18n.changeLanguage(lng);

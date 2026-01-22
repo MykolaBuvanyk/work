@@ -24,6 +24,7 @@ import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
 import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
 
 const TopToolbar = ({ className, formData }) => {
+  console.log(9432943294,formData);
   const { canvas } = useCanvasContext();
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
@@ -58,7 +59,7 @@ const TopToolbar = ({ className, formData }) => {
     },
     {
       id: 3,
-      name: "Screws",
+      name: "Screws 13 mm",
       price: 0.1,
       desc: "Size 2.9 × 13 mm",
       iconKey: "screws.svg",
@@ -481,6 +482,8 @@ const TopToolbar = ({ className, formData }) => {
       setAccessories(filterAccessories);
   }, [formData]);
 
+  console.log(3434,accessories);
+
   return (
     <div className={`${styles.accessories} ${className}`}>
       <div className={styles.firstPart}>
@@ -578,10 +581,7 @@ const TopToolbar = ({ className, formData }) => {
         <h3 className={styles.title}>Accessories:</h3>
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
-          {accessories
-            .filter(
-              (it) => it.checked || it.id === 1 || it.id === 2 || it.id === 3
-            )
+          {accessories.sort((a, b) => b.checked - a.checked).slice(0,3)
             .map((it) => {
               const qtyNum = parseNumber(it.qty);
               const total = it.price * qtyNum;
@@ -640,6 +640,7 @@ const TopToolbar = ({ className, formData }) => {
             }
           }}
         >
+          {accessories.length>3&& <>
           <svg
             width="34"
             height="34"
@@ -674,7 +675,7 @@ const TopToolbar = ({ className, formData }) => {
               </clipPath>
             </defs>
           </svg>
-          More Accessories
+          More Accessories</>}
         </div>
         <AccessoriesModal
           isOpen={isAccessoriesOpen}

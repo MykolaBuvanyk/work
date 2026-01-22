@@ -117,6 +117,8 @@
 
 input[type="number"] {
   width: 50px;
+  max-width: 50px;
+  min-width: 50px;
   background-color: rgba(0, 108, 164, 1);
   color: white;
   border-radius: 0;

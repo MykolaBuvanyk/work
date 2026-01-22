@@ -19,6 +19,7 @@ const languages = [
   { code: 'hr', countryCode: 'HR', label: 'Hrvatski' },
   { code: 'ua', countryCode: 'UA', label: 'Українська' },
   { code: 'ru', countryCode: 'RU', label: 'Русский' },
+  { code: 'de', countryCode: 'DE', label: 'Deutsch' },
 ];
 
 const UpdateBaner = () => {

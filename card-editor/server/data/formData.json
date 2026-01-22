@@ -433,14 +433,14 @@
   ],
   "listAccessories": [
     {
-      "isAvaible": false,
+      "isAvaible": true,
       "img": "/images/accessories/CableTies 1.png",
       "text": "Cable ties",
       "number": 0.05,
       "info": "Сable ties, size 3.6 x 140 mm"
     },
     {
-      "isAvaible": true,
+      "isAvaible": false,
       "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
       "text": "Screws",
       "number": 0.11,
@@ -454,7 +454,7 @@
       "info": "Size 2.9 x 13 mm"
     },
     {
-      "isAvaible": false,
+      "isAvaible": true,
       "img": "/images/accessories/S-Hook.png",
       "text": "S-Hooks",
       "number": 0.25,

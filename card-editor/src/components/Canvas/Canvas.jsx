@@ -73,7 +73,7 @@ const Canvas = ({ className }) => {
     if (canvasRef.current && canvasRef.current.__fabricCanvas) {
       try {
         canvasRef.current.__fabricCanvas.dispose();
-      } catch {}
+      } catch { }
     }
 
     const fCanvas = new fabric.Canvas(canvasRef.current, {
@@ -95,12 +95,12 @@ const Canvas = ({ className }) => {
         ta.style.height = '0';
         ta.style.opacity = '0';
         ta.style.pointerEvents = 'none';
-      } catch {}
+      } catch { }
     };
     const clearHiddenTextareaStyle = ta => {
       try {
         ta.removeAttribute('style');
-      } catch {}
+      } catch { }
     };
     const enforceHideCaretIfEditing = () => {
       try {
@@ -113,10 +113,10 @@ const Canvas = ({ className }) => {
         ) {
           try {
             obj.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
-          } catch {}
+          } catch { }
           applyHiddenTextareaStyle(obj.hiddenTextarea);
         }
-      } catch {}
+      } catch { }
     };
     if (canvasRef.current) canvasRef.current.__fabricCanvas = fCanvas;
     setCanvas(fCanvas);
@@ -147,7 +147,7 @@ const Canvas = ({ className }) => {
       try {
         const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
         texts.forEach(t => bringCanvasObjectToFront(t));
-      } catch {}
+      } catch { }
     };
 
     // Snapping (auto-alignment) while dragging: snap to other objects' edges/centers + show blue guide lines
@@ -182,7 +182,7 @@ const Canvas = ({ className }) => {
       if (!o) return null;
       try {
         if (typeof o.setCoords === 'function') o.setCoords();
-      } catch {}
+      } catch { }
       try {
         if (typeof o.getBoundingRect === 'function') {
           const b = o.getBoundingRect(true, true);
@@ -200,7 +200,7 @@ const Canvas = ({ className }) => {
             midY: (minY + maxY) / 2,
           };
         }
-      } catch {}
+      } catch { }
       const ac = o.aCoords;
       if (!ac || !ac.tl || !ac.tr || !ac.br || !ac.bl) return null;
       const xs = [ac.tl.x, ac.tr.x, ac.br.x, ac.bl.x];
@@ -275,9 +275,9 @@ const Canvas = ({ className }) => {
       const guides =
         guideX != null || guideY != null
           ? {
-              x: guideX,
-              y: guideY,
-            }
+            x: guideX,
+            y: guideY,
+          }
           : null;
 
       return {
@@ -360,9 +360,9 @@ const Canvas = ({ className }) => {
       const guides =
         guideX != null || guideY != null
           ? {
-              x: guideX,
-              y: guideY,
-            }
+            x: guideX,
+            y: guideY,
+          }
           : null;
 
       return {
@@ -378,7 +378,7 @@ const Canvas = ({ className }) => {
         // Забороняємо вибір отворів і закриваємо пропертіс
         try {
           fCanvas.discardActiveObject();
-        } catch {}
+        } catch { }
         setActiveObject(null);
         setShapePropertiesOpen(false);
         return;
@@ -401,7 +401,7 @@ const Canvas = ({ className }) => {
           });
           obj.canvas && obj.setCoords && obj.setCoords();
           obj.canvas && obj.canvas.requestRenderAll && obj.canvas.requestRenderAll();
-        } catch {}
+        } catch { }
         setShapePropertiesOpen(false);
         return;
       }
@@ -494,7 +494,7 @@ const Canvas = ({ className }) => {
                   if (typeof active.setSelectionEnd === 'function') active.setSelectionEnd(len);
                   if (active.hiddenTextarea && typeof active.hiddenTextarea.focus === 'function')
                     active.hiddenTextarea.focus();
-                } catch {}
+                } catch { }
                 fCanvas.requestRenderAll();
                 return; // прервали обработку клика
               }
@@ -502,35 +502,35 @@ const Canvas = ({ className }) => {
                 try {
                   // Для действий вне текста завершаем редактирование, применяем команду, затем возвращаем фокус
                   active.exitEditing && active.exitEditing();
-                } catch {}
+                } catch { }
                 centerHorizontallyHandler(e, { target: active });
                 return;
               }
               if (hit(posC)) {
                 try {
                   active.exitEditing && active.exitEditing();
-                } catch {}
+                } catch { }
                 centerVerticallyHandler(e, { target: active });
                 return;
               }
               if (hit(posDup)) {
                 try {
                   active.exitEditing && active.exitEditing();
-                } catch {}
+                } catch { }
                 duplicateHandler(e, { target: active });
                 return;
               }
               if (hit(posDel)) {
                 try {
                   active.exitEditing && active.exitEditing();
-                } catch {}
+                } catch { }
                 deleteHandler(e, { target: active });
                 return;
               }
             }
           }
         }
-      } catch {}
+      } catch { }
       const t = e.target;
       // Якщо під курсором є текст — віддати йому пріоритет вибору
       try {
@@ -553,7 +553,7 @@ const Canvas = ({ className }) => {
             return; // зупиняємо обробку — не чіпаємо фігуру під текстом
           }
         }
-      } catch {}
+      } catch { }
       if (isHole(t)) return; // ігноруємо кліки по отворах
       // Якщо фігура має fromShapeTab=true, завжди відкриваємо Shape Properties
       if (t && (t.fromShapeTab === true || (t.data && t.data.fromShapeTab === true))) {
@@ -586,7 +586,7 @@ const Canvas = ({ className }) => {
           setActiveObject(t);
           fCanvas.setActiveObject(t);
           // panel appears on selection events; avoid forcing controls here to prevent flicker
-        } catch {}
+        } catch { }
       }
     });
 
@@ -603,7 +603,7 @@ const Canvas = ({ className }) => {
           if (t.hiddenTextarea && typeof t.hiddenTextarea.focus === 'function')
             t.hiddenTextarea.focus();
           fCanvas.requestRenderAll();
-        } catch {}
+        } catch { }
       }
     });
 
@@ -614,12 +614,12 @@ const Canvas = ({ className }) => {
         if (!t.__allowNextEditing) {
           try {
             if (typeof t.exitEditing === 'function') t.exitEditing();
-          } catch {}
+          } catch { }
           try {
             fCanvas.setActiveObject(t);
             ensureActionControls(t);
             fCanvas.requestRenderAll();
-          } catch {}
+          } catch { }
           return;
         }
         // спожити дозвіл тільки для цього входу
@@ -627,27 +627,27 @@ const Canvas = ({ className }) => {
         // Скрываем нативный caret у hiddenTextarea и включаем периодическую подстраховку
         try {
           if (t.__caretHideTimer) clearInterval(t.__caretHideTimer);
-        } catch {}
+        } catch { }
         try {
           t.__caretHideTimer = setInterval(() => {
             try {
               if (t.hiddenTextarea) {
                 try {
                   t.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
-                } catch {}
+                } catch { }
                 applyHiddenTextareaStyle(t.hiddenTextarea);
               }
-            } catch {}
+            } catch { }
           }, 100);
-        } catch {}
+        } catch { }
         try {
           if (t.hiddenTextarea) {
             try {
               t.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
-            } catch {}
+            } catch { }
             applyHiddenTextareaStyle(t.hiddenTextarea);
           }
-        } catch {}
+        } catch { }
       }
     });
     // На каждом кадре после рендера убеждаемся, что hiddenTextarea остаётся скрытой
@@ -657,13 +657,13 @@ const Canvas = ({ className }) => {
       const t = e?.target;
       try {
         if (t && t.__caretHideTimer) clearInterval(t.__caretHideTimer);
-      } catch {}
+      } catch { }
       try {
         if (t) t.__caretHideTimer = null;
-      } catch {}
+      } catch { }
       try {
         if (t && t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
-      } catch {}
+      } catch { }
     });
 
     const mirrorIfPath = e => {
@@ -687,7 +687,7 @@ const Canvas = ({ className }) => {
           lockMovementX: true,
           lockMovementY: true,
         });
-      } catch {}
+      } catch { }
     };
 
     // Автодоведення при обертанні: якщо кут майже горизонтальний або вертикальний — фіксуємо точно
@@ -739,7 +739,7 @@ const Canvas = ({ className }) => {
         t.__snappedVertical = snappedV;
         try {
           fCanvas.requestRenderAll();
-        } catch {}
+        } catch { }
       } else {
         // Скидаємо прапорці, якщо вийшли з зони автодоведення
         if (t.__snappedHorizontal) t.__snappedHorizontal = false;
@@ -796,11 +796,11 @@ const Canvas = ({ className }) => {
             });
             fCanvas.set('backgroundColor', pattern);
             fCanvas.requestRenderAll && fCanvas.requestRenderAll();
-          } catch {}
+          } catch { }
         };
-        img.onerror = () => {};
+        img.onerror = () => { };
         img.src = url;
-      } catch {}
+      } catch { }
     };
 
     // Перегенерація фону-градієнта під поточні розміри canvasa
@@ -848,7 +848,7 @@ const Canvas = ({ className }) => {
 
         fCanvas.set('backgroundColor', pattern);
         fCanvas.requestRenderAll && fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
     };
     const resizeToViewport = () => {
       if (!viewportRef.current) return;
@@ -895,10 +895,10 @@ const Canvas = ({ className }) => {
 
       try {
         fCanvas.fire('display:scale', { scale: scaleToFit });
-      } catch {}
+      } catch { }
       try {
         syncShadowHost();
-      } catch {}
+      } catch { }
     };
 
     // Helper: compute max display scale percent allowed so canvas fits inside viewport - 10px
@@ -975,10 +975,10 @@ const Canvas = ({ className }) => {
 
       try {
         fCanvas.fire('display:scale', { scale: factor });
-      } catch {}
+      } catch { }
       try {
         syncShadowHost();
-      } catch {}
+      } catch { }
       return clamped;
     };
 
@@ -1004,11 +1004,15 @@ const Canvas = ({ className }) => {
           // Якщо фон є текстурою — регенеруємо під новий розмір, щоб не дублювався
           try {
             rebuildBackgroundTexture();
-          } catch {}
+          } catch { }
           // Якщо фон є градієнтом — регенеруємо під новий розмір, щоб не лишались білі ділянки
           try {
             rebuildBackgroundGradient();
-          } catch {}
+          } catch { }
+          try {
+            fCanvas.fire('canvas:resized', { width: nextW, height: nextH, prevW, prevH });
+          } catch { }
+
         } finally {
           resizingRef.current = false;
         }
@@ -1020,7 +1024,7 @@ const Canvas = ({ className }) => {
     window.addEventListener('resize', resizeToViewport);
     try {
       syncShadowHost();
-    } catch {}
+    } catch { }
 
     // Рендерери контролів
     const makeTextBadgeRenderer = symbol => (ctx, left, top) => {
@@ -1052,7 +1056,7 @@ const Canvas = ({ className }) => {
             cache.loaded = true;
             try {
               fCanvas.requestRenderAll();
-            } catch {}
+            } catch { }
           };
           img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
           cache.img = img;
@@ -1097,7 +1101,7 @@ const Canvas = ({ className }) => {
           rotateIconCache.loaded = true;
           try {
             fCanvas.requestRenderAll();
-          } catch {}
+          } catch { }
         };
         img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
         rotateIconCache.img = img;
@@ -1211,15 +1215,15 @@ const Canvas = ({ className }) => {
 
             try {
               if (typeof obj.setCoords === 'function') obj.setCoords();
-            } catch {}
+            } catch { }
             fCanvas.add(obj);
             fCanvas.setActiveObject(obj);
             try {
               ensureActionControls(obj);
-            } catch {}
+            } catch { }
             try {
               setShapePropertiesOpen(false);
-            } catch {}
+            } catch { }
             fCanvas.requestRenderAll();
             return true;
           } catch {
@@ -1234,7 +1238,7 @@ const Canvas = ({ className }) => {
             cloned.__baseBBoxW = target.__baseBBoxW || target.width;
             cloned.__baseBBoxH = target.__baseBBoxH || target.height;
           }
-        } catch {}
+        } catch { }
 
         // IMPORTANT for PDF export: duplicated shapes must have unique ids.
         // PDF pipeline adds inner contours to nodes selected by id prefix (e.g. [id^="shape-"]).
@@ -1253,7 +1257,7 @@ const Canvas = ({ className }) => {
           ) {
             ensureShapeSvgId(cloned, fCanvas);
           }
-        } catch {}
+        } catch { }
 
         // Preserve IconMenu flag so modal stays closed for clones
         try {
@@ -1264,27 +1268,27 @@ const Canvas = ({ className }) => {
             if (!cloned.data) cloned.data = {};
             cloned.data.fromIconMenu = true;
           }
-        } catch {}
+        } catch { }
         const nextLeft = (target.left || 0) + 10;
         const nextTop = (target.top || 0) + 10;
         cloned.set({ left: nextLeft, top: nextTop });
         if (typeof cloned.setCoords === 'function') {
           try {
             cloned.setCoords();
-          } catch {}
+          } catch { }
         }
         fCanvas.add(cloned);
         fCanvas.setActiveObject(cloned);
         try {
           ensureActionControls(cloned);
-        } catch {}
+        } catch { }
         try {
           if (cloned.fromIconMenu === true || (cloned.data && cloned.data.fromIconMenu === true)) {
             setShapePropertiesOpen(false);
           }
-        } catch {}
+        } catch { }
         fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
       return true;
     };
     // Режим редагування: якщо ціль — текст, входимо в редагування і ставимо курсор в кінець; інакше — нічого
@@ -1305,17 +1309,17 @@ const Canvas = ({ className }) => {
         try {
           target.selectionStart = txt.length;
           target.selectionEnd = txt.length;
-        } catch {}
+        } catch { }
         try {
           // Фокус на скрытую textarea, если доступна
           if (target.hiddenTextarea && typeof target.hiddenTextarea.focus === 'function') {
             target.hiddenTextarea.focus();
           }
-        } catch {}
+        } catch { }
         if (typeof target.canvas?.requestRenderAll === 'function') {
           target.canvas.requestRenderAll();
         }
-      } catch {}
+      } catch { }
       return true;
     };
     const deleteHandler = (evt, transform) => {
@@ -1345,14 +1349,14 @@ const Canvas = ({ className }) => {
           t.__centerFlashHTimer = setTimeout(() => {
             try {
               t.__centerFlashHExpireAt = null;
-            } catch {}
+            } catch { }
             try {
               fCanvas.requestRenderAll();
-            } catch {}
+            } catch { }
           }, 1000);
-        } catch {}
+        } catch { }
         fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
       return true;
     };
     const centerHorizontallyHandler = (evt, transform) => {
@@ -1373,14 +1377,14 @@ const Canvas = ({ className }) => {
           t.__centerFlashVTimer = setTimeout(() => {
             try {
               t.__centerFlashVExpireAt = null;
-            } catch {}
+            } catch { }
             try {
               fCanvas.requestRenderAll();
-            } catch {}
+            } catch { }
           }, 1000);
-        } catch {}
+        } catch { }
         fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
       return true;
     };
     const ensureActionControls = obj => {
@@ -1389,7 +1393,7 @@ const Canvas = ({ className }) => {
       if (typeof obj.setCoords === 'function') {
         try {
           obj.setCoords();
-        } catch {}
+        } catch { }
       }
       // If aCoords are still not available, postpone applying controls to avoid Fabric reading undefined positions
       const ac = obj.aCoords;
@@ -1398,7 +1402,7 @@ const Canvas = ({ className }) => {
         obj.hasControls = false;
         try {
           requestAnimationFrame(() => ensureActionControls(obj));
-        } catch {}
+        } catch { }
         return;
       }
       // Ensure per-instance controls object so changes don't leak to other objects
@@ -1504,7 +1508,7 @@ const Canvas = ({ className }) => {
           });
 
           obj.controls[key] = control;
-        } catch {}
+        } catch { }
       };
 
       // Resize handles: skip for Cut elements (only show action panel + rotate)
@@ -1513,7 +1517,7 @@ const Canvas = ({ className }) => {
         if (circleLock) {
           try {
             obj.lockUniScaling = true; // preserve 1:1 via Fabric constraint
-          } catch {}
+          } catch { }
         }
         // Use standard Fabric controls so scaling math stays consistent for any rotation.
         // We only override visuals to keep our blue dot handles.
@@ -1667,7 +1671,7 @@ const Canvas = ({ className }) => {
         if (isHole(o)) {
           try {
             fCanvas.discardActiveObject();
-          } catch {}
+          } catch { }
           setActiveObject(null);
           setShapePropertiesOpen(false);
           return;
@@ -1682,7 +1686,7 @@ const Canvas = ({ className }) => {
         if (isHole(o)) {
           try {
             fCanvas.discardActiveObject();
-          } catch {}
+          } catch { }
           setActiveObject(null);
           setShapePropertiesOpen(false);
           return;
@@ -1718,7 +1722,7 @@ const Canvas = ({ className }) => {
           t.scaleX = s;
           t.scaleY = s;
         }
-      } catch {}
+      } catch { }
 
       // Keep rounded-rect corners circular under non-uniform scaling.
       // The canvas rounding (clipPath) is defined in canvas coordinates, so we emulate that
@@ -1746,7 +1750,7 @@ const Canvas = ({ className }) => {
             t.set?.({ rx: nextRx, ry: nextRy });
           }
         }
-      } catch {}
+      } catch { }
 
       // Snapping while resizing (scaling)
       try {
@@ -1802,34 +1806,34 @@ const Canvas = ({ className }) => {
                 const signY = sy >= 0 ? 1 : -1;
                 t.scaleX = signX * Math.abs(sx) * factorX;
                 t.scaleY = signY * Math.abs(sy) * factorY;
-              } catch {}
+              } catch { }
 
               // Reposition via center point so originX/Y don't matter
               try {
                 const newCenter = new fabric.Point(nextCx, nextCy);
                 t.setPositionByOrigin(newCenter, 'center', 'center');
-              } catch {}
+              } catch { }
               try {
                 t.setCoords && t.setCoords();
-              } catch {}
+              } catch { }
             }
           }
           t.__snapGuides = guides;
         }
-      } catch {}
+      } catch { }
 
       t.__isScaling = true;
       t.__wasScaling = true;
       if (t.__scaleExpireTimer) {
         try {
           clearTimeout(t.__scaleExpireTimer);
-        } catch {}
+        } catch { }
         t.__scaleExpireTimer = null;
       }
       t.__scaleLabelExpireAt = null;
       try {
         fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
     });
     const clearScalingFlag = e => {
       const t = e?.target;
@@ -1842,19 +1846,19 @@ const Canvas = ({ className }) => {
         if (t.__scaleExpireTimer) {
           try {
             clearTimeout(t.__scaleExpireTimer);
-          } catch {}
+          } catch { }
         }
         t.__scaleExpireTimer = setTimeout(() => {
           try {
             t.__scaleLabelExpireAt = null;
-          } catch {}
+          } catch { }
           try {
             fCanvas.requestRenderAll();
-          } catch {}
+          } catch { }
         }, 1000);
         try {
           fCanvas.requestRenderAll();
-        } catch {}
+        } catch { }
       }
     };
     fCanvas.on('mouse:up', clearScalingFlag);
@@ -1967,7 +1971,7 @@ const Canvas = ({ className }) => {
               ctx.fill(p2);
               drew = true;
             }
-          } catch {}
+          } catch { }
         }
         if (!drew) {
           const baseW = (designRef.current && designRef.current.width) || fCanvas.getWidth();
@@ -2037,7 +2041,7 @@ const Canvas = ({ className }) => {
               const p22 = new Path2D(match2[1]);
               ctx.fill(p22);
             }
-          } catch {}
+          } catch { }
         } else {
           const baseW = (designRef.current && designRef.current.width) || fCanvas.getWidth();
           const baseH = (designRef.current && designRef.current.height) || fCanvas.getHeight();
@@ -2132,7 +2136,7 @@ const Canvas = ({ className }) => {
               const scaleY = (cp.scaleY || 1) * s;
               shapePath = `<path d="${m[1]}" transform="matrix(${scaleX} 0 0 ${scaleY} 0 0)"/>`;
             }
-          } catch {}
+          } catch { }
         }
         if (!shapePath) {
           // fallback to full artboard rect (with padding offset)
@@ -2144,9 +2148,8 @@ const Canvas = ({ className }) => {
         const filter = `
           <defs>
             <filter id="${id}" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB" primitiveUnits="userSpaceOnUse">
-              <feDropShadow dx="0" dy="${offsetCssY}" stdDeviation="${
-                blurCss / 2
-              }" flood-color="${shadowColor}" flood-opacity="1"/>
+              <feDropShadow dx="0" dy="${offsetCssY}" stdDeviation="${blurCss / 2
+          }" flood-color="${shadowColor}" flood-opacity="1"/>
             </filter>
             <mask id="cutout" maskUnits="userSpaceOnUse">
               <rect x="-10000" y="-10000" width="20000" height="20000" fill="white"/>
@@ -2176,7 +2179,7 @@ const Canvas = ({ className }) => {
             </g>`;
           outlineHost.innerHTML = outlineSvgHeader + outlineBody + '</svg>';
         }
-      } catch {}
+      } catch { }
     };
 
     const drawFrame = () => {
@@ -2229,7 +2232,7 @@ const Canvas = ({ className }) => {
           }
           ctx.restore();
         }
-      } catch {}
+      } catch { }
       // Якщо об'єкт зафіксовано по горизонталі — малюємо синю пунктирну лінію по центру
       if (active.__snappedHorizontal) {
         const midY = (minY + maxY) / 2;
@@ -2412,23 +2415,23 @@ const Canvas = ({ className }) => {
             // Delete
             if (typeof deleteIconRenderer === 'function')
               deleteIconRenderer(ctx, posDel.x, posDel.y);
-          } catch {}
+          } catch { }
         }
-      } catch {}
+      } catch { }
       ctx.restore();
     };
     fCanvas.on('before:render', clearTop);
     fCanvas.on('after:render', () => {
       try {
         syncShadowHost();
-      } catch {}
+      } catch { }
     });
     fCanvas.on('after:render', drawFrame);
     // Also refresh shadow when display scale changes (CSS zoom of the canvas box)
     const onDisplayScale = () => {
       try {
         syncShadowHost();
-      } catch {}
+      } catch { }
     };
     fCanvas.on('display:scale', onDisplayScale);
 
@@ -2446,7 +2449,7 @@ const Canvas = ({ className }) => {
         if (fromShapeTab) {
           ensureShapeSvgId(target, fCanvas);
         }
-      } catch {}
+      } catch { }
       // Правило шарів: текст завжди поверх усіх інших фігур
       try {
         if (isTextObj(target)) {
@@ -2455,7 +2458,7 @@ const Canvas = ({ className }) => {
           const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
           texts.forEach(t => bringCanvasObjectToFront(t));
         }
-      } catch {}
+      } catch { }
       // Якщо додано Cut-форму (з блоку Cut) — одразу активуємо і малюємо панель/рамку
       try {
         if (target.isCutElement === true && target.cutType === 'shape') {
@@ -2466,14 +2469,14 @@ const Canvas = ({ className }) => {
               lockScalingY: true,
               lockUniScaling: true,
             });
-          } catch {}
+          } catch { }
           fCanvas.setActiveObject(target);
           ensureActionControls(target);
           setShapePropertiesOpen(false);
           fCanvas.requestRenderAll();
           return;
         }
-      } catch {}
+      } catch { }
       // Якщо додано з IconMenu — одразу робимо активним та показуємо панель
       try {
         if (target.fromIconMenu === true || (target.data && target.data.fromIconMenu === true)) {
@@ -2483,19 +2486,19 @@ const Canvas = ({ className }) => {
           fCanvas.requestRenderAll();
           return;
         }
-      } catch {}
+      } catch { }
       // Для halfCircle зберігаємо базові розміри bbox при першому додаванні
       try {
         if (target.shapeType === 'halfCircle') {
           if (!target.__baseBBoxW) target.__baseBBoxW = target.width;
           if (!target.__baseBBoxH) target.__baseBBoxH = target.height;
         }
-      } catch {}
+      } catch { }
       // Ensure text objects compute aCoords before applying controls
       if (typeof target.setCoords === 'function') {
         try {
           target.setCoords();
-        } catch {}
+        } catch { }
       }
       const active = fCanvas.getActiveObject();
       if (active && active === target) {
@@ -2510,7 +2513,7 @@ const Canvas = ({ className }) => {
       if (isHole(t)) {
         try {
           t.set({ left: t._lastLeft ?? t.left, top: t._lastTop ?? t.top });
-        } catch {}
+        } catch { }
         return false;
       } else if (t) {
         t._lastLeft = t.left;
@@ -2529,23 +2532,23 @@ const Canvas = ({ className }) => {
               left: (Number(t.left) || 0) + applyDx,
               top: (Number(t.top) || 0) + applyDy,
             });
-          } catch {}
+          } catch { }
           try {
             t.setCoords && t.setCoords();
-          } catch {}
+          } catch { }
         }
         t.__snapGuides = guides;
-      } catch {}
+      } catch { }
     });
 
     const clearSnapGuides = e => {
       try {
         const t = e?.target || (fCanvas.getActiveObject && fCanvas.getActiveObject());
         if (t && t.__snapGuides) t.__snapGuides = null;
-      } catch {}
+      } catch { }
       try {
         fCanvas.requestRenderAll();
-      } catch {}
+      } catch { }
     };
     fCanvas.on('mouse:up', clearSnapGuides);
     fCanvas.on('object:modified', clearSnapGuides);
@@ -2561,7 +2564,7 @@ const Canvas = ({ className }) => {
             scaleY: t._lastScaleY ?? t.scaleY,
           });
           t.setCoords && t.setCoords();
-        } catch {}
+        } catch { }
         return false;
       } else if (t) {
         t._lastScaleX = t.scaleX;
@@ -2589,7 +2592,7 @@ const Canvas = ({ className }) => {
     outlineColorRef.current = OUTLINE_COLOR;
     try {
       canvas && canvas.requestRenderAll();
-    } catch {}
+    } catch { }
   }, [canvas]);
 
   useEffect(() => {
@@ -2617,7 +2620,7 @@ const Canvas = ({ className }) => {
         if (active && typeof active.setCoords === 'function') {
           active.setCoords();
         }
-      } catch {}
+      } catch { }
       canvas.renderAll();
     };
 
@@ -2832,12 +2835,12 @@ const Canvas = ({ className }) => {
         if (obj.useThemeColor) {
           try {
             obj.set({ fill: textColor, stroke: textColor });
-          } catch {}
+          } catch { }
         }
       };
       objs.forEach(applyThemeColor);
       canvas.requestRenderAll?.();
-    } catch {}
+    } catch { }
     const qrs = objs.filter(o => o.isQRCode && o.qrText);
     const bars = objs.filter(o => o.isBarCode && o.barCodeText && o.barCodeType);
     if (qrs.length === 0 && bars.length === 0) return;
@@ -2902,12 +2905,12 @@ const Canvas = ({ className }) => {
             canvas.add(obj);
             try {
               if (typeof obj.setCoords === 'function') obj.setCoords();
-            } catch {}
+            } catch { }
             if (typeof canvas.moveTo === 'function') canvas.moveTo(obj, idx);
             if (wasActive) {
               try {
                 canvas.setActiveObject(obj);
-              } catch {}
+              } catch { }
             }
             canvas.remove(o);
             // Доп. оновлення у наступному кадрі — для коректних aCoords перед малюванням контролів
@@ -2918,10 +2921,10 @@ const Canvas = ({ className }) => {
                   if (wasActive) canvas.setActiveObject(obj);
                   if (typeof obj.setCoords === 'function') obj.setCoords();
                   canvas.requestRenderAll();
-                } catch {}
+                } catch { }
               });
-            } catch {}
-          } catch {}
+            } catch { }
+          } catch { }
         }
 
         // Перегенерація BarCode
@@ -2970,12 +2973,12 @@ const Canvas = ({ className }) => {
             canvas.add(obj);
             try {
               if (typeof obj.setCoords === 'function') obj.setCoords();
-            } catch {}
+            } catch { }
             if (typeof canvas.moveTo === 'function') canvas.moveTo(obj, idx);
             if (wasActive) {
               try {
                 canvas.setActiveObject(obj);
-              } catch {}
+              } catch { }
             }
             canvas.remove(o);
             try {
@@ -2985,10 +2988,10 @@ const Canvas = ({ className }) => {
                   if (wasActive) canvas.setActiveObject(obj);
                   if (typeof obj.setCoords === 'function') obj.setCoords();
                   canvas.requestRenderAll();
-                } catch {}
+                } catch { }
               });
-            } catch {}
-          } catch {}
+            } catch { }
+          } catch { }
         }
       } finally {
         canvas.__suspendUndoRedo = false;
@@ -3078,7 +3081,7 @@ export const copyHandler = async (evt, transform) => {
           ta.style.height = '0';
           ta.style.opacity = '0';
           ta.style.pointerEvents = 'none';
-        } catch {}
+        } catch { }
         ta.focus();
         // После фокусировки явно ставим курсор в конец через fabric методы
         setTimeout(() => {
@@ -3090,13 +3093,13 @@ export const copyHandler = async (evt, transform) => {
             if (typeof target.setSelectionEnd === 'function') {
               target.setSelectionEnd(len);
             }
-          } catch {}
+          } catch { }
         }, 0);
       }
-    } catch {}
+    } catch { }
     if (typeof target.canvas?.requestRenderAll === 'function') {
       target.canvas.requestRenderAll();
     }
-  } catch {}
+  } catch { }
   return true;
 };

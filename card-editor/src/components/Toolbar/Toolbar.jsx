@@ -2746,6 +2746,13 @@ const Toolbar = ({ formData }) => {
       }
     };
   }, [canvas]);
+  useEffect(() => {
+    try {
+      window.dispatchEvent(new CustomEvent('toolbar:changed'));
+    } catch {
+      // no-op
+    }
+  }, [sizeValues?.width, sizeValues?.height, thickness, isAdhesiveTape]);
 
   // Застосовуємо дефолтну схему кольорів при завантаженні
   useEffect(() => {
@@ -9388,7 +9395,7 @@ const Toolbar = ({ formData }) => {
 
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][6].isSelect && (
             <span
-              onClick={() => handleColorPick(6, '#FFFFFF', '#00FF00', 'solid')}
+              onClick={() => handleColorPick(6, '#FFFFFF', '#018001', 'solid')}
               title="Green / White"
             >
               <A7

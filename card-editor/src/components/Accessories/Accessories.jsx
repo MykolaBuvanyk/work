@@ -24,13 +24,13 @@ import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
 import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
 
 const TopToolbar = ({ className, formData }) => {
-  console.log(9432943294,formData);
+  console.log(9432943294, formData);
   const { canvas } = useCanvasContext();
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
   const [isAccessoriesOpen, setAccessoriesOpen] = useState(false);
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
-  
+
   // Toolbar <-> Modal shared state
   const [accessories, setAccessories] = useState([
     {
@@ -179,15 +179,15 @@ const TopToolbar = ({ className, formData }) => {
       let currentUnsavedId = null;
       try {
         currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
-      } catch {}
+      } catch { }
       if (currentUnsavedId && canvas) {
         await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
-          () => {}
+          () => { }
         );
       }
 
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
-  const PX_PER_MM = 72 / 25.4;
+      const PX_PER_MM = 72 / 25.4;
       const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
       const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
@@ -195,8 +195,8 @@ const TopToolbar = ({ className, formData }) => {
 
       try {
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
-      } catch {}
-      
+      } catch { }
+
       // НОВЕ: Автоматично відкриваємо новостворене полотно
       setTimeout(() => {
         try {
@@ -224,73 +224,73 @@ const TopToolbar = ({ className, formData }) => {
       let currentUnsavedId = null;
       let currentProjectCanvasId = null;
       let currentProjectId = null;
-      
+
       try {
         currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
         currentProjectCanvasId =
           localStorage.getItem("currentProjectCanvasId") ||
           localStorage.getItem("currentCanvasId");
         currentProjectId = localStorage.getItem("currentProjectId");
-      } catch {}
-      
+      } catch { }
+
       // Визначаємо що саме треба видалити
       const isUnsavedSign = !!currentUnsavedId;
       const isProjectCanvas = !!currentProjectCanvasId && !!currentProjectId;
-      
+
       if (!isUnsavedSign && !isProjectCanvas) {
         console.log("No canvas to delete");
         setWorking(false);
         return;
       }
-      
+
       // Видаляємо unsaved sign
       if (isUnsavedSign) {
         console.log("Deleting unsaved sign:", currentUnsavedId);
-        
+
         // Persist final state before removal (optional safety)
         if (canvas) {
           await updateUnsavedSignFromCanvas(currentUnsavedId, canvas).catch(
-            () => {}
+            () => { }
           );
         }
-        
+
         await deleteUnsavedSign(currentUnsavedId);
-        
+
         try {
           localStorage.removeItem("currentUnsavedSignId");
-        } catch {}
-        
+        } catch { }
+
         // Тригеримо оновлення
         try {
           window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
-        } catch {}
+        } catch { }
       }
-      
+
       // Видаляємо canvas з проекту
       if (isProjectCanvas) {
         console.log("Deleting project canvas:", currentProjectCanvasId);
-        
+
         // Persist final state before removal (optional safety)
         if (canvas) {
           await updateCanvasInCurrentProject(currentProjectCanvasId, canvas).catch(
-            () => {}
+            () => { }
           );
         }
-        
+
         await deleteCanvasFromCurrentProject(currentProjectCanvasId);
-        
+
         try {
           localStorage.removeItem("currentCanvasId");
           localStorage.removeItem("currentProjectCanvasId");
           localStorage.removeItem("currentProjectCanvasIndex");
-        } catch {}
+        } catch { }
         try {
           if (typeof window !== "undefined") {
             window.__currentProjectCanvasId = null;
             window.__currentProjectCanvasIndex = null;
           }
-        } catch {}
-        
+        } catch { }
+
         // Тригеримо оновлення проекту
         try {
           window.dispatchEvent(
@@ -298,12 +298,12 @@ const TopToolbar = ({ className, formData }) => {
               detail: { projectId: currentProjectId }
             })
           );
-        } catch {}
+        } catch { }
       }
-      
+
       // Завантажуємо наступне доступне полотно
       let nextCanvasToLoad = null;
-      
+
       // Спочатку перевіряємо чи є ще полотна в проекті
       if (currentProjectId) {
         const project = await getProject(currentProjectId);
@@ -313,14 +313,14 @@ const TopToolbar = ({ className, formData }) => {
             localStorage.setItem("currentCanvasId", nextCanvasToLoad.id);
             localStorage.setItem("currentProjectCanvasId", nextCanvasToLoad.id);
             localStorage.setItem("currentProjectCanvasIndex", "0");
-          } catch {}
+          } catch { }
           try {
             if (typeof window !== "undefined") {
               window.__currentProjectCanvasId = nextCanvasToLoad.id;
               window.__currentProjectCanvasIndex = 0;
             }
-          } catch {}
-          
+          } catch { }
+
           if (canvas && nextCanvasToLoad.json) {
             canvas.__suspendUndoRedo = true;
             canvas.loadFromJSON(nextCanvasToLoad.json, () => {
@@ -328,21 +328,21 @@ const TopToolbar = ({ className, formData }) => {
               canvas.__suspendUndoRedo = false;
             });
           }
-          
+
           console.log("Loaded next project canvas:", nextCanvasToLoad.id);
           setWorking(false);
           return;
         }
       }
-      
+
       // Якщо в проекті немає полотен, перевіряємо unsaved signs
       const remaining = await getAllUnsavedSigns();
       if (remaining.length > 0) {
         nextCanvasToLoad = remaining[0];
         try {
           localStorage.setItem("currentUnsavedSignId", nextCanvasToLoad.id);
-        } catch {}
-        
+        } catch { }
+
         if (canvas && nextCanvasToLoad.json) {
           canvas.__suspendUndoRedo = true;
           canvas.loadFromJSON(nextCanvasToLoad.json, () => {
@@ -350,19 +350,19 @@ const TopToolbar = ({ className, formData }) => {
             canvas.__suspendUndoRedo = false;
           });
         }
-        
+
         console.log("Loaded next unsaved sign:", nextCanvasToLoad.id);
       } else {
         // Немає жодних полотен - очищаємо canvas
         console.log("No more canvases available, clearing canvas");
-        
+
         if (canvas) {
           canvas.__suspendUndoRedo = true;
           canvas.clear();
           canvas.renderAll();
           canvas.__suspendUndoRedo = false;
         }
-        
+
         // Скидаємо флаг перевірки, щоб автоматично створити нове полотно
         setHasCheckedCanvases(false);
       }
@@ -380,11 +380,11 @@ const TopToolbar = ({ className, formData }) => {
     const checkAndCreateCanvas = async () => {
       try {
         // ВИПРАВЛЕННЯ: Додаємо затримку щоб дати час іншим компонентам створити полотна
-       
-        
+
+
         // Отримуємо всі unsaved signs
         const unsavedSigns = await getAllUnsavedSigns();
-        
+
         // Перевіряємо чи є полотна в проекті
         let projectCanvasCount = 0;
         try {
@@ -399,7 +399,7 @@ const TopToolbar = ({ className, formData }) => {
         }
 
         const totalCanvases = unsavedSigns.length + projectCanvasCount;
-        
+
         console.log("Canvas check (delayed):", {
           unsavedSigns: unsavedSigns.length,
           projectCanvases: projectCanvasCount,
@@ -409,26 +409,26 @@ const TopToolbar = ({ className, formData }) => {
         // Якщо немає жодного полотна - створюємо дефолтне
         if (totalCanvases < 1) {
           console.log("No canvases found after delay, creating default canvas");
-          
+
           // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
           const PX_PER_MM = 72 / 25.4;
           const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
           const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
 
           const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-          
+
           // Оновлюємо localStorage
           try {
             localStorage.setItem("currentUnsavedSignId", newSign.id);
-          } catch {}
+          } catch { }
 
           // Тригеримо подію оновлення
           try {
             window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
-          } catch {}
+          } catch { }
 
           console.log("Default canvas created:", newSign.id);
-          
+
           // НОВЕ: Автоматично відкриваємо створене полотно
           // Чекаємо трохи щоб ProjectCanvasesGrid встиг оновитись
           setTimeout(() => {
@@ -455,16 +455,16 @@ const TopToolbar = ({ className, formData }) => {
     };
 
     checkAndCreateCanvas();
-    
+
     // Слухаємо подію створення полотна з інших компонентів
     const handleCanvasCreated = () => {
       console.log("Canvas created event received, marking as checked");
       setHasCheckedCanvases(true);
     };
-    
+
     window.addEventListener("canvas:created", handleCanvasCreated);
     window.addEventListener("unsaved:signsUpdated", handleCanvasCreated);
-    
+
     return () => {
       window.removeEventListener("canvas:created", handleCanvasCreated);
       window.removeEventListener("unsaved:signsUpdated", handleCanvasCreated);
@@ -472,17 +472,39 @@ const TopToolbar = ({ className, formData }) => {
   }, [canvas, hasCheckedCanvases, working]);
 
   useEffect(() => {
-      let filterAccessories = accessories.filter(
-        (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
-      );
-      filterAccessories = filterAccessories.map((x) => ({
-        ...x,
-        price: formData.listAccessories.find((y) => x.name == y.text).number,
-      }));
-      setAccessories(filterAccessories);
+    let filterAccessories = accessories.filter(
+      (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
+    );
+    filterAccessories = filterAccessories.map((x) => ({
+      ...x,
+      price: formData.listAccessories.find((y) => x.name == y.text).number,
+    }));
+    setAccessories(filterAccessories);
   }, [formData]);
 
-  console.log(3434,accessories);
+  console.log(3434, accessories);
+  useEffect(() => {
+    try {
+      window.getSelectedAccessories = () => accessories;
+      window.dispatchEvent(
+        new CustomEvent("accessories:changed", {
+          detail: { accessories },
+        })
+      );
+    } catch {
+      // no-op
+    }
+
+    return () => {
+      try {
+        if (window.getSelectedAccessories && window.getSelectedAccessories() === accessories) {
+          delete window.getSelectedAccessories;
+        }
+      } catch {
+        // no-op
+      }
+    };
+  }, [accessories]);
 
   return (
     <div className={`${styles.accessories} ${className}`}>
@@ -581,7 +603,7 @@ const TopToolbar = ({ className, formData }) => {
         <h3 className={styles.title}>Accessories:</h3>
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
-          {accessories.sort((a, b) => b.checked - a.checked).slice(0,3)
+          {accessories.sort((a, b) => b.checked - a.checked).slice(0, 3)
             .map((it) => {
               const qtyNum = parseNumber(it.qty);
               const total = it.price * qtyNum;
@@ -640,42 +662,42 @@ const TopToolbar = ({ className, formData }) => {
             }
           }}
         >
-          {accessories.length>3&& <>
-          <svg
-            width="34"
-            height="34"
-            viewBox="0 0 34 34"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <g clip-path="url(#clip0_82_640)">
-              <path
-                d="M16.6244 16.6238L20.5427 16.7054M16.706 20.5421L16.6244 16.6238L16.706 20.5421ZM16.5428 12.7054L16.6244 16.6238L16.5428 12.7054ZM16.6244 16.6238L12.7061 16.5421L16.6244 16.6238Z"
-                stroke="#017F01"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M23.6951 23.6952C27.4409 19.9494 27.3117 13.7469 23.4065 9.84172C19.5012 5.93647 13.2988 5.80729 9.55296 9.5531C5.80711 13.299 5.93633 19.5014 9.84158 23.4066C13.7468 27.3118 19.9492 27.4411 23.6951 23.6952Z"
-                stroke="#009951"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </g>
-            <defs>
-              <clipPath id="clip0_82_640">
-                <rect
-                  width="23.0204"
-                  height="24"
-                  fill="white"
-                  transform="translate(0 16.2778) rotate(-45)"
+          {accessories.length > 3 && <>
+            <svg
+              width="34"
+              height="34"
+              viewBox="0 0 34 34"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clip-path="url(#clip0_82_640)">
+                <path
+                  d="M16.6244 16.6238L20.5427 16.7054M16.706 20.5421L16.6244 16.6238L16.706 20.5421ZM16.5428 12.7054L16.6244 16.6238L16.5428 12.7054ZM16.6244 16.6238L12.7061 16.5421L16.6244 16.6238Z"
+                  stroke="#017F01"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 />
-              </clipPath>
-            </defs>
-          </svg>
-          More Accessories</>}
+                <path
+                  d="M23.6951 23.6952C27.4409 19.9494 27.3117 13.7469 23.4065 9.84172C19.5012 5.93647 13.2988 5.80729 9.55296 9.5531C5.80711 13.299 5.93633 19.5014 9.84158 23.4066C13.7468 27.3118 19.9492 27.4411 23.6951 23.6952Z"
+                  stroke="#009951"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_82_640">
+                  <rect
+                    width="23.0204"
+                    height="24"
+                    fill="white"
+                    transform="translate(0 16.2778) rotate(-45)"
+                  />
+                </clipPath>
+              </defs>
+            </svg>
+            More Accessories</>}
         </div>
         <AccessoriesModal
           isOpen={isAccessoriesOpen}

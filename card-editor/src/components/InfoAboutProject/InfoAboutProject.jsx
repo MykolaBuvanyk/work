@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useCanvasContext } from "../../contexts/CanvasContext";
-import * as fabric from "fabric";
+import React from "react";
 import styles from "./InfoAboutProject.module.css";
+import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
 
 const InfoAboutProject = () => {
+  const { price, discountPercent, discountAmount, totalPrice, isLoading } =
+    useCurrentSignPrice();
+
+  const formatted = `€ ${Number(price || 0).toFixed(2)}`;
+  const formattedDiscount = `€ ${Number(discountAmount || 0).toFixed(2)}`;
+  const formattedTotal = `€ ${Number(totalPrice || 0).toFixed(2)}`;
+
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
@@ -33,17 +39,17 @@ const InfoAboutProject = () => {
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>Current sign</p>
-        <span className={styles.price}> € 20.45</span>
+        <span className={styles.price}>{isLoading ? "…" : formatted}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>
-          Discount <span>(5%)</span>
+          Discount <span>({Number(discountPercent || 0).toFixed(0)}%)</span>
         </p>
-        <span className={styles.price}> € 3.35</span>
+        <span className={styles.price}>{isLoading ? "…" : formattedDiscount}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>Total Price incl. VAT</p>
-        <span className={styles.price}> € 110.90</span>
+        <span className={styles.price}>{isLoading ? "…" : formattedTotal}</span>
       </div>
     </div>
   );

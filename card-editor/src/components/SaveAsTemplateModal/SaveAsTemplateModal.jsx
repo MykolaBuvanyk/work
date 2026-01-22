@@ -1,9 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./SaveAsTemplateModal.module.css";
+import { fetchTemplateCategories } from "../../http/templates";
 
-const SaveAsTemplateModal = ({ onClose, onSave }) => {
+const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    if (!isAdmin) return;
+
+    fetchTemplateCategories()
+      .then((data) => {
+        if (!mounted) return;
+        setCategories(Array.isArray(data) ? data : []);
+      })
+      .catch((e) => {
+        console.warn("Failed to fetch template categories", e);
+        if (!mounted) return;
+        setCategories([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAdmin]);
 
   const handleSave = async () => {
     if (!onSave || isSaving) return;
@@ -15,7 +38,7 @@ const SaveAsTemplateModal = ({ onClose, onSave }) => {
 
     setIsSaving(true);
     try {
-      await onSave(trimmed);
+      await onSave(trimmed, selectedCategoryId || null);
       onClose && onClose();
     } catch (e) {
       console.error("Save template failed", e);
@@ -62,6 +85,24 @@ const SaveAsTemplateModal = ({ onClose, onSave }) => {
             placeholder="Template name"
           />
         </div>
+
+        {isAdmin ? (
+          <div className={styles.field}>
+            <div className={styles.label}>(Category)</div>
+            <select
+              className={styles.input}
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+            >
+              <option value="">Uncategorized</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </div>
 
       <div className={styles.buttons}>

@@ -8,6 +8,7 @@ import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import SaveAsTemplateModal from "../SaveAsTemplateModal/SaveAsTemplateModal";
 import TemplatesModal from "../TemplatesModal/TemplatesModal";
+import { saveTemplateSnapshot } from "../../utils/templateStorage";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
@@ -41,7 +42,6 @@ const TopToolbar = ({ className }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveAsTemplate = () => {
-    if (!isAdmin) return;
     if (!canvas) return;
     setSaveAsTemplateModalOpen(true);
   };
@@ -777,7 +777,8 @@ const TopToolbar = ({ className }) => {
       {isSaveAsTemplateModalOpen && (
         <SaveAsTemplateModal
           onClose={() => setSaveAsTemplateModalOpen(false)}
-          onSave={async (name) => {
+          isAdmin={isAdmin}
+          onSave={async (name, categoryId) => {
             if (!canvas) return;
             setIsSaving(true);
             try {
@@ -797,7 +798,11 @@ const TopToolbar = ({ className }) => {
                 throw new Error("Failed to export canvas");
               }
 
-              await createTemplate(name, snapshot);
+              if (isAdmin) {
+                await createTemplate(name, snapshot, categoryId);
+              } else {
+                await saveTemplateSnapshot(name, snapshot);
+              }
             } finally {
               setIsSaving(false);
             }

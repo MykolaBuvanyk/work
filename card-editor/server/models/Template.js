@@ -4,6 +4,8 @@ const TemplateSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     canvas: { type: mongoose.Schema.Types.Mixed, required: true },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'TemplateCategory', default: null },
+    isPublic: { type: Boolean, default: true },
     createdById: { type: String, default: null },
   },
   {

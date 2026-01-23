@@ -10,7 +10,12 @@ import {
   formatDate, 
   getProject,
   addCanvasesFromProjectsToCurrentProject,
-  clearAllUnsavedSigns 
+  clearAllUnsavedSigns,
+  updateUnsavedSignFromCanvas,
+  addUnsavedSignFromSnapshot,
+  exportCanvas,
+  addCanvasesFromProjectsToUnsavedSigns,
+  transferUnsavedSignsToProjectByIds
 } from "../../utils/projectStorage";
 
 
@@ -22,16 +27,29 @@ const YourProjectsModal = ({ onClose }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]); // Для чекбоксів
+  const [isCartConfirmOpen, setIsCartConfirmOpen] = useState(false);
 
   useEffect(() => {
     getAllProjects()
       .then((list) => {
-        const mapped = (list || []).map((p) => ({
+        const mapped = (list || []).map((p) => {
+          const ts =
+            typeof (p?.updatedAt ?? p?.createdAt) === "number"
+              ? p.updatedAt ?? p.createdAt
+              : 0;
+
+          return {
           id: p.id,
           name: p.name,
-          date: formatDate(p.updatedAt || p.createdAt),
+          date: formatDate(ts),
+          sortTs: ts,
           images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
-        }));
+          };
+        });
+
+        // Newest first (uses exact timestamp, not the formatted string)
+        mapped.sort((a, b) => (b.sortTs || 0) - (a.sortTs || 0));
+
         setProjects(mapped);
       })
       .catch(() => {});
@@ -196,6 +214,136 @@ const YourProjectsModal = ({ onClose }) => {
       return;
     }
 
+    const currentProjectId = (() => {
+      try {
+        return localStorage.getItem("currentProjectId");
+      } catch {
+        return null;
+      }
+    })();
+
+    // If there is no current (saved) project open, treat this action as:
+    // "Add current (unsaved) canvas into the selected saved project".
+    if (!currentProjectId) {
+      if (!canvas) {
+        alert("Canvas is not ready yet. Please try again.");
+        return;
+      }
+
+      if (selectedProjects.length !== 1) {
+        alert("Please select exactly one project to add your current changes to");
+        return;
+      }
+
+      const targetProjectId = selectedProjects[0];
+
+      let currentUnsavedId = null;
+      try {
+        currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+      } catch {}
+
+      try {
+        // Ensure latest edits are captured into the unsaved sign entry.
+        if (currentUnsavedId) {
+          await updateUnsavedSignFromCanvas(currentUnsavedId, canvas);
+        } else {
+          // Fallback: create an unsaved entry from the current canvas snapshot.
+          const toolbarState = window.getCurrentToolbarState?.() || {};
+          const snap = await exportCanvas(canvas, toolbarState);
+          if (!snap) {
+            alert("Failed to capture current canvas");
+            return;
+          }
+          const entry = await addUnsavedSignFromSnapshot(snap);
+          currentUnsavedId = entry?.id || null;
+        }
+
+        if (!currentUnsavedId) {
+          alert("Nothing to add: no unsaved canvas found");
+          return;
+        }
+
+        const updatedProject = await transferUnsavedSignsToProjectByIds(
+          targetProjectId,
+          [currentUnsavedId]
+        );
+
+        if (!updatedProject) {
+          alert("Failed to add current changes to the selected project");
+          return;
+        }
+
+        // Switch to the target project and open the newly added canvas (if possible).
+        const canvases = Array.isArray(updatedProject.canvases)
+          ? updatedProject.canvases
+          : [];
+        const addedIndex = (() => {
+          for (let i = canvases.length - 1; i >= 0; i -= 1) {
+            const meta = canvases[i]?.canvasMetadata;
+            if (meta?.sourceUnsavedId === currentUnsavedId) return i;
+          }
+          return canvases.length ? canvases.length - 1 : -1;
+        })();
+
+        const addedCanvas = addedIndex >= 0 ? canvases[addedIndex] : null;
+        try {
+          localStorage.setItem("currentProjectId", updatedProject.id);
+          localStorage.setItem("currentProjectName", updatedProject.name || "");
+          localStorage.removeItem("currentUnsavedSignId");
+          if (addedCanvas?.id) {
+            localStorage.setItem("currentCanvasId", addedCanvas.id);
+            localStorage.setItem("currentProjectCanvasId", addedCanvas.id);
+            localStorage.setItem("currentProjectCanvasIndex", String(addedIndex));
+          }
+        } catch {}
+
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = addedCanvas?.id || null;
+            window.__currentProjectCanvasIndex =
+              typeof addedIndex === "number" && addedIndex >= 0 ? addedIndex : null;
+          }
+        } catch {}
+
+        if (canvas && addedCanvas?.json && typeof canvas.loadFromJSON === "function") {
+          canvas.__suspendUndoRedo = true;
+          canvas.loadFromJSON(addedCanvas.json, () => {
+            try {
+              canvas.renderAll();
+            } catch {}
+            canvas.__suspendUndoRedo = false;
+          });
+        }
+
+        try {
+          window.dispatchEvent(
+            new CustomEvent("project:canvasesUpdated", {
+              detail: { projectId: updatedProject.id },
+            })
+          );
+          window.dispatchEvent(
+            new CustomEvent("project:switched", {
+              detail: { projectId: updatedProject.id },
+            })
+          );
+          window.dispatchEvent(
+            new CustomEvent("project:opened", {
+              detail: { projectId: updatedProject.id },
+            })
+          );
+        } catch {}
+
+        setSelectedProjects([]);
+        alert("Successfully added your current changes to the selected project");
+        onClose && onClose();
+        return;
+      } catch (error) {
+        console.error("Failed to add current (unsaved) canvas to project:", error);
+        alert("An error occurred while adding canvases");
+        return;
+      }
+    }
+
     try {
       const result = await addCanvasesFromProjectsToCurrentProject(selectedProjects);
       
@@ -228,6 +376,112 @@ const YourProjectsModal = ({ onClose }) => {
       alert("An error occurred while adding canvases");
     }
   };
+
+  const addSelectedProjectsToCurrentProject = async (projectIds) => {
+    if (!Array.isArray(projectIds) || projectIds.length === 0) return;
+
+    // If there is a saved current project, we add canvases into it.
+    // If user is working on an unsaved draft (no currentProjectId), we append canvases
+    // into the unsavedSigns store WITHOUT saving/creating a project.
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+
+    if (!currentProjectId) {
+      try {
+        if (!canvas) {
+          alert("Canvas is not ready yet. Please try again.");
+          return;
+        }
+
+        // Ensure current edits are persisted as an unsaved sign.
+        let currentUnsavedId = null;
+        try {
+          currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
+        } catch {}
+
+        if (currentUnsavedId) {
+          await updateUnsavedSignFromCanvas(currentUnsavedId, canvas);
+        } else {
+          const toolbarState = window.getCurrentToolbarState?.() || {};
+          const snap = await exportCanvas(canvas, toolbarState);
+          if (!snap) {
+            alert("Failed to capture current canvas");
+            return;
+          }
+          const entry = await addUnsavedSignFromSnapshot(snap);
+          currentUnsavedId = entry?.id || null;
+          if (currentUnsavedId) {
+            try {
+              localStorage.setItem("currentUnsavedSignId", currentUnsavedId);
+            } catch {}
+          }
+        }
+
+        const added = await addCanvasesFromProjectsToUnsavedSigns(projectIds);
+        if (!added) {
+          alert("Failed to add canvases. Please try again.");
+          return;
+        }
+
+        setSelectedProjects([]);
+        onClose && onClose();
+        return;
+      } catch (e) {
+        console.error("Failed to add canvases to draft:", e);
+        alert("An error occurred while adding canvases");
+        return;
+      }
+    }
+
+    try {
+      const result = await addCanvasesFromProjectsToCurrentProject(projectIds);
+      if (!result) {
+        alert("Failed to add canvases. Please make sure you have a current project open.");
+        return;
+      }
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent("project:canvasesUpdated", {
+            detail: { projectId: result.id },
+          })
+        );
+      } catch {}
+
+      setSelectedProjects([]);
+      onClose && onClose();
+    } catch (error) {
+      console.error("Failed to add canvases to current project:", error);
+      alert("An error occurred while adding canvases");
+    }
+  };
+
+  const handleCartClick = async () => {
+    if (selectedProjects.length === 0) return;
+
+    if (selectedProjects.length > 1) {
+      setIsCartConfirmOpen(true);
+      return;
+    }
+
+    // Single selection: add directly
+    await addSelectedProjectsToCurrentProject(selectedProjects);
+  };
+
+  const handleCartConfirmYes = async () => {
+    const ids = [...selectedProjects];
+    setIsCartConfirmOpen(false);
+    await addSelectedProjectsToCurrentProject(ids);
+  };
+
+  const handleCartConfirmCancel = () => {
+    setIsCartConfirmOpen(false);
+  };
+
+  const isCartDisabled = selectedProjects.length === 0;
+
   return (
     <div className={styles.yourProjectsModal}>
       <div className={styles.headerWrapper}>
@@ -259,7 +513,15 @@ const YourProjectsModal = ({ onClose }) => {
       <div className={styles.addInfoWrapper}>
         You can choose from your saved projects and add them to your current
         projects or place an ORDER.
-        <button>
+        <button
+          type="button"
+          disabled={isCartDisabled}
+          onClick={handleCartClick}
+          style={{
+            cursor: isCartDisabled ? "not-allowed" : "pointer",
+            opacity: isCartDisabled ? 0.6 : 1,
+          }}
+        >
           <svg
             width="23"
             height="22"
@@ -287,6 +549,33 @@ const YourProjectsModal = ({ onClose }) => {
           Cart
         </button>
       </div>
+
+      {isCartConfirmOpen && (
+        <div
+          className={styles.confirmOverlay}
+          onClick={handleCartConfirmCancel}
+          role="presentation"
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className={styles.confirmText}>
+              All selected projects will be added to the current project. Continue?
+            </div>
+            <div className={styles.confirmActions}>
+              <button type="button" onClick={handleCartConfirmYes}>
+                Yes
+              </button>
+              <button type="button" onClick={handleCartConfirmCancel}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className={styles.savedOrderedWrapper}>
         <button
           className={activeTab === "saved" ? styles.active : ""}

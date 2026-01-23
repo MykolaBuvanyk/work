@@ -566,6 +566,55 @@ export async function addUnsavedSignFromSnapshot(snapshot) {
   return entry;
 }
 
+// Add canvases from selected projects into the unsavedSigns store (draft mode).
+// Returns number of canvases added.
+export async function addCanvasesFromProjectsToUnsavedSigns(
+  projectIds,
+  { maxCanvases = 10 } = {}
+) {
+  if (!Array.isArray(projectIds) || projectIds.length === 0) return 0;
+
+  const existingUnsaved = await getAllUnsavedSigns();
+  const currentCount = Array.isArray(existingUnsaved) ? existingUnsaved.length : 0;
+  const limit = typeof maxCanvases === "number" && maxCanvases > 0 ? maxCanvases : 10;
+
+  let added = 0;
+  let remaining = Math.max(0, limit - currentCount);
+  if (remaining === 0) return 0;
+
+  for (const projectId of projectIds) {
+    if (remaining === 0) break;
+    if (!projectId) continue;
+
+    try {
+      const sourceProject = await getProject(projectId);
+      const canvases = Array.isArray(sourceProject?.canvases)
+        ? sourceProject.canvases
+        : [];
+      if (!canvases.length) continue;
+
+      for (const canvasEntry of canvases) {
+        if (remaining === 0) break;
+        if (!canvasEntry) continue;
+
+        // IMPORTANT: prevent snapshot.id from overriding generated unsaved id.
+        const { id: _ignored, ...snapshot } = canvasEntry;
+        await addUnsavedSignFromSnapshot(snapshot);
+        added += 1;
+        remaining -= 1;
+      }
+    } catch (error) {
+      console.error(
+        "Error adding canvases from project to unsaved signs:",
+        projectId,
+        error
+      );
+    }
+  }
+
+  return added;
+}
+
 export async function addBlankUnsavedSign(width = 0, height = 0) {
   const entry = {
     id: uuid(),
@@ -2237,6 +2286,72 @@ export async function transferUnsavedSignsToProject(
     // Якщо нічого не перенесено, все одно повідомляємо про оновлення списку незбережених знаків
     broadcastUnsavedUpdate();
   }
+  return project;
+}
+
+// Transfer selected unsaved signs into the specified project (append, max 10 total).
+// Unlike transferUnsavedSignsToProject, this ONLY migrates the provided ids.
+export async function transferUnsavedSignsToProjectByIds(
+  projectId,
+  unsavedIds
+) {
+  if (!projectId) return null;
+  if (!Array.isArray(unsavedIds) || unsavedIds.length === 0) return null;
+
+  const include = new Set(unsavedIds.filter(Boolean));
+  if (!include.size) return null;
+
+  const unsaved = await getAllUnsavedSigns();
+  if (!unsaved.length) return null;
+
+  const project = await getProject(projectId);
+  if (!project) return null;
+
+  const existing = Array.isArray(project.canvases) ? project.canvases : [];
+
+  const toTransfer = unsaved.filter((s) => s && include.has(s.id));
+  if (!toTransfer.length) {
+    return project;
+  }
+
+  const transferredIds = [];
+  for (const s of toTransfer) {
+    if (existing.length >= 10) break;
+    const newCanvasId = uuid();
+    existing.push({
+      id: newCanvasId,
+      json: s.json,
+      preview: s.preview,
+      previewSvg: s.previewSvg,
+      width: s.width,
+      height: s.height,
+      backgroundColor: s.backgroundColor,
+      backgroundType: s.backgroundType,
+      backgroundImage: s.backgroundImage,
+      canvasType: s.canvasType,
+      cornerRadius: s.cornerRadius,
+      toolbarState: s.toolbarState,
+      copiesCount: s.copiesCount,
+      canvasMetadata: {
+        ...(s.canvasMetadata || {}),
+        sourceUnsavedId: s.id,
+        migratedAt: Date.now(),
+      },
+    });
+    transferredIds.push(s.id);
+  }
+
+  if (transferredIds.length) {
+    project.canvases = existing;
+    project.updatedAt = Date.now();
+    await putProject(project);
+    await Promise.all(transferredIds.map((id) => deleteUnsavedSign(id)));
+    broadcastProjectUpdate(project.id);
+    broadcastUnsavedUpdate();
+  } else {
+    broadcastUnsavedUpdate();
+  }
+
   return project;
 }
 

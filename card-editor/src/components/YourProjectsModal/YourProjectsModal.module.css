@@ -254,3 +254,52 @@ table td {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmModal {
+  width: 520px;
+  max-width: calc(100vw - 40px);
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
+  padding: 22px 24px;
+}
+
+.confirmText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  margin-bottom: 18px;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirmActions button {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  background: #f3f3f3;
+  color: rgba(0, 108, 164, 1);
+  font-weight: 600;
+}
+
+.confirmActions button:first-child {
+  background: rgba(0, 108, 164, 1);
+  border-color: rgba(0, 108, 164, 1);
+  color: #ffffff;
+}

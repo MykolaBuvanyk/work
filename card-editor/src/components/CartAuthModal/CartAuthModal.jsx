@@ -1,0 +1,144 @@
+import React, { useEffect, useState } from 'react';
+import './CartAuthModal.scss';
+import MyTextInput from '../MyInput/MyTextInput';
+import MyTextPassword from '../MyInput/MyTextPassword';
+import ForgotPass from '../ForgotPass/ForgotPass';
+import FormFogotPass from '../FormFogotPass/FormFogotPass';
+import { $host } from '../../http';
+import { useDispatch } from 'react-redux';
+import { setUser } from '../../store/reducers/user';
+import { Link, useNavigate } from 'react-router-dom';
+
+const CartAuthModal = ({ isOpen, onClose }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isForgotPass, setIsForgotPass] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = e => {
+      if (e.key === 'Escape') onClose?.();
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const submit = async e => {
+    try {
+      e.preventDefault();
+      if (isSubmitting) return;
+
+      setIsSubmitting(true);
+      const res = await $host.post('auth/login', { email, password });
+      dispatch(setUser({ token: res.data.token }));
+      onClose?.();
+      navigate('/');
+    } catch (err) {
+      alert('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleForgotPass = () => {
+    setIsForgotPass(prev => !prev);
+  };
+
+  return (
+    <div className="cart-auth-modal__overlay" onMouseDown={onClose} role="dialog" aria-modal>
+      <div className="cart-auth-modal__panel" onMouseDown={e => e.stopPropagation()}>
+        <button className="cart-auth-modal__close" type="button" onClick={onClose} aria-label="Close">
+          ×
+        </button>
+
+        <div className="cart-auth-modal__header">
+          <h1>
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 40 40"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M31.3333 32.2199C33.0177 30.6615 34.3611 28.7712 35.279 26.6681C36.1969 24.565 36.6693 22.2946 36.6667 19.9999C36.6667 10.7949 29.205 3.33325 20 3.33325C10.795 3.33325 3.33333 10.7949 3.33333 19.9999C3.33051 22.3237 3.81497 24.6222 4.75543 26.7471C5.69588 28.872 7.07145 30.7762 8.79333 32.3366C11.8567 35.1293 15.8547 36.674 20 36.6666C24.2048 36.6742 28.2556 35.0848 31.3333 32.2199ZM29.94 28.8866C31.6556 26.968 32.7793 24.5939 33.1753 22.0508C33.5714 19.5077 33.223 16.9043 32.1721 14.5549C31.1212 12.2054 29.4128 10.2103 27.2531 8.81041C25.0933 7.41049 22.5746 6.66558 20.0008 6.66558C17.4271 6.66558 14.9083 7.41049 12.7486 8.81041C10.5888 10.2103 8.88042 12.2054 7.82955 14.5549C6.77867 16.9043 6.43024 19.5077 6.82632 22.0508C7.2224 24.5939 8.34605 26.968 10.0617 28.8866C11.5077 26.5399 13.7359 24.7791 16.3533 23.9149C15.1513 23.1292 14.2351 21.9765 13.7411 20.6281C13.2471 19.2798 13.2016 17.8079 13.6115 16.4317C14.0214 15.0554 14.8647 13.8483 16.016 12.9899C17.1672 12.1316 18.5648 11.6679 20.0008 11.6679C21.4368 11.6679 22.8345 12.1316 23.9857 12.9899C25.1369 13.8483 25.9803 15.0554 26.3901 16.4317C26.8 17.8079 26.7546 19.2798 26.2606 20.6281C25.7665 21.9765 24.8503 23.1292 23.6483 23.9149C26.266 24.7796 28.4943 26.5393 29.94 28.8866ZM27.3733 31.1116C26.6654 29.7696 25.6045 28.6464 24.3052 27.8631C23.0058 27.0798 21.5172 26.6661 20 26.6666C18.4831 26.6664 16.9948 27.0802 15.6958 27.8636C14.3967 28.6469 13.3361 29.7699 12.6283 31.1116C14.74 32.5149 17.275 33.3333 20 33.3333C22.725 33.3333 25.2617 32.5166 27.3733 31.1116ZM20 21.6666C20.884 21.6666 21.7319 21.3154 22.357 20.6903C22.9821 20.0652 23.3333 19.2173 23.3333 18.3333C23.3333 17.4492 22.9821 16.6014 22.357 15.9762C21.7319 15.3511 20.884 14.9999 20 14.9999C19.1159 14.9999 18.2681 15.3511 17.643 15.9762C17.0178 16.6014 16.6667 17.4492 16.6667 18.3333C16.6667 19.2173 17.0178 20.0652 17.643 20.6903C18.2681 21.3154 19.1159 21.6666 20 21.6666Z"
+                fill="#14213D"
+              />
+            </svg>
+            Already a customer
+          </h1>
+        </div>
+
+        <form className="cart-auth-modal__form" onSubmit={submit}>
+          <div className="cart-auth-modal__field">
+            <label htmlFor="email">E-mail address</label>
+            <MyTextInput name={'email'} value={email} setValue={setEmail} required />
+          </div>
+
+          <div className="cart-auth-modal__field">
+            <label htmlFor="password">Password</label>
+            <MyTextPassword name={'password'} value={password} setValue={setPassword} required />
+          </div>
+
+          <ForgotPass setIsForgotPassword={toggleForgotPass} />
+
+          <button className="cart-auth-modal__submit" disabled={isSubmitting}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clip-path="url(#clip0_1_173)">
+                <path
+                  d="M8 4C8 3.73478 8.10536 3.48043 8.29289 3.29289C8.48043 3.10536 8.73478 3 9 3H20C20.2652 3 20.5196 3.10536 20.7071 3.29289C20.8946 3.48043 21 3.73478 21 4V20C21 20.2652 20.8946 20.5196 20.7071 20.7071C20.5196 20.8946 20.2652 21 20 21H9C8.73478 21 8.48043 20.8946 8.29289 20.7071C8.10536 20.5196 8 20.2652 8 20V15H10V19H19V5H10V9H8V4Z"
+                  fill="white"
+                />
+                <path
+                  d="M13.707 8.29308C13.6148 8.19757 13.5044 8.12139 13.3824 8.06898C13.2604 8.01657 13.1292 7.98898 12.9964 7.98783C12.8636 7.98668 12.7319 8.01198 12.609 8.06226C12.4861 8.11254 12.3745 8.18679 12.2806 8.28069C12.1867 8.37458 12.1125 8.48623 12.0622 8.60913C12.0119 8.73202 11.9866 8.8637 11.9877 8.99648C11.9889 9.12926 12.0165 9.26048 12.0689 9.38249C12.1213 9.50449 12.1975 9.61483 12.293 9.70708L13.586 11.0001H4C3.73478 11.0001 3.48043 11.1054 3.29289 11.293C3.10536 11.4805 3 11.7349 3 12.0001C3 12.2653 3.10536 12.5197 3.29289 12.7072C3.48043 12.8947 3.73478 13.0001 4 13.0001H13.586L12.293 14.2931C12.1108 14.4817 12.01 14.7343 12.0123 14.9965C12.0146 15.2587 12.1198 15.5095 12.3052 15.6949C12.4906 15.8803 12.7414 15.9855 13.0036 15.9878C13.2658 15.99 13.5184 15.8892 13.707 15.7071L16.707 12.7071C16.8945 12.5196 16.9998 12.2652 16.9998 12.0001C16.9998 11.7349 16.8945 11.4806 16.707 11.2931L13.707 8.29308Z"
+                  fill="white"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_1_173">
+                  <rect width="24" height="24" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+            {isSubmitting ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <div className="cart-auth-modal__forgot">
+          <FormFogotPass isForgotPass={isForgotPass} />
+        </div>
+
+        <div className="cart-auth-modal__footer">
+          <span>Don't have an account? </span>
+          <Link to="/login" onClick={onClose}>
+            Register now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CartAuthModal;

@@ -4514,14 +4514,8 @@ const Toolbar = ({ formData }) => {
         if (lineObj) {
           const diameterMm = pxToMm(diameterPx);
           const lineWidthMm = diameterMm * 0.65;
-          // Обчислюємо поточну пропорцію товщини до розміру картки і зберігаємо її
-          const currThickMm = pxToMm(lineObj.height || 0);
-          const currRatio = diameterMm > 0 ? currThickMm / diameterMm : 0;
-          // Нова товщина за збереженою пропорцією
-          const lineThicknessMm = Math.max(
-            0,
-            diameterMm * (currRatio || thickness / Math.max(1, diameterMm))
-          );
+          // Fixed 1mm thickness: must NOT depend on toolbar thickness.
+          const lineThicknessMm = 1;
           lineObj.set({
             width: mmToPx(lineWidthMm),
             height: mmToPx(lineThicknessMm),
@@ -4546,12 +4540,8 @@ const Toolbar = ({ formData }) => {
           // Використовуємо поточну товщину (state thickness) для перерахунку відступів
           const diameterMm = pxToMm(diameterPx);
           const effectiveThickMm = (() => {
-            if (lineObj) {
-              const currThickMm = pxToMm(lineObj.height || 0);
-              const currRatio = diameterMm > 0 ? currThickMm / diameterMm : 0;
-              return Math.max(0, diameterMm * (currRatio || thickness / Math.max(1, diameterMm)));
-            }
-            return thickness;
+            // Fixed 1mm thickness: must NOT depend on toolbar thickness.
+            return 1;
           })();
           const lineThicknessMm = effectiveThickMm; // мм
           const radiusMm = diameterMm / 2;
@@ -4589,18 +4579,8 @@ const Toolbar = ({ formData }) => {
           .getObjects()
           .find(o => o.isCircleWithCrossVerticalLine || o.name === 'circleWithCrossVerticalLine');
         const lineWidthMm = diameterMm * 0.65;
-        // Обчислюємо актуальну пропорцію товщини до розміру картки за наявними лініями
-        const deriveThickRatio = () => {
-          const hThickMm = hLine ? pxToMm(hLine.height || 0) : null;
-          const vThickMm = vLine ? pxToMm(vLine.width || 0) : null;
-          const mm = typeof hThickMm === 'number' && hThickMm > 0 ? hThickMm : vThickMm;
-          return diameterMm > 0 && mm ? mm / diameterMm : null;
-        };
-        const thickRatio = deriveThickRatio();
-        const lineThicknessMm = Math.max(
-          0,
-          thickRatio != null ? diameterMm * thickRatio : thickness // fallback до поточного state товщини
-        );
+        // Fixed 1mm thickness: must NOT depend on toolbar thickness.
+        const lineThicknessMm = 1;
         const lineThicknessPx = mmToPx(lineThicknessMm);
         const lineWidthPx = mmToPx(lineWidthMm);
         const paddingPx = mmToPx(0.5); // зменшений відступ для ближчого розташування до лінії
@@ -5682,70 +5662,6 @@ const Toolbar = ({ formData }) => {
     // Пункт 3 (товщина) стосується лише внутрішніх бордерів/елементів картки, не змінює активні об'єкти
     // Якщо вже додано внутрішній бордер – оновлюємо його товщину без потреби вимикати/вмикати
     if (canvas) {
-      if (currentShapeType === 'circleWithLine') {
-        const lineObj = canvas.getObjects().find(o => o.isCircleWithLineCenterLine);
-        if (lineObj) {
-          lineObj.set({ height: mmToPx(value) });
-          lineObj.setCoords();
-        }
-      }
-      if (currentShapeType === 'circleWithCross') {
-        const hLine = canvas.getObjects().find(o => o.isCircleWithCrossHorizontalLine);
-        if (hLine) {
-          hLine.set({ height: mmToPx(value) });
-          hLine.setCoords();
-        }
-        const vLine = canvas.getObjects().find(o => o.isCircleWithCrossVerticalLine);
-        if (vLine) {
-          vLine.set({ width: mmToPx(value) });
-          vLine.setCoords();
-        }
-      }
-      // Також оновлюємо позицію текстів у circleWithLine при зміні товщини
-      if (currentShapeType === 'circleWithLine') {
-        const diameterPx = canvas.width;
-        const topText = canvas.getObjects().find(o => o.isCircleWithLineTopText);
-        const bottomText = canvas.getObjects().find(o => o.isCircleWithLineBottomText);
-        if (topText || bottomText) {
-          const radiusMm = pxToMm(diameterPx) / 2;
-          const gapMm = (radiusMm - value / 2) / 3; // value у мм (зменшений відступ)
-          const centerY = canvas.height / 2;
-          if (topText) {
-            topText.set({ top: centerY - mmToPx(gapMm), left: diameterPx / 2 });
-            topText.setCoords();
-          }
-          if (bottomText) {
-            bottomText.set({
-              top: centerY + mmToPx(gapMm),
-              left: diameterPx / 2,
-            });
-            bottomText.setCoords();
-          }
-        }
-      } else if (currentShapeType === 'circleWithCross') {
-        const diameterPx = canvas.width;
-        const topText = canvas.getObjects().find(o => o.isCircleWithCrossTopText);
-        const blText = canvas.getObjects().find(o => o.isCircleWithCrossBottomLeftText);
-        const brText = canvas.getObjects().find(o => o.isCircleWithCrossBottomRightText);
-        if (topText || blText || brText) {
-          const radiusMm = pxToMm(diameterPx) / 2;
-          const gapMm = (radiusMm - value / 2) / 3; // зменшений відступ
-          const centerY = canvas.height / 2;
-          const bottomY = centerY + mmToPx(gapMm);
-          if (topText) {
-            topText.set({ left: diameterPx / 2, top: centerY - mmToPx(gapMm) });
-            topText.setCoords();
-          }
-          if (blText) {
-            blText.set({ left: diameterPx * 0.35, top: bottomY });
-            blText.setCoords();
-          }
-          if (brText) {
-            brText.set({ left: diameterPx * 0.65, top: bottomY });
-            brText.setCoords();
-          }
-        }
-      }
       canvas.renderAll();
 
       // Відстежуємо зміну товщини

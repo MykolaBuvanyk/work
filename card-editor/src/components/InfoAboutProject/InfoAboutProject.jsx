@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
+import { useSelector } from "react-redux";
+import CartAuthModal from "../CartAuthModal/CartAuthModal";
 
 const InfoAboutProject = () => {
+  const { isAuth } = useSelector((state) => state.user);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const { price, discountPercent, discountAmount, totalPrice, isLoading } =
     useCurrentSignPrice();
 
@@ -10,11 +15,19 @@ const InfoAboutProject = () => {
   const formattedDiscount = `€ ${Number(discountAmount || 0).toFixed(2)}`;
   const formattedTotal = `€ ${Number(totalPrice || 0).toFixed(2)}`;
 
+  const onCartClick = () => {
+    if (!isAuth) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    // TODO: open cart for authorized users
+  };
+
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
         <h3 className={styles.title}>Projects: 10</h3>
-        <button className={styles.cartButton}>
+        <button className={styles.cartButton} onClick={onCartClick} type="button">
           <svg
             width="22"
             height="22"
@@ -51,6 +64,8 @@ const InfoAboutProject = () => {
         <p className={styles.para}>Total Price incl. VAT</p>
         <span className={styles.price}>{isLoading ? "…" : formattedTotal}</span>
       </div>
+
+      <CartAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };

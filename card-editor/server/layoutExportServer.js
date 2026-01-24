@@ -29,6 +29,77 @@ const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = '#008181';
 const TEXT_STROKE_WIDTH_PT = 0.5;
 
+const normalizeColorForGrouping = value => {
+  if (typeof value !== 'string') return null;
+  const raw = value.trim().toLowerCase();
+  if (!raw) return null;
+  const compact = raw.replace(/\s+/g, '');
+  const shortHex = /^#([0-9a-f]{3})$/i;
+  const shortHexWithAlpha = /^#([0-9a-f]{4})$/i;
+  const match3 = compact.match(shortHex);
+  if (match3) {
+    const [r, g, b] = match3[1].split('');
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  const match4 = compact.match(shortHexWithAlpha);
+  if (match4) {
+    const [r, g, b, a] = match4[1].split('');
+    return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+  }
+  return compact;
+};
+
+const normalizeThicknessMmForGrouping = thicknessPx => {
+  const px = Number(thicknessPx);
+  if (!Number.isFinite(px) || px <= 0) return null;
+  const mm = px / MM_TO_PT;
+  return Math.round(mm * 100) / 100;
+};
+
+const getMaterialKeyFromPlacement = placement => {
+  const colorRaw =
+    placement?.materialColor ||
+    placement?.customBorder?.exportStrokeColor ||
+    placement?.customBorder?.displayStrokeColor ||
+    placement?.themeStrokeColor ||
+    null;
+  const thicknessMmFromMaterial = (() => {
+    const numeric = Number(placement?.materialThicknessMm);
+    if (Number.isFinite(numeric) && numeric > 0) return Math.round(numeric * 100) / 100;
+    return null;
+  })();
+  const thicknessMm =
+    thicknessMmFromMaterial ??
+    normalizeThicknessMmForGrouping(placement?.customBorder?.thicknessPx);
+  const color = normalizeColorForGrouping(colorRaw) || 'unknown';
+  const thickness = thicknessMm !== null ? String(thicknessMm) : 'unknown';
+  return `${color}::${thickness}`;
+};
+
+const splitSheetByMaterial = sheet => {
+  const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+  if (placements.length <= 1) return [sheet];
+
+  const groups = new Map();
+  const order = [];
+  placements.forEach(placement => {
+    const key = getMaterialKeyFromPlacement(placement);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push(key);
+    }
+    groups.get(key).push(placement);
+  });
+
+  if (order.length <= 1) return [sheet];
+
+  return order.map(key => ({
+    ...sheet,
+    placements: groups.get(key) || [],
+    materialKey: key,
+  }));
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FONT_DIR = path.resolve(__dirname, '../src/assets/fonts');
@@ -1149,7 +1220,12 @@ app.post('/api/layout-pdf', async (req, res) => {
 
     doc.pipe(res);
 
-    sheets.forEach((sheet, sheetIndex) => {
+    const expandedSheets = [];
+    sheets.forEach(sheet => {
+      expandedSheets.push(...splitSheetByMaterial(sheet));
+    });
+
+    expandedSheets.forEach((sheet, sheetIndex) => {
       const pageWidthPt = mmToPoints(sheet?.width);
       const pageHeightPt = mmToPoints(sheet?.height);
 

@@ -629,9 +629,29 @@ const normalizeDesigns = (designs = []) =>
 
       const customBorder = extractCustomBorderMetadata(design);
 
-      // Витягуємо strokeColor з toolbarState для відслідковування колірної теми
-      const themeStrokeColor =
-        design?.toolbarState?.globalColors?.strokeColor || null;
+      // Матеріальні параметри (для групування сторінок PDF):
+      // - color: backgroundColor (колір/текстура основи)
+      // - thickness: toolbarState.thickness (мм)
+      const materialColor =
+        design?.toolbarState?.globalColors?.backgroundColor ??
+        design?.backgroundColor ??
+        design?.meta?.backgroundColor ??
+        null;
+      const materialThicknessMm = (() => {
+        const candidates = [
+          design?.toolbarState?.thickness,
+          design?.thickness,
+          design?.meta?.thickness,
+        ];
+        for (const candidate of candidates) {
+          const numeric = Number(candidate);
+          if (Number.isFinite(numeric) && numeric > 0) return numeric;
+        }
+        return null;
+      })();
+
+      // Legacy: theme stroke color (used for export SVG tweaks)
+      const themeStrokeColor = design?.toolbarState?.globalColors?.strokeColor || null;
 
       return {
         id: design.id ?? `design-${index}`,
@@ -643,6 +663,8 @@ const normalizeDesigns = (designs = []) =>
         copies,
         svg: svgContent,
         preview: design?.preview || null,
+        materialColor,
+        materialThicknessMm,
         themeStrokeColor, // Додаємо інформацію про колір теми
         customBorder,
       };
@@ -700,6 +722,8 @@ const planSheets = (items, sheetSize, spacingMm) => {
       copies: item.copies ?? 1,
       svg: item.svg || null,
       preview: item.preview || null,
+      materialColor: item.materialColor ?? null,
+      materialThicknessMm: item.materialThicknessMm ?? null,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
       customBorder: item.customBorder || null,
     };
@@ -741,6 +765,8 @@ const planSheets = (items, sheetSize, spacingMm) => {
       copies: item.copies ?? 1,
       svg: item.svg || null,
       preview: item.preview || null,
+      materialColor: item.materialColor ?? null,
+      materialThicknessMm: item.materialThicknessMm ?? null,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
       customBorder: item.customBorder || null,
     };
@@ -790,60 +816,135 @@ const planSheets = (items, sheetSize, spacingMm) => {
         copies: totalCopies,
         svg: item.svg || null,
         preview: item.preview || null,
+        materialColor: item.materialColor ?? null,
+        materialThicknessMm: item.materialThicknessMm ?? null,
         themeStrokeColor: item.themeStrokeColor || null, // Зберігаємо колір теми
         customBorder: item.customBorder || null,
       });
     }
   });
 
-  queue.forEach((item) => {
-    const orientations = orientationsFor(item);
-    let placed = false;
+  const normalizeHexColor = (value) => {
+    const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
+    if (!raw) return null;
+    const noSpaces = raw.replace(/\s+/g, "");
+    const shortHex = /^#([0-9a-f]{3})$/i;
+    const shortHexWithAlpha = /^#([0-9a-f]{4})$/i;
+    const match3 = noSpaces.match(shortHex);
+    if (match3) {
+      const [r, g, b] = match3[1].split("");
+      return `#${r}${r}${g}${g}${b}${b}`;
+    }
+    const match4 = noSpaces.match(shortHexWithAlpha);
+    if (match4) {
+      const [r, g, b, a] = match4[1].split("");
+      return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+    }
+    return noSpaces;
+  };
 
-    for (const sheet of sheets) {
-      for (const orientation of orientations) {
-        let rowPlaced = false;
-        for (const row of sheet.rows) {
-          if (tryPlaceOnRow(sheet, row, item, orientation)) {
-            rowPlaced = true;
+  const normalizeThicknessMm = (value) => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return null;
+    // Round to 2 decimals to avoid float noise
+    return Math.round(numeric * 100) / 100;
+  };
+
+  const getMaterialKey = (item) => {
+    // Primary: canvas/background color + material thickness
+    // Fallbacks remain for older data so export doesn't regress.
+    const colorRaw =
+      item?.materialColor ??
+      item?.customBorder?.exportStrokeColor ??
+      item?.customBorder?.displayStrokeColor ??
+      item?.themeStrokeColor ??
+      null;
+    const thicknessMm =
+      normalizeThicknessMm(item?.materialThicknessMm) ??
+      normalizeThicknessMm(item?.customBorder?.thicknessPx
+        ? item?.customBorder?.thicknessPx / PX_PER_MM
+        : null);
+    const color = normalizeHexColor(colorRaw) || "unknown";
+    const thickness = thicknessMm !== null ? String(thicknessMm) : "unknown";
+    return `${color}::${thickness}`;
+  };
+
+  const packQueueIntoSheets = (queueItems) => {
+    const groupSheets = [];
+    const groupLeftovers = [];
+
+    queueItems.forEach((item) => {
+      const orientations = orientationsFor(item);
+      let placed = false;
+
+      for (const sheet of groupSheets) {
+        for (const orientation of orientations) {
+          let rowPlaced = false;
+          for (const row of sheet.rows) {
+            if (tryPlaceOnRow(sheet, row, item, orientation)) {
+              rowPlaced = true;
+              placed = true;
+              break;
+            }
+          }
+          if (rowPlaced) break;
+
+          if (tryPlaceOnNewRow(sheet, item, orientation)) {
             placed = true;
             break;
           }
         }
-        if (rowPlaced) break;
+        if (placed) break;
+      }
 
-        if (tryPlaceOnNewRow(sheet, item, orientation)) {
-          placed = true;
-          break;
+      if (!placed) {
+        const newSheet = {
+          width: sheetSize.width,
+          height: sheetSize.height,
+          rows: [],
+          placements: [],
+          nextRowY: 0,
+          usedArea: 0,
+        };
+
+        let placedOnFresh = false;
+        for (const orientation of orientations) {
+          if (tryPlaceOnNewRow(newSheet, item, orientation)) {
+            placedOnFresh = true;
+            break;
+          }
+        }
+
+        if (placedOnFresh) {
+          groupSheets.push(newSheet);
+        } else {
+          groupLeftovers.push(item);
         }
       }
-      if (placed) break;
+    });
+
+    return { sheets: groupSheets, leftovers: groupLeftovers };
+  };
+
+  // PDF requirement: a single sheet/page must contain items of ONLY one border color and one thickness.
+  // If color OR thickness differs, items must be placed on separate pages.
+  const groups = new Map();
+  const groupOrder = [];
+  queue.forEach((item) => {
+    const key = getMaterialKey(item);
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      groupOrder.push(key);
     }
+    groups.get(key).push(item);
+  });
 
-    if (!placed) {
-      const newSheet = {
-        width: sheetSize.width,
-        height: sheetSize.height,
-        rows: [],
-        placements: [],
-        nextRowY: 0,
-        usedArea: 0,
-      };
-
-      let placedOnFresh = false;
-      for (const orientation of orientations) {
-        if (tryPlaceOnNewRow(newSheet, item, orientation)) {
-          placedOnFresh = true;
-          break;
-        }
-      }
-
-      if (placedOnFresh) {
-        sheets.push(newSheet);
-      } else {
-        leftovers.push(item);
-      }
-    }
+  groupOrder.forEach((key) => {
+    const { sheets: groupSheets, leftovers: groupLeftovers } = packQueueIntoSheets(
+      groups.get(key) || []
+    );
+    sheets.push(...groupSheets);
+    leftovers.push(...groupLeftovers);
   });
 
   return { sheets, leftovers };
@@ -3783,6 +3884,9 @@ const LayoutPlannerModal = ({
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,
+            materialColor: placement.materialColor ?? null,
+            materialThicknessMm: placement.materialThicknessMm ?? null,
+            themeStrokeColor: placement.themeStrokeColor ?? null,
           };
         });
 

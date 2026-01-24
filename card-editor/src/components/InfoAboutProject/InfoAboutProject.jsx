@@ -7,12 +7,15 @@ import { useCanvasContext } from "../../contexts/CanvasContext";
 import CartSaveProjectModal from "../CartSaveProjectModal/CartSaveProjectModal";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import { saveNewProject } from "../../utils/projectStorage";
+import { saveCurrentProject } from "../../utils/projectStorage";
+import { addProjectToCart } from "../../http/cart";
 
 const InfoAboutProject = () => {
   const { isAuth } = useSelector((state) => state.user);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
   const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { designs, canvas } = useCanvasContext();
 
   const { price, discountPercent, discountAmount, totalPrice, isLoading } =
@@ -32,7 +35,7 @@ const InfoAboutProject = () => {
     }, 0);
   }, [designs]);
 
-  const onCartClick = () => {
+  const onCartClick = async () => {
     if (!isAuth) {
       setIsAuthModalOpen(true);
       return;
@@ -49,14 +52,61 @@ const InfoAboutProject = () => {
       return;
     }
 
-    // TODO: open cart for authorized users
+    if (!canvas || isAddingToCart) return;
+
+    setIsAddingToCart(true);
+    try {
+      // Ensure latest canvas state is persisted into the current project before sending
+      const project = await saveCurrentProject(canvas);
+
+      const accessoriesAll =
+        typeof window !== "undefined" && typeof window.getSelectedAccessories === "function"
+          ? window.getSelectedAccessories() || []
+          : [];
+
+      const accessoriesSelected = Array.isArray(accessoriesAll)
+        ? accessoriesAll
+            .filter((x) => x && (x.checked || Number(x.qty) > 0))
+            .map((x) => ({
+              id: x.id,
+              name: x.name,
+              qty: x.qty,
+              price: x.price,
+              desc: x.desc,
+            }))
+        : [];
+
+      const payload = {
+        projectId: project?.id || currentProjectId,
+        projectName: project?.name || "Untitled",
+        price: Number(price || 0),
+        discountPercent: Number(discountPercent || 0),
+        discountAmount: Number(discountAmount || 0),
+        totalPrice: Number(totalPrice || 0),
+        project,
+        accessories: accessoriesSelected,
+      };
+
+      await addProjectToCart(payload);
+      alert("Project added to cart");
+    } catch (e) {
+      console.error("Failed to add to cart", e);
+      alert("Failed to add project to cart. Please try again.");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
         <h3 className={styles.title}>Projects: {projectsCount}</h3>
-        <button className={styles.cartButton} onClick={onCartClick} type="button">
+        <button
+          className={styles.cartButton}
+          onClick={onCartClick}
+          type="button"
+          disabled={isAddingToCart}
+        >
           <svg
             width="22"
             height="22"

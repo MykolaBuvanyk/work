@@ -5,6 +5,7 @@ import Login from './components/Login/Login';
 import TermsOfPurchasing from './components/TermsOfPurchasing/TermsOfPurchasing';
 import PrivacyPolicy from './components/PrivacyPolicy/PrivacyPolicy';
 import Admin from './Admin/Admin';
+import CartOrdersAdmin from './Admin/CartOrdersAdmin';
 import UpdateAvaible from './components/UpdateAvaible/UpdateAvaible';
 import UpdateIcons from './components/UpdateIcons/UpdateIcons';
 import LanguageGuard from './LanguageGuard';
@@ -26,6 +27,7 @@ function App() {
       <Route path="contacts" element={<Contacts />} />
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="admin" element={<Admin />} />
+      <Route path="admin/cart-orders" element={<CartOrdersAdmin />} />
       <Route path="admin/update-avaible" element={<UpdateAvaible />} />
       <Route path="admin/update-avaible/icon" element={<UpdateIcons />} />
       <Route path="admin/update-baner" element={<UpdateBaner />} />

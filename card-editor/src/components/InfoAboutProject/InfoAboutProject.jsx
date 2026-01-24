@@ -1,12 +1,19 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
 import { useSelector } from "react-redux";
 import CartAuthModal from "../CartAuthModal/CartAuthModal";
+import { useCanvasContext } from "../../contexts/CanvasContext";
+import CartSaveProjectModal from "../CartSaveProjectModal/CartSaveProjectModal";
+import SaveAsModal from "../SaveAsModal/SaveAsModal";
+import { saveNewProject } from "../../utils/projectStorage";
 
 const InfoAboutProject = () => {
   const { isAuth } = useSelector((state) => state.user);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
+  const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
+  const { designs, canvas } = useCanvasContext();
 
   const { price, discountPercent, discountAmount, totalPrice, isLoading } =
     useCurrentSignPrice();
@@ -15,18 +22,40 @@ const InfoAboutProject = () => {
   const formattedDiscount = `€ ${Number(discountAmount || 0).toFixed(2)}`;
   const formattedTotal = `€ ${Number(totalPrice || 0).toFixed(2)}`;
 
+  const projectsCount = useMemo(() => {
+    if (!Array.isArray(designs) || designs.length === 0) return 0;
+
+    return designs.reduce((sum, design) => {
+      const raw = design?.copiesCount ?? design?.toolbarState?.copiesCount ?? 1;
+      const count = Number(raw);
+      return sum + (Number.isFinite(count) && count > 0 ? count : 1);
+    }, 0);
+  }, [designs]);
+
   const onCartClick = () => {
     if (!isAuth) {
       setIsAuthModalOpen(true);
       return;
     }
+
+    // Require saved project before cart
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+
+    if (!currentProjectId) {
+      setIsSaveProjectModalOpen(true);
+      return;
+    }
+
     // TODO: open cart for authorized users
   };
 
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
-        <h3 className={styles.title}>Projects: 10</h3>
+        <h3 className={styles.title}>Projects: {projectsCount}</h3>
         <button className={styles.cartButton} onClick={onCartClick} type="button">
           <svg
             width="22"
@@ -66,6 +95,46 @@ const InfoAboutProject = () => {
       </div>
 
       <CartAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+
+      <CartSaveProjectModal
+        isOpen={isSaveProjectModalOpen}
+        onCancel={() => setIsSaveProjectModalOpen(false)}
+        onSave={() => {
+          setIsSaveProjectModalOpen(false);
+          setIsSaveAsModalOpen(true);
+        }}
+      />
+
+      {isSaveAsModalOpen && (
+        <SaveAsModal
+          onClose={() => setIsSaveAsModalOpen(false)}
+          onSaveAs={async (name) => {
+            if (!canvas) return;
+            if (!name || !name.trim()) {
+              alert("Please enter a project name");
+              return;
+            }
+
+            try {
+              const savedProject = await saveNewProject(name, canvas);
+              if (savedProject && savedProject.id) {
+                try {
+                  localStorage.setItem("currentProjectId", savedProject.id);
+                } catch {}
+                window.dispatchEvent(
+                  new CustomEvent("project:opened", {
+                    detail: { projectId: savedProject.id },
+                  })
+                );
+              }
+              setIsSaveAsModalOpen(false);
+            } catch (e) {
+              console.error("Save as failed:", e);
+              alert("Failed to save project. Please try again.");
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

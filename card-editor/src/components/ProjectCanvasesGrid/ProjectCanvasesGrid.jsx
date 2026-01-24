@@ -342,6 +342,48 @@ const ProjectCanvasesGrid = () => {
       const activeUnsaved = currentUnsavedIdRef.current;
       const activeProjectCanvas = currentProjectCanvasIdRef.current;
 
+      // Sync lightweight state (like copiesCount) immediately for UI
+      if (activeUnsaved || activeProjectCanvas) {
+        const nextToolbarState = extractToolbarState(canvas);
+        const nextCopiesCount = nextToolbarState?.copiesCount;
+
+        if (activeUnsaved) {
+          setUnsavedSigns(prev =>
+            prev.map(sign =>
+              sign.id === activeUnsaved
+                ? {
+                    ...sign,
+                    toolbarState: nextToolbarState,
+                    copiesCount:
+                      nextCopiesCount ?? sign.copiesCount ?? sign.toolbarState?.copiesCount ?? 1,
+                  }
+                : sign
+            )
+          );
+        } else if (activeProjectCanvas) {
+          setProject(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              canvases:
+                prev.canvases?.map(canv =>
+                  canv.id === activeProjectCanvas
+                    ? {
+                        ...canv,
+                        toolbarState: nextToolbarState,
+                        copiesCount:
+                          nextCopiesCount ??
+                          canv.copiesCount ??
+                          canv.toolbarState?.copiesCount ??
+                          1,
+                      }
+                    : canv
+                ) || [],
+            };
+          });
+        }
+      }
+
       if (activeUnsaved || activeProjectCanvas) {
         console.log('Toolbar change detected, triggering auto-save with preview update');
 
@@ -471,12 +513,22 @@ const ProjectCanvasesGrid = () => {
     setContextDesigns(prev => {
       const prevArray = Array.isArray(prev) ? prev : [];
       if (prevArray.length === designPayloads.length) {
-        const identical = prevArray.every(
-          (design, index) => design?.id === designPayloads[index]?.id
-        );
-        if (identical) {
-          return prevArray;
-        }
+        const identical = prevArray.every((design, index) => {
+          const next = designPayloads[index];
+          if (design?.id !== next?.id) return false;
+
+          const prevCopies =
+            design?.copiesCount ?? design?.toolbarState?.copiesCount ?? null;
+          const nextCopies = next?.copiesCount ?? next?.toolbarState?.copiesCount ?? null;
+          if (prevCopies !== nextCopies) return false;
+
+          if (design?.preview !== next?.preview) return false;
+          if (design?.previewSvg !== next?.previewSvg) return false;
+
+          return true;
+        });
+
+        if (identical) return prevArray;
       }
 
       return designPayloads;

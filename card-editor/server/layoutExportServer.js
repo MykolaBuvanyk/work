@@ -73,7 +73,12 @@ const getMaterialKeyFromPlacement = placement => {
     normalizeThicknessMmForGrouping(placement?.customBorder?.thicknessPx);
   const color = normalizeColorForGrouping(colorRaw) || 'unknown';
   const thickness = thicknessMm !== null ? String(thicknessMm) : 'unknown';
-  return `${color}::${thickness}`;
+
+  const tapeRaw = placement?.isAdhesiveTape;
+  const tape = tapeRaw === true || tapeRaw === 1 || tapeRaw === 'true' || tapeRaw === '1';
+  const tapeKey = tape ? 'tape' : 'no-tape';
+
+  return `${color}::${thickness}::${tapeKey}`;
 };
 
 const splitSheetByMaterial = sheet => {

@@ -66,14 +66,18 @@ const InfoAboutProject = () => {
 
       const accessoriesSelected = Array.isArray(accessoriesAll)
         ? accessoriesAll
-            .filter((x) => x && (x.checked || Number(x.qty) > 0))
-            .map((x) => ({
-              id: x.id,
-              name: x.name,
-              qty: x.qty,
-              price: x.price,
-              desc: x.desc,
-            }))
+            .filter((x) => x && x.checked)
+            .map((x) => {
+              const qtyRaw = Number(x.qty);
+              const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
+              return {
+                id: x.id,
+                name: x.name,
+                qty,
+                price: x.price,
+                desc: x.desc,
+              };
+            })
         : [];
 
       const payload = {

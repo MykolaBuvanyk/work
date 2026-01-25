@@ -9,6 +9,24 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(num) ? num : fallback;
 };
 
+const normalizeAccessories = (input) => {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .filter((x) => x && typeof x === 'object')
+    .map((x) => {
+      const qty = Math.floor(toNumber(x.qty, 0));
+      return {
+        id: x.id,
+        name: x.name,
+        qty,
+        price: x.price,
+        desc: x.desc,
+      };
+    })
+    .filter((x) => x.qty > 0 && (x.id != null || x.name != null));
+};
+
 // Auth: add current project to cart
 CartRouter.post('/', requireAuth, async (req, res, next) => {
   try {
@@ -39,7 +57,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       discountAmount: toNumber(body.discountAmount, 0),
       totalPrice: toNumber(body.totalPrice, 0),
       project,
-      accessories: Array.isArray(body.accessories) ? body.accessories : body.accessories || [],
+      accessories: normalizeAccessories(body.accessories),
       status: 'pending',
     });
 

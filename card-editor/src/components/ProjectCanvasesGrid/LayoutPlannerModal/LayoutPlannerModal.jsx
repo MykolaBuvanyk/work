@@ -599,6 +599,182 @@ const toMm = (px = 0) => (Number(px) || 0) / PX_PER_MM;
 
 const round1 = (value) => Math.round(Number(value) || 0);
 
+const normalizeHexColor = (value) => {
+  const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (!raw) return null;
+  const noSpaces = raw.replace(/\s+/g, "");
+  const shortHex = /^#([0-9a-f]{3})$/i;
+  const shortHexWithAlpha = /^#([0-9a-f]{4})$/i;
+  const match3 = noSpaces.match(shortHex);
+  if (match3) {
+    const [r, g, b] = match3[1].split("");
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  const match4 = noSpaces.match(shortHexWithAlpha);
+  if (match4) {
+    const [r, g, b, a] = match4[1].split("");
+    return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
+  }
+  return noSpaces;
+};
+
+const normalizeThicknessMm = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return null;
+  // Round to 2 decimals to avoid float noise
+  return Math.round(numeric * 100) / 100;
+};
+
+const normalizeTapeFlag = (value) => {
+  if (value === true) return true;
+  if (value === false) return false;
+  if (value === 1) return true;
+  if (value === 0) return false;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "true" || v === "1" || v === "yes") return true;
+    if (v === "false" || v === "0" || v === "no") return false;
+  }
+  return null;
+};
+
+const COLOR_LABEL_BY_INDEX = {
+  0: "White / Black",
+  1: "White / Blue",
+  2: "White / Red",
+  3: "Black / White",
+  4: "Blue / White",
+  5: "Red / White",
+  6: "Green / White",
+  7: "Yellow / Black",
+  8: "Silver / Black",
+  9: "Brown / White",
+  10: "Orange / White",
+  11: "Gray / White",
+  12: "“Wood” / Black",
+  13: "Carbon / White",
+};
+
+const normalizeSlashLabel = (value) => {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return null;
+
+  // Normalize spaces around slash but keep original words/case.
+  if (raw.includes("/")) {
+    const parts = raw.split("/").map((p) => p.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0]} / ${parts[1]}`;
+    }
+  }
+  return raw;
+};
+
+const resolveMaterialColorLabel = ({ selectedColorIndex, backgroundColor, strokeColor }) => {
+  const idx = Number(selectedColorIndex);
+  if (Number.isFinite(idx) && COLOR_LABEL_BY_INDEX[idx] != null) {
+    return COLOR_LABEL_BY_INDEX[idx];
+  }
+
+  const bgRaw = typeof backgroundColor === "string" ? backgroundColor.trim() : "";
+  const strokeRaw = typeof strokeColor === "string" ? strokeColor.trim() : "";
+
+  // If already stored as "White / Black" etc.
+  const combined = normalizeSlashLabel(bgRaw);
+  if (combined && combined.includes(" / ")) return combined;
+
+  const normalizeName = (color) => {
+    const c = normalizeHexColor(color);
+    if (!c) return null;
+    if (c === "#ffffff" || c === "#ffffffff") return "White";
+    if (c === "#000000" || c === "#000000ff") return "Black";
+    if (c === "#0000ff" || c === "#0000ffff") return "Blue";
+    if (c === "#ff0000" || c === "#ff0000ff") return "Red";
+    if (c === "#018001" || c === "#018001ff") return "Green";
+    if (c === "#ffff00" || c === "#ffff00ff") return "Yellow";
+    if (c === "#808080" || c === "#808080ff") return "Gray";
+    if (c === "#8b4513" || c === "#8b4513ff") return "Brown";
+    if (c === "#ffa500" || c === "#ffa500ff") return "Orange";
+    if (c === "#f0f0f0" || c === "#f0f0f0ff") return "Silver";
+    return null;
+  };
+
+  const textureLabel = (() => {
+    const lowerBg = bgRaw.toLowerCase();
+    if (lowerBg.includes("wood")) return "“Wood”";
+    if (lowerBg.includes("carbon")) return "Carbon";
+    return null;
+  })();
+
+  const bgName = textureLabel || normalizeName(bgRaw);
+  const strokeName = normalizeName(strokeRaw);
+
+  if (bgName && strokeName) {
+    return `${bgName} / ${strokeName}`;
+  }
+
+  // Fallback: keep something stable for grouping.
+  return normalizeSlashLabel(bgRaw) || normalizeHexColor(bgRaw) || "unknown";
+};
+
+const getMaterialKey = (item) => {
+  // Primary: canvas/background color + material thickness
+  // Fallbacks remain for older data so export doesn't regress.
+  const colorRaw =
+    item?.materialColor ??
+    item?.customBorder?.exportStrokeColor ??
+    item?.customBorder?.displayStrokeColor ??
+    item?.themeStrokeColor ??
+    null;
+  const thicknessMm =
+    normalizeThicknessMm(item?.materialThicknessMm) ??
+    normalizeThicknessMm(
+      item?.customBorder?.thicknessPx
+        ? item?.customBorder?.thicknessPx / PX_PER_MM
+        : null
+    );
+  const color = normalizeHexColor(colorRaw) || "unknown";
+  const thickness = thicknessMm !== null ? String(thicknessMm) : "unknown";
+
+  const tapeRaw =
+    item?.isAdhesiveTape ??
+    item?.meta?.isAdhesiveTape ??
+    item?.toolbarState?.isAdhesiveTape ??
+    null;
+  const tape = normalizeTapeFlag(tapeRaw);
+  const tapeKey = tape === true ? "tape" : tape === false ? "no-tape" : "unknown-tape";
+
+  return `${color}::${thickness}::${tapeKey}`;
+};
+
+const formatMaterialLabel = ({ color, thickness, tape }) => {
+  const colorLabel = (() => {
+    const raw = typeof color === "string" ? color.trim() : "";
+    const withSlash = normalizeSlashLabel(raw);
+    if (withSlash && withSlash.includes(" / ")) return withSlash;
+    // Fall back to previous behavior for hex-only cases.
+    const normalizedColor = normalizeHexColor(color) || "unknown";
+    if (normalizedColor === "#ffffff" || normalizedColor === "#ffffffff") return "White";
+    if (normalizedColor === "#000000" || normalizedColor === "#000000ff") return "Black";
+    return normalizedColor;
+  })();
+
+  const thicknessLabel =
+    thickness === "unknown" || thickness === null || thickness === undefined
+      ? "unknown"
+      : (() => {
+          const numeric = Number(thickness);
+          if (!Number.isFinite(numeric)) return String(thickness);
+          // Ukrainian comma decimal separator.
+          return numeric.toLocaleString("uk-UA", {
+            minimumFractionDigits: numeric % 1 === 0 ? 0 : 1,
+            maximumFractionDigits: 2,
+          });
+        })();
+
+  const tapeLabel = tape === "tape" ? "Tape" : tape === "no-tape" ? "No tape" : "Tape?";
+  return `${colorLabel} ${thicknessLabel} mm · ${tapeLabel}`;
+};
+
 const extractCopies = (design) => {
   const candidates = [
     design?.copiesCount,
@@ -632,11 +808,21 @@ const normalizeDesigns = (designs = []) =>
       // Матеріальні параметри (для групування сторінок PDF):
       // - color: backgroundColor (колір/текстура основи)
       // - thickness: toolbarState.thickness (мм)
-      const materialColor =
+      const backgroundColor =
         design?.toolbarState?.globalColors?.backgroundColor ??
         design?.backgroundColor ??
         design?.meta?.backgroundColor ??
         null;
+      const strokeColor =
+        design?.toolbarState?.globalColors?.strokeColor ??
+        design?.toolbarState?.globalColors?.textColor ??
+        design?.toolbarState?.globalColors?.fillColor ??
+        null;
+      const materialColor = resolveMaterialColorLabel({
+        selectedColorIndex: design?.toolbarState?.selectedColorIndex,
+        backgroundColor,
+        strokeColor,
+      });
       const materialThicknessMm = (() => {
         const candidates = [
           design?.toolbarState?.thickness,
@@ -648,6 +834,19 @@ const normalizeDesigns = (designs = []) =>
           if (Number.isFinite(numeric) && numeric > 0) return numeric;
         }
         return null;
+      })();
+
+      const isAdhesiveTape = (() => {
+        const candidates = [
+          design?.toolbarState?.isAdhesiveTape,
+          design?.isAdhesiveTape,
+          design?.meta?.isAdhesiveTape,
+        ];
+        for (const candidate of candidates) {
+          const parsed = normalizeTapeFlag(candidate);
+          if (parsed !== null) return parsed;
+        }
+        return false;
       })();
 
       // Legacy: theme stroke color (used for export SVG tweaks)
@@ -665,6 +864,7 @@ const normalizeDesigns = (designs = []) =>
         preview: design?.preview || null,
         materialColor,
         materialThicknessMm,
+        isAdhesiveTape,
         themeStrokeColor, // Додаємо інформацію про колір теми
         customBorder,
       };
@@ -724,6 +924,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       preview: item.preview || null,
       materialColor: item.materialColor ?? null,
       materialThicknessMm: item.materialThicknessMm ?? null,
+      isAdhesiveTape: item.isAdhesiveTape ?? false,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
       customBorder: item.customBorder || null,
     };
@@ -767,6 +968,7 @@ const planSheets = (items, sheetSize, spacingMm) => {
       preview: item.preview || null,
       materialColor: item.materialColor ?? null,
       materialThicknessMm: item.materialThicknessMm ?? null,
+      isAdhesiveTape: item.isAdhesiveTape ?? false,
       themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
       customBorder: item.customBorder || null,
     };
@@ -818,56 +1020,12 @@ const planSheets = (items, sheetSize, spacingMm) => {
         preview: item.preview || null,
         materialColor: item.materialColor ?? null,
         materialThicknessMm: item.materialThicknessMm ?? null,
+        isAdhesiveTape: item.isAdhesiveTape ?? false,
         themeStrokeColor: item.themeStrokeColor || null, // Зберігаємо колір теми
         customBorder: item.customBorder || null,
       });
     }
   });
-
-  const normalizeHexColor = (value) => {
-    const raw = typeof value === "string" ? value.trim().toLowerCase() : "";
-    if (!raw) return null;
-    const noSpaces = raw.replace(/\s+/g, "");
-    const shortHex = /^#([0-9a-f]{3})$/i;
-    const shortHexWithAlpha = /^#([0-9a-f]{4})$/i;
-    const match3 = noSpaces.match(shortHex);
-    if (match3) {
-      const [r, g, b] = match3[1].split("");
-      return `#${r}${r}${g}${g}${b}${b}`;
-    }
-    const match4 = noSpaces.match(shortHexWithAlpha);
-    if (match4) {
-      const [r, g, b, a] = match4[1].split("");
-      return `#${r}${r}${g}${g}${b}${b}${a}${a}`;
-    }
-    return noSpaces;
-  };
-
-  const normalizeThicknessMm = (value) => {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) return null;
-    // Round to 2 decimals to avoid float noise
-    return Math.round(numeric * 100) / 100;
-  };
-
-  const getMaterialKey = (item) => {
-    // Primary: canvas/background color + material thickness
-    // Fallbacks remain for older data so export doesn't regress.
-    const colorRaw =
-      item?.materialColor ??
-      item?.customBorder?.exportStrokeColor ??
-      item?.customBorder?.displayStrokeColor ??
-      item?.themeStrokeColor ??
-      null;
-    const thicknessMm =
-      normalizeThicknessMm(item?.materialThicknessMm) ??
-      normalizeThicknessMm(item?.customBorder?.thicknessPx
-        ? item?.customBorder?.thicknessPx / PX_PER_MM
-        : null);
-    const color = normalizeHexColor(colorRaw) || "unknown";
-    const thickness = thicknessMm !== null ? String(thicknessMm) : "unknown";
-    return `${color}::${thickness}`;
-  };
 
   const packQueueIntoSheets = (queueItems) => {
     const groupSheets = [];
@@ -3781,6 +3939,7 @@ const LayoutPlannerModal = ({
   const [orientation, setOrientation] = useState("portrait");
   const [enableGaps, setEnableGaps] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedMaterialKey, setSelectedMaterialKey] = useState("all");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3797,6 +3956,7 @@ const LayoutPlannerModal = ({
     if (!isOpen) {
       setOrientation("portrait");
       setFormatKey("A4");
+      setSelectedMaterialKey("all");
     }
   }, [isOpen]);
 
@@ -3810,14 +3970,72 @@ const LayoutPlannerModal = ({
 
   const normalizedItems = useMemo(() => normalizeDesigns(designs), [designs]);
 
+  const materialGroups = useMemo(() => {
+    const groups = new Map();
+    normalizedItems.forEach((item) => {
+      const key = getMaterialKey(item);
+      const existing = groups.get(key);
+      const countToAdd = Math.max(1, Number(item?.copies) || 1);
+
+      if (!existing) {
+        const [colorPart, thicknessPart, tapePart] = String(key).split("::");
+        groups.set(key, {
+          key,
+          color: colorPart || "unknown",
+          thickness: thicknessPart || "unknown",
+          tape: tapePart || "unknown-tape",
+          count: countToAdd,
+        });
+      } else {
+        existing.count += countToAdd;
+      }
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.key.localeCompare(b.key);
+    });
+  }, [normalizedItems]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (selectedMaterialKey === "all") return;
+    const exists = materialGroups.some((g) => g.key === selectedMaterialKey);
+    if (!exists) {
+      setSelectedMaterialKey("all");
+    }
+  }, [isOpen, materialGroups, selectedMaterialKey]);
+
   const { sheets, leftovers } = useMemo(
     () => planSheets(normalizedItems, sheetSize, spacingMm),
     [normalizedItems, sheetSize, spacingMm]
   );
 
+  const { visibleSheets, visibleLeftovers } = useMemo(() => {
+    if (selectedMaterialKey === "all") {
+      return { visibleSheets: sheets, visibleLeftovers: leftovers };
+    }
+
+    const matchSheet = (sheet) => {
+      const first = sheet?.placements?.[0] || null;
+      if (!first) return false;
+      return getMaterialKey(first) === selectedMaterialKey;
+    };
+
+    return {
+      visibleSheets: (sheets || []).filter(matchSheet),
+      visibleLeftovers: (leftovers || []).filter(
+        (item) => getMaterialKey(item) === selectedMaterialKey
+      ),
+    };
+  }, [leftovers, selectedMaterialKey, sheets]);
+
   const sheetArea = sheetSize.width * sheetSize.height;
-  const totalUsedArea = sheets.reduce((acc, sheet) => acc + sheet.usedArea, 0);
-  const sheetsCount = sheets.length;
+  const totalUsedArea = visibleSheets.reduce(
+    (acc, sheet) => acc + sheet.usedArea,
+    0
+  );
+  const sheetsCount = visibleSheets.length;
   const coverage =
     sheetsCount > 0
       ? Math.round((totalUsedArea / (sheetArea * sheetsCount)) * 100)
@@ -3830,14 +4048,15 @@ const LayoutPlannerModal = ({
       ),
     [normalizedItems]
   );
-  const placedCopies = sheets.reduce(
+  const placedCopies = visibleSheets.reduce(
     (acc, sheet) => acc + sheet.placements.length,
     0
   );
-  const leftoverCopies = leftovers.length;
+  const leftoverCopies = visibleLeftovers.length;
   const nothingToPlace = totalRequestedCopies === 0;
 
   const handleExportPdf = useCallback(async () => {
+    // Export always uses ALL groups to keep PDF rules intact.
     if (!sheets.length || isExporting) return;
 
     if (typeof fetch !== "function") {
@@ -3886,6 +4105,7 @@ const LayoutPlannerModal = ({
             customBorder: placement.customBorder || null,
             materialColor: placement.materialColor ?? null,
             materialThicknessMm: placement.materialThicknessMm ?? null,
+            isAdhesiveTape: placement.isAdhesiveTape ?? false,
             themeStrokeColor: placement.themeStrokeColor ?? null,
           };
         });
@@ -3959,6 +4179,15 @@ const LayoutPlannerModal = ({
 
   if (!isOpen) return null;
 
+  const selectedMaterialLabel =
+    selectedMaterialKey === "all"
+      ? "Всі"
+      : (() => {
+          const group = materialGroups.find((g) => g.key === selectedMaterialKey);
+          if (!group) return "Всі";
+          return formatMaterialLabel(group);
+        })();
+
   return (
     <div className={styles.backdrop}>
       <div className={styles.modal}>
@@ -3967,7 +4196,7 @@ const LayoutPlannerModal = ({
             <h2>План друку полотен</h2>
             <p className={styles.subtitle}>
               Формат {FORMATS[formatKey]?.label} · проміжок між полотнами{" "}
-              {spacingMm} мм · {ORIENTATION_LABELS[orientation]}
+              {spacingMm} мм · {ORIENTATION_LABELS[orientation]} · матеріал: {selectedMaterialLabel}
             </p>
           </div>
           <button
@@ -4031,6 +4260,21 @@ const LayoutPlannerModal = ({
             </button>
           </div>
 
+          <label className={styles.controlGroup}>
+            <span>Група (колір/товщина)</span>
+            <select
+              value={selectedMaterialKey}
+              onChange={(event) => setSelectedMaterialKey(event.target.value)}
+            >
+              <option value="all">Всі матеріали ({totalRequestedCopies} шт)</option>
+              {materialGroups.map((group) => (
+                <option key={group.key} value={group.key}>
+                  {formatMaterialLabel(group)} — {group.count} шт
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className={styles.summary}>
             <strong>{sheetsCount || 0}</strong> арк.
             <span>
@@ -4064,7 +4308,7 @@ const LayoutPlannerModal = ({
             </div>
           ) : (
             <div className={styles.sheetList}>
-              {sheets.map((sheet, sheetIndex) => {
+              {visibleSheets.map((sheet, sheetIndex) => {
                 const scale = Math.min(
                   1,
                   340 / Math.max(sheet.width, sheet.height)
@@ -4141,11 +4385,11 @@ const LayoutPlannerModal = ({
           )}
         </div>
 
-        {leftovers.length > 0 ? (
+        {visibleLeftovers.length > 0 ? (
           <div className={styles.leftovers}>
-            <h4>Не помістилося ({leftovers.length})</h4>
+            <h4>Не помістилося ({visibleLeftovers.length})</h4>
             <ul>
-              {leftovers.map((item) => (
+              {visibleLeftovers.map((item) => (
                 <li key={item.id}>
                   {item.label || item.name}
                   {item.copies > 1

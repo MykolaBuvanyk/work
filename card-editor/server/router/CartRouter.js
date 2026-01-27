@@ -1,6 +1,8 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
+import { Order, User } from '../models/models.js';
+import ErrorApi from '../error/ErrorApi.js';
 
 const CartRouter = express.Router();
 
@@ -61,9 +63,22 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       status: 'pending',
     });
 
+    const order=await Order.create({
+      sum:Math.round(body.price * 100) / 100,
+      signs:body.project.canvases.length,
+      userId,
+      country:body.lang,
+      status:'Waiting',
+      orderName:body.projectName,
+      orderType:'',
+      accessories:JSON.stringify(body.accessories),
+      idMongo:body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null
+    })
+
     return res.json({
       id: String(created._id),
       status: created.status,
+      order,
       createdAt: created.createdAt,
     });
   } catch (e) {
@@ -120,5 +135,33 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
     return next(e);
   }
 });
+
+CartRouter.get('/filter',requireAuth,requireAdmin, async (req,res,next)=>{
+  try{
+    let {page,search,limit,status}=req.query;
+    console.log(4343,req.query);
+    page=parseInt(page);
+    limit=parseInt(limit);
+    const offset=limit*(page-1);
+    const where={};
+    if(status){
+      where.status=status;
+    }
+    console.log(4342,where)
+    const orders=await Order.findAll({
+        offset,
+        limit,
+        where:where,
+        include:[{
+          model:User
+        }]
+      });
+
+    return res.json({orders,page});
+  }catch(err){
+    return res.status(400).json(err);
+    //return next(ErrorApi.badRequest(err));
+  }
+})
 
 export default CartRouter;

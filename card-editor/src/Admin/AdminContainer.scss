@@ -30,8 +30,11 @@
                     letter-spacing: 0%;
                     color: #000000;
                 }
-                select,input[type='checkbox'] {
+                select,input {
                     width: 165px;
+                    min-width: 165px;
+                    max-width: 165px;
+                    box-sizing: border-box;
                     height: 25px;
                     background-color: transparent;
                     border-radius: 8px;
@@ -40,6 +43,8 @@
             }
         }
         table{
+
+            background-color: #F0F0F0;
             width: 100%;
             border-collapse: collapse; // Прибираємо подвійні лінії
             font-size: 14px;
@@ -57,7 +62,6 @@
 
             // Стилі для тіла таблиці
             tbody td {
-                background-color: #F0F0F0;
                 padding: 8px 5px;
                 border: 2px solid #ffffff;
                 text-align: left;
@@ -79,6 +83,10 @@
                 &.highlight-row {
                     background-color: #ff9933; 
                 }
+            }
+            tr:hover {
+                background-color: #CACACA;
+                cursor: pointer;
             }
         }
     }

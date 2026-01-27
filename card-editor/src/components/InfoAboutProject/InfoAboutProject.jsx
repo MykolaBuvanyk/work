@@ -9,6 +9,7 @@ import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import { saveNewProject } from "../../utils/projectStorage";
 import { saveCurrentProject } from "../../utils/projectStorage";
 import { addProjectToCart } from "../../http/cart";
+import { jwtDecode } from "jwt-decode";
 
 const InfoAboutProject = () => {
   const { isAuth } = useSelector((state) => state.user);
@@ -17,6 +18,8 @@ const InfoAboutProject = () => {
   const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { designs, canvas } = useCanvasContext();
+
+  const user=useSelector((state)=>state.user);
 
   const { price, discountPercent, discountAmount, totalPrice, isLoading } =
     useCurrentSignPrice();
@@ -79,6 +82,13 @@ const InfoAboutProject = () => {
               };
             })
         : [];
+      
+      let lang='de'
+
+      if(location.pathname.length>=3){
+        lang=location.pathname.slice(1,3);
+      }
+
 
       const payload = {
         projectId: project?.id || currentProjectId,
@@ -89,7 +99,10 @@ const InfoAboutProject = () => {
         totalPrice: Number(totalPrice || 0),
         project,
         accessories: accessoriesSelected,
+        lang,
       };
+      
+      
 
       await addProjectToCart(payload);
       alert("Project added to cart");

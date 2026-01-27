@@ -41,4 +41,20 @@ const User = sequelize.define('users', {
   //codeFor
 });
 
-export { User };
+const Order=sequelize.define('orders',{
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  sum:{type:DataTypes.FLOAT, allowNull:false},
+  signs:{type:DataTypes.INTEGER,defaultValue:1},
+  country:{type:DataTypes.STRING,allowNull:false,defaultValue:"NO"},
+  status:{type:DataTypes.ENUM('Returned','Manufact','Delivered','Printed','Waiting','Recived'),allowNull:false,defaultValue:'Waiting'},
+  deliveryType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},
+  orderName:{type:DataTypes.STRING,defaultValue:'',allowNull:false},
+  orderType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},
+  accessories:{type:DataTypes.TEXT,allowNull:false,defaultValue:''},
+  idMongo:{type:DataTypes.STRING,allowNull:false}
+})
+
+User.hasMany(Order);
+Order.belongsTo(User);
+
+export { User, Order };

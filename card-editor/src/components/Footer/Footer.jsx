@@ -39,6 +39,7 @@ const languages = [
   { countryCode: 'HR', label: 'HR', description: 'Hrvatska' },
   { countryCode: 'UA', label: 'UK', description: 'Україна' },
   { countryCode: 'RU', label: 'RU', description: 'Россия' },
+  { countryCode: 'de', label: 'DE', description: 'Deutsch' },
 ];
 
 

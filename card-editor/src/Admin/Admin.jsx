@@ -3,9 +3,42 @@ import './AdminContainer.scss';
 import Order from './Order';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { $authHost } from '../http';
+
+const limit=10;
 
 const Admin = () => {
   const { isAdmin } = useSelector(state => state.user);
+  const [status,setStatus]=useState('all');
+  const [page,setPage]=useState(1);
+  const [orders,setOrders]=useState([]);
+
+  const [day, setDay] = useState('03');
+  const [month, setMonth] = useState('Dec');
+  const [year, setYear] = useState('2025');
+
+  // Об'єднання в формат ISO або об'єкт Date
+  const fullDate = new Date(`${month} ${day}, ${year}`); 
+  // Або просто рядок для відправки на сервер
+  const dateString = `${year}-${month}-${day}`;
+  
+  const getOrders=async()=>{
+    try{
+      let query=`?page=${page}&limit=${limit}`;
+      if(status!='all'){
+        query+=`&status=${status}`
+      }
+      console.log(94324,query)
+      const res=await $authHost.get('cart/filter'+query);
+      setOrders(res.data.orders);
+    }catch(err){
+      alert('Помилка при отримані замовлень.');
+    }
+  }
+
+  useEffect(()=>{
+    getOrders();
+  },[page, status])
 
   const orderData = [
     {
@@ -101,14 +134,14 @@ const Admin = () => {
           <div className="selects">
             <div className="select-cont">
               <p>Status</p>
-              <select>
-                <option>All</option>
-                <option>Received</option>
-                <option>Printed</option>
-                <option>Manufact.</option>
-                <option>Delivered</option>
-                <option>Returned</option>
-                <option>Waiting</option>
+              <select onChange={(e)=>setStatus(e.target.value)} value={status}>
+                <option value='all'>All</option>
+                <option value='Recived'>Received</option>
+                <option value='Printed'>Printed</option>
+                <option value='Manufact'>Manufact.</option>
+                <option value='Delivered'>Delivered</option>
+                <option value='Returned'>Returned</option>
+                <option value='Waiting'>Waiting</option>
               </select>
             </div>
             <div className="select-cont">
@@ -133,16 +166,16 @@ const Admin = () => {
 
             {/* Тіло таблиці */}
             <tbody>
-              {orderData.map((order, index) => (
+              {orders.map((order, index) => (
                 <tr key={order.orderNo}>
                   {/* Перша колонка Order No з помаранчевим фоном */}
-                  <td className="order-no">{order.orderNo}</td>
-                  <td>{order.custNo}</td>
+                  <td className="order-no">{order.id}</td>
+                  <td>{order.userId}</td>
                   <td>{order.signs}</td>
-                  <td>{order.orderSum}</td>
+                  <td>{order.sum}</td>
                   <td>{order.country}</td>
                   <td>{order.status}</td>
-                  <td>{order.orderDate}</td>
+                  <td>{order.createdAt}</td>
                   <td>{order.deliveryType}</td>
                 </tr>
               ))}

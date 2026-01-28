@@ -5357,5 +5357,12 @@ const LayoutPlannerModal = ({
   );
 };
 
-export { buildPlacementPreview };
+export {
+  buildPlacementPreview,
+  planSheets,
+  normalizeDesigns,
+  FORMATS,
+  getMaterialKey,
+  formatMaterialLabel,
+};
 export default LayoutPlannerModal;

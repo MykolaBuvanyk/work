@@ -11,6 +11,54 @@ import { saveCurrentProject } from "../../utils/projectStorage";
 import { addProjectToCart } from "../../http/cart";
 import { jwtDecode } from "jwt-decode";
 
+const COLOR_THEME_BY_INDEX_CAPS = {
+  0: "WHITE / BLACK",
+  1: "WHITE / BLUE",
+  2: "WHITE / RED",
+  3: "BLACK / WHITE",
+  4: "BLUE / WHITE",
+  5: "RED / WHITE",
+  6: "GREEN / WHITE",
+  7: "YELLOW / BLACK",
+  8: "GRAY / WHITE",
+  9: "ORANGE / WHITE",
+  10: "BROWN / WHITE",
+  11: "SILVER / BLACK",
+  12: "“WOOD” / BLACK",
+  13: "CARBON / WHITE",
+};
+
+const normalizeThickness = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+};
+
+const resolveColorThemeCaps = (toolbarState = {}, canvasSnap = {}) => {
+  const idx = Number(toolbarState?.selectedColorIndex);
+  if (Number.isFinite(idx) && COLOR_THEME_BY_INDEX_CAPS[idx]) {
+    return COLOR_THEME_BY_INDEX_CAPS[idx];
+  }
+
+  // Minimal fallback for texture backgrounds.
+  const bg =
+    toolbarState?.globalColors?.backgroundColor ??
+    toolbarState?.backgroundColor ??
+    canvasSnap?.backgroundColor;
+  const bgType =
+    toolbarState?.globalColors?.backgroundType ??
+    toolbarState?.backgroundType ??
+    canvasSnap?.backgroundType;
+
+  if (typeof bg === "string" && String(bgType).toLowerCase() === "texture") {
+    const lower = bg.toLowerCase();
+    if (lower.includes("wood")) return COLOR_THEME_BY_INDEX_CAPS[12];
+    if (lower.includes("carbon")) return COLOR_THEME_BY_INDEX_CAPS[13];
+  }
+
+  return "UNKNOWN";
+};
+
 const InfoAboutProject = () => {
   const { isAuth } = useSelector((state) => state.user);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -62,6 +110,23 @@ const InfoAboutProject = () => {
       // Ensure latest canvas state is persisted into the current project before sending
       const project = await saveCurrentProject(canvas);
 
+      const projectWithCanvasMeta = (() => {
+        const canvases = Array.isArray(project?.canvases) ? project.canvases : [];
+        const mapped = canvases.map((c) => {
+          const toolbarState = c?.toolbarState || {};
+          const Thickness = normalizeThickness(toolbarState?.thickness);
+          const ColorTheme = resolveColorThemeCaps(toolbarState, c);
+          const Tape = toolbarState?.isAdhesiveTape ? "TAPE" : "NO TAPE";
+          return {
+            ...c,
+            Thickness,
+            ColorTheme,
+            Tape,
+          };
+        });
+        return { ...(project || {}), canvases: mapped };
+      })();
+
       const accessoriesAll =
         typeof window !== "undefined" && typeof window.getSelectedAccessories === "function"
           ? window.getSelectedAccessories() || []
@@ -97,7 +162,7 @@ const InfoAboutProject = () => {
         discountPercent: Number(discountPercent || 0),
         discountAmount: Number(discountAmount || 0),
         totalPrice: Number(totalPrice || 0),
-        project,
+        project: projectWithCanvasMeta,
         accessories: accessoriesSelected,
         lang,
       };

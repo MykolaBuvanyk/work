@@ -27,6 +27,50 @@ const CartOrderDetails = ({ order, isLoading }) => {
       .join("; ");
   }, [order]);
 
+  const canvasesLines = useMemo(() => {
+    const canvases = order?.project?.canvases;
+    if (!Array.isArray(canvases) || canvases.length === 0) return [];
+
+    const formatNumber = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const formatSize = (c) => {
+      const mmW = formatNumber(c?.toolbarState?.sizeValues?.width);
+      const mmH = formatNumber(c?.toolbarState?.sizeValues?.height);
+      if (mmW != null && mmH != null) return `${mmW}×${mmH} mm`;
+
+      const pxW = formatNumber(c?.width);
+      const pxH = formatNumber(c?.height);
+      if (pxW != null && pxH != null) return `${Math.round(pxW)}×${Math.round(pxH)} px`;
+
+      return "Unknown size";
+    };
+
+    const formatThickness = (c) => {
+      const t = formatNumber(c?.Thickness ?? c?.toolbarState?.thickness ?? c?.thickness);
+      return t == null ? "—" : String(t);
+    };
+
+    const formatTape = (c) => {
+      const tape = c?.Tape;
+      if (typeof tape === "string" && tape.trim()) return tape.trim().toUpperCase();
+      return c?.toolbarState?.isAdhesiveTape === true ? "TAPE" : "NO TAPE";
+    };
+
+    const formatColorTheme = (c) => {
+      const ct = c?.ColorTheme;
+      if (typeof ct === "string" && ct.trim()) return ct.trim();
+      return "UNKNOWN";
+    };
+
+    return canvases.map((c, idx) => {
+      const name = c?.name || c?.title || `Canvas ${idx + 1}`;
+      return `${idx + 1}. ${name} — ${formatSize(c)} — ${formatColorTheme(c)} — Thickness: ${formatThickness(c)} — ${formatTape(c)}`;
+    });
+  }, [order]);
+
   const openProject = useCallback(async () => {
     const project = order?.project;
     if (!project || typeof project !== "object") {
@@ -180,6 +224,20 @@ const CartOrderDetails = ({ order, isLoading }) => {
         <div className="row">
           <p>Accessories:</p>
           <span className="mol">{accessoriesText}</span>
+          <div />
+        </div>
+      ) : null}
+
+      {canvasesLines.length ? (
+        <div className="row">
+          <p>Canvas details</p>
+          <span className="mol">
+            {canvasesLines.map((line, idx) => (
+              <span key={idx} style={{ display: "block", marginBottom: 4 }}>
+                {line}
+              </span>
+            ))}
+          </span>
           <div />
         </div>
       ) : null}

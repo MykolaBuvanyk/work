@@ -13,11 +13,95 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(num) ? num : fallback;
 };
 
+const COLOR_THEME_BY_INDEX_CAPS = {
+  0: 'WHITE / BLACK',
+  1: 'WHITE / BLUE',
+  2: 'WHITE / RED',
+  3: 'BLACK / WHITE',
+  4: 'BLUE / WHITE',
+  5: 'RED / WHITE',
+  6: 'GREEN / WHITE',
+  7: 'YELLOW / BLACK',
+  8: 'GRAY / WHITE',
+  9: 'ORANGE / WHITE',
+  10: 'BROWN / WHITE',
+  11: 'SILVER / BLACK',
+  12: '“WOOD” / BLACK',
+  13: 'CARBON / WHITE',
+};
+
+const normalizeThickness = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+};
+
+const resolveColorThemeCaps = (toolbarState = {}, canvasSnap = {}) => {
+  const idx = Number(toolbarState?.selectedColorIndex);
+  if (Number.isFinite(idx) && COLOR_THEME_BY_INDEX_CAPS[idx]) {
+    return COLOR_THEME_BY_INDEX_CAPS[idx];
+  }
+
+  const bg =
+    toolbarState?.globalColors?.backgroundColor ??
+    toolbarState?.backgroundColor ??
+    canvasSnap?.backgroundColor;
+  const bgType =
+    toolbarState?.globalColors?.backgroundType ??
+    toolbarState?.backgroundType ??
+    canvasSnap?.backgroundType;
+
+  if (typeof bg === 'string' && String(bgType).toLowerCase() === 'texture') {
+    const lower = bg.toLowerCase();
+    if (lower.includes('wood')) return COLOR_THEME_BY_INDEX_CAPS[12];
+    if (lower.includes('carbon')) return COLOR_THEME_BY_INDEX_CAPS[13];
+  }
+
+  const existing = typeof canvasSnap?.ColorTheme === 'string' ? canvasSnap.ColorTheme.trim() : '';
+  return existing ? existing.toUpperCase() : 'UNKNOWN';
+};
+
+const normalizeTapeLabel = (value) => (value === true ? 'TAPE' : 'NO TAPE');
+
+const normalizeProjectForCart = (project) => {
+  if (!project || typeof project !== 'object') return project;
+
+  const canvases = Array.isArray(project.canvases) ? project.canvases : [];
+  const mappedCanvases = canvases.map((c) => {
+    const canvas = c && typeof c === 'object' ? c : {};
+    const toolbarState = canvas.toolbarState && typeof canvas.toolbarState === 'object' ? canvas.toolbarState : {};
+
+    const Thickness = normalizeThickness(canvas.Thickness ?? toolbarState.thickness ?? canvas.thickness);
+    const ColorTheme = resolveColorThemeCaps(toolbarState, canvas);
+    const Tape =
+      typeof canvas.Tape === 'string'
+        ? canvas.Tape.trim().toUpperCase() === 'TAPE'
+          ? 'TAPE'
+          : 'NO TAPE'
+        : normalizeTapeLabel(toolbarState.isAdhesiveTape === true);
+
+    return {
+      ...canvas,
+      Thickness,
+      ColorTheme,
+      Tape,
+    };
+  });
+
+  return {
+    ...project,
+    canvases: mappedCanvases,
+  };
+};
+
 const normalizeAccessories = (input) => {
   if (!Array.isArray(input)) return [];
 
   return input
     .filter((x) => x && typeof x === 'object')
+    // If checked is explicitly provided, only keep checked=true.
+    // If not provided (older clients), assume already filtered.
+    .filter((x) => (x.checked === undefined ? true : x.checked === true))
     .map((x) => {
       const qty = Math.floor(toNumber(x.qty, 0));
       return {
@@ -40,7 +124,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     }
 
     const body = req.body || {};
-    const project = body.project;
+    const project = normalizeProjectForCart(body.project);
     const projectNameRaw = body.projectName ?? project?.name;
     const projectName = String(projectNameRaw || '').trim();
 
@@ -52,6 +136,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       return res.status(400).json({ status: 400, message: 'Project name is required' });
     }
 
+    const normalizedAccessories = normalizeAccessories(body.accessories);
+
     const created = await CartProject.create({
       userId,
       projectId: body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null,
@@ -61,7 +147,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       discountAmount: toNumber(body.discountAmount, 0),
       totalPrice: toNumber(body.totalPrice, 0),
       project,
-      accessories: normalizeAccessories(body.accessories),
+      accessories: normalizedAccessories,
       status: 'pending',
     });
 
@@ -73,7 +159,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       status:'Waiting',
       orderName:body.projectName,
       orderType:'',
-      accessories:JSON.stringify(body.accessories),
+      accessories:JSON.stringify(normalizedAccessories),
       idMongo:body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null
     })
 

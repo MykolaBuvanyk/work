@@ -3,6 +3,8 @@ import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
 import { Order, User } from '../models/models.js';
 import ErrorApi from '../error/ErrorApi.js';
+import { col, fn, Op } from 'sequelize';
+import mongoose from 'mongoose';
 
 const CartRouter = express.Router();
 
@@ -136,32 +138,131 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
   }
 });
 
-CartRouter.get('/filter',requireAuth,requireAdmin, async (req,res,next)=>{
-  try{
-    let {page,search,limit,status}=req.query;
-    console.log(4343,req.query);
-    page=parseInt(page);
-    limit=parseInt(limit);
-    const offset=limit*(page-1);
-    const where={};
-    if(status){
-      where.status=status;
-    }
-    console.log(4342,where)
-    const orders=await Order.findAll({
-        offset,
-        limit,
-        where:where,
-        include:[{
-          model:User
-        }]
-      });
 
-    return res.json({orders,page});
-  }catch(err){
+CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    let { page = 1, limit = 20, search, status, start, finish, lang } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const offset = limit * (page - 1);
+
+    const where = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where[Op.or] = [ 
+        { orderName: { [Op.like]: `%${search}%` } },
+        { orderType: { [Op.like]: `%${search}%` } },
+        { id: { [Op.like]: `%${search}%` } },
+        { deliveryType: { [Op.like]: `%${search}%` } },
+        { sum: { [Op.like]: `%${search}%` } }
+      ]
+    }
+
+
+    if (start || finish) {
+      where.createdAt = {};
+      if (start) where.createdAt[Op.gte] = new Date(start);
+      if (finish) where.createdAt[Op.lte] = new Date(finish);
+    }
+
+    if (lang) {
+      where.country = lang;
+    }
+
+    const orders = await Order.findAndCountAll({
+      offset,
+      limit,
+      where,
+      order: [['createdAt', 'DESC']],
+      include: [{ model: User }],
+    });
+
+    const totalSumData = await Order.findOne({
+      attributes: [[fn('SUM', col('sum')), 'totalSum']],
+      where,
+    });
+
+    const totalSum = totalSumData.get('totalSum') || 0;
+
+    return res.json({ 
+      orders: orders.rows,
+      page,
+      totalSum,
+      count: orders.count
+    });
+  } catch (err) {
     return res.status(400).json(err);
-    //return next(ErrorApi.badRequest(err));
   }
-})
+});
+
+CartRouter.get('/get/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findOne({
+      where: { id: Number(id) },
+      include: [
+        { 
+          model: User,
+          include:[
+            {
+              model: Order
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const orderMongo = await CartProject
+      .findOne({ projectId: order.idMongo })
+      .lean();
+  
+
+    return res.json({
+      order: {
+        ...order.toJSON(),
+        orderMongo,
+      },
+    });
+  } catch (err) {
+    console.error('GET ORDER ERROR:', err);
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { orderId, newStatus } = req.body;
+
+    const [updatedCount] = await Order.update(
+      { status: newStatus },
+      { where: { id: Number(orderId) } }
+    );
+
+    if (updatedCount === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    return res.json({
+      success: true,
+      orderId,
+      status: newStatus,
+    });
+  } catch (err) {
+    console.error('SET STATUS ERROR:', err);
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+
 
 export default CartRouter;

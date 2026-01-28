@@ -1,12 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './OrderContainer.scss';
+import { $authHost } from '../http';
 
-const Order = () => {
+const Order = ({orderId}) => {
+  const [order,setOrder]=useState();
+  
+  const getOrder=async()=>{
+    try{
+      const res=await $authHost.get('cart/get/'+orderId);
+      setOrder(res.data.order);
+    }catch(err){
+      console.log(err);
+      alert('Помилка отримання замовлення');
+    }
+  }
+
+  useEffect(()=>{
+    getOrder()
+  },[orderId])
+
+  const setStatus = async(newStatus) => {
+    try {
+      const res=await $authHost.post('cart/setStatus', {orderId,newStatus});
+      getOrder();
+    }catch {
+      alert("Помилка задання статусу");
+    }
+  }
+
+  console.log(3434,order)
+
+  if(!order)return null;
   return (
     <div className="order-container">
       <div className="row">
         <p>Order.No</p>
-        <span>5 (Printed)</span>
+        <span>{order.id} ({order.status})</span>
         <div className="druk">
           <svg
             width="24"
@@ -41,12 +70,12 @@ const Order = () => {
       </div>
       <div className="row">
         <p>Order Name</p>
-        <span>Water signs 23</span>
+        <span>{order.orderName}</span>
         <div />
       </div>
       <div className="row">
         <p>Customer No</p>
-        <span>33 (10; 7563.45) </span>
+        <span>{order.userId} ({order.user.orders.length}; {order.user.orders.reduce((acc,x)=>acc+=x.sum,0)}) </span>
         <div />
       </div>
       <div className="row">
@@ -58,18 +87,21 @@ const Order = () => {
         <button>Delivery Note</button>
       </div>
       <div className="buttons">
-        <button>Printed</button>
-        <button>Manufactured</button>
-        <button>Deliveredred</button>
+        <button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
+        <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>
+        <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
+        <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
+        <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
+        <button className={order.status=='Recived'?'active':''} onClick={()=>setStatus('Recived')}>Recived</button>
       </div>
       <div className="row">
         <p>Delivery Type</p>
-        <span>Deutsch Post Großbrief</span>
+        <span>{order.deliveryType}</span>
         <div />
       </div>
       <div className="row">
         <p>Order Sum</p>
-        <span>225.07</span>
+        <span>{order.sum}</span>
         <div />
       </div>
       <div className="row">
@@ -79,17 +111,12 @@ const Order = () => {
       </div>
       <div className="row">
         <p>Accessories:</p>
-        <span className="mol">4 Screws 2.9 x 13; 2 ties; 3 keyrings </span>
-        <div />
-      </div>
-      <div className="row">
-        <p>Accessories:</p>
-        <span className="mol">4 Screws 2.9 x 13; 2 ties; 3 keyrings </span>
+        <span className="mol">{JSON.parse(order.accessories).map(x=><>{x.qty} {x.name};{'   '}</>)}</span>
         <div />
       </div>
       <div className="row">
         <p>Count Sings:</p>
-        <span>12 (4 types)</span>
+        <span>{order.signs}</span>
         <div />
       </div>
       <div className="row">
@@ -114,12 +141,12 @@ const Order = () => {
       </div>
       <div className="row">
         <p>E-Mail:</p>
-        <span>wat.des.sol@gmail.com</span>
+        <span>{order.user.email}</span>
         <div />
       </div>
       <div className="row">
         <p>Phone:</p>
-        <span>+49 157 12345678</span>
+        <span>{order.user.phone}</span>
         <div />
       </div>
       <div className="row">
@@ -129,7 +156,7 @@ const Order = () => {
       </div>
       <div className="row">
         <p>Massage to Production:</p>
-        <span>Please, all signs at one plate</span>
+        <span>---</span>
       </div>
       <div className="urls">
         <div className="url-cont">

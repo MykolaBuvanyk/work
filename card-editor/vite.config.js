@@ -13,6 +13,7 @@ export default defineConfig({
     allowedHosts: [
       'localhost',
       'likewise-bat-warning-dat.trycloudflare.com',
+      '5fceac8d4e39.ngrok-free.app'
     ],
   },
 });

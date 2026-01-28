@@ -3,73 +3,100 @@ import './AdminContainer.scss';
 import Order from './Order';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { $authHost } from '../http';
+import Flag from 'react-flagkit';
+import { SlArrowDown } from 'react-icons/sl';
+import ReactPaginate from 'react-paginate';
+
+const limit=15;
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+
+  const pad = n => String(n).padStart(2, '0');
+
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = String(d.getFullYear()).slice(2);
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+}
+
+
+const languages = [
+
+  { countryCode: 'ALL', label: 'ALL' }, 
+  { countryCode: 'DE', label: 'DE' }, // Використовуємо GB для UK/EN
+  { countryCode: 'GB', label: 'EN' }, // Використовуємо GB для UK/EN
+  { countryCode: 'FR', label: 'FR' },
+  { countryCode: 'IT', label: 'IT' },
+  { countryCode: 'ES', label: 'ES' },
+  { countryCode: 'PL', label: 'PL' },
+  { countryCode: 'CZ', label: 'CS' }, // Чехія
+  { countryCode: 'NL', label: 'NL' },
+  { countryCode: 'SE', label: 'SV' }, // Швеція
+  { countryCode: 'NO', label: 'NO' },
+  { countryCode: 'DK', label: 'DA' }, // Данія
+  { countryCode: 'HU', label: 'HU' },
+  { countryCode: 'HR', label: 'HR' }, // Хорватія
+  { countryCode: 'UA', label: 'UK' }, // Україна
+  { countryCode: 'RU', label: 'RU' },
+];
 
 const Admin = () => {
   const { isAdmin } = useSelector(state => state.user);
+  const [status,setStatus]=useState('ALL');
+  const [page,setPage]=useState(1);
+  const [orders,setOrders]=useState([]);
+  const [search,setSearch]=useState('');
+  const [start,setStart]=useState('');
+  const [finish,setFinish]=useState('');
+  const [countPages, setCountPages]=useState(1);
 
-  const orderData = [
-    {
-      orderNo: 1,
-      custNo: 1,
-      signs: 10,
-      orderSum: 125.54,
-      country: 'CH',
-      status: 'Returned',
-      orderDate: '26-11-25 08:40',
-      deliveryType: 'Deutsch Post Großbrief',
-    },
-    {
-      orderNo: 2,
-      custNo: 123,
-      signs: 9,
-      orderSum: 98.45,
-      country: 'UK',
-      status: 'Manufact.',
-      orderDate: '23-11-25 15:23',
-      deliveryType: 'UPS Next Day Packet',
-    },
-    {
-      orderNo: 3,
-      custNo: 45,
-      signs: 2,
-      orderSum: 9.54,
-      country: 'PL',
-      status: 'Delivered',
-      orderDate: '05-09-25 12:45',
-      deliveryType: 'UPS Next Day',
-    },
-    {
-      orderNo: 4,
-      custNo: 4,
-      signs: 5,
-      orderSum: 25.63,
-      country: 'DE',
-      status: 'Received',
-      orderDate: '05-09-25 12:45',
-      deliveryType: 'Pick Up',
-    },
-    {
-      orderNo: 5,
-      custNo: 33,
-      signs: 12,
-      orderSum: 225.07,
-      country: 'DE',
-      status: 'Printed',
-      orderDate: '12-11-25 16:45',
-      deliveryType: 'Deutsch Post Großbrief',
-    },
-    {
-      orderNo: 6,
-      custNo: 57,
-      signs: 1,
-      orderSum: 9.25,
-      country: 'IT',
-      status: 'Waiting',
-      orderDate: '08-11-25 7:45',
-      deliveryType: 'UPS Next Day',
-    },
-  ];
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [selectLang, setSelectLang] = useState({ countryCode: 'ALL', label: 'ALL' });
+  const [sum,setSum]=useState(0);
+  const [orderId,setOrderId]=useState(null);
+
+  
+  const getOrders=async()=>{
+    try{
+      let query=`?page=${page}&limit=${limit}`;
+      if(status!='ALL'){
+        query+=`&status=${status}`
+      }
+      if(search){
+        query+=`&search=${search}`;
+      }
+      if(start){
+        query+=`&start=${start}`
+      }
+      if(finish){
+        query+=`&finish=${finish}`
+      }
+      if(selectLang.countryCode!='ALL'){
+        query+=`&lang=${selectLang.label.toLowerCase()}`
+      }
+      
+      const res=await $authHost.get('cart/filter'+query);
+      setOrders(res.data.orders);
+      setSum(res.data.totalSum.toFixed(2))
+      setCountPages(Math.ceil(res.data.count/limit))
+    }catch(err){
+      console.log(err);
+      alert('Помилка при отримані замовлень.');
+    }
+  }
+
+  useEffect(()=>{
+    getOrders();
+  },[page, status, start, finish, selectLang, search]);
+
+ 
   useEffect(() => {}, [isAdmin]);
+
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
     <>
@@ -98,22 +125,68 @@ const Admin = () => {
       </div>
       <div className="admin-container">
         <div className="left">
-          <div className="selects">
-            <div className="select-cont">
-              <p>Status</p>
-              <select>
-                <option>All</option>
-                <option>Received</option>
-                <option>Printed</option>
-                <option>Manufact.</option>
-                <option>Delivered</option>
-                <option>Returned</option>
-                <option>Waiting</option>
-              </select>
+          <div className="filters">
+            <div className="selects">
+              <div className="select-cont">
+                <p>Status</p>
+                <select onChange={(e)=>setStatus(e.target.value)} value={status}>
+                  <option value='ALL'>All</option>
+                  <option value='Recived'>Received</option>
+                  <option value='Printed'>Printed</option>
+                  <option value='Manufact'>Manufact.</option>
+                  <option value='Delivered'>Delivered</option>
+                  <option value='Returned'>Returned</option>
+                  <option value='Waiting'>Waiting</option>
+                </select>
+              </div>
+              <div className="select-cont">
+                <p>Filter</p>
+                <input style={{paddingLeft:'7.5px'}} type='text' placeholder='value' value={search} onChange={(e)=>setSearch(e.target.value)} />
+              </div>
             </div>
-            <div className="select-cont">
-              <p>Filter</p>
-              <input />
+            <div className="dates">
+              <div className="date">
+                <p>start:</p>
+                <input max={finish} type="date" value={start} onChange={(e)=>setStart(e.target.value)} />
+              </div>
+              <div className="date">
+                <p>finish:</p>
+                <input min={start} type="date" value={finish} onChange={(e)=>setFinish(e.target.value)} />
+              </div>
+            </div>
+            <div className="lang-and-check-and-sum">
+              <div className={'lang'}>
+                <div
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                >
+                  {selectLang.label!='ALL'&&
+                    <Flag country={selectLang.countryCode} size={32} />
+                  }
+                  {selectLang.label}
+                  <SlArrowDown size={14} />
+                </div>
+                <div className={isLangOpen ? 'dropdown' : 'open'}>
+                  {languages.map(lang => (
+                    <div
+                      key={lang.countryCode}
+                      onClick={() => {setIsLangOpen(false);setSelectLang(lang)}}
+                      className={'countries'}
+                    >
+                      {lang.countryCode!='ALL'&&
+                        <Flag country={lang.countryCode} size={32} />
+                      }
+                      {lang.countryCode}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="check">
+                <button>check</button>
+              </div>
+              <div className="sum">
+                <input type="number" value={sum} />
+              </div>
             </div>
           </div>
           <table>
@@ -133,25 +206,48 @@ const Admin = () => {
 
             {/* Тіло таблиці */}
             <tbody>
-              {orderData.map((order, index) => (
-                <tr key={order.orderNo}>
-                  {/* Перша колонка Order No з помаранчевим фоном */}
-                  <td className="order-no">{order.orderNo}</td>
-                  <td>{order.custNo}</td>
-                  <td>{order.signs}</td>
-                  <td>{order.orderSum}</td>
-                  <td>{order.country}</td>
-                  <td>{order.status}</td>
-                  <td>{order.orderDate}</td>
-                  <td>{order.deliveryType}</td>
+              {orders.map((order, index) => (
+                <tr
+                  style={{backgroundColor: orderId==order.id?'#CACACA': (index+1)%2==0? '#f9f9f9':'unset'}} 
+                  onClick={()=>{
+                    if(orderId==order.id)setOrderId(null)
+                    else setOrderId(order.id)
+                    }} key={order.id}>
+
+                    <td className="order-no">{order.id}</td>
+                    <td>{order.userId}</td>
+                    <td>{order.signs}</td>
+                    <td>{order.sum}</td>
+                    <td>{order.country}</td>
+                    <td>{order.status}</td>
+                    <td>{formatDate(order.createdAt)}</td>
+                    <td>{order.deliveryType}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {countPages>1&&
+            <div className="pagination">
+              <ReactPaginate
+                pageCount={countPages}
+                forcePage={page - 1}
+                onPageChange={(e) => setPage(e.selected + 1)}
+                marginPagesDisplayed={1}
+                pageRangeDisplayed={3}
+                previousLabel="←"
+                nextLabel="→"
+                breakLabel="…"
+                containerClassName="pagination"
+                activeClassName="active"
+              />
+            </div>
+          }         
         </div>
-        <div className="right">
-          <Order />
-        </div>
+        {orderId&&
+          <div className="right">
+            <Order orderId={orderId} />
+          </div>
+        }
       </div>
     </>
   );

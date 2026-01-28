@@ -8,6 +8,7 @@ class ErrorApi extends Error {
     return new ErrorApi(400, message);
   }
 
+
   static internalServerError(err) {
     return new ErrorApi(500, err.message || err);
   }

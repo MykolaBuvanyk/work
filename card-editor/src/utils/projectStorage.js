@@ -1165,23 +1165,25 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
     // ВИПРАВЛЕННЯ: Генеруємо SVG preview з вбудованими шрифтами + PNG fallback
     let previewSvg = "";
     let previewPng = "";
-    try {
-      const previews = await generateCanvasPreviews(canvas, {
-        width,
-        height,
-        pngMultiplier:
-          typeof options.previewPngMultiplier === "number"
-            ? options.previewPngMultiplier
-            : undefined,
-        maxPngDimension:
-          typeof options.previewPngMaxDimension === "number"
-            ? options.previewPngMaxDimension
-            : undefined,
-      });
-      previewSvg = previews.previewSvg;
-      previewPng = previews.previewPng;
-    } catch (previewError) {
-      console.error("Failed to produce previews:", previewError);
+    if (!options.skipPreview) {
+      try {
+        const previews = await generateCanvasPreviews(canvas, {
+          width,
+          height,
+          pngMultiplier:
+            typeof options.previewPngMultiplier === "number"
+              ? options.previewPngMultiplier
+              : undefined,
+          maxPngDimension:
+            typeof options.previewPngMaxDimension === "number"
+              ? options.previewPngMaxDimension
+              : undefined,
+        });
+        previewSvg = previews.previewSvg;
+        previewPng = previews.previewPng;
+      } catch (previewError) {
+        console.error("Failed to produce previews:", previewError);
+      }
     }
 
     // Store comprehensive toolbar state for each canvas

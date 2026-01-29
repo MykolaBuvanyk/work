@@ -49,15 +49,22 @@ const HistoryPanel = ({ isOpen, onClose }) => {
 
   // Отримуємо інформацію про стан для відображення
   const getStateInfo = (state, index) => {
-    const timestamp = state.timestamp || Date.now();
+    // Підтримуємо як стиснуті так і нестиснуті стани
+    const timestamp = state.timestamp || state._meta?.timestamp || Date.now();
     const date = new Date(timestamp);
-    const objectCount = state.objects ? state.objects.length : 0;
+    
+    // Для стиснутих станів використовуємо метадані
+    const objectCount = state._compressed 
+      ? (state._meta?.objectCount || 0)
+      : (state.json?.objects?.length || state.objects?.length || 0);
     
     // Визначаємо тип операції на основі змін
     let operationType = "Unknown";
     if (index > 0 && history[index - 1]) {
       const prevState = history[index - 1];
-      const prevCount = prevState.objects ? prevState.objects.length : 0;
+      const prevCount = prevState._compressed 
+        ? (prevState._meta?.objectCount || 0)
+        : (prevState.json?.objects?.length || prevState.objects?.length || 0);
       
       if (objectCount > prevCount) {
         operationType = "Added object";
@@ -199,27 +206,25 @@ const HistoryPanel = ({ isOpen, onClose }) => {
           <h4>Performance Metrics</h4>
           <div className={styles.metricsGrid}>
             <div className={styles.metric}>
-              <span>Total Saves:</span>
-              <span>{metrics.totalSaves}</span>
+              <span>States:</span>
+              <span>{metrics.stateCount} / {metrics.maxHistorySize}</span>
             </div>
             <div className={styles.metric}>
-              <span>Total Restores:</span>
-              <span>{metrics.totalRestores}</span>
+              <span>Current:</span>
+              <span>#{metrics.currentIndex + 1}</span>
             </div>
             <div className={styles.metric}>
-              <span>Avg Save Time:</span>
-              <span>{metrics.averageSaveTime?.toFixed(2)}ms</span>
+              <span>Total Size:</span>
+              <span>{metrics.totalSizeKB} KB</span>
             </div>
             <div className={styles.metric}>
-              <span>Avg Restore Time:</span>
-              <span>{metrics.averageRestoreTime?.toFixed(2)}ms</span>
+              <span>Avg State:</span>
+              <span>{metrics.averageStateSizeKB} KB</span>
             </div>
-            {metrics.compressionsSaved > 0 && (
-              <div className={styles.metric}>
-                <span>Compressions:</span>
-                <span>{metrics.compressionsSaved}</span>
-              </div>
-            )}
+            <div className={styles.metric}>
+              <span>Compression:</span>
+              <span>{metrics.compressionEnabled ? '✅ On' : '❌ Off'}</span>
+            </div>
           </div>
         </div>
       )}

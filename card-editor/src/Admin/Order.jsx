@@ -28,7 +28,33 @@ const Order = ({orderId}) => {
     }
   }
 
-  console.log(3434,order)
+  const downloadFile = async (url, fileName) => {
+    const res = await $authHost.get(url, { responseType: 'blob' });
+    
+    // Створюємо тимчасове посилання для скачування
+    const blob = new Blob([res.data], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+    
+    // Очищуємо пам'ять
+    window.URL.revokeObjectURL(link.href);
+  };
+
+  const druk = async () => {
+    try {
+      // Скачуємо по черзі
+      await downloadFile(`cart/getPdfs/${orderId}`, `Order-${orderId}.pdf`);
+      await downloadFile(`cart/getPdfs2/${orderId}`, `DeliveryNote-${orderId}.pdf`);
+      await downloadFile(`cart/getPdfs3/${orderId}`, `Invoice-${orderId}.pdf`);
+      
+      console.log('Усі файли завантажено');
+    } catch (err) {
+      console.error(err);
+      alert('Помилка при завантаженні файлів');
+    }
+  };
 
   if(!order)return null;
   return (
@@ -36,7 +62,7 @@ const Order = ({orderId}) => {
       <div className="row">
         <p>Order.No</p>
         <span>{order.id} ({order.status})</span>
-        <div className="druk">
+        <div onClick={druk} className="druk">
           <svg
             width="24"
             height="24"

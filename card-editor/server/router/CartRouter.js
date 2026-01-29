@@ -565,12 +565,16 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, requireAdmin, async (req, res, 
             </div>
 
             <div style="margin-top: 30px; gap: 0;">
-                ${orderMongo.accessories.map(x=>(
-                  `<div class="item-row">
+                ${orderMongo?.accessories 
+              ? orderMongo?.accessories.map(x => `
+                  <div class="item-row">
                     <div class="checkbox"></div>
-                    <div class="no-label-text"><span class="qty">${x.qty} </span> <span style="text-decoration: underline;">${x.name}<span></div>
-                  </div>`
-                ))}
+                    <div class="no-label-text">
+                      <span class="qty">${x.qty} </span> 
+                      <span style="text-decoration: underline;">${x.name}</span>
+                    </div>
+                  </div>`).join('') 
+              : ''}
             </div>
         </div>
 
@@ -806,8 +810,12 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, requireAdmin, async (req, res,
 
         <table class="items-table">
             <tr>
-                <td class="label-cell">Accessories: ${orderMongo.accessories.length} Types:</td>
-                <td style="display: flex; flex-direction: row; gap: 5px; flex-wrap: wrap;">${orderMongo.accessories.map(x=>`<div>${x.qty} ${x.name};</div>`).join('')}</td>
+                <td class="label-cell">Accessories: ${orderMongo?.accessories?.length || 0} Types:</td>
+                <td style="display: flex; flex-direction: row; gap: 5px; flex-wrap: wrap;">
+                  ${orderMongo?.accessories 
+                  ? orderMongo?.accessories.map(x => `<div>${x.qty} ${x.name};</div>`).join('') 
+                  : ''}
+                </td>
             </tr>
             ${''/*orderMongo.items.map((item, index) => `
                 <tr class="sign-row">
@@ -1103,7 +1111,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
             </tr>
             <tr>
                 <td>Discount (5 %)</td>
-                <td>€ ${orderMongo.discountPercent}</td>
+                <td>€ ${orderMongo?.discountPercent||0}</td>
             </tr>
             <tr>
                 <td>Shipping & Packaging cost</td>

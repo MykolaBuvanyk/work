@@ -1204,10 +1204,14 @@ const buildFallbackSvgMarkup = (placement, message) => {
 
 app.post('/api/layout-pdf', async (req, res) => {
   try {
-    const { sheets, sheetLabel = 'sheet', timestamp } = req.body || {};
+    const { sheets, sheetLabel = 'sheet', timestamp, exportMode } = req.body || {};
 
     if (!Array.isArray(sheets) || sheets.length === 0) {
       return res.status(400).json({ error: 'Очікуємо принаймні один аркуш для експорту.' });
+    }
+
+    if (sheets.length > 10) {
+      return res.status(400).json({ error: 'Максимальна кількість аркушів для PDF — 10.' });
     }
 
     const safeSheetLabel = String(sheetLabel || 'sheet').replace(/[^a-z0-9-_]+/gi, '-');
@@ -1245,6 +1249,106 @@ app.post('/api/layout-pdf', async (req, res) => {
       }
 
       doc.addPage({ size: [pageWidthPt, pageHeightPt], margin: 0 });
+
+      const shouldRenderMjFrame =
+        exportMode === 'Sheet optimized (MJ) Fr.' ||
+        sheet?.exportMode === 'Sheet optimized (MJ) Fr.' ||
+        (Number(sheet?.leftStripWidthMm) || 0) > 0;
+
+      if (shouldRenderMjFrame) {
+        const stripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 9.5);
+        const holeDiameterMm = 5.5;
+        const holeSpacingMm = 80;
+        const secondHoleMinHeightMm = 135;
+
+        const stripWidthPt = mmToPoints(stripWidthMm);
+        doc.save();
+        // Strip background is the page itself (white).
+        // Draw ONLY the strip right edge line (at x=stripWidth) to match the UI.
+        doc.save();
+        doc.lineWidth(0.5);
+        doc.strokeColor('#8B4513');
+        doc.moveTo(stripWidthPt, 0);
+        doc.lineTo(stripWidthPt, pageHeightPt);
+        doc.stroke();
+        doc.restore();
+
+        const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
+        const holeCentersYmm =
+          pageHeightMm >= secondHoleMinHeightMm
+            ? [pageHeightMm / 2 - holeSpacingMm / 2, pageHeightMm / 2 + holeSpacingMm / 2]
+            : [pageHeightMm / 2];
+
+        const centerXpt = mmToPoints(stripWidthMm / 2);
+        const radiusPt = mmToPoints(holeDiameterMm / 2);
+
+        holeCentersYmm.forEach((cyMm) => {
+          const cyPt = mmToPoints(cyMm);
+          doc
+            .circle(centerXpt, cyPt, radiusPt)
+            .lineWidth(0.75)
+            .fillAndStroke('#FFFFFF', '#8B4513');
+        });
+
+        doc.restore();
+      }
+
+      // Optional: left-side sheet info label (rotated), if provided by client.
+      const sheetInfo = sheet?.sheetInfo || null;
+      if (sheetInfo && (sheetInfo.projectId || sheetInfo.sheetIndex)) {
+        const leftStripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 0);
+        const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
+
+        const fallbackAreaWidthMm = leftStripWidthMm > 0 ? leftStripWidthMm : leftInsetMm;
+        const areaWidthMm = Math.max(
+          0,
+          Number(sheetInfo?.areaWidthMm) || fallbackAreaWidthMm
+        );
+
+        if (areaWidthMm > 0) {
+          const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
+
+          const fallbackXCenterMm = leftStripWidthMm > 0
+            ? leftStripWidthMm / 2
+            : Math.max(0, fallbackAreaWidthMm - 1);
+
+          const xCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm))
+            ? Number(sheetInfo.xCenterMm)
+            : fallbackXCenterMm;
+          const yCenterMm = Number.isFinite(Number(sheetInfo?.yCenterMm))
+            ? Number(sheetInfo.yCenterMm)
+            : pageHeightMm / 2;
+
+          const anchorXpt = mmToPoints(xCenterMm);
+          const anchorYpt = mmToPoints(yCenterMm);
+
+          const projectId = sheetInfo.projectId ? String(sheetInfo.projectId) : '';
+          const shPart = sheetInfo.sheetCount
+            ? `Sh ${Number(sheetInfo.sheetIndex) || 1} / ${Number(sheetInfo.sheetCount) || 1}`
+            : `Sh ${Number(sheetInfo.sheetIndex) || 1}`;
+
+          const label = projectId ? `${projectId} ${shPart}` : shPart;
+
+          // Font size in pt, capped small so it fits within the left inset.
+          const fontSize = Math.max(
+            5,
+            Math.min(8, mmToPoints(areaWidthMm * 0.6))
+          );
+
+          doc.save();
+          doc.fillColor('#111111');
+          doc.font('Helvetica');
+          doc.fontSize(fontSize);
+
+          // Rotate so text reads vertically along the left side.
+          doc.translate(anchorXpt, anchorYpt);
+          doc.rotate(-90);
+
+          const totalWidth = doc.widthOfString(label);
+          doc.text(label, -totalWidth / 2, 0, { lineBreak: false });
+          doc.restore();
+        }
+      }
 
       (sheet.placements || []).forEach((placement, placementIndex) => {
         const widthPt = mmToPoints(placement?.width);
@@ -1747,6 +1851,60 @@ app.post('/api/layout-pdf', async (req, res) => {
         doc.rect(xPt, yBottomPt, widthPt, heightPt).stroke();
         doc.restore();
       });
+
+      // Draw the wrapping frame AFTER placements so it stays visible.
+      const frameRect = sheet?.frameRect;
+      if (
+        frameRect &&
+        Number.isFinite(Number(frameRect?.x)) &&
+        Number.isFinite(Number(frameRect?.y)) &&
+        Number.isFinite(Number(frameRect?.width)) &&
+        Number.isFinite(Number(frameRect?.height))
+      ) {
+        const frameWidthMm = Math.max(0, Number(frameRect.width) || 0);
+        const frameHeightMm = Math.max(0, Number(frameRect.height) || 0);
+        if (frameWidthMm > 0 && frameHeightMm > 0) {
+          const frameXPt = mmToPoints(frameRect.x);
+          const frameYPt = mmToPoints(frameRect.y);
+          const frameWidthPt = mmToPoints(frameWidthMm);
+          const frameHeightPt = mmToPoints(frameHeightMm);
+
+          doc.save();
+          doc.lineWidth(0.5);
+          doc.strokeColor('#8B4513');
+
+          const radiusPt = mmToPoints(5);
+          if (sheet.exportMode === "Sheet optimized (MJ) Fr.") {
+            // Only round top-right and bottom-right corners
+            // PDFKit doesn't support per-corner radius, so draw path manually
+            const r = radiusPt;
+            doc.moveTo(frameXPt, frameYPt);
+            // top edge
+            doc.lineTo(frameXPt + frameWidthPt - r, frameYPt);
+            doc.bezierCurveTo(
+              frameXPt + frameWidthPt - r / 2, frameYPt,
+              frameXPt + frameWidthPt, frameYPt + r / 2,
+              frameXPt + frameWidthPt, frameYPt + r
+            );
+            // right edge
+            doc.lineTo(frameXPt + frameWidthPt, frameYPt + frameHeightPt - r);
+            doc.bezierCurveTo(
+              frameXPt + frameWidthPt, frameYPt + frameHeightPt - r / 2,
+              frameXPt + frameWidthPt - r / 2, frameYPt + frameHeightPt,
+              frameXPt + frameWidthPt - r, frameYPt + frameHeightPt
+            );
+            // bottom edge
+            doc.lineTo(frameXPt, frameYPt + frameHeightPt);
+            // left edge (no rounding)
+            doc.lineTo(frameXPt, frameYPt);
+            doc.closePath();
+            doc.stroke();
+          } else {
+            doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
+          }
+          doc.restore();
+        }
+      }
     });
 
     doc.end();

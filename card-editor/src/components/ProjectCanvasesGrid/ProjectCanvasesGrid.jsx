@@ -1732,6 +1732,7 @@ const ProjectCanvasesGrid = () => {
         onClose={() => setIsLayoutModalOpen(false)}
         designs={designPayloads}
         spacingMm={5}
+        projectId={project?.id || null}
       />
     </>
   );

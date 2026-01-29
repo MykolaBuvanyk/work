@@ -1,9 +1,132 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './OrderContainer.scss';
 import { $authHost } from '../http';
+import {
+  FORMATS,
+  buildPlacementPreview,
+  formatMaterialLabel,
+  getMaterialKey,
+  normalizeDesigns,
+  planSheets,
+} from '../components/ProjectCanvasesGrid/LayoutPlannerModal/LayoutPlannerModal';
+
+const PX_PER_MM = 72 / 25.4;
+
+const exportModeOptions = [
+  'Normal',
+  'Normal (MJ) Frame',
+  'Sheet optimized (MJ) Fr.',
+  'Sheet A4 portrait',
+  'Sheet A5 portrait',
+  'Sheet A4 landscape',
+  'Production optimized',
+];
+
+const exportModePresets = {
+  Normal: { enableGaps: false, formatKey: 'MJ_295x600', orientation: 'portrait' },
+  'Normal (MJ) Frame': { enableGaps: true, formatKey: 'MJ_295x600', orientation: 'portrait' },
+  'Sheet optimized (MJ) Fr.': { enableGaps: true, formatKey: 'A4', orientation: 'portrait' },
+  'Sheet A4 portrait': { formatKey: 'A4', orientation: 'portrait' },
+  'Sheet A5 portrait': { formatKey: 'A5', orientation: 'portrait' },
+  'Sheet A4 landscape': { formatKey: 'A4', orientation: 'landscape' },
+};
+
+const downloadBlob = (blob, fileName) => {
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    console.error('Failed to download blob', e);
+  }
+};
+
+const safeNumber = (value, fallback = 0) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
+
+const mapCartCanvasToDesign = (canvas, index) => {
+  const c = canvas && typeof canvas === 'object' ? canvas : {};
+  const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
+  const widthFromJson = jsonTemplate?.width;
+  const heightFromJson = jsonTemplate?.height;
+
+  const widthMmRaw = c.widthMm ?? c.widthMM ?? c.WidthMm ?? c.WidthMM ?? null;
+  const heightMmRaw = c.heightMm ?? c.heightMM ?? c.HeightMm ?? c.HeightMM ?? null;
+
+  const widthFromMmPx = (() => {
+    const mm = safeNumber(widthMmRaw, 0);
+    return mm > 0 ? mm * PX_PER_MM : 0;
+  })();
+  const heightFromMmPx = (() => {
+    const mm = safeNumber(heightMmRaw, 0);
+    return mm > 0 ? mm * PX_PER_MM : 0;
+  })();
+
+  const toolbarState = { ...(c.toolbarState || {}) };
+  if (c.Thickness != null && toolbarState.thickness == null) {
+    toolbarState.thickness = c.Thickness;
+  }
+  if (c.Tape != null) {
+    toolbarState.isAdhesiveTape = String(c.Tape).toUpperCase() === 'TAPE';
+  }
+
+  const backgroundColor =
+    toolbarState?.globalColors?.backgroundColor ??
+    c.backgroundColor ??
+    c.ColorTheme ??
+    null;
+
+  return {
+    id: c.id || `canvas-${index + 1}`,
+    name: c.name || `Полотно ${index + 1}`,
+    width: c.width || widthFromJson || widthFromMmPx || 1200,
+    height: c.height || heightFromJson || heightFromMmPx || 800,
+    jsonTemplate,
+    backgroundColor,
+    toolbarState,
+    preview: c.preview || null,
+    previewSvg: c.previewSvg || c.previewSVG || c.svg || null,
+    copiesCount: c.copiesCount ?? toolbarState?.copiesCount ?? null,
+    meta: {
+      ...(c.meta || {}),
+      backgroundColor,
+      thickness: c.Thickness ?? toolbarState.thickness ?? null,
+      isAdhesiveTape: toolbarState.isAdhesiveTape ?? null,
+    },
+  };
+};
 
 const Order = ({orderId}) => {
   const [order,setOrder]=useState();
+  const [selectedMaterialKey, setSelectedMaterialKey] = useState('all');
+  const [exportMode, setExportMode] = useState('Normal');
+
+  const [formatKey, setFormatKey] = useState('MJ_295x600');
+  const [orientation, setOrientation] = useState('portrait');
+  const [enableGaps, setEnableGaps] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
+  const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
+  const [pdfMaxPageWidth, setPdfMaxPageWidth] = useState(0);
+  const [pdfMaxPageHeight, setPdfMaxPageHeight] = useState(0);
+  const [pdfPageMargin, setPdfPageMargin] = useState(0);
+  const [frameSpacingMm, setFrameSpacingMm] = useState(3);
+  const [pdfSignSpacing, setPdfSignSpacing] = useState(2);
+  const [pdfSortOrder, setPdfSortOrder] = useState('high-first');
+  const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
+
+  const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
+  const [appliedMinPageHeight, setAppliedMinPageHeight] = useState(0);
+  const [appliedMaxPageWidth, setAppliedMaxPageWidth] = useState(0);
+  const [appliedMaxPageHeight, setAppliedMaxPageHeight] = useState(0);
   
   const getOrder=async()=>{
     try{
@@ -18,6 +141,393 @@ const Order = ({orderId}) => {
   useEffect(()=>{
     getOrder()
   },[orderId])
+
+  // Apply export mode presets (same logic as LayoutPlannerModal).
+  useEffect(() => {
+    const preset = exportModePresets?.[exportMode];
+    if (!preset) return;
+    if (typeof preset.enableGaps === 'boolean') setEnableGaps(preset.enableGaps);
+    if (typeof preset.formatKey === 'string' && preset.formatKey) setFormatKey(preset.formatKey);
+    if (preset.orientation === 'portrait' || preset.orientation === 'landscape') {
+      setOrientation(preset.orientation);
+    }
+  }, [exportMode]);
+
+  // Debounce min/max page constraint inputs (3s) like LayoutPlannerModal.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setAppliedMinPageWidth(pdfMinPageWidth);
+      setAppliedMinPageHeight(pdfMinPageHeight);
+      setAppliedMaxPageWidth(pdfMaxPageWidth);
+      setAppliedMaxPageHeight(pdfMaxPageHeight);
+    }, 3000);
+    return () => clearTimeout(timeoutId);
+  }, [pdfMinPageWidth, pdfMinPageHeight, pdfMaxPageWidth, pdfMaxPageHeight]);
+
+  const designs = useMemo(() => {
+    const canvases = order?.orderMongo?.project?.canvases;
+    if (!Array.isArray(canvases)) return [];
+    return canvases.map(mapCartCanvasToDesign).filter(Boolean);
+  }, [order]);
+
+  const normalizedItems = useMemo(() => normalizeDesigns(designs), [designs]);
+
+  const materialGroups = useMemo(() => {
+    const groups = new Map();
+    normalizedItems.forEach((item) => {
+      const key = getMaterialKey(item);
+      const existing = groups.get(key);
+      const countToAdd = Math.max(1, Number(item?.copies) || 1);
+      if (!existing) {
+        const [colorPart, thicknessPart, tapePart] = String(key).split('::');
+        groups.set(key, {
+          key,
+          color: colorPart || 'unknown',
+          thickness: thicknessPart || 'unknown',
+          tape: tapePart || 'unknown-tape',
+          count: countToAdd,
+        });
+      } else {
+        existing.count += countToAdd;
+      }
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.key.localeCompare(b.key);
+    });
+  }, [normalizedItems]);
+
+  useEffect(() => {
+    if (selectedMaterialKey === 'all') return;
+    const exists = materialGroups.some((g) => g.key === selectedMaterialKey);
+    if (!exists) setSelectedMaterialKey('all');
+  }, [materialGroups, selectedMaterialKey]);
+
+  const effectiveSignSpacingMm = (() => {
+    const parsed = Number(pdfSignSpacing);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    return 5;
+  })();
+
+  const sheetSize = useMemo(() => {
+    const isMjFrameMode = exportMode === 'Sheet optimized (MJ) Fr.';
+    const a4 = FORMATS.A4;
+    const base = FORMATS[formatKey] || FORMATS.A4;
+    const oriented = isMjFrameMode
+      ? { width: a4.width, height: a4.height }
+      : orientation === 'landscape'
+        ? { width: base.height, height: base.width }
+        : { width: base.width, height: base.height };
+
+    const minW = Math.max(0, safeNumber(appliedMinPageWidth, 0));
+    const minH = Math.max(0, safeNumber(appliedMinPageHeight, 0));
+    let maxW = Math.max(0, safeNumber(appliedMaxPageWidth, 0));
+    let maxH = Math.max(0, safeNumber(appliedMaxPageHeight, 0));
+
+    if (minW > 0 && maxW > 0 && maxW < minW) maxW = minW;
+    if (minH > 0 && maxH > 0 && maxH < minH) maxH = minH;
+
+    let width = oriented.width;
+    let height = oriented.height;
+    if (minW > 0) width = Math.max(width, minW);
+    if (minH > 0) height = Math.max(height, minH);
+    if (maxW > 0) width = Math.min(width, maxW);
+    if (maxH > 0) height = Math.min(height, maxH);
+
+    if (isMjFrameMode) {
+      width = Math.min(width, a4.width);
+      height = Math.min(height, a4.height);
+    }
+
+    return {
+      width,
+      height,
+      label: isMjFrameMode ? a4.label : base.label,
+    };
+  }, [appliedMaxPageHeight, appliedMaxPageWidth, appliedMinPageHeight, appliedMinPageWidth, exportMode, formatKey, orientation]);
+
+  const isMjFrameMode = exportMode === 'Sheet optimized (MJ) Fr.';
+  const hasBrownFrame = exportMode === 'Normal (MJ) Frame' || exportMode === 'Sheet optimized (MJ) Fr.';
+
+  const planned = useMemo(() => {
+    const a4 = FORMATS.A4;
+    const layoutOptions = isMjFrameMode
+      ? {
+          leftStripWidthMm: 9.5,
+          disableLeftFrameSpacing: true,
+          optimizeToContent: true,
+          maxSheetWidthMm: a4.width,
+          maxSheetHeightMm: a4.height,
+        }
+      : {};
+
+    const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
+    const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
+
+    const pageInsetMm = hasBrownFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
+    const frameInsetMm = hasBrownFrame ? safeFrameSpacingMm : 0;
+
+    return planSheets(
+      normalizedItems,
+      { ...sheetSize, sortOrder: pdfSortOrder },
+      effectiveSignSpacingMm,
+      isMjFrameMode ? 0 : pageInsetMm,
+      frameInsetMm,
+      layoutOptions
+    );
+  }, [effectiveSignSpacingMm, frameSpacingMm, hasBrownFrame, isMjFrameMode, normalizedItems, pdfPageMargin, pdfSortOrder, sheetSize]);
+
+  const sheetsWithIndex = useMemo(() => {
+    const sheetCount = Array.isArray(planned?.sheets) ? planned.sheets.length : 0;
+    return (planned?.sheets || []).map((s, idx) => ({
+      ...s,
+      globalSheetIndex: idx + 1,
+      globalSheetCount: sheetCount,
+    }));
+  }, [planned]);
+
+  const visibleSheets = useMemo(() => {
+    if (selectedMaterialKey === 'all') return sheetsWithIndex;
+    return (sheetsWithIndex || []).filter((sheet) => {
+      const first = sheet?.placements?.[0] || null;
+      if (!first) return false;
+      return getMaterialKey(first) === selectedMaterialKey;
+    });
+  }, [selectedMaterialKey, sheetsWithIndex]);
+
+  const totalRequestedCopies = useMemo(
+    () => normalizedItems.reduce((acc, item) => acc + Math.max(1, item.copies || 0), 0),
+    [normalizedItems]
+  );
+
+  const handleDownloadPdf = async () => {
+    if (isExporting) return;
+    if (!visibleSheets.length) {
+      alert('Немає аркушів для експорту');
+      return;
+    }
+    if (visibleSheets.length > 10) {
+      alert(`Максимальна кількість аркушів для PDF — 10. Зараз: ${visibleSheets.length}.`);
+      return;
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+    const sheetLabel = FORMATS[formatKey]?.label || 'sheet';
+
+    const computeFrameRect = (sheet) => {
+      if (!hasBrownFrame) return null;
+      const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+      if (!placements.length) return null;
+
+      const safeFrameSpacing = Math.max(0, safeNumber(frameSpacingMm, 0));
+      const safePageMargin = Math.max(0, safeNumber(pdfPageMargin, 0));
+
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      placements.forEach((p) => {
+        const x = safeNumber(p?.x, 0);
+        const y = safeNumber(p?.y, 0);
+        const w = Math.max(0, safeNumber(p?.width, 0));
+        const h = Math.max(0, safeNumber(p?.height, 0));
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + w);
+        maxY = Math.max(maxY, y + h);
+      });
+
+      if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+        return null;
+      }
+
+      let x = minX - safeFrameSpacing;
+      let y = minY - safeFrameSpacing;
+      let width = maxX - minX + safeFrameSpacing * 2;
+      let height = maxY - minY + safeFrameSpacing * 2;
+
+      const stripWidthMm = exportMode === 'Sheet optimized (MJ) Fr.' ? 9.5 : 0;
+      if (exportMode === 'Sheet optimized (MJ) Fr.') {
+        x = stripWidthMm;
+        y = minY - safeFrameSpacing;
+        width = maxX - x + safeFrameSpacing;
+        height = maxY - minY + safeFrameSpacing * 2;
+      }
+
+      const leftLimit = Math.max(safePageMargin, stripWidthMm);
+      const topLimit = safePageMargin;
+      const rightLimit = Math.max(leftLimit, safeNumber(sheet?.width, 0) - safePageMargin);
+      const bottomLimit = Math.max(topLimit, safeNumber(sheet?.height, 0) - safePageMargin);
+
+      x = Math.max(leftLimit, x);
+      y = Math.max(topLimit, y);
+      width = Math.max(0, Math.min(width, rightLimit - x));
+      height = Math.max(0, Math.min(height, bottomLimit - y));
+
+      if (width <= 0 || height <= 0) return null;
+      return { x, y, width, height };
+    };
+
+    const resolvedProjectId = String(order?.idMongo || order?.orderMongo?.projectId || order?.orderMongo?.id || order?.id || '').trim() || null;
+
+    const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
+      const placements = (sheet.placements || []).map((placement) => {
+        const previewData = buildPlacementPreview(placement, { enableGaps });
+        return {
+          id: placement.id,
+          baseId: placement.baseId,
+          name: placement.name,
+          x: placement.x,
+          y: placement.y,
+          width: placement.width,
+          height: placement.height,
+          copyIndex: placement.copyIndex ?? 1,
+          copies: placement.copies ?? 1,
+          svgMarkup: previewData?.type === 'svg' ? previewData.exportMarkup : null,
+          sourceWidth: placement.sourceWidth || placement.width,
+          sourceHeight: placement.sourceHeight || placement.height,
+          customBorder: placement.customBorder || null,
+          materialColor: placement.materialColor ?? null,
+          materialThicknessMm: placement.materialThicknessMm ?? null,
+          isAdhesiveTape: placement.isAdhesiveTape ?? false,
+          themeStrokeColor: placement.themeStrokeColor ?? null,
+        };
+      });
+
+      const frameRect = computeFrameRect(sheet);
+
+      const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
+      const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
+      const stripWidthMm = Math.max(0, safeNumber(sheet?.leftStripWidthMm, 0));
+
+      const placementsBounds = (() => {
+        const list = Array.isArray(sheet?.placements) ? sheet.placements : [];
+        if (!list.length) return null;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        list.forEach((p) => {
+          const x = safeNumber(p?.x, 0);
+          const y = safeNumber(p?.y, 0);
+          const w = Math.max(0, safeNumber(p?.width, 0));
+          const h = Math.max(0, safeNumber(p?.height, 0));
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + w);
+          maxY = Math.max(maxY, y + h);
+        });
+        if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+          return null;
+        }
+        return { minX, minY, maxX, maxY };
+      })();
+
+      const holeCentersY = (() => {
+        const h = Math.max(0, safeNumber(sheet?.height, 0));
+        if (h >= 135) return [h / 2 - 80 / 2, h / 2 + 80 / 2];
+        return [h / 2];
+      })();
+
+      const sheetInfoPlacement = (() => {
+        if (!pdfAddSheetInfo) return null;
+
+        if (exportMode === 'Sheet optimized (MJ) Fr.') {
+          if (stripWidthMm <= 0) return null;
+          const centerYmm = holeCentersY.length
+            ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
+            : Math.max(0, safeNumber(sheet?.height, 0)) / 2;
+          return {
+            xCenterMm: stripWidthMm / 2,
+            yCenterMm: centerYmm,
+            areaWidthMm: stripWidthMm,
+          };
+        }
+
+        if (safeFrameSpacingMm <= 0) return null;
+
+        const contentLeftMm = (() => {
+          if (placementsBounds && Number.isFinite(placementsBounds.minX)) return placementsBounds.minX;
+          if (frameRect) return frameRect.x + safeFrameSpacingMm;
+          return safePageMarginMm + safeFrameSpacingMm;
+        })();
+
+        const yCenterMm = (() => {
+          if (frameRect) return frameRect.y + frameRect.height / 2;
+          if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
+          return Math.max(0, safeNumber(sheet?.height, 0)) / 2;
+        })();
+
+        return {
+          xCenterMm: Math.max(
+            safePageMarginMm + safeFrameSpacingMm / 2,
+            contentLeftMm - safeFrameSpacingMm / 2
+          ),
+          yCenterMm,
+          areaWidthMm: safeFrameSpacingMm,
+        };
+      })();
+
+      const sheetInfo = sheetInfoPlacement
+        ? {
+            projectId: resolvedProjectId,
+            sheetIndex: sheet?.globalSheetIndex ?? sheetIndex + 1,
+            sheetCount: sheet?.globalSheetCount ?? visibleSheets.length,
+            ...sheetInfoPlacement,
+          }
+        : null;
+
+      return {
+        index: sheetIndex,
+        width: sheet.width,
+        height: sheet.height,
+        frameRect,
+        exportMode,
+        leftStripWidthMm: sheet.leftStripWidthMm ?? 0,
+        leftInset: sheet.leftInset ?? null,
+        topInset: sheet.topInset ?? null,
+        rightInset: sheet.rightInset ?? null,
+        bottomInset: sheet.bottomInset ?? null,
+        sheetInfo,
+        placements,
+      };
+    });
+
+    const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
+
+    setIsExporting(true);
+    try {
+      const response = await fetch(exportEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sheetLabel,
+          timestamp,
+          formatKey,
+          exportMode,
+          spacingMm: effectiveSignSpacingMm,
+          sheets: preparedSheets,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `Export server error: ${response.status}`);
+      }
+
+      const pdfBlob = await response.blob();
+      const materialSuffix = selectedMaterialKey === 'all' ? 'all' : 'material';
+      const fileName = `order-${orderId}-${materialSuffix}-${timestamp}.pdf`;
+      downloadBlob(pdfBlob, fileName);
+    } catch (e) {
+      console.error('PDF export failed', e);
+      alert('Помилка експорту PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const setStatus = async(newStatus) => {
     try {
@@ -226,70 +736,125 @@ const Order = ({orderId}) => {
       <div className="list-info">
         <div className="inf">
           <p>Material</p>
-          <select style={{ width: '100%' }}>
-            <option value="1">White / Black NO TAPE (4 signs)</option>
+          <select
+            style={{ width: '100%', color: '#000000' }}
+            value={selectedMaterialKey}
+            onChange={(e) => setSelectedMaterialKey(e.target.value)}
+          >
+            <option value="all">All materials ({totalRequestedCopies} signs)</option>
+            {materialGroups.map((group) => (
+              <option key={group.key} value={group.key}>
+                {formatMaterialLabel(group)} ({group.count} signs)
+              </option>
+            ))}
           </select>
         </div>
         <div className="inf">
           <p>Mode</p>
-          <select style={{ width: '172px' }}>
-            <option value="1">Normal</option>
+          <select
+            style={{ width: '172px', color: '#000000' }}
+            value={exportMode}
+            onChange={(e) => setExportMode(e.target.value)}
+          >
+            {exportModeOptions.map((mode) => (
+              <option key={mode} value={mode}>
+                {mode}
+              </option>
+            ))}
           </select>
         </div>
         <div className="info-ful">
           <p>Min page width</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfMinPageWidth}
+            onChange={(e) => setPdfMinPageWidth(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Min page height</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfMinPageHeight}
+            onChange={(e) => setPdfMinPageHeight(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Min page width</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfMaxPageWidth}
+            onChange={(e) => setPdfMaxPageWidth(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Min page height</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfMaxPageHeight}
+            onChange={(e) => setPdfMaxPageHeight(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Page margin</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfPageMargin}
+            onChange={(e) => setPdfPageMargin(Number(e.target.value) || 0)}
+            disabled={isMjFrameMode}
+          />
+          <span>0 = defaults</span>
+        </div>
+        <div className="info-ful">
+          <p>Frame spacing</p>
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={frameSpacingMm}
+            onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Sign spacing</p>
-          <input type="number" />
-          <span>0 = defaults</span>
-        </div>
-        <div className="info-ful">
-          <p>Max width on sheet</p>
-          <input type="number" />
-          <span>0 = defaults</span>
-        </div>
-        <div className="info-ful">
-          <p>Max height on sheet</p>
-          <input type="number" />
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfSignSpacing}
+            onChange={(e) => setPdfSignSpacing(Number(e.target.value) || 0)}
+          />
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
           <p>Sort order</p>
-          <select>
-            <option value="1">High first</option>
+          <select
+            style={{ color: '#000000' }}
+            value={pdfSortOrder}
+            onChange={(e) => setPdfSortOrder(e.target.value)}
+          >
+            <option value="high-first">High first</option>
+            <option value="low-first">Low first</option>
           </select>
         </div>
         <div className="info-ful">
           <p>Add sheet info</p>
-          <input type="checkbox" />
+          <input type="checkbox" checked={pdfAddSheetInfo} onChange={(e) => setPdfAddSheetInfo(e.target.checked)} />
           <span>Only if sheets are used</span>
         </div>
       </div>
       <div className="but">
-        <button>Download PDF</button>
+        <button onClick={handleDownloadPdf} disabled={isExporting || !visibleSheets.length}>
+          {isExporting ? 'Preparing…' : 'Download PDF'}
+        </button>
       </div>
       <div className="but-message">
         <button>Message to customer</button>

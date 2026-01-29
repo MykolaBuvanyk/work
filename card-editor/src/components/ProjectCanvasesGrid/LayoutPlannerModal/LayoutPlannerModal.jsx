@@ -85,6 +85,45 @@ const FORMATS = {
   A5: { label: "A5", width: 148, height: 210 },
   A4: { label: "A4", width: 210, height: 297 },
   A3: { label: "A3", width: 297, height: 420 },
+  MJ_295x600: { label: "MJ 295×600", width: 295, height: 600 },
+};
+
+const MJ_FRAME_STRIP_WIDTH_MM = 9.5;
+const MJ_FRAME_HOLE_DIAMETER_MM = 5.5;
+const MJ_FRAME_HOLE_SPACING_MM = 80;
+const MJ_FRAME_SECOND_HOLE_MIN_HEIGHT_MM = 135;
+const MJ_FRAME_STRIP_COLOR = "#8B4513";
+const MJ_FRAME_CORNER_RADIUS_MM = 5;
+
+const normalizeProjectIdForLabel = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const uuidMatch = trimmed.match(
+      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+    );
+    return uuidMatch ? uuidMatch[0] : trimmed;
+  }
+  if (typeof value === "number" || typeof value === "bigint") return String(value);
+  if (typeof value === "object") {
+    const candidate =
+      value._id ??
+      value.id ??
+      value.oid ??
+      value.$oid ??
+      (value._id && (value._id.$oid ?? value._id.oid)) ??
+      null;
+    if (candidate && typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      return trimmed ? trimmed : null;
+    }
+    try {
+      const asString = String(value);
+      if (asString && asString !== "[object Object]") return asString;
+    } catch {}
+  }
+  return null;
 };
 
 const ORIENTATION_LABELS = {
@@ -877,9 +916,33 @@ const normalizeDesigns = (designs = []) =>
       return b.area - a.area;
     });
 
-const planSheets = (items, sheetSize, spacingMm) => {
-  const sheetInnerWidth = sheetSize.width;
-  const sheetInnerHeight = sheetSize.height;
+const planSheets = (
+  items,
+  sheetSize,
+  spacingMm,
+  pageMarginMm = 0,
+  frameSpacingMm = 0,
+  layoutOptions = {}
+) => {
+  const {
+    leftStripWidthMm = 0,
+    disableLeftFrameSpacing = false,
+    optimizeToContent = false,
+    maxSheetWidthMm = null,
+    maxSheetHeightMm = null,
+  } = layoutOptions || {};
+
+  const safePageMargin = Math.max(0, Number(pageMarginMm) || 0);
+  const safeFrameSpacing = Math.max(0, Number(frameSpacingMm) || 0);
+
+  const stripWidthMm = Math.max(0, Number(leftStripWidthMm) || 0);
+  const leftInset = safePageMargin + stripWidthMm + (disableLeftFrameSpacing ? 0 : safeFrameSpacing);
+  const topInset = safePageMargin + safeFrameSpacing;
+  const rightInset = safePageMargin + safeFrameSpacing;
+  const bottomInset = safePageMargin + safeFrameSpacing;
+
+  const sheetInnerWidth = sheetSize.width - leftInset - rightInset;
+  const sheetInnerHeight = sheetSize.height - topInset - bottomInset;
 
   if (sheetInnerWidth <= 0 || sheetInnerHeight <= 0) {
     return { sheets: [], leftovers: items };
@@ -888,120 +951,96 @@ const planSheets = (items, sheetSize, spacingMm) => {
   const sheets = [];
   const leftovers = [];
 
-  const tryPlaceOnRow = (sheet, row, item, orientation) => {
-    if (
-      orientation.width > sheetInnerWidth ||
-      orientation.height > sheetInnerHeight
-    ) {
-      return false;
-    }
+  const EPS = 0.001;
 
-    // Не дозволяємо рядах збільшувати висоту понад первісну
-    if (orientation.height - row.height > 0.01) {
-      return false;
-    }
+  const intersects = (a, b) => {
+    return (
+      a.x < b.x + b.width - EPS &&
+      a.x + a.width > b.x + EPS &&
+      a.y < b.y + b.height - EPS &&
+      a.y + a.height > b.y + EPS
+    );
+  };
 
-    const xOffset = row.items.length === 0 ? 0 : row.usedWidth + spacingMm;
-    if (xOffset + orientation.width > sheetInnerWidth + 0.001) {
-      return false;
-    }
+  const getInnerRect = (placement) => ({
+    x: placement.x - leftInset,
+    y: placement.y - topInset,
+    width: placement.width,
+    height: placement.height,
+  });
 
-    const placement = {
-      id: item.id,
-      name: item.label || item.name,
-      width: orientation.width,
-      height: orientation.height,
-      x: xOffset,
-      y: row.y,
-      rotated: orientation.rotated,
-      meta: item.meta,
-      sourceWidth: item.widthMm,
-      sourceHeight: item.heightMm,
-      baseId: item.baseId ?? item.id,
-      copyIndex: item.copyIndex ?? 1,
-      copies: item.copies ?? 1,
-      svg: item.svg || null,
-      preview: item.preview || null,
-      materialColor: item.materialColor ?? null,
-      materialThicknessMm: item.materialThicknessMm ?? null,
-      isAdhesiveTape: item.isAdhesiveTape ?? false,
-      themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
-      customBorder: item.customBorder || null,
+  const canPlaceAt = (sheet, candidate) => {
+    if (candidate.x < 0 || candidate.y < 0) return false;
+    if (candidate.x + candidate.width > sheetInnerWidth + EPS) return false;
+    if (candidate.y + candidate.height > sheetInnerHeight + EPS) return false;
+
+    const inflatedExisting = (p) => {
+      const r = getInnerRect(p);
+      const pad = Math.max(0, Number(spacingMm) || 0);
+      return {
+        x: r.x - pad,
+        y: r.y - pad,
+        width: r.width + pad * 2,
+        height: r.height + pad * 2,
+      };
     };
 
-    row.items.push(placement);
-    row.usedWidth = xOffset + orientation.width;
-    sheet.placements.push(placement);
-    sheet.usedArea += item.area;
+    for (const existing of sheet.placements) {
+      if (intersects(candidate, inflatedExisting(existing))) {
+        return false;
+      }
+    }
 
     return true;
   };
 
-  const tryPlaceOnNewRow = (sheet, item, orientation) => {
-    if (
-      orientation.width > sheetInnerWidth ||
-      orientation.height > sheetInnerHeight
-    ) {
-      return false;
+  const findTopLeftPosition = (sheet, width, height) => {
+    const xs = new Set([0]);
+    const ys = new Set([0]);
+
+    sheet.placements.forEach((p) => {
+      const r = getInnerRect(p);
+      xs.add(r.x);
+      xs.add(r.x + r.width + spacingMm);
+      ys.add(r.y);
+      ys.add(r.y + r.height + spacingMm);
+    });
+
+    const xCandidates = Array.from(xs).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
+    const yCandidates = Array.from(ys).filter((y) => Number.isFinite(y)).sort((a, b) => a - b);
+
+    for (const y of yCandidates) {
+      for (const x of xCandidates) {
+        const candidate = { x, y, width, height };
+        if (canPlaceAt(sheet, candidate)) {
+          return { x, y };
+        }
+      }
     }
 
-    const rowY = sheet.nextRowY;
-    if (rowY + orientation.height > sheetInnerHeight + 0.001) {
-      return false;
-    }
-
-    const placement = {
-      id: item.id,
-      name: item.label || item.name,
-      width: orientation.width,
-      height: orientation.height,
-      x: 0,
-      y: rowY,
-      rotated: orientation.rotated,
-      meta: item.meta,
-      sourceWidth: item.widthMm,
-      sourceHeight: item.heightMm,
-      baseId: item.baseId ?? item.id,
-      copyIndex: item.copyIndex ?? 1,
-      copies: item.copies ?? 1,
-      svg: item.svg || null,
-      preview: item.preview || null,
-      materialColor: item.materialColor ?? null,
-      materialThicknessMm: item.materialThicknessMm ?? null,
-      isAdhesiveTape: item.isAdhesiveTape ?? false,
-      themeStrokeColor: item.themeStrokeColor || null, // Передаємо колір теми
-      customBorder: item.customBorder || null,
-    };
-
-    const row = {
-      y: rowY,
-      height: orientation.height,
-      usedWidth: orientation.width,
-      items: [placement],
-    };
-
-    sheet.rows.push(row);
-    sheet.nextRowY = rowY + orientation.height + spacingMm;
-    sheet.placements.push(placement);
-    sheet.usedArea += item.area;
-
-    return true;
+    return null;
   };
 
   const orientationsFor = (item) => {
-    const variants = [
-      { width: item.widthMm, height: item.heightMm, rotated: false },
-    ];
+    const normal = { width: item.widthMm, height: item.heightMm, rotated: false };
 
-    if (Math.abs(item.widthMm - item.heightMm) > 0.01) {
-      variants.push({
-        width: item.heightMm,
-        height: item.widthMm,
-        rotated: true,
-      });
+    if (Math.abs(item.widthMm - item.heightMm) <= 0.01) {
+      return [normal];
     }
 
-    return variants;
+    const rotated = { width: item.heightMm, height: item.widthMm, rotated: true };
+
+    const fits = (candidate) =>
+      candidate.width <= sheetInnerWidth + 0.001 &&
+      candidate.height <= sheetInnerHeight + 0.001;
+
+    // If it doesn't fit by width in the default orientation but fits when rotated,
+    // try rotated first (auto-rotate to ensure it can be placed).
+    if (!fits(normal) && fits(rotated)) {
+      return [rotated, normal];
+    }
+
+    return [normal, rotated];
   };
 
   const queue = [];
@@ -1027,30 +1066,53 @@ const planSheets = (items, sheetSize, spacingMm) => {
     }
   });
 
-  const packQueueIntoSheets = (queueItems) => {
+  const packQueueIntoSheets = (queueItems, sortOrder = "high-first") => {
     const groupSheets = [];
     const groupLeftovers = [];
 
-    queueItems.forEach((item) => {
+    const orderedItems = [...queueItems].sort((a, b) => {
+      const areaA = Number(a?.area) || 0;
+      const areaB = Number(b?.area) || 0;
+      if (areaA === areaB) return String(a?.id || "").localeCompare(String(b?.id || ""));
+      return sortOrder === "low-first" ? areaA - areaB : areaB - areaA;
+    });
+
+    orderedItems.forEach((item) => {
       const orientations = orientationsFor(item);
       let placed = false;
 
       for (const sheet of groupSheets) {
         for (const orientation of orientations) {
-          let rowPlaced = false;
-          for (const row of sheet.rows) {
-            if (tryPlaceOnRow(sheet, row, item, orientation)) {
-              rowPlaced = true;
-              placed = true;
-              break;
-            }
-          }
-          if (rowPlaced) break;
+          const pos = findTopLeftPosition(sheet, orientation.width, orientation.height);
+          if (!pos) continue;
 
-          if (tryPlaceOnNewRow(sheet, item, orientation)) {
-            placed = true;
-            break;
-          }
+          const placement = {
+            id: item.id,
+            name: item.label || item.name,
+            width: orientation.width,
+            height: orientation.height,
+            x: leftInset + pos.x,
+            y: topInset + pos.y,
+            rotated: orientation.rotated,
+            meta: item.meta,
+            sourceWidth: item.widthMm,
+            sourceHeight: item.heightMm,
+            baseId: item.baseId ?? item.id,
+            copyIndex: item.copyIndex ?? 1,
+            copies: item.copies ?? 1,
+            svg: item.svg || null,
+            preview: item.preview || null,
+            materialColor: item.materialColor ?? null,
+            materialThicknessMm: item.materialThicknessMm ?? null,
+            isAdhesiveTape: item.isAdhesiveTape ?? false,
+            themeStrokeColor: item.themeStrokeColor || null,
+            customBorder: item.customBorder || null,
+          };
+
+          sheet.placements.push(placement);
+          sheet.usedArea += item.area;
+          placed = true;
+          break;
         }
         if (placed) break;
       }
@@ -1059,27 +1121,85 @@ const planSheets = (items, sheetSize, spacingMm) => {
         const newSheet = {
           width: sheetSize.width,
           height: sheetSize.height,
-          rows: [],
+          pageMarginMm: safePageMargin,
+          frameSpacingMm: safeFrameSpacing,
+          leftInset,
+          topInset,
+          rightInset,
+          bottomInset,
+          leftStripWidthMm: stripWidthMm,
           placements: [],
-          nextRowY: 0,
           usedArea: 0,
         };
 
-        let placedOnFresh = false;
         for (const orientation of orientations) {
-          if (tryPlaceOnNewRow(newSheet, item, orientation)) {
-            placedOnFresh = true;
-            break;
-          }
+          const pos = findTopLeftPosition(newSheet, orientation.width, orientation.height);
+          if (!pos) continue;
+
+          const placement = {
+            id: item.id,
+            name: item.label || item.name,
+            width: orientation.width,
+            height: orientation.height,
+            x: leftInset + pos.x,
+            y: topInset + pos.y,
+            rotated: orientation.rotated,
+            meta: item.meta,
+            sourceWidth: item.widthMm,
+            sourceHeight: item.heightMm,
+            baseId: item.baseId ?? item.id,
+            copyIndex: item.copyIndex ?? 1,
+            copies: item.copies ?? 1,
+            svg: item.svg || null,
+            preview: item.preview || null,
+            materialColor: item.materialColor ?? null,
+            materialThicknessMm: item.materialThicknessMm ?? null,
+            isAdhesiveTape: item.isAdhesiveTape ?? false,
+            themeStrokeColor: item.themeStrokeColor || null,
+            customBorder: item.customBorder || null,
+          };
+
+          newSheet.placements.push(placement);
+          newSheet.usedArea += item.area;
+          groupSheets.push(newSheet);
+          placed = true;
+          break;
         }
 
-        if (placedOnFresh) {
-          groupSheets.push(newSheet);
-        } else {
-          groupLeftovers.push(item);
-        }
+        if (!placed) groupLeftovers.push(item);
       }
     });
+
+    if (optimizeToContent) {
+      groupSheets.forEach((sheet) => {
+        const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+        if (placements.length === 0) return;
+
+        const maxRight = placements.reduce(
+          (acc, p) => Math.max(acc, (Number(p?.x) || 0) + (Number(p?.width) || 0)),
+          0
+        );
+        const maxBottom = placements.reduce(
+          (acc, p) => Math.max(acc, (Number(p?.y) || 0) + (Number(p?.height) || 0)),
+          0
+        );
+
+        let desiredWidth = maxRight + rightInset;
+        let desiredHeight = maxBottom + bottomInset;
+
+        desiredWidth = Math.max(desiredWidth, stripWidthMm);
+
+        if (Number.isFinite(maxSheetWidthMm) && maxSheetWidthMm > 0) {
+          desiredWidth = Math.min(desiredWidth, maxSheetWidthMm);
+        }
+        if (Number.isFinite(maxSheetHeightMm) && maxSheetHeightMm > 0) {
+          desiredHeight = Math.min(desiredHeight, maxSheetHeightMm);
+        }
+
+        sheet.width = Math.min(sheet.width, desiredWidth);
+        sheet.height = Math.min(sheet.height, desiredHeight);
+      });
+    }
 
     return { sheets: groupSheets, leftovers: groupLeftovers };
   };
@@ -1099,7 +1219,8 @@ const planSheets = (items, sheetSize, spacingMm) => {
 
   groupOrder.forEach((key) => {
     const { sheets: groupSheets, leftovers: groupLeftovers } = packQueueIntoSheets(
-      groups.get(key) || []
+      groups.get(key) || [],
+      sheetSize.sortOrder || "high-first"
     );
     sheets.push(...groupSheets);
     leftovers.push(...groupLeftovers);
@@ -3548,7 +3669,7 @@ const styleLineFromCircleElements = (svgElement) => {
 };
 
 const buildPlacementPreview = (placement, options = {}) => {
-  const { enableGaps = true } = options;
+  const { enableGaps = true, hideFrames = false } = options;
   const { svg, preview, customBorder } = placement || {};
 
   if (svg && typeof window !== "undefined") {
@@ -3778,6 +3899,43 @@ const buildPlacementPreview = (placement, options = {}) => {
         .map((value) => parseFloat(value))
         .filter((value) => Number.isFinite(value));
 
+      const applyRotationIfNeeded = (rootElement, width, height) => {
+        if (!placement?.rotated) return;
+        if (!rootElement) return;
+        if (!Number.isFinite(width) || !Number.isFinite(height)) return;
+        if (width <= 0 || height <= 0) return;
+
+        const ns = rootElement.namespaceURI || "http://www.w3.org/2000/svg";
+        const wrapper = doc.createElementNS(ns, "g");
+        wrapper.setAttribute("data-layout-rotated", "true");
+        wrapper.setAttribute("transform", `translate(${height},0) rotate(90)`);
+
+        const nodesToWrap = Array.from(rootElement.childNodes || []).filter(
+          (node) => {
+            if (node.nodeType !== 1) return true; // keep non-elements (text/comments) wrapped too
+            const tag = node.nodeName.toLowerCase();
+            return tag !== "defs";
+          }
+        );
+
+        nodesToWrap.forEach((node) => {
+          wrapper.appendChild(node);
+        });
+
+        rootElement.appendChild(wrapper);
+
+        // Swap viewBox to match rotated coordinate system.
+        rootElement.setAttribute("viewBox", `0 0 ${height} ${width}`);
+
+        // If explicit numeric width/height are present, swap them as well.
+        const rawW = parseFloat(rootElement.getAttribute("width"));
+        const rawH = parseFloat(rootElement.getAttribute("height"));
+        if (Number.isFinite(rawW) && Number.isFinite(rawH)) {
+          rootElement.setAttribute("width", String(rawH));
+          rootElement.setAttribute("height", String(rawW));
+        }
+      };
+
       const mmValueToPx = (value) => {
         const numeric = Number(value);
         return Number.isFinite(numeric) ? numeric * PX_PER_MM : null;
@@ -3841,6 +3999,8 @@ const buildPlacementPreview = (placement, options = {}) => {
       }
       styleLineFromCircleElements(exportElement);
 
+      applyRotationIfNeeded(exportElement, viewBoxWidth, viewBoxHeight);
+
       const previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
@@ -3861,7 +4021,25 @@ const buildPlacementPreview = (placement, options = {}) => {
       }
 
       normalizeHoleShapes(previewElement);
-      recolorStrokeAttributes(previewElement, PREVIEW_OUTLINE_COLOR);
+
+      const stripPreviewFrames = (rootElement) => {
+        if (!rootElement?.querySelectorAll) return;
+
+        const nodes = Array.from(
+          rootElement.querySelectorAll(
+            '[id="canvaShape"], [data-canvas-outline="true"], [id="canvaShapeCustom"], [id^="border"], [data-export-border], [data-export-border-blue="true"]'
+          )
+        );
+
+        nodes.forEach((node) => {
+          const parent = node?.parentNode;
+          if (parent) parent.removeChild(node);
+        });
+      };
+
+      if (!hideFrames) {
+        recolorStrokeAttributes(previewElement, PREVIEW_OUTLINE_COLOR);
+      }
       // convertTextToStrokeOnly(previewElement);
       addInnerContoursForShapes(previewElement, {
         enableBorderContours: customBorder?.mode === "custom",
@@ -3881,6 +4059,12 @@ const buildPlacementPreview = (placement, options = {}) => {
 
       applyCustomBorderOverrides(previewElement, customBorder);
       styleLineFromCircleElements(previewElement);
+
+      applyRotationIfNeeded(previewElement, viewBoxWidth, viewBoxHeight);
+
+      if (hideFrames) {
+        stripPreviewFrames(previewElement);
+      }
 
       try {
         outlineBarcodeRects(exportElement);
@@ -3934,12 +4118,63 @@ const LayoutPlannerModal = ({
   onClose,
   designs = [],
   spacingMm = 5,
+  projectId = null,
 }) => {
-  const [formatKey, setFormatKey] = useState("A4");
+  const [formatKey, setFormatKey] = useState("MJ_295x600");
   const [orientation, setOrientation] = useState("portrait");
-  const [enableGaps, setEnableGaps] = useState(true);
+  const [enableGaps, setEnableGaps] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedMaterialKey, setSelectedMaterialKey] = useState("all");
+  const [exportMode, setExportMode] = useState("Normal");
+
+  const [frameSpacingMm, setFrameSpacingMm] = useState(3);
+
+  const exportModePresets = useMemo(
+    () => ({
+      Normal: { enableGaps: false, formatKey: "MJ_295x600", orientation: "portrait" },
+      "Normal (MJ) Frame": { enableGaps: true, formatKey: "MJ_295x600", orientation: "portrait" },
+      "Sheet optimized (MJ) Fr.": { enableGaps: true, formatKey: "A4", orientation: "portrait" },
+      "Sheet A4 portrait": { formatKey: "A4", orientation: "portrait" },
+      "Sheet A5 portrait": { formatKey: "A5", orientation: "portrait" },
+      "Sheet A4 landscape": { formatKey: "A4", orientation: "landscape" },
+    }),
+    []
+  );
+
+  // PDF settings UI (visual-only for now)
+  const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
+  const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
+  const [pdfMaxPageWidth, setPdfMaxPageWidth] = useState(0);
+  const [pdfMaxPageHeight, setPdfMaxPageHeight] = useState(0);
+  const [pdfPageMargin, setPdfPageMargin] = useState(0);
+  const [pdfSignSpacing, setPdfSignSpacing] = useState(2);
+  const [pdfSortOrder, setPdfSortOrder] = useState("high-first");
+  const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
+
+  // Applied page size constraints (debounced from the inputs).
+  const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
+  const [appliedMinPageHeight, setAppliedMinPageHeight] = useState(0);
+  const [appliedMaxPageWidth, setAppliedMaxPageWidth] = useState(0);
+  const [appliedMaxPageHeight, setAppliedMaxPageHeight] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const timeoutId = setTimeout(() => {
+      setAppliedMinPageWidth(pdfMinPageWidth);
+      setAppliedMinPageHeight(pdfMinPageHeight);
+      setAppliedMaxPageWidth(pdfMaxPageWidth);
+      setAppliedMaxPageHeight(pdfMaxPageHeight);
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    isOpen,
+    pdfMinPageWidth,
+    pdfMinPageHeight,
+    pdfMaxPageWidth,
+    pdfMaxPageHeight,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -3955,20 +4190,103 @@ const LayoutPlannerModal = ({
   useEffect(() => {
     if (!isOpen) {
       setOrientation("portrait");
-      setFormatKey("A4");
+      setFormatKey("MJ_295x600");
       setSelectedMaterialKey("all");
+      setExportMode("Normal");
+      setEnableGaps(false);
+      setFrameSpacingMm(3);
+
+      setPdfMinPageWidth(0);
+      setPdfMinPageHeight(0);
+      setPdfMaxPageWidth(0);
+      setPdfMaxPageHeight(0);
+
+      setAppliedMinPageWidth(0);
+      setAppliedMinPageHeight(0);
+      setAppliedMaxPageWidth(0);
+      setAppliedMaxPageHeight(0);
+
+      setPdfPageMargin(0);
+      setPdfSignSpacing(2);
+      setPdfSortOrder("high-first");
+      setPdfAddSheetInfo(true);
     }
   }, [isOpen]);
 
-  const sheetSize = useMemo(() => {
-    const base = FORMATS[formatKey] || FORMATS.A4;
-    if (orientation === "landscape") {
-      return { width: base.height, height: base.width };
+  useEffect(() => {
+    if (!isOpen) return;
+    const preset = exportModePresets?.[exportMode];
+    if (!preset) return;
+    if (typeof preset.enableGaps === "boolean") {
+      setEnableGaps(preset.enableGaps);
     }
-    return base;
-  }, [formatKey, orientation]);
+    if (typeof preset.formatKey === "string" && preset.formatKey) {
+      setFormatKey(preset.formatKey);
+    }
+    if (preset.orientation === "portrait" || preset.orientation === "landscape") {
+      setOrientation(preset.orientation);
+    }
+  }, [exportMode, exportModePresets, isOpen]);
+
+  const sheetSize = useMemo(() => {
+    const isMjFrameMode = exportMode === "Sheet optimized (MJ) Fr.";
+    const a4 = FORMATS.A4;
+
+    const base = FORMATS[formatKey] || FORMATS.A4;
+    const oriented = isMjFrameMode
+      ? { width: a4.width, height: a4.height }
+      : orientation === "landscape"
+        ? { width: base.height, height: base.width }
+        : { width: base.width, height: base.height };
+
+    const minW = Math.max(0, Number(appliedMinPageWidth) || 0);
+    const minH = Math.max(0, Number(appliedMinPageHeight) || 0);
+
+    let maxW = Math.max(0, Number(appliedMaxPageWidth) || 0);
+    let maxH = Math.max(0, Number(appliedMaxPageHeight) || 0);
+
+    // Normalize inconsistent inputs.
+    if (minW > 0 && maxW > 0 && maxW < minW) maxW = minW;
+    if (minH > 0 && maxH > 0 && maxH < minH) maxH = minH;
+
+    // Min values define the minimum allowed page size (only increase if the base is smaller).
+    let width = oriented.width;
+    let height = oriented.height;
+
+    if (minW > 0) width = Math.max(width, minW);
+    if (minH > 0) height = Math.max(height, minH);
+
+    if (maxW > 0) width = Math.min(width, maxW);
+    if (maxH > 0) height = Math.min(height, maxH);
+
+    if (isMjFrameMode) {
+      // Hard constraint: must not exceed A4.
+      width = Math.min(width, a4.width);
+      height = Math.min(height, a4.height);
+    }
+
+    return {
+      width,
+      height,
+      label: isMjFrameMode ? a4.label : base.label,
+    };
+  }, [
+    formatKey,
+    orientation,
+    exportMode,
+    appliedMinPageWidth,
+    appliedMinPageHeight,
+    appliedMaxPageWidth,
+    appliedMaxPageHeight,
+  ]);
 
   const normalizedItems = useMemo(() => normalizeDesigns(designs), [designs]);
+
+  const effectiveSignSpacingMm = (() => {
+    const parsed = Number(pdfSignSpacing);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    return spacingMm;
+  })();
 
   const materialGroups = useMemo(() => {
     const groups = new Map();
@@ -4006,10 +4324,60 @@ const LayoutPlannerModal = ({
     }
   }, [isOpen, materialGroups, selectedMaterialKey]);
 
-  const { sheets, leftovers } = useMemo(
-    () => planSheets(normalizedItems, sheetSize, spacingMm),
-    [normalizedItems, sheetSize, spacingMm]
+  const isMjFrameMode = exportMode === "Sheet optimized (MJ) Fr.";
+  const hasBrownFrame =
+    exportMode === "Normal (MJ) Frame" || exportMode === "Sheet optimized (MJ) Fr.";
+
+  const getSheetUsableArea = useCallback(
+    (sheet) => {
+      const w = Math.max(0, Number(sheet?.width) || 0);
+      const h = Math.max(0, Number(sheet?.height) || 0);
+      const leftInset = Math.max(0, Number(sheet?.leftInset) || 0);
+      const rightInset = Math.max(0, Number(sheet?.rightInset) || 0);
+      const topInset = Math.max(0, Number(sheet?.topInset) || 0);
+      const bottomInset = Math.max(0, Number(sheet?.bottomInset) || 0);
+      return Math.max(0, w - leftInset - rightInset) * Math.max(0, h - topInset - bottomInset);
+    },
+    []
   );
+
+  const { sheets, leftovers } = useMemo(() => {
+    const a4 = FORMATS.A4;
+    const layoutOptions = isMjFrameMode
+      ? {
+          leftStripWidthMm: MJ_FRAME_STRIP_WIDTH_MM,
+          disableLeftFrameSpacing: true,
+          optimizeToContent: true,
+          maxSheetWidthMm: a4.width,
+          maxSheetHeightMm: a4.height,
+        }
+      : {};
+
+    const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
+    const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
+
+    // If there's no frame, treat frameSpacing as a sheet-edge inset.
+    const pageInsetMm = hasBrownFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
+    const frameInsetMm = hasBrownFrame ? safeFrameSpacingMm : 0;
+
+    const planned = planSheets(
+      normalizedItems,
+      { ...sheetSize, sortOrder: pdfSortOrder },
+      effectiveSignSpacingMm,
+      isMjFrameMode ? 0 : pageInsetMm,
+      frameInsetMm,
+      layoutOptions
+    );
+
+    const sheetCount = Array.isArray(planned?.sheets) ? planned.sheets.length : 0;
+    const sheetsWithIndex = (planned?.sheets || []).map((s, idx) => ({
+      ...s,
+      globalSheetIndex: idx + 1,
+      globalSheetCount: sheetCount,
+    }));
+
+    return { sheets: sheetsWithIndex, leftovers: planned?.leftovers || [] };
+  }, [normalizedItems, sheetSize, pdfSortOrder, effectiveSignSpacingMm, pdfPageMargin, frameSpacingMm, isMjFrameMode, hasBrownFrame]);
 
   const { visibleSheets, visibleLeftovers } = useMemo(() => {
     if (selectedMaterialKey === "all") {
@@ -4030,15 +4398,18 @@ const LayoutPlannerModal = ({
     };
   }, [leftovers, selectedMaterialKey, sheets]);
 
-  const sheetArea = sheetSize.width * sheetSize.height;
   const totalUsedArea = visibleSheets.reduce(
     (acc, sheet) => acc + sheet.usedArea,
     0
   );
   const sheetsCount = visibleSheets.length;
+  const totalUsableArea = visibleSheets.reduce(
+    (acc, sheet) => acc + getSheetUsableArea(sheet),
+    0
+  );
   const coverage =
     sheetsCount > 0
-      ? Math.round((totalUsedArea / (sheetArea * sheetsCount)) * 100)
+      ? Math.round((totalUsedArea / Math.max(1, totalUsableArea)) * 100)
       : 0;
   const totalRequestedCopies = useMemo(
     () =>
@@ -4059,6 +4430,16 @@ const LayoutPlannerModal = ({
     // Export always uses ALL groups to keep PDF rules intact.
     if (!sheets.length || isExporting) return;
 
+    const totalSheets = sheets.length;
+    if (totalSheets > 10) {
+      if (typeof window !== "undefined" && typeof window.alert === "function") {
+        window.alert(
+          `Максимальна кількість аркушів для PDF — 10. Зараз: ${totalSheets}. Зменш кількість аркушів або оптимізуй розкладку.`
+        );
+      }
+      return;
+    }
+
     if (typeof fetch !== "function") {
       console.error("Експорт PDF потребує підтримки fetch у браузері.");
       return;
@@ -4072,6 +4453,108 @@ const LayoutPlannerModal = ({
         .slice(0, 19);
       const sheetLabel = FORMATS[formatKey]?.label || "sheet";
       const zip = new JSZip();
+
+      const computeFrameRect = (sheet) => {
+        if (!hasBrownFrame) return null;
+        const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+        if (!placements.length) return null;
+
+        const safeFrameSpacing = Math.max(0, Number(frameSpacingMm) || 0);
+        const safePageMargin = Math.max(0, Number(pdfPageMargin) || 0);
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        placements.forEach((p) => {
+          const x = Number(p?.x) || 0;
+          const y = Number(p?.y) || 0;
+          const w = Math.max(0, Number(p?.width) || 0);
+          const h = Math.max(0, Number(p?.height) || 0);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + w);
+          maxY = Math.max(maxY, y + h);
+        });
+
+        if (
+          !Number.isFinite(minX) ||
+          !Number.isFinite(minY) ||
+          !Number.isFinite(maxX) ||
+          !Number.isFinite(maxY)
+        ) {
+          return null;
+        }
+
+        // Normal frame: spacing on all sides.
+        let x = minX - safeFrameSpacing;
+        let y = minY - safeFrameSpacing;
+        let width = maxX - minX + safeFrameSpacing * 2;
+        let height = maxY - minY + safeFrameSpacing * 2;
+
+        // MJ optimized: no left frame spacing; frame starts exactly at strip boundary
+        // (same x as first canvases). Still draw full rectangle so we can round all corners.
+        const stripWidthMm = exportMode === "Sheet optimized (MJ) Fr." ? MJ_FRAME_STRIP_WIDTH_MM : 0;
+        if (exportMode === "Sheet optimized (MJ) Fr.") {
+          x = stripWidthMm;
+          y = minY - safeFrameSpacing;
+          width = maxX - x + safeFrameSpacing;
+          height = maxY - minY + safeFrameSpacing * 2;
+        }
+
+        // Clamp the frame to stay within the page margins.
+        const leftLimit = Math.max(safePageMargin, stripWidthMm);
+        const topLimit = safePageMargin;
+        const rightLimit = Math.max(
+          leftLimit,
+          (Number(sheet?.width) || 0) - safePageMargin
+        );
+        const bottomLimit = Math.max(
+          topLimit,
+          (Number(sheet?.height) || 0) - safePageMargin
+        );
+
+        x = Math.max(leftLimit, x);
+        y = Math.max(topLimit, y);
+        width = Math.max(0, Math.min(width, rightLimit - x));
+        height = Math.max(0, Math.min(height, bottomLimit - y));
+
+        if (width <= 0 || height <= 0) return null;
+        return { x, y, width, height };
+      };
+
+      const computePlacementsBounds = (sheet) => {
+        const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+        if (!placements.length) return null;
+
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        placements.forEach((p) => {
+          const x = Number(p?.x) || 0;
+          const y = Number(p?.y) || 0;
+          const w = Math.max(0, Number(p?.width) || 0);
+          const h = Math.max(0, Number(p?.height) || 0);
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + w);
+          maxY = Math.max(maxY, y + h);
+        });
+
+        if (
+          !Number.isFinite(minX) ||
+          !Number.isFinite(minY) ||
+          !Number.isFinite(maxX) ||
+          !Number.isFinite(maxY)
+        ) {
+          return null;
+        }
+
+        return { minX, minY, maxX, maxY };
+      };
 
       const preparedSheets = sheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
@@ -4110,10 +4593,100 @@ const LayoutPlannerModal = ({
           };
         });
 
+        const frameRect = computeFrameRect(sheet);
+        const placementsBounds = computePlacementsBounds(sheet);
+
+        const resolvedProjectId =
+          normalizeProjectIdForLabel(projectId) ||
+          (() => {
+            try {
+              return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
+            } catch {
+              return null;
+            }
+          })();
+
+        const sheetInfoEnabled = !!pdfAddSheetInfo;
+
+        const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
+        const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
+        const stripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 0);
+
+        const holeCentersY = (() => {
+          const h = Math.max(0, Number(sheet?.height) || 0);
+          if (h >= MJ_FRAME_SECOND_HOLE_MIN_HEIGHT_MM) {
+            return [
+              h / 2 - MJ_FRAME_HOLE_SPACING_MM / 2,
+              h / 2 + MJ_FRAME_HOLE_SPACING_MM / 2,
+            ];
+          }
+          return [h / 2];
+        })();
+
+        const sheetInfoPlacement = (() => {
+          if (!sheetInfoEnabled) return null;
+          if (exportMode === "Sheet optimized (MJ) Fr.") {
+            if (stripWidthMm <= 0) return null;
+            const centerYmm = holeCentersY.length
+              ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
+              : (Number(sheet?.height) || 0) / 2;
+            return {
+              xCenterMm: stripWidthMm / 2,
+              yCenterMm: centerYmm,
+              areaWidthMm: stripWidthMm,
+            };
+          }
+
+          // Other modes: center inside the left frameSpacing band.
+          if (safeFrameSpacingMm <= 0) return null;
+
+          const contentLeftMm = (() => {
+            if (placementsBounds && Number.isFinite(placementsBounds.minX)) {
+              return placementsBounds.minX;
+            }
+            if (frameRect) return frameRect.x + safeFrameSpacingMm;
+            return safePageMarginMm + safeFrameSpacingMm;
+          })();
+
+          const fallbackYCenterMm = (() => {
+            if (frameRect) return frameRect.y + frameRect.height / 2;
+            if (placementsBounds) {
+              return (placementsBounds.minY + placementsBounds.maxY) / 2;
+            }
+            return (Number(sheet?.height) || 0) / 2;
+          })();
+
+          return {
+            xCenterMm: Math.max(
+              safePageMarginMm + safeFrameSpacingMm / 2,
+              contentLeftMm - safeFrameSpacingMm / 2
+            ),
+            yCenterMm: fallbackYCenterMm,
+            areaWidthMm: safeFrameSpacingMm,
+          };
+        })();
+
+        const sheetInfo = sheetInfoPlacement
+          ? {
+              projectId: resolvedProjectId,
+              sheetIndex: sheet?.globalSheetIndex ?? sheetIndex + 1,
+              sheetCount: sheet?.globalSheetCount ?? sheets.length,
+              ...sheetInfoPlacement,
+            }
+          : null;
+
         return {
           index: sheetIndex,
           width: sheet.width,
           height: sheet.height,
+          frameRect,
+          exportMode,
+          leftStripWidthMm: sheet.leftStripWidthMm ?? 0,
+          leftInset: sheet.leftInset ?? null,
+          topInset: sheet.topInset ?? null,
+          rightInset: sheet.rightInset ?? null,
+          bottomInset: sheet.bottomInset ?? null,
+          sheetInfo,
           placements,
         };
       });
@@ -4129,7 +4702,8 @@ const LayoutPlannerModal = ({
           sheetLabel,
           timestamp,
           formatKey,
-          spacingMm,
+          exportMode,
+          spacingMm: effectiveSignSpacingMm,
           sheets: preparedSheets,
         }),
       });
@@ -4175,7 +4749,19 @@ const LayoutPlannerModal = ({
     } finally {
       setIsExporting(false);
     }
-  }, [formatKey, isExporting, sheets, spacingMm, enableGaps]);
+  }, [
+    formatKey,
+    exportMode,
+    isExporting,
+    sheets,
+    spacingMm,
+    effectiveSignSpacingMm,
+    enableGaps,
+    pdfPageMargin,
+    frameSpacingMm,
+    pdfAddSheetInfo,
+    projectId,
+  ]);
 
   if (!isOpen) return null;
 
@@ -4188,6 +4774,16 @@ const LayoutPlannerModal = ({
           return formatMaterialLabel(group);
         })();
 
+  const exportModeOptions = [
+    "Normal",
+    "Normal (MJ) Frame",
+    "Sheet optimized (MJ) Fr.",
+    "Sheet A4 portrait",
+    "Sheet A5 portrait",
+    "Sheet A4 landscape",
+    "Production optimized",
+  ];
+
   return (
     <div className={styles.backdrop}>
       <div className={styles.modal}>
@@ -4195,8 +4791,8 @@ const LayoutPlannerModal = ({
           <div>
             <h2>План друку полотен</h2>
             <p className={styles.subtitle}>
-              Формат {FORMATS[formatKey]?.label} · проміжок між полотнами{" "}
-              {spacingMm} мм · {ORIENTATION_LABELS[orientation]} · матеріал: {selectedMaterialLabel}
+              Формат {sheetSize.label} · {sheetSize.width}×{sheetSize.height} мм · проміжок між полотнами{" "}
+              {effectiveSignSpacingMm} мм · {ORIENTATION_LABELS[orientation]} · матеріал: {selectedMaterialLabel}
             </p>
           </div>
           <button
@@ -4214,6 +4810,7 @@ const LayoutPlannerModal = ({
             <select
               value={formatKey}
               onChange={(event) => setFormatKey(event.target.value)}
+              disabled={isMjFrameMode}
             >
               {Object.entries(FORMATS).map(([key, format]) => (
                 <option key={key} value={key}>
@@ -4234,6 +4831,7 @@ const LayoutPlannerModal = ({
                     value === orientation ? styles.orientationActive : ""
                   }
                   onClick={() => setOrientation(value)}
+                  disabled={isMjFrameMode}
                 >
                   {ORIENTATION_LABELS[value]}
                 </button>
@@ -4275,6 +4873,132 @@ const LayoutPlannerModal = ({
             </select>
           </label>
 
+          <label className={styles.controlGroup}>
+            <span>Режим (PDF)</span>
+            <select
+              value={exportMode}
+              onChange={(event) => setExportMode(event.target.value)}
+            >
+              {exportModeOptions.map((modeLabel) => (
+                <option key={modeLabel} value={modeLabel}>
+                  {modeLabel}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Min page width</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfMinPageWidth}
+                onChange={(e) => setPdfMinPageWidth(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>0 = defaults</span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Min page height</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfMinPageHeight}
+                onChange={(e) => setPdfMinPageHeight(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>0 = defaults</span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Max page width</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfMaxPageWidth}
+                onChange={(e) => setPdfMaxPageWidth(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>0 = defaults</span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Max page height</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfMaxPageHeight}
+                onChange={(e) => setPdfMaxPageHeight(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>0 = defaults</span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Page margin (to frame)</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfPageMargin}
+                onChange={(e) => setPdfPageMargin(Number(e.target.value) || 0)}
+                disabled={isMjFrameMode}
+              />
+              <span className={styles.hint}>
+                {isMjFrameMode ? "ignored for MJ mode" : ""}
+              </span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Frame spacing</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={frameSpacingMm}
+                onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>
+                {isMjFrameMode ? "MJ mode: top/right/bottom only" : "applies on all sides"}
+              </span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Sign spacing</span>
+            <div className={styles.controlInline}>
+              <input
+                type="number"
+                value={pdfSignSpacing}
+                onChange={(e) => setPdfSignSpacing(Number(e.target.value) || 0)}
+              />
+              <span className={styles.hint}>2 = defaults</span>
+            </div>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Sort order</span>
+            <select
+              value={pdfSortOrder}
+              onChange={(e) => setPdfSortOrder(e.target.value)}
+            >
+              <option value="high-first">High first</option>
+              <option value="low-first">Low first</option>
+            </select>
+          </label>
+
+          <label className={styles.controlGroup}>
+            <span>Add sheet info</span>
+            <div className={styles.controlInline}>
+              <input
+                type="checkbox"
+                checked={pdfAddSheetInfo}
+                onChange={(e) => setPdfAddSheetInfo(e.target.checked)}
+              />
+              <span className={styles.hint}>Only if sheets are used</span>
+            </div>
+          </label>
+
           <div className={styles.summary}>
             <strong>{sheetsCount || 0}</strong> арк.
             <span>
@@ -4313,13 +5037,180 @@ const LayoutPlannerModal = ({
                   1,
                   340 / Math.max(sheet.width, sheet.height)
                 );
+
+                const stripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 0);
+                const shouldRenderMjStrip = stripWidthMm > 0;
+                const placementsBounds = (() => {
+                  const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
+                  if (!placements.length) return null;
+                  let minX = Infinity;
+                  let maxX = -Infinity;
+                  let minY = Infinity;
+                  let maxY = -Infinity;
+                  placements.forEach((p) => {
+                    const x = Number(p?.x) || 0;
+                    const y = Number(p?.y) || 0;
+                    const w = Math.max(0, Number(p?.width) || 0);
+                    const h = Math.max(0, Number(p?.height) || 0);
+                    minX = Math.min(minX, x);
+                    maxX = Math.max(maxX, x + w);
+                    minY = Math.min(minY, y);
+                    maxY = Math.max(maxY, y + h);
+                  });
+                  if (
+                    !Number.isFinite(minX) ||
+                    !Number.isFinite(maxX) ||
+                    !Number.isFinite(minY) ||
+                    !Number.isFinite(maxY)
+                  ) {
+                    return null;
+                  }
+                  return { minX, maxX, minY, maxY };
+                })();
+                const holeCentersY = (() => {
+                  const h = Math.max(0, Number(sheet?.height) || 0);
+                  if (h >= MJ_FRAME_SECOND_HOLE_MIN_HEIGHT_MM) {
+                    return [
+                      h / 2 - MJ_FRAME_HOLE_SPACING_MM / 2,
+                      h / 2 + MJ_FRAME_HOLE_SPACING_MM / 2,
+                    ];
+                  }
+                  return [h / 2];
+                })();
+
+                const sheetUsableArea = getSheetUsableArea(sheet);
+
+                const showSheetInfo = !!pdfAddSheetInfo;
+                const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
+                const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
+                const sheetInfoPlacement = (() => {
+                  if (!showSheetInfo) return null;
+                  if (exportMode === "Sheet optimized (MJ) Fr.") {
+                    if (stripWidthMm <= 0) return null;
+                    const centerYmm = holeCentersY.length
+                      ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
+                      : (Number(sheet?.height) || 0) / 2;
+                    return {
+                      xLeftMm: 0,
+                      areaWidthMm: stripWidthMm,
+                      yCenterMm: centerYmm,
+                    };
+                  }
+
+                  if (safeFrameSpacingMm <= 0) return null;
+
+                  const contentLeftMm = (() => {
+                    if (placementsBounds && Number.isFinite(placementsBounds.minX)) {
+                      return placementsBounds.minX;
+                    }
+                    if (hasBrownFrame && frameRect) return frameRect.x + safeFrameSpacingMm;
+                    return safePageMarginMm + safeFrameSpacingMm;
+                  })();
+
+                  const fallbackYCenterMm = (() => {
+                    if (hasBrownFrame && frameRect) return frameRect.y + frameRect.height / 2;
+                    if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
+                    return (Number(sheet?.height) || 0) / 2;
+                  })();
+
+                  return {
+                    xLeftMm: Math.max(
+                      safePageMarginMm,
+                      contentLeftMm - safeFrameSpacingMm
+                    ),
+                    areaWidthMm: safeFrameSpacingMm,
+                    yCenterMm: fallbackYCenterMm,
+                  };
+                })();
+
+                const resolvedProjectId =
+                  normalizeProjectIdForLabel(projectId) ||
+                  (() => {
+                    try {
+                      return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
+                    } catch {
+                      return null;
+                    }
+                  })();
+
+                const sheetInfoLine1 = resolvedProjectId ? `${resolvedProjectId}` : "";
+                const sheetInfoLine2 = `Sh ${sheet?.globalSheetIndex ?? sheetIndex + 1} / ${sheet?.globalSheetCount ?? sheets.length}`;
+
+                const sheetInfoFontPx = (() => {
+                  const bandPx = Math.max(0, (sheetInfoPlacement?.areaWidthMm || 0) * scale);
+                  if (bandPx <= 0) return 0;
+                  return Math.max(3, Math.min(9, bandPx * 0.9));
+                })();
+
+                const frameRect = (() => {
+                  const placements = Array.isArray(sheet?.placements)
+                    ? sheet.placements
+                    : [];
+                  if (!placements.length) return null;
+
+                  const safeFrameSpacing = Math.max(
+                    0,
+                    Number(frameSpacingMm) || 0
+                  );
+                  const safePageMargin = Math.max(0, Number(pdfPageMargin) || 0);
+
+                  let minX = Infinity;
+                  let minY = Infinity;
+                  let maxX = -Infinity;
+                  let maxY = -Infinity;
+
+                  placements.forEach((p) => {
+                    const x = Number(p?.x) || 0;
+                    const y = Number(p?.y) || 0;
+                    const w = Math.max(0, Number(p?.width) || 0);
+                    const h = Math.max(0, Number(p?.height) || 0);
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x + w);
+                    maxY = Math.max(maxY, y + h);
+                  });
+
+                  if (
+                    !Number.isFinite(minX) ||
+                    !Number.isFinite(minY) ||
+                    !Number.isFinite(maxX) ||
+                    !Number.isFinite(maxY)
+                  ) {
+                    return null;
+                  }
+
+                  let x = minX - safeFrameSpacing;
+                  let y = minY - safeFrameSpacing;
+                  let width = maxX - minX + safeFrameSpacing * 2;
+                  let height = maxY - minY + safeFrameSpacing * 2;
+
+                  const leftLimit = safePageMargin;
+                  const topLimit = safePageMargin;
+                  const rightLimit = Math.max(
+                    leftLimit,
+                    (Number(sheet?.width) || 0) - safePageMargin
+                  );
+                  const bottomLimit = Math.max(
+                    topLimit,
+                    (Number(sheet?.height) || 0) - safePageMargin
+                  );
+
+                  x = Math.max(leftLimit, x);
+                  y = Math.max(topLimit, y);
+                  width = Math.max(0, Math.min(width, rightLimit - x));
+                  height = Math.max(0, Math.min(height, bottomLimit - y));
+
+                  if (width <= 0 || height <= 0) return null;
+                  return { x, y, width, height };
+                })();
+
                 return (
                   <div key={`sheet-${sheetIndex}`} className={styles.sheetCard}>
                     <div className={styles.sheetHeader}>
                       <h3>Аркуш {sheetIndex + 1}</h3>
                       <span>
                         {sheet.width}×{sheet.height} мм · заповнення{" "}
-                        {Math.round((sheet.usedArea / sheetArea) * 100)}%
+                        {Math.round((sheet.usedArea / Math.max(1, sheetUsableArea)) * 100)}%
                       </span>
                     </div>
                     <div
@@ -4329,9 +5220,82 @@ const LayoutPlannerModal = ({
                         height: `${sheet.height * scale}px`,
                       }}
                     >
+                      {showSheetInfo && sheetInfoPlacement?.areaWidthMm > 0 ? (
+                        <div
+                          className={styles.sheetInfo}
+                          style={{
+                            left: `${(sheetInfoPlacement.xLeftMm || 0) * scale}px`,
+                            width: `${(sheetInfoPlacement.areaWidthMm || 0) * scale}px`,
+                          }}
+                        >
+                          <div
+                            className={styles.sheetInfoInner}
+                            style={{
+                              top: `${(sheetInfoPlacement.yCenterMm || 0) * scale}px`,
+                              fontSize: sheetInfoFontPx ? `${sheetInfoFontPx}px` : undefined,
+                            }}
+                          >
+                            {sheetInfoLine1 ? (
+                              <div className={styles.sheetInfoLine}>{sheetInfoLine1}</div>
+                            ) : null}
+                            <div className={styles.sheetInfoLine}>{sheetInfoLine2}</div>
+                          </div>
+                        </div>
+                      ) : null}
+                      {shouldRenderMjStrip ? (
+                        <div
+                          className={styles.mjStrip}
+                          style={{
+                            width: `${stripWidthMm * scale}px`,
+                          }}
+                        >
+                          <svg
+                            className={styles.mjStripSvg}
+                            viewBox={`0 0 ${stripWidthMm} ${Math.max(
+                              0,
+                              Number(sheet?.height) || 0
+                            )}`}
+                            preserveAspectRatio="none"
+                          >
+                            {holeCentersY.map((cy, idx) => (
+                              <circle
+                                key={`mj-hole-${sheetIndex}-${idx}`}
+                                cx={stripWidthMm / 2}
+                                cy={cy}
+                                r={MJ_FRAME_HOLE_DIAMETER_MM / 2}
+                                fill="#FFFFFF"
+                                stroke={MJ_FRAME_STRIP_COLOR}
+                                strokeWidth="1"
+                              />
+                            ))}
+                          </svg>
+                        </div>
+                      ) : null}
+                      {hasBrownFrame && frameRect ? (
+                        <div
+                          className={styles.frameRect}
+                          style={{
+                            left: `${frameRect.x * scale}px`,
+                            top: `${frameRect.y * scale}px`,
+                            width: `${frameRect.width * scale}px`,
+                            height: `${frameRect.height * scale}px`,
+                            borderTopLeftRadius:
+                              exportMode === "Sheet optimized (MJ) Fr."
+                                ? 0
+                                : `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                            borderBottomLeftRadius:
+                              exportMode === "Sheet optimized (MJ) Fr."
+                                ? 0
+                                : `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                            borderTopRightRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                            borderBottomRightRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                          }}
+                        />
+                      ) : null}
                       {sheet.placements.map((placement) => {
                         const previewData = buildPlacementPreview(placement, {
                           enableGaps,
+                          hideFrames: true,
                         });
                         const hasPreview = !!previewData;
 
@@ -4359,20 +5323,7 @@ const LayoutPlannerModal = ({
                                   src={previewData?.url}
                                   alt={placement.name || "Полотно"}
                                 />
-                              ) : (
-                                <span className={styles.placementPlaceholder}>
-                                  SVG відсутній
-                                </span>
-                              )}
-                            </div>
-                            <div className={styles.placementMeta}>
-                              <span className={styles.placementName}>
-                                {placement.name}
-                              </span>
-                              <span className={styles.placementSize}>
-                                {round1(placement.width)}×
-                                {round1(placement.height)} мм
-                              </span>
+                              ) : null}
                             </div>
                           </div>
                         );
@@ -4406,5 +5357,12 @@ const LayoutPlannerModal = ({
   );
 };
 
-export { buildPlacementPreview };
+export {
+  buildPlacementPreview,
+  planSheets,
+  normalizeDesigns,
+  FORMATS,
+  getMaterialKey,
+  formatMaterialLabel,
+};
 export default LayoutPlannerModal;

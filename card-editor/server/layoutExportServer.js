@@ -1298,54 +1298,63 @@ app.post('/api/layout-pdf', async (req, res) => {
       if (sheetInfo && (sheetInfo.projectId || sheetInfo.sheetIndex)) {
         const leftStripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 0);
         const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
-
         const fallbackAreaWidthMm = leftStripWidthMm > 0 ? leftStripWidthMm : leftInsetMm;
-        const areaWidthMm = Math.max(
-          0,
-          Number(sheetInfo?.areaWidthMm) || fallbackAreaWidthMm
-        );
+        const areaWidthMm = Math.max(0, Number(sheetInfo?.areaWidthMm) || fallbackAreaWidthMm);
 
         if (areaWidthMm > 0) {
           const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
-
-          const fallbackXCenterMm = leftStripWidthMm > 0
-            ? leftStripWidthMm / 2
-            : Math.max(0, fallbackAreaWidthMm - 1);
-
-          const xCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm))
-            ? Number(sheetInfo.xCenterMm)
-            : fallbackXCenterMm;
-          const yCenterMm = Number.isFinite(Number(sheetInfo?.yCenterMm))
-            ? Number(sheetInfo.yCenterMm)
-            : pageHeightMm / 2;
-
+          const fallbackXCenterMm = leftStripWidthMm > 0 ? leftStripWidthMm / 2 : Math.max(0, fallbackAreaWidthMm - 1);
+          const xCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm)) ? Number(sheetInfo.xCenterMm) : fallbackXCenterMm;
+          const yCenterMm = Number.isFinite(Number(sheetInfo?.yCenterMm)) ? Number(sheetInfo.yCenterMm) : pageHeightMm / 2;
           const anchorXpt = mmToPoints(xCenterMm);
           const anchorYpt = mmToPoints(yCenterMm);
 
-          const projectId = sheetInfo.projectId ? String(sheetInfo.projectId) : '';
-          const shPart = sheetInfo.sheetCount
-            ? `Sh ${Number(sheetInfo.sheetIndex) || 1} / ${Number(sheetInfo.sheetCount) || 1}`
-            : `Sh ${Number(sheetInfo.sheetIndex) || 1}`;
-
-          const label = projectId ? `${projectId} ${shPart}` : shPart;
-
           // Font size in pt, capped small so it fits within the left inset.
-          const fontSize = Math.max(
-            5,
-            Math.min(8, mmToPoints(areaWidthMm * 0.6))
-          );
+          const fontSize = Math.max(5, Math.min(8, mmToPoints(areaWidthMm * 0.6)));
+
+          // Special handling for Sheet optimized (MJ) Fr. mode with a circle
+          const isMjOptimized = (sheet?.exportMode || exportMode) === 'Sheet optimized (MJ) Fr.';
+          const customLabel = sheetInfo.customLabel || null;
 
           doc.save();
           doc.fillColor('#111111');
           doc.font('Helvetica');
           doc.fontSize(fontSize);
-
-          // Rotate so text reads vertically along the left side.
           doc.translate(anchorXpt, anchorYpt);
           doc.rotate(-90);
 
-          const totalWidth = doc.widthOfString(label);
-          doc.text(label, -totalWidth / 2, 0, { lineBreak: false });
+          if (isMjOptimized && customLabel && customLabel.includes('\u25CF')) {
+            // Split by the circle
+            let [rightText, leftText] = customLabel.split('\u25CF').map(s => s.trim());
+            // leftText is the number, rightText is the project name (for this patch)
+            // Restore 'Sh' before the number
+            let sheetNum = leftText;
+            if (!/^Sh\s*/.test(sheetNum)) {
+              sheetNum = `Sh ${sheetNum}`;
+            }
+            // Circle geometry
+            const stripWidthPt = mmToPoints(leftStripWidthMm);
+            const circleRadiusPt = mmToPoints(5.5 / 2); // 5.5mm diameter
+            const circleCenterX = 0; // anchorXpt is at strip center
+            // Measure text widths
+            const leftWidth = doc.widthOfString(sheetNum);
+            const rightWidth = doc.widthOfString(rightText);
+            // Place number to the left of the first circle, project name to the right
+            const gapPt = mmToPoints(0.5); // 0.5mm gap from circle
+            // Draw number (with 'Sh') left of the circle
+            doc.text(sheetNum, -circleRadiusPt - gapPt - leftWidth, 0, { lineBreak: false });
+            // Draw project name right of the circle
+            doc.text(rightText, circleRadiusPt + gapPt, 0, { lineBreak: false });
+          } else {
+            // Fallback: default label logic
+            const projectId = sheetInfo.projectId ? String(sheetInfo.projectId) : '';
+            const shPart = sheetInfo.sheetCount
+              ? `Sh ${Number(sheetInfo.sheetIndex) || 1} / ${Number(sheetInfo.sheetCount) || 1}`
+              : `Sh ${Number(sheetInfo.sheetIndex) || 1}`;
+            const label = projectId ? `${projectId} ${shPart}` : shPart;
+            const totalWidth = doc.widthOfString(label);
+            doc.text(label, -totalWidth / 2, 0, { lineBreak: false });
+          }
           doc.restore();
         }
       }

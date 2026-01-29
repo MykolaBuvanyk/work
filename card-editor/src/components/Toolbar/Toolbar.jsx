@@ -5666,6 +5666,8 @@ const Toolbar = ({ formData }) => {
 
       // Відстежуємо зміну товщини
       trackThicknessChange(value);
+      // Reset color scheme to default: black text, white background
+      updateColorScheme('#000000', '#FFFFFF', 'solid', 0);
     }
   };
 

@@ -13,6 +13,18 @@ const pxToMm = (px) => (Number(px) || 0) / PX_PER_MM;
 
 const mmToCm = (mm) => (Number(mm) || 0) / 10;
 
+const normalizeMm = (mm) => {
+  const n = safeNumber(mm);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  // Match UI expectations: most sizes are 0.1mm or whole-mm.
+  // When px->mm conversion loses precision (e.g. 100mm stored as 283px => 99.83mm),
+  // snap near-integers back to the intended value.
+  const round1 = Math.round(n * 10) / 10;
+  const nearestInt = Math.round(round1);
+  if (Math.abs(round1 - nearestInt) < 0.25) return nearestInt;
+  return round1;
+};
+
 const safeNumber = (v) => {
   if (v === null || v === undefined) return 0;
   if (typeof v === "number") return Number.isFinite(v) ? v : 0;
@@ -73,6 +85,30 @@ const getObjectAreaCm2 = (obj) => {
   }
 };
 
+const getObjectRectMm = (obj) => {
+  try {
+    const widthPx =
+      typeof obj.getScaledWidth === "function"
+        ? obj.getScaledWidth()
+        : safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
+
+    const heightPx =
+      typeof obj.getScaledHeight === "function"
+        ? obj.getScaledHeight()
+        : safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
+
+    const widthMm = normalizeMm(pxToMm(widthPx));
+    const heightMm = normalizeMm(pxToMm(heightPx));
+
+    return {
+      widthMm: Number.isFinite(widthMm) && widthMm > 0 ? widthMm : 0,
+      heightMm: Number.isFinite(heightMm) && heightMm > 0 ? heightMm : 0,
+    };
+  } catch {
+    return { widthMm: 0, heightMm: 0 };
+  }
+};
+
 const getJsonObjectAreaCm2 = (obj) => {
   if (!obj) return 0;
   const widthPx = safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
@@ -80,6 +116,18 @@ const getJsonObjectAreaCm2 = (obj) => {
     safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
   const areaCm2 = mmToCm(pxToMm(widthPx)) * mmToCm(pxToMm(heightPx));
   return Number.isFinite(areaCm2) && areaCm2 > 0 ? areaCm2 : 0;
+};
+
+const getJsonObjectRectMm = (obj) => {
+  if (!obj) return { widthMm: 0, heightMm: 0 };
+  const widthPx = safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
+  const heightPx = safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
+  const widthMm = normalizeMm(pxToMm(widthPx));
+  const heightMm = normalizeMm(pxToMm(heightPx));
+  return {
+    widthMm: Number.isFinite(widthMm) && widthMm > 0 ? widthMm : 0,
+    heightMm: Number.isFinite(heightMm) && heightMm > 0 ? heightMm : 0,
+  };
 };
 
 const getEntryJson = (entry) => {
@@ -102,27 +150,22 @@ const computeEntrySubtotal = (entry, formData) => {
   const thicknessKey = resolveThicknessKey(toolbarState?.thickness);
   const tapeIndex = toolbarState?.isAdhesiveTape ? 1 : 0;
 
-  const materialPricePerCm2 =
-    safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
-  const engravingPricePerCm2 =
-    safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
-
-  const canvasAreaCm2 = mmToCm(widthMm) * mmToCm(heightMm);
-  const basePrice = canvasAreaCm2 * materialPricePerCm2;
+  // k comes from Admin "price" block based on thickness + tape
+  const k = safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
 
   const objects = Array.isArray(json?.objects) ? json.objects : [];
   let elementsPrice = 0;
   for (const obj of objects) {
     if (!obj) continue;
-    if (isBorderObject(obj)) continue;
     if (isHoleObject(obj)) continue;
     if (obj.excludeFromExport) continue;
-    const areaCm2 = getJsonObjectAreaCm2(obj);
-    if (areaCm2 <= 0) continue;
-    elementsPrice += areaCm2 * engravingPricePerCm2;
+
+    const { widthMm: objW, heightMm: objH } = getJsonObjectRectMm(obj);
+    // New formula per element (except holes)
+    elementsPrice += 1.15 + objW * objH * 0.00115 * k;
   }
 
-  const subtotal = basePrice + elementsPrice;
+  const subtotal = elementsPrice;
   return Number.isFinite(subtotal) ? subtotal : 0;
 };
 
@@ -174,25 +217,19 @@ export const useCurrentSignPrice = () => {
 
       const { data: formData } = await $host.get("auth/getDate");
 
-      const materialPricePerCm2 =
-        safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
-      const engravingPricePerCm2 =
-        safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
-
-      const canvasAreaCm2 = mmToCm(widthMm) * mmToCm(heightMm);
-      const basePrice = canvasAreaCm2 * materialPricePerCm2;
+      // k comes from Admin "price" block based on thickness + tape
+      const k = safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
 
       const objects = (canvas.getObjects?.() || []).filter(Boolean);
       let elementsPrice = 0;
       for (const obj of objects) {
         if (!obj) continue;
-        if (isBorderObject(obj)) continue;
         if (isHoleObject(obj)) continue;
         if (obj.excludeFromExport) continue;
 
-        const areaCm2 = getObjectAreaCm2(obj);
-        if (areaCm2 <= 0) continue;
-        elementsPrice += areaCm2 * engravingPricePerCm2;
+        const { widthMm: objW, heightMm: objH } = getObjectRectMm(obj);
+        // New formula per element (except holes)
+        elementsPrice += 1.15 + objW * objH * 0.00115 * k;
       }
 
       const selectedAccessories = getSelectedAccessoriesSnapshot();
@@ -212,7 +249,7 @@ export const useCurrentSignPrice = () => {
       }
 
       // Current sign: active canvas + accessories (as requested earlier)
-      const currentCanvasSubtotal = basePrice + elementsPrice;
+      const currentCanvasSubtotal = elementsPrice;
       const currentSignSubtotal = currentCanvasSubtotal + accessoriesPrice;
 
       // Order subtotal: sum of all canvases (project + unsaved) + accessories once

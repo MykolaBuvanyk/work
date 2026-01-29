@@ -10,6 +10,7 @@ const ToolbarFooter = () => {
     index: -1,
     total: 0,
   });
+  const [manufacturerNote, setManufacturerNote] = useState('');
 
   // Compute current/total using context or window helper
   const currentIndex = useMemo(() => {
@@ -27,6 +28,17 @@ const ToolbarFooter = () => {
   }, [orderInfo.total, designs]);
 
   useEffect(() => {
+    // Expose getter/setter for manufacturer note so other UI can read it
+    try {
+      window.getManufacturerNote = () => String(window._manufacturerNote || manufacturerNote || '').trim();
+      window.setManufacturerNote = (v) => {
+        window._manufacturerNote = String(v || '');
+        try {
+          setManufacturerNote(String(v || ''));
+        } catch {}
+      };
+    } catch {}
+
     if (typeof window.getCanvasOrderInfo === "function") {
       try {
         setOrderInfo(
@@ -57,12 +69,26 @@ const ToolbarFooter = () => {
     window.addEventListener("project:canvasesUpdated", handler);
     window.addEventListener("grid:navigationReady", readyHandler);
     return () => {
+      try {
+        delete window.getManufacturerNote;
+      } catch {}
+      try {
+        delete window.setManufacturerNote;
+      } catch {}
+
       window.removeEventListener("canvas:loaded", handler);
       window.removeEventListener("unsaved:signsUpdated", handler);
       window.removeEventListener("project:canvasesUpdated", handler);
       window.removeEventListener("grid:navigationReady", readyHandler);
     };
   }, []);
+
+  // Keep global getter in sync when note changes
+  useEffect(() => {
+    try {
+      window.getManufacturerNote = () => String(window._manufacturerNote || manufacturerNote || '').trim();
+    } catch {}
+  }, [manufacturerNote]);
 
   const goFirst = () => {
     if (orderInfo.order.length) {
@@ -200,6 +226,14 @@ const ToolbarFooter = () => {
           type="text"
           placeholder="Text"
           className={styles.footerNoteInput}
+          value={manufacturerNote}
+          onChange={(e) => {
+            const v = e.target.value || '';
+            setManufacturerNote(v);
+            try {
+              window._manufacturerNote = v;
+            } catch {}
+          }}
         />
       </div>
     </div>

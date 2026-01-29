@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './OrderContainer.scss';
 import { $authHost } from '../http';
+import { clearAllUnsavedSigns, putProject } from '../utils/projectStorage';
 import {
   FORMATS,
   buildPlacementPreview,
@@ -9,6 +10,9 @@ import {
   normalizeDesigns,
   planSheets,
 } from '../components/ProjectCanvasesGrid/LayoutPlannerModal/LayoutPlannerModal';
+import {
+  A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,
+} from '../assets/Icons';
 
 const PX_PER_MM = 72 / 25.4;
 
@@ -112,6 +116,7 @@ const Order = ({orderId}) => {
   const [orientation, setOrientation] = useState('portrait');
   const [enableGaps, setEnableGaps] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isOpeningProject, setIsOpeningProject] = useState(false);
 
   const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
   const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
@@ -370,7 +375,8 @@ const Order = ({orderId}) => {
       return { x, y, width, height };
     };
 
-    const resolvedProjectId = String(order?.idMongo || order?.orderMongo?.projectId || order?.orderMongo?.id || order?.id || '').trim() || null;
+    // Always use order.id as the project ID for sheet labels
+    const resolvedProjectId = String(order?.id || '').trim() || null;
 
     const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
       const placements = (sheet.placements || []).map((placement) => {
@@ -470,14 +476,31 @@ const Order = ({orderId}) => {
         };
       })();
 
-      const sheetInfo = sheetInfoPlacement
-        ? {
+      // For 'Sheet optimized (MJ) Fr.' mode, visually separate projectId and sheet number with a circle in the label band
+      let sheetInfo = null;
+      if (sheetInfoPlacement) {
+        if (exportMode === 'Sheet optimized (MJ) Fr.') {
+          // Compose a special label: [projectId] ● [sheetIndex/sheetCount]
+          const projectId = resolvedProjectId;
+          const sheetIndex = sheet?.globalSheetIndex ?? sheetIndex + 1;
+          const sheetCount = sheet?.globalSheetCount ?? visibleSheets.length;
+          // Use a unicode circle (●) as separator
+          sheetInfo = {
+            ...sheetInfoPlacement,
+            projectId,
+            sheetIndex,
+            sheetCount,
+            customLabel: `${projectId} \u25CF ${sheetIndex}/${sheetCount}`,
+          };
+        } else {
+          sheetInfo = {
             projectId: resolvedProjectId,
             sheetIndex: sheet?.globalSheetIndex ?? sheetIndex + 1,
             sheetCount: sheet?.globalSheetCount ?? visibleSheets.length,
             ...sheetInfoPlacement,
-          }
-        : null;
+          };
+        }
+      }
 
       return {
         index: sheetIndex,
@@ -529,6 +552,137 @@ const Order = ({orderId}) => {
     }
   };
 
+  const handleDownloadGroupPdf = async (group, displayLabel) => {
+    if (!group) return;
+    // Use 'Normal' style and fall back to sensible defaults from state
+    const localExportMode = 'Normal';
+    const localFormatKey = formatKey || exportModePresets['Normal'].formatKey || 'MJ_295x600';
+    const localOrientation = orientation || 'portrait';
+    const localEnableGaps = typeof enableGaps === 'boolean' ? enableGaps : !!exportModePresets['Normal'].enableGaps;
+    const localPageMargin = Math.max(0, safeNumber(pdfPageMargin, 0));
+    const localFrameSpacing = Math.max(0, safeNumber(frameSpacingMm, 3));
+    const localSignSpacing = Math.max(0, safeNumber(pdfSignSpacing, 5));
+
+    // Filter normalized items for this material group
+    const itemsForGroup = normalizedItems.filter((it) => getMaterialKey(it) === group.key);
+    if (!itemsForGroup.length) {
+      alert('No signs for this material');
+      return;
+    }
+
+    // compute sheet size using Normal mode logic
+    const base = FORMATS[localFormatKey] || FORMATS.A4;
+    const oriented = localOrientation === 'landscape' ? { width: base.height, height: base.width } : { width: base.width, height: base.height };
+    const sheet = { width: oriented.width, height: oriented.height, label: base.label };
+
+    // plan sheets for this group's items
+    const plannedGroup = planSheets(
+      itemsForGroup,
+      { ...sheet, sortOrder: pdfSortOrder },
+      localSignSpacing,
+      localPageMargin + localFrameSpacing,
+      0,
+      {}
+    );
+
+    const visible = (plannedGroup?.sheets || []).map((s, idx) => ({ ...s, globalSheetIndex: idx + 1, globalSheetCount: plannedGroup.sheets.length }));
+    if (!visible.length) {
+      alert('No sheets generated for this material');
+      return;
+    }
+    if (visible.length > 10) {
+      alert(`Максимальна кількість аркушів для PDF — 10. Зараз: ${visible.length}.`);
+      return;
+    }
+
+    const resolvedProjectId = String(order?.id || '').trim() || null;
+
+    const preparedSheets = visible.map((sheet, sheetIndex) => {
+      const placements = (sheet.placements || []).map((placement) => {
+        const previewData = buildPlacementPreview(placement, { enableGaps: localEnableGaps });
+        return {
+          id: placement.id,
+          baseId: placement.baseId,
+          name: placement.name,
+          x: placement.x,
+          y: placement.y,
+          width: placement.width,
+          height: placement.height,
+          copyIndex: placement.copyIndex ?? 1,
+          copies: placement.copies ?? 1,
+          svgMarkup: previewData?.type === 'svg' ? previewData.exportMarkup : null,
+          sourceWidth: placement.sourceWidth || placement.width,
+          sourceHeight: placement.sourceHeight || placement.height,
+          customBorder: placement.customBorder || null,
+          materialColor: placement.materialColor ?? null,
+          materialThicknessMm: placement.materialThicknessMm ?? null,
+          isAdhesiveTape: placement.isAdhesiveTape ?? false,
+          themeStrokeColor: placement.themeStrokeColor ?? null,
+        };
+      });
+
+      // reuse simple sheetInfo (non-MJ)
+      const sheetInfo = {
+        projectId: resolvedProjectId,
+        sheetIndex: sheet.globalSheetIndex ?? sheetIndex + 1,
+        sheetCount: sheet.globalSheetCount ?? visible.length,
+        xCenterMm: Math.max(0, localPageMargin + localFrameSpacing / 2),
+        yCenterMm: (sheet.height || 0) / 2,
+        areaWidthMm: localFrameSpacing,
+      };
+
+      return {
+        index: sheetIndex,
+        width: sheet.width,
+        height: sheet.height,
+        frameRect: null,
+        exportMode: localExportMode,
+        leftStripWidthMm: 0,
+        leftInset: sheet.leftInset ?? null,
+        topInset: sheet.topInset ?? null,
+        rightInset: sheet.rightInset ?? null,
+        bottomInset: sheet.bottomInset ?? null,
+        sheetInfo,
+        placements,
+      };
+    });
+
+    const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
+    setIsExporting(true);
+    try {
+      const response = await fetch(exportEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sheetLabel: sheet.label || 'sheet',
+          timestamp: new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19),
+          formatKey: localFormatKey,
+          exportMode: localExportMode,
+          spacingMm: localSignSpacing,
+          sheets: preparedSheets,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `Export server error: ${response.status}`);
+      }
+
+      const pdfBlob = await response.blob();
+      // Use the visible label as filename when provided, but sanitize for filesystem
+      const rawName = typeof displayLabel === 'string' && displayLabel.trim() ? displayLabel.trim() : `order-${orderId}-${group.key}`;
+      const sanitize = (s) => s.replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim();
+      const sanitized = sanitize(rawName);
+      const fileName = sanitized.endsWith('.pdf') ? sanitized : `${sanitized}.pdf`;
+      downloadBlob(pdfBlob, fileName);
+    } catch (e) {
+      console.error('PDF export failed', e);
+      alert('Помилка експорту PDF');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const setStatus = async(newStatus) => {
     try {
       const res=await $authHost.post('cart/setStatus', {orderId,newStatus});
@@ -538,9 +692,91 @@ const Order = ({orderId}) => {
     }
   }
 
+  const openProject = async () => {
+    // Project snapshot is stored under order.orderMongo.project (CartProject.project)
+    const project = order?.orderMongo?.project || order?.project || order?.order || null;
+    if (!project || typeof project !== 'object') {
+      alert('No project snapshot in this order');
+      return;
+    }
+    if (!project.id) {
+      alert('Project snapshot has no id');
+      return;
+    }
+
+    setIsOpeningProject(true);
+    try {
+      try {
+        await clearAllUnsavedSigns();
+      } catch {}
+      try {
+        localStorage.removeItem('currentUnsavedSignId');
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
+      } catch {}
+
+      await putProject(project);
+
+      try {
+        localStorage.setItem('currentProjectId', project.id);
+        localStorage.setItem('currentProjectName', project.name || order?.projectName || '');
+      } catch {}
+
+      const first = Array.isArray(project.canvases) ? project.canvases[0] : null;
+      if (first?.id) {
+        try {
+          localStorage.setItem('currentCanvasId', first.id);
+          localStorage.setItem('currentProjectCanvasId', first.id);
+          localStorage.setItem('currentProjectCanvasIndex', '0');
+        } catch {}
+        try {
+          if (typeof window !== 'undefined') {
+            window.__currentProjectCanvasId = first.id;
+            window.__currentProjectCanvasIndex = 0;
+          }
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem('currentCanvasId');
+          localStorage.removeItem('currentProjectCanvasId');
+          localStorage.removeItem('currentProjectCanvasIndex');
+        } catch {}
+        try {
+          if (typeof window !== 'undefined') {
+            window.__currentProjectCanvasId = null;
+            window.__currentProjectCanvasIndex = null;
+          }
+        } catch {}
+      }
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent('project:opened', {
+            detail: { projectId: project.id },
+          })
+        );
+      } catch {}
+
+      // Navigate to editor root
+      try {
+        const prefix = (location && location.pathname && String(location.pathname).match(/^\/([a-z]{2})(\/|$)/i)) ? `/${String(location.pathname).slice(1,3)}` : '';
+        // Use window.location to navigate, as Admin may not have router here
+        window.location.href = prefix || '/';
+      } catch {}
+    } catch (e) {
+      console.error('Failed to open ordered project', e);
+      alert(e?.message || 'Failed to open ordered project');
+    } finally {
+      setIsOpeningProject(false);
+    }
+  };
+
   console.log(3434,order)
 
   if(!order)return null;
+  const manufacturerNote =
+    String(order?.orderMongo?.manufacturerNote || order?.orderMongo?.project?.manufacturerNote || '').trim() || null;
   return (
     <div className="order-container">
       <div className="row">
@@ -591,7 +827,13 @@ const Order = ({orderId}) => {
       <div className="row">
         <p>Order Type</p>
         <span>CSA Engraved Plastic</span>
-        <div className="open">Open Project</div>
+        <div
+          className="open"
+          onClick={isOpeningProject ? undefined : openProject}
+          style={{ cursor: isOpeningProject ? 'default' : 'pointer' }}
+        >
+          {isOpeningProject ? 'Opening...' : 'Open Project'}
+        </div>
       </div>
       <div className="delivery">
         <button>Delivery Note</button>
@@ -666,45 +908,75 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Massage to Production:</p>
-        <span>---</span>
+        <span>{manufacturerNote || '---'}</span>
       </div>
       <div className="urls">
-        <div className="url-cont">
-          <div className="url">33 White / Black NO TAPE (5) .pdf (4 signs)</div>
-          <div style={{ backgroundColor: '#FFFFFF' }} className="img">
-            A
+        {(materialGroups && materialGroups.length > 0) ? (
+          materialGroups.map((group) => {
+            const userId = String(order?.userId || '');
+            const colorLabel = String(group.color || 'UNKNOWN');
+            const thicknessNum = Number(group.thickness);
+            const thicknessLabel = Number.isFinite(thicknessNum) && Math.abs(thicknessNum - 1.6) > 1e-6 ? ` ${thicknessNum}` : '';
+            const tapePart = String(group.tape || '').trim();
+            const hasTape = tapePart === 'tape';
+            const tapeLabel = hasTape ? '' : ' NO TAPE';
+            const fileLabel = `${userId} ${String(colorLabel || '').toUpperCase()}${thicknessLabel}${tapeLabel}.pdf (${group.count} signs)`;
+
+            const normalizedColor = String(colorLabel || '').trim().toLowerCase();
+
+            const iconMap = {
+              'white / black': A1,
+              'white/black': A1,
+              'white / blue': A2,
+              'white/blue': A2,
+              'white / red': A3,
+              'white/red': A3,
+              'black / white': A4,
+              'black/white': A4,
+              'blue / white': A5,
+              'blue/white': A5,
+              'red / white': A6,
+              'red/white': A6,
+              'green / white': A7,
+              'green/white': A7,
+              'yellow / black': A8,
+              'yellow/black': A8,
+              'gray / white': A9,
+              'gray/white': A9,
+              'grey / white': A9,
+              'orange / white': A11,
+              'orange/white': A11,
+              'brown / white': A10,
+              'brown/white': A10,
+              'silver / black': A12,
+              'silver/black': A12,
+              'wood / black': A13,
+              'wood/black': A13,
+              'carbon / white': A14,
+              'carbon/white': A14,
+            };
+
+            const IconComp = iconMap[normalizedColor] || null;
+
+            return (
+              <div className="url-cont" key={group.key}>
+                <div
+                  className="url"
+                  onClick={() => handleDownloadGroupPdf(group, fileLabel)}
+                  style={{ cursor: isExporting ? 'default' : 'pointer' }}
+                >
+                  {fileLabel}
+                </div>
+                <div className="img">{IconComp ? <IconComp /> : 'A'}</div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="url-cont">
+            <div className="url">No materials</div>
+            <div className="img">A</div>
           </div>
-        </div>
-        <div className="url-cont">
-          <div className="url">33 Silver / Black 0,8 (5) . pdf (2 signs)</div>
-          <div
-            style={{
-              backgroundColor:
-                'linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)',
-            }}
-            className="img"
-          >
-            A
-          </div>
-        </div>
-        <div className="url-cont">
-          <div className="url">33 Blue / White 3,2 NO TAPE (5) .pdf (2 signs)</div>
-          <div
-            style={{
-              backgroundColor: '#2928FF',
-              color: '#FFFFFF',
-            }}
-            className="img"
-          >
-            A
-          </div>
-        </div>
-        <div className="url-cont">
-          <div className="url">33 Red / White (5) .pdf (4 signs)</div>
-          <div style={{ backgroundColor: '#FD0100', color: '#FFFFFF' }} className="img">
-            A
-          </div>
-        </div>
+        )}
       </div>
       <div className="title">Make Customised PDF:</div>
       <div className="list-info">

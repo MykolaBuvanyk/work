@@ -165,7 +165,19 @@ const InfoAboutProject = () => {
         project: projectWithCanvasMeta,
         accessories: accessoriesSelected,
         lang,
+        // Manufacturer note (optional) pulled from toolbar footer
+        manufacturerNote:
+          typeof window.getManufacturerNote === 'function'
+            ? String(window.getManufacturerNote() || '')
+            : String(window._manufacturerNote || ''),
       };
+
+      // Also embed note into project snapshot so admin can see it under project
+      try {
+        if (payload.manufacturerNote) {
+          payload.project = { ...(payload.project || {}), manufacturerNote: payload.manufacturerNote };
+        }
+      } catch {}
       
       
 

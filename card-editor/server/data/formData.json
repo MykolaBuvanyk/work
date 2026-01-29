@@ -479,46 +479,46 @@
     "thinkness16": {
       "isSelect": true,
       "materialArea": [
-        0.2,
-        0.22
+        "1",
+        "1.1"
       ],
       "engravingArea": [
-        0.15,
-        0.15
+        "1",
+        "1.1"
       ],
       "holesPerimeter": [
-        0.1,
-        0.1
+        "1",
+        "1.1"
       ]
     },
     "thinkness08": {
       "isSelect": true,
       "materialArea": [
-        0.2,
-        0.22
+        "1",
+        "1.1"
       ],
       "engravingArea": [
-        0.15,
-        0.15
+        "1",
+        "1.1"
       ],
       "holesPerimeter": [
-        0.1,
-        0.1
+        "1",
+        "1.1"
       ]
     },
     "thinkness32": {
       "isSelect": true,
       "materialArea": [
-        0.2,
-        0.22
+        "1",
+        "1.1"
       ],
       "engravingArea": [
-        0.15,
-        0.15
+        "1",
+        "1.1"
       ],
       "holesPerimeter": [
-        0.1,
-        0.1
+        "1",
+        "1.1"
       ]
     }
   },

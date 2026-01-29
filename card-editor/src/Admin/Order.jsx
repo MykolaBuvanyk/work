@@ -782,7 +782,7 @@ const Order = ({orderId}) => {
       <div className="row">
         <p>Order.No</p>
         <span>{order.id} ({order.status})</span>
-        <div className="druk">
+        <div onClick={druk} className="druk">
           <svg
             width="24"
             height="24"

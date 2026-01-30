@@ -1185,5 +1185,40 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
   }
 });
 
+CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
+  try{
+    const userId=req.user.id;
+
+    const orders = await Order.findAll({
+      where: { userId: Number(userId) },
+      include: [
+        { 
+          model: User,
+          include:[
+            {
+              model: Order
+            }
+          ]
+        }
+      ]
+    });
+
+    
+    for(let i=0;i<orders.length;i++){
+      const orderMongo = await CartProject
+        .findOne({ projectId: orders[i].idMongo })
+        .lean();
+      orders[i].orderMongo=orderMongo;
+    }
+  
+
+    return res.json({
+      orders
+    });
+  }catch(err){
+    res.status(500);
+  }
+})
+
 
 export default CartRouter;

@@ -660,7 +660,7 @@ const Order = ({orderId}) => {
           exportMode: localExportMode,
           spacingMm: localSignSpacing,
           sheets: preparedSheets,
-        }),
+        }),ec
       });
 
       if (!response.ok) {
@@ -772,6 +772,34 @@ const Order = ({orderId}) => {
     }
   };
 
+  const downloadFile = async (url, fileName) => {
+    const res = await $authHost.get(url, { responseType: 'blob' });
+
+    // Створюємо тимчасове посилання для скачування
+    const blob = new Blob([res.data], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+
+    // Очищуємо пам'ять
+    window.URL.revokeObjectURL(link.href);
+  };
+
+  const druk = async () => {
+    try {
+      // Скачуємо по черзі
+      await downloadFile(`cart/getPdfs/${orderId}`, `Order-${orderId}.pdf`);
+      await downloadFile(`cart/getPdfs2/${orderId}`, `DeliveryNote-${orderId}.pdf`);
+      await downloadFile(`cart/getPdfs3/${orderId}`, `Invoice-${orderId}.pdf`);
+
+      console.log('Усі файли завантажено');
+    } catch (err) {
+      console.error(err);
+      alert('Помилка при завантаженні файлів');
+    }
+  };
+
   console.log(3434,order)
 
   if(!order)return null;
@@ -782,7 +810,7 @@ const Order = ({orderId}) => {
       <div className="row">
         <p>Order.No</p>
         <span>{order.id} ({order.status})</span>
-        {/* <div onClick={druk} className="druk">
+        <div onClick={druk} className="druk">
           <svg
             width="24"
             height="24"
@@ -812,7 +840,7 @@ const Order = ({orderId}) => {
               stroke-linejoin="round"
             />
           </svg>
-        </div> */}
+        </div>
       </div>
       <div className="row">
         <p>Order Name</p>
@@ -821,7 +849,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Customer No</p>
-        <span>{order.userId} ({order.user.orders.length}; {order.user.orders.reduce((acc,x)=>acc+=x.sum,0)}) </span>
+        <span>{order.userId} ({order.user.orders.length}; {order.user.orders.reduce((acc,x)=>acc+=x.sum,0).toFixed(2)}) </span>
         <div />
       </div>
       <div className="row">

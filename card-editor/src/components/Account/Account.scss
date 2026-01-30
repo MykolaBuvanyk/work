@@ -1,0 +1,75 @@
+.account-container {
+    padding: 20px;
+    background-color: #fff;
+    min-height: 100vh;
+
+    .orders-table-wrapper {
+        overflow-x: auto;
+        margin-top: 20px;
+        border: 1px solid #ccc;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+
+        thead {
+            background-color: #e0e0e0;
+            tr th {
+                padding: 10px;
+                border: 1px solid #bbb;
+                font-weight: normal;
+                text-align: left;
+                white-space: nowrap;
+            }
+        }
+
+        tbody {
+            tr {
+                background-color: #f9f9f9;
+                &:hover { background-color: #f1f1f1; }
+
+                td {
+                    padding: 8px 10px;
+                    border: 1px solid #ddd;
+                    vertical-align: middle;
+                }
+
+                .row-number {
+                    background-color: #FF9D00;
+                    color: black;
+                    font-weight: bold;
+                    text-align: center;
+                    width: 30px;
+                    border: 1px solid #FF9D00;
+                }
+
+                .clickable {
+                    cursor: pointer;
+                    text-align: center;
+                    &:hover { opacity: 0.7; }
+                }
+
+                .invoice-cell {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                }
+
+                /* Кольори статусів */
+                .status-paid { color: #2e7d32; font-weight: 500; }
+                .status-unpaid { color: #d32f2f; font-weight: 500; }
+
+                /* Іконки (імітація кольорів) */
+                .icon-green { color: #2e7d32; font-size: 18px; }
+                .icon-blue { color: #0288d1; font-size: 18px; }
+                .icon-red { color: #c62828; font-size: 18px; }
+                .icon-folder { color: #0288d1; font-size: 18px; }
+                .to-pay-icon { color: #ff9800; cursor: pointer; }
+            }
+        }
+    }
+}

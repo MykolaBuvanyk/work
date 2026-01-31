@@ -60,7 +60,10 @@ textarea {
   box-sizing: border-box;
   align-items: flex-end;
 }
-
+svg {
+  shape-rendering: geometricPrecision;
+  image-rendering: -webkit-optimize-contrast;
+}
 .topToolbar {
   width: 100%;
   max-width: 860px;

@@ -912,11 +912,11 @@ const Order = ({orderId}) => {
       <div className="row box">
         <p>Delivery Address:</p>
         <div className="box">
-          <div>Water Design Solution GmbH</div>
-          <div>Joe Doe</div>
-          <div>Hauptstr. 33</div>
-          <div>72400 Balingen</div>
-          <div>Germany</div>
+          <div>{order.orderName}</div>
+          <div>{order.user.firstName} {order.user.surname}</div>
+          <div>{order.user.address}. {order.user.house||''}</div>
+          <div>{order.user.postcode} {order.user.city}</div>
+          <div>{order.user.country}</div>
         </div>
       </div>
       <div className="row">

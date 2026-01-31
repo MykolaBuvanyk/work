@@ -1,139 +1,162 @@
-.contacts-container{
-    font-family: Inter;
+.contacts-container {
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 0 20px;
+  min-height: 60.5vh;
+  text-align: left; // Скидаємо загальне центрування для внутрішніх блоків
+
+  h1 {
+    font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-style: Semi Bold;
     font-size: 24px;
     line-height: 100%;
-    letter-spacing: 0%;
     text-align: center;
     color: #000000;
-    min-height: 60.5vh;
-    h1{
-        font-family: Inter;
-        font-weight: 600;
-        font-style: Semi Bold;
-        font-size: 24px;
-        line-height: 100%;
-        letter-spacing: 0%;
-        text-align: center;
-        color: #000000;
-        margin-top: 30px;
-        margin-bottom: 20px;
+    margin-top: 50px;
+    margin-bottom: 50px;
+  }
+
+  .contact-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+  }
+
+  .info-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+
+    section {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
-    h2{
+  }
+
+  .section-title {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 121%;
+    text-decoration: underline;
+    color: #000;
+    margin-bottom: 10px;
+  }
+
+  .whatsapp-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    text-decoration: underline;
+    margin-top: 5px;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .contact-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 121%;
+    color: #000000;
+    margin-top: 5px;
+
+    &.address-box {
+      line-height: 1.5;
+    }
+  }
+
+  .email-link {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: #1900FF;
+    text-decoration: underline;
+    margin-top: 5px;
+  }
+
+  .form-column {
+    flex: 1;
+
+    .form-title {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+      line-height: 100%;
+      text-decoration: underline;
+      margin-bottom: 25px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+
+      .input-group {
         display: flex;
-        flex-direction: row;
-        gap: 5px;
-        font-family: Inter;
+        flex-direction: column;
+        gap: 8px;
+
+        label {
+          font-family: 'Inter', sans-serif;
+          font-weight: 400;
+          font-size: 16px;
+          color: #000;
+        }
+
+        input, textarea {
+          width: 100%;
+          border: 1px solid #7D7D7D;
+          border-radius: 4px; // Зменшив радіус для точності
+          padding: 8px 12px;
+          background: transparent;
+          font-family: 'Inter', sans-serif;
+          font-size: 16px;
+
+          &:focus {
+            outline: 1px solid #000;
+          }
+        }
+
+        input {
+          height: 35px;
+        }
+      }
+
+      .send-btn {
+        align-self: flex-start;
+        margin-top: 10px;
+        background: #0076a8; // Колір з кнопки SEND на макеті
+        color: white;
+        border: none;
+        padding: 8px 35px;
+        border-radius: 4px;
+        font-family: 'Inter', sans-serif;
         font-weight: 600;
-        font-style: Semi Bold;
-        font-size: 16px;
-        line-height: 121%;
-        letter-spacing: 0%;
-        text-decoration: underline;
-        text-decoration-style: solid;
-        text-decoration-thickness: 0%;
-        text-decoration-skip-ink: auto;
-        align-items: center;
-    }
-    .contact {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        .info{
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: left;
-            width: 50%;
-            .number {
-                padding: 0;
-                margin: 0;
-                margin-block-start: 0;
-                margin-block-end: 0;
-                font-family: Inter;
-                font-weight: 400;
-                font-style: Regular;
-                font-size: 16px;
-                leading-trim: NONE;
-                line-height: 121%;
-                letter-spacing: 0%;
-                color: #000000;
-                margin-top: 5px;
-                margin-bottom: 20px;
-                text-align: left;
-            }
-            a{
-                font-family: Inter;
-                font-weight: 400;
-                font-style: Regular;
-                font-size: 16px;
-                line-height: 16px;
-                letter-spacing: 0%;
-                text-decoration: underline;
-                text-decoration-style: solid;
-                text-decoration-thickness: 0%;
-                text-decoration-skip-ink: auto;
-                color: #1900FF;
-                text-align: left;
-                align-items: flex-start;
-                margin-top: 5px;
-            }
-            .address{
-                font-family: Inter;
-                font-weight: 400;
-                font-style: Regular;
-                font-size: 16px;
-                leading-trim: NONE;
-                line-height: 24px;
-                letter-spacing: 0%;
-                color: #000000;
-                max-width: 120px;
-                text-align: left;
-                margin-top: 3px;
-            }
-            .time-work{
-                font-family: Inter;
-                font-weight: 400;
-                font-style: Regular;
-                font-size: 16px;
-                leading-trim: NONE;
-                line-height: 100%;
-                letter-spacing: 0%;
-                color: #000000;
-            }
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+
+        &:hover {
+          opacity: 0.9;
         }
-        .form{
-            width: 45%;
-            form{
-                label{
-                    display: flex;
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 7.5px;
-                    font-family: Inter;
-                    font-weight: 400;
-                    font-style: Regular;
-                    font-size: 16px;
-                    leading-trim: NONE;
-                    line-height: 100%;
-                    letter-spacing: 0%;
-                    text-align: left;
-                    color: #000000;
-                    margin-top: 20px;
-                    input,textarea {
-                        width: 100%;
-                        background-color: transparent;
-                        box-sizing: border-box;
-                        border-radius: 8px;
-                        border: 1px solid #7D7D7D;
-                        padding-left: 7.5px;
-                    }
-                    input{
-                        height: 29px;
-                    }
-                }
-            }
-        }
+      }
     }
+  }
+}
+
+// Адаптивність (опціонально)
+@media (max-width: 768px) {
+  .contacts-container .contact-grid {
+    flex-direction: column;
+    gap: 40px;
+  }
 }

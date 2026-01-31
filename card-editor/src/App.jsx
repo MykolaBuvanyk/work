@@ -15,6 +15,7 @@ import QuickGuide from './components/QuickGuide/QuickGuide';
 import UpdateBaner from './components/UpdateBaner/UpdateBaner';
 import Account from './components/Account/Account';
 import AccountSetting from './components/Account/AccountSetting';
+import AccoutDetail from './components/Account/AccoutDetail';
 
 
 
@@ -30,6 +31,7 @@ function App() {
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="account" element={<Account />} />
       <Route path="account/setting" element={<AccountSetting />} />
+      <Route path="account/detail" element={<AccoutDetail />} />
       <Route path="admin" element={<Admin />} />
       <Route path="admin/cart-orders" element={<CartOrdersAdmin />} />
       <Route path="admin/update-avaible" element={<UpdateAvaible />} />

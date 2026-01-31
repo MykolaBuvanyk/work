@@ -1,0 +1,85 @@
+.account-setting {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+
+    .message-section {
+        max-width: 600px;
+        margin-top: 40px;
+
+        .message-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #000;
+        }
+
+        .message-box {
+            display: flex;
+            border: 1px solid #999;
+            background-color: #eee;
+            min-height: 200px;
+
+            .message-label {
+                width: 30%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                font-size: 16px;
+                color: #000;
+                border-right: 1.5px solid #fff; // Біла лінія-розділювач як на макеті
+                white-space: nowrap;
+            }
+
+            .message-input-container {
+                width: 70%;
+                padding: 15px;
+                display: flex;
+
+                .message-textarea {
+                    width: 100%;
+                    height: 100%;
+                    border: 1px solid #0076a8;
+                    border-radius: 4px;
+                    padding: 10px;
+                    resize: none;
+                    outline: none;
+
+                    &:focus {
+                        box-shadow: 0 0 3px #0076a8;
+                    }
+                }
+            }
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+
+            .send-button {
+                background-color: #0076a8;
+                color: white;
+                border: none;
+                padding: 0 45px;
+                border-radius: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: background-color 0.2s;
+                height: 25px;
+
+                &:hover {
+                    background-color: #005d85;
+                }
+
+                &:active {
+                    transform: scale(0.98);
+                }
+            }
+        }
+    }
+    textarea {
+        background-color: #FFFFFF;
+    }
+}

@@ -73,6 +73,11 @@ const Header = () => {
         name: 'Registration',
         url: '/login',
       });
+    else
+      newUrls.push({
+        name:'My Account',
+        url:'/account'
+      })
     newUrls.push(
       ...[
         {

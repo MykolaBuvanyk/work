@@ -366,138 +366,121 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
 });
 
 CartRouter.get('/getPdfs/:idOrder', requireAuth, requireAdmin, async (req, res, next) => {
-  let browser; // Оголошуємо зовні, щоб закрити у блоці finally
-  try {
-    const { idOrder } = req.params;
-    
-    // Твоя логіка пошуку даних
-    const order = await Order.findOne({
-      where: { id: Number(idOrder) },
-      include: [{ model: User, include: [Order] }]
-    });
+    let browser;
+    try {
+        const { idOrder } = req.params;
 
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+        // 1. Отримання даних з SQL (враховуємо твій регістр)
+        const order = await Order.findOne({
+            where: { id: Number(idOrder) },
+            include: [{ 
+                model: User, 
+                include: [{ model: Order }] 
+            }]
+        });
 
-    const orderMongo = await CartProject.findOne({ projectId: order.idMongo }).lean();
+        if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    console.log(4324);
+        // 2. Отримання даних з MongoDB (проект лежить тут)
+        const orderMongo = await CartProject.findOne({ projectId: order.idMongo }).lean();
 
-    // Запускаємо Puppeteer
-    browser = await puppeteer.launch({ 
-      headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Важливо для Linux/VPS
-    });
-    const page = await browser.newPage();
+        // --- ЛОГІКА ТРАНСФОРМАЦІЇ ДАНИХ (ПЕРЕНЕСЕНО З ФРОНТЕНДУ) ---
 
+        // Функція перетворення канвасу в дизайн
+        const mapCartCanvasToDesign = (canvas) => {
+            if (!canvas) return null;
+            return {
+                ...canvas,
+                // додаємо базові поля, якщо вони потрібні для ключа матеріалу
+                color: canvas.color || 'unknown',
+                thickness: canvas.thickness || '1.6',
+                tape: canvas.tape || 'no-tape',
+                copies: canvas.copies || 1
+            };
+        };
 
-    // Генеруємо HTML (використовуємо дані з order та orderMongo)
-    const htmlContent = `
-      <!DOCTYPE html>
-<html lang="en">
+        // Функція нормалізації (розгортання дизайнів)
+        const normalizeDesigns = (designs) => {
+            if (!Array.isArray(designs)) return [];
+            return designs.flatMap(design => {
+                // якщо логіка нормалізації передбачає якісь зміни, додай тут
+                return design;
+            });
+        };
+
+        // Функція генерації ключа матеріалу
+        const getMaterialKey = (item) => {
+            const color = String(item?.color || 'unknown').trim().toLowerCase();
+            const thickness = String(item?.thickness || '1.6').trim();
+            const tape = String(item?.tape || 'no-tape').trim().toLowerCase();
+            return `${color}::${thickness}::${tape}`;
+        };
+
+        // 3. Побудова materialGroups (ідентично до твого useMemo)
+        const canvases = orderMongo?.project?.canvases || [];
+        const designs = canvases.map(mapCartCanvasToDesign).filter(Boolean);
+        const normalizedItems = normalizeDesigns(designs);
+
+        const groups = new Map();
+        normalizedItems.forEach((item) => {
+            const key = getMaterialKey(item);
+            const existing = groups.get(key);
+            const countToAdd = Math.max(1, Number(item?.copies) || 1);
+            if (!existing) {
+                const [colorPart, thicknessPart, tapePart] = String(key).split('::');
+                groups.set(key, {
+                    key,
+                    color: colorPart || 'unknown',
+                    thickness: thicknessPart || 'unknown',
+                    tape: tapePart || 'unknown-tape',
+                    count: countToAdd,
+                });
+            } else {
+                existing.count += countToAdd;
+            }
+        });
+
+        // Сортування (як у тебе в коді)
+        const materialGroups = Array.from(groups.values()).sort((a, b) => {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.key.localeCompare(b.key);
+        });
+
+        // --- ГЕНЕРАЦІЯ PDF ---
+
+        browser = await puppeteer.launch({
+            headless: "new",
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+        const page = await browser.newPage();
+
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
 <head>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            padding: 20px 40px;
-            color: #000;
-            line-height: 1.4;
-            font-size: 13px;
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px 40px; color: #000; line-height: 1.4; font-size: 13px; }
+        .page { width: 100%; position: relative; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 24px; margin: 0; letter-spacing: 2px; }
+        .order-meta { margin-bottom: 40px; }
+        .address-container { display: flex; justify-content: space-between; margin-top: 50px; margin-bottom: 60px; }
+        .items-list { margin-top: 40px; }
+        .item-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .checkbox { width: 35px; height: 22px; border: 1px solid #777; margin-right: 30px; }
+        .label-box { 
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid #ccc; margin-right: 25px; font-weight: bold; font-size: 12px;
         }
-        .page {
-            width: 100%;
-            position: relative;
-        }
-        /* Header Section */
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            font-size: 24px;
-            margin: 0;
-            letter-spacing: 2px;
-        }
-        .header p {
-            font-size: 18px;
-            margin: 0;
-            font-weight: bold;
-        }
+        .item-text { text-decoration: underline; font-size: 13px; }
+        .qty { margin-right: 15px; font-weight: bold; }
 
-        /* Order Details */
-        .order-meta {
-            margin-bottom: 40px;
-        }
-        .date { text-decoration: underline; margin-bottom: 5px; }
-        
-        /* Main Grid for Addresses */
-        .address-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-            margin-bottom: 60px;
-        }
-        .right-address {
-            font-size: 11px;
-            line-height: 1.2;
-        }
-
-        /* Items Section */
-        .items-list {
-            margin-top: 40px;
-        }
-        .item-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .checkbox {
-            width: 35px;
-            height: 22px;
-            border: 1px solid #777;
-            margin-right: 30px;
-        }
-        .label-box {
-            width: 22px;
-            height: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ccc;
-            margin-right: 25px;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .item-text {
-            text-decoration: underline;
-            font-size: 13px;
-        }
-        .no-label-text {
-            font-size: 14px;
-            font-weight: normal;
-        }
-        .qty {
-            margin-right: 15px;
-            font-weight: bold;
-        }
-
-        /* Footer */
-        .footer-info {
-            margin-top: 50px;
-        }
-        .page-number {
-            position: absolute;
-            bottom: -50px;
-            right: 0;
-            font-size: 11px;
-        }
-
-        /* Colors */
-        .bg-white { background: white; color: black; border: 1px solid #000; }
-        .bg-silver { background: #c0c0c0; color: black; }
-        .bg-blue { background: #0000ff; color: white; border: none; }
-        .bg-red { background: #ff0000; color: white; border: none; }
+        /* Кольори */
+        .white-black { background: white; color: black; border: 1px solid #000; }
+        .silver-black { background: #c0c0c0; color: black; }
+        .blue-white { background: #0000ff; color: white; border: none; }
+        .red-white { background: #ff0000; color: white; border: none; }
     </style>
 </head>
 <body>
@@ -509,114 +492,94 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, requireAdmin, async (req, res, 
 
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div class="order-meta">
-                <div class="date">22.01.25 08:35</div>
+                <div style="text-decoration: underline;">${new Date().toLocaleDateString('uk-UA')}</div>
                 <div>Customer No: ${order.userId}</div>
                 <div>Order No: ${order.id}</div>
-                <div>Count orders: ${order.user.orders.length}</div>
+                <div>Count orders: ${order.user?.orders?.length || 0}</div>
             </div>
             <div style="font-size: 20px; font-weight: bold; margin-top: 40px;">
-                ${order.orderName}
+                ${order.orderName || ''}
             </div>
         </div>
 
-        <div style="margin-top: 30px;">Our Notice:</div>
-
         <div class="address-container">
-            <div class="left-address">
-                <strong>${order.user.company}</strong><br>
-                ${order.user.firstName} ${order.user.surname}<br>
-                ${order.user.address} ${order.user.house||''}<br>
-                ${order.city} ${order.user.postcode}<br>
-                ${order.user.country}<br><br>
-                Phone: ${order.user.phone}<br>
-                ${order.user.email}
+            <div>
+                <strong>${order.user?.company || ''}</strong><br>
+                ${order.user?.firstName} ${order.user?.surname}<br>
+                ${order.user?.address} ${order.user?.house || ''}<br>
+                ${order.user?.postcode} ${order.user?.city || ''}<br>
+                ${order.user?.country || ''}
             </div>
-            <div class="right-address">
-                <strong>${order.user.company2||''}</strong><br>
-                ${order.user.firstName} ${order.user.surname}<br>
-                ${order.user.address2||''} ${order.user.house2||''}<br>
-                ${order.city2||''} ${order.user.postcode2||''}<br>
-                ${order.user.country2||''}<br><br>
-                Phone: ${order.user.phone2||''}<br>
-                ${order.user.email}
+            <div style="font-size: 11px;">
+                ${order.user?.company2 || ''}<br>
+                ${order.user?.firstName} ${order.user?.surname}<br>
+                Phone: ${order.user?.phone}<br>
+                ${order.user?.email}
             </div>
         </div>
 
         <div class="items-list">
-            <div class="item-row">
-                <div class="checkbox"></div>
-                <div class="label-box bg-white">A</div>
-                <div class="item-text">33 WHITE / BLACK NO TAPE (5) (4 signs)</div>
-            </div>
-            <div class="item-row">
-                <div class="checkbox"></div>
-                <div class="label-box bg-silver">A</div>
-                <div class="item-text">33 SILVER / BLACK 0,8 (5) (2 signs)</div>
-            </div>
-            <div class="item-row">
-                <div class="checkbox"></div>
-                <div class="label-box bg-blue">A</div>
-                <div class="item-text">33 BLUE / WHITE 3,2 NO TAPE (5) (2 signs)</div>
-            </div>
-            <div class="item-row">
-                <div class="checkbox"></div>
-                <div class="label-box bg-red">A</div>
-                <div class="item-text">33 RED / WHITE (5) (4 signs)</div>
-            </div>
+            ${materialGroups.map(group => {
+                const colorLabel = String(group.color).toUpperCase();
+                const thicknessNum = Number(group.thickness);
+                const thicknessLabel = Math.abs(thicknessNum - 1.6) > 0.01 ? ` ${thicknessNum}` : '';
+                const tapeLabel = group.tape === 'tape' ? '' : ' NO TAPE';
+                const fileLabel = `${order.userId} ${colorLabel}${thicknessLabel}${tapeLabel}.pdf (${group.count} signs)`;
+                
+                const colorClass = group.color.replace(/ \/ |\/| /g, '-');
 
-            <div style="margin-top: 30px; gap: 0;">
-                ${orderMongo?.accessories 
-              ? orderMongo?.accessories.map(x => `
+                return `
+                <div class="item-row">
+                    <div class="checkbox"></div>
+                    <div class="label-box ${colorClass}">A</div>
+                    <div class="item-text">${fileLabel}</div>
+                </div>`;
+            }).join('')}
+
+            <div style="margin-top: 30px;">
+                ${(orderMongo?.accessories || []).map(x => `
                   <div class="item-row">
                     <div class="checkbox"></div>
-                    <div class="no-label-text">
+                    <div style="font-size: 14px;">
                       <span class="qty">${x.qty} </span> 
                       <span style="text-decoration: underline;">${x.name}</span>
                     </div>
-                  </div>`).join('') 
-              : ''}
+                  </div>`).join('')}
             </div>
         </div>
 
-        <div class="footer-info">
-            <div class="item-row" style="margin-bottom: 5px;">
-                <div class="checkbox" style="margin-bottom: 0;"></div>
-                <div>Delivery: ${order.user.address}</div>
+        <div style="margin-top: 50px;">
+            <div class="item-row">
+                <div class="checkbox"></div>
+                <div>Delivery: ${order.user?.address || ''}</div>
             </div>
-            <div style="margin-left: 65px;">Order Sum: ${order.sum}</div>
+            <div style="margin-left: 65px; font-weight: bold;">Order Sum: ${order.sum}</div>
         </div>
-
-        <div class="page-number">Page 1 of 1</div>
     </div>
 </body>
-</html>
-    `;
-    
+</html>`;
 
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({ 
-      format: 'A4', 
-      printBackground: true,
-      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-    });
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        const pdfBuffer = await page.pdf({ 
+            format: 'A4', 
+            printBackground: true,
+            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+        });
 
-    res.removeHeader('Content-Type');
+        res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="order-${idOrder}.pdf"`,
+            'Content-Length': pdfBuffer.length
+        });
 
-    res.writeHead(200, {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="order-${idOrder}.pdf"`,
-      'Content-Length': pdfBuffer.length
-    });
+        return res.end(pdfBuffer, 'binary');
 
-    return res.end(pdfBuffer, 'binary'); // Використовуємо .end з вказанням бінарного формату
-
-  } catch (err) {
-    console.error('error get pdfs', err);
-    res.status(500).send('Error generating PDF');
-  } finally {
-    if (browser) await browser.close(); // Обов'язково закриваємо процес
-  }
+    } catch (err) {
+        console.error('error get pdfs', err);
+        return res.status(500).send('Error');
+    } finally {
+        if (browser) await browser.close();
+    }
 });
 
 
@@ -1184,6 +1147,41 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
     if (browser) await browser.close(); // Обов'язково закриваємо процес
   }
 });
+
+CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
+  try{
+    const userId=req.user.id;
+
+    const orders = await Order.findAll({
+      where: { userId: Number(userId) },
+      include: [
+        { 
+          model: User,
+          include:[
+            {
+              model: Order
+            }
+          ]
+        }
+      ]
+    });
+
+    
+    for(let i=0;i<orders.length;i++){
+      const orderMongo = await CartProject
+        .findOne({ projectId: orders[i].idMongo })
+        .lean();
+      orders[i].orderMongo=orderMongo;
+    }
+  
+
+    return res.json({
+      orders
+    });
+  }catch(err){
+    res.status(500);
+  }
+})
 
 
 export default CartRouter;

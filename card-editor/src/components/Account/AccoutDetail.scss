@@ -1,0 +1,156 @@
+.account-detail-container {
+  max-width: 1250px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Inter', sans-serif;
+
+  .account-content {
+    margin-top: 15px;
+
+    .top-notice {
+      color: #0076a8; // Синій колір як на макеті
+      font-style: italic;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .instruction {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 25px;
+    }
+
+    .address-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    // ТАБЛИЧНА ВЕРСТКА ПОЛІВ
+    .table-form {
+      border: 1px solid #999;
+      background-color: #f0f0f0; // Світло-сірий фон всієї таблиці
+
+      .input-row {
+        display: flex;
+        border-bottom: 1px solid #999;
+        min-height: 38px;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .label-cell {
+          width: 200px; // Фіксована ширина згідно з макетом Figma
+          padding: 8px 12px;
+          display: flex;
+          align-items: center;
+          font-size: 14px;
+          border-right: 1px solid #999;
+          
+          .required {
+            color: black;
+            margin-right: 3px;
+          }
+        }
+
+        .input-cell {
+          flex: 1;
+          background-color: #fff; // Білий фон для полів вводу
+          padding: 4px 8px;
+          display: flex;
+          align-items: center;
+
+          input, .custom-select {
+            width: 100%;
+            border: 1px solid #0076a8;
+            border-radius: 4px;
+            padding: 4px 10px;
+            font-size: 14px;
+            outline: none;
+          }
+          input,select {
+            background-color: #ffffff;
+          }
+
+          .custom-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+          }
+        }
+      }
+    }
+
+    .button-wrapper {
+      display: flex;
+      margin-top: 15px;
+      
+      &.right { justify-content: flex-end; }
+      &.center { 
+        justify-content: center;
+        margin-top: 40px;
+      }
+    }
+
+    .btn-save, .btn-send {
+      background-color: #0076a8;
+      color: white;
+      border: none;
+      padding: 0px 50px;
+      height: 25px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+
+
+      &:hover { background-color: #005d85; }
+    }
+
+    .password-section {
+      margin-top: 50px;
+
+      .password-flex {
+        display: flex;
+        gap: 40px;
+        align-items: flex-start;
+
+        .password-table {
+          width: 550px;
+        }
+
+        .password-help {
+          padding-top: 10px;
+          p {
+            font-style: italic;
+            font-size: 14px;
+            margin-bottom: 15px;
+            font-family: Inter;
+            font-weight: 600;
+            font-style: Italic;
+            font-size: 16px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            text-align: justify;
+            color: #000000;
+            width: 100%;
+          }
+          .btn-send {
+            height: 25px;
+            font-size: 13px;
+            padding: 0 50px;
+          }
+        }
+      }
+    }
+  }
+}

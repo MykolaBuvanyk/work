@@ -134,38 +134,79 @@ const getEntryJson = (entry) => {
   return entry?.jsonTemplate || entry?.json || null;
 };
 
+const hasCustomBorderEnabled = (toolbarState, objects) => {
+  // Prefer objects presence as source-of-truth; toolbarState can be stale during
+  // fast resize/toggle sequences.
+  if (Array.isArray(objects)) {
+    return objects.some(
+      (obj) =>
+        obj &&
+        (obj.isBorderShape || obj.cardBorderMode || obj.cardBorderThicknessPx) &&
+        String(obj.cardBorderMode || "").toLowerCase() === "custom"
+    );
+  }
+  return toolbarState?.hasBorder === true;
+};
+
+const computeBorderPrice = ({ widthMm, heightMm, hasBorder }) => {
+  if (!hasBorder) return 0;
+  const w = normalizeMm(safeNumber(widthMm));
+  const h = normalizeMm(safeNumber(heightMm));
+  if (!(w > 0) || !(h > 0)) return 0;
+
+  // P is the canvas perimeter in millimeters.
+  // Pricing rule: 0.2 + (P - 40) * 0.0056
+  // Interpret as: base 0.2 up to P=40mm, then add per extra mm.
+  // Example: 100x100 => P=400 => 0.2 + (400-40)*0.0056 = 2.216
+  const pMm = 2 * (w + h);
+  const extra = Math.max(0, pMm - 40);
+  const price = 0.2 + extra * 0.0056;
+  return Number.isFinite(price) && price > 0 ? price : 0;
+};
+
 const computeEntrySubtotal = (entry, formData) => {
   const json = getEntryJson(entry);
   const toolbarState = entry?.toolbarState || extractToolbarState(entry) || {};
 
   const widthMm =
-    safeNumber(toolbarState?.sizeValues?.width) ||
-    pxToMm(safeNumber(entry?.width || json?.width)) ||
+    normalizeMm(safeNumber(toolbarState?.sizeValues?.width)) ||
+    normalizeMm(pxToMm(safeNumber(entry?.width || json?.width))) ||
     120;
   const heightMm =
-    safeNumber(toolbarState?.sizeValues?.height) ||
-    pxToMm(safeNumber(entry?.height || json?.height)) ||
+    normalizeMm(safeNumber(toolbarState?.sizeValues?.height)) ||
+    normalizeMm(pxToMm(safeNumber(entry?.height || json?.height))) ||
     80;
 
   const thicknessKey = resolveThicknessKey(toolbarState?.thickness);
   const tapeIndex = toolbarState?.isAdhesiveTape ? 1 : 0;
 
-  // k comes from Admin "price" block based on thickness + tape
-  const k = safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
+  // Canvas/material coefficient (same source as before)
+  const kMaterial =
+    safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
+
+  // Engraving coefficient comes from engravingArea
+  const kEngraving =
+    safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
+
+  // Canvas/base price formula
+  const canvasPrice = 1.15 + widthMm * heightMm * 0.00115 * kMaterial;
 
   const objects = Array.isArray(json?.objects) ? json.objects : [];
-  let elementsPrice = 0;
+  const hasBorder = hasCustomBorderEnabled(toolbarState, objects);
+  const borderPrice = computeBorderPrice({ widthMm, heightMm, hasBorder });
+  let engravingPrice = 0;
   for (const obj of objects) {
     if (!obj) continue;
+    if (isBorderObject(obj)) continue;
     if (isHoleObject(obj)) continue;
     if (obj.excludeFromExport) continue;
 
     const { widthMm: objW, heightMm: objH } = getJsonObjectRectMm(obj);
-    // New formula per element (except holes)
-    elementsPrice += 1.15 + objW * objH * 0.00115 * k;
+    // Engraving formula per element (except holes)
+    engravingPrice += (objW + objH) * 0.039 * kEngraving;
   }
 
-  const subtotal = elementsPrice;
+  const subtotal = canvasPrice + engravingPrice + borderPrice;
   return Number.isFinite(subtotal) ? subtotal : 0;
 };
 
@@ -209,27 +250,43 @@ export const useCurrentSignPrice = () => {
           ? window.getCurrentToolbarState() || {}
           : {};
 
-      const widthMm = safeNumber(toolbarState?.sizeValues?.width);
-      const heightMm = safeNumber(toolbarState?.sizeValues?.height);
+      // During some resize flows toolbar state can lag behind canvas dimensions.
+      // Use canvas px dimensions as a fallback to keep price consistent.
+      let widthMm = normalizeMm(safeNumber(toolbarState?.sizeValues?.width));
+      let heightMm = normalizeMm(safeNumber(toolbarState?.sizeValues?.height));
+      if (!(widthMm > 0)) widthMm = normalizeMm(pxToMm(safeNumber(canvas.getWidth?.())));
+      if (!(heightMm > 0)) heightMm = normalizeMm(pxToMm(safeNumber(canvas.getHeight?.())));
 
       const thicknessKey = resolveThicknessKey(toolbarState?.thickness);
       const tapeIndex = toolbarState?.isAdhesiveTape ? 1 : 0;
 
       const { data: formData } = await $host.get("auth/getDate");
 
-      // k comes from Admin "price" block based on thickness + tape
-      const k = safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
+      // Canvas/material coefficient
+      const kMaterial =
+        safeNumber(formData?.listThinkness?.[thicknessKey]?.materialArea?.[tapeIndex]) || 0;
+
+      // Engraving coefficient
+      const kEngraving =
+        safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
+
+      // Canvas/base price formula
+      const basePrice = 1.15 + widthMm * heightMm * 0.00115 * kMaterial;
+
+      const hasBorder = hasCustomBorderEnabled(toolbarState, canvas?.getObjects?.() || []);
+      const borderPrice = computeBorderPrice({ widthMm, heightMm, hasBorder });
 
       const objects = (canvas.getObjects?.() || []).filter(Boolean);
       let elementsPrice = 0;
       for (const obj of objects) {
         if (!obj) continue;
+        if (isBorderObject(obj)) continue;
         if (isHoleObject(obj)) continue;
         if (obj.excludeFromExport) continue;
 
         const { widthMm: objW, heightMm: objH } = getObjectRectMm(obj);
-        // New formula per element (except holes)
-        elementsPrice += 1.15 + objW * objH * 0.00115 * k;
+        // Engraving formula per element (except holes)
+        elementsPrice += (objW + objH) * 0.039 * kEngraving;
       }
 
       const selectedAccessories = getSelectedAccessoriesSnapshot();
@@ -249,7 +306,7 @@ export const useCurrentSignPrice = () => {
       }
 
       // Current sign: active canvas + accessories (as requested earlier)
-      const currentCanvasSubtotal = elementsPrice;
+      const currentCanvasSubtotal = basePrice + elementsPrice + borderPrice;
       const currentSignSubtotal = currentCanvasSubtotal + accessoriesPrice;
 
       // Order subtotal: sum of all canvases (project + unsaved) + accessories once

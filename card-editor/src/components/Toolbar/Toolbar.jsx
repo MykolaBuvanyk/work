@@ -1440,8 +1440,12 @@ const Toolbar = ({ formData }) => {
   );
 
   const getToolbarState = useCallback(() => {
-    const current = toolbarStateRef.current || buildToolbarState();
-    return cloneToolbarState(current);
+    // Always compute fresh state: refs (like borderStateRef) and canvas objects
+    // can change without changing hook deps, so relying on toolbarStateRef.current
+    // can return stale `hasBorder` after resize/toggle.
+    const snapshot = buildToolbarState();
+    toolbarStateRef.current = snapshot;
+    return cloneToolbarState(snapshot);
   }, [buildToolbarState, cloneToolbarState]);
 
   useEffect(() => {

@@ -113,8 +113,10 @@ const Toolbar = ({ formData }) => {
   const RECT_HOLE_HEIGHT_MM = 2;
   const RECT_HOLE_MIN_OFFSET_X_MM = 3;
   const RECT_HOLE_MIN_OFFSET_Y_MM = 2;
-  const mmToPx = mm => (typeof mm === 'number' ? Math.round(mm * PX_PER_MM) : 0);
+  // NOTE: Fabric supports sub-pixel geometry; avoid rounding to keep holes/cuts accurate.
+  const mmToPx = mm => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
   const pxToMm = px => (typeof px === 'number' ? px / PX_PER_MM : 0);
+  const holeRadiusPxFromDiameterMm = diameterMm => (Number(diameterMm) || 0) * (PX_PER_MM / 2);
   // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
   const round1 = n => Math.round((Number(n) || 0) * 10) / 10;
   const [activeObject, setActiveObject] = useState(null);
@@ -6041,7 +6043,7 @@ const Toolbar = ({ formData }) => {
   // Додавання тексту
   const addText = () => {
     if (canvas) {
-      const text = new fabric.IText('Текст', {
+      const text = new fabric.IText('Text', {
         left: canvas.width / 2,
         top: canvas.height / 2,
         originX: 'center',
@@ -6296,15 +6298,32 @@ const Toolbar = ({ formData }) => {
     return mmToPx(offsetMm);
   };
 
-  // Прямокутні (квадратні) отвори використовують ту ж динамічну евристику відступів
+  // Прямокутні отвори (тип 5): фіксований відступ від краю.
+  // ВАЖЛИВО: у виробничих інструментах (LightBurn) зазвичай міряють до лінії різу (stroke).
+  // Тому щоб відступ по лінії різу був рівно X/Y мм, додаємо 0.5*stroke до геометрії.
+  // Координата центру = offsetEdge + 0.5*stroke + (width/2).
   const getRectHoleOffsetsPx = () => {
-    const baseOffsetPx = getHoleOffsetPx(Math.max(RECT_HOLE_WIDTH_MM, RECT_HOLE_HEIGHT_MM));
-    const minOffsetXpx = mmToPx(RECT_HOLE_MIN_OFFSET_X_MM + RECT_HOLE_WIDTH_MM / 2);
-    const minOffsetYpx = mmToPx(RECT_HOLE_MIN_OFFSET_Y_MM + RECT_HOLE_HEIGHT_MM / 2);
-    return {
-      offsetXpx: Math.max(baseOffsetPx, minOffsetXpx),
-      offsetYpx: Math.max(baseOffsetPx, minOffsetYpx),
-    };
+    const holeStrokeWidthPx = 1;
+    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+
+    // Small calibration tweak to match CAM measurement precisely.
+    const edgeFudgeMm = 0.04;
+
+    const desiredCenterOffsetXmm =
+      RECT_HOLE_MIN_OFFSET_X_MM + edgeFudgeMm + halfStrokeMm + RECT_HOLE_WIDTH_MM / 2;
+    const desiredCenterOffsetYmm =
+      RECT_HOLE_MIN_OFFSET_Y_MM + edgeFudgeMm + halfStrokeMm + RECT_HOLE_HEIGHT_MM / 2;
+
+    let offsetXpx = mmToPx(desiredCenterOffsetXmm);
+    let offsetYpx = mmToPx(desiredCenterOffsetYmm);
+
+    // Safety for very small canvases: keep centers inside.
+    const wPx = canvas?.getWidth?.() || canvas?.width || 0;
+    const hPx = canvas?.getHeight?.() || canvas?.height || 0;
+    if (wPx > 0) offsetXpx = Math.min(offsetXpx, wPx / 2);
+    if (hPx > 0) offsetYpx = Math.min(offsetYpx, hPx / 2);
+
+    return { offsetXpx, offsetYpx };
   };
 
   const registerHoleShape = shape => {
@@ -6340,7 +6359,7 @@ const Toolbar = ({ formData }) => {
     const canvasWidth = canvas.getWidth?.() || canvas.width || 0;
     const semicircleRadiusPx = mmToPx(LOCK_ARCH_HEIGHT_MM);
     const chordY = semicircleRadiusPx;
-    const holeRadiusPx = mmToPx((holesDiameter || 2.5) / 2);
+    const holeRadiusPx = holeRadiusPxFromDiameterMm(holesDiameter || 2.5);
     const minTopGapPx = mmToPx(MIN_LOCK_HOLE_TOP_GAP_MM);
     const extraAllowancePx = mmToPx(LOCK_HOLE_EXTRA_DOWN_MM);
     const baseCenterY = semicircleRadiusPx / 2;
@@ -6446,7 +6465,7 @@ const Toolbar = ({ formData }) => {
       new fabric.Circle({
         left: canvasWidth / 2,
         top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
+        radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
         fill: HOLE_FILL_COLOR, // Білий фон дирки
         stroke: CUT_STROKE_COLOR, // Оранжевий бордер
         strokeWidth: 1, // 1px
@@ -6491,7 +6510,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6517,7 +6536,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6564,7 +6583,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6590,7 +6609,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6616,7 +6635,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight - offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6642,7 +6661,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight - offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6671,7 +6690,7 @@ const Toolbar = ({ formData }) => {
     }
   };
 
-  // Тип 5 - 4 ПРЯМОКУТНІ отвори 5x2мм у кутах (динамічний відступ як у решти)
+  // Тип 5 - 4 ПРЯМОКУТНІ отвори 5x2мм у кутах (статичні відступи: X=3мм, Y=2мм від краю)
   const addHoleType5 = () => {
     if (!canvas) return;
     clearExistingHoles();
@@ -6723,9 +6742,9 @@ const Toolbar = ({ formData }) => {
     canvas.requestRenderAll();
     try {
       console.log(
-        `Тип5: 4 прямокутні 5x2мм. Горизонтальний відступ центру=${pxToMm(offsetXpx).toFixed(
-          2
-        )}мм, вертикальний=${pxToMm(offsetYpx).toFixed(2)}мм`
+        `Тип5: 4 прямокутні 5x2мм. Відступ від краю: X=${RECT_HOLE_MIN_OFFSET_X_MM}мм, Y=${RECT_HOLE_MIN_OFFSET_Y_MM}мм (центр: X=${pxToMm(
+          offsetXpx
+        ).toFixed(2)}мм, Y=${pxToMm(offsetYpx).toFixed(2)}мм)`
       );
     } catch {}
   };
@@ -6749,7 +6768,7 @@ const Toolbar = ({ formData }) => {
       new fabric.Circle({
         left: offsetPx,
         top: centerY,
-        radius: diameterPx / 2,
+        radius: holeRadiusPxFromDiameterMm(diameterMm),
         fill: HOLE_FILL_COLOR,
         stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
@@ -6800,7 +6819,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 3) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 3),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,

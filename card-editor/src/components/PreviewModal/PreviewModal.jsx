@@ -26,9 +26,42 @@ const PreviewModal = ({ canvas, onClose }) => {
     try {
       setLoading(true);
       try { canvas.requestRenderAll(); } catch {}
-      const svg = typeof canvas.toSVG === "function" ? canvas.toSVG() : "";
-      const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg || "<svg xmlns='http://www.w3.org/2000/svg'/>"
-      );
+      let svg = typeof canvas.toSVG === "function" ? canvas.toSVG() : "";
+
+      // Force real-world units in the exported SVG so LightBurn measures correctly.
+      // We prefer the stored design dimensions (mm) if present.
+      try {
+        const PX_PER_MM = 72 / 25.4;
+        const wPx = Number(canvas.getWidth?.() ?? canvas.width ?? 0);
+        const hPx = Number(canvas.getHeight?.() ?? canvas.height ?? 0);
+        const storedW = Number(canvas.get?.("designWidthMm"));
+        const storedH = Number(canvas.get?.("designHeightMm"));
+        const wMm = Number.isFinite(storedW) && storedW > 0 ? storedW : (wPx / PX_PER_MM);
+        const hMm = Number.isFinite(storedH) && storedH > 0 ? storedH : (hPx / PX_PER_MM);
+
+        const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+        const svgEl = doc.querySelector("svg");
+        if (svgEl && wPx > 0 && hPx > 0 && wMm > 0 && hMm > 0) {
+          // Keep some decimals to avoid quantization for small holes.
+          const wMmStr = String(Math.round(wMm * 1000) / 1000);
+          const hMmStr = String(Math.round(hMm * 1000) / 1000);
+          svgEl.setAttribute("width", `${wMmStr}mm`);
+          svgEl.setAttribute("height", `${hMmStr}mm`);
+          if (!svgEl.getAttribute("viewBox")) {
+            svgEl.setAttribute("viewBox", `0 0 ${wPx} ${hPx}`);
+          }
+          // Avoid stretching when opening in different viewers.
+          if (!svgEl.getAttribute("preserveAspectRatio")) {
+            svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+          }
+          svg = new XMLSerializer().serializeToString(svgEl);
+        }
+      } catch {
+        // ignore unit normalization errors
+      }
+      const url =
+        "data:image/svg+xml;charset=utf-8," +
+        encodeURIComponent(svg || "<svg xmlns='http://www.w3.org/2000/svg'/>");
       setDataUrl(url);
     } finally {
       setLoading(false);

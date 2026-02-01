@@ -577,9 +577,10 @@ const applyHoleAppearance = (node) => {
   stripHoleStyleOverrides(node);
   node.setAttribute("stroke", HOLE_STROKE_COLOR);
   node.setAttribute("fill", HOLE_FILL_COLOR);
-  if (!node.getAttribute("stroke-width")) {
-    node.setAttribute("stroke-width", "1");
-  }
+  // Keep hole strokes visually present but geometrically negligible for CAD/CAM measurement.
+  // Using a tiny value avoids LightBurn reading offsets from the inner stroke edge.
+  node.setAttribute("stroke-width", "0.01");
+  node.setAttribute("vector-effect", "non-scaling-stroke");
   node.setAttribute(
     "stroke-linejoin",
     node.getAttribute("stroke-linejoin") || "round"

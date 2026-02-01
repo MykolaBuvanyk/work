@@ -6,9 +6,10 @@ import styles from "./TextList.module.css";
 
 const TextList = () => {
   const { canvas, globalColors } = useCanvasContext();
+  const DEFAULT_TEXT_LABEL = "Text";
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
-  const [newTextValue, setNewTextValue] = useState("");
+  const [newTextValue, setNewTextValue] = useState(DEFAULT_TEXT_LABEL);
   const [availableFonts, setAvailableFonts] = useState([]);
   const isUpdatingRef = useRef(false);
 
@@ -162,7 +163,7 @@ const TextList = () => {
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
-      const text = new fabric.IText(newTextValue || "Новий текст", {
+      const text = new fabric.IText(newTextValue || DEFAULT_TEXT_LABEL, {
         left: canvasWidth / 2,
         top: canvasHeight / 2,
         originX: "center",
@@ -282,7 +283,7 @@ const TextList = () => {
       } catch {}
 
       // Очищуємо поле після додавання
-      setNewTextValue("Add text");
+      setNewTextValue(DEFAULT_TEXT_LABEL);
 
       setTimeout(() => {
         isUpdatingRef.current = false;
@@ -999,7 +1000,7 @@ const TextList = () => {
               }
             }}
             className={styles.addTextInput}
-            placeholder="Add text"
+              placeholder={DEFAULT_TEXT_LABEL}
           />
         </div>
       </div>

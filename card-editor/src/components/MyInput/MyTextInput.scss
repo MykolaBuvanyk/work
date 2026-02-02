@@ -1,4 +1,5 @@
 .text-input-container {
+  width: 100%;
   input {
     border: 1px solid #006ca4;
     border-radius: 4px;
@@ -7,5 +8,6 @@
     background-color: transparent;
     width: 100%;
     padding-left: 10px;
+    background-color: #FFFFFF;
   }
 }

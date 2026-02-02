@@ -1,52 +1,113 @@
 .login-form-container {
-  padding: 20px;
+  max-width: 600px;
+  padding: 25px;
+  border: 1px solid #777; // Сіра тонка рамка навколо всієї форми
   border-radius: 8px;
-  border: 1px solid #006ca4;
-  h1 {
-    font-family: Barlow;
-    font-weight: 600;
-    font-style: SemiBold;
-    font-size: 24px;
-    line-height: 32px;
-    letter-spacing: 0%;
-    vertical-align: middle;
-    color: #14213d;
+  background-color: #fff;
+
+  .login-header {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-top: 0;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+      margin: 0;
+    }
   }
-  .form-log {
+
+  .login-table {
+    border: 1px solid #7D7D7D;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: #ffffff;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-top: 12.5px;
-    .value {
+    gap: 3px;
+
+    .table-row {
       display: flex;
-      flex-direction: column;
-      gap: 3px;
-      label {
-        font-family: Barlow;
-        font-weight: 600;
-        font-style: SemiBold;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0%;
-        vertical-align: middle;
-        color: #14213d;
+      gap: 2px;
+      
+      &:last-child {
+        border-bottom: none;
       }
     }
-    button {
-      background-color: #0374e3;
-      border-radius: 4px;
-      width: 100%;
-      box-sizing: border-box;
-      color: #ffffff;
+
+    .table-label {
+      background-color: #f1f1f1; // Сірий фон як на фото
+      padding: 12px 15px;
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 5px;
-      height: 35px;
+      width: 55%;
+
+      label {
+        color: #333;
+        font-weight: 500;
+        font-style: Medium;
+        font-size: 14px;
+        line-height: 100%;
+        white-space: nowrap;
+
+      }
+    }
+
+    .table-input {
+      flex: 1;
+      padding: 8px 10px;
+      background-color: #F0F0F0;
+      display: flex;
+      align-items: center;
+      .pass-input-container{
+        width: 100%;
+      }
+      .text-input-container{
+        width: 100%;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid #006CA4;
+        border-radius: 4px;
+        padding: 0px 8px;
+        outline: none;
+        background-color: #ffffff;
+        height: 25px;
+      }
+    }
+  }
+
+  .forgot-password-link {
+    text-align: right;
+    margin: 8px 0 20px 0;
+
+    a {
+      color: #006ca4;
+      text-decoration: none;
+      font-size: 14px;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .sign-in-btn {
+    width: 100%;
+    background-color: #006ca4; // Темно-синій колір кнопки
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 20px; // Заокруглена кнопка
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background-color: #005a8a;
     }
   }
 }

@@ -40,7 +40,7 @@ const Account = () => {
     };
 
     return (
-        <div className='account-container'>
+        <div id='account-container'>
             <AccountHeader />
             
             <div className="orders-table-wrapper">

@@ -1,0 +1,42 @@
+.login-container {
+  display: flex;
+  flex-direction: column;
+
+  .login-main {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .form-log {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    
+    width: 100%;
+  }
+  h1 {
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 100%;
+    text-align: left;
+    color: #000000;
+    margin: 47px 0 20px 0;
+  }
+  p {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 100%;
+    color: #000000;
+    margin: 0;
+  }
+  .info {
+    font-weight: 500;
+    font-style: Italic;
+    font-size: 16px;
+    line-height: 100%;
+    color: #006CA4;
+    margin: 20px 0;
+  }
+  
+}

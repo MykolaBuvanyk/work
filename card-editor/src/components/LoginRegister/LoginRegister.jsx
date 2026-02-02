@@ -17,7 +17,7 @@ const LoginRegister = () => {
     setSelectedType(event.target.value);
   };
   return (
-    <div className="login-register-container form-log">
+    <div className="login-register-container">
       <h2>
         <svg
           width="40"

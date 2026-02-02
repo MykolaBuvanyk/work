@@ -1,137 +1,130 @@
 .register-bussines-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 25px;
-  label {
-    font-family: Barlow;
-    font-weight: 600;
-    font-style: SemiBold;
-    font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0%;
-    vertical-align: middle;
-    color: #14213d;
+  margin-top: 20px;
+  background-color: #fff;
+
+  .registration-table {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #FFFFFF;
     display: flex;
     flex-direction: column;
-    select {
-      height: 40px;
-      width: 100%;
-      background-color: transparent;
-      padding-left: 10px;
-      box-sizing: border-box;
-    }
-    select::-webkit-scrollbar {
-      width: 8px;
-    }
+    gap: 3px;
 
-    select::-webkit-scrollbar-track {
-      background: #eee;
-    }
-
-    select::-webkit-scrollbar-thumb {
-      background: #006ca4;
-      border-radius: 4px;
-    }
-
-    select::-webkit-scrollbar-thumb:hover {
-      background: #004f78;
-    }
-    &.row {
+    .table-row {
       display: flex;
       flex-direction: row;
-      gap: 5px;
-      align-items: center;
-      a {
-        font-family: Barlow;
+      gap: 2px;
+      border-bottom: 1px solid #eee;
+      min-height: 40px;
+      background-color: #FFFFFF;
+
+      &:last-child { border-bottom: none; }
+
+      .label-cell {
+        flex: 0 0 35%;
+        background-color: #F0F0F0;
+        padding: 10px 15px;
+        display: flex;
+        align-items: center;
+        font-size: 13px;
         font-weight: 600;
-        font-style: SemiBold;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0%;
-        vertical-align: middle;
-        color: #0374e3;
+        color: #000;
       }
-      input[type='checkbox'] {
-        margin: 0;
-        appearance: none;
-        -webkit-appearance: none;
-        width: 18px;
-        height: 18px;
+
+      .input-cell {
+        flex: 1;
+        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        background-color: #F0F0F0;
+
+        input {
+          width: 100%;
+          border: 1px solid #006ca4;
+          border-radius: 4px;
+          height: 28px;
+        }
+
+        &.country-row {
+          gap: 10px;
+          select {
+            border: 1px solid #006ca4;
+            border-radius: 4px;
+            height: 30px;
+            flex: 1;
+            background-color: #ffffff;
+          }
+          .short-select { flex: 0 0 80px; }
+        }
+      }
+    }
+  }
+
+  .vat-notice {
+    font-size: 12px;
+    margin: 10px 0;
+    color: #333;
+    a { color: #006ca4; text-decoration: underline; }
+  }
+
+  .checkbox-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+
+    .radio-style {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #006ca4;
+      cursor: pointer;
+      position: relative;
+
+      input { opacity: 0; position: absolute; }
+
+      .checkmark {
+        width: 22px;
+        height: 22px;
         border: 2px solid #006ca4;
-        border-radius: 4px;
-        cursor: pointer;
-        background: transparent;
-        transition: 0.2s ease;
+        border-radius: 50%;
         display: inline-block;
         position: relative;
+        flex-shrink: 0;
       }
 
-      /* Коли вибраний */
-      input[type='checkbox']:checked {
-        background-color: #006ca4;
-        border-color: #006ca4;
-      }
-
-      /* Галочка */
-      input[type='checkbox']:checked::after {
+      input:checked + .checkmark::after {
         content: '';
         position: absolute;
-        top: 0px;
+        top: 4px;
         left: 4px;
-        width: 4px;
+        width: 10px;
         height: 10px;
-        border: solid white;
-        border-width: 0 2px 2px 0;
-        transform: rotate(45deg);
+        background-color: #006ca4;
+        border-radius: 50%;
       }
     }
-    span {
-      font-family: Barlow;
-      font-weight: 400;
-      font-style: Regular;
-      font-size: 14px;
-      line-height: 20px;
-      letter-spacing: 0%;
-      vertical-align: middle;
-      color: #006ca4;
-    }
   }
-  .info {
-    font-family: Barlow;
-    font-weight: 400;
-    font-style: Regular;
-    font-size: 12px;
-    line-height: 18px;
-    letter-spacing: 0%;
-    vertical-align: middle;
-    color: #313e52;
 
-    a {
-      font-family: Barlow;
-      font-weight: 400;
-      font-style: Regular;
-      font-size: 12px;
-      line-height: 18px;
-      letter-spacing: 0%;
-      vertical-align: middle;
-      color: #0374e3;
-    }
-  }
-  button {
-    background-color: #0374e3;
-    border-radius: 4px;
-    border: 1px solid #000000;
-    font-family: Barlow;
-    font-weight: 600;
-    font-style: SemiBold;
-    font-size: 16px;
-    line-height: 14px;
-    letter-spacing: 0%;
-    text-align: center;
-    vertical-align: middle;
-    color: #ffffff;
+  .register-btn {
+    width: 100%;
+    background-color: #006ca4;
+    color: white;
     border: none;
-    height: 35px;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  .footer-info {
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    a { color: #006ca4; text-decoration: underline; }
   }
 }

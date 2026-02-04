@@ -21,6 +21,25 @@ function formatDate(dateStr) {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
+function formatDatePlusMonth(dateStr) {
+  const d = new Date(dateStr);
+
+  // додаємо +1 місяць
+  d.setMonth(d.getMonth() + 1);
+
+  const pad = n => String(n).padStart(2, '0');
+
+  const day = pad(d.getDate());
+  const month = pad(d.getMonth() + 1);
+  const year = String(d.getFullYear()).slice(2);
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
+}
+
+
+
 
 const CartRouter = express.Router();
 
@@ -1042,9 +1061,9 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
                 <tr><td>Invoice No:</td><td>${order.id}</td></tr>
                 <tr><td>Customer No:</td><td>${order.userId}</td></tr>
                 <tr><td>Date:</td><td>${formatDate(order.createdAt)}</td></tr>
-                <tr><td>Invoice due date:</td><td></td></tr>
-                <tr><td>Payment Terms:</td><td></td></tr>
-                <tr><td>Reference:</td><td></td></tr>
+                <tr><td>Invoice due date:</td><td>${formatDatePlusMonth(order.createdAt)}</td></tr>
+                <tr><td>Payment Terms:</td><td>30 days net</td></tr>
+                <tr><td>Reference:</td><td>Order No: ${order.id}</td></tr>
             </table>
         </div>
     </div>

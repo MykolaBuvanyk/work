@@ -11,8 +11,8 @@ const __dirname = path.dirname(__filename);
 
 const secretKey = process.env.secretKey;
 
-const generateJwt = async (id, phone, firstName, surname, type, isRemember = true) => {
-  return jwt.sign({ id, phone, firstName, surname, type }, secretKey, {
+const generateJwt = async (id, phone, firstName, surname, type, isRemember = true, company) => {
+  return jwt.sign({ id, phone, firstName, surname, type, company }, secretKey, {
     expiresIn: isRemember ? '1y' : '1h',
   });
 };
@@ -115,7 +115,8 @@ class AuthController {
         newUser.firstName,
         newUser.surname,
         newUser.type,
-        true
+        true,
+        newUser.company
       );
       return res.json({ newUser, token });
     } catch (err) {
@@ -137,7 +138,8 @@ class AuthController {
         user.firstName,
         user.surname,
         user.type,
-        true
+        true,
+        user.company
       );
       return res.json({ token });
     } catch (err) {

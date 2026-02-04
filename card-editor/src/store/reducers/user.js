@@ -10,6 +10,7 @@ const initialState = {
     firstName: '',
     surname: '',
     type: '',
+    company:''
   },
 };
 
@@ -33,6 +34,7 @@ const authSlice = createSlice({
         state.user.firstName = decoded.firstName;
         state.user.surname = decoded.surname;
         state.user.type = decoded.type;
+        state.user.company = decoded.company;
       } catch (e) {
         console.error('Помилка декодування токена:', e);
       }
@@ -49,6 +51,7 @@ const authSlice = createSlice({
       state.user.firstName = '';
       state.user.surname = '';
       state.user.type = '';
+      state.user.company = '';
     },
     initializeFromLocalStorage: state => {
       const token = localStorage.getItem('token');
@@ -63,6 +66,7 @@ const authSlice = createSlice({
           state.user.firstName = decoded.firstName;
           state.user.surname = decoded.surname;
           state.user.type = decoded.type;
+          state.user.company = decoded.company;
         } catch (e) {
           console.error('Помилка декодування токена:', e);
         }

@@ -196,7 +196,7 @@ const Footer = () => {
               fill="#262626"
             />
           </svg>
-          <div className={'lang'}>
+          {/*<div className={'lang'}>
             <div
               className='lang-select'
               style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
@@ -220,7 +220,7 @@ const Footer = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </div>*/}
         </div>
         <div className="list-urls">
           {urls.map(x => (

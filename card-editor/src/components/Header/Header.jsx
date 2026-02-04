@@ -9,20 +9,35 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/reducers/user';
 
 const languages = [
-  { countryCode: 'GB', label: 'EN' }, // Використовуємо GB для UK/EN
-  { countryCode: 'FR', label: 'FR' },
-  { countryCode: 'IT', label: 'IT' },
-  { countryCode: 'ES', label: 'ES' },
-  { countryCode: 'PL', label: 'PL' },
-  { countryCode: 'CZ', label: 'CS' }, // Чехія
-  { countryCode: 'NL', label: 'NL' },
-  { countryCode: 'SE', label: 'SV' }, // Швеція
-  { countryCode: 'NO', label: 'NO' },
-  { countryCode: 'DK', label: 'DA' }, // Данія
-  { countryCode: 'HU', label: 'HU' },
-  { countryCode: 'HR', label: 'HR' }, // Хорватія
-  { countryCode: 'UA', label: 'UK' }, // Україна
-  { countryCode: 'RU', label: 'RU' },
+  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
+  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
+
+  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
+  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
+  { countryCode: 'DE', label: 'DE-DE' }, // Germany
+  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
+  { countryCode: 'FR', label: 'FR-FR' }, // France
+
+  { countryCode: 'GB', label: 'EN-GB' }, // UK
+  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
+  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
+
+  { countryCode: 'IT', label: 'IT-IT' }, // Italy
+  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
+  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
+
+  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
+  { countryCode: 'PL', label: 'PL-PL' }, // Poland
+
+  { countryCode: 'RO', label: 'RO-RO' }, // Romania
+  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
+  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
+
+  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
+  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
+  { countryCode: 'ES', label: 'ES-ES' }, // Spain
+
+  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
 ];
 
 const Header = () => {
@@ -118,8 +133,7 @@ const Header = () => {
   
   const IMG_URL = import.meta.env.VITE_LAYOUT_SERVER;
 
-  console.log(99234324, IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'de' : location.pathname.slice(1, 3)}.jpeg`)
-
+  console.log(4234,user)
   return (
     <div className={styles.header}>
       <div className={styles.firstPart}>
@@ -309,7 +323,7 @@ const Header = () => {
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
             <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>
-            <p>Water Design Solution GMbH</p>
+            <p>{user.company||''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
             {isAuth ? 'Log out' : 'Log in'}
@@ -320,8 +334,9 @@ const Header = () => {
               style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
               onClick={() => setIsLangOpen(!isLangOpen)}
             >
-              <Flag country="DE" size={32} />
-              DE
+              {//<Flag country="DE" size={32} />
+}
+              EN
               <SlArrowDown size={14} />
             </div>
             <div className={isLangOpen ? styles.dropdown : styles.open}>
@@ -331,7 +346,8 @@ const Header = () => {
                   onClick={() => setIsLangOpen(false)}
                   className={styles.countries}
                 >
-                  <Flag country={lang.countryCode} size={32} />
+                  {//<Flag country={lang.countryCode} size={32} />
+}
                   {lang.countryCode}
                 </div>
               ))}

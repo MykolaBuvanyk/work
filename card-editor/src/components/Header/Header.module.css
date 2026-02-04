@@ -91,7 +91,7 @@
   background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 73px;
+  width: 45px;
   padding: 7.5px 0;
   z-index: 99;
 }
@@ -109,7 +109,7 @@
   letter-spacing: 0%;
   vertical-align: middle;
   color: #000000;
-  padding-right: 10px;
+  /*padding-right: 10px;*/
   display: flex;
   align-items: center;
   justify-content: center;

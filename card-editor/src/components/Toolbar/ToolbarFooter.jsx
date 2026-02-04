@@ -220,6 +220,21 @@ const ToolbarFooter = () => {
         </div>
       </div>
 
+      <div style={{gap:'30px', marginTop:'10px'}} className={styles.footerInfo}>
+        <div className={styles.row}>
+          <span>Unique types:</span>
+          <span className={styles.footerPageCount}>
+            <span>{10}</span>
+          </span>
+        </div>
+        <div className={styles.row}>
+          <span>Unique types:</span>
+          <span className={styles.footerPageCount}>
+            <span>{10}</span>
+          </span>
+        </div>
+      </div>
+
       <div className={styles.footerNoteSection}>
         <div className={styles.footerNoteTitle}>Note for the manufacturer</div>
         <input

@@ -6,27 +6,44 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 
 const languages = [
-  { countryCode: 'GB', label: 'EN' }, // Використовуємо GB для UK/EN
-  { countryCode: 'FR', label: 'FR' },
-  { countryCode: 'IT', label: 'IT' },
-  { countryCode: 'ES', label: 'ES' },
-  { countryCode: 'PL', label: 'PL' },
-  { countryCode: 'CZ', label: 'CS' }, // Чехія
-  { countryCode: 'NL', label: 'NL' },
-  { countryCode: 'SE', label: 'SV' }, // Швеція
-  { countryCode: 'NO', label: 'NO' },
-  { countryCode: 'DK', label: 'DA' }, // Данія
-  { countryCode: 'HU', label: 'HU' },
-  { countryCode: 'HR', label: 'HR' }, // Хорватія
-  { countryCode: 'UA', label: 'UK' }, // Україна
-  { countryCode: 'RU', label: 'RU' },
+  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
+  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
+
+  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
+  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
+  { countryCode: 'DE', label: 'DE-DE' }, // Germany
+  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
+  { countryCode: 'FR', label: 'FR-FR' }, // France
+
+  { countryCode: 'GB', label: 'EN-GB' }, // UK
+  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
+  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
+
+  { countryCode: 'IT', label: 'IT-IT' }, // Italy
+  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
+  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
+
+  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
+  { countryCode: 'PL', label: 'PL-PL' }, // Poland
+
+  { countryCode: 'RO', label: 'RO-RO' }, // Romania
+  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
+  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
+
+  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
+  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
+  { countryCode: 'ES', label: 'ES-ES' }, // Spain
+
+  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
 ];
+
+
 
 const UpdateAvaible = () => {
   const { isAdmin } = useSelector(state => state.user);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [langInput, setLangInput2]=useState('');
-  const [langSelect, setLangSelect]=useState('GB');
+  const [langSelect, setLangSelect]=useState('BE');
 
 
   const [formData, setFormData] = useState({
@@ -193,7 +210,7 @@ const UpdateAvaible = () => {
         </div>
       </div>
 
-      <div className="row">
+      <div style={{gap:'60px'}} className="row">
         <div className="first">
           <div className="title">Accessories:</div>
           <ul className="list-elem">
@@ -224,32 +241,7 @@ const UpdateAvaible = () => {
           </ul>
 
           <div className="bonuses">
-            <div className="lang-cont">
-              <span>VAT</span>
-              <div className='lang'>
-                <div
-                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                >
-                  <Flag country={langSelect} size={32} />
-                  {langSelect}
-                  <SlArrowDown size={14} />
-                </div>
-                <div className={isLangOpen ? 'dropdown' : 'open'}>
-                  {languages.map(lang => (
-                    <div
-                      key={lang.countryCode}
-                      onClick={() => setSelectLang(lang.countryCode)}
-                      className={'countries'}
-                    >
-                      <Flag country={lang.countryCode} size={32} />
-                      {lang.countryCode}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <input type="text" value={langInput} onChange={(e)=>setLangInput(e.target.value)} />
-            </div>
+            
             <div className="bunuses-text">
               <div className="bonuses-title">
                 <p>Bonuses: </p> <span>€</span>
@@ -332,6 +324,30 @@ const UpdateAvaible = () => {
                 </div>
               </div>
             ))}
+          </div>
+          <div className="lang-cont">
+            <span>VAT</span>
+            <div className='lang'>
+              <div
+                style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                onClick={() => setIsLangOpen(!isLangOpen)}
+              >
+                {langSelect}
+                <SlArrowDown size={14} />
+              </div>
+              <div className={isLangOpen ? 'dropdown' : 'open'}>
+                {languages.map(lang => (
+                  <div
+                    key={lang.countryCode}
+                    onClick={() => setSelectLang(lang.countryCode)}
+                    className={'countries'}
+                  >
+                    {lang.countryCode}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <input type="text" value={langInput} onChange={(e)=>setLangInput(e.target.value)} />
           </div>
         </div>
       </div>

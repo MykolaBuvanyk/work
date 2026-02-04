@@ -101,7 +101,7 @@ const AccoutDetail = () => {
             <button className="btn-blue-oval">Send</button>
           </div>
         </div>
-      </div>
+      </div>  
     </div>
   );
 };

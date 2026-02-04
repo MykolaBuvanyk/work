@@ -539,6 +539,23 @@ input[type="number"]:focus {
   gap: 10px;
 }
 
+.footerInfoCont {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7.5px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 7.5px;
+}
+
+.row p {
+  color: #000000;
+}
+
 .footerInfo {
   display: flex;
   align-items: center;
@@ -554,6 +571,7 @@ input[type="number"]:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 16px;
   /* контрольований відступ між 2, /, 10 */
 }
 

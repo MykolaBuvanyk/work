@@ -13,6 +13,7 @@ import {
 import {
   A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,
 } from '../assets/Icons';
+import { useNavigate } from 'react-router-dom';
 
 const PX_PER_MM = 72 / 25.4;
 
@@ -799,8 +800,14 @@ const Order = ({orderId}) => {
       alert('Помилка при завантаженні файлів');
     }
   };
+  
+  const emailOpen = () => {
+    window.open(
+      `mailto:${order.user.email}?subject=Order no №${order.id}`,
+      "_blank"
+    );
+  };
 
-  console.log(3434,order)
 
   if(!order)return null;
   const manufacturerNote =
@@ -1131,7 +1138,7 @@ const Order = ({orderId}) => {
         </button>
       </div>
       <div className="but-message">
-        <button>Message to customer</button>
+        <button onClick={emailOpen}>Message to customer</button>
       </div>
     </div>
   );

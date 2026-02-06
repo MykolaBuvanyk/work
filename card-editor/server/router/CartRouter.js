@@ -1185,20 +1185,27 @@ CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
       ]
     });
 
-    
-    for(let i=0;i<orders.length;i++){
-      const orderMongo = await CartProject
-        .findOne({ projectId: orders[i].idMongo })
-        .lean();
-      orders[i].orderMongo=orderMongo;
-    }
-  
+    // IMPORTANT: Order is a Sequelize model instance. Adding a dynamic field (orders[i].orderMongo)
+    // will NOT be serialized by res.json(). Convert to plain objects explicitly.
+    const mapped = await Promise.all(
+      (orders || []).map(async (order) => {
+        const orderMongo = await CartProject
+          .findOne({ projectId: order.idMongo })
+          .lean();
+
+        return {
+          ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),
+          orderMongo,
+        };
+      })
+    );
 
     return res.json({
-      orders
+      orders: mapped,
     });
   }catch(err){
-    res.status(500);
+    console.error('GET MY ORDERS ERROR:', err);
+    return res.status(500).json({ message: 'Failed to load orders' });
   }
 })
 

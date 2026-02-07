@@ -228,7 +228,7 @@ const Admin = () => {
                     else setOrderId(order.id)
                     }} key={order.id}>
 
-                    <td className="order-no">{order.id.padStart(3, '0')}</td>
+                    <td className="order-no">{order.id}</td>
                     <td>{order.userId}</td>
                     <td>{order.signs}</td>
                     <td>{order.sum}</td>

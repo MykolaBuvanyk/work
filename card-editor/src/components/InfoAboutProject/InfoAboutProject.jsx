@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
 import { useSelector } from "react-redux";
@@ -65,7 +65,7 @@ const InfoAboutProject = () => {
   const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
   const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const { designs, canvas } = useCanvasContext();
+  const { canvas } = useCanvasContext();
 
   const user=useSelector((state)=>state.user);
 
@@ -76,15 +76,42 @@ const InfoAboutProject = () => {
   const formattedDiscount = `€ ${Number(discountAmount || 0).toFixed(2)}`;
   const formattedTotal = `€ ${Number(totalPrice || 0).toFixed(2)}`;
 
-  const projectsCount = useMemo(() => {
-    if (!Array.isArray(designs) || designs.length === 0) return 0;
+  const readProjectMetaFromStorage = () => {
+    try {
+      const id = String(localStorage.getItem("currentProjectId") || "").trim();
+      const name = String(localStorage.getItem("currentProjectName") || "").trim();
+      return { id, name };
+    } catch {
+      return { id: "", name: "" };
+    }
+  };
 
-    return designs.reduce((sum, design) => {
-      const raw = design?.copiesCount ?? design?.toolbarState?.copiesCount ?? 1;
-      const count = Number(raw);
-      return sum + (Number.isFinite(count) && count > 0 ? count : 1);
-    }, 0);
-  }, [designs]);
+  const [projectMeta, setProjectMeta] = useState(() => readProjectMetaFromStorage());
+
+  useEffect(() => {
+    const sync = () => setProjectMeta(readProjectMetaFromStorage());
+
+    // Initial sync + react to project open/save events.
+    sync();
+    window.addEventListener("project:opened", sync);
+    window.addEventListener("project:switched", sync);
+    window.addEventListener("project:reset", sync);
+    window.addEventListener("storage", sync);
+
+    return () => {
+      window.removeEventListener("project:opened", sync);
+      window.removeEventListener("project:switched", sync);
+      window.removeEventListener("project:reset", sync);
+      window.removeEventListener("storage", sync);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const projectTitle = useMemo(() => {
+    if (!projectMeta?.id) return "Not saved";
+    if (projectMeta?.name) return projectMeta.name;
+    return "Untitled";
+  }, [projectMeta]);
 
   const onCartClick = async () => {
     if (!isAuth) {
@@ -194,7 +221,7 @@ const InfoAboutProject = () => {
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
-        <h3 className={styles.title}>Projects: {projectsCount}</h3>
+        <h3 className={styles.title}>Project: {projectTitle}</h3>
         <button
           className={styles.cartButton}
           onClick={onCartClick}
@@ -265,6 +292,9 @@ const InfoAboutProject = () => {
                 try {
                   localStorage.setItem("currentProjectId", savedProject.id);
                 } catch {}
+
+                // Update header immediately even if no other state changes.
+                setProjectMeta({ id: String(savedProject.id), name: String(name || "").trim() });
                 window.dispatchEvent(
                   new CustomEvent("project:opened", {
                     detail: { projectId: savedProject.id },

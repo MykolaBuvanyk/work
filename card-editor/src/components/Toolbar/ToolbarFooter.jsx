@@ -5,6 +5,25 @@ import { useCanvasContext } from "../../contexts/CanvasContext";
 const ToolbarFooter = () => {
   const { designs, currentDesignId } = useCanvasContext();
 
+  const uniqueTypesCount = useMemo(() => {
+    return Array.isArray(designs) ? designs.length : 0;
+  }, [designs]);
+
+  const totalSignsCount = useMemo(() => {
+    if (!Array.isArray(designs) || designs.length === 0) return 0;
+
+    return designs.reduce((sum, design) => {
+      const raw =
+        design?.copiesCount ??
+        design?.toolbarState?.copiesCount ??
+        1;
+
+      const n = Math.floor(Number(raw));
+      const safe = Number.isFinite(n) && n > 0 ? n : 1;
+      return sum + safe;
+    }, 0);
+  }, [designs]);
+
   const [orderInfo, setOrderInfo] = useState({
     order: [],
     index: -1,
@@ -224,13 +243,13 @@ const ToolbarFooter = () => {
         <div className={styles.row}>
           <span>Unique types:</span>
           <span className={styles.footerPageCount}>
-            <span>{10}</span>
+            <span>{uniqueTypesCount}</span>
           </span>
         </div>
         <div className={styles.row}>
-          <span>Unique types:</span>
+          <span>Total signs:</span>
           <span className={styles.footerPageCount}>
-            <span>{10}</span>
+            <span>{totalSignsCount}</span>
           </span>
         </div>
       </div>

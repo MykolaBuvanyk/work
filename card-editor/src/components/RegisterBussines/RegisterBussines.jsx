@@ -18,8 +18,19 @@ const RegisterBussines = () => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
 
+  const sumbit = async e => {
+    try {
+      e.preventDefault();
+      const res = await $host.post('auth/register', formData);
+      //dispatch(setUser({ token: res.data.token }));
+      navigate(`/login/enter/${res.data.newUser.id}`);
+    } catch (err) {
+      alert('error');
+    }
+  };
+
   return (
-    <form className="register-bussines-container">
+    <form onSubmit={sumbit} className="register-bussines-container">
       <div className="registration-table">
         {/* Row: First Name */}
         <div className="table-row">

@@ -35,6 +35,7 @@
     "mongoose": "^8.18.2",
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
+    "nodemailer": "^8.0.1",
     "paper": "^0.12.18",
     "pdfkit": "^0.15.0",
     "potrace": "^2.1.8",

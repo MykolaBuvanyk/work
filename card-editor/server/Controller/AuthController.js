@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
+import sendEmail from './utils/sendEmail.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +119,52 @@ class AuthController {
         true,
         newUser.company
       );
+
+      const subject = `Welcome to SignXpert!`;
+      const messageHtml = `
+<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; color: #000000; margin: 0; padding: 40px 20px; line-height: 1.5;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        
+        <div style="text-align: center; margin-bottom: 35px;">
+          <img src=${process.env.VITE_LAYOUT_SERVER+'images/images/logo.png'}
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 24px; font-weight: 500; margin: 0; color: #000000;">Your account is ready! Welcome to SignXpert</h1>
+        </div>
+
+        <div style="padding: 0 10px; font-size: 16px;">
+            <p style="margin: 0 0 10px 0;">Hello, <span style="color: #0077b5;">${firstName}</span>!</p>
+            <p style="margin: 0 0 10px 0;">We’re excited to have you with us.</p>
+            <p style="margin: 0 0 25px 0;">Your account has been successfully created, and you can now start designing your projects.</p>
+
+            <div style="margin-bottom: 25px;">
+                <p style="margin: 0;">Customer number: <strong>${String(newUser.id).padStart(3, '0')}</strong></p>
+                <p style="margin: 0;">Email: <a href="mailto:${email}" style="color: #004a99; text-decoration: underline;">${email}</a></p>
+            </div>
+
+            <p style="margin: 0 0 5px 0;">Ready to start creating?</p>
+            <p style="margin: 0 0 30px 0;">Our online editor is available right in your browser — the fastest way to bring your ideas to life.</p>
+
+            <div style="text-align: center; margin-bottom: 40px;">
+                <a href="https://sign-xpert.com/editor" style="background-color: #006da0; color: #ffffff; padding: 12px 60px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
+            </div>
+
+            <p style="margin: 0 0 5px 0;">Best regards,</p>
+            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+
+            <div style="text-align: right; font-size: 14px; line-height: 1.6;">
+                <p style="margin: 0;"><a href="https://sign-xpert.com" style="color: #004a99; text-decoration: underline;">sign-xpert.com</a></p>
+                <p style="margin: 0;"><a href="mailto:info@sign-xpert.com" style="color: #004a99; text-decoration: underline;">info@sign-xpert.com</a></p>
+                <p style="margin: 0; color: #000000;">+49 157 766 25 125</p>
+            </div>
+        </div>
+    </div>
+</div>
+`;
+
+      sendEmail(email, messageHtml, subject)
+
       return res.json({ newUser, token });
     } catch (err) {
       return next(ErrorApi.internalServerError(err));

@@ -16,6 +16,7 @@ import UpdateBaner from './components/UpdateBaner/UpdateBaner';
 import Account from './components/Account/Account';
 import AccountSetting from './components/Account/AccountSetting';
 import AccoutDetail from './components/Account/AccoutDetail';
+import Enter from './components/Enter/Enter';
 
 
 
@@ -25,6 +26,7 @@ function App() {
     <>
       <Route index element={<Home />} />
       <Route path="login" element={<Login />} />
+      <Route path="login/enter/:id" element={<Enter />} />
       <Route path="terms-of-purchasing" element={<TermsOfPurchasing />} />
       <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="contacts" element={<Contacts />} />

@@ -186,6 +186,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       status: 'pending',
     });
 
+
     const order=await Order.create({
       sum:Math.round(body.price * 100) / 100,
       signs:body.project.canvases.length,
@@ -197,6 +198,13 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       accessories:JSON.stringify(normalizedAccessories),
       idMongo:body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null
     })
+
+    const userOrders=await Order.findOne({where:{userId:req.user.id,status:'Deleted'}});
+    if(userOrders){
+      order.status='Deleted';
+      await order.save();
+    }
+    
 
     return res.json({
       id: String(created._id),
@@ -364,10 +372,19 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { orderId, newStatus } = req.body;
 
-    const [updatedCount] = await Order.update(
-      { status: newStatus },
-      { where: { id: Number(orderId) } }
-    );
+    let updatedCount;
+
+    if(newStatus=='Deleted'){
+      [updatedCount] = await Order.update(
+        { status: newStatus },
+        { where: { userId: req.user.id } }
+      );
+    }else {
+      [updatedCount] = await Order.update(
+        { status: newStatus },
+        { where: { id: Number(orderId) } }
+      );
+    }
 
     if (updatedCount === 0) {
       return res.status(404).json({ message: 'Order not found' });

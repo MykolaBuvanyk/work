@@ -7,7 +7,6 @@
     text-align: center;
     align-items: center;
     /* margin-top: 55px; */
-    font-family: 'Inter', sans-serif;
     margin-bottom: 10px;
 }
 .terms_page_wrapper{
@@ -22,7 +21,6 @@
     letter-spacing: 0%;
     text-align: left;
     margin-top: 55px;
-    font-family: 'Inter', sans-serif;
     margin-top: 20px;
 }
 .term_page_content p,.term_page_content a {
@@ -32,7 +30,6 @@
     letter-spacing: 0%;
     text-align: left;
     margin-top: 20px;
-    font-family: 'Inter', sans-serif;
 }
 a{
     color: #127fde;

@@ -25,8 +25,8 @@ const RegisterConsumer = () => {
     try {
       e.preventDefault();
       const res = await $host.post('auth/register', formData);
-      dispatch(setUser({ token: res.data.token }));
-      navigate('/');
+      //dispatch(setUser({ token: res.data.token }));
+      navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
       alert('error');
     }

@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 
 const LoginRegister = () => {
   const location=useLocation();
-  console.log(434,location);
+
   const [selectedType, setSelectedType] = useState(location.hash?'Business':'Consumer');
   useEffect(()=>{
     if(location.hash){

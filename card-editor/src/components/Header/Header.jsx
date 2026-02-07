@@ -326,7 +326,7 @@ const Header = () => {
             <p>{user.company||''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
-            {isAuth ? 'Log out' : 'Log in'}
+            {isAuth ? 'Log out' : <>Log in or <span style={{color:'red'}}>register</span></>}
           </p>
 
           <div className={styles.lang}>

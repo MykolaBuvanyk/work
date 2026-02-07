@@ -813,6 +813,7 @@ const Order = ({orderId}) => {
   const manufacturerNote =
     String(order?.orderMongo?.manufacturerNote || order?.orderMongo?.project?.manufacturerNote || '').trim() || null;
   return (
+    <>
     <div className="order-container">
       <div className="row">
         <p>Order.No</p>
@@ -1141,6 +1142,10 @@ const Order = ({orderId}) => {
         <button onClick={emailOpen}>Message to customer</button>
       </div>
     </div>
+    <br/>
+    <br/>
+    <button style={{background:'#0095e2',color:'#ff2828ff', fontWeight:'550', padding:'0 5px'}} onClick={()=>setStatus('Deleted')}>Delete Cust. Account</button>
+    </>
   );
 };
 

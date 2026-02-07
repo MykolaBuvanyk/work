@@ -150,6 +150,7 @@ const Admin = () => {
                   <option value='Delivered'>Delivered</option>
                   <option value='Returned'>Returned</option>
                   <option value='Waiting'>Waiting</option>
+                  <option value='Deleted'>Deleted</option>
                 </select>
               </div>
               <div className="select-cont">
@@ -227,7 +228,7 @@ const Admin = () => {
                     else setOrderId(order.id)
                     }} key={order.id}>
 
-                    <td className="order-no">{order.id}</td>
+                    <td className="order-no">{order.id.padStart(3, '0')}</td>
                     <td>{order.userId}</td>
                     <td>{order.signs}</td>
                     <td>{order.sum}</td>

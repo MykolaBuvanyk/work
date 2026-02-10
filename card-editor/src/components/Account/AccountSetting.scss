@@ -2,7 +2,6 @@
     padding: 20px;
 
     .message-section {
-        max-width: 600px;
         margin-top: 40px;
 
         .message-title {
@@ -13,6 +12,7 @@
         }
 
         .message-box {
+            max-width: 600px;
             display: flex;
             border: 1px solid #999;
             background-color: #eee;

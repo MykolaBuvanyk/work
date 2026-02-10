@@ -244,6 +244,126 @@ class AuthController {
       return next(ErrorApi.badRequest(err.message));
     }
   };
+
+  static GetMy=async(req,res,next)=>{
+    try{
+      const userId=req.user.id;
+      const user=await User.findOne({where:{id:userId}});
+      return res.json({user});
+    }catch(err){
+      return next(ErrorApi.badRequest(err));
+    }
+  }
+  
+  static UpdateProfile = async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      const values = req.body;
+
+      // Видаляємо поля, які не можна оновлювати через цей метод (безпека)
+      const { id, password, role, ...updateData } = values;
+
+      // Оновлюємо користувача
+      // Метод update повертає масив [кількість_оновлених_рядків]
+      const [updatedRows] = await User.update(updateData, {
+        where: { id: userId }
+      });
+
+      if (updatedRows === 0) {
+        return next(ErrorApi.badRequest("User not found or no changes made"));
+      }
+
+      // Отримуємо оновлені дані користувача для відповіді
+      const updatedUser = await User.findOne({ where: { id: userId } });
+
+      return res.json({ 
+        message: "Profile updated successfully", 
+        user: updatedUser 
+      });
+      
+    } catch (err) {
+      console.log(524234);
+      // Якщо помилка валідації Sequelize (наприклад, дублікат email)
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        return next(ErrorApi.badRequest("Email already in use"));
+      }
+      return next(ErrorApi.badRequest(err.message));
+    }
+  }
+  static UpdatePassword = async (req, res, next) => {
+    try {
+      const { oldPassword, newPassword } = req.body; // виправлено typo: oldPassowrd -> oldPassword
+      
+      const user = await User.findOne({ where: { id: req.user.id } });
+      if (!user) {
+        return next(ErrorApi.badRequest("Користувача не знайдено"));
+      }
+
+      // 1. ПРАВИЛЬНА ПЕРЕВІРКА ПАРОЛЯ
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      
+      if (!isMatch) {
+        return next(ErrorApi.badRequest("Старий пароль невірний"));
+      }
+
+      // 2. ХЕШУВАННЯ НОВОГО ПАРОЛЯ
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      
+      // 3. ОНОВЛЕННЯ ТА ЗБЕРЕЖЕННЯ
+      user.password = hashedNewPassword;
+      await user.save(); // Обов'язково await
+
+      return res.status(200).json({ message: "Password updated successfully" });
+    } catch (err) {
+      return next(ErrorApi.badRequest(err.message));
+    }
+  }
+  
+  static NewPass = async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return next(ErrorApi.badRequest("Email is required"));
+      }
+
+      // 1) знайти користувача
+      const user = await User.findOne({ where: { email } });
+
+      if (!user) {
+        return next(ErrorApi.badRequest("User not found"));
+      }
+
+      // 2) згенерувати новий пароль
+      const newPassword = Math.random().toString(36).slice(-8);
+
+      // 3) захешувати
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // 4) оновити пароль в базі
+      user.password = hashedPassword;
+      await user.save();
+
+      // 5) сформувати email
+      const htmlMessage = `
+        <h2>Password Reset</h2>
+        <p>Hello ${user.firstName},</p>
+        <p>Your new password is:</p>
+        <h3>${newPassword}</h3>
+        <p>Please log in and change it after signing in.</p>
+      `;
+
+      // 6) відправити
+      await sendEmail(email, htmlMessage, "Your new password");
+
+      return res.json({ message: "New password sent successfully" });
+
+    } catch (err) {
+      console.log(4234,err);
+      return next(ErrorApi.internalServerError(err.message));
+    }
+  };
+
 }
 
 export default AuthController;

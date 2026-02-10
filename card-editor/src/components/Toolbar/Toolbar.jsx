@@ -6294,21 +6294,18 @@ const Toolbar = ({ formData }) => {
     const longSideMm = maxMm || 0;
     const radiusMm = d / 2;
 
-    // Нова формула (за уточненням): потрібен відступ ВІД КРАЮ ПОЛОТНА ДО КРАЮ ОТВОРУ.
-    // edgeGapMm = 1.2 + (d/2) + L*0.02, де L — довша сторона полотна (maxMm).
-    const desiredEdgeGapMm =
+    // Нова формула (активна): відступ ДО ЦЕНТРУ отвору.
+    // centerOffsetMm = 1.2 + (d/2) + L*0.02
+    const desiredCenterOffsetMm =
       HOLE_OFFSET_ADDITIVE_MIN + radiusMm + longSideMm * HOLE_OFFSET_SIDE_MULTIPLIER;
 
-    // Компенсація під виробничі виміри: часто міряють до ЛІНІЇ РІЗУ (stroke), а не до геометрії.
-    // Stroke у Fabric малюється по центру контуру, тому зовнішній край stroke "з'їдає" halfStroke.
-    // Додаємо halfStroke + невеликий fudge (аналогічно прямокутним отворам), щоб у CAM було рівно по формулі.
+    // Компенсація під виробничі виміри (LightBurn/CAM): часто міряють до лінії різу (stroke).
+    // Stroke малюється по центру контуру, тому додаємо halfStroke + невеликий fudge.
     const holeStrokeWidthPx = 1;
     const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
     const edgeFudgeMm = 0.04;
-    const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
 
-    // У Fabric отвір позиціонуємо по центру (origin='center'), тому переводимо edgeGap -> centerOffset.
-    let offsetMm = edgeGapMm + radiusMm;
+    let offsetMm = desiredCenterOffsetMm + halfStrokeMm + edgeFudgeMm;
     if (!isFinite(offsetMm)) offsetMm = 0;
 
     // Геометричний запобіжник: дирка не повинна заходити далі центру (для дуже великих дирок)
@@ -6316,19 +6313,28 @@ const Toolbar = ({ formData }) => {
     offsetMm = Math.min(offsetMm, maxOffsetMm);
 
     if (import.meta?.env?.DEV) {
+      const edgeGapMm = Math.max(0, offsetMm - radiusMm);
       console.debug('[getHoleOffsetPx] calc', {
         diameterMm: d,
         radiusMm,
         longSideMm,
-        desiredEdgeGapMm,
-        edgeGapMm,
+        desiredCenterOffsetMm,
         centerOffsetMm: offsetMm,
-        edgeGapAfterClampMm: Math.max(0, offsetMm - radiusMm),
+        edgeGapAfterClampMm: edgeGapMm,
         maxOffsetMm,
         halfStrokeMm,
         edgeFudgeMm,
       });
     }
+
+    // Попередня версія (НЕ ВИДАЛЯТИ): відступ до КРАЮ отвору + компенсація stroke.
+    // const desiredEdgeGapMm = HOLE_OFFSET_ADDITIVE_MIN + radiusMm + longSideMm * HOLE_OFFSET_SIDE_MULTIPLIER;
+    // const holeStrokeWidthPx = 1;
+    // const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+    // const edgeFudgeMm = 0.04;
+    // const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
+    // let offsetMm = edgeGapMm + radiusMm;
+
     // Стара версія розрахунку (НЕ ВИДАЛЯТИ):
     // let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
     // if (!isFinite(additive)) additive = 0;

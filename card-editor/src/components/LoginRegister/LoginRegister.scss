@@ -15,7 +15,6 @@
     margin-top: 0;
   }
   padding: 20px;
-  background-color: #f4f8fa;
   border-radius: 8px;
   border: 1px solid #006ca4;
   .type-register {
@@ -45,14 +44,13 @@
       &::before {
         content: '';
         position: absolute;
-        left: 0;
+        left: -1px;
         top: 50%;
         transform: translateY(-50%);
         width: 20px;
         height: 20px;
         border: 2px solid #aebac7; // Сірий контур
         border-radius: 50%;
-        background-color: white;
         transition: border-color 0.2s;
       }
 

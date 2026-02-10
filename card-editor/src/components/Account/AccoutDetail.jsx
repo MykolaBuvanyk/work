@@ -1,43 +1,134 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './AccoutDetail.scss';
 import MyTextInput from '../MyInput/MyTextInput';
-import MyTextPassword from '../MyInput/MyTextPassword';
 import AccountHeader from './AccountHeader';
+import { $authHost } from '../../http';
+import ChangePassword from './ChangePassword';
+
+// Оновлені ключі, що відповідають вашій моделі Sequelize
+const addressFields = [
+  { label: 'First Name', key: 'firstName' },
+  { label: 'Surname', key: 'surname' },
+  { label: 'Company Name', key: 'company' },
+  { label: 'Address 1', key: 'address' },
+  { label: 'Address 2', key: 'address2' },
+  { label: 'House', key: 'house' },
+  { label: 'Town/City', key: 'city' },
+  { label: 'State', key: 'state' },
+  { label: 'Postal code', key: 'postcode' },
+  { label: '*Country', key: 'country', isSelect: true },
+  { label: 'E-Mail address', key: 'email' },
+  { label: 'Mobile Phone', key: 'phone' },
+  { label: 'VAT Number', key: 'vatNumber' },
+];
+
+const invoiceFields = [
+  { label: 'First Name', key: 'firstName2' },
+  { label: 'Surname', key: 'surname2' },
+  { label: 'Company Name', key: 'company2' },
+  { label: 'Address 1', key: 'address3' },
+  { label: 'Address 2', key: 'address4' },
+  { label: 'Town/City', key: 'city2' },
+  { label: 'State', key: 'state2' },
+  { label: 'Postal code', key: 'postcode2' },
+  { label: '*Country', key: 'country2', isSelect: true },
+  { label: 'Mobile Phone', key: 'phone2' },
+];
+
+const combinedCountries = [
+  { code: 'BE', label: '🇧🇪 Belgium' },
+  { code: 'CH', label: '🇨🇭 Switzerland' },
+  { code: 'CZ', label: '🇨🇿 Czech Republic' },
+  { code: 'DK', label: '🇩🇰 Denmark' },
+  { code: 'DE', label: '🇩🇪 Germany' },
+  { code: 'EE', label: '🇪🇪 Estonia' },
+  { code: 'FR', label: '🇫🇷 France' },
+  { code: 'GB', label: '🇬🇧 United Kingdom' },
+  { code: 'HU', label: '🇭🇺 Hungary' },
+  { code: 'IE', label: '🇮🇪 Ireland' },
+  { code: 'IT', label: '🇮🇹 Italy' },
+  { code: 'LT', label: '🇱🇹 Lithuania' },
+  { code: 'LU', label: '🇱🇺 Luxembourg' },
+  { code: 'NL', label: '🇳🇱 Netherlands' },
+  { code: 'PL', label: '🇵🇱 Poland' },
+  { code: 'RO', label: '🇷🇴 Romania' },
+  { code: 'SI', label: '🇸🇮 Slovenia' },
+  { code: 'SK', label: '🇸🇰 Slovakia' },
+  { code: 'SE', label: '🇸🇪 Sweden' },
+  { code: 'HR', label: '🇭🇷 Croatia' },
+  { code: 'ES', label: '🇪🇸 Spain' },
+  { code: 'UA', label: '🇺🇦 Ukraine' }
+];
 
 const AccoutDetail = () => {
   const [address, setAddress] = useState({});
   const [invoice, setInvoice] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  const getMy = async () => {
+    try {
+      const res = await $authHost.get('auth/getMy');
+      const user = res.data.user;
+
+      // Розподіляємо дані з fullUser по двох об'єктах стейту
+      const addrData = {};
+      addressFields.forEach(f => addrData[f.key] = user[f.key] || '');
+      setAddress(addrData);
+
+      const invData = {};
+      invoiceFields.forEach(f => invData[f.key] = user[f.key] || '');
+      setInvoice(invData);
+      
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error loading user data");
+    }
+  };
+
+  useEffect(() => {
+    getMy();
+  }, []);
 
   const handleInput = (setter) => (field) => (val) => {
     setter(prev => ({ ...prev, [field]: val }));
   };
 
-  const fields = [
-    { label: 'Name', key: 'name' },
-    { label: 'Company Name', key: 'company' },
-    { label: 'Address 1', key: 'addr1' },
-    { label: 'Address 2', key: 'addr2' },
-    { label: 'Address 3', key: 'addr3' },
-    { label: 'Town', key: 'town' },
-    { label: 'Postal code', key: 'postcode' },
-    { label: '*Country', key: 'country', isSelect: true },
-    { label: 'E-Mail address', key: 'email' },
-    { label: 'Mobile Phone', key: 'phone' },
-    { label: 'VAT Number', key: 'vat' },
-  ];
+  // Метод для відправки оновлених даних
+  const handleSave = async () => {
+    try {
+      // Об'єднуємо обидва об'єкти в один для відправки на сервер
+      const updateData = { ...address, ...invoice };
+      
+      await $authHost.put('auth/updateProfile', updateData); // Замініть на ваш ендпоінт
+      alert("Changes saved successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Save failed");
+    }
+  };
 
-  const renderTable = (data, setter) => (
+  const renderTable = (fieldsList, data, setter) => (
     <div className="registration-table">
-      {fields.map((f) => (
+      {fieldsList.map((f) => (
         <div className="table-row" key={f.key}>
           <div className="label-cell">{f.label}</div>
           <div className="input-cell">
             {f.isSelect ? (
-              <select className="table-select">
-                <option value="">Select country</option>
+              <select 
+                className="table-select" 
+                value={data[f.key] || ''} 
+                onChange={(e) => handleInput(setter)(f.key)(e.target.value)}
+              >
+                {combinedCountries.map(x => (
+                  <option key={x.code} value={x.code}>{x.label}</option>
+                ))}
               </select>
             ) : (
-              <MyTextInput value={data[f.key]} setValue={handleInput(setter)(f.key)} />
+              <MyTextInput 
+                value={data[f.key] || ''} 
+                setValue={handleInput(setter)(f.key)} 
+              />
             )}
           </div>
         </div>
@@ -45,14 +136,16 @@ const AccoutDetail = () => {
     </div>
   );
 
+  if (loading) return <div>Loading...</div>;
+
   return (
     <div className="account-detail-container">
-      <AccountHeader/>
-      <br/>
+      <AccountHeader />
+      <br />
       <p className="blue-notice">
-        *The invoice and Delivery Note will be included with the shipment and sent to the same delivery address.
+        *The invoice and Delivery Note will be included with the shipment...
       </p>
-      
+
       <p className="update-text">
         If you want to update your registration details, do it here and click <strong>“Save Changes.”</strong>
       </p>
@@ -60,48 +153,18 @@ const AccoutDetail = () => {
       <div className="tables-grid">
         <div className="grid-col">
           <h3>Address</h3>
-          {renderTable(address, setAddress)}
+          {renderTable(addressFields, address, setAddress)}
         </div>
         <div className="grid-col">
-          <h3>Invoice Address</h3>
-          {renderTable(invoice, setInvoice)}
+          <h3>Invoice or delivery address</h3>
+          {renderTable(invoiceFields, invoice, setInvoice)}
         </div>
       </div>
 
       <div className="action-right">
-        <button className="btn-blue-rect">Save Changes</button>
+        <button className="btn-blue-rect" onClick={handleSave}>Save Changes</button>
       </div>
-
-      <div className="password-section">
-        <h3>Change Password</h3>
-        <div className="password-flex-row">
-          <div style={{display:'flex',flexDirection:'column',justifyContent:'right',alignItems:'flex-end'}}>
-            <div className="registration-table pass-table">
-              <div className="table-row">
-                <div className="label-cell">Existing Password</div>
-                <div className="input-cell"><MyTextPassword /></div>
-              </div>
-              <div className="table-row">
-                <div className="label-cell">New Passport</div>
-                <div className="input-cell"><MyTextPassword /></div>
-              </div>
-              <div className="table-row">
-                <div className="label-cell">Confirm New Passport</div>
-                <div className="input-cell"><MyTextPassword /></div>
-              </div>
-            </div>
-
-            <div className="action-center">
-              <button className="btn-blue-rect">Save Changes</button>
-            </div>
-          </div>
-
-          <div className="pass-forgot-block">
-            <p>* Forgot Passport? Click here and we'll email your current passport to you.</p>
-            <button className="btn-blue-oval">Send</button>
-          </div>
-        </div>
-      </div>  
+      <ChangePassword/>
     </div>
   );
 };

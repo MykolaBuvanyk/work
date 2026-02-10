@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useCanvasContext } from '../../contexts/CanvasContext';
-import * as fabric from 'fabric';
 import styles from './Header.module.css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/reducers/user';
@@ -323,10 +320,10 @@ const Header = () => {
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
             <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>
-            <p>{user.company||''}</p>
+            <p className={styles.company} style={{textAlign:'right'}}>{user.company||''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
-            {isAuth ? 'Log out' : <>Log in or <span style={{color:'red'}}>register</span></>}
+            {isAuth ? 'Log out' : <>Log in or <span style={{color:'red'}}>Register</span></>}
           </p>
 
           <div className={styles.lang}>

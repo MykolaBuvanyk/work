@@ -6,12 +6,43 @@ import { countries, states } from './countries';
 import { Link } from 'react-router-dom';
 import { $host } from '../../http';
 
+const combinedCountries = [
+  { code: 'BE', label: '🇧🇪 Belgium' },
+  { code: 'CH', label: '🇨🇭 Switzerland' },
+  { code: 'CZ', label: '🇨🇿 Czech Republic' },
+  { code: 'DK', label: '🇩🇰 Denmark' },
+  { code: 'DE', label: '🇩🇪 Germany' },
+  { code: 'EE', label: '🇪🇪 Estonia' },
+  { code: 'FR', label: '🇫🇷 France' },
+  { code: 'GB', label: '🇬🇧 United Kingdom' },
+  { code: 'HU', label: '🇭🇺 Hungary' },
+  { code: 'IE', label: '🇮🇪 Ireland' },
+  { code: 'IT', label: '🇮🇹 Italy' },
+  { code: 'LT', label: '🇱🇹 Lithuania' },
+  { code: 'LU', label: '🇱🇺 Luxembourg' },
+  { code: 'NL', label: '🇳🇱 Netherlands' },
+  { code: 'PL', label: '🇵🇱 Poland' },
+  { code: 'RO', label: '🇷🇴 Romania' },
+  { code: 'SI', label: '🇸🇮 Slovenia' },
+  { code: 'SK', label: '🇸🇰 Slovakia' },
+  { code: 'SE', label: '🇸🇪 Sweden' },
+  { code: 'HR', label: '🇭🇷 Croatia' },
+  { code: 'ES', label: '🇪🇸 Spain' },
+  { code: 'UA', label: '🇺🇦 Ukraine' }
+];
+
 const RegisterBussines = () => {
+    const [isInvoice,setIsInvoice]=useState(false);
+  
   const [formData, setFormData] = useState({
-    firstName: '', company: '', address1: '', address2: '', address3: '',
+    firstName: '', address1: '', address2: '', address3: '',
     town: '', postcode: '', country: '', state: '', email: '',
-    phone: '', vatNumber: '', password: '', confirmPassword: '', additional: '',
-    isDifferent: false, isSubscribe: false
+    phone: '', password: '', confirmPassword: '', additional: '',
+    isDifferent: false, isSubscribe: false,firstName2: '', surname2: '', company: '',
+    phone2: '', address2: '', postcode2: '', city2: '',
+    country2: '', state2: '', isSubscribe: false, type: 'Consumer',
+    firstName2:'',phone2:'',company2:'',address2:'',address3:'',address4:'',
+    city:'',country2:"",postcode2:'',eMailInvoice:'',phone2:''
   });
 
   const handleInput = fieldName => value => {
@@ -36,11 +67,6 @@ const RegisterBussines = () => {
         <div className="table-row">
           <div className="label-cell">*First name and Surname</div>
           <div className="input-cell"><MyTextInput value={formData.firstName} setValue={handleInput('firstName')} /></div>
-        </div>
-        {/* Row: Company Name */}
-        <div className="table-row">
-          <div className="label-cell">*Company Name</div>
-          <div className="input-cell"><MyTextInput value={formData.company} setValue={handleInput('company')} /></div>
         </div>
         {/* Row: Address 1 */}
         <div className="table-row">
@@ -70,7 +96,7 @@ const RegisterBussines = () => {
           <div className="label-cell">*Country</div>
           <div className="input-cell country-row">
             <select onChange={e => handleInput('country')(e.target.value)} value={formData.country}>
-              {countries.map(x => <option key={x} value={x}>{x}</option>)}
+              {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
             </select>
             <select className="short-select"><option>Dropdown</option></select>
           </div>
@@ -83,10 +109,6 @@ const RegisterBussines = () => {
         <div className="table-row">
           <div className="label-cell">*Mobile Phone</div>
           <div className="input-cell"><MyTextInput value={formData.phone} setValue={handleInput('phone')} /></div>
-        </div>
-        <div className="table-row">
-          <div className="label-cell">VAT Number</div>
-          <div className="input-cell"><MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} /></div>
         </div>
         {/* Password Fields */}
         <div className="table-row">
@@ -110,10 +132,87 @@ const RegisterBussines = () => {
 
       <div className="checkbox-section">
         <label className="radio-style">
-          <input type="checkbox" checked={formData.isDifferent} onChange={e => handleInput('isDifferent')(e.target.checked)} />
+          <input 
+            type="checkbox" 
+            checked={isInvoice} 
+            onChange={e => setIsInvoice(e.target.checked)} 
+          />
           <span className="checkmark"></span>
           Invoice or delivery address (if different from above)
         </label>
+
+        {isInvoice&&
+        <div className="registration-table">
+          <div className="table-row">
+            <div className="label-cell">*First name and Surname</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.firstName2} setValue={handleInput('firstName2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Company Name</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.company2} setValue={handleInput('company2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Company Name</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.company2} setValue={handleInput('company2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Address 1</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.address2} setValue={handleInput('address2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">Address 2</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.address3} setValue={handleInput('address3')} />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">Address 3</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.address4} setValue={handleInput('address4')} />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Town</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.city2} setValue={handleInput('city2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Postal code </div>
+            <div className="input-cell">
+              <MyTextInput value={formData.postcode2} setValue={handleInput('postcode2')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Country</div>
+            <div className="input-cell country-row">
+              <select onChange={e => handleInput('country2')(e.target.value)} value={formData.country2}>
+                {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
+              </select>
+              <select className="short-select"><option>Dropdown</option></select>
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*E-Mail address</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.eMailInvoice} setValue={handleInput('eMailInvoice')} required />
+            </div>
+          </div>
+          <div className="table-row">
+            <div className="label-cell">*Mobile Phone</div>
+            <div className="input-cell">
+              <MyTextInput value={formData.phone2} setValue={handleInput('phone2')} required />
+            </div>
+          </div>
+        </div>}
 
         <label className="radio-style">
           <input type="checkbox" checked={formData.isSubscribe} onChange={e => handleInput('isSubscribe')(e.target.checked)} />

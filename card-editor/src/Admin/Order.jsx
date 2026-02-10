@@ -880,7 +880,7 @@ const Order = ({orderId}) => {
         <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
         <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
-        <button className={order.status=='Recived'?'active':''} onClick={()=>setStatus('Recived')}>Recived</button>
+        <button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button>
       </div>
       <div className="row">
         <p>Delivery Type</p>
@@ -1066,7 +1066,7 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
-          <p>Min page width</p>
+          <p>max page width</p>
           <input
             type="number"
             style={{ color: '#000000' }}
@@ -1076,7 +1076,7 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
-          <p>Min page height</p>
+          <p>max page height</p>
           <input
             type="number"
             style={{ color: '#000000' }}
@@ -1097,6 +1097,16 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
+          <p>Sign spacing</p>
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            value={pdfSignSpacing}
+            onChange={(e) => setPdfSignSpacing(Number(e.target.value) || 0)}
+          />
+          <span>0 = defaults</span>
+        </div>
+        <div className="info-ful">
           <p>Frame spacing</p>
           <input
             type="number"
@@ -1107,12 +1117,13 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
-          <p>Sign spacing</p>
+          <p>Max height on sheet</p>
           <input
             type="number"
             style={{ color: '#000000' }}
-            value={pdfSignSpacing}
-            onChange={(e) => setPdfSignSpacing(Number(e.target.value) || 0)}
+            defaultValue={0}
+            //value={frameSpacingMm}
+            //onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
           />
           <span>0 = defaults</span>
         </div>
@@ -1144,7 +1155,9 @@ const Order = ({orderId}) => {
     </div>
     <br/>
     <br/>
-    <button style={{background:'#0095e2',color:'#ff2828ff', fontWeight:'550', padding:'0 5px'}} onClick={()=>setStatus('Deleted')}>Delete Cust. Account</button>
+    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'right'}} className="right">
+      <button style={{alignItems:'flex-end',marginBottom:"30px",justifyContent:'right',display:'flex',background:'#0095e2',color:'#ff2828ff', fontWeight:'550', padding:'0 5px'}} onClick={()=>setStatus('Deleted')}>Delete Cust. Account</button>
+    </div>
     </>
   );
 };

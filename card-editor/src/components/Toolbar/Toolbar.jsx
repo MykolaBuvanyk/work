@@ -6268,14 +6268,21 @@ const Toolbar = ({ formData }) => {
     return { minMm, maxMm };
   };
 
-  const HOLE_OFFSET_BASE_MULTIPLIER = 0.04; // трохи агресивніше віддаляємо від країв
-  const HOLE_OFFSET_CAP_MM = 9; // попереднє значення 7.5 мм
-  const HOLE_OFFSET_ADDITIVE_MIN = 1.2; // попереднє значення 0.8 мм
-  const HOLE_OFFSET_ADDITIVE_MAX = 4.0; // попереднє значення 3.2 мм
-  const HOLE_OFFSET_DIAMETER_BASE = 5.4; // попереднє значення 4.8
-  const HOLE_OFFSET_DIAMETER_DIVISOR = 16; // попереднє значення 18
-  const HOLE_EDGE_CLEARANCE_MM = 3.5; // попередньо 2 мм
+  const HOLE_OFFSET_ADDITIVE_MIN = 1.2; // гарантований мінімальний проміжок (мм)
+  const HOLE_OFFSET_SIDE_MULTIPLIER = 0.02; // L*0.02 (L — довша сторона полотна)
 
+  // Нова формула відступу (за вимогою):
+  // offsetMm = 1.2(гарантований мінімальний проміжок) + півдіаметр вибраного отвору + L*0.02
+  // де L — довша сторона полотна (в мм)
+
+  // Стара версія (НЕ ВИДАЛЯТИ):
+  // const HOLE_OFFSET_BASE_MULTIPLIER = 0.04; // трохи агресивніше віддаляємо від країв
+  // const HOLE_OFFSET_CAP_MM = 9; // попереднє значення 7.5 мм
+  // const HOLE_OFFSET_ADDITIVE_MAX = 4.0; // попереднє значення 3.2 мм
+  // const HOLE_OFFSET_DIAMETER_BASE = 5.4; // попереднє значення 4.8
+  // const HOLE_OFFSET_DIAMETER_DIVISOR = 16; // попереднє значення 18
+  // const HOLE_EDGE_CLEARANCE_MM = 3.5; // попередньо 2 мм
+  //
   // Емпірична формула відступу (з ескізів):
   // offsetMm = clamp(0, cap, baseMultiplier * maxSideMm + clamp(additiveMin, additiveMax, base - divisor/diameterMm))
   const getHoleOffsetPx = (overrideDiameterMm = null) => {
@@ -6283,18 +6290,59 @@ const Toolbar = ({ formData }) => {
     const diameterSource =
       typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter;
     const d = Math.max(diameterSource || 0, 0.1);
-    let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
-    if (!isFinite(additive)) additive = 0;
-    additive = Math.max(HOLE_OFFSET_ADDITIVE_MIN, Math.min(additive, HOLE_OFFSET_ADDITIVE_MAX));
-    const base = HOLE_OFFSET_BASE_MULTIPLIER * (maxMm || 0);
-    let offsetMm = Math.min(base + additive, HOLE_OFFSET_CAP_MM);
-    // Мінімальна відстань від краю дирки до краю фігури: 3.5мм
-    // Тобто offset >= 3.5мм + радіус дирки
-    const minOffsetMm = HOLE_EDGE_CLEARANCE_MM + (d || 0.1) / 2;
-    // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
-    const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
-    offsetMm = Math.max(offsetMm, minOffsetMm);
+
+    const longSideMm = maxMm || 0;
+    const radiusMm = d / 2;
+
+    // Нова формула (за уточненням): потрібен відступ ВІД КРАЮ ПОЛОТНА ДО КРАЮ ОТВОРУ.
+    // edgeGapMm = 1.2 + (d/2) + L*0.02, де L — довша сторона полотна (maxMm).
+    const desiredEdgeGapMm =
+      HOLE_OFFSET_ADDITIVE_MIN + radiusMm + longSideMm * HOLE_OFFSET_SIDE_MULTIPLIER;
+
+    // Компенсація під виробничі виміри: часто міряють до ЛІНІЇ РІЗУ (stroke), а не до геометрії.
+    // Stroke у Fabric малюється по центру контуру, тому зовнішній край stroke "з'їдає" halfStroke.
+    // Додаємо halfStroke + невеликий fudge (аналогічно прямокутним отворам), щоб у CAM було рівно по формулі.
+    const holeStrokeWidthPx = 1;
+    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+    const edgeFudgeMm = 0.04;
+    const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
+
+    // У Fabric отвір позиціонуємо по центру (origin='center'), тому переводимо edgeGap -> centerOffset.
+    let offsetMm = edgeGapMm + radiusMm;
+    if (!isFinite(offsetMm)) offsetMm = 0;
+
+    // Геометричний запобіжник: дирка не повинна заходити далі центру (для дуже великих дирок)
+    const maxOffsetMm = Math.max(0, (minMm || 0) - (d || 0.1) / 2);
     offsetMm = Math.min(offsetMm, maxOffsetMm);
+
+    if (import.meta?.env?.DEV) {
+      console.debug('[getHoleOffsetPx] calc', {
+        diameterMm: d,
+        radiusMm,
+        longSideMm,
+        desiredEdgeGapMm,
+        edgeGapMm,
+        centerOffsetMm: offsetMm,
+        edgeGapAfterClampMm: Math.max(0, offsetMm - radiusMm),
+        maxOffsetMm,
+        halfStrokeMm,
+        edgeFudgeMm,
+      });
+    }
+    // Стара версія розрахунку (НЕ ВИДАЛЯТИ):
+    // let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
+    // if (!isFinite(additive)) additive = 0;
+    // additive = Math.max(HOLE_OFFSET_ADDITIVE_MIN, Math.min(additive, HOLE_OFFSET_ADDITIVE_MAX));
+    // const base = HOLE_OFFSET_BASE_MULTIPLIER * (maxMm || 0);
+    // let offsetMm = Math.min(base + additive, HOLE_OFFSET_CAP_MM);
+    // // Мінімальна відстань від краю дирки до краю фігури: 3.5мм
+    // // Тобто offset >= 3.5мм + радіус дирки
+    // const minOffsetMm = HOLE_EDGE_CLEARANCE_MM + (d || 0.1) / 2;
+    // // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
+    // const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
+    // offsetMm = Math.max(offsetMm, minOffsetMm);
+    // offsetMm = Math.min(offsetMm, maxOffsetMm);
+
     return mmToPx(offsetMm);
   };
 

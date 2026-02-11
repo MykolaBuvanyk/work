@@ -7492,6 +7492,14 @@ const Toolbar = ({ formData }) => {
       // Встановлюємо тип поточної фігури
       setShapeType('lock');
 
+      // Lock starts with no rounding by default.
+      // IMPORTANT: do not read cornerRadius from sizeValues here (setState is async).
+      const lockCornerRadiusMm = 0;
+      try {
+        canvas.set?.('cornerRadius', 0);
+        canvas.set?.('hasUserEditedCanvasCornerRadius', false);
+      } catch {}
+
       // Нові розміри (залишимо 100x90 мм загальна висота включно з півкругом)
       const totalHeightMM = 90; // загальна висота
       const widthMM = 100;
@@ -7525,7 +7533,7 @@ const Toolbar = ({ formData }) => {
         }
         // Права точка хорди
         pts.push({ x: rightArcX, y: rectTopY });
-        const cornerRadiusPx = mmToPx(sizeValues.cornerRadius || 0);
+        const cornerRadiusPx = mmToPx(lockCornerRadiusMm);
         const baseCr = Math.min(cornerRadiusPx, rectBottomY - rectTopY, wPx / 2);
         const topSideLen = wPx - rightArcX; // від правого краю дуги до правого краю прямокутника
         const crTop = Math.min(baseCr, topSideLen);
@@ -8661,8 +8669,9 @@ const Toolbar = ({ formData }) => {
     const parsed = parseFloat(String(rawValue).replace(',', '.'));
     const clamped = Math.max(0, Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed));
     let value = round1(clamped);
-    // Only rectangle canvas supports corner radius; other canvas shapes must be 0
-    if (key === 'cornerRadius' && currentShapeType && currentShapeType !== 'rectangle') {
+    // Keep corner radius editable for non-circle shapes.
+    // For shapes where the UI disables corner radius, enforce 0.
+    if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
       value = 0;
     }
     const effectiveHeight =
@@ -8769,8 +8778,8 @@ const Toolbar = ({ formData }) => {
       const minVal = isLockShape && isHeightField ? LOCK_ARCH_HEIGHT_MM : 0;
       const nextVal = Math.max(minVal, Math.min(max, cur + delta));
       let newValue = round1(nextVal);
-      // Only rectangle canvas supports corner radius; other canvas shapes must be 0
-      if (key === 'cornerRadius' && currentShapeType && currentShapeType !== 'rectangle') {
+      // For shapes where the UI disables corner radius, enforce 0.
+      if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
         newValue = 0;
       }
       let updated = { ...prev, [key]: newValue };

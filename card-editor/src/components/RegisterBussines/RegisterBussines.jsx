@@ -32,6 +32,19 @@ const combinedCountries = [
   { code: 'UA', label: '🇺🇦 Ukraine' }
 ];
 
+const tellAboutList=[
+  'Choose the answer',
+  'Online / Internet',
+  'Through samples',
+  'Via flyer',
+  'Colleague',
+  'Social media',
+  'Event / exhibition',
+  'Newsletter',
+  'E-Mail',
+  'Other'
+]
+
 const RegisterBussines = () => {
     const [isInvoice,setIsInvoice]=useState(false);
   
@@ -42,8 +55,8 @@ const RegisterBussines = () => {
     isDifferent: false, isSubscribe: false,firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', isSubscribe: false, type: 'Consumer',
-    firstName2:'',phone2:'',company2:'',address4:'',address5:'',address6:'',
-    city:'',eMailInvoice:'',phone2:''
+    firstName2:'',company2:'',address4:'',address5:'',address6:'',
+    city:'',eMailInvoice:'',tellAbout:''
   });
 
   const handleInput = fieldName => value => {
@@ -231,6 +244,14 @@ const RegisterBussines = () => {
           <div className="input-group">
             <MyTextInput value={formData.weWill} setValue={handleInput('weWill')} required />
           </div>
+        </div>
+        <div style={{marginTop:'7.5px'}} className="we-will-container we-will-container2">
+          <div className="text-content">
+            <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>Please tell us where you heard about us — it will help us improve!</p>
+          </div>
+          <select onChange={e => handleInput('tellAbout')(e.target.value)} value={formData.tellAbout}>
+            {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+          </select>
         </div>
       </div>
 

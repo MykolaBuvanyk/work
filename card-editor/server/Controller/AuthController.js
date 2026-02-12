@@ -70,11 +70,11 @@ class AuthController {
         password,
       };
 
-      for (const [field, value] of Object.entries(requiredFields)) {
+      /*for (const [field, value] of Object.entries(requiredFields)) {
         if (value === undefined || value === null) {
           return next(ErrorApi.badRequest(`Field "${field}" is required and cannot be null`));
         }
-      }
+      }*/
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -120,43 +120,45 @@ class AuthController {
         newUser.company
       );
 
-      const subject = `Welcome to SignXpert!`;
+      const subject = `Welcome to SignXpert. Your account is ready!`;
       const messageHtml = `
-<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #ffffff; color: #000000; margin: 0; padding: 40px 20px; line-height: 1.5;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+<div style="background-color: #f4f4f4; padding: 40px 20px; font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #333333;">
         
-        <div style="text-align: center; margin-bottom: 35px;">
-          <img src=${process.env.VITE_LAYOUT_SERVER+'images/images/logo.png'}
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="${process.env.VITE_LAYOUT_SERVER}images/images/logo.png" alt="SignXpert Logo" style="max-width: 250px; height: auto;">
         </div>
 
         <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 24px; font-weight: 500; margin: 0; color: #000000;">Your account is ready! Welcome to SignXpert</h1>
+            <h1 style="font-size: 22px; font-weight: bold; color: #000000; margin: 0;">
+                Your account is ready! Welcome to SignXpert
+            </h1>
         </div>
 
-        <div style="padding: 0 10px; font-size: 16px;">
-            <p style="margin: 0 0 10px 0;">Hello, <span style="color: #0077b5;">${firstName}</span>!</p>
-            <p style="margin: 0 0 10px 0;">We’re excited to have you with us.</p>
+        <div style="font-size: 16px; line-height: 1.5;">
+            <p style="margin: 0 0 15px 0;">Hello, <span style="color: #337ab7; font-weight: bold;">${firstName}</span>!</p>
+            <p style="margin: 0 0 15px 0;">We’re excited to have you with us.</p>
             <p style="margin: 0 0 25px 0;">Your account has been successfully created, and you can now start designing your projects.</p>
 
             <div style="margin-bottom: 25px;">
                 <p style="margin: 0;">Customer number: <strong>${String(newUser.id).padStart(3, '0')}</strong></p>
-                <p style="margin: 0;">Email: <a href="mailto:${email}" style="color: #004a99; text-decoration: underline;">${email}</a></p>
+                <p style="margin: 0;">Email: <a href="mailto:${email}" style="color: #337ab7; text-decoration: underline;">${email}</a></p>
             </div>
 
             <p style="margin: 0 0 5px 0;">Ready to start creating?</p>
             <p style="margin: 0 0 30px 0;">Our online editor is available right in your browser — the fastest way to bring your ideas to life.</p>
 
             <div style="text-align: center; margin-bottom: 40px;">
-                <a href="https://sign-xpert.com/editor" style="background-color: #006da0; color: #ffffff; padding: 12px 60px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
+                <a href="https://sign-xpert.com/editor" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
             </div>
 
-            <p style="margin: 0 0 5px 0;">Best regards,</p>
+            <p style="margin: 0;">Best regards,</p>
             <p style="margin: 0 0 40px 0;">SignXpert Team</p>
 
-            <div style="text-align: right; font-size: 14px; line-height: 1.6;">
-                <p style="margin: 0;"><a href="https://sign-xpert.com" style="color: #004a99; text-decoration: underline;">sign-xpert.com</a></p>
-                <p style="margin: 0;"><a href="mailto:info@sign-xpert.com" style="color: #004a99; text-decoration: underline;">info@sign-xpert.com</a></p>
-                <p style="margin: 0; color: #000000;">+49 157 766 25 125</p>
+            <div style="text-align: right; font-size: 14px; line-height: 1.4;">
+                <p style="margin: 0;"><a href="https://sign-xpert.com" style="color: #337ab7; text-decoration: underline;">sign-xpert.com</a></p>
+                <p style="margin: 0;"><a href="mailto:info@sign-xpert.com" style="color: #337ab7; text-decoration: underline;">info@sign-xpert.com</a></p>
+                <p style="margin: 0; color: #666666;">+49 157 766 25 125</p>
             </div>
         </div>
     </div>
@@ -167,6 +169,7 @@ class AuthController {
 
       return res.json({ newUser, token });
     } catch (err) {
+      console.log(32434,err);
       return next(ErrorApi.internalServerError(err));
     }
   };

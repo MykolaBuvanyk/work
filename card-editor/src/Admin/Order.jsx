@@ -1066,7 +1066,7 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
-          <p>max page width</p>
+          <p>Max page width</p>
           <input
             type="number"
             style={{ color: '#000000' }}
@@ -1076,7 +1076,7 @@ const Order = ({orderId}) => {
           <span>0 = defaults</span>
         </div>
         <div className="info-ful">
-          <p>max page height</p>
+          <p>Max page height</p>
           <input
             type="number"
             style={{ color: '#000000' }}
@@ -1113,6 +1113,17 @@ const Order = ({orderId}) => {
             style={{ color: '#000000' }}
             value={frameSpacingMm}
             onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
+          />
+          <span>0 = defaults</span>
+        </div>
+        <div className="info-ful">
+          <p>Max width on sheet</p>
+          <input
+            type="number"
+            style={{ color: '#000000' }}
+            defaultValue={0}
+            //value={frameSpacingMm}
+            //onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
           />
           <span>0 = defaults</span>
         </div>

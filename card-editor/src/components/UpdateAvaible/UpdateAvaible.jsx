@@ -244,7 +244,7 @@ const UpdateAvaible = () => {
             
             <div className="bunuses-text">
               <div className="bonuses-title">
-                <p><b>Bonuses</b>: </p> <span>€</span>
+                <p style={{fontWeight:'bold'}}>Bonuses: </p> <span>€</span>
               </div>
               <div id="procent-discount">
                 {formData.discount.map((x, idx) => (

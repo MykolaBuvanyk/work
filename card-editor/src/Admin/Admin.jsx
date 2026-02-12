@@ -229,7 +229,7 @@ const Admin = () => {
                     }} key={order.id}>
 
                     <td className="order-no">{order.id}</td>
-                    <td>{order.userId}</td>
+                    <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
                     <td>{order.sum}</td>
                     <td>{order.country}</td>

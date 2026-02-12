@@ -20,7 +20,6 @@ const Login = () => {
         </div>
         <div className="form-log">
           <LoginRegister />
-          <WeWiill/>
         </div>
       </div>
     </div>

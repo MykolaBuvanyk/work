@@ -24,9 +24,6 @@ const WeWiill = () => {
           onChange={(e) => setEmail(e.target.value)}
           placeholder=""
         />
-        <button className="send-btn" onClick={handleSend}>
-          Send
-        </button>
       </div>
     </div>
   );

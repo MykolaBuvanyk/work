@@ -5,9 +5,9 @@ import MyTextPassword from '../MyInput/MyTextPassword';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/reducers/user';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const LoginForm = () => {
+const LoginForm = ({toRegister=false}) => {
   const [email, setEmail] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,6 +91,11 @@ const LoginForm = () => {
           <button type="submit" className="sign-in-btn">
             Sign In
           </button>
+        }
+        {toRegister&&
+        <div className="toReg">
+          <Link to="/login">Don't have an account? Register now</Link>
+        </div>
         }
       </form>
     </div>

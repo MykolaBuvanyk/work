@@ -7,31 +7,29 @@ import ChangePassword from './ChangePassword';
 
 // Оновлені ключі, що відповідають вашій моделі Sequelize
 const addressFields = [
-  { label: 'First Name', key: 'firstName' },
-  { label: 'Surname', key: 'surname' },
+  { label: 'Name', key: 'firstName' },
   { label: 'Company Name', key: 'company' },
   { label: 'Address 1', key: 'address' },
   { label: 'Address 2', key: 'address2' },
-  { label: 'House', key: 'house' },
-  { label: 'Town/City', key: 'city' },
-  { label: 'State', key: 'state' },
+  { label: 'Address 3', key: 'address3' },
+  { label: 'Town', key: 'city' },
   { label: 'Postal code', key: 'postcode' },
-  { label: '*Country', key: 'country', isSelect: true },
+  { label: 'Country', key: 'country', isSelect: true },
   { label: 'E-Mail address', key: 'email' },
   { label: 'Mobile Phone', key: 'phone' },
   { label: 'VAT Number', key: 'vatNumber' },
 ];
 
 const invoiceFields = [
-  { label: 'First Name', key: 'firstName2' },
-  { label: 'Surname', key: 'surname2' },
+  { label: 'Name', key: 'firstName2' },
   { label: 'Company Name', key: 'company2' },
-  { label: 'Address 1', key: 'address3' },
-  { label: 'Address 2', key: 'address4' },
-  { label: 'Town/City', key: 'city2' },
-  { label: 'State', key: 'state2' },
+  { label: 'Address 1', key: 'address4' },
+  { label: 'Address 2', key: 'address5' },
+  { label: 'Address 3', key: 'address6' },
+  { label: 'Town', key: 'city2' },
   { label: 'Postal code', key: 'postcode2' },
   { label: '*Country', key: 'country2', isSelect: true },
+  { label: 'E-Mail address', key: 'eMailInvoice' },
   { label: 'Mobile Phone', key: 'phone2' },
 ];
 
@@ -156,7 +154,7 @@ const AccoutDetail = () => {
           {renderTable(addressFields, address, setAddress)}
         </div>
         <div className="grid-col">
-          <h3>Invoice or delivery address</h3>
+          <h3>Invoice or delivery address (if different from the left)</h3>
           {renderTable(invoiceFields, invoice, setInvoice)}
         </div>
       </div>

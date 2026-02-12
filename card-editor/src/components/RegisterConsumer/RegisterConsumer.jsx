@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import './RegisterConsumer.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
-import { countries, states } from './countries';
 import { Link, useNavigate } from 'react-router-dom';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
-import { setUser } from '../../store/reducers/user';
 
 const combinedCountries = [
   { code: 'BE', label: '🇧🇪 Belgium' },
@@ -33,20 +31,35 @@ const combinedCountries = [
   { code: 'UA', label: '🇺🇦 Ukraine' }
 ];
 
+const tellAboutList=[
+  'Choose the answer',
+  'Online / Internet',
+  'Through samples',
+  'Via flyer',
+  'Colleague',
+  'Social media',
+  'Event / exhibition',
+  'Newsletter',
+  'E-Mail',
+  'Other'
+]
+
 const RegisterConsumer = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    firstName: '', surname: '', phone: '', email: '',
-    IsEmailInvoice: false, eMailInvoice: '', password: '',
-    address: '', postcode: '', city: '', country: '', state: '',
-    isDifferent: false, firstName2: '', surname2: '', company: '',
-    phone2: '', address2: '', postcode2: '', city2: '',
+    firstName: '', address: '', address2: '', address3: '',
+    town: '', postcode: '', country: 'BE', state: '', email: '',
+    phone: '', password: '', confirmPassword: '', additional: '',
+    isDifferent: false, isSubscribe: false, firstName2: '', surname2: '',
+    phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', isSubscribe: false, type: 'Consumer',
-    firstName2:'',phone2:'',company2:'',address2:'',address3:'',address4:'',
-    city:'',country2:"",postcode2:'',eMailInvoice:'',phone2:''
+    firstName2:'',phone2:'',company2:'',address4:'',address5:'', address6:'',
+    city:'',country2:"",postcode2:'',eMailInvoice:'',phone2:'', weWill:'',tellAbout:'Choose the answer'
   });
+
+  console.log(4324,formData);
 
   const [isInvoice,setIsInvoice]=useState(false);
 
@@ -57,6 +70,7 @@ const RegisterConsumer = () => {
       //dispatch(setUser({ token: res.data.token }));
       navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
+      console.log(4324,err);
       alert('error');
     }
   };
@@ -68,71 +82,65 @@ const RegisterConsumer = () => {
   return (
     <form className="register-consumer-container" onSubmit={sumbit}>
       <div className="registration-table">
-        {/* Row: First Name */}
         <div className="table-row">
           <div className="label-cell">*First name and Surname</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.firstName} setValue={handleInput('firstName')} required />
-          </div>
+          <div className="input-cell"><MyTextInput value={formData.firstName} setValue={handleInput('firstName')} /></div>
         </div>
-
-        {/* Row: Mobile Phone */}
+        {/* Row: Address 1 */}
         <div className="table-row">
-          <div className="label-cell">*Mobile Phone</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.phone} setValue={handleInput('phone')} required placeholder="Required for notification" />
-          </div>
+          <div className="label-cell">*Address 1</div>
+          <div className="input-cell"><MyTextInput value={formData.address} setValue={handleInput('address')} /></div>
         </div>
-
-        {/* Row: Email */}
+        {/* Rows: Address 2 & 3 */}
         <div className="table-row">
-          <div className="label-cell">*E-Mail address</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.email} setValue={handleInput('email')} required />
-          </div>
+          <div className="label-cell">Address 2</div>
+          <div className="input-cell"><MyTextInput value={formData.address2} setValue={handleInput('address2')} /></div>
         </div>
-
-        {/* Row: Password */}
         <div className="table-row">
-          <div className="label-cell">*Password</div>
-          <div className="input-cell">
-            <MyTextPassword value={formData.password} setValue={handleInput('password')} required />
-          </div>
+          <div className="label-cell">Address 3</div>
+          <div className="input-cell"><MyTextInput value={formData.address3} setValue={handleInput('address3')} /></div>
         </div>
-
-        {/* Row: Address */}
-        <div className="table-row">
-          <div className="label-cell">*Address</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.address} setValue={handleInput('address')} required />
-          </div>
-        </div>
-
-        {/* Row: Postcode */}
-        <div className="table-row">
-          <div className="label-cell">*Postal code</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.postcode} setValue={handleInput('postcode')} required />
-          </div>
-        </div>
-
-        {/* Row: City/Town */}
+        {/* Town & Postal */}
         <div className="table-row">
           <div className="label-cell">*Town</div>
-          <div className="input-cell">
-            <MyTextInput value={formData.city} setValue={handleInput('city')} required />
-          </div>
+          <div className="input-cell"><MyTextInput value={formData.town} setValue={handleInput('town')} /></div>
         </div>
-
-        {/* Row: Country */}
+        <div className="table-row">
+          <div className="label-cell">*Postal code</div>
+          <div className="input-cell"><MyTextInput value={formData.postcode} setValue={handleInput('postcode')} /></div>
+        </div>
+        {/* Country Select */}
         <div className="table-row">
           <div className="label-cell">*Country</div>
           <div className="input-cell country-row">
             <select onChange={e => handleInput('country')(e.target.value)} value={formData.country}>
               {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
             </select>
-            <select className="short-select"><option>Dropdown</option></select>
+            <select value={formData.country} onChange={e => handleInput('country')(e.target.value)} className="short-select">{combinedCountries.map(x=><option key={x.code} value={x.code}>{x.code}</option>)}</select>
           </div>
+        </div>
+        {/* E-mail & Phone */}
+        <div className="table-row">
+          <div className="label-cell">*E-Mail address</div>
+          <div className="input-cell"><MyTextInput value={formData.email} setValue={handleInput('email')} /></div>
+        </div>
+        <div className="table-row">
+          <div className="label-cell">*Mobile Phone</div>
+          <div className="input-cell"><MyTextInput value={formData.phone} setValue={handleInput('phone')} /></div>
+        </div>
+        {/* Password Fields */}
+        <div className="table-row">
+          <div className="label-cell">*Password</div>
+          <div className="input-cell"><MyTextPassword value={formData.password} setValue={handleInput('password')} /></div>
+        </div>
+        <div className="table-row">
+          <div className="label-cell">*Confirm Password</div>
+          <div className="input-cell"><MyTextPassword value={formData.confirmPassword} setValue={handleInput('confirmPassword')} /></div>
+        </div>
+        {/* Additional Info */}
+        <div className="table-row">
+          <div className="label-cell">Additional Information</div>
+          <div className="input-cell"><MyTextInput value={formData.additional} setValue={handleInput('additional')} /></div>
         </div>
       </div>
 
@@ -162,27 +170,21 @@ const RegisterConsumer = () => {
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Company Name</div>
-            <div className="input-cell">
-              <MyTextInput value={formData.company2} setValue={handleInput('company2')} required />
-            </div>
-          </div>
-          <div className="table-row">
             <div className="label-cell">*Address 1</div>
             <div className="input-cell">
-              <MyTextInput value={formData.address2} setValue={handleInput('address2')} required />
+              <MyTextInput value={formData.address4} setValue={handleInput('address4')} required />
             </div>
           </div>
           <div className="table-row">
             <div className="label-cell">Address 2</div>
             <div className="input-cell">
-              <MyTextInput value={formData.address3} setValue={handleInput('address3')} />
+              <MyTextInput value={formData.address5} setValue={handleInput('address5')} />
             </div>
           </div>
           <div className="table-row">
             <div className="label-cell">Address 3</div>
             <div className="input-cell">
-              <MyTextInput value={formData.address4} setValue={handleInput('address4')} />
+              <MyTextInput value={formData.address6} setValue={handleInput('address6')} />
             </div>
           </div>
           <div className="table-row">
@@ -203,7 +205,7 @@ const RegisterConsumer = () => {
               <select onChange={e => handleInput('country2')(e.target.value)} value={formData.country2}>
                 {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
               </select>
-              <select className="short-select"><option>Dropdown</option></select>
+              <select value={formData.country2} onChange={e => handleInput('country2')(e.target.value)} className="short-select">{combinedCountries.map(x=><option key={x.code} value={x.code}>{x.code}</option>)}</select>
             </div>
           </div>
           <div className="table-row">
@@ -229,13 +231,31 @@ const RegisterConsumer = () => {
           <span className="checkmark"></span>
           Yes please. I would like to subscribe to your mailings and receive news and offers.
         </label>
+        <div className="we-will-container">
+          <div className="text-content">
+            <p>We will send the invoice to the e-mail you provided.</p>
+            <p>You can also add another e-mail, separated by a comma, if you wish.</p>
+          </div>
+          
+          <div className="input-group">
+              <MyTextInput value={formData.weWill} setValue={handleInput('weWill')} required />
+          </div>
+        </div>
+        <div style={{marginTop:'7.5px'}} className="we-will-container we-will-container2">
+          <div className="text-content">
+            <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>Please tell us where you heard about us — it will help us improve!</p>
+          </div>
+          <select onChange={e => handleInput('tellAbout')(e.target.value)} value={formData.tellAbout}>
+            {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+          </select>
+        </div>
       </div>
 
       <button className="register-btn" type="submit">Register</button>
 
       <div className="footer-info">
         SignXpert gathers your personal information when you set up an account, using it for
-        advertising purposes and to handle and complete any future orders. You can learn more in our <Link to="/privacy">privacy policy.</Link>
+        advertising purposes and to handle and complete any future orders. You can learn more in our <Link to="/privacy-policy">privacy policy.</Link>
       </div>
     </form>
   );

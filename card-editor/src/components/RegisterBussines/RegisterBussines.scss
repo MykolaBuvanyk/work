@@ -114,11 +114,17 @@
     background-color: #006ca4;
     color: white;
     border: none;
-    padding: 10px;
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    margin-bottom: 20px;
+    height: 25px;
+    font-size: 16px;
+    transition: background 0.3s;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    text-align: center;
   }
 
   .footer-info {

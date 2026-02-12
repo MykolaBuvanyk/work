@@ -3,7 +3,7 @@ import './RegisterBussines.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
 import { countries, states } from './countries';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { $host } from '../../http';
 import WeWiill from '../WeWill/WeWiill';
 
@@ -54,14 +54,15 @@ const RegisterBussines = () => {
     phone: '',vatNumber:'', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false,firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
-    country2: '', state2: '', isSubscribe: false, type: 'Consumer',
-    firstName2:'',company2:'',address4:'',address5:'',address6:'',
-    city:'',eMailInvoice:'',tellAbout:''
+    country2: '', state2: '', type: 'Consumer', company2:'',address4:'',
+    address5:'',address6:'', city:'',eMailInvoice:'',tellAbout:''
   });
 
   const handleInput = fieldName => value => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
   };
+
+  const navigate=useNavigate();
 
   const sumbit = async e => {
     try {
@@ -103,7 +104,7 @@ const RegisterBussines = () => {
         {/* Town & Postal */}
         <div className="table-row">
           <div className="label-cell">*Town</div>
-          <div className="input-cell"><MyTextInput value={formData.town} setValue={handleInput('town')} /></div>
+          <div className="input-cell"><MyTextInput value={formData.city} setValue={handleInput('city')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Postal code</div>

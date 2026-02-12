@@ -20,6 +20,7 @@ const generateJwt = async (id, phone, firstName, surname, type, isRemember = tru
 
 class AuthController {
   static Register = async (req, res, next) => {
+    console.log(52423432)
     try {
       const {
         email,
@@ -110,15 +111,18 @@ class AuthController {
         state2: state2 || null,
         password: hashedPassword,
       });
+      console.log(94234324);
       const token = await generateJwt(
         newUser.id,
-        newUser.phone,
-        newUser.firstName,
-        newUser.surname,
-        newUser.type,
+        newUser.phone||'',
+        newUser.firstName||'',
+        newUser.surname||'',
+        newUser.type||'',
         true,
-        newUser.company
+        newUser.company||''
       );
+
+      console.log(233284234);
 
       const subject = `Welcome to SignXpert. Your account is ready!`;
       const messageHtml = `
@@ -165,8 +169,10 @@ class AuthController {
 </div>
 `;
 
+      console.log(534234);
       sendEmail(email, messageHtml, subject)
 
+      console.log(78234234);
       return res.json({ newUser, token });
     } catch (err) {
       console.log(32434,err);

@@ -50,13 +50,13 @@ const RegisterConsumer = () => {
   
   const [formData, setFormData] = useState({
     firstName: '', address: '', address2: '', address3: '',
-    town: '', postcode: '', country: 'BE', state: '', email: '',
+    city: '', postcode: '', country: 'BE', state: '', email: '',
     phone: '', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false, firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', isSubscribe: false, type: 'Consumer',
     firstName2:'',company2:'',address4:'',address5:'', address6:'',
-    city:'',eMailInvoice:'', weWill:'',tellAbout:'Choose the answer'
+    eMailInvoice:'', weWill:'',tellAbout:'Choose the answer'
   });
 
   console.log(4324,formData);
@@ -64,14 +64,16 @@ const RegisterConsumer = () => {
   const [isInvoice,setIsInvoice]=useState(false);
 
   const sumbit = async e => {
+    console.log(523434);
     try {
       e.preventDefault();
       const res = await $host.post('auth/register', formData);
       //dispatch(setUser({ token: res.data.token }));
+      console.log(234324,res);
       navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
       console.log(4324,err);
-      alert('error');
+      alert('2error');
     }
   };
 
@@ -103,7 +105,7 @@ const RegisterConsumer = () => {
         {/* Town & Postal */}
         <div className="table-row">
           <div className="label-cell">*Town</div>
-          <div className="input-cell"><MyTextInput value={formData.town} setValue={handleInput('town')} /></div>
+          <div className="input-cell"><MyTextInput value={formData.city} setValue={handleInput('city')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Postal code</div>

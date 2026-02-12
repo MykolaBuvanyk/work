@@ -16,7 +16,8 @@ const Login = () => {
       <div className="login-main">
         <div className="form-log">
            <LoginForm />
-           <PleaceTell/>
+           {//<PleaceTell/>
+}
         </div>
         <div className="form-log">
           <LoginRegister />

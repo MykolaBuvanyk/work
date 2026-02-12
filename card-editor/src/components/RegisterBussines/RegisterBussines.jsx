@@ -43,7 +43,7 @@ const RegisterBussines = () => {
     phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', isSubscribe: false, type: 'Consumer',
     firstName2:'',phone2:'',company2:'',address4:'',address5:'',address6:'',
-    city:'',country2:"",postcode2:'',eMailInvoice:'',phone2:''
+    city:'',eMailInvoice:'',phone2:''
   });
 
   const handleInput = fieldName => value => {
@@ -229,13 +229,7 @@ const RegisterBussines = () => {
           </div>
           
           <div className="input-group">
-            <input 
-              type="text" 
-              className="email-input" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder=""
-            />
+            <MyTextInput value={formData.weWill} setValue={handleInput('weWill')} required />
           </div>
         </div>
       </div>

@@ -55,8 +55,8 @@ const RegisterConsumer = () => {
     isDifferent: false, isSubscribe: false, firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', isSubscribe: false, type: 'Consumer',
-    firstName2:'',phone2:'',company2:'',address4:'',address5:'', address6:'',
-    city:'',country2:"",postcode2:'',eMailInvoice:'',phone2:'', weWill:'',tellAbout:'Choose the answer'
+    firstName2:'',company2:'',address4:'',address5:'', address6:'',
+    city:'',eMailInvoice:'', weWill:'',tellAbout:'Choose the answer'
   });
 
   console.log(4324,formData);

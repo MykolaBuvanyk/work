@@ -241,6 +241,7 @@ const Canvas = ({ className }) => {
         o => o && o !== target && isSnappingCandidate(o)
       );
 
+      // --- Check against other objects ---
       for (const o of objs) {
         const ob = getAABB(o);
         if (!ob) continue;
@@ -269,6 +270,31 @@ const Canvas = ({ className }) => {
               guideY = oy;
             }
           }
+        }
+      }
+
+      // --- Check against canvas center ---
+      const W = (designRef.current && designRef.current.width) || fCanvas.getWidth();
+      const H = (designRef.current && designRef.current.height) || fCanvas.getHeight();
+      const canvasCenters = { x: W / 2, y: H / 2 };
+      // X: align element center/edges to canvas center X
+      for (const tx of tX) {
+        const dx = canvasCenters.x - tx;
+        const adx = Math.abs(dx);
+        if (adx <= thr && adx < bestAbsDx) {
+          bestAbsDx = adx;
+          bestDx = dx;
+          guideX = canvasCenters.x;
+        }
+      }
+      // Y: align element center/edges to canvas center Y
+      for (const ty of tY) {
+        const dy = canvasCenters.y - ty;
+        const ady = Math.abs(dy);
+        if (ady <= thr && ady < bestAbsDy) {
+          bestAbsDy = ady;
+          bestDy = dy;
+          guideY = canvasCenters.y;
         }
       }
 
@@ -2520,23 +2546,11 @@ const Canvas = ({ className }) => {
         t._lastTop = t.top;
       }
 
-      // Drag snapping for regular objects
+      // Alignment guides only (no snap)
       if (!t) return;
       try {
-        const { dx, dy, guides } = computeDragSnap(t);
-        const applyDx = applySnapDelta(dx);
-        const applyDy = applySnapDelta(dy);
-        if (applyDx || applyDy) {
-          try {
-            t.set({
-              left: (Number(t.left) || 0) + applyDx,
-              top: (Number(t.top) || 0) + applyDy,
-            });
-          } catch { }
-          try {
-            t.setCoords && t.setCoords();
-          } catch { }
-        }
+        const { guides } = computeDragSnap(t);
+        // Do NOT apply any dx/dy, just show guides
         t.__snapGuides = guides;
       } catch { }
     });

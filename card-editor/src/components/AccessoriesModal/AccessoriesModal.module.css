@@ -1,12 +1,15 @@
 .modalRoot {
   position: fixed;
-  top: 5%;
+  inset: 0;
   left: 0;
   right: 0;
-  z-index: 3000;
+  z-index: 1200;
   display: flex;
   justify-content: center; /* по середині між лівим і правим краями */
   align-items: flex-start;
+  background: rgba(0, 0, 0, 0.08);
+  padding-top: 50px;
+  overflow: auto;
   pointer-events: none;
 }
 
@@ -16,12 +19,12 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   box-shadow: 0 4px 5px 2px rgba(0, 0, 0, 0.25);
-  z-index: 3100;
+  z-index: 1210;
   width: 1100px; /* фіксована ширина завжди */
   min-width: 1100px;
   max-width: 1100px;
   /* Дозволяємо вікну рости по висоті до межі екрану і скролити ВСЕРЕДИНІ вікна */
-  max-height: calc(100vh - 10%);
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
   overscroll-behavior: contain; /* не прокручувати сторінку при скролі модалки */
   -webkit-overflow-scrolling: touch;

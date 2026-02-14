@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { $host } from "../http";
 import {
@@ -222,13 +223,37 @@ const getSelectedAccessoriesSnapshot = () => {
   return [];
 };
 
+const resolveVatCountryCode = () => {
+  // TODO: replace with real country resolver from user profile / delivery address.
+  return "DE";
+};
+
+const resolveVatPercent = ({ formData, userType, countryCode }) => {
+  const country = String(countryCode || "DE").trim().toUpperCase();
+  const type = String(userType || "Consumer").trim();
+
+  if (type === "Consumer") {
+    return safeNumber(formData?.[`${country}_CONS`]);
+  }
+
+  if (type === "Business" || type === "Admin") {
+    return safeNumber(formData?.[country]);
+  }
+
+  return safeNumber(formData?.[`${country}_CONS`]);
+};
+
 export const useCurrentSignPrice = () => {
   const { canvas } = useCanvasContext();
+  const userType = useSelector((state) => state?.user?.user?.type || "Consumer");
   const [price, setPrice] = useState(0);
+  const [netAfterDiscount, setNetAfterDiscount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [orderSubtotal, setOrderSubtotal] = useState(0);
+  const [accessoriesPrice, setAccessoriesPrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
-  const [vatPercent, setVatPercent] = useState(19);
+  const [vatPercent, setVatPercent] = useState(0);
   const [vatAmount, setVatAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -339,7 +364,7 @@ export const useCurrentSignPrice = () => {
         orderCanvasesSubtotal = currentCanvasSubtotal;
       }
 
-      const orderSubtotal = orderCanvasesSubtotal + accessoriesPrice;
+      const orderSubtotal = orderCanvasesSubtotal ;
 
       const rules = Array.isArray(formData?.discount) ? formData.discount : [];
       const pickDiscountPercent = (amount) => {
@@ -387,16 +412,23 @@ export const useCurrentSignPrice = () => {
 
       const percent = pickDiscountPercent(orderSubtotal);
       const discAmount = orderSubtotal * (percent / 100);
-      const netAfterDiscount = orderSubtotal - discAmount;
+      const netAfterDiscount = orderSubtotal - discAmount + accessoriesPrice;
 
-      // VAT: for now always 19% (ignore selected country)
-      const vatP = 19;
+      const vatCountryCode = resolveVatCountryCode();
+      const vatP = resolveVatPercent({
+        formData,
+        userType,
+        countryCode: vatCountryCode,
+      });
       const vat = netAfterDiscount * (vatP / 100);
       const totalInclVat = netAfterDiscount + vat;
 
       setPrice(Number.isFinite(currentSignSubtotal) ? currentSignSubtotal : 0);
+      setNetAfterDiscount(Number.isFinite(netAfterDiscount) ? netAfterDiscount : 0);
       setDiscountPercent(Number.isFinite(percent) ? percent : 0);
       setDiscountAmount(Number.isFinite(discAmount) ? discAmount : 0);
+      setOrderSubtotal(Number.isFinite(orderSubtotal) ? orderSubtotal : 0);
+      setAccessoriesPrice(Number.isFinite(accessoriesPrice) ? accessoriesPrice : 0);
       setVatPercent(vatP);
       setVatAmount(Number.isFinite(vat) ? vat : 0);
       setTotalPrice(Number.isFinite(totalInclVat) ? totalInclVat : 0);
@@ -406,7 +438,7 @@ export const useCurrentSignPrice = () => {
       inFlightRef.current = false;
       setIsLoading(false);
     }
-  }, [canvas]);
+  }, [canvas, userType]);
 
   const scheduleDebounced = useCallback(() => {
     if (!canvas) return;
@@ -472,8 +504,11 @@ export const useCurrentSignPrice = () => {
 
   return {
     price,
+    netAfterDiscount,
     discountPercent,
     discountAmount,
+    orderSubtotal,
+    accessoriesPrice,
     totalPrice,
     vatPercent,
     vatAmount,

@@ -154,13 +154,13 @@
       .bonuses{
         border-top: 2px solid #006CA4;
         display: flex;
-        justify-content: right;
+        justify-content: space-between;
         padding-top: 15px;
         .bunuses-text{
           display: flex;
           flex-direction: column;
           gap: 15px;
-          justify-content: space-between;
+          // justify-content: space-between;
           .bonuses-title{
             display: flex;
             flex-direction: row;
@@ -193,6 +193,7 @@
             .proc{
               display: flex;
               flex-direction: row;
+              justify-content: space-between;
               gap: 10px;
               input {
                 background-color: transparent;
@@ -213,7 +214,7 @@
                 outline: 1px solid #000000;
                 box-sizing: border-box;
                 padding: 0;
-                width: 101px;
+                width: 52px;
                 text-align: center;
                 &.number2{
                   width: 37px;
@@ -354,30 +355,39 @@
       .lang-cont {
         display: flex;
         flex-direction: row;
-        gap: 12px;
+        gap: 24px;
         position: relative;
-        height: 19px;
-        align-items: center;
+        align-items: flex-start;
         margin-right: 60px;
         padding-top: 25px;
         border-top: 2px solid #006CA4;
         margin-top: 17px;
         width: 100%;
-        span {
-          font-family: Inter;
-          font-weight: 500;
-          font-style: Medium;
-          font-size: 14px;
-          line-height: 100%;
-          letter-spacing: 0%;
-          color: #006CA4;
-        }
-        input {
-          background-color: transparent;
-          border-radius: 8px;
-          width: 69px;
-          text-align: center;
-          height: 18px;
+
+        .vat-col {
+          display: flex;
+          flex-direction: row;
+          gap: 12px;
+          align-items: center;
+
+          span {
+            font-family: Inter;
+            font-weight: 500;
+            font-style: Medium;
+            font-size: 14px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            color: #006CA4;
+            min-width: max-content;
+          }
+
+          input {
+            background-color: transparent;
+            border-radius: 8px;
+            width: 52px;
+            text-align: center;
+            height: 18px;
+          }
         }
 
         .lang {

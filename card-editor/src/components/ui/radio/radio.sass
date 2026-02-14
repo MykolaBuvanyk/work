@@ -1,0 +1,45 @@
+.radio
+  display: inline-flex
+  align-items: center
+  gap: 20px
+  cursor: pointer
+  user-select: none
+
+.radio-strong
+  gap: 14px
+
+.radio__input
+  position: absolute
+  opacity: 0
+  pointer-events: none
+
+.radio__ui
+  width: 20px
+  height: 20px
+  border-radius: 50%
+  border: 1px solid var(--color-primary)
+  background: var(--color-white)
+  position: relative
+  box-sizing: border-box
+
+  &::after
+    content: ''
+    position: absolute
+    top: 50%
+    left: 50%
+    width: 10px
+    height: 10px
+    border-radius: 50%
+    border: 1px solid var(--color-primary)
+    background: transparent
+    transform: translate(-50%, -50%) scale(0)
+    box-sizing: border-box
+
+.radio__input:checked + .radio__ui::after
+  transform: translate(-50%, -50%) scale(1)
+
+.radio-strong .radio__label
+  font-weight: 600
+  font-size: 16px
+
+

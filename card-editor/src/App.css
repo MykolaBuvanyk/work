@@ -1,6 +1,11 @@
 #root {
   width: 100%;
-
+  --color-primary:rgba(0, 108, 164, 1);
+  --color-gray-border: rgba(0, 0, 0, 0.61);
+  --color-bg-gray: rgba(240, 240, 240, 1);
+  --color-text: rgba(0, 0, 0, 1);
+  --color-error: rgba(255, 0, 0, 1);
+  --color-white: rgba(255, 255, 255, 1);
   /* height: 100vh; */
   margin: 0;
   padding: 0;

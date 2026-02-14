@@ -40,10 +40,20 @@ const languages = [
 
 
 const UpdateAvaible = () => {
+  const deliveryLabels = [
+    'UPS Envelope',
+    'UPS Next Day Package',
+    'UPS Express before 12 PM',
+    'UPS Saturday Delivery',
+  ];
+
   const { isAdmin } = useSelector(state => state.user);
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isLangOpenCons, setIsLangOpenCons] = useState(false);
   const [langInput, setLangInput2]=useState('');
+  const [langInputCons, setLangInputCons] = useState('');
   const [langSelect, setLangSelect]=useState('BE');
+  const [langSelectCons, setLangSelectCons] = useState('BE');
 
 
   const [formData, setFormData] = useState({
@@ -80,8 +90,32 @@ const UpdateAvaible = () => {
       });
     }*/
     setFormData(prev => {
-      const updatedArray = [...prev[arrayName]];
-      updatedArray[index] = { ...updatedArray[index], [field]: value };
+      const updatedArray = Array.isArray(prev[arrayName]) ? [...prev[arrayName]] : [];
+      updatedArray[index] = { ...(updatedArray[index] || {}), [field]: value };
+      return { ...prev, [arrayName]: updatedArray };
+    });
+  };
+
+  const normalizeDeliveryArray = (array = []) =>
+    deliveryLabels.map((label, index) => {
+      const itemByIndex = array[index];
+      const itemByName = Array.isArray(array) ? array.find(x => (x?.name || x?.text) === label) : null;
+      const source = itemByIndex || itemByName || {};
+      return {
+        name: label,
+        value: source.value || '',
+      };
+    });
+
+  const getDeliveryArray = key => {
+    if (Array.isArray(formData[key])) return normalizeDeliveryArray(formData[key]);
+    return normalizeDeliveryArray([]);
+  };
+
+  const handleDeliveryChange = (arrayName, index, value) => {
+    setFormData(prev => {
+      const updatedArray = normalizeDeliveryArray(prev[arrayName]);
+      updatedArray[index] = { ...updatedArray[index], value };
       return { ...prev, [arrayName]: updatedArray };
     });
   };
@@ -139,8 +173,14 @@ const UpdateAvaible = () => {
   const setSelectLang=(code)=>{
     setLangSelect(code)
     setIsLangOpen(false)
-    setLangInput2(formData[code]);
+    setLangInput2(formData[code] || '');
   }
+
+  const setSelectLangCons = code => {
+    setLangSelectCons(code);
+    setIsLangOpenCons(false);
+    setLangInputCons(formData[`${code}_CONS`] || '');
+  };
 
   useEffect(() => {}, [isAdmin]);
 
@@ -150,6 +190,13 @@ const UpdateAvaible = () => {
     });
     setLangInput2(value)
   }
+
+  const setLangInputForCons = value => {
+    setFormData(prev => {
+      return { ...prev, [`${langSelectCons}_CONS`]: value };
+    });
+    setLangInputCons(value);
+  };
   if (!isAdmin) return <>У вас не достатньо прав</>;
 
   if (formData.colour16.length == 0) return <>...loading</>;
@@ -238,10 +285,45 @@ const UpdateAvaible = () => {
                 <div className="info">{x.info}</div>
               </li>
             ))}
-          </ul>
-
+        </ul>
           <div className="bonuses">
             
+            {/* Delivery DE column */}
+            <div className="bunuses-text">
+              <div className="bonuses-title">
+                <p style={{fontWeight:'bold'}}>Delivery DE:</p>
+              </div>
+              <div id="procent-discount" className="delivery-list">
+                {getDeliveryArray('deliveryDE').map((x, idx) => (
+                  <div key={idx} className="proc">
+                    {(x.name || x.text || deliveryLabels[idx])}
+                    <input
+                      type="number"
+                      value={x.value || ''}
+                      onChange={e => handleDeliveryChange('deliveryDE', idx, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Delivery Other column (with inputs) */}
+            <div className="bunuses-text">
+              <div className="bonuses-title">
+                <p style={{fontWeight:'bold'}}>Delivery Other:</p>
+              </div>
+              <div id="procent-discount" className="delivery-list">
+                {getDeliveryArray('deliveryOther').map((x, idx) => (
+                  <div key={idx} className="proc">
+                    {(x.name || x.text || deliveryLabels[idx])}
+                    <input
+                      type="number"
+                      value={x.value || ''}
+                      onChange={e => handleDeliveryChange('deliveryOther', idx, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="bunuses-text">
               <div className="bonuses-title">
                 <p style={{fontWeight:'bold'}}>Bonuses: </p> <span>€</span>
@@ -326,28 +408,55 @@ const UpdateAvaible = () => {
             ))}
           </div>
           <div className="lang-cont">
-            <span>VAT</span>
-            <div className='lang'>
-              <div
-                style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
-                onClick={() => setIsLangOpen(!isLangOpen)}
-              >
-                {langSelect}
-                <SlArrowDown size={14} />
+            <div className="vat-col">
+              <span>VAT Bus</span>
+              <div className='lang'>
+                <div
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                >
+                  {langSelect}
+                  <SlArrowDown size={14} />
+                </div>
+                <div className={isLangOpen ? 'dropdown' : 'open'}>
+                  {languages.map(lang => (
+                    <div
+                      key={lang.countryCode}
+                      onClick={() => setSelectLang(lang.countryCode)}
+                      className={'countries'}
+                    >
+                      {lang.countryCode}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className={isLangOpen ? 'dropdown' : 'open'}>
-                {languages.map(lang => (
-                  <div
-                    key={lang.countryCode}
-                    onClick={() => setSelectLang(lang.countryCode)}
-                    className={'countries'}
-                  >
-                    {lang.countryCode}
-                  </div>
-                ))}
-              </div>
+              <input type="text" value={langInput} onChange={(e)=>setLangInput(e.target.value)} />
             </div>
-            <input type="text" value={langInput} onChange={(e)=>setLangInput(e.target.value)} />
+
+            <div className="vat-col">
+              <span>VAT Cons</span>
+              <div className='lang'>
+                <div
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                  onClick={() => setIsLangOpenCons(!isLangOpenCons)}
+                >
+                  {langSelectCons}
+                  <SlArrowDown size={14} />
+                </div>
+                <div className={isLangOpenCons ? 'dropdown' : 'open'}>
+                  {languages.map(lang => (
+                    <div
+                      key={`${lang.countryCode}-cons`}
+                      onClick={() => setSelectLangCons(lang.countryCode)}
+                      className={'countries'}
+                    >
+                      {lang.countryCode}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <input type="text" value={langInputCons} onChange={(e)=>setLangInputForCons(e.target.value)} />
+            </div>
           </div>
         </div>
       </div>
@@ -356,74 +465,3 @@ const UpdateAvaible = () => {
 };
 
 export default UpdateAvaible;
-
-/*const [formData, setFormData] = useState({
-    colour16: [
-      { beck: '#FFFFFF', color: '#000000', isSelect: true },
-      { beck: '#FFFFFF', color: '#0179D0', isSelect: true },
-      { beck: '#FFFFFF', color: '#FE0000', isSelect: true },
-      { beck: '#000000', color: '#FFFFFF', isSelect: true },
-      { beck: '#2928FF', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD0100', color: '#FFFFFF', isSelect: true },
-      { beck: '#017F01', color: '#FFFFFF', isSelect: true },
-      { beck: '#FFFF01', color: '#000000', isSelect: true },
-      { beck: 'linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)', color: '#000000', isSelect: true },
-      { beck: '#964B21', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD7714', color: '#FFFFFF', isSelect: true },
-      { beck: '#808080', color: '#FFFFFF', isSelect: true },
-      { beck: '#E6CCB2', color: '#000000', isSelect: true },
-      { beck: '#36454F', color: '#FFFFFF', isSelect: true },
-    ],
-    colour08: [
-      { beck: '#FFFFFF', color: '#000000', isSelect: true },
-      { beck: '#FFFFFF', color: '#0179D0', isSelect: true },
-      { beck: '#FFFFFF', color: '#FE0000', isSelect: true },
-      { beck: '#000000', color: '#FFFFFF', isSelect: true },
-      { beck: '#2928FF', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD0100', color: '#FFFFFF', isSelect: true },
-      { beck: '#017F01', color: '#FFFFFF', isSelect: true },
-      { beck: '#FFFF01', color: '#000000', isSelect: true },
-      { beck: 'linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)', color: '#000000', isSelect: true },
-      { beck: '#964B21', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD7714', color: '#FFFFFF', isSelect: true },
-      { beck: '#808080', color: '#FFFFFF', isSelect: true },
-      { beck: '#E6CCB2', color: '#000000', isSelect: true },
-      { beck: '#36454F', color: '#FFFFFF', isSelect: true },
-    ],
-    colour32: [
-      { beck: '#FFFFFF', color: '#000000', isSelect: true },
-      { beck: '#FFFFFF', color: '#0179D0', isSelect: true },
-      { beck: '#FFFFFF', color: '#FE0000', isSelect: true },
-      { beck: '#000000', color: '#FFFFFF', isSelect: true },
-      { beck: '#2928FF', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD0100', color: '#FFFFFF', isSelect: true },
-      { beck: '#017F01', color: '#FFFFFF', isSelect: true },
-      { beck: '#FFFF01', color: '#000000', isSelect: true },
-      { beck: 'linear-gradient(152.22deg, #B5B5B5 28.28%, #F5F5F5 52.41%, #979797 74.14%)', color: '#000000', isSelect: true },
-      { beck: '#964B21', color: '#FFFFFF', isSelect: true },
-      { beck: '#FD7714', color: '#FFFFFF', isSelect: true },
-      { beck: '#808080', color: '#FFFFFF', isSelect: true },
-      { beck: '#E6CCB2', color: '#000000', isSelect: true },
-      { beck: '#36454F', color: '#FFFFFF', isSelect: true },
-    ],
-    listAccessories: [
-      { isAvaible: true, img: '/images/accessories/CableTies 1.png', text: 'Cable ties', number: 0.05, info: 'Сable ties, size 3.6 x 140 mm' },
-      { isAvaible: true, img: '/images/accessories/ph1 2.9 x 9.5 mm 1.png', text: 'Screws', number: 0.1, info: 'Size 2.9 x 9.5 mm' },
-      { isAvaible: true, img: '/images/accessories/ph1 2.9 x 9.5 mm 1.png', text: 'Size 2.9 x 13 mm', number: 0.1, info: 'Size 2.9 x 13 mm' },
-      { isAvaible: true, img: '/images/accessories/S-Hook.png', text: 'S-Hooks', number: 0.25, info: 'Nickel plated' },
-      { isAvaible: true, img: '/images/accessories/Keyring 1.png', text: 'Keyrings', number: 0.7, info: '30 mm' },
-      { isAvaible: true, img: '/images/accessories/Ballchain 1.png', text: 'Ball chains', number: 0.25, info: 'Nickel plated, length 10 cm' },
-    ],
-    listThinkness: {
-      thinkness16: { isSelect: true, materialArea: [0.2, 0.22], engravingArea: [0.15, 0.15], holesPerimeter: [0.1, 0.1] },
-      thinkness08: { isSelect: true, materialArea: [0.2, 0.22], engravingArea: [0.15, 0.15], holesPerimeter: [0.1, 0.1] },
-      thinkness32: { isSelect: true, materialArea: [0.2, 0.22], engravingArea: [0.15, 0.15], holesPerimeter: [0.1, 0.1] }
-    },
-    discount: [
-      { price: '30 - 50', discount: '5' },
-      { price: '50 - 100', discount: '10' },
-      { price: '100 - 200', discount: '15' },
-      { price: '200 - 500', discount: '20' },
-      { price: '500 - 10000', discount: '25' },
-    ]
-  });*/

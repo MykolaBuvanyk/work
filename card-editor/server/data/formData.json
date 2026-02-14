@@ -559,5 +559,44 @@
   "UA": "19%",
   "RU": "35%",
   "code": "19%",
-  "LT": "10%"
+  "LT": "10%",
+  "deliveryDE": [
+    {
+      "name": "UPS Envelope",
+      "value": "4.95"
+    },
+    {
+      "name": "UPS Next Day Package",
+      "value": "6.95"
+    },
+    {
+      "name": "UPS Express before 12 PM",
+      "value": "9.95"
+    },
+    {
+      "name": "UPS Saturday Delivery",
+      "value": "9.95"
+    }
+  ],
+  "deliveryOther": [
+    {
+      "name": "UPS Envelope",
+      "value": "5.95"
+    },
+    {
+      "name": "UPS Next Day Package",
+      "value": "7.95"
+    },
+    {
+      "name": "UPS Express before 12 PM",
+      "value": "10.95"
+    },
+    {
+      "name": "UPS Saturday Delivery",
+      "value": "10.95"
+    }
+  ],
+  "DE": "1",
+  "BE_CONS": "19",
+  "DE_CONS": "10"
 }

@@ -486,6 +486,25 @@ const TopToolbar = ({ className, formData }) => {
   useEffect(() => {
     try {
       window.getSelectedAccessories = () => accessories;
+      window.setSelectedAccessories = (nextAccessories) => {
+        if (!Array.isArray(nextAccessories)) return;
+        setAccessories((prev) => {
+          const byId = new Map(nextAccessories.map((item) => [item?.id, item]));
+          return (Array.isArray(prev) ? prev : []).map((item) => {
+            const incoming = byId.get(item?.id);
+            if (!incoming) return item;
+            return {
+              ...item,
+              checked: !!incoming.checked,
+              qty: String(incoming.qty ?? item.qty ?? "1"),
+              visible:
+                incoming.visible !== undefined
+                  ? !!incoming.visible
+                  : item.visible || !!incoming.checked,
+            };
+          });
+        });
+      };
       window.dispatchEvent(
         new CustomEvent("accessories:changed", {
           detail: { accessories },
@@ -499,6 +518,9 @@ const TopToolbar = ({ className, formData }) => {
       try {
         if (window.getSelectedAccessories && window.getSelectedAccessories() === accessories) {
           delete window.getSelectedAccessories;
+        }
+        if (window.setSelectedAccessories) {
+          delete window.setSelectedAccessories;
         }
       } catch {
         // no-op

@@ -48,6 +48,22 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(num) ? num : fallback;
 };
 
+const isMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || '').trim());
+
+const findCartProjectForOrder = async (order) => {
+  const key = String(order?.idMongo || '').trim();
+  if (!key) return null;
+
+  // New format: idMongo stores CartProject _id for a strict 1:1 mapping.
+  if (isMongoObjectId(key)) {
+    const byId = await CartProject.findById(key).lean();
+    if (byId) return byId;
+  }
+
+  // Legacy fallback: old orders stored projectId in idMongo.
+  return CartProject.findOne({ projectId: key }, null, { sort: { createdAt: -1 } }).lean();
+};
+
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: 'WHITE / BLACK',
   1: 'WHITE / BLUE',
@@ -172,15 +188,17 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     }
 
     const normalizedAccessories = normalizeAccessories(body.accessories);
+    const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
+    const totalPriceInclVat = toNumber(body.totalPrice, 0);
 
     const created = await CartProject.create({
       userId,
       projectId: body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null,
       projectName,
-      price: toNumber(body.price, 0),
+      price: netAfterDiscount,
       discountPercent: toNumber(body.discountPercent, 0),
       discountAmount: toNumber(body.discountAmount, 0),
-      totalPrice: toNumber(body.totalPrice, 0),
+      totalPrice: totalPriceInclVat,
       project,
       accessories: normalizedAccessories,
       status: 'pending',
@@ -188,7 +206,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
 
 
     const order=await Order.create({
-      sum:Math.round(body.price * 100) / 100,
+      sum: Math.round(netAfterDiscount * 100) / 100,
       signs:body.project.canvases.length,
       userId,
       country:body.lang,
@@ -196,7 +214,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       orderName:body.projectName,
       orderType:'',
       accessories:JSON.stringify(normalizedAccessories),
-      idMongo:body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null
+      idMongo: String(created._id)
     })
 
     const userOrders=await Order.findOne({where:{userId:req.user.id,status:'Deleted'}});
@@ -311,15 +329,25 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       include: [{ model: User }],
     });
 
-    const totalSumData = await Order.findOne({
-      attributes: [[fn('SUM', col('sum')), 'totalSum']],
-      where,
-    });
+    const mappedOrders = await Promise.all(
+      (orders.rows || []).map(async (order) => {
+        const orderMongo = await findCartProjectForOrder(order);
+        const totalPrice = Number(orderMongo?.totalPrice);
+        return {
+          ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),
+          orderMongo,
+          totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+        };
+      })
+    );
 
-    const totalSum = totalSumData.get('totalSum') || 0;
+    const totalSum = mappedOrders.reduce((acc, order) => {
+      const full = Number(order?.totalPrice);
+      return Number.isFinite(full) ? acc + full : acc;
+    }, 0);
 
     return res.json({ 
-      orders: orders.rows,
+      orders: mappedOrders,
       page,
       totalSum,
       count: orders.count
@@ -351,9 +379,7 @@ CartRouter.get('/get/:id', requireAuth, requireAdmin, async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    const orderMongo = await CartProject
-      .findOne({ projectId: order.idMongo })
-      .lean();
+    const orderMongo = await findCartProjectForOrder(order);
   
 
     return res.json({
@@ -418,7 +444,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, requireAdmin, async (req, res, 
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
         // 2. Отримання даних з MongoDB (проект лежить тут)
-        const orderMongo = await CartProject.findOne({ projectId: order.idMongo }).lean();
+        const orderMongo = await findCartProjectForOrder(order);
 
         // --- ЛОГІКА ТРАНСФОРМАЦІЇ ДАНИХ (ПЕРЕНЕСЕНО З ФРОНТЕНДУ) ---
 
@@ -634,7 +660,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, requireAdmin, async (req, res,
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    const orderMongo = await CartProject.findOne({ projectId: order.idMongo }).lean();
+    const orderMongo = await findCartProjectForOrder(order);
 
     console.log(4324);
 
@@ -869,7 +895,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    const orderMongo = await CartProject.findOne({ projectId: order.idMongo }).lean();
+    const orderMongo = await findCartProjectForOrder(order);
 
     console.log(4324);
 
@@ -1206,9 +1232,7 @@ CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
     // will NOT be serialized by res.json(). Convert to plain objects explicitly.
     const mapped = await Promise.all(
       (orders || []).map(async (order) => {
-        const orderMongo = await CartProject
-          .findOne({ projectId: order.idMongo })
-          .lean();
+        const orderMongo = await findCartProjectForOrder(order);
 
         return {
           ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),

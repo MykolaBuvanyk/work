@@ -10,6 +10,9 @@ import { saveNewProject } from "../../utils/projectStorage";
 import { saveCurrentProject } from "../../utils/projectStorage";
 import { addProjectToCart } from "../../http/cart";
 import { jwtDecode } from "jwt-decode";
+import Checkout from "../checkout/checkout";
+import ThankYou from "../order-success/order-success";
+import CartAccessoriesModal from "../CartAccessoriesModal/CartAccessoriesModal";
 
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: "WHITE / BLACK",
@@ -65,11 +68,15 @@ const InfoAboutProject = () => {
   const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
   const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isCartAccessoriesOpen, setIsCartAccessoriesOpen] = useState(false);
+  const [cartAccessories, setCartAccessories] = useState([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
   const { canvas } = useCanvasContext();
 
   const user=useSelector((state)=>state.user);
 
-  const { price, discountPercent, discountAmount, totalPrice, isLoading } =
+  const { price, netAfterDiscount, discountPercent, discountAmount, orderSubtotal, accessoriesPrice, totalPrice, isLoading } =
     useCurrentSignPrice();
 
   const formatted = `€ ${Number(price || 0).toFixed(2)}`;
@@ -113,13 +120,68 @@ const InfoAboutProject = () => {
     return "Untitled";
   }, [projectMeta]);
 
-  const onCartClick = async () => {
-    if (!isAuth) {
-      setIsAuthModalOpen(true);
-      return;
+  const getSelectedAccessoriesSnapshot = () => {
+    try {
+      const getter = typeof window !== "undefined" ? window.getSelectedAccessories : null;
+      const list = typeof getter === "function" ? getter() : null;
+      if (Array.isArray(list)) return list;
+    } catch {
+      // no-op
     }
+    return [];
+  };
 
-    // Require saved project before cart
+  const parseQty = (value) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.floor(n);
+  };
+
+  const syncAccessoriesToProject = (nextAccessories) => {
+    try {
+      const setter = typeof window !== "undefined" ? window.setSelectedAccessories : null;
+      if (typeof setter === "function") {
+        setter(nextAccessories);
+      }
+    } catch {
+      // no-op
+    }
+  };
+
+  const updateCartAccessories = (updater) => {
+    setCartAccessories((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      const safeNext = Array.isArray(next) ? next : [];
+      syncAccessoriesToProject(safeNext);
+      return safeNext;
+    });
+  };
+
+  const toggleCartAccessory = (id) => {
+    updateCartAccessories((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item
+      )
+    );
+  };
+
+  const setCartAccessoryQty = (id, raw) => {
+    updateCartAccessories((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, qty: String(raw) } : item))
+    );
+  };
+
+  const changeCartAccessoryQty = (id, delta) => {
+    updateCartAccessories((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const next = Math.max(0, parseQty(item.qty) + delta);
+        return { ...item, qty: String(next) };
+      })
+    );
+  };
+
+  const addCurrentProjectToCart = async (checkoutTotals = {}) => {
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
@@ -127,14 +189,13 @@ const InfoAboutProject = () => {
 
     if (!currentProjectId) {
       setIsSaveProjectModalOpen(true);
-      return;
+      return false;
     }
 
-    if (!canvas || isAddingToCart) return;
+    if (!canvas || isAddingToCart) return false;
 
     setIsAddingToCart(true);
     try {
-      // Ensure latest canvas state is persisted into the current project before sending
       const project = await saveCurrentProject(canvas);
 
       const projectWithCanvasMeta = (() => {
@@ -154,13 +215,8 @@ const InfoAboutProject = () => {
         return { ...(project || {}), canvases: mapped };
       })();
 
-      const accessoriesAll =
-        typeof window !== "undefined" && typeof window.getSelectedAccessories === "function"
-          ? window.getSelectedAccessories() || []
-          : [];
-
-      const accessoriesSelected = Array.isArray(accessoriesAll)
-        ? accessoriesAll
+      const accessoriesSelected = Array.isArray(cartAccessories)
+        ? cartAccessories
             .filter((x) => x && x.checked)
             .map((x) => {
               const qtyRaw = Number(x.qty);
@@ -174,48 +230,118 @@ const InfoAboutProject = () => {
               };
             })
         : [];
-      
-      let lang='de'
 
-      if(location.pathname.length>=3){
-        lang=location.pathname.slice(1,3);
+      let lang = "de";
+      if (location.pathname.length >= 3) {
+        lang = location.pathname.slice(1, 3);
       }
 
+      const fallbackSum = Number(netAfterDiscount || 0);
+      const fallbackTotal = Number(totalPrice || 0);
+      const normalizedSum = Number(checkoutTotals?.sum);
+      const normalizedTotalSum = Number(checkoutTotals?.totalSum);
+      const sum = Number.isFinite(normalizedSum) ? normalizedSum : fallbackSum;
+      const totalSum = Number.isFinite(normalizedTotalSum)
+        ? normalizedTotalSum
+        : fallbackTotal;
 
       const payload = {
         projectId: project?.id || currentProjectId,
         projectName: project?.name || "Untitled",
-        price: Number(price || 0),
+        price: Number(sum || 0),
+        netAfterDiscount: Number(sum || 0),
         discountPercent: Number(discountPercent || 0),
         discountAmount: Number(discountAmount || 0),
-        totalPrice: Number(totalPrice || 0),
+        totalPrice: Number(totalSum || 0),
         project: projectWithCanvasMeta,
         accessories: accessoriesSelected,
         lang,
-        // Manufacturer note (optional) pulled from toolbar footer
+        checkout: {
+          deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
+          deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
+          vatPercent: Number(checkoutTotals?.vatPercent || 0),
+          vatAmount: Number(checkoutTotals?.vatAmount || 0),
+          deliveryAddress: checkoutTotals?.deliveryAddress || null,
+        },
         manufacturerNote:
-          typeof window.getManufacturerNote === 'function'
-            ? String(window.getManufacturerNote() || '')
-            : String(window._manufacturerNote || ''),
+          typeof window.getManufacturerNote === "function"
+            ? String(window.getManufacturerNote() || "")
+            : String(window._manufacturerNote || ""),
       };
 
-      // Also embed note into project snapshot so admin can see it under project
       try {
         if (payload.manufacturerNote) {
-          payload.project = { ...(payload.project || {}), manufacturerNote: payload.manufacturerNote };
+          payload.project = {
+            ...(payload.project || {}),
+            manufacturerNote: payload.manufacturerNote,
+          };
         }
       } catch {}
-      
-      
 
       await addProjectToCart(payload);
-      alert("Project added to cart");
+      return true;
     } catch (e) {
       console.error("Failed to add to cart", e);
       alert("Failed to add project to cart. Please try again.");
+      return false;
     } finally {
       setIsAddingToCart(false);
     }
+  };
+
+  const onCartClick = async () => {
+    if (!isAuth) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    // Require saved project before cart
+    let currentProjectId = null;
+    try {
+      currentProjectId = localStorage.getItem("currentProjectId");
+    } catch {}
+
+    if (!currentProjectId) {
+      setIsSaveProjectModalOpen(true);
+      return;
+    }
+
+    const snapshot = getSelectedAccessoriesSnapshot().map((item) => ({
+      ...item,
+      qty: String(item?.qty ?? "1"),
+      checked: !!item?.checked,
+    }));
+    updateCartAccessories(snapshot);
+    setIsCartAccessoriesOpen(true);
+  };
+
+  const handleCartAccessoriesClose = () => {
+    setIsCartAccessoriesOpen(false);
+  };
+
+  const handleProceedToCheckout = async () => {
+    setIsCartAccessoriesOpen(false);
+    setIsCheckoutOpen(true);
+  };
+
+  const handleCheckoutClose = () => {
+    setIsCheckoutOpen(false);
+  };
+
+  const handleBackToAccessories = () => {
+    setIsCheckoutOpen(false);
+    setIsCartAccessoriesOpen(true);
+  };
+
+  const handleCheckoutPlaceOrder = async (checkoutTotals) => {
+    const added = await addCurrentProjectToCart(checkoutTotals);
+    if (!added) return;
+    setIsCheckoutOpen(false);
+    setIsOrderSuccessOpen(true);
+  };
+
+  const handleOrderSuccessClose = () => {
+    setIsOrderSuccessOpen(false);
   };
 
   return (
@@ -309,6 +435,36 @@ const InfoAboutProject = () => {
           }}
         />
       )}
+
+      <CartAccessoriesModal
+        isOpen={isCartAccessoriesOpen}
+        onClose={handleCartAccessoriesClose}
+        onProceed={handleProceedToCheckout}
+        proceedDisabled={isAddingToCart}
+        title="The Accessories you selected:"
+        items={cartAccessories}
+        onToggle={toggleCartAccessory}
+        onSetQty={setCartAccessoryQty}
+        onInc={(id) => changeCartAccessoryQty(id, 1)}
+        onDec={(id) => changeCartAccessoryQty(id, -1)}
+      />
+
+      {isCheckoutOpen && (
+        <Checkout
+          onClose={handleCheckoutClose}
+          onPlaceOrder={handleCheckoutPlaceOrder}
+          onBackToAccessories={handleBackToAccessories}
+          projectTitle={projectTitle}
+          discountPercent={Number(discountPercent || 0)}
+          discountAmount={Number(discountAmount || 0)}
+          netAfterDiscount={Number(netAfterDiscount || 0)}
+          orderSubtotal={Number(orderSubtotal || 0)}
+          accessoriesPrice={Number(accessoriesPrice || 0)}
+          selectedAccessories={Array.isArray(cartAccessories) ? cartAccessories.filter(x => x?.checked) : []}
+        />
+      )}
+
+      {isOrderSuccessOpen && <ThankYou onClose={handleOrderSuccessClose} />}
     </div>
   );
 };

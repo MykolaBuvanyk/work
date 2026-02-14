@@ -27,6 +27,21 @@ const Account = () => {
         getMyOrders();
     }, []);
 
+    useEffect(() => {
+        if (!Array.isArray(myOrders) || myOrders.length === 0) {
+            console.log('Latest order in account:', null);
+            return;
+        }
+
+        const latestOrder = myOrders.reduce((latest, current) => {
+            const latestTime = new Date(latest?.createdAt || 0).getTime();
+            const currentTime = new Date(current?.createdAt || 0).getTime();
+            return currentTime > latestTime ? current : latest;
+        }, myOrders[0]);
+
+        console.log('Latest order in account:', latestOrder);
+    }, [myOrders]);
+
     const downloadPdf = async (id, type) => {
         try {
             const res = await $authHost.get(`cart/getPdfs${type}/${id}`, { responseType: 'blob' });
@@ -156,7 +171,7 @@ const Account = () => {
                                 <td>{order.id}</td>
                                 <td>{order.orderName || 'Water signs 23'}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
-                                <td>{(order.sum * 1.19 + 8.5).toFixed(2)}</td>
+                                <td>{Number.isFinite(Number(order?.orderMongo?.totalPrice)) ? Number(order.orderMongo.totalPrice).toFixed(2) : '—'}</td>
                                 <td>{order.status || 'Received'}</td>
                                 <td onClick={() => downloadPdf(order.id, '1')} className="clickable"><DelNoteIcon /></td>
                                 <td className="clickable"><TrackingIcon /></td>

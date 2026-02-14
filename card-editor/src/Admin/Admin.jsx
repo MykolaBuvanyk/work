@@ -87,15 +87,47 @@ const Admin = () => {
         query+=`&start=${start}`
       }
       if(finish){
-        query+=`&finish=${finish}`
+        // Додаємо кінець дня, якщо не вказано час
+        let finishWithTime = finish;
+        if (!finish.includes('T')) {
+          finishWithTime = finish + 'T23:59:59';
+        }
+        query+=`&finish=${finishWithTime}`
       }
       if(selectLang.countryCode!='ALL'){
         query+=`&lang=${selectLang.countryCode.toLowerCase()}`
       }
       
       const res=await $authHost.get('cart/filter'+query);
-      setOrders(res.data.orders);
-      setSum(res.data.totalSum.toFixed(2))
+      const baseOrders = Array.isArray(res?.data?.orders) ? res.data.orders : [];
+
+      const enrichedOrders = await Promise.all(
+        baseOrders.map(async (order) => {
+          try {
+            const details = await $authHost.get(`cart/get/${order.id}`);
+            const fullOrder = details?.data?.order;
+            const totalPrice = Number(fullOrder?.orderMongo?.totalPrice);
+
+            return {
+              ...order,
+              orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+              totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+            };
+          } catch {
+            return {
+              ...order,
+              totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
+            };
+          }
+        })
+      );
+
+      setOrders(enrichedOrders);
+      const total = enrichedOrders.reduce((acc, order) => {
+        const value = Number(order?.totalPrice);
+        return Number.isFinite(value) ? acc + value : acc;
+      }, 0);
+      setSum(total.toFixed(2))
       setCountPages(Math.ceil(res.data.count/limit))
     }catch(err){
       console.log(err);
@@ -224,6 +256,7 @@ const Admin = () => {
                 <tr
                   style={{backgroundColor: orderId==order.id?'#CACACA': (index+1)%2==0? '#f9f9f9':'unset'}} 
                   onClick={()=>{
+                    console.log('Clicked order:', order);
                     if(orderId==order.id)setOrderId(null)
                     else setOrderId(order.id)
                     }} key={order.id}>
@@ -231,7 +264,7 @@ const Admin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
-                    <td>{order.sum}</td>
+                    <td>{Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice).toFixed(2) : '—'}</td>
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>

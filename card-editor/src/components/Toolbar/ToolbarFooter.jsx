@@ -2,6 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "./Toolbar.module.css";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 
+const emitManufacturerNoteChanged = (value) => {
+  try {
+    window.dispatchEvent(
+      new CustomEvent("manufacturerNote:changed", {
+        detail: { value: String(value || "") },
+      })
+    );
+  } catch {}
+};
+
 const ToolbarFooter = () => {
   const { designs, currentDesignId } = useCanvasContext();
 
@@ -55,6 +65,7 @@ const ToolbarFooter = () => {
         try {
           setManufacturerNote(String(v || ''));
         } catch {}
+        emitManufacturerNoteChanged(String(v || ''));
       };
     } catch {}
 
@@ -108,6 +119,18 @@ const ToolbarFooter = () => {
       window.getManufacturerNote = () => String(window._manufacturerNote || manufacturerNote || '').trim();
     } catch {}
   }, [manufacturerNote]);
+
+  useEffect(() => {
+    try {
+      window.getToolbarFooterTotalSigns = () => Number(totalSignsCount) || 0;
+    } catch {}
+
+    return () => {
+      try {
+        delete window.getToolbarFooterTotalSigns;
+      } catch {}
+    };
+  }, [totalSignsCount]);
 
   const goFirst = () => {
     if (orderInfo.order.length) {
@@ -267,6 +290,7 @@ const ToolbarFooter = () => {
             try {
               window._manufacturerNote = v;
             } catch {}
+            emitManufacturerNoteChanged(v);
           }}
         />
       </div>

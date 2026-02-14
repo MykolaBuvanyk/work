@@ -17,6 +17,9 @@ import Account from './components/Account/Account';
 import AccountSetting from './components/Account/AccountSetting';
 import AccoutDetail from './components/Account/AccoutDetail';
 import Enter from './components/Enter/Enter';
+import Checkout from './components/checkout/checkout';
+import ThankYou from './components/order-success/order-success';
+import RequireSavedProject from './components/guards/RequireSavedProject';
 
 
 
@@ -34,6 +37,30 @@ function App() {
       <Route path="account" element={<Account />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
+      <Route
+        path="checkout"
+        element={
+          <RequireSavedProject>
+            <Checkout />
+          </RequireSavedProject>
+        }
+      />
+      <Route
+        path="order-success"
+        element={
+          <RequireSavedProject>
+            <ThankYou />
+          </RequireSavedProject>
+        }
+      />
+      <Route
+        path="order-secces"
+        element={
+          <RequireSavedProject>
+            <ThankYou />
+          </RequireSavedProject>
+        }
+      />
       <Route path="admin" element={<Admin />} />
       <Route path="admin/cart-orders" element={<CartOrdersAdmin />} />
       <Route path="admin/update-avaible" element={<UpdateAvaible />} />

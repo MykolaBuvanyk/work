@@ -3657,14 +3657,26 @@ const styleLineFromCircleElements = (svgElement) => {
   ids.forEach((id) => {
     const elements = svgElement.querySelectorAll(`[id="${id}"]`);
     elements.forEach((el) => {
+      // Ensure the circle line uses the standard accent color and is above frame elements
       el.setAttribute("stroke", "#008181");
       el.setAttribute("fill", "none");
+      el.setAttribute("pointer-events", "none");
       const style = el.getAttribute("style") || "";
       const newStyle =
         style
           .replace(/stroke\s*:[^;]+;?/gi, "")
-          .replace(/fill\s*:[^;]+;?/gi, "") + ";stroke:#008181;fill:none;";
+          .replace(/fill\s*:[^;]+;?/gi, "") + ";stroke:#008181;fill:none;pointer-events:none;";
       el.setAttribute("style", newStyle);
+
+      // Move LineFromCircle element to the end of the SVG so it renders on top of the frame.
+      // This hides the overlapping right-side frame segment and visually places the
+      // line above the border (appearing to push the left border "behind" the circle).
+      try {
+        const parent = el.parentNode || svgElement;
+        parent.appendChild(el);
+      } catch (e) {
+        // ignore DOM reorder failures
+      }
     });
   });
 };
@@ -4494,18 +4506,27 @@ const LayoutPlannerModal = ({
         let width = maxX - minX + safeFrameSpacing * 2;
         let height = maxY - minY + safeFrameSpacing * 2;
 
-        // MJ optimized: no left frame spacing; frame starts exactly at strip boundary
-        // (same x as first canvases). Still draw full rectangle so we can round all corners.
+        // MJ optimized: the left frame edge must pass on the LEFT side of binder holes
+        // (tangent to hole outer edge), so no brown line appears on the right side of holes.
         const stripWidthMm = exportMode === "Sheet optimized (MJ) Fr." ? MJ_FRAME_STRIP_WIDTH_MM : 0;
         if (exportMode === "Sheet optimized (MJ) Fr.") {
-          x = stripWidthMm;
+          const holeRadiusMm = MJ_FRAME_HOLE_DIAMETER_MM / 2;
+          // Keep the same side gap to hole as the previous right-side layout.
+          const legacyHoleSideGapMm = Math.max(
+            0,
+            stripWidthMm - (stripWidthMm / 2 + holeRadiusMm)
+          );
+          x = Math.max(0, stripWidthMm / 2 - holeRadiusMm - legacyHoleSideGapMm);
           y = minY - safeFrameSpacing;
           width = maxX - x + safeFrameSpacing;
           height = maxY - minY + safeFrameSpacing * 2;
         }
 
         // Clamp the frame to stay within the page margins.
-        const leftLimit = Math.max(safePageMargin, stripWidthMm);
+        const leftLimit =
+          exportMode === "Sheet optimized (MJ) Fr."
+            ? 0
+            : Math.max(safePageMargin, stripWidthMm);
         const topLimit = safePageMargin;
         const rightLimit = Math.max(
           leftLimit,
@@ -5185,7 +5206,26 @@ const LayoutPlannerModal = ({
                   let width = maxX - minX + safeFrameSpacing * 2;
                   let height = maxY - minY + safeFrameSpacing * 2;
 
-                  const leftLimit = safePageMargin;
+                  const stripWidthMm =
+                    exportMode === "Sheet optimized (MJ) Fr."
+                      ? Math.max(0, Number(sheet?.leftStripWidthMm) || MJ_FRAME_STRIP_WIDTH_MM)
+                      : 0;
+                  if (exportMode === "Sheet optimized (MJ) Fr.") {
+                    const holeRadiusMm = MJ_FRAME_HOLE_DIAMETER_MM / 2;
+                    const legacyHoleSideGapMm = Math.max(
+                      0,
+                      stripWidthMm - (stripWidthMm / 2 + holeRadiusMm)
+                    );
+                    x = Math.max(0, stripWidthMm / 2 - holeRadiusMm - legacyHoleSideGapMm);
+                    y = minY - safeFrameSpacing;
+                    width = maxX - x + safeFrameSpacing;
+                    height = maxY - minY + safeFrameSpacing * 2;
+                  }
+
+                  const leftLimit =
+                    exportMode === "Sheet optimized (MJ) Fr."
+                      ? 0
+                      : safePageMargin;
                   const topLimit = safePageMargin;
                   const rightLimit = Math.max(
                     leftLimit,
@@ -5280,14 +5320,8 @@ const LayoutPlannerModal = ({
                             top: `${frameRect.y * scale}px`,
                             width: `${frameRect.width * scale}px`,
                             height: `${frameRect.height * scale}px`,
-                            borderTopLeftRadius:
-                              exportMode === "Sheet optimized (MJ) Fr."
-                                ? 0
-                                : `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
-                            borderBottomLeftRadius:
-                              exportMode === "Sheet optimized (MJ) Fr."
-                                ? 0
-                                : `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                            borderTopLeftRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
+                            borderBottomLeftRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
                             borderTopRightRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
                             borderBottomRightRadius: `${MJ_FRAME_CORNER_RADIUS_MM * scale}px`,
                           }}

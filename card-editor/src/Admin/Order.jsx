@@ -28,8 +28,8 @@ const exportModeOptions = [
 ];
 
 const exportModePresets = {
-  Normal: { enableGaps: false, formatKey: 'MJ_295x600', orientation: 'portrait' },
-  'Normal (MJ) Frame': { enableGaps: true, formatKey: 'MJ_295x600', orientation: 'portrait' },
+  Normal: { enableGaps: false, formatKey: 'MJ_295x600', orientation: 'landscape' },
+  'Normal (MJ) Frame': { enableGaps: true, formatKey: 'MJ_295x600', orientation: 'landscape' },
   'Sheet optimized (MJ) Fr.': { enableGaps: true, formatKey: 'A4', orientation: 'portrait' },
   'Sheet A4 portrait': { formatKey: 'A4', orientation: 'portrait' },
   'Sheet A5 portrait': { formatKey: 'A5', orientation: 'portrait' },
@@ -354,15 +354,28 @@ const Order = ({orderId}) => {
       let width = maxX - minX + safeFrameSpacing * 2;
       let height = maxY - minY + safeFrameSpacing * 2;
 
-      const stripWidthMm = exportMode === 'Sheet optimized (MJ) Fr.' ? 9.5 : 0;
+      const stripWidthMm =
+        exportMode === 'Sheet optimized (MJ) Fr.'
+          ? Math.max(0, safeNumber(sheet?.leftStripWidthMm, 9.5))
+          : 0;
       if (exportMode === 'Sheet optimized (MJ) Fr.') {
-        x = stripWidthMm;
+        const holeRadiusMm = 5.5 / 2;
+        // Keep the SAME gap to the hole as it used to be on the right side.
+        // old right-side gap = stripWidth - (holeCenter + holeRadius)
+        const legacyHoleSideGapMm = Math.max(
+          0,
+          stripWidthMm - (stripWidthMm / 2 + holeRadiusMm)
+        );
+        x = Math.max(0, stripWidthMm / 2 - holeRadiusMm - legacyHoleSideGapMm);
         y = minY - safeFrameSpacing;
         width = maxX - x + safeFrameSpacing;
         height = maxY - minY + safeFrameSpacing * 2;
       }
 
-      const leftLimit = Math.max(safePageMargin, stripWidthMm);
+      const leftLimit =
+        exportMode === 'Sheet optimized (MJ) Fr.'
+          ? 0
+          : Math.max(safePageMargin, stripWidthMm);
       const topLimit = safePageMargin;
       const rightLimit = Math.max(leftLimit, safeNumber(sheet?.width, 0) - safePageMargin);
       const bottomLimit = Math.max(topLimit, safeNumber(sheet?.height, 0) - safePageMargin);
@@ -378,6 +391,29 @@ const Order = ({orderId}) => {
 
     // Always use order.id as the project ID for sheet labels
     const resolvedProjectId = String(order?.id || '').trim() || null;
+
+    // Group sheets by material key for per-group sheet numbering
+    const groupKeyBySheet = (sheet) => {
+      const first = sheet?.placements?.[0] || null;
+      return first ? getMaterialKey(first) : 'unknown';
+    };
+    const groupSheets = {};
+    visibleSheets.forEach((sheet) => {
+      const key = groupKeyBySheet(sheet);
+      if (!groupSheets[key]) groupSheets[key] = [];
+      groupSheets[key].push(sheet);
+    });
+
+    // Map: sheetId -> {groupIndex, groupCount}
+    const sheetGroupNumbers = {};
+    Object.entries(groupSheets).forEach(([key, sheets]) => {
+      sheets.forEach((sheet, idx) => {
+        sheetGroupNumbers[sheet.index ?? sheet.globalSheetIndex ?? idx] = {
+          groupIndex: idx + 1,
+          groupCount: sheets.length,
+        };
+      });
+    });
 
     const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
       const placements = (sheet.placements || []).map((placement) => {
@@ -405,101 +441,92 @@ const Order = ({orderId}) => {
 
       const frameRect = computeFrameRect(sheet);
 
-      const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
-      const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
-      const stripWidthMm = Math.max(0, safeNumber(sheet?.leftStripWidthMm, 0));
-
-      const placementsBounds = (() => {
-        const list = Array.isArray(sheet?.placements) ? sheet.placements : [];
-        if (!list.length) return null;
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-        list.forEach((p) => {
-          const x = safeNumber(p?.x, 0);
-          const y = safeNumber(p?.y, 0);
-          const w = Math.max(0, safeNumber(p?.width, 0));
-          const h = Math.max(0, safeNumber(p?.height, 0));
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x + w);
-          maxY = Math.max(maxY, y + h);
-        });
-        if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
-          return null;
-        }
-        return { minX, minY, maxX, maxY };
-      })();
-
-      const holeCentersY = (() => {
-        const h = Math.max(0, safeNumber(sheet?.height, 0));
-        if (h >= 135) return [h / 2 - 80 / 2, h / 2 + 80 / 2];
-        return [h / 2];
-      })();
-
-      const sheetInfoPlacement = (() => {
-        if (!pdfAddSheetInfo) return null;
-
-        if (exportMode === 'Sheet optimized (MJ) Fr.') {
-          if (stripWidthMm <= 0) return null;
-          const centerYmm = holeCentersY.length
-            ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
-            : Math.max(0, safeNumber(sheet?.height, 0)) / 2;
-          return {
-            xCenterMm: stripWidthMm / 2,
-            yCenterMm: centerYmm,
-            areaWidthMm: stripWidthMm,
-          };
-        }
-
-        if (safeFrameSpacingMm <= 0) return null;
-
-        const contentLeftMm = (() => {
-          if (placementsBounds && Number.isFinite(placementsBounds.minX)) return placementsBounds.minX;
-          if (frameRect) return frameRect.x + safeFrameSpacingMm;
-          return safePageMarginMm + safeFrameSpacingMm;
-        })();
-
-        const yCenterMm = (() => {
-          if (frameRect) return frameRect.y + frameRect.height / 2;
-          if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
-          return Math.max(0, safeNumber(sheet?.height, 0)) / 2;
-        })();
-
-        return {
-          xCenterMm: Math.max(
-            safePageMarginMm + safeFrameSpacingMm / 2,
-            contentLeftMm - safeFrameSpacingMm / 2
-          ),
-          yCenterMm,
-          areaWidthMm: safeFrameSpacingMm,
-        };
-      })();
-
-      // For 'Sheet optimized (MJ) Fr.' mode, visually separate projectId and sheet number with a circle in the label band
+      // For Normal and Normal (MJ) Frame: no sheetInfo at all
       let sheetInfo = null;
-      if (sheetInfoPlacement) {
-        if (exportMode === 'Sheet optimized (MJ) Fr.') {
-          // Compose a special label: [projectId] ● [sheetIndex/sheetCount]
-          const projectId = resolvedProjectId;
-          const sheetIndex = sheet?.globalSheetIndex ?? sheetIndex + 1;
-          const sheetCount = sheet?.globalSheetCount ?? visibleSheets.length;
-          // Use a unicode circle (●) as separator
-          sheetInfo = {
-            ...sheetInfoPlacement,
-            projectId,
-            sheetIndex,
-            sheetCount,
-            customLabel: `${projectId} \u25CF ${sheetIndex}/${sheetCount}`,
+      if (exportMode !== 'Normal' && exportMode !== 'Normal (MJ) Frame') {
+        // For all other modes: per-group numbering
+        const groupNum = sheetGroupNumbers[sheet.index ?? sheet.globalSheetIndex ?? sheetIndex] || { groupIndex: sheetIndex + 1, groupCount: visibleSheets.length };
+        const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
+        const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
+        const stripWidthMm = Math.max(0, safeNumber(sheet?.leftStripWidthMm, 0));
+        const placementsBounds = (() => {
+          const list = Array.isArray(sheet?.placements) ? sheet.placements : [];
+          if (!list.length) return null;
+          let minX = Infinity;
+          let minY = Infinity;
+          let maxX = -Infinity;
+          let maxY = -Infinity;
+          list.forEach((p) => {
+            const x = safeNumber(p?.x, 0);
+            const y = safeNumber(p?.y, 0);
+            const w = Math.max(0, safeNumber(p?.width, 0));
+            const h = Math.max(0, safeNumber(p?.height, 0));
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x + w);
+            maxY = Math.max(maxY, y + h);
+          });
+          if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+            return null;
+          }
+          return { minX, minY, maxX, maxY };
+        })();
+        const holeCentersY = (() => {
+          const h = Math.max(0, safeNumber(sheet?.height, 0));
+          if (h >= 135) return [h / 2 - 80 / 2, h / 2 + 80 / 2];
+          return [h / 2];
+        })();
+        const sheetInfoPlacement = (() => {
+          if (!pdfAddSheetInfo) return null;
+          if (exportMode === 'Sheet optimized (MJ) Fr.') {
+            if (stripWidthMm <= 0) return null;
+            const centerYmm = holeCentersY.length
+              ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
+              : Math.max(0, safeNumber(sheet?.height, 0)) / 2;
+            return {
+              xCenterMm: stripWidthMm / 2,
+              yCenterMm: centerYmm,
+              areaWidthMm: stripWidthMm,
+            };
+          }
+          if (safeFrameSpacingMm <= 0) return null;
+          const contentLeftMm = (() => {
+            if (placementsBounds && Number.isFinite(placementsBounds.minX)) return placementsBounds.minX;
+            if (frameRect) return frameRect.x + safeFrameSpacingMm;
+            return safePageMarginMm + safeFrameSpacingMm;
+          })();
+          const yCenterMm = (() => {
+            if (frameRect) return frameRect.y + frameRect.height / 2;
+            if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
+            return Math.max(0, safeNumber(sheet?.height, 0)) / 2;
+          })();
+          return {
+            xCenterMm: Math.max(
+              safePageMarginMm + safeFrameSpacingMm / 2,
+              contentLeftMm - safeFrameSpacingMm / 2
+            ),
+            yCenterMm,
+            areaWidthMm: safeFrameSpacingMm,
           };
-        } else {
-          sheetInfo = {
-            projectId: resolvedProjectId,
-            sheetIndex: sheet?.globalSheetIndex ?? sheetIndex + 1,
-            sheetCount: sheet?.globalSheetCount ?? visibleSheets.length,
-            ...sheetInfoPlacement,
-          };
+        })();
+        if (sheetInfoPlacement) {
+          if (exportMode === 'Sheet optimized (MJ) Fr.') {
+            const projectId = resolvedProjectId;
+            sheetInfo = {
+              ...sheetInfoPlacement,
+              projectId,
+              sheetIndex: groupNum.groupIndex,
+              sheetCount: groupNum.groupCount,
+              customLabel: `${projectId} \u25CF ${groupNum.groupIndex}/${groupNum.groupCount}`,
+            };
+          } else {
+            sheetInfo = {
+              projectId: resolvedProjectId,
+              sheetIndex: groupNum.groupIndex,
+              sheetCount: groupNum.groupCount,
+              ...sheetInfoPlacement,
+            };
+          }
         }
       }
 
@@ -949,14 +976,14 @@ const Order = ({orderId}) => {
       <div className="urls">
         {(materialGroups && materialGroups.length > 0) ? (
           materialGroups.map((group) => {
-            const userId = String(order?.userId || '');
+            const orderNumber = String(order?.id || orderId || '');
             const colorLabel = String(group.color || 'UNKNOWN');
             const thicknessNum = Number(group.thickness);
             const thicknessLabel = Number.isFinite(thicknessNum) && Math.abs(thicknessNum - 1.6) > 1e-6 ? ` ${thicknessNum}` : '';
             const tapePart = String(group.tape || '').trim();
             const hasTape = tapePart === 'tape';
             const tapeLabel = hasTape ? '' : ' NO TAPE';
-            const fileLabel = `${userId} ${String(colorLabel || '').toUpperCase()}${thicknessLabel}${tapeLabel}.pdf (${group.count} signs)`;
+            const fileLabel = `${orderNumber} ${String(colorLabel || '').toUpperCase()}${thicknessLabel}${tapeLabel}.pdf (${group.count} signs)`;
 
             const normalizedColor = String(colorLabel || '').trim().toLowerCase();
 

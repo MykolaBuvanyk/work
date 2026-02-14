@@ -1261,17 +1261,9 @@ app.post('/api/layout-pdf', async (req, res) => {
         const holeSpacingMm = 80;
         const secondHoleMinHeightMm = 135;
 
-        const stripWidthPt = mmToPoints(stripWidthMm);
         doc.save();
         // Strip background is the page itself (white).
-        // Draw ONLY the strip right edge line (at x=stripWidth) to match the UI.
-        doc.save();
-        doc.lineWidth(0.5);
-        doc.strokeColor('#8B4513');
-        doc.moveTo(stripWidthPt, 0);
-        doc.lineTo(stripWidthPt, pageHeightPt);
-        doc.stroke();
-        doc.restore();
+        // Do not draw a separate strip edge line here: the frame outline is drawn later.
 
         const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
         const holeCentersYmm =
@@ -1317,11 +1309,57 @@ app.post('/api/layout-pdf', async (req, res) => {
           const customLabel = sheetInfo.customLabel || null;
 
           doc.save();
-          doc.fillColor('#111111');
-          doc.font('Helvetica');
+          doc.strokeColor(TEXT_OUTLINE_COLOR);
+          doc.fillOpacity(0);
+          doc.strokeOpacity(1);
+          doc.lineJoin('round');
+          doc.lineCap('round');
+          doc.lineWidth(Math.max(TEXT_STROKE_WIDTH_PT, 0.2));
+          doc.font(DEFAULT_FONT_ID);
           doc.fontSize(fontSize);
           doc.translate(anchorXpt, anchorYpt);
           doc.rotate(-90);
+
+          const drawVectorLabelText = (text, startX, startY) => {
+            const runs = splitTextIntoFontRuns(String(text || ''), DEFAULT_FONT_ID);
+            if (!runs.length) return;
+
+            let segmentX = startX;
+            runs.forEach(run => {
+              if (!run?.text) return;
+
+              const textToSvg = getTextToSvgInstance(run.fontId) || getTextToSvgInstance(DEFAULT_FONT_ID);
+              if (textToSvg) {
+                try {
+                  const pathData = textToSvg.getD(run.text, {
+                    fontSize,
+                    anchor: TEXT_TO_SVG_ANCHOR,
+                  });
+                  const metrics = textToSvg.getMetrics(run.text, {
+                    fontSize,
+                    anchor: TEXT_TO_SVG_ANCHOR,
+                  });
+                  doc.save();
+                  doc.translate(segmentX, startY);
+                  doc.path(pathData);
+                  doc.stroke();
+                  doc.restore();
+                  segmentX += Number(metrics?.width) || 0;
+                  return;
+                } catch (pathError) {
+                  console.warn('SheetInfo TextToSVG path failed:', pathError.message);
+                }
+              }
+
+              // Fallback if TextToSVG is unavailable.
+              doc.text(run.text, segmentX, startY, {
+                lineBreak: false,
+                stroke: true,
+                fill: false,
+              });
+              segmentX += doc.widthOfString(run.text);
+            });
+          };
 
           if (isMjOptimized && customLabel && customLabel.includes('\u25CF')) {
             // Split by the circle
@@ -1342,9 +1380,9 @@ app.post('/api/layout-pdf', async (req, res) => {
             // Place number to the left of the first circle, project name to the right
             const gapPt = mmToPoints(0.5); // 0.5mm gap from circle
             // Draw number (with 'Sh') left of the circle
-            doc.text(sheetNum, -circleRadiusPt - gapPt - leftWidth, 0, { lineBreak: false });
+            drawVectorLabelText(sheetNum, -circleRadiusPt - gapPt - leftWidth, 0);
             // Draw project name right of the circle
-            doc.text(rightText, circleRadiusPt + gapPt, 0, { lineBreak: false });
+            drawVectorLabelText(rightText, circleRadiusPt + gapPt, 0);
           } else {
             // Fallback: default label logic
             const projectId = sheetInfo.projectId ? String(sheetInfo.projectId) : '';
@@ -1353,7 +1391,7 @@ app.post('/api/layout-pdf', async (req, res) => {
               : `Sh ${Number(sheetInfo.sheetIndex) || 1}`;
             const label = projectId ? `${projectId} ${shPart}` : shPart;
             const totalWidth = doc.widthOfString(label);
-            doc.text(label, -totalWidth / 2, 0, { lineBreak: false });
+            drawVectorLabelText(label, -totalWidth / 2, 0);
           }
           doc.restore();
         }
@@ -1883,34 +1921,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc.strokeColor('#8B4513');
 
           const radiusPt = mmToPoints(5);
-          if (sheet.exportMode === "Sheet optimized (MJ) Fr.") {
-            // Only round top-right and bottom-right corners
-            // PDFKit doesn't support per-corner radius, so draw path manually
-            const r = radiusPt;
-            doc.moveTo(frameXPt, frameYPt);
-            // top edge
-            doc.lineTo(frameXPt + frameWidthPt - r, frameYPt);
-            doc.bezierCurveTo(
-              frameXPt + frameWidthPt - r / 2, frameYPt,
-              frameXPt + frameWidthPt, frameYPt + r / 2,
-              frameXPt + frameWidthPt, frameYPt + r
-            );
-            // right edge
-            doc.lineTo(frameXPt + frameWidthPt, frameYPt + frameHeightPt - r);
-            doc.bezierCurveTo(
-              frameXPt + frameWidthPt, frameYPt + frameHeightPt - r / 2,
-              frameXPt + frameWidthPt - r / 2, frameYPt + frameHeightPt,
-              frameXPt + frameWidthPt - r, frameYPt + frameHeightPt
-            );
-            // bottom edge
-            doc.lineTo(frameXPt, frameYPt + frameHeightPt);
-            // left edge (no rounding)
-            doc.lineTo(frameXPt, frameYPt);
-            doc.closePath();
-            doc.stroke();
-          } else {
-            doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
-          }
+          doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
           doc.restore();
         }
       }

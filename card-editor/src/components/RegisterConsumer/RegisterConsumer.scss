@@ -129,12 +129,33 @@
     a { color: #006ca4; text-decoration: underline; }
   }
   .we-will-container2{
-    select {
+    .tell-about-combo {
+      position: relative;
+      width: 100%;
+
+      input {
+        padding-right: 44px;
+      }
+
+      .tell-about-switch {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 42px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+    }
+
+    select,
+    input {
       width: 100%;
       height: 28px;
       background-color: #F0F0F0;
       border: 1px solid #000000;
       border-radius: 5px;
+      padding: 0 8px;
+      box-sizing: border-box;
     }
   }
 }

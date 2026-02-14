@@ -2,6 +2,7 @@ import { User } from '../models/models.js';
 import ErrorApi from '../error/ErrorApi.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { Op } from 'sequelize';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
@@ -182,7 +183,18 @@ class AuthController {
   static Login = async (req, res, next) => {
     try {
       const { email, password } = req.body;
-      const user = await User.findOne({ where: { email } });
+      const loginValue = String(email || '').trim();
+      const whereClause = [{ email: loginValue }];
+
+      if (/^\d+$/.test(loginValue)) {
+        whereClause.push({ id: Number(loginValue) });
+      }
+
+      const user = await User.findOne({
+        where: {
+          [Op.or]: whereClause
+        }
+      });
       if (!user) return next(ErrorApi.badRequest('no register'));
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {

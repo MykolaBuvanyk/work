@@ -33,7 +33,6 @@ const combinedCountries = [
 ];
 
 const tellAboutList=[
-  'Choose the answer',
   'Online / Internet',
   'Through samples',
   'Via flyer',
@@ -47,6 +46,7 @@ const tellAboutList=[
 
 const RegisterBussines = () => {
     const [isInvoice,setIsInvoice]=useState(false);
+  const [tellAboutSelection, setTellAboutSelection] = useState('');
   
   const [formData, setFormData] = useState({
     firstName: '',company:'', address: '', address2: '', address3: '',
@@ -60,6 +60,17 @@ const RegisterBussines = () => {
 
   const handleInput = fieldName => value => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleTellAboutSelect = value => {
+    setTellAboutSelection(value);
+    setFormData(prev => ({
+      ...prev,
+      tellAbout:
+        value === 'Other'
+          ? (tellAboutList.includes(prev.tellAbout) ? '' : prev.tellAbout)
+          : value
+    }));
   };
 
   const navigate=useNavigate();
@@ -250,9 +261,28 @@ const RegisterBussines = () => {
           <div className="text-content">
             <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>Please tell us where you heard about us — it will help us improve!</p>
           </div>
-          <select onChange={e => handleInput('tellAbout')(e.target.value)} value={formData.tellAbout}>
-            {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
-          </select>
+          {tellAboutSelection === 'Other' ? (
+            <div className="tell-about-combo">
+              <input
+                value={formData.tellAbout}
+                onChange={e => handleInput('tellAbout')(e.target.value)}
+                placeholder="Please specify"
+              />
+              <select
+                className="tell-about-switch"
+                onChange={e => handleTellAboutSelect(e.target.value)}
+                value=""
+              >
+                <option value="" disabled></option>
+                {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </div>
+          ) : (
+            <select onChange={e => handleTellAboutSelect(e.target.value)} value={tellAboutSelection}>
+              <option value="" disabled>Choose the answer</option>
+              {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+            </select>
+          )}
         </div>
       </div>
 

@@ -53,8 +53,8 @@ const UpdateAvaible = () => {
   const [isLangOpenCons, setIsLangOpenCons] = useState(false);
   const [langInput, setLangInput2]=useState('');
   const [langInputCons, setLangInputCons] = useState('');
-  const [langSelect, setLangSelect]=useState('BE');
-  const [langSelectCons, setLangSelectCons] = useState('BE');
+  const [langSelect, setLangSelect]=useState('AT');
+  const [langSelectCons, setLangSelectCons] = useState('AT');
 
 
   const [formData, setFormData] = useState({

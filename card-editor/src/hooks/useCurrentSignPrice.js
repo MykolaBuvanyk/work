@@ -332,10 +332,12 @@ export const useCurrentSignPrice = () => {
 
       // Current sign: active canvas + accessories (as requested earlier)
       const currentCanvasSubtotal = basePrice + elementsPrice + borderPrice;
-      const currentSignSubtotal = currentCanvasSubtotal + accessoriesPrice;
+      const currentSignSubtotal = currentCanvasSubtotal;
 
       // Order subtotal: sum of all canvases (project + unsaved) + accessories once
       let orderCanvasesSubtotal = 0;
+      let entriesCount = 0;
+      let totalCopiesCount = 0;
       try {
         const unsaved = await getAllUnsavedSigns().catch(() => []);
         let projectCanvases = [];
@@ -349,10 +351,43 @@ export const useCurrentSignPrice = () => {
           projectCanvases = [];
         }
 
-        const entries = [...(Array.isArray(projectCanvases) ? projectCanvases : []), ...(Array.isArray(unsaved) ? unsaved : [])];
+        const mergedEntries = [
+          ...(Array.isArray(projectCanvases) ? projectCanvases : []),
+          ...(Array.isArray(unsaved) ? unsaved : []),
+        ];
+
+        const seen = new Set();
+        const entries = [];
+        for (const entry of mergedEntries) {
+          if (!entry) continue;
+          const json = getEntryJson(entry);
+          const stableId =
+            entry?.id ||
+            entry?._id ||
+            entry?.canvasId ||
+            entry?.localId ||
+            entry?.tempId;
+          const fallbackKey = [
+            safeNumber(entry?.width || json?.width),
+            safeNumber(entry?.height || json?.height),
+            safeNumber(entry?.toolbarState?.thickness),
+            String(entry?.toolbarState?.isAdhesiveTape === true),
+            Array.isArray(json?.objects) ? json.objects.length : 0,
+          ].join("|");
+          const dedupeKey = String(stableId || fallbackKey);
+          if (seen.has(dedupeKey)) continue;
+          seen.add(dedupeKey);
+          entries.push(entry);
+        }
+
+        entriesCount = entries.length;
         for (const entry of entries) {
           if (!entry) continue;
-          const copies = Math.max(1, Math.floor(safeNumber(entry?.copiesCount || entry?.toolbarState?.copiesCount || 1)));
+          const copies = Math.max(
+            1,
+            Math.floor(safeNumber(entry?.copiesCount || entry?.toolbarState?.copiesCount || 1))
+          );
+          totalCopiesCount += copies;
           orderCanvasesSubtotal += computeEntrySubtotal(entry, formData) * copies;
         }
       } catch {
@@ -364,7 +399,13 @@ export const useCurrentSignPrice = () => {
         orderCanvasesSubtotal = currentCanvasSubtotal;
       }
 
-      const orderSubtotal = orderCanvasesSubtotal ;
+      const isSingleCanvasNoAccessories =
+        entriesCount === 1 && totalCopiesCount === 1 && !(accessoriesPrice > 0);
+      if (isSingleCanvasNoAccessories) {
+        orderCanvasesSubtotal = currentCanvasSubtotal;
+      }
+
+      const orderSubtotal = orderCanvasesSubtotal;
 
       const rules = Array.isArray(formData?.discount) ? formData.discount : [];
       const pickDiscountPercent = (amount) => {
@@ -422,7 +463,20 @@ export const useCurrentSignPrice = () => {
       });
       const vat = netAfterDiscount * (vatP / 100);
       const totalInclVat = netAfterDiscount + vat;
-
+      console.log("All price components", {
+        currentCanvasSubtotal,
+        accessoriesPrice,
+        entriesCount,
+        totalCopiesCount,
+        isSingleCanvasNoAccessories,
+        orderSubtotal,
+        percent,
+        discAmount,
+        netAfterDiscount,
+        vatP,
+        vat,
+        totalInclVat
+      });
       setPrice(Number.isFinite(currentSignSubtotal) ? currentSignSubtotal : 0);
       setNetAfterDiscount(Number.isFinite(netAfterDiscount) ? netAfterDiscount : 0);
       setDiscountPercent(Number.isFinite(percent) ? percent : 0);

@@ -6,35 +6,29 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 
 const languages = [
-  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
-  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
-
-  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
-  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
-  { countryCode: 'DE', label: 'DE-DE' }, // Germany
-  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
-  { countryCode: 'FR', label: 'FR-FR' }, // France
-
-  { countryCode: 'GB', label: 'EN-GB' }, // UK
-  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
-  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
-
-  { countryCode: 'IT', label: 'IT-IT' }, // Italy
-  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
-  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
-
-  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
-  { countryCode: 'PL', label: 'PL-PL' }, // Poland
-
-  { countryCode: 'RO', label: 'RO-RO' }, // Romania
-  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
-  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
-
-  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
-  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
-  { countryCode: 'ES', label: 'ES-ES' }, // Spain
-
-  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
+  { countryCode: 'AT', label: 'AT' },
+  { countryCode: 'BE', label: 'BE' },
+  { countryCode: 'HR', label: 'HR' },
+  { countryCode: 'CZ', label: 'CZ' },
+  { countryCode: 'DK', label: 'DK' },
+  { countryCode: 'EE', label: 'EE' },
+  { countryCode: 'FR', label: 'FR' },
+  { countryCode: 'DE', label: 'DE' },
+  { countryCode: 'HU', label: 'HU' },
+  { countryCode: 'IE', label: 'IE' },
+  { countryCode: 'IT', label: 'IT' },
+  { countryCode: 'LT', label: 'LT' },
+  { countryCode: 'LU', label: 'LU' },
+  { countryCode: 'NL', label: 'NL' },
+  { countryCode: 'PL', label: 'PL' },
+  { countryCode: 'RO', label: 'RO' },
+  { countryCode: 'SK', label: 'SK' },
+  { countryCode: 'SI', label: 'SI' },
+  { countryCode: 'ES', label: 'ES' },
+  { countryCode: 'SE', label: 'SE' },
+  { countryCode: 'CH', label: 'CH' },
+  { countryCode: 'UA', label: 'UA' },
+  { countryCode: 'UK', label: 'UK' },
 ];
 
 
@@ -412,11 +406,11 @@ const UpdateAvaible = () => {
               <span>VAT Bus</span>
               <div className='lang'>
                 <div
-                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', cursor: 'pointer' }}
                   onClick={() => setIsLangOpen(!isLangOpen)}
                 >
                   {langSelect}
-                  <SlArrowDown size={14} />
+                  <SlArrowDown size={14} style={{ transition: 'transform 0.2s', transform: isLangOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                 </div>
                 <div className={isLangOpen ? 'dropdown' : 'open'}>
                   {languages.map(lang => (
@@ -437,11 +431,11 @@ const UpdateAvaible = () => {
               <span>VAT Cons</span>
               <div className='lang'>
                 <div
-                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', cursor: 'pointer' }}
                   onClick={() => setIsLangOpenCons(!isLangOpenCons)}
                 >
                   {langSelectCons}
-                  <SlArrowDown size={14} />
+                  <SlArrowDown size={14} style={{ transition: 'transform 0.2s', transform: isLangOpenCons ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                 </div>
                 <div className={isLangOpenCons ? 'dropdown' : 'open'}>
                   {languages.map(lang => (

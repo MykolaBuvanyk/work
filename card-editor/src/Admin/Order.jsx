@@ -931,7 +931,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Count Sings:</p>
-        <span>{order.signs}</span>
+        <span>{totalRequestedCopies > 0 ? totalRequestedCopies : order.signs}</span>
         <div />
       </div>
       <div className="row">

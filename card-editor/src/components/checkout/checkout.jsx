@@ -470,7 +470,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											{isBusiness && (
+											{(isBusiness || isInvoiceDifferent) && (
 												<FieldRow id='companyName' label='Company Name'>
 													<input
 														id='companyName'
@@ -602,7 +602,9 @@ export default function Checkout({
 
 									<div className='address-extra'>
 										<div className='address-extra__row'>
-											<label className='address-extra__note'>
+											<label
+												className={`address-extra__note ${isPhoneOk ? 'address-extra__note--checked' : ''}`}
+											>
 												This phone number may be used for any questions
 											</label>
 
@@ -619,7 +621,9 @@ export default function Checkout({
 										<div className='address-extra__row address-extra__row--invoice'>
 											<label
 												htmlFor='invoiceEmail'
-												className='address-extra__invoice-text'
+												className={`address-extra__invoice-text ${
+													!isInvoiceDifferent ? 'address-extra__invoice-text--disabled' : ''
+												}`}
 											>
 												This email will be used to send you the invoice
 											</label>

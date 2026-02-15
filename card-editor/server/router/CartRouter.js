@@ -166,6 +166,18 @@ const normalizeAccessories = (input) => {
     .filter((x) => x.qty > 0 && (x.id != null || x.name != null));
 };
 
+const countProjectSigns = (project) => {
+  const canvases = Array.isArray(project?.canvases) ? project.canvases : [];
+  return canvases.reduce((sum, canvas) => {
+    const rawCopies =
+      canvas?.copiesCount ??
+      canvas?.toolbarState?.copiesCount ??
+      1;
+    const copies = Math.max(1, Math.floor(toNumber(rawCopies, 1)));
+    return sum + copies;
+  }, 0);
+};
+
 // Auth: add current project to cart
 CartRouter.post('/', requireAuth, async (req, res, next) => {
   try {
@@ -205,9 +217,11 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     });
 
 
+    const orderSigns = countProjectSigns(project);
+
     const order=await Order.create({
       sum: Math.round(netAfterDiscount * 100) / 100,
-      signs:body.project.canvases.length,
+      signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:body.lang,
       status:'Waiting',

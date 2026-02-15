@@ -1,11 +1,13 @@
 .update-avaible-container {
-  input{
+  input {
     color: #006CA4;
   }
+
   .button {
     display: flex;
     align-items: flex-end;
     justify-content: right;
+
     button {
       background-color: #fd7714;
       font-family: Inter;
@@ -25,20 +27,24 @@
       letter-spacing: 0%;
     }
   }
+
   .list {
     display: flex;
     flex-direction: column;
     gap: 20px;
     margin-top: 30px;
+
     .row {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
     }
+
     .title {
       display: flex;
       flex-direction: row;
       gap: 10px;
+
       span {
         display: flex;
         align-items: center;
@@ -49,6 +55,7 @@
         border-radius: 100%;
       }
     }
+
     ul {
       display: flex;
       flex-direction: row;
@@ -59,11 +66,13 @@
       padding: 0;
       margin-right: 10%;
       margin-left: 10%;
+
       li {
         display: flex;
         flex-direction: row;
         gap: 7.5px;
         align-items: center;
+
         input {
           margin: 0;
           color: #006CA4;
@@ -76,10 +85,12 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+
     .list-colors {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
       gap: 7.5px;
+
       div {
         width: 35px;
         height: 35px;
@@ -91,10 +102,12 @@
       }
     }
   }
+
   .row {
     display: flex;
     flex-direction: row;
     gap: 15px;
+
     .title {
       font-family: Inter;
       font-weight: 700;
@@ -109,19 +122,23 @@
       text-decoration-skip-ink: auto;
       color: #006ca4;
     }
+
     .first {
       margin-top: 30px;
       width: 70%;
+
       .list-elem {
         display: flex;
         flex-direction: column;
         gap: 20px;
+
         .elem {
           list-style-type: armenian;
           display: flex;
           flex-direction: row;
           align-items: center;
           gap: 10px;
+
           input[type='number'] {
             background-color: transparent;
             border: 1px solid #7d7d7d;
@@ -131,41 +148,57 @@
             border-width: 1px;
             color: #000000;
           }
+
           .img-cont {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 200px;
             height: 51px;
+
             img {
               max-height: 51px;
               max-width: 100px;
               width: auto;
             }
           }
+
           .text {
             width: 130px;
           }
+
           .info {
             margin-left: 20px;
           }
         }
       }
-      .bonuses{
+
+      .bonuses {
         border-top: 2px solid #006CA4;
         display: flex;
         justify-content: space-between;
         padding-top: 15px;
-        .bunuses-text{
+        padding-bottom: 10px;
+
+
+        .bunuses-text:nth-child(1),
+        .bunuses-text:nth-child(2) {
+          border-right: 1px solid #000000;
+          padding-right: 28px;
+        }
+
+        .bunuses-text {
           display: flex;
           flex-direction: column;
           gap: 15px;
+
           // justify-content: space-between;
-          .bonuses-title{
+          .bonuses-title {
             display: flex;
             flex-direction: row;
             gap: 5px;
-            p{
+
+            p {
               margin: 0;
               font-family: Inter;
               font-weight: 500;
@@ -175,7 +208,8 @@
               letter-spacing: 0%;
               color: #006CA4;
             }
-            span{
+
+            span {
               font-family: Inter;
               font-weight: 400;
               font-style: Regular;
@@ -186,15 +220,19 @@
               text-align: right;
             }
           }
-          #procent-discount{
+
+          #procent-discount {
             display: flex;
             flex-direction: column;
             gap: 5px;
-            .proc{
+
+            .proc {
               display: flex;
               flex-direction: row;
               justify-content: space-between;
               gap: 10px;
+              align-items: center;
+
               input {
                 background-color: transparent;
                 font-family: Inter;
@@ -216,7 +254,8 @@
                 padding: 0;
                 width: 52px;
                 text-align: center;
-                &.number2{
+
+                &.number2 {
                   width: 37px;
                   text-align: right;
                   padding-right: 7.5px;
@@ -225,14 +264,17 @@
             }
           }
         }
-      } 
+      }
     }
+
     .prices {
       width: 30%;
       margin-top: 30px;
+
       .title {
         margin-bottom: 10px;
       }
+
       p {
         font-family: Inter;
         font-weight: 300;
@@ -242,19 +284,22 @@
         letter-spacing: 0%;
         margin-top: 7.5px;
       }
-      .list-thinkness{
+
+      .list-thinkness {
         margin-top: 30px;
         display: flex;
         flex-direction: column;
         gap: 12.5px;
-        .thinkness-title-row{
+
+        .thinkness-title-row {
           display: flex;
           flex-direction: row;
           justify-content: space-between;
           align-items: center;
           gap: 7.5px;
           margin-top: 10px;
-          span{
+
+          span {
             margin-left: 10px;
             font-family: Inter;
             font-weight: 700;
@@ -266,11 +311,13 @@
             text-decoration: none;
             border: none;
           }
-          .thinkness-title{
+
+          .thinkness-title {
             display: flex;
             flex-direction: row;
             align-items: center;
-            p{
+
+            p {
               font-family: Inter;
               font-weight: 700;
               font-style: Bold;
@@ -286,7 +333,8 @@
               color: #000000;
               margin: 0;
             }
-            span{
+
+            span {
               font-family: Inter;
               font-weight: 700;
               font-style: Bold;
@@ -297,7 +345,8 @@
               color: #006CA4;
             }
           }
-          .thinkness-info{
+
+          .thinkness-info {
             display: flex;
             align-items: center;
             gap: 7.5px;
@@ -309,28 +358,34 @@
             line-height: 100%;
             letter-spacing: 0%;
             color: #000000;
-            input{
+
+            input {
               margin: 0;
             }
+
             padding-right: 80px;
           }
         }
-        .lists{
+
+        .lists {
           display: flex;
           flex-direction: column;
           gap: 7.5px;
           margin-top: 10px;
-          .list{
+
+          .list {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
             margin: 0;
-            p{
+
+            p {
               margin: 0;
               width: 85px;
             }
-            span{
+
+            span {
               font-family: Inter;
               font-weight: 500;
               font-style: Italic;
@@ -340,7 +395,8 @@
               color: #000000;
               white-space: nowrap;
             }
-            input{
+
+            input {
               width: 59px;
               height: 25px;
               border-radius: 8px;
@@ -352,6 +408,7 @@
           }
         }
       }
+
       .lang-cont {
         display: flex;
         flex-direction: row;

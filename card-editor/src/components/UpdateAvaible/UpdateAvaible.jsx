@@ -4,6 +4,7 @@ import { $authHost } from '../../http';
 import { useSelector } from 'react-redux';
 import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
+import combinedCountries from '../Countries'
 
 const languages = [
   { countryCode: 'BE', label: 'FR-BE' }, // Belgium
@@ -416,16 +417,18 @@ const UpdateAvaible = () => {
                   onClick={() => setIsLangOpen(!isLangOpen)}
                 >
                   {langSelect}
-                  <SlArrowDown size={14} />
+                  <div className={`svg ${isLangOpen?'rotate':''}`}>
+                    <SlArrowDown size={14} />
+                  </div>
                 </div>
                 <div className={isLangOpen ? 'dropdown' : 'open'}>
-                  {languages.map(lang => (
+                  {combinedCountries.map((lang) => (
                     <div
-                      key={lang.countryCode}
-                      onClick={() => setSelectLang(lang.countryCode)}
+                      key={lang.code}
+                      onClick={() => setSelectLang(lang.code)}
                       className={'countries'}
                     >
-                      {lang.countryCode}
+                      {lang.code}
                     </div>
                   ))}
                 </div>
@@ -441,16 +444,18 @@ const UpdateAvaible = () => {
                   onClick={() => setIsLangOpenCons(!isLangOpenCons)}
                 >
                   {langSelectCons}
-                  <SlArrowDown size={14} />
+                  <div className={`svg ${isLangOpenCons?'rotate':''}`}>
+                    <SlArrowDown size={14} />
+                  </div>
                 </div>
                 <div className={isLangOpenCons ? 'dropdown' : 'open'}>
-                  {languages.map(lang => (
+                  {combinedCountries.map(lang => (
                     <div
-                      key={`${lang.countryCode}-cons`}
-                      onClick={() => setSelectLangCons(lang.countryCode)}
+                      key={`${lang.code}-cons`}
+                      onClick={() => setSelectLangCons(lang.code)}
                       className={'countries'}
                     >
-                      {lang.countryCode}
+                      {lang.code}
                     </div>
                   ))}
                 </div>

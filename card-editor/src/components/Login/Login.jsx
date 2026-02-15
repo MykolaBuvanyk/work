@@ -2,8 +2,6 @@ import React from 'react';
 import './Login.scss';
 import LoginForm from '../LoginForm/LoginForm';
 import LoginRegister from '../LoginRegister/LoginRegister';
-import PleaceTell from '../PleaceTell/PleaceTell';
-import WeWiill from '../WeWill/WeWiill';
 
 const Login = () => {
   return (

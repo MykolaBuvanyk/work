@@ -1,26 +1,9 @@
 import React, { useState } from 'react';
 import './UpdateBaner.scss';
-import Flag from 'react-flagkit';
 import { MdCloudUpload } from 'react-icons/md';
 import { $authHost } from '../../http';
+import combinedCountries from '../Countries';
 
-const languages = [
-  { code: 'en', countryCode: 'GB', label: 'English' },
-  { code: 'fr', countryCode: 'FR', label: 'Français' },
-  { code: 'it', countryCode: 'IT', label: 'Italiano' },
-  { code: 'es', countryCode: 'ES', label: 'Español' },
-  { code: 'pl', countryCode: 'PL', label: 'Polski' },
-  { code: 'cz', countryCode: 'CZ', label: 'Čeština' },
-  { code: 'nl', countryCode: 'NL', label: 'Nederlands' },
-  { code: 'se', countryCode: 'SE', label: 'Svenska' },
-  { code: 'no', countryCode: 'NO', label: 'Norsk' },
-  { code: 'dk', countryCode: 'DK', label: 'Dansk' },
-  { code: 'hu', countryCode: 'HU', label: 'Magyar' },
-  { code: 'hr', countryCode: 'HR', label: 'Hrvatski' },
-  { code: 'ua', countryCode: 'UA', label: 'Українська' },
-  { code: 'ru', countryCode: 'RU', label: 'Русский' },
-  { code: 'de', countryCode: 'DE', label: 'Deutsch' },
-];
 
 const UpdateBaner = () => {
   const [refreshKey, setRefreshKey] = useState(Date.now());
@@ -51,11 +34,11 @@ const UpdateBaner = () => {
       </header>
 
       <div className="banners-grid">
-        {languages.map((lang) => (
+        {combinedCountries.map((lang) => (
           <div key={lang.code} className="banner-card">
             <div className="card-header">
               <div className="flag-wrapper">
-                <Flag country={lang.countryCode} size={24} />
+                {lang.flag}
               </div>
               <div className="lang-info">
                 <span className="lang-name">{lang.label}</span>

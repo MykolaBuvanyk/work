@@ -203,13 +203,13 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       accessories: normalizedAccessories,
       status: 'pending',
     });
-
-
+  
+    const user=await User.findOne({where:{id:req.user.id}});
     const order=await Order.create({
       sum: Math.round(netAfterDiscount * 100) / 100,
       signs:body.project.canvases.length,
       userId,
-      country:body.lang,
+      country:user.country,
       status:'Waiting',
       orderName:body.projectName,
       orderType:'',

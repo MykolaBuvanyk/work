@@ -936,7 +936,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Invoice Tag:</p>
-        <span>12 Plastic Engraved Plates</span>
+        <span>Invoice No: {order.id}</span>
         <div />
       </div>
       <div className="row">

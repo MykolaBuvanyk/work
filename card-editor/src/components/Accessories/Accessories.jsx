@@ -233,14 +233,47 @@ const TopToolbar = ({ className, formData }) => {
         currentProjectId = localStorage.getItem("currentProjectId");
       } catch { }
 
-      // Визначаємо що саме треба видалити
-      const isUnsavedSign = !!currentUnsavedId;
-      const isProjectCanvas = !!currentProjectCanvasId && !!currentProjectId;
+      // Визначаємо активний тип полотна (не видаляємо обидва одночасно)
+      const activeMode = currentUnsavedId
+        ? "unsaved"
+        : currentProjectCanvasId && currentProjectId
+          ? "project"
+          : null;
+      const isUnsavedSign = activeMode === "unsaved";
+      const isProjectCanvas = activeMode === "project";
 
       if (!isUnsavedSign && !isProjectCanvas) {
         console.log("No canvas to delete");
         setWorking(false);
         return;
+      }
+
+      const sortUnsavedByCreated = (list) => {
+        return [...(Array.isArray(list) ? list : [])].sort((a, b) => {
+          const timeA = Number(a?.createdAt) || 0;
+          const timeB = Number(b?.createdAt) || 0;
+          return timeA - timeB;
+        });
+      };
+
+      let projectDeleteIndex = -1;
+      let unsavedDeleteIndex = -1;
+
+      if (isProjectCanvas) {
+        const projectBefore = await getProject(currentProjectId);
+        const projectCanvasesBefore = Array.isArray(projectBefore?.canvases)
+          ? projectBefore.canvases
+          : [];
+        projectDeleteIndex = projectCanvasesBefore.findIndex(
+          (entry) => entry?.id === currentProjectCanvasId
+        );
+      }
+
+      if (isUnsavedSign) {
+        const unsavedBefore = sortUnsavedByCreated(await getAllUnsavedSigns());
+        unsavedDeleteIndex = unsavedBefore.findIndex(
+          (entry) => entry?.id === currentUnsavedId
+        );
       }
 
       // Видаляємо unsaved sign
@@ -301,33 +334,36 @@ const TopToolbar = ({ className, formData }) => {
         } catch { }
       }
 
-      // Завантажуємо наступне доступне полотно
+      // Активуємо попереднє полотно після видалення
       let nextCanvasToLoad = null;
 
-      // Спочатку перевіряємо чи є ще полотна в проекті
-      if (currentProjectId) {
+      if (isProjectCanvas && currentProjectId) {
         const project = await getProject(currentProjectId);
         if (project && project.canvases && project.canvases.length > 0) {
-          nextCanvasToLoad = project.canvases[0];
+          const targetIndex = Math.max(0, (projectDeleteIndex > 0 ? projectDeleteIndex - 1 : 0));
+          const safeIndex = Math.min(targetIndex, project.canvases.length - 1);
+          nextCanvasToLoad = project.canvases[safeIndex];
+
           try {
             localStorage.setItem("currentCanvasId", nextCanvasToLoad.id);
             localStorage.setItem("currentProjectCanvasId", nextCanvasToLoad.id);
-            localStorage.setItem("currentProjectCanvasIndex", "0");
+            localStorage.setItem("currentProjectCanvasIndex", String(safeIndex));
+            localStorage.removeItem("currentUnsavedSignId");
           } catch { }
           try {
             if (typeof window !== "undefined") {
               window.__currentProjectCanvasId = nextCanvasToLoad.id;
-              window.__currentProjectCanvasIndex = 0;
+              window.__currentProjectCanvasIndex = safeIndex;
             }
           } catch { }
 
-          if (canvas && nextCanvasToLoad.json) {
-            canvas.__suspendUndoRedo = true;
-            canvas.loadFromJSON(nextCanvasToLoad.json, () => {
-              canvas.renderAll();
-              canvas.__suspendUndoRedo = false;
-            });
-          }
+          try {
+            window.dispatchEvent(
+              new CustomEvent("canvas:autoOpen", {
+                detail: { canvasId: nextCanvasToLoad.id, isUnsaved: false },
+              })
+            );
+          } catch { }
 
           console.log("Loaded next project canvas:", nextCanvasToLoad.id);
           setWorking(false);
@@ -335,21 +371,34 @@ const TopToolbar = ({ className, formData }) => {
         }
       }
 
-      // Якщо в проекті немає полотен, перевіряємо unsaved signs
-      const remaining = await getAllUnsavedSigns();
+      // Якщо проектних полотен немає (або видаляли unsaved), перевіряємо unsaved signs
+      const remaining = sortUnsavedByCreated(await getAllUnsavedSigns());
       if (remaining.length > 0) {
-        nextCanvasToLoad = remaining[0];
+        const targetIndex = Math.max(0, (unsavedDeleteIndex > 0 ? unsavedDeleteIndex - 1 : 0));
+        const safeIndex = Math.min(targetIndex, remaining.length - 1);
+        nextCanvasToLoad = remaining[safeIndex];
+
         try {
+          localStorage.setItem("currentCanvasId", nextCanvasToLoad.id);
           localStorage.setItem("currentUnsavedSignId", nextCanvasToLoad.id);
+          localStorage.removeItem("currentProjectCanvasId");
+          localStorage.removeItem("currentProjectCanvasIndex");
+        } catch { }
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = null;
+            window.__currentProjectCanvasIndex = null;
+          }
         } catch { }
 
-        if (canvas && nextCanvasToLoad.json) {
-          canvas.__suspendUndoRedo = true;
-          canvas.loadFromJSON(nextCanvasToLoad.json, () => {
-            canvas.renderAll();
-            canvas.__suspendUndoRedo = false;
-          });
-        }
+        try {
+          window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+          window.dispatchEvent(
+            new CustomEvent("canvas:autoOpen", {
+              detail: { canvasId: nextCanvasToLoad.id, isUnsaved: true },
+            })
+          );
+        } catch { }
 
         console.log("Loaded next unsaved sign:", nextCanvasToLoad.id);
       } else {

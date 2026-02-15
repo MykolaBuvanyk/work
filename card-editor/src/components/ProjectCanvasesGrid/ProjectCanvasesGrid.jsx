@@ -70,6 +70,8 @@ const ProjectCanvasesGrid = () => {
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
 
   useEffect(() => {
+    let isEffectActive = true;
+
     const load = () => {
       let id = null;
       try {
@@ -339,6 +341,18 @@ const ProjectCanvasesGrid = () => {
     // Listen for toolbar/canvas property changes
     const handleToolbarChange = () => {
       if (!canvas) return;
+
+      // Ignore programmatic canvas mutations (clear/load/switch).
+      // Without this guard, debounced autosave may persist a temporary blank state
+      // into the currently active project canvas.
+      if (canvas.__suspendUndoRedo || canvas.__switching) {
+        if (updateDebounceRef.current) {
+          clearTimeout(updateDebounceRef.current);
+          updateDebounceRef.current = null;
+        }
+        return;
+      }
+
       const activeUnsaved = currentUnsavedIdRef.current;
       const activeProjectCanvas = currentProjectCanvasIdRef.current;
 
@@ -393,6 +407,8 @@ const ProjectCanvasesGrid = () => {
         }
 
         updateDebounceRef.current = setTimeout(async () => {
+          if (!isEffectActive) return;
+          if (!canvas || canvas.__suspendUndoRedo || canvas.__switching) return;
           try {
             if (activeUnsaved) {
               await updateUnsavedSignFromCanvas(activeUnsaved, canvas);
@@ -450,41 +466,25 @@ const ProjectCanvasesGrid = () => {
     window.addEventListener('canvas:dimensionsChanged', handleToolbarChange);
     window.addEventListener('canvas:shapeChanged', handleToolbarChange);
 
-    // Save current canvas when component unmounts or page unloads
-    const handleBeforeUnload = async () => {
-      if (!canvas) return;
-      const currentUnsavedId = currentUnsavedIdRef.current;
-      const currentProjectCanvasId = currentProjectCanvasIdRef.current;
-
-      try {
-        if (currentUnsavedId) {
-          await updateUnsavedSignFromCanvas(currentUnsavedId, canvas);
-        } else if (currentProjectCanvasId) {
-          await updateCanvasInCurrentProject(currentProjectCanvasId, canvas);
-        }
-      } catch (e) {
-        console.error('Failed to save before unload:', e);
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
+      isEffectActive = false;
+
+      if (updateDebounceRef.current) {
+        clearTimeout(updateDebounceRef.current);
+        updateDebounceRef.current = null;
+      }
+
       window.removeEventListener('project:canvasesUpdated', updated);
       window.removeEventListener('project:switched', switched);
       window.removeEventListener('project:reset', reset);
       window.removeEventListener('project:opened', handleProjectOpened);
       window.removeEventListener('canvas:autoOpen', handleCanvasAutoOpen);
       window.removeEventListener('unsaved:signsUpdated', unsavedUpdated);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('canvas:propertyChanged', handleToolbarChange);
       window.removeEventListener('toolbar:changed', handleToolbarChange);
       window.removeEventListener('canvas:backgroundChanged', handleToolbarChange);
       window.removeEventListener('canvas:dimensionsChanged', handleToolbarChange);
       window.removeEventListener('canvas:shapeChanged', handleToolbarChange);
-
-      // Save current state when component unmounts
-      handleBeforeUnload();
     };
   }, [canvas]);
 

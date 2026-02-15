@@ -445,7 +445,9 @@
             text-align: center;
             height: 18px;
           }
+          
         }
+        
 
         .lang {
           position: relative;
@@ -459,6 +461,13 @@
           letter-spacing: 0%;
           vertical-align: middle;
           color: #000000;
+          .svg {
+            transition: transform 0.3s ease; // додаємо плавну анімацію
+
+            &.rotate {
+              transform: rotate(180deg);
+            }
+          }
         }
 
         .dropdown {

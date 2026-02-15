@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import './UpdateAvaible.scss';
 import { $authHost } from '../../http';
 import { useSelector } from 'react-redux';
-import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 
 const languages = [

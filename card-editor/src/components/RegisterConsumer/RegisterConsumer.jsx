@@ -5,31 +5,7 @@ import MyTextInput from '../MyInput/MyTextInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
-
-const combinedCountries = [
-  { code: 'BE', label: '🇧🇪 Belgium' },
-  { code: 'CH', label: '🇨🇭 Switzerland' },
-  { code: 'CZ', label: '🇨🇿 Czech Republic' },
-  { code: 'DK', label: '🇩🇰 Denmark' },
-  { code: 'DE', label: '🇩🇪 Germany' },
-  { code: 'EE', label: '🇪🇪 Estonia' },
-  { code: 'FR', label: '🇫🇷 France' },
-  { code: 'GB', label: '🇬🇧 United Kingdom' },
-  { code: 'HU', label: '🇭🇺 Hungary' },
-  { code: 'IE', label: '🇮🇪 Ireland' },
-  { code: 'IT', label: '🇮🇹 Italy' },
-  { code: 'LT', label: '🇱🇹 Lithuania' },
-  { code: 'LU', label: '🇱🇺 Luxembourg' },
-  { code: 'NL', label: '🇳🇱 Netherlands' },
-  { code: 'PL', label: '🇵🇱 Poland' },
-  { code: 'RO', label: '🇷🇴 Romania' },
-  { code: 'SI', label: '🇸🇮 Slovenia' },
-  { code: 'SK', label: '🇸🇰 Slovakia' },
-  { code: 'SE', label: '🇸🇪 Sweden' },
-  { code: 'HR', label: '🇭🇷 Croatia' },
-  { code: 'ES', label: '🇪🇸 Spain' },
-  { code: 'UA', label: '🇺🇦 Ukraine' }
-];
+import combinedCountries from '../Countries';
 
 const tellAboutList=[
   'Online / Internet',

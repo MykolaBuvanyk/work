@@ -4,38 +4,30 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/reducers/user';
-
-const languages = [
-  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
-  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
-
-  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
-  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
-  { countryCode: 'DE', label: 'DE-DE' }, // Germany
-  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
-  { countryCode: 'FR', label: 'FR-FR' }, // France
-
-  { countryCode: 'GB', label: 'EN-GB' }, // UK
-  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
-  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
-
-  { countryCode: 'IT', label: 'IT-IT' }, // Italy
-  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
-  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
-
-  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
-  { countryCode: 'PL', label: 'PL-PL' }, // Poland
-
-  { countryCode: 'RO', label: 'RO-RO' }, // Romania
-  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
-  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
-
-  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
-  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
-  { countryCode: 'ES', label: 'ES-ES' }, // Spain
-
-  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
+import combinedCountries from '../Countries';
+ 
+const languageCountries = [
+  { flag: "🇩🇪", code: "DE" },
+  { flag: "🇬🇧", code: "EN" },
+  { flag: "🇫🇷", code: "FR" },
+  { flag: "🇮🇹", code: "IT" },
+  { flag: "🇨🇿", code: "CS" },
+  { flag: "🇩🇰", code: "DA" },
+  { flag: "🇪🇸", code: "ES" },
+  { flag: "🇪🇪", code: "ET" },
+  { flag: "🇭🇷", code: "HR" },
+  { flag: "🇭🇺", code: "HU" },
+  { flag: "🇱🇹", code: "LT" },
+  { flag: "🇳🇱", code: "NL" },
+  { flag: "🇵🇱", code: "PL" },
+  { flag: "🇷🇴", code: "RO" },
+  { flag: "🇸🇰", code: "SK" },
+  { flag: "🇸🇮", code: "SL" },
+  { flag: "🇸🇪", code: "SV" },
+  { flag: "🇺🇦", code: "UA" },
 ];
+
+
 
 const Header = () => {
   const { pathname } = useLocation(); // <-- тут шлях
@@ -130,7 +122,7 @@ const Header = () => {
   
   const IMG_URL = import.meta.env.VITE_LAYOUT_SERVER;
 
-  console.log(4234,user)
+
   return (
     <div className={styles.header}>
       <div className={styles.firstPart}>
@@ -319,7 +311,7 @@ const Header = () => {
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
-            <p className={styles.name}>{isAuth && user.firstName + ' ' + user.surname}</p>
+            <p className={styles.name}>{isAuth && user.firstName||'' + ' ' + user.surname||''}</p>
             <p className={styles.company} style={{textAlign:'right'}}>{user.company||''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
@@ -328,24 +320,27 @@ const Header = () => {
 
           <div className={styles.lang}>
             <div
-              style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center' }}
+              style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center',fontSize:'16px' }}
               onClick={() => setIsLangOpen(!isLangOpen)}
             >
               {//<Flag country="DE" size={32} />
 }
-              EN
-              <SlArrowDown size={14} />
+              🇬🇧 UK
+              <div className={isLangOpen&&styles.rotate}>
+                <SlArrowDown size={14} />
+              </div>
             </div>
             <div className={isLangOpen ? styles.dropdown : styles.open}>
-              {languages.map(lang => (
+              {languageCountries.map(lang => (
                 <div
-                  key={lang.countryCode}
+                  key={lang.code}
                   onClick={() => setIsLangOpen(false)}
                   className={styles.countries}
+                  style={{whiteSpace:"nowrap"}}
                 >
                   {//<Flag country={lang.countryCode} size={32} />
 }
-                  {lang.countryCode}
+                  {lang.flag+' '+lang.code}
                 </div>
               ))}
             </div>

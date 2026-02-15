@@ -1,5 +1,5 @@
 .login-form-container {
-  max-width: 600px;
+  width: 550px;
   padding: 25px;
   border: 1px solid #777; // Сіра тонка рамка навколо всієї форми
   border-radius: 8px;
@@ -43,6 +43,7 @@
       display: flex;
       align-items: center;
       width: 55%;
+      min-width: 275px;
 
       label {
         color: #333;

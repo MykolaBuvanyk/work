@@ -4,6 +4,7 @@ import MyTextInput from '../MyInput/MyTextInput';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import ChangePassword from './ChangePassword';
+import combinedCountries from '../Countries';
 
 // Оновлені ключі, що відповідають вашій моделі Sequelize
 const addressFields = [
@@ -33,30 +34,6 @@ const invoiceFields = [
   { label: 'Mobile Phone', key: 'phone2' },
 ];
 
-const combinedCountries = [
-  { code: 'BE', label: '🇧🇪 Belgium' },
-  { code: 'CH', label: '🇨🇭 Switzerland' },
-  { code: 'CZ', label: '🇨🇿 Czech Republic' },
-  { code: 'DK', label: '🇩🇰 Denmark' },
-  { code: 'DE', label: '🇩🇪 Germany' },
-  { code: 'EE', label: '🇪🇪 Estonia' },
-  { code: 'FR', label: '🇫🇷 France' },
-  { code: 'GB', label: '🇬🇧 United Kingdom' },
-  { code: 'HU', label: '🇭🇺 Hungary' },
-  { code: 'IE', label: '🇮🇪 Ireland' },
-  { code: 'IT', label: '🇮🇹 Italy' },
-  { code: 'LT', label: '🇱🇹 Lithuania' },
-  { code: 'LU', label: '🇱🇺 Luxembourg' },
-  { code: 'NL', label: '🇳🇱 Netherlands' },
-  { code: 'PL', label: '🇵🇱 Poland' },
-  { code: 'RO', label: '🇷🇴 Romania' },
-  { code: 'SI', label: '🇸🇮 Slovenia' },
-  { code: 'SK', label: '🇸🇰 Slovakia' },
-  { code: 'SE', label: '🇸🇪 Sweden' },
-  { code: 'HR', label: '🇭🇷 Croatia' },
-  { code: 'ES', label: '🇪🇸 Spain' },
-  { code: 'UA', label: '🇺🇦 Ukraine' }
-];
 
 const AccoutDetail = () => {
   const [address, setAddress] = useState({});

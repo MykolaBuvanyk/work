@@ -14,6 +14,7 @@ import {
   A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,
 } from '../assets/Icons';
 import { useNavigate } from 'react-router-dom';
+import combinedCountries from '../components/Countries';
 
 const PX_PER_MM = 72 / 25.4;
 
@@ -936,7 +937,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Invoice Tag:</p>
-        <span>12 Plastic Engraved Plates</span>
+        <span>Invoice No: {order.id}</span>
         <div />
       </div>
       <div className="row">
@@ -947,11 +948,14 @@ const Order = ({orderId}) => {
       <div className="row box">
         <p>Delivery Address:</p>
         <div className="box">
-          <div>{order.orderName}</div>
           <div>{order.user.firstName} {order.user.surname}</div>
-          <div>{order.user.address}. {order.user.house||''}</div>
-          <div>{order.user.postcode} {order.user.city}</div>
-          <div>{order.user.country}</div>
+          <div>{order.user.company||''}</div>
+          <div>{order.user.address||''}</div>
+          <div>{order.user.address2||''}</div>
+          <div>{order.user.address3||''}</div>
+          <div>{order.user.city||''}</div>
+          <div>{order.user.postcode||''}</div>
+          <div>{combinedCountries.find(x=>x.code==order.user.country).label||order.user.country||''}</div>    
         </div>
       </div>
       <div className="row">

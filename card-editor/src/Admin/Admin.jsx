@@ -242,7 +242,7 @@ const Admin = () => {
                 <th>Order No</th>
                 <th>Cust No</th>
                 <th>Signs</th>
-                <th>Order Sum</th>
+                <th>Sum (V.+D)</th>
                 <th>Country</th>
                 <th>Status</th>
                 <th>Order Date</th>

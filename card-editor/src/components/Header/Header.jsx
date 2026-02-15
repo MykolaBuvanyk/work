@@ -4,38 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/reducers/user';
-
-const languages = [
-  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
-  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
-
-  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
-  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
-  { countryCode: 'DE', label: 'DE-DE' }, // Germany
-  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
-  { countryCode: 'FR', label: 'FR-FR' }, // France
-
-  { countryCode: 'GB', label: 'EN-GB' }, // UK
-  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
-  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
-
-  { countryCode: 'IT', label: 'IT-IT' }, // Italy
-  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
-  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
-
-  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
-  { countryCode: 'PL', label: 'PL-PL' }, // Poland
-
-  { countryCode: 'RO', label: 'RO-RO' }, // Romania
-  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
-  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
-
-  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
-  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
-  { countryCode: 'ES', label: 'ES-ES' }, // Spain
-
-  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
-];
+import combinedCountries from '../Countries';
+ 
 
 const Header = () => {
   const { pathname } = useLocation(); // <-- тут шлях
@@ -130,7 +100,7 @@ const Header = () => {
   
   const IMG_URL = import.meta.env.VITE_LAYOUT_SERVER;
 
-  console.log(4234,user)
+
   return (
     <div className={styles.header}>
       <div className={styles.firstPart}>
@@ -333,19 +303,20 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              EN
+              🇬🇧 UK
               <SlArrowDown size={14} />
             </div>
             <div className={isLangOpen ? styles.dropdown : styles.open}>
-              {languages.map(lang => (
+              {combinedCountries.map(lang => (
                 <div
-                  key={lang.countryCode}
+                  key={lang.code}
                   onClick={() => setIsLangOpen(false)}
                   className={styles.countries}
+                  style={{whiteSpace:"nowrap"}}
                 >
                   {//<Flag country={lang.countryCode} size={32} />
 }
-                  {lang.countryCode}
+                  {lang.flag+' '+lang.code}
                 </div>
               ))}
             </div>

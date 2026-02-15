@@ -1,0 +1,27 @@
+const combinedCountries = [
+  { code: 'AT', label: 'Austria', flag: '🇦🇹' },
+  { code: 'BE', label: 'Belgium', flag: '🇧🇪' },
+  { code: 'HR', label: 'Croatia', flag: '🇭🇷' },
+  { code: 'CZ', label: 'Czech Republic', flag: '🇨🇿' },
+  { code: 'DK', label: 'Denmark', flag: '🇩🇰' },
+  { code: 'EE', label: 'Estonia', flag: '🇪🇪' },
+  { code: 'FR', label: 'France', flag: '🇫🇷' },
+  { code: 'DE', label: 'Germany', flag: '🇩🇪' },
+  { code: 'HU', label: 'Hungary', flag: '🇭🇺' },
+  { code: 'IE', label: 'Ireland', flag: '🇮🇪' },
+  { code: 'IT', label: 'Italy', flag: '🇮🇹' },
+  { code: 'LT', label: 'Lithuania', flag: '🇱🇹' },
+  { code: 'LU', label: 'Luxembourg', flag: '🇱🇺' },
+  { code: 'NL', label: 'Netherlands', flag: '🇳🇱' },
+  { code: 'PL', label: 'Poland', flag: '🇵🇱' },
+  { code: 'RO', label: 'Romania', flag: '🇷🇴' },
+  { code: 'SK', label: 'Slovakia', flag: '🇸🇰' },
+  { code: 'SI', label: 'Slovenia', flag: '🇸🇮' },
+  { code: 'ES', label: 'Spain', flag: '🇪🇸' },
+  { code: 'SE', label: 'Sweden', flag: '🇸🇪' },
+  { code: 'CH', label: 'Switzerland', flag: '🇨🇭' },
+  { code: 'UA', label: 'Ukraine', flag: '🇺🇦' },
+  { code: 'UK', label: 'United Kingdom', flag: '🇬🇧' },
+];
+
+export default combinedCountries;

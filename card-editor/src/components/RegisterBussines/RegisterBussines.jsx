@@ -2,35 +2,9 @@ import React, { useState } from 'react';
 import './RegisterBussines.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
-import { countries, states } from './countries';
 import { Link, useNavigate } from 'react-router-dom';
 import { $host } from '../../http';
-import WeWiill from '../WeWill/WeWiill';
-
-const combinedCountries = [
-  { code: 'BE', label: '🇧🇪 Belgium' },
-  { code: 'CH', label: '🇨🇭 Switzerland' },
-  { code: 'CZ', label: '🇨🇿 Czech Republic' },
-  { code: 'DK', label: '🇩🇰 Denmark' },
-  { code: 'DE', label: '🇩🇪 Germany' },
-  { code: 'EE', label: '🇪🇪 Estonia' },
-  { code: 'FR', label: '🇫🇷 France' },
-  { code: 'GB', label: '🇬🇧 United Kingdom' },
-  { code: 'HU', label: '🇭🇺 Hungary' },
-  { code: 'IE', label: '🇮🇪 Ireland' },
-  { code: 'IT', label: '🇮🇹 Italy' },
-  { code: 'LT', label: '🇱🇹 Lithuania' },
-  { code: 'LU', label: '🇱🇺 Luxembourg' },
-  { code: 'NL', label: '🇳🇱 Netherlands' },
-  { code: 'PL', label: '🇵🇱 Poland' },
-  { code: 'RO', label: '🇷🇴 Romania' },
-  { code: 'SI', label: '🇸🇮 Slovenia' },
-  { code: 'SK', label: '🇸🇰 Slovakia' },
-  { code: 'SE', label: '🇸🇪 Sweden' },
-  { code: 'HR', label: '🇭🇷 Croatia' },
-  { code: 'ES', label: '🇪🇸 Spain' },
-  { code: 'UA', label: '🇺🇦 Ukraine' }
-];
+import combinedCountries from '../Countries';
 
 const tellAboutList=[
   'Online / Internet',
@@ -273,7 +247,7 @@ const RegisterBussines = () => {
                 onChange={e => handleTellAboutSelect(e.target.value)}
                 value=""
               >
-                <option value="" disabled></option>
+              <option value="" disabled></option>
                 {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
               </select>
             </div>

@@ -88,6 +88,11 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
         console.error("Failed to clear unsaved signs", e);
       }
 
+      try {
+        localStorage.removeItem("pendingOpenedProjectAccessories");
+        sessionStorage.removeItem("pendingOpenedProjectAccessories");
+      } catch {}
+
       // Створюємо нове полотно за замовчуванням після збереження
       try {
         // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
@@ -107,6 +112,8 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
 
         // Відправляємо подію про оновлення unsaved signs
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+        window.dispatchEvent(new CustomEvent("project:reset"));
+        window.dispatchEvent(new CustomEvent("accessories:reset"));
 
         // Даємо час на оновлення state і автоматично відкриваємо полотно
         setTimeout(() => {
@@ -212,6 +219,11 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
       console.error("Failed to clear unsaved signs", e);
     }
 
+    try {
+      localStorage.removeItem("pendingOpenedProjectAccessories");
+      sessionStorage.removeItem("pendingOpenedProjectAccessories");
+    } catch {}
+
     // Створюємо нове полотно за замовчуванням
     try {
       // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
@@ -239,6 +251,7 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
 
       // Відправляємо подію про reset проекту (після створення нового полотна)
       window.dispatchEvent(new CustomEvent("project:reset"));
+      window.dispatchEvent(new CustomEvent("accessories:reset"));
 
       // Даємо час на оновлення state і автоматично відкриваємо полотно
       setTimeout(() => {

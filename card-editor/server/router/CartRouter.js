@@ -166,6 +166,18 @@ const normalizeAccessories = (input) => {
     .filter((x) => x.qty > 0 && (x.id != null || x.name != null));
 };
 
+const countTotalSignsFromProject = (project) => {
+  const canvases = Array.isArray(project?.canvases) ? project.canvases : [];
+  if (!canvases.length) return 0;
+
+  return canvases.reduce((sum, canvas) => {
+    const rawCopies = canvas?.copiesCount ?? canvas?.toolbarState?.copiesCount ?? 1;
+    const copies = Math.floor(Number(rawCopies));
+    const safeCopies = Number.isFinite(copies) && copies > 0 ? copies : 1;
+    return sum + safeCopies;
+  }, 0);
+};
+
 // Auth: add current project to cart
 CartRouter.post('/', requireAuth, async (req, res, next) => {
   try {
@@ -190,6 +202,9 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const normalizedAccessories = normalizeAccessories(body.accessories);
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
+    const checkoutCountryRegion = String(body?.checkout?.deliveryAddress?.region || '').trim().toUpperCase();
+    const checkoutCountryName = String(body?.checkout?.deliveryAddress?.country || '').trim();
+    const totalSigns = countTotalSignsFromProject(project);
 
     const created = await CartProject.create({
       userId,
@@ -207,9 +222,9 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const user=await User.findOne({where:{id:req.user.id}});
     const order=await Order.create({
       sum: Math.round(netAfterDiscount * 100) / 100,
-      signs:body.project.canvases.length,
+      signs:totalSigns,
       userId,
-      country:user.country,
+      country:checkoutCountryRegion || checkoutCountryName || user.country,
       status:'Waiting',
       orderName:body.projectName,
       orderType:'',
@@ -333,9 +348,11 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       (orders.rows || []).map(async (order) => {
         const orderMongo = await findCartProjectForOrder(order);
         const totalPrice = Number(orderMongo?.totalPrice);
+        const computedSigns = countTotalSignsFromProject(orderMongo?.project);
         return {
           ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),
           orderMongo,
+          signs: computedSigns > 0 ? computedSigns : Number(order?.signs || 0),
           totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
         };
       })
@@ -380,12 +397,14 @@ CartRouter.get('/get/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 
     const orderMongo = await findCartProjectForOrder(order);
+    const computedSigns = countTotalSignsFromProject(orderMongo?.project);
   
 
     return res.json({
       order: {
         ...order.toJSON(),
         orderMongo,
+        signs: computedSigns > 0 ? computedSigns : Number(order?.signs || 0),
       },
     });
   } catch (err) {
@@ -1233,10 +1252,12 @@ CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
     const mapped = await Promise.all(
       (orders || []).map(async (order) => {
         const orderMongo = await findCartProjectForOrder(order);
+        const computedSigns = countTotalSignsFromProject(orderMongo?.project);
 
         return {
           ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),
           orderMongo,
+          signs: computedSigns > 0 ? computedSigns : Number(order?.signs || 0),
         };
       })
     );

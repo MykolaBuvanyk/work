@@ -178,6 +178,8 @@ const countProjectSigns = (project) => {
   }, 0);
 };
 
+const countTotalSignsFromProject = (project) => countProjectSigns(project);
+
 // Auth: add current project to cart
 CartRouter.post('/', requireAuth, async (req, res, next) => {
   try {
@@ -204,7 +206,6 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
     const checkoutCountryRegion = String(body?.checkout?.deliveryAddress?.region || '').trim().toUpperCase();
     const checkoutCountryName = String(body?.checkout?.deliveryAddress?.country || '').trim();
-    const totalSigns = countTotalSignsFromProject(project);
 
     const created = await CartProject.create({
       userId,
@@ -224,11 +225,12 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
 
   
     const user=await User.findOne({where:{id:req.user.id}});
+    const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order=await Order.create({
       sum: Math.round(netAfterDiscount * 100) / 100,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
-      country:checkoutCountryRegion || checkoutCountryName || user.country,
+      country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,
       status:'Waiting',
       orderName:body.projectName,
       orderType:'',

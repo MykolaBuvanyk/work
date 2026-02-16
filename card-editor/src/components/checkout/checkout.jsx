@@ -84,6 +84,24 @@ const INITIAL_DELIVERY_ADDRESS = {
 	mobile: '',
 }
 
+const CHECKOUT_COUNTRY_STORAGE_KEY = 'checkout:selected-country'
+
+const readStoredCountrySelection = () => {
+	try {
+		const raw = localStorage.getItem(CHECKOUT_COUNTRY_STORAGE_KEY)
+		if (!raw) return { country: '', region: '' }
+		const parsed = JSON.parse(raw)
+		if (!parsed || typeof parsed !== 'object') return { country: '', region: '' }
+		const normalized = normalizeCountrySelection(parsed.country || parsed.region)
+		return {
+			country: normalized.country,
+			region: normalized.region,
+		}
+	} catch {
+		return { country: '', region: '' }
+	}
+}
+
 const COLOR_THEME_BY_INDEX = {
 	0: 'White / Black',
 	1: 'White / Blue',
@@ -137,7 +155,10 @@ export default function Checkout({
 	selectedAccessories = [],
 }) {
 	const [delivery, setDelivery] = useState(DELIVERY_LABELS[0])
-	const [deliveryAddress, setDeliveryAddress] = useState(INITIAL_DELIVERY_ADDRESS)
+	const [deliveryAddress, setDeliveryAddress] = useState(() => ({
+		...INITIAL_DELIVERY_ADDRESS,
+		...readStoredCountrySelection(),
+	}))
 	const [deliveryConfig, setDeliveryConfig] = useState({ deliveryDE: [], deliveryOther: [] })
 	const [vatConfig, setVatConfig] = useState({})
 	const [isPhoneOk, setIsPhoneOk] = useState(false)
@@ -157,10 +178,13 @@ export default function Checkout({
 			const firstName = String(user.firstName || '').trim()
 			const surname = String(user.surname || '').trim()
 			const fullName = [firstName, surname].filter(Boolean).join(' ')
+			const profileCountry = normalizeCountrySelection(user.country)
 
 			setDeliveryAddress(prev => ({
 				...prev,
-				...normalizeCountrySelection(user.country),
+				...(String(prev.country || '').trim() || String(prev.region || '').trim()
+					? {}
+					: profileCountry),
 				fullName,
 				companyName: String(user.company || ''),
 				address1: String(user.address || ''),
@@ -188,6 +212,28 @@ export default function Checkout({
 			active = false
 		}
 	}, [reduxUser])
+
+	useEffect(() => {
+		try {
+			const country = String(deliveryAddress?.country || '').trim()
+			const region = String(deliveryAddress?.region || '').trim().toUpperCase()
+			if (!country && !region) {
+				localStorage.removeItem(CHECKOUT_COUNTRY_STORAGE_KEY)
+				return
+			}
+
+			const normalized = normalizeCountrySelection(country || region)
+			localStorage.setItem(
+				CHECKOUT_COUNTRY_STORAGE_KEY,
+				JSON.stringify({
+					country: normalized.country,
+					region: normalized.region,
+				})
+			)
+		} catch {
+			// no-op
+		}
+	}, [deliveryAddress?.country, deliveryAddress?.region])
 
 	useEffect(() => {
 		try {

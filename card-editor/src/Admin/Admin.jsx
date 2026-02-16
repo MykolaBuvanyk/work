@@ -58,6 +58,20 @@ const languages = [
   { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
 ];
 
+const resolveOrderSigns = (order) => {
+  const canvases = order?.orderMongo?.project?.canvases;
+  if (Array.isArray(canvases) && canvases.length > 0) {
+    return canvases.reduce((sum, canvas) => {
+      const raw = canvas?.copiesCount ?? canvas?.toolbarState?.copiesCount ?? 1;
+      const copies = Math.max(1, Math.floor(Number(raw) || 1));
+      return sum + copies;
+    }, 0);
+  }
+
+  const legacy = Number(order?.signs);
+  return Number.isFinite(legacy) ? legacy : 0;
+};
+
 const Admin = () => {
   const { isAdmin } = useSelector(state => state.user);
   const [status,setStatus]=useState('ALL');
@@ -112,11 +126,16 @@ const Admin = () => {
               ...order,
               orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
               totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+              signs: resolveOrderSigns({
+                ...order,
+                orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+              }),
             };
           } catch {
             return {
               ...order,
               totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
+              signs: resolveOrderSigns(order),
             };
           }
         })

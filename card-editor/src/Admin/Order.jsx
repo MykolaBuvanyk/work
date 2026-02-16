@@ -689,7 +689,7 @@ const Order = ({orderId}) => {
           exportMode: localExportMode,
           spacingMm: localSignSpacing,
           sheets: preparedSheets,
-        }),ec
+        }),
       });
 
       if (!response.ok) {

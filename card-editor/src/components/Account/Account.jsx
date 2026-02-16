@@ -140,6 +140,7 @@ const Account = () => {
         }
     };
 
+
     return (
         <div id='account-container'>
             <AccountHeader />
@@ -164,7 +165,7 @@ const Account = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {myOrders.map((order, index) => (
+                        {myOrders.sort((a,b)=>b.id-a.id).map((order, index) => (
                             <tr key={order.id}>
                                 <td className="row-number">{index + 1}</td>
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>

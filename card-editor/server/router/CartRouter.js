@@ -166,15 +166,15 @@ const normalizeAccessories = (input) => {
     .filter((x) => x.qty > 0 && (x.id != null || x.name != null));
 };
 
-const countTotalSignsFromProject = (project) => {
+const countProjectSigns = (project) => {
   const canvases = Array.isArray(project?.canvases) ? project.canvases : [];
-  if (!canvases.length) return 0;
-
   return canvases.reduce((sum, canvas) => {
-    const rawCopies = canvas?.copiesCount ?? canvas?.toolbarState?.copiesCount ?? 1;
-    const copies = Math.floor(Number(rawCopies));
-    const safeCopies = Number.isFinite(copies) && copies > 0 ? copies : 1;
-    return sum + safeCopies;
+    const rawCopies =
+      canvas?.copiesCount ??
+      canvas?.toolbarState?.copiesCount ??
+      1;
+    const copies = Math.max(1, Math.floor(toNumber(rawCopies, 1)));
+    return sum + copies;
   }, 0);
 };
 
@@ -218,11 +218,15 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       accessories: normalizedAccessories,
       status: 'pending',
     });
+
+
+    const orderSigns = countProjectSigns(project);
+
   
     const user=await User.findOne({where:{id:req.user.id}});
     const order=await Order.create({
       sum: Math.round(netAfterDiscount * 100) / 100,
-      signs:totalSigns,
+      signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || user.country,
       status:'Waiting',

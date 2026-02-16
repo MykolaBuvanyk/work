@@ -36,8 +36,8 @@ const AccessoriesModal = ({
     if (!el) return;
 
     const updateScrollable = () => {
-      // Враховуємо top: 5% для .modalRoot -> даємо ~90% висоти екрана під модалку
-      const available = Math.floor(window.innerHeight * 0.9);
+      // Враховуємо top: 5% для .modalRoot -> даємо ~80% висоти екрана під модалку
+      const available = Math.floor(window.innerHeight * 0.8);
       // scrollHeight дає природну висоту контенту модалки
       const natural = el.scrollHeight;
       if (natural > available) {

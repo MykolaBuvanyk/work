@@ -521,15 +521,117 @@ const TopToolbar = ({ className, formData }) => {
   }, [canvas, hasCheckedCanvases, working]);
 
   useEffect(() => {
-    let filterAccessories = accessories.filter(
-      (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
-    );
-    filterAccessories = filterAccessories.map((x) => ({
-      ...x,
-      price: formData.listAccessories.find((y) => x.name == y.text).number,
-    }));
-    setAccessories(filterAccessories);
+    const hydrateAccessories = async () => {
+      let filterAccessories = accessories.filter(
+        (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
+      );
+      filterAccessories = filterAccessories.map((x) => ({
+        ...x,
+        price: formData.listAccessories.find((y) => x.name == y.text).number,
+      }));
+
+      let pending = [];
+      try {
+        const rawLocal = localStorage.getItem("pendingOpenedProjectAccessories");
+        const rawSession = sessionStorage.getItem("pendingOpenedProjectAccessories");
+        const parsedLocal = rawLocal ? JSON.parse(rawLocal) : [];
+        const parsedSession = rawSession ? JSON.parse(rawSession) : [];
+        pending = Array.isArray(parsedLocal) && parsedLocal.length > 0
+          ? parsedLocal
+          : Array.isArray(parsedSession) && parsedSession.length > 0
+            ? parsedSession
+            : [];
+      } catch {
+        pending = [];
+      }
+
+      if (!Array.isArray(pending) || pending.length === 0) {
+        try {
+          const currentProjectId = localStorage.getItem("currentProjectId");
+          if (currentProjectId) {
+            const currentProject = await getProject(currentProjectId);
+            const fromProject = Array.isArray(currentProject?.accessories)
+              ? currentProject.accessories
+              : [];
+            if (fromProject.length > 0) {
+              pending = fromProject;
+            }
+          }
+        } catch {
+          // no-op
+        }
+      }
+
+      if (Array.isArray(pending) && pending.length > 0) {
+        const byId = new Map();
+        const byName = new Map();
+        pending.forEach((item) => {
+          if (!item || typeof item !== "object") return;
+          if (item.id != null) byId.set(String(item.id), item);
+          if (item.name != null) byName.set(String(item.name).trim().toLowerCase(), item);
+        });
+
+        filterAccessories = filterAccessories.map((item) => {
+          const matchById = item?.id != null ? byId.get(String(item.id)) : null;
+          const matchByName = item?.name != null ? byName.get(String(item.name).trim().toLowerCase()) : null;
+          const incoming = matchById || matchByName;
+          if (!incoming) {
+            return {
+              ...item,
+              checked: false,
+              visible: false,
+              qty: "1",
+            };
+          }
+
+          const qtyRaw = Number(incoming.qty);
+          const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
+
+          return {
+            ...item,
+            checked: true,
+            visible: true,
+            qty: String(qty),
+          };
+        });
+
+        try {
+          localStorage.removeItem("pendingOpenedProjectAccessories");
+          sessionStorage.removeItem("pendingOpenedProjectAccessories");
+        } catch {
+          // no-op
+        }
+      }
+
+      setAccessories(filterAccessories);
+    };
+
+    hydrateAccessories();
   }, [formData]);
+
+  useEffect(() => {
+    const resetAccessories = () => {
+      setAccessories((prev) =>
+        (Array.isArray(prev) ? prev : []).map((item) => ({
+          ...item,
+          checked: false,
+          visible: false,
+          qty: "1",
+        }))
+      );
+      try {
+        localStorage.removeItem("pendingOpenedProjectAccessories");
+        sessionStorage.removeItem("pendingOpenedProjectAccessories");
+      } catch {
+        // no-op
+      }
+    };
+
+    window.addEventListener("accessories:reset", resetAccessories);
+    return () => {
+      window.removeEventListener("accessories:reset", resetAccessories);
+    };
+  }, []);
 
   console.log(3434, accessories);
   useEffect(() => {

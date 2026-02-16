@@ -154,6 +154,11 @@ const TopToolbar = ({ className }) => {
         console.error("Failed to clear unsaved signs", e);
       }
 
+      try {
+        localStorage.removeItem("pendingOpenedProjectAccessories");
+        sessionStorage.removeItem("pendingOpenedProjectAccessories");
+      } catch {}
+
       // Створюємо нове полотно за замовчуванням
       try {
         // Розміри прямокутника за замовчуванням (120x80 мм при 96 DPI)
@@ -184,6 +189,7 @@ const TopToolbar = ({ className }) => {
 
         // Відправляємо подію про reset проекту (після створення нового полотна)
         window.dispatchEvent(new CustomEvent("project:reset"));
+        window.dispatchEvent(new CustomEvent("accessories:reset"));
 
         // Даємо час на оновлення state і автоматично відкриваємо полотно
         setTimeout(() => {

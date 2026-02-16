@@ -724,6 +724,20 @@ const Order = ({orderId}) => {
   const openProject = async () => {
     // Project snapshot is stored under order.orderMongo.project (CartProject.project)
     const project = order?.orderMongo?.project || order?.project || order?.order || null;
+    const orderedAccessories = (() => {
+      const mongoAccessories = Array.isArray(order?.orderMongo?.accessories)
+        ? order.orderMongo.accessories
+        : [];
+      if (mongoAccessories.length > 0) return mongoAccessories;
+      try {
+        const parsed = JSON.parse(order?.accessories || '[]');
+        const sqlAccessories = Array.isArray(parsed) ? parsed : [];
+        if (sqlAccessories.length > 0) return sqlAccessories;
+      } catch {
+        // no-op
+      }
+      return [];
+    })();
     if (!project || typeof project !== 'object') {
       alert('No project snapshot in this order');
       return;
@@ -732,6 +746,11 @@ const Order = ({orderId}) => {
       alert('Project snapshot has no id');
       return;
     }
+
+    const projectToOpen = {
+      ...project,
+      accessories: Array.isArray(orderedAccessories) ? orderedAccessories : [],
+    };
 
     setIsOpeningProject(true);
     try {
@@ -745,14 +764,21 @@ const Order = ({orderId}) => {
         window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
       } catch {}
 
-      await putProject(project);
+      await putProject(projectToOpen);
 
       try {
-        localStorage.setItem('currentProjectId', project.id);
-        localStorage.setItem('currentProjectName', project.name || order?.projectName || '');
+        localStorage.setItem('pendingOpenedProjectAccessories', JSON.stringify(orderedAccessories));
+      } catch {}
+      try {
+        sessionStorage.setItem('pendingOpenedProjectAccessories', JSON.stringify(orderedAccessories));
       } catch {}
 
-      const first = Array.isArray(project.canvases) ? project.canvases[0] : null;
+      try {
+        localStorage.setItem('currentProjectId', projectToOpen.id);
+        localStorage.setItem('currentProjectName', projectToOpen.name || order?.projectName || '');
+      } catch {}
+
+      const first = Array.isArray(projectToOpen.canvases) ? projectToOpen.canvases[0] : null;
       if (first?.id) {
         try {
           localStorage.setItem('currentCanvasId', first.id);
@@ -782,7 +808,7 @@ const Order = ({orderId}) => {
       try {
         window.dispatchEvent(
           new CustomEvent('project:opened', {
-            detail: { projectId: project.id },
+            detail: { projectId: projectToOpen.id },
           })
         );
       } catch {}
@@ -932,7 +958,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Count Sings:</p>
-        <span>{totalRequestedCopies > 0 ? totalRequestedCopies : order.signs}</span>
+        <span>{totalRequestedCopies || order.signs}</span>
         <div />
       </div>
       <div className="row">
@@ -955,7 +981,7 @@ const Order = ({orderId}) => {
           <div>{order.user.address3||''}</div>
           <div>{order.user.city||''}</div>
           <div>{order.user.postcode||''}</div>
-          <div>{combinedCountries.find(x=>x.code==order.user.country).label||order.user.country||''}</div>    
+          <div>{(combinedCountries.find(x=>x.code===(order.country||order.user.country))||{}).label||order.country||order.user.country||''}</div>    
         </div>
       </div>
       <div className="row">
@@ -970,7 +996,7 @@ const Order = ({orderId}) => {
       </div>
       <div className="row">
         <p>Instruction:</p>
-        <span></span>
+        <span>{order?.user?.additional || '---'}</span>
         <div />
       </div>
       <div className="row">

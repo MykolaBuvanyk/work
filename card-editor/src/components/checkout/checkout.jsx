@@ -296,6 +296,10 @@ export default function Checkout({
 
 	const handlePlaceOrder = e => {
 		e?.preventDefault?.()
+		if (!String(deliveryAddress?.country || '').trim()) {
+			alert('Please select a country')
+			return
+		}
 		if (typeof onPlaceOrder === 'function') {
 			onPlaceOrder({
 				sum: Number(sumForOrder || 0),
@@ -551,8 +555,11 @@ export default function Checkout({
 													name='country'
 													value={deliveryAddress.country}
 													onChange={e => updateDeliveryField('country', e.target.value)}
+														required
 												>
-													<option value=''></option>
+														<option value='' disabled>
+															Select country
+														</option>
 													{COUNTRY_OPTIONS.map(country => (
 														<option key={country.code} value={country.name}>
 															{country.name}

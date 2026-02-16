@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/reducers/user';
 import { Link, useNavigate } from 'react-router-dom';
 
-const LoginForm = ({toRegister=false}) => {
+const LoginForm = ({toRegister=false, onSuccess}) => {
   const [email, setEmail] = useState('');
   const [forgotEmail, setForgotEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +20,7 @@ const LoginForm = ({toRegister=false}) => {
       e.preventDefault();
       const res = await $host.post('auth/login', { email, password });
       dispatch(setUser({ token: res.data.token }));
+      onSuccess?.();
       navigate('/');
     } catch (err) {
       alert('error');

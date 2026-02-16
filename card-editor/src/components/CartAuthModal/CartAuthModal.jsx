@@ -61,8 +61,8 @@ const CartAuthModal = ({ isOpen, onClose }) => {
 
   return (
     <div onClick={onClose} className="cart-auth-modal__overlay">
-      <div onClick={(e)=>{e.stopPropagation();e.preventDefault()}} role="dialog" aria-modal>
-        <LoginForm toRegister/>
+      <div onClick={(e)=>{e.stopPropagation();}} role="dialog" aria-modal>
+        <LoginForm toRegister onSuccess={onClose} />
       </div>
     </div>
   );

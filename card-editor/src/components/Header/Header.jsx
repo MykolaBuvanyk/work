@@ -7,7 +7,7 @@ import { logout } from '../../store/reducers/user';
 import combinedCountries from '../Countries';
  
 const languageCountries = [
-  { flag: "🇩🇪", code: "DE" },
+  //{ flag: "🇩🇪", code: "DE" },Вибрана
   { flag: "🇬🇧", code: "EN" },
   { flag: "🇫🇷", code: "FR" },
   { flag: "🇮🇹", code: "IT" },
@@ -325,7 +325,7 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              🇬🇧 UK
+              🇩🇪 DE
               <div className={isLangOpen&&styles.rotate}>
                 <SlArrowDown size={14} />
               </div>

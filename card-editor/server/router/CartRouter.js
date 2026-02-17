@@ -231,7 +231,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,
-      status:'Waiting',
+      status:'Received',
       orderName:body.projectName,
       orderType:'',
       accessories:JSON.stringify(normalizedAccessories),

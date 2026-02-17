@@ -3,24 +3,29 @@
   padding: 10px;
   box-sizing: border-box;
   max-width: 500px;
+
   .row {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+
     p {
       min-width: 200px;
       max-width: 200px;
       margin: 0;
     }
+
     span {
       width: 100%;
     }
+
     div {
       display: flex;
       min-width: 100px;
       white-space: nowrap;
       align-items: flex-end;
       justify-content: right;
+
       &.box {
         background-color: #f2f0f0;
         padding: 7.5px;
@@ -29,18 +34,22 @@
         flex-direction: column;
         justify-content: left;
         align-items: flex-start;
+
         div {
           justify-content: left;
           align-items: flex-start;
         }
       }
     }
+
     &.box {
       justify-content: left;
     }
   }
+
   .delivery {
     margin: 5px 0;
+
     button {
       background-color: #0095e2;
       width: 120px;
@@ -50,39 +59,47 @@
       color: #ffffff;
     }
   }
+
   .buttons {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 15px;
+    justify-content: space-between;
+    gap: 13px;
     margin: 20px 0;
+
     button {
       background-color: #006ca4;
       color: #ffffff;
       padding: 0 10px;
       margin: 0;
+
       &.active {
         background-color: chocolate;
         color: #ffffff;
       }
     }
   }
+
   .urls {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin-top: 15px;
+
     .url-cont {
       display: flex;
       flex-direction: row;
       gap: 10px;
       align-items: center;
+
       .url {
         width: 340px;
         color: #007aff;
         text-decoration: underline;
         cursor: pointer;
       }
+
       .img {
         width: 35px;
         height: 35px;
@@ -99,6 +116,7 @@
       }
     }
   }
+
   .title {
     margin-top: 20px;
     background-color: #d5d5d5;
@@ -116,15 +134,18 @@
     letter-spacing: 0%;
     color: #000000;
   }
+
   .list-info {
     display: flex;
     flex-direction: column;
     gap: 15px;
     margin-top: 20px;
+
     .inf {
       display: flex;
       flex-direction: row;
       align-items: center;
+
       p {
         font-family: Inter;
         font-weight: 600;
@@ -137,6 +158,7 @@
         min-width: 120px;
         max-width: 120px;
       }
+
       select {
         display: flex;
         background-color: transparent;
@@ -144,10 +166,12 @@
       }
     }
   }
+
   .info-ful {
     display: flex;
     flex-direction: row;
     align-items: center;
+
     p {
       width: 150px;
       font-family: Inter;
@@ -159,6 +183,7 @@
       letter-spacing: 0%;
       color: #000000;
     }
+
     input[type='number'] {
       width: 38px;
       height: 17px;
@@ -167,6 +192,7 @@
       background-color: transparent;
       margin-right: 20px;
     }
+
     input[type='checkbox'] {
       width: 20px;
       height: 20px;
@@ -174,6 +200,7 @@
       margin: 0;
       margin-right: 20px;
     }
+
     span {
       font-family: Inter;
       font-weight: 500;
@@ -184,16 +211,19 @@
       letter-spacing: 0%;
       color: #000000;
     }
+
     select {
       padding-right: 20px;
       background-color: transparent;
       border-radius: 5px;
     }
   }
+
   .but {
     display: flex;
     align-items: center;
     justify-content: center;
+
     button {
       background-color: #006ca4;
       padding: 1px 10px;
@@ -210,11 +240,13 @@
       height: 21px;
     }
   }
+
   .but-message {
     display: flex;
     justify-content: right;
     align-items: flex-end;
     margin-top: 30px;
+
     button {
       padding: 3px 10px;
       background-color: #0095e2;
@@ -228,6 +260,7 @@
       letter-spacing: 0%;
       height: 20px;
     }
+
     padding-bottom: 10px;
   }
 }

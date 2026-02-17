@@ -6065,7 +6065,7 @@ const Toolbar = ({ formData }) => {
   // Додавання тексту
   const addText = () => {
     if (canvas) {
-      const text = new fabric.IText('Текст', {
+      const text = new fabric.IText('Text', {
         left: canvas.width / 2,
         top: canvas.height / 2,
         originX: 'center',

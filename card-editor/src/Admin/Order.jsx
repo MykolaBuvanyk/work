@@ -929,12 +929,12 @@ const Order = ({orderId}) => {
         <button>Delivery Note</button>
       </div>
       <div className="buttons">
-        <button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
+        <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>
         <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
-        <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
-        <button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button>
+        {/* <button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button> */}
+        <button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
       </div>
       <div className="row">
         <p>Delivery Type</p>

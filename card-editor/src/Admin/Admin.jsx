@@ -87,6 +87,17 @@ const Admin = () => {
   const [sum,setSum]=useState(0);
   const [orderId,setOrderId]=useState(null);
 
+  const handleStartDateChange = (nextStart) => {
+    setStart(nextStart);
+
+    if (!nextStart) return;
+
+    const normalizedFinishDate = String(finish || '').split('T')[0];
+    if (normalizedFinishDate && nextStart > normalizedFinishDate) {
+      setFinish(nextStart);
+    }
+  };
+
   
   const getOrders=async()=>{
     try{
@@ -212,11 +223,11 @@ const Admin = () => {
             <div className="dates">
               <div className="date">
                 <p>start:</p>
-                <input max={finish} type="date" value={start} onChange={(e)=>setStart(e.target.value)} />
+                <input type="date" value={start} onChange={(e)=>handleStartDateChange(e.target.value)} />
               </div>
               <div className="date">
                 <p>finish:</p>
-                <input min={start} type="date" value={finish} onChange={(e)=>setFinish(e.target.value)} />
+                <input type="date" value={finish} onChange={(e)=>setFinish(e.target.value)} />
               </div>
             </div>
             <div className="lang-and-check-and-sum">

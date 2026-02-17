@@ -4466,6 +4466,9 @@ const LayoutPlannerModal = ({
         .slice(0, 19);
       const sheetLabel = FORMATS[formatKey]?.label || "sheet";
       const zip = new JSZip();
+      const svgAssets = {};
+      const markupToAssetKey = new Map();
+      let svgAssetCounter = 0;
 
       const computeFrameRect = (sheet) => {
         if (!hasBrownFrame) return null;
@@ -4581,6 +4584,7 @@ const LayoutPlannerModal = ({
       const preparedSheets = sheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
           const previewData = buildPlacementPreview(placement, { enableGaps });
+          let svgAssetKey = null;
 
           if (previewData?.type === "svg" && previewData.exportMarkup) {
             try {
@@ -4590,6 +4594,17 @@ const LayoutPlannerModal = ({
               zip.file(fileName, previewData.exportMarkup);
             } catch (zipError) {
               console.error("Не вдалося додати SVG у ZIP", zipError);
+            }
+
+            const markup = previewData.exportMarkup;
+            const existingAssetKey = markupToAssetKey.get(markup);
+            if (existingAssetKey) {
+              svgAssetKey = existingAssetKey;
+            } else {
+              svgAssetCounter += 1;
+              svgAssetKey = `svg-${svgAssetCounter}`;
+              markupToAssetKey.set(markup, svgAssetKey);
+              svgAssets[svgAssetKey] = markup;
             }
           }
 
@@ -4601,10 +4616,11 @@ const LayoutPlannerModal = ({
             y: placement.y,
             width: placement.width,
             height: placement.height,
+            rotated: !!placement.rotated,
             copyIndex: placement.copyIndex ?? 1,
             copies: placement.copies ?? 1,
-            svgMarkup:
-              previewData?.type === "svg" ? previewData.exportMarkup : null,
+            svgAssetKey,
+            svgMarkup: null,
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,
@@ -4715,19 +4731,53 @@ const LayoutPlannerModal = ({
 
       const exportEndpoint =
         import.meta.env.VITE_LAYOUT_EXPORT_URL || "/api/layout-pdf";
+
+      const payload = {
+        sheetLabel,
+        timestamp,
+        formatKey,
+        exportMode,
+        spacingMm: effectiveSignSpacingMm,
+        svgAssets,
+        sheets: preparedSheets,
+      };
+
+      const payloadJson = JSON.stringify(payload);
+      const requestHeaders = {
+        "Content-Type": "application/json",
+      };
+
+      let requestBody = payloadJson;
+      if (typeof CompressionStream !== "undefined") {
+        try {
+          const encoder = new TextEncoder();
+          const input = encoder.encode(payloadJson);
+          const compressionStream = new CompressionStream("gzip");
+          const writer = compressionStream.writable.getWriter();
+          await writer.write(input);
+          await writer.close();
+
+          const compressedBuffer = await new Response(
+            compressionStream.readable
+          ).arrayBuffer();
+
+          if (
+            compressedBuffer &&
+            compressedBuffer.byteLength > 0 &&
+            compressedBuffer.byteLength < input.byteLength
+          ) {
+            requestBody = compressedBuffer;
+            requestHeaders["Content-Encoding"] = "gzip";
+          }
+        } catch (compressionError) {
+          console.warn("PDF payload compression failed, using plain JSON", compressionError);
+        }
+      }
+
       const response = await fetch(exportEndpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          sheetLabel,
-          timestamp,
-          formatKey,
-          exportMode,
-          spacingMm: effectiveSignSpacingMm,
-          sheets: preparedSheets,
-        }),
+        headers: requestHeaders,
+        body: requestBody,
       });
 
       if (!response.ok) {
@@ -5333,6 +5383,16 @@ const LayoutPlannerModal = ({
                           hideFrames: true,
                         });
                         const hasPreview = !!previewData;
+                        const rotatedPreviewStyle = placement?.rotated
+                          ? {
+                              width: `${placement.height * scale}px`,
+                              height: `${placement.width * scale}px`,
+                              transform: "rotate(90deg)",
+                              transformOrigin: "center center",
+                              objectFit: "contain",
+                              flex: "0 0 auto",
+                            }
+                          : undefined;
 
                         return (
                           <div
@@ -5349,6 +5409,7 @@ const LayoutPlannerModal = ({
                               {previewData?.previewMarkup ? (
                                 <div
                                   className={styles.inlineSvgWrapper}
+                                  style={rotatedPreviewStyle}
                                   dangerouslySetInnerHTML={{
                                     __html: previewData.previewMarkup,
                                   }}
@@ -5357,6 +5418,7 @@ const LayoutPlannerModal = ({
                                 <img
                                   src={previewData?.url}
                                   alt={placement.name || "Полотно"}
+                                  style={rotatedPreviewStyle}
                                 />
                               ) : null}
                             </div>

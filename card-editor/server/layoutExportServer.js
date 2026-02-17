@@ -18,6 +18,8 @@ dotenv.config();
 
 const MM_TO_PT = 72 / 25.4;
 const DEFAULT_PORT = Number(process.env.LAYOUT_EXPORT_PORT || 4177);
+const REQUEST_BODY_LIMIT = process.env.LAYOUT_EXPORT_BODY_LIMIT || '512mb';
+const MAX_EXPORT_SHEETS = Number(process.env.LAYOUT_EXPORT_MAX_SHEETS || 200);
 const ALLOWED_ORIGINS = process.env.LAYOUT_EXPORT_ORIGINS
   ? process.env.LAYOUT_EXPORT_ORIGINS.split(',')
       .map(origin => origin.trim())
@@ -622,6 +624,88 @@ const extractSvgContentDimensions = (svgElement, fallbackWidth, fallbackHeight) 
   return { width, height };
 };
 
+const isPlacementRotated = placement => {
+  const raw = placement?.rotated;
+  return raw === true || raw === 1 || raw === '1' || raw === 'true';
+};
+
+const hasRotatedWrapperNode = root => {
+  if (!root || root.nodeType !== 1) return false;
+
+  const stack = [root];
+  while (stack.length) {
+    const current = stack.pop();
+    if (!current || current.nodeType !== 1) continue;
+
+    if (typeof current.getAttribute === 'function') {
+      const marker = current.getAttribute('data-layout-rotated');
+      if (marker === 'true') {
+        return true;
+      }
+    }
+
+    const children = Array.from(current.childNodes || []);
+    for (const child of children) {
+      if (child && child.nodeType === 1) {
+        stack.push(child);
+      }
+    }
+  }
+
+  return false;
+};
+
+const applyPlacementRotationToSvgElement = (svgElement, placement) => {
+  if (!svgElement || !isPlacementRotated(placement)) {
+    return;
+  }
+
+  if (hasRotatedWrapperNode(svgElement)) {
+    return;
+  }
+
+  const { width, height } = extractSvgContentDimensions(
+    svgElement,
+    placement?.sourceWidth || placement?.width,
+    placement?.sourceHeight || placement?.height
+  );
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return;
+  }
+
+  const ownerDocument = svgElement.ownerDocument;
+  if (!ownerDocument || typeof ownerDocument.createElementNS !== 'function') {
+    return;
+  }
+
+  const ns = svgElement.namespaceURI || 'http://www.w3.org/2000/svg';
+  const wrapper = ownerDocument.createElementNS(ns, 'g');
+  wrapper.setAttribute('data-layout-rotated', 'true');
+  wrapper.setAttribute('transform', `translate(${height},0) rotate(90)`);
+
+  const nodesToWrap = Array.from(svgElement.childNodes || []).filter(node => {
+    if (!node) return false;
+    if (node.nodeType !== 1) return true;
+    const tag = (node.nodeName || '').toLowerCase();
+    return tag !== 'defs';
+  });
+
+  nodesToWrap.forEach(node => {
+    wrapper.appendChild(node);
+  });
+
+  svgElement.appendChild(wrapper);
+  svgElement.setAttribute('viewBox', `0 0 ${height} ${width}`);
+
+  const attrWidth = parseFloat(svgElement.getAttribute('width') || '');
+  const attrHeight = parseFloat(svgElement.getAttribute('height') || '');
+  if (Number.isFinite(attrWidth) && Number.isFinite(attrHeight)) {
+    svgElement.setAttribute('width', String(attrHeight));
+    svgElement.setAttribute('height', String(attrWidth));
+  }
+};
+
 const IDENTITY_MATRIX = [1, 0, 0, 1, 0, 0];
 
 const multiplyMatrices = (m1 = IDENTITY_MATRIX, m2 = IDENTITY_MATRIX) => [
@@ -731,6 +815,12 @@ const extractScaleFromMatrix = (matrix = IDENTITY_MATRIX) => {
   const scaleX = Math.hypot(matrix[0], matrix[1]) || 1;
   const scaleY = Math.hypot(matrix[2], matrix[3]) || 1;
   return { scaleX, scaleY };
+};
+
+const extractRotationDegreesFromMatrix = (matrix = IDENTITY_MATRIX) => {
+  const angleRad = Math.atan2(matrix[1] || 0, matrix[0] || 1);
+  if (!Number.isFinite(angleRad)) return 0;
+  return (angleRad * 180) / Math.PI;
 };
 
 // Heuristic detection of JsBarcode-like groups: a <g> containing many <rect>
@@ -1124,7 +1214,7 @@ app.use((req, res, next) => {
 
 app.use('/images', express.static(path.join(__dirname, 'static')));
 
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
 
 // Optional: receive client diagnostics and print them in server terminal.
 // Enable with: ENABLE_CLIENT_DIAG_LOGS=1
@@ -1204,14 +1294,17 @@ const buildFallbackSvgMarkup = (placement, message) => {
 
 app.post('/api/layout-pdf', async (req, res) => {
   try {
-    const { sheets, sheetLabel = 'sheet', timestamp, exportMode } = req.body || {};
+    const { sheets, sheetLabel = 'sheet', timestamp, exportMode, svgAssets } = req.body || {};
+    const svgAssetMap = svgAssets && typeof svgAssets === 'object' ? svgAssets : {};
 
     if (!Array.isArray(sheets) || sheets.length === 0) {
       return res.status(400).json({ error: 'Очікуємо принаймні один аркуш для експорту.' });
     }
 
-    if (sheets.length > 10) {
-      return res.status(400).json({ error: 'Максимальна кількість аркушів для PDF — 10.' });
+    if (Number.isFinite(MAX_EXPORT_SHEETS) && MAX_EXPORT_SHEETS > 0 && sheets.length > MAX_EXPORT_SHEETS) {
+      return res.status(400).json({
+        error: `Максимальна кількість аркушів для PDF — ${MAX_EXPORT_SHEETS}.`,
+      });
     }
 
     const safeSheetLabel = String(sheetLabel || 'sheet').replace(/[^a-z0-9-_]+/gi, '-');
@@ -1233,6 +1326,9 @@ app.post('/api/layout-pdf', async (req, res) => {
     sheets.forEach(sheet => {
       expandedSheets.push(...splitSheetByMaterial(sheet));
     });
+
+    const parser = new DOMParser();
+    const parsedSvgByAssetKey = new Map();
 
     expandedSheets.forEach((sheet, sheetIndex) => {
       const pageWidthPt = mmToPoints(sheet?.width);
@@ -1422,15 +1518,51 @@ app.post('/api/layout-pdf', async (req, res) => {
           return;
         }
 
-        if (placement?.svgMarkup) {
+        const placementSvgMarkup = (() => {
+          if (typeof placement?.svgMarkup === 'string' && placement.svgMarkup.trim()) {
+            return placement.svgMarkup;
+          }
+
+          const assetKey = placement?.svgAssetKey;
+          if (typeof assetKey === 'string' && assetKey) {
+            const assetMarkup = svgAssetMap[assetKey];
+            if (typeof assetMarkup === 'string' && assetMarkup.trim()) {
+              return assetMarkup;
+            }
+          }
+
+          return null;
+        })();
+
+        const placementSvgAssetKey =
+          typeof placement?.svgAssetKey === 'string' && placement.svgAssetKey
+            ? placement.svgAssetKey
+            : null;
+
+        if (placementSvgMarkup) {
           try {
-            const parser = new DOMParser();
-            const svgDocument = parser.parseFromString(placement.svgMarkup, 'image/svg+xml');
-            const svgElement = svgDocument.documentElement;
+            let svgElement = null;
+
+            if (placementSvgAssetKey) {
+              if (parsedSvgByAssetKey.has(placementSvgAssetKey)) {
+                const cachedSvgElement = parsedSvgByAssetKey.get(placementSvgAssetKey);
+                svgElement = cachedSvgElement ? cachedSvgElement.cloneNode(true) : null;
+              } else {
+                const svgDocument = parser.parseFromString(placementSvgMarkup, 'image/svg+xml');
+                const parsedElement = svgDocument?.documentElement || null;
+                parsedSvgByAssetKey.set(placementSvgAssetKey, parsedElement || null);
+                svgElement = parsedElement ? parsedElement.cloneNode(true) : null;
+              }
+            } else {
+              const svgDocument = parser.parseFromString(placementSvgMarkup, 'image/svg+xml');
+              svgElement = svgDocument?.documentElement || null;
+            }
 
             if (!svgElement) {
               throw new Error('SVG markup не містить кореневого елемента');
             }
+
+            applyPlacementRotationToSvgElement(svgElement, placement);
 
             const { width: contentWidth, height: contentHeight } = extractSvgContentDimensions(
               svgElement,
@@ -1616,6 +1748,8 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const point = applyMatrixToPoint(cumulativeMatrix, baseX, baseY);
                 const { scaleX: matrixScaleX, scaleY: matrixScaleY } =
                   extractScaleFromMatrix(cumulativeMatrix);
+                const matrixRotationDeg = extractRotationDegreesFromMatrix(cumulativeMatrix);
+                const hasMatrixRotation = Math.abs(matrixRotationDeg) > 0.01;
 
                 const fontId = resolveFontId(fontFamilyAttr, fontWeightAttr, fontStyleAttr);
 
@@ -1750,28 +1884,33 @@ app.post('/api/layout-pdf', async (req, res) => {
                       .join(' -> ')}`
                 );
 
-                let drawX = normalizedX;
+                let drawXLocal = 0;
                 if (anchorMode === 'end' || anchorMode === 'right') {
-                  drawX -= textWidth;
+                  drawXLocal -= textWidth;
                 } else if (anchorMode === 'middle' || anchorMode === 'center') {
-                  drawX -= textWidth / 2;
+                  drawXLocal -= textWidth / 2;
                 } else {
                   // Fabric text usually stores anchor via styles; if not provided we assume centered placement.
-                  drawX -= textWidth / 2;
+                  drawXLocal -= textWidth / 2;
                 }
 
-                let drawY = normalizedY - halfLineHeight;
+                const drawYLocal = -halfLineHeight;
 
-                const outOfBounds =
-                  drawX < xPt - widthPt * 0.25 ||
-                  drawX > xPt + widthPt * 1.25 ||
-                  drawY < yTopPt - heightPt * 0.5 ||
-                  drawY > yTopPt + heightPt * 1.5;
+                let drawX = normalizedX + drawXLocal;
+                let drawY = normalizedY + drawYLocal;
 
-                if (outOfBounds) {
-                  drawX = xPt + widthPt / 2 - textWidth / 2;
-                  const centerY = yTopPt + heightPt / 2;
-                  drawY = centerY - halfLineHeight;
+                if (!hasMatrixRotation) {
+                  const outOfBounds =
+                    drawX < xPt - widthPt * 0.25 ||
+                    drawX > xPt + widthPt * 1.25 ||
+                    drawY < yTopPt - heightPt * 0.5 ||
+                    drawY > yTopPt + heightPt * 1.5;
+
+                  if (outOfBounds) {
+                    drawX = xPt + widthPt / 2 - textWidth / 2;
+                    const centerY = yTopPt + heightPt / 2;
+                    drawY = centerY - halfLineHeight;
+                  }
                 }
 
                 doc.strokeColor(TEXT_OUTLINE_COLOR);
@@ -1779,51 +1918,63 @@ app.post('/api/layout-pdf', async (req, res) => {
                 doc.lineJoin('round');
                 doc.lineCap('round');
 
-                let segmentX = drawX;
-                segmentMetrics.forEach(segment => {
-                  if (!segment.text) {
-                    return;
-                  }
-
-                  const renderWithPdfkit = () => {
-                    try {
-                      doc.font(segment.fontId);
-                    } catch (segmentFontError) {
-                      doc.font(DEFAULT_FONT_ID);
+                const drawSegments = (segmentStartX, baselineY) => {
+                  let segmentX = segmentStartX;
+                  segmentMetrics.forEach(segment => {
+                    if (!segment.text) {
+                      return;
                     }
-                    doc.fontSize(scaledFontSize);
-                    doc.text(segment.text, segmentX, drawY, {
-                      lineBreak: false,
-                      stroke: true,
-                      fill: false,
-                    });
-                  };
 
-                  if (segment.textToSvg) {
-                    try {
-                      const pathData = segment.textToSvg.getD(segment.text, {
-                        fontSize: scaledFontSize,
-                        anchor: TEXT_TO_SVG_ANCHOR,
+                    const renderWithPdfkit = () => {
+                      try {
+                        doc.font(segment.fontId);
+                      } catch (segmentFontError) {
+                        doc.font(DEFAULT_FONT_ID);
+                      }
+                      doc.fontSize(scaledFontSize);
+                      doc.text(segment.text, segmentX, baselineY, {
+                        lineBreak: false,
+                        stroke: true,
+                        fill: false,
                       });
-                      doc.save();
-                      doc.translate(segmentX, drawY);
-                      doc.path(pathData);
-                      doc.stroke();
-                      doc.restore();
-                    } catch (pathError) {
-                      console.warn(
-                        `TextToSVG path failed для ${segment.fontId}:`,
-                        pathError.message
-                      );
-                      TEXT_TO_SVG_CACHE.set(segment.fontId, null);
+                    };
+
+                    if (segment.textToSvg) {
+                      try {
+                        const pathData = segment.textToSvg.getD(segment.text, {
+                          fontSize: scaledFontSize,
+                          anchor: TEXT_TO_SVG_ANCHOR,
+                        });
+                        doc.save();
+                        doc.translate(segmentX, baselineY);
+                        doc.path(pathData);
+                        doc.stroke();
+                        doc.restore();
+                      } catch (pathError) {
+                        console.warn(
+                          `TextToSVG path failed для ${segment.fontId}:`,
+                          pathError.message
+                        );
+                        TEXT_TO_SVG_CACHE.set(segment.fontId, null);
+                        renderWithPdfkit();
+                      }
+                    } else {
                       renderWithPdfkit();
                     }
-                  } else {
-                    renderWithPdfkit();
-                  }
 
-                  segmentX += segment.width;
-                });
+                    segmentX += segment.width;
+                  });
+                };
+
+                if (hasMatrixRotation) {
+                  doc.save();
+                  doc.translate(normalizedX, normalizedY);
+                  doc.rotate(matrixRotationDeg);
+                  drawSegments(drawXLocal, drawYLocal);
+                  doc.restore();
+                } else {
+                  drawSegments(drawX, drawY);
+                }
 
                 doc.restore();
               } catch (textError) {
@@ -1871,7 +2022,7 @@ app.post('/api/layout-pdf', async (req, res) => {
 
         const fallbackMarkup = buildFallbackSvgMarkup(
           placement,
-          placement?.svgMarkup ? 'SVG недоступний' : 'SVG відсутній'
+          placementSvgMarkup ? 'SVG недоступний' : 'SVG відсутній'
         );
         if (fallbackMarkup) {
           try {
@@ -1920,7 +2071,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc.lineWidth(0.5);
           doc.strokeColor('#8B4513');
 
-          const radiusPt = mmToPoints(5);
+          const radiusPt = mmToPoints(1.5);
           doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
           doc.restore();
         }

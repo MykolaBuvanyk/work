@@ -167,7 +167,7 @@ const Account = () => {
                     <tbody>
                         {myOrders.sort((a,b)=>b.id-a.id).map((order, index) => (
                             <tr key={order.id}>
-                                <td className="row-number">{index + 1}</td>
+                                <td className="row-number">{myOrders.length- index }</td>
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>{order.id}</td>
                                 <td>{order.orderName || 'Water signs 23'}</td>

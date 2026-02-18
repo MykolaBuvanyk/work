@@ -59,9 +59,13 @@ const findCartProjectForOrder = async (order) => {
     const byId = await CartProject.findById(key).lean();
     if (byId) return byId;
   }
-
+  
   // Legacy fallback: old orders stored projectId in idMongo.
   return CartProject.findOne({ projectId: key }, null, { sort: { createdAt: -1 } }).lean();
+};
+
+const findCartProjectForId = async (idMongo) => {
+  return CartProject.findOne({ projectId: String(idMongo) }, null, { sort: { createdAt: -1 } }).lean();
 };
 
 const COLOR_THEME_BY_INDEX_CAPS = {
@@ -323,11 +327,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
     if (search) {
       where[Op.or] = [ 
+        { userId: { [Op.like]: `%${parseInt(search)}%` } },
         { orderName: { [Op.like]: `%${search}%` } },
         { orderType: { [Op.like]: `%${search}%` } },
-        { id: { [Op.like]: `%${search}%` } },
-        { deliveryType: { [Op.like]: `%${search}%` } },
-        { sum: { [Op.like]: `%${search}%` } }
+        { id: { [Op.like]: `%${parseInt(search)}%` } },
+        //{ deliveryType: { [Op.like]: `%${search}%` } },
+        { country: { [Op.like]: `%${search}%` } },
+        //{ sum: { [Op.like]: `%${search}%` } },
+        { userId: { [Op.like]: `%${parseInt(search)}%` } }
       ]
     }
 
@@ -364,8 +371,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       })
     );
 
-
-    const baseOrders = Array.isArray(orders) ? orders : [];
+    const baseOrders = orders.rows;
 
     const resolveOrderSigns = (order) => {
       const canvases = order?.orderMongo?.project?.canvases;
@@ -380,32 +386,33 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       const legacy = Number(order?.signs);
       return Number.isFinite(legacy) ? legacy : 0;
     };
-
+    
     const enrichedOrders= await Promise.all(
       baseOrders.map(async (order) => {
         try {
           if (!order) {
             return res.status(404).json({ message: 'Order not found' });
           }
-
+          
           const orderMongo = await findCartProjectForOrder(order);
           const computedSigns = countTotalSignsFromProject(orderMongo?.project);
-  
-          const fullOrder = details?.data?.order;
-          const totalPrice = Number(fullOrder?.orderMongo?.totalPrice);
 
+          const signs=computedSigns > 0 ? computedSigns : Number(order?.signs || 0);
+          
+          const fullOrder = orderMongo;
+          const totalPrice = Number(orderMongo?.totalPrice);
           return {
-            ...order,
+            ...order.toJSON(),
             orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
             totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
             signs: resolveOrderSigns({
-              ...order,
+              ...order.toJSON(),
               orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
             }),
           };
         } catch {
           return {
-            ...order,
+            ...order.toJSON(),
             totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
             signs: resolveOrderSigns(order),
           };
@@ -413,15 +420,15 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       })
     );
     
-    const total = order.reduce((acc, order) => {
+    const total = enrichedOrders.reduce((acc, order) => {
         const value = Number(order?.totalPrice);
         return Number.isFinite(value) ? acc + value : acc;
       }, 0);
 
     const sum=total.toFixed(2)
     
-
-    return res.json({ 
+    
+    return res.json({
       orders: enrichedOrders,
       page,
       totalSum:sum,
@@ -733,13 +740,9 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, requireAdmin, async (req, res,
       include: [{ model: User, include: [{model:Order}] }]
     });
 
-    console.log(635545,order.user.phone)
-
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const orderMongo = await findCartProjectForOrder(order);
-
-    console.log(4324);
 
     // Запускаємо Puppeteer
     browser = await puppeteer.launch({ 
@@ -968,13 +971,9 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
       include: [{ model: User, include: [{model:Order}] }]
     });
 
-    console.log(635545,order.user.phone)
-
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const orderMongo = await findCartProjectForOrder(order);
-
-    console.log(4324);
 
     // Запускаємо Puppeteer
     browser = await puppeteer.launch({ 

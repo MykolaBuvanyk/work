@@ -124,9 +124,9 @@ const Admin = () => {
       }
       
       const res=await $authHost.get('cart/filter'+query);
+      
      
-     
-      setOrders(res.data.ordersz);
+      setOrders(res.data.orders);
       setSum(res.data.sum)
       setCountPages(Math.ceil(res.data.count/limit))
     }catch(err){
@@ -235,7 +235,7 @@ const Admin = () => {
                 <button>check</button>
               </div>
               <div className="sum">
-                <input type="number" value={sum} />
+                <input type="number" readOnly value={sum} />
               </div>
             </div>
           </div>

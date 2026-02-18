@@ -8,7 +8,7 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 
-const limit=15;
+const limit=25;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -206,7 +206,7 @@ const Admin = () => {
                 <p>Status</p>
                 <select onChange={(e)=>setStatus(e.target.value)} value={status}>
                   <option value='ALL'>All</option>
-                  <option value='Recived'>Received</option>
+                  <option value='Received'>Received</option>
                   <option value='Printed'>Printed</option>
                   <option value='Manufact'>Manufact.</option>
                   <option value='Delivered'>Delivered</option>

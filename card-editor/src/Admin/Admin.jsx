@@ -8,7 +8,7 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 
-const limit=15;
+const limit=25;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);

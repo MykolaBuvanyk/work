@@ -327,11 +327,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
     if (search) {
       where[Op.or] = [ 
+        { userId: { [Op.like]: `%${parseInt(search)}%` } },
         { orderName: { [Op.like]: `%${search}%` } },
         { orderType: { [Op.like]: `%${search}%` } },
-        { id: { [Op.like]: `%${search}%` } },
-        { deliveryType: { [Op.like]: `%${search}%` } },
-        { sum: { [Op.like]: `%${search}%` } }
+        { id: { [Op.like]: `%${parseInt(search)}%` } },
+        //{ deliveryType: { [Op.like]: `%${search}%` } },
+        { country: { [Op.like]: `%${search}%` } },
+        //{ sum: { [Op.like]: `%${search}%` } },
+        { userId: { [Op.like]: `%${parseInt(search)}%` } }
       ]
     }
 

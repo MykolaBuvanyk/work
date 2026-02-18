@@ -8,7 +8,7 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 
-const limit=25;
+const limit=15;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -124,34 +124,8 @@ const Admin = () => {
       }
       
       const res=await $authHost.get('cart/filter'+query);
-      //const baseOrders = Array.isArray(res?.data?.orders) ? res.data.orders : [];
-
-      /*const enrichedOrders = await Promise.all(
-        baseOrders.map(async (order) => {
-          try {
-            const details = await $authHost.get(`cart/get/${order.id}`);
-            const fullOrder = details?.data?.order;
-            const totalPrice = Number(fullOrder?.orderMongo?.totalPrice);
-
-            return {
-              ...order,
-              orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
-              totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
-              signs: resolveOrderSigns({
-                ...order,
-                orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
-              }),
-            };
-          } catch {
-            return {
-              ...order,
-              totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
-              signs: resolveOrderSigns(order),
-            };
-          }
-        })
-      );*/
-
+     
+     
       setOrders(res.data.orders);
       setSum(res.data.sum)
       setCountPages(Math.ceil(res.data.count/limit))
@@ -164,9 +138,7 @@ const Admin = () => {
   useEffect(()=>{
     getOrders();
   },[page, status, start, finish, selectLang, search]);
-  const update=()=>{
-    getOrders();
-  }
+
  
   useEffect(() => {}, [isAdmin]);
 
@@ -204,7 +176,7 @@ const Admin = () => {
                 <p>Status</p>
                 <select onChange={(e)=>setStatus(e.target.value)} value={status}>
                   <option value='ALL'>All</option>
-                  <option value='Received'>Received</option>
+                  <option value='Recived'>Received</option>
                   <option value='Printed'>Printed</option>
                   <option value='Manufact'>Manufact.</option>
                   <option value='Delivered'>Delivered</option>
@@ -320,7 +292,7 @@ const Admin = () => {
         </div>
         {orderId&&
           <div className="right">
-            <Order orderId={orderId} update={update} />
+            <Order orderId={orderId} />
           </div>
         }
       </div>

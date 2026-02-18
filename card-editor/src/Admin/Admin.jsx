@@ -126,7 +126,7 @@ const Admin = () => {
       const res=await $authHost.get('cart/filter'+query);
      
      
-      setOrders(res.data.orders);
+      setOrders(res.data.ordersz);
       setSum(res.data.sum)
       setCountPages(Math.ceil(res.data.count/limit))
     }catch(err){
@@ -141,6 +141,10 @@ const Admin = () => {
 
  
   useEffect(() => {}, [isAdmin]);
+
+  const update=()=>{
+    getOrders();
+  }
 
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
@@ -292,7 +296,7 @@ const Admin = () => {
         </div>
         {orderId&&
           <div className="right">
-            <Order orderId={orderId} />
+            <Order orderId={orderId} update={update} />
           </div>
         }
       </div>

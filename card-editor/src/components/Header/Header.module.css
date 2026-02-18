@@ -112,8 +112,10 @@
   /*padding-right: 10px;*/
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
   font-size: 15px;
+  padding-left: 2px;
+  
 }
 
 .rotate{

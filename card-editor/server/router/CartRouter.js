@@ -59,9 +59,13 @@ const findCartProjectForOrder = async (order) => {
     const byId = await CartProject.findById(key).lean();
     if (byId) return byId;
   }
-
+  
   // Legacy fallback: old orders stored projectId in idMongo.
   return CartProject.findOne({ projectId: key }, null, { sort: { createdAt: -1 } }).lean();
+};
+
+const findCartProjectForId = async (idMongo) => {
+  return CartProject.findOne({ projectId: String(idMongo) }, null, { sort: { createdAt: -1 } }).lean();
 };
 
 const COLOR_THEME_BY_INDEX_CAPS = {
@@ -231,7 +235,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,
-      status:'Waiting',
+      status:'Received',
       orderName:body.projectName,
       orderType:'',
       accessories:JSON.stringify(normalizedAccessories),
@@ -323,11 +327,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
     if (search) {
       where[Op.or] = [ 
+        { userId: { [Op.like]: `%${parseInt(search)}%` } },
         { orderName: { [Op.like]: `%${search}%` } },
         { orderType: { [Op.like]: `%${search}%` } },
-        { id: { [Op.like]: `%${search}%` } },
-        { deliveryType: { [Op.like]: `%${search}%` } },
-        { sum: { [Op.like]: `%${search}%` } }
+        { id: { [Op.like]: `%${parseInt(search)}%` } },
+        //{ deliveryType: { [Op.like]: `%${search}%` } },
+        { country: { [Op.like]: `%${search}%` } },
+        //{ sum: { [Op.like]: `%${search}%` } },
+        { userId: { [Op.like]: `%${parseInt(search)}%` } }
       ]
     }
 
@@ -342,7 +349,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       where.country = lang;
     }
 
-    const orders = await Order.findAndCountAll({
+    let orders = await Order.findAndCountAll({
       offset,
       limit,
       where,
@@ -364,15 +371,67 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       })
     );
 
-    const totalSum = mappedOrders.reduce((acc, order) => {
-      const full = Number(order?.totalPrice);
-      return Number.isFinite(full) ? acc + full : acc;
-    }, 0);
+    const baseOrders = orders.rows;
 
-    return res.json({ 
-      orders: mappedOrders,
+    const resolveOrderSigns = (order) => {
+      const canvases = order?.orderMongo?.project?.canvases;
+      if (Array.isArray(canvases) && canvases.length > 0) {
+        return canvases.reduce((sum, canvas) => {
+          const raw = canvas?.copiesCount ?? canvas?.toolbarState?.copiesCount ?? 1;
+          const copies = Math.max(1, Math.floor(Number(raw) || 1));
+          return sum + copies;
+        }, 0);
+      }
+
+      const legacy = Number(order?.signs);
+      return Number.isFinite(legacy) ? legacy : 0;
+    };
+    
+    const enrichedOrders= await Promise.all(
+      baseOrders.map(async (order) => {
+        try {
+          if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+          }
+          
+          const orderMongo = await findCartProjectForOrder(order);
+          const computedSigns = countTotalSignsFromProject(orderMongo?.project);
+
+          const signs=computedSigns > 0 ? computedSigns : Number(order?.signs || 0);
+          
+          const fullOrder = orderMongo;
+          const totalPrice = Number(orderMongo?.totalPrice);
+          return {
+            ...order.toJSON(),
+            orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+            totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+            signs: resolveOrderSigns({
+              ...order.toJSON(),
+              orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+            }),
+          };
+        } catch {
+          return {
+            ...order.toJSON(),
+            totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
+            signs: resolveOrderSigns(order),
+          };
+        }
+      })
+    );
+    
+    const total = enrichedOrders.reduce((acc, order) => {
+        const value = Number(order?.totalPrice);
+        return Number.isFinite(value) ? acc + value : acc;
+      }, 0);
+
+    const sum=total.toFixed(2)
+    
+    
+    return res.json({
+      orders: enrichedOrders,
       page,
-      totalSum,
+      totalSum:sum,
       count: orders.count
     });
   } catch (err) {
@@ -681,13 +740,9 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, requireAdmin, async (req, res,
       include: [{ model: User, include: [{model:Order}] }]
     });
 
-    console.log(635545,order.user.phone)
-
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const orderMongo = await findCartProjectForOrder(order);
-
-    console.log(4324);
 
     // Запускаємо Puppeteer
     browser = await puppeteer.launch({ 
@@ -916,13 +971,9 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, requireAdmin, async (req, res,
       include: [{ model: User, include: [{model:Order}] }]
     });
 
-    console.log(635545,order.user.phone)
-
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const orderMongo = await findCartProjectForOrder(order);
-
-    console.log(4324);
 
     // Запускаємо Puppeteer
     browser = await puppeteer.launch({ 

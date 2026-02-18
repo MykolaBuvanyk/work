@@ -8,7 +8,7 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 
-const limit=15;
+const limit=25;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -87,6 +87,17 @@ const Admin = () => {
   const [sum,setSum]=useState(0);
   const [orderId,setOrderId]=useState(null);
 
+  const handleStartDateChange = (nextStart) => {
+    setStart(nextStart);
+
+    if (!nextStart) return;
+
+    const normalizedFinishDate = String(finish || '').split('T')[0];
+    if (normalizedFinishDate && nextStart > normalizedFinishDate) {
+      setFinish(nextStart);
+    }
+  };
+
   
   const getOrders=async()=>{
     try{
@@ -113,40 +124,10 @@ const Admin = () => {
       }
       
       const res=await $authHost.get('cart/filter'+query);
-      const baseOrders = Array.isArray(res?.data?.orders) ? res.data.orders : [];
-
-      const enrichedOrders = await Promise.all(
-        baseOrders.map(async (order) => {
-          try {
-            const details = await $authHost.get(`cart/get/${order.id}`);
-            const fullOrder = details?.data?.order;
-            const totalPrice = Number(fullOrder?.orderMongo?.totalPrice);
-
-            return {
-              ...order,
-              orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
-              totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
-              signs: resolveOrderSigns({
-                ...order,
-                orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
-              }),
-            };
-          } catch {
-            return {
-              ...order,
-              totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
-              signs: resolveOrderSigns(order),
-            };
-          }
-        })
-      );
-
-      setOrders(enrichedOrders);
-      const total = enrichedOrders.reduce((acc, order) => {
-        const value = Number(order?.totalPrice);
-        return Number.isFinite(value) ? acc + value : acc;
-      }, 0);
-      setSum(total.toFixed(2))
+      
+     
+      setOrders(res.data.orders);
+      setSum(res.data.sum)
       setCountPages(Math.ceil(res.data.count/limit))
     }catch(err){
       console.log(err);
@@ -160,6 +141,10 @@ const Admin = () => {
 
  
   useEffect(() => {}, [isAdmin]);
+
+  const update=()=>{
+    getOrders();
+  }
 
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
@@ -212,11 +197,11 @@ const Admin = () => {
             <div className="dates">
               <div className="date">
                 <p>start:</p>
-                <input max={finish} type="date" value={start} onChange={(e)=>setStart(e.target.value)} />
+                <input type="date" value={start} onChange={(e)=>handleStartDateChange(e.target.value)} />
               </div>
               <div className="date">
                 <p>finish:</p>
-                <input min={start} type="date" value={finish} onChange={(e)=>setFinish(e.target.value)} />
+                <input type="date" value={finish} onChange={(e)=>setFinish(e.target.value)} />
               </div>
             </div>
             <div className="lang-and-check-and-sum">
@@ -250,7 +235,7 @@ const Admin = () => {
                 <button>check</button>
               </div>
               <div className="sum">
-                <input type="number" value={sum} />
+                <input type="number" readOnly value={sum} />
               </div>
             </div>
           </div>
@@ -311,7 +296,7 @@ const Admin = () => {
         </div>
         {orderId&&
           <div className="right">
-            <Order orderId={orderId} />
+            <Order orderId={orderId} update={update} />
           </div>
         }
       </div>

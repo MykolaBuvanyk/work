@@ -5,26 +5,28 @@ import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/reducers/user';
 import combinedCountries from '../Countries';
+import Flag from 'react-flagkit';
  
 const languageCountries = [
-  //{ flag: "🇩🇪", code: "DE" },Вибрана
-  { flag: "🇬🇧", code: "EN" },
-  { flag: "🇫🇷", code: "FR" },
-  { flag: "🇮🇹", code: "IT" },
-  { flag: "🇨🇿", code: "CS" },
-  { flag: "🇩🇰", code: "DA" },
-  { flag: "🇪🇸", code: "ES" },
-  { flag: "🇪🇪", code: "ET" },
-  { flag: "🇭🇷", code: "HR" },
-  { flag: "🇭🇺", code: "HU" },
-  { flag: "🇱🇹", code: "LT" },
-  { flag: "🇳🇱", code: "NL" },
-  { flag: "🇵🇱", code: "PL" },
-  { flag: "🇷🇴", code: "RO" },
-  { flag: "🇸🇰", code: "SK" },
-  { flag: "🇸🇮", code: "SL" },
-  { flag: "🇸🇪", code: "SV" },
-  { flag: "🇺🇦", code: "UA" },
+  // { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
+
+  { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
+  { flag: "🇫🇷", code: "FR", codeFlag: "FR" },
+  { flag: "🇮🇹", code: "IT", codeFlag: "IT" },
+  { flag: "🇨🇿", code: "CS", codeFlag: "CZ" },
+  { flag: "🇩🇰", code: "DA", codeFlag: "DK" },
+  { flag: "🇪🇸", code: "ES", codeFlag: "ES" },
+  { flag: "🇪🇪", code: "ET", codeFlag: "EE" },
+  { flag: "🇭🇷", code: "HR", codeFlag: "HR" },
+  { flag: "🇭🇺", code: "HU", codeFlag: "HU" },
+  { flag: "🇱🇹", code: "LT", codeFlag: "LT" },
+  { flag: "🇳🇱", code: "NL", codeFlag: "NL" },
+  { flag: "🇵🇱", code: "PL", codeFlag: "PL" },
+  { flag: "🇷🇴", code: "RO", codeFlag: "RO" },
+  { flag: "🇸🇰", code: "SK", codeFlag: "SK" },
+  { flag: "🇸🇮", code: "SL", codeFlag: "SI" },
+  { flag: "🇸🇪", code: "SV", codeFlag: "SE" },
+  { flag: "🇺🇦", code: "UA", codeFlag: "UA" },
 ];
 
 
@@ -325,7 +327,7 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              🇩🇪 DE
+              <Flag size={22} country='DE' /> DE
               <div className={isLangOpen&&styles.rotate}>
                 <SlArrowDown size={14} />
               </div>
@@ -340,7 +342,7 @@ const Header = () => {
                 >
                   {//<Flag country={lang.countryCode} size={32} />
 }
-                  {lang.flag+' '+lang.code}
+                  <Flag size={20} country={lang.codeFlag} /> {lang.code}
                 </div>
               ))}
             </div>

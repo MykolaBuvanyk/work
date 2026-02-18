@@ -113,8 +113,11 @@ const Toolbar = ({ formData }) => {
   const RECT_HOLE_HEIGHT_MM = 2;
   const RECT_HOLE_MIN_OFFSET_X_MM = 3;
   const RECT_HOLE_MIN_OFFSET_Y_MM = 2;
-  const mmToPx = mm => (typeof mm === 'number' ? Math.round(mm * PX_PER_MM) : 0);
+  // const mmToPx = mm => (typeof mm === 'number' ? Math.round(mm * PX_PER_MM) : 0);
+  // NOTE: Fabric supports sub-pixel geometry; avoid rounding to keep holes/cuts accurate.
+  const mmToPx = mm => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
   const pxToMm = px => (typeof px === 'number' ? px / PX_PER_MM : 0);
+  const holeRadiusPxFromDiameterMm = diameterMm => (Number(diameterMm) || 0) * (PX_PER_MM / 2);
   // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
   const round1 = n => Math.round((Number(n) || 0) * 10) / 10;
   const [activeObject, setActiveObject] = useState(null);
@@ -6065,7 +6068,7 @@ const Toolbar = ({ formData }) => {
   // Додавання тексту
   const addText = () => {
     if (canvas) {
-      const text = new fabric.IText('Текст', {
+      const text = new fabric.IText('Text', {
         left: canvas.width / 2,
         top: canvas.height / 2,
         originX: 'center',
@@ -6290,13 +6293,21 @@ const Toolbar = ({ formData }) => {
     return { minMm, maxMm };
   };
 
-  const HOLE_OFFSET_BASE_MULTIPLIER = 0.04; // трохи агресивніше віддаляємо від країв
-  const HOLE_OFFSET_CAP_MM = 9; // попереднє значення 7.5 мм
-  const HOLE_OFFSET_ADDITIVE_MIN = 1.2; // попереднє значення 0.8 мм
-  const HOLE_OFFSET_ADDITIVE_MAX = 4.0; // попереднє значення 3.2 мм
-  const HOLE_OFFSET_DIAMETER_BASE = 5.4; // попереднє значення 4.8
-  const HOLE_OFFSET_DIAMETER_DIVISOR = 16; // попереднє значення 18
-  const HOLE_EDGE_CLEARANCE_MM = 3.5; // попередньо 2 мм
+  const HOLE_OFFSET_ADDITIVE_MIN = 1.2; // гарантований мінімальний проміжок (мм)
+  const HOLE_OFFSET_SIDE_MULTIPLIER = 0.02; // L*0.02 (L — довша сторона полотна)
+
+  // Нова формула відступу (за вимогою):
+  // offsetMm = 1.2(гарантований мінімальний проміжок) + півдіаметр вибраного отвору + L*0.02
+  // де L — довша сторона полотна (в мм)
+
+  // Стара версія (НЕ ВИДАЛЯТИ):
+  // const HOLE_OFFSET_BASE_MULTIPLIER = 0.04; // трохи агресивніше віддаляємо від країв
+  // const HOLE_OFFSET_CAP_MM = 9; // попереднє значення 7.5 мм
+  // const HOLE_OFFSET_ADDITIVE_MAX = 4.0; // попереднє значення 3.2 мм
+  // const HOLE_OFFSET_DIAMETER_BASE = 5.4; // попереднє значення 4.8
+  // const HOLE_OFFSET_DIAMETER_DIVISOR = 16; // попереднє значення 18
+  // const HOLE_EDGE_CLEARANCE_MM = 3.5; // попередньо 2 мм
+  //
 
   // Емпірична формула відступу (з ескізів):
   // offsetMm = clamp(0, cap, baseMultiplier * maxSideMm + clamp(additiveMin, additiveMax, base - divisor/diameterMm))
@@ -6305,30 +6316,88 @@ const Toolbar = ({ formData }) => {
     const diameterSource =
       typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter;
     const d = Math.max(diameterSource || 0, 0.1);
-    let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
-    if (!isFinite(additive)) additive = 0;
-    additive = Math.max(HOLE_OFFSET_ADDITIVE_MIN, Math.min(additive, HOLE_OFFSET_ADDITIVE_MAX));
-    const base = HOLE_OFFSET_BASE_MULTIPLIER * (maxMm || 0);
-    let offsetMm = Math.min(base + additive, HOLE_OFFSET_CAP_MM);
-    // Мінімальна відстань від краю дирки до краю фігури: 3.5мм
-    // Тобто offset >= 3.5мм + радіус дирки
-    const minOffsetMm = HOLE_EDGE_CLEARANCE_MM + (d || 0.1) / 2;
-    // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
-    const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
-    offsetMm = Math.max(offsetMm, minOffsetMm);
+
+    const longSideMm = maxMm || 0;
+    const radiusMm = d / 2;
+
+    // Нова формула (за уточненням): потрібен відступ ВІД КРАЮ ПОЛОТНА ДО КРАЮ ОТВОРУ.
+    // edgeGapMm = 1.2 + (d/2) + L*0.02, де L — довша сторона полотна (maxMm).
+    const desiredCenterOffsetMm =
+      HOLE_OFFSET_ADDITIVE_MIN + radiusMm + longSideMm * HOLE_OFFSET_SIDE_MULTIPLIER;
+
+    // Компенсація під виробничі виміри: часто міряють до ЛІНІЇ РІЗУ (stroke), а не до геометрії.
+    // Stroke у Fabric малюється по центру контуру, тому зовнішній край stroke "з'їдає" halfStroke.
+    // Додаємо halfStroke + невеликий fudge (аналогічно прямокутним отворам), щоб у CAM було рівно по формулі.
+    const holeStrokeWidthPx = 1;
+    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+    const edgeFudgeMm = 0.04;
+    // const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
+
+    // У Fabric отвір позиціонуємо по центру (origin='center'), тому переводимо edgeGap -> centerOffset.
+    let offsetMm = desiredCenterOffsetMm + halfStrokeMm + edgeFudgeMm;
+    if (!isFinite(offsetMm)) offsetMm = 0;
+
+    // Геометричний запобіжник: дирка не повинна заходити далі центру (для дуже великих дирок)
+    const maxOffsetMm = Math.max(0, (minMm || 0) - (d || 0.1) / 2);
     offsetMm = Math.min(offsetMm, maxOffsetMm);
+
+    if (import.meta?.env?.DEV) {
+      console.debug('[getHoleOffsetPx] calc', {
+        diameterMm: d,
+        radiusMm,
+        longSideMm,
+        desiredEdgeGapMm,
+        edgeGapMm,
+        centerOffsetMm: offsetMm,
+        edgeGapAfterClampMm: Math.max(0, offsetMm - radiusMm),
+        maxOffsetMm,
+        halfStrokeMm,
+        edgeFudgeMm,
+      });
+    }
+    // Стара версія розрахунку (НЕ ВИДАЛЯТИ):
+    // let additive = HOLE_OFFSET_DIAMETER_BASE - HOLE_OFFSET_DIAMETER_DIVISOR / d; // зменшується при збільшенні діаметра
+    // if (!isFinite(additive)) additive = 0;
+    // additive = Math.max(HOLE_OFFSET_ADDITIVE_MIN, Math.min(additive, HOLE_OFFSET_ADDITIVE_MAX));
+    // const base = HOLE_OFFSET_BASE_MULTIPLIER * (maxMm || 0);
+    // let offsetMm = Math.min(base + additive, HOLE_OFFSET_CAP_MM);
+    // // Мінімальна відстань від краю дирки до краю фігури: 3.5мм
+    // // Тобто offset >= 3.5мм + радіус дирки
+    // const minOffsetMm = HOLE_EDGE_CLEARANCE_MM + (d || 0.1) / 2;
+    // // Максимальний відступ: дирка не повинна заходити далі центру (для дуже великих дирок)
+    // const maxOffsetMm = Math.max(0, minMm - (d || 0.1) / 2);
+    // offsetMm = Math.max(offsetMm, minOffsetMm);
+    // offsetMm = Math.min(offsetMm, maxOffsetMm);
+
     return mmToPx(offsetMm);
   };
 
-  // Прямокутні (квадратні) отвори використовують ту ж динамічну евристику відступів
+  // Прямокутні отвори (тип 5): фіксований відступ від краю.
+  // ВАЖЛИВО: у виробничих інструментах (LightBurn) зазвичай міряють до лінії різу (stroke).
+  // Тому щоб відступ по лінії різу був рівно X/Y мм, додаємо 0.5*stroke до геометрії.
+  // Координата центру = offsetEdge + 0.5*stroke + (width/2).
   const getRectHoleOffsetsPx = () => {
-    const baseOffsetPx = getHoleOffsetPx(Math.max(RECT_HOLE_WIDTH_MM, RECT_HOLE_HEIGHT_MM));
-    const minOffsetXpx = mmToPx(RECT_HOLE_MIN_OFFSET_X_MM + RECT_HOLE_WIDTH_MM / 2);
-    const minOffsetYpx = mmToPx(RECT_HOLE_MIN_OFFSET_Y_MM + RECT_HOLE_HEIGHT_MM / 2);
-    return {
-      offsetXpx: Math.max(baseOffsetPx, minOffsetXpx),
-      offsetYpx: Math.max(baseOffsetPx, minOffsetYpx),
-    };
+    const holeStrokeWidthPx = 1;
+    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+
+    // Small calibration tweak to match CAM measurement precisely.
+    const edgeFudgeMm = 0.04;
+
+    const desiredCenterOffsetXmm =
+      RECT_HOLE_MIN_OFFSET_X_MM + edgeFudgeMm + halfStrokeMm + RECT_HOLE_WIDTH_MM / 2;
+    const desiredCenterOffsetYmm =
+      RECT_HOLE_MIN_OFFSET_Y_MM + edgeFudgeMm + halfStrokeMm + RECT_HOLE_HEIGHT_MM / 2;
+
+    let offsetXpx = mmToPx(desiredCenterOffsetXmm);
+    let offsetYpx = mmToPx(desiredCenterOffsetYmm);
+
+    // Safety for very small canvases: keep centers inside.
+    const wPx = canvas?.getWidth?.() || canvas?.width || 0;
+    const hPx = canvas?.getHeight?.() || canvas?.height || 0;
+    if (wPx > 0) offsetXpx = Math.min(offsetXpx, wPx / 2);
+    if (hPx > 0) offsetYpx = Math.min(offsetYpx, hPx / 2);
+
+    return { offsetXpx, offsetYpx };
   };
 
   const registerHoleShape = shape => {
@@ -6364,7 +6433,7 @@ const Toolbar = ({ formData }) => {
     const canvasWidth = canvas.getWidth?.() || canvas.width || 0;
     const semicircleRadiusPx = mmToPx(LOCK_ARCH_HEIGHT_MM);
     const chordY = semicircleRadiusPx;
-    const holeRadiusPx = mmToPx((holesDiameter || 2.5) / 2);
+    const holeRadiusPx = holeRadiusPxFromDiameterMm(holesDiameter || 2.5);
     const minTopGapPx = mmToPx(MIN_LOCK_HOLE_TOP_GAP_MM);
     const extraAllowancePx = mmToPx(LOCK_HOLE_EXTRA_DOWN_MM);
     const baseCenterY = semicircleRadiusPx / 2;
@@ -6470,7 +6539,7 @@ const Toolbar = ({ formData }) => {
       new fabric.Circle({
         left: canvasWidth / 2,
         top: offsetPx,
-        radius: mmToPx((holesDiameter || 2.5) / 2),
+        radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
         fill: HOLE_FILL_COLOR, // Білий фон дирки
         stroke: CUT_STROKE_COLOR, // Оранжевий бордер
         strokeWidth: 1, // 1px
@@ -6515,7 +6584,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6541,7 +6610,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6588,7 +6657,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6614,7 +6683,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6640,7 +6709,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight - offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6666,7 +6735,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight - offsetPx,
-          radius: mmToPx((holesDiameter || 2.5) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -6773,7 +6842,7 @@ const Toolbar = ({ formData }) => {
       new fabric.Circle({
         left: offsetPx,
         top: centerY,
-        radius: diameterPx / 2,
+        radius: holeRadiusPxFromDiameterMm(diameterMm),
         fill: HOLE_FILL_COLOR,
         stroke: CUT_STROKE_COLOR,
         strokeWidth: 1,
@@ -6824,7 +6893,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: mmToPx((holesDiameter || 3) / 2),
+          radius: holeRadiusPxFromDiameterMm(holesDiameter || 3),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7443,6 +7512,14 @@ const Toolbar = ({ formData }) => {
       // Встановлюємо тип поточної фігури
       setShapeType('lock');
 
+      // Lock starts with no rounding by default.
+      // IMPORTANT: do not read cornerRadius from sizeValues here (setState is async).
+      const lockCornerRadiusMm = 0;
+      try {
+        canvas.set?.('cornerRadius', 0);
+        canvas.set?.('hasUserEditedCanvasCornerRadius', false);
+      } catch {}
+
       // Нові розміри (залишимо 100x90 мм загальна висота включно з півкругом)
       const totalHeightMM = 90; // загальна висота
       const widthMM = 100;
@@ -7476,7 +7553,7 @@ const Toolbar = ({ formData }) => {
         }
         // Права точка хорди
         pts.push({ x: rightArcX, y: rectTopY });
-        const cornerRadiusPx = mmToPx(sizeValues.cornerRadius || 0);
+        const cornerRadiusPx = mmToPx(lockCornerRadiusMm);
         const baseCr = Math.min(cornerRadiusPx, rectBottomY - rectTopY, wPx / 2);
         const topSideLen = wPx - rightArcX; // від правого краю дуги до правого краю прямокутника
         const crTop = Math.min(baseCr, topSideLen);
@@ -8612,8 +8689,9 @@ const Toolbar = ({ formData }) => {
     const parsed = parseFloat(String(rawValue).replace(',', '.'));
     const clamped = Math.max(0, Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed));
     let value = round1(clamped);
-    // Only rectangle canvas supports corner radius; other canvas shapes must be 0
-    if (key === 'cornerRadius' && currentShapeType && currentShapeType !== 'rectangle') {
+    // Keep corner radius editable for non-circle shapes.
+    // For shapes where the UI disables corner radius, enforce 0.
+    if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
       value = 0;
     }
     const effectiveHeight =
@@ -8720,8 +8798,8 @@ const Toolbar = ({ formData }) => {
       const minVal = isLockShape && isHeightField ? LOCK_ARCH_HEIGHT_MM : 0;
       const nextVal = Math.max(minVal, Math.min(max, cur + delta));
       let newValue = round1(nextVal);
-      // Only rectangle canvas supports corner radius; other canvas shapes must be 0
-      if (key === 'cornerRadius' && currentShapeType && currentShapeType !== 'rectangle') {
+      // For shapes where the UI disables corner radius, enforce 0.
+      if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
         newValue = 0;
       }
       let updated = { ...prev, [key]: newValue };

@@ -342,7 +342,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       where.country = lang;
     }
 
-    const orders = await Order.findAndCountAll({
+    let orders = await Order.findAndCountAll({
       offset,
       limit,
       where,
@@ -364,15 +364,53 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       })
     );
 
-    const totalSum = mappedOrders.reduce((acc, order) => {
-      const full = Number(order?.totalPrice);
-      return Number.isFinite(full) ? acc + full : acc;
-    }, 0);
+
+    const baseOrders = Array.isArray(orders) ? orders : [];
+
+    const enrichedOrders= await Promise.all(
+      baseOrders.map(async (order) => {
+        try {
+          if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+          }
+
+          const orderMongo = await findCartProjectForOrder(order);
+          const computedSigns = countTotalSignsFromProject(orderMongo?.project);
+  
+          const fullOrder = details?.data?.order;
+          const totalPrice = Number(fullOrder?.orderMongo?.totalPrice);
+
+          return {
+            ...order,
+            orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+            totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+            signs: resolveOrderSigns({
+              ...order,
+              orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
+            }),
+          };
+        } catch {
+          return {
+            ...order,
+            totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
+            signs: resolveOrderSigns(order),
+          };
+        }
+      })
+    );
+    
+    const total = order.reduce((acc, order) => {
+        const value = Number(order?.totalPrice);
+        return Number.isFinite(value) ? acc + value : acc;
+      }, 0);
+
+    const sum=total.toFixed(2)
+    
 
     return res.json({ 
       orders: mappedOrders,
       page,
-      totalSum,
+      totalSum:sum,
       count: orders.count
     });
   } catch (err) {

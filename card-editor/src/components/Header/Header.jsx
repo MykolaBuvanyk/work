@@ -327,7 +327,7 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              <Flag size={22} content='DE' /> DE
+              <Flag size={22} country='DE' /> DE
               <div className={isLangOpen&&styles.rotate}>
                 <SlArrowDown size={14} />
               </div>

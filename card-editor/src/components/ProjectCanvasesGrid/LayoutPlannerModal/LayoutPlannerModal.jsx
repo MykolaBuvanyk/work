@@ -691,7 +691,7 @@ const COLOR_LABEL_BY_INDEX = {
   9: "Brown / White",
   10: "Orange / White",
   11: "Gray / White",
-  12: "“Wood” / Black",
+  12: "Wood / Black",
   13: "Carbon / White",
 };
 
@@ -740,7 +740,7 @@ const resolveMaterialColorLabel = ({ selectedColorIndex, backgroundColor, stroke
 
   const textureLabel = (() => {
     const lowerBg = bgRaw.toLowerCase();
-    if (lowerBg.includes("wood")) return "“Wood”";
+    if (lowerBg.includes("wood")) return "Wood";
     if (lowerBg.includes("carbon")) return "Carbon";
     return null;
   })();

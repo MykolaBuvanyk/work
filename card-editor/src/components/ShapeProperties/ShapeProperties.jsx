@@ -1682,11 +1682,11 @@ const ShapeProperties = ({
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue("width", 5)}
+                  onClick={() => incrementValue("width", 1)}
                 ></i>
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue("width", 5)}
+                  onClick={() => decrementValue("width", 1)}
                 ></i>
               </div>
             </div>
@@ -1779,11 +1779,11 @@ const ShapeProperties = ({
               <div className={styles.arrows}>
                 <i
                   className="fa-solid fa-chevron-up"
-                  onClick={() => incrementValue("height", 5)}
+                  onClick={() => incrementValue("height", 1)}
                 ></i>
                 <i
                   className="fa-solid fa-chevron-down"
-                  onClick={() => decrementValue("height", 5)}
+                  onClick={() => decrementValue("height", 1)}
                 ></i>
               </div>
             </div>

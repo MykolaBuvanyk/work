@@ -57,6 +57,13 @@ const safeNumber = (value, fallback = 0) => {
   return Number.isFinite(num) ? num : fallback;
 };
 
+const normalizeMaterialColorLabel = (value) =>
+  String(value || '')
+    .replace(/["'`“”‘’]/g, '')
+    .replace(/\s*\/\s*/g, ' / ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
   const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
@@ -1007,7 +1014,7 @@ const Order = ({orderId}) => {
         {(materialGroups && materialGroups.length > 0) ? (
           materialGroups.map((group) => {
             const orderNumber = String(order?.id || orderId || '');
-            const colorLabel = String(group.color || 'UNKNOWN');
+            const colorLabel = normalizeMaterialColorLabel(group.color || 'UNKNOWN');
             const thicknessNum = Number(group.thickness);
             const thicknessLabel = Number.isFinite(thicknessNum) && Math.abs(thicknessNum - 1.6) > 1e-6 ? ` ${thicknessNum}` : '';
             const tapePart = String(group.tape || '').trim();
@@ -1015,7 +1022,7 @@ const Order = ({orderId}) => {
             const tapeLabel = hasTape ? '' : ' NO TAPE';
             const fileLabel = `${orderNumber} ${String(colorLabel || '').toUpperCase()}${thicknessLabel}${tapeLabel}.pdf (${group.count} signs)`;
 
-            const normalizedColor = String(colorLabel || '').trim().toLowerCase();
+            const normalizedColor = normalizeMaterialColorLabel(colorLabel).toLowerCase();
 
             const iconMap = {
               'white / black': A1,

@@ -7,9 +7,11 @@
   box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.25);
   z-index: 2000;
   border-radius: 8px;
-  width: 1100px;
+  width: min(1100px, calc(100vw - 24px));
   padding: 40px 50px;
   max-height: 90vh;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .headerWrapper {
   position: relative;
@@ -41,9 +43,12 @@
 .addInfoWrapper button {
   background-color: rgba(218, 218, 218, 1);
   border: 1px solid rgba(0, 0, 0, 0.61);
+  border-radius: 4px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  width: 75px;
+  padding: 5px;
   gap: 10px;
   color: rgba(0, 108, 164, 1);
   font-weight: 500;
@@ -84,65 +89,88 @@
   background-color: rgba(0, 108, 164, 1);
 }
 /* Table */
-table {
+.projectsTableWrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.table {
   border-collapse: separate;
-  width: max-content;
+  width: 100%;
+  table-layout: fixed;
 }
+
+.tr {
+  display: grid;
+  grid-template-columns: 36px 64px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: center;
+}
+
+.table tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tr > td {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0;
+}
+
 input[type="checkbox"] {
-  margin-top: 8px;
-}
-table td:nth-child(1) {
-  padding-right: 15px;
+  margin-top: 0;
 }
 
-table td:nth-child(2) {
-  padding-left: 0;
-  padding-right: 65px;
+.tr > td:nth-child(1) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-table td:nth-child(3) {
-  padding-left: 0;
-  padding-right: 115px;
+.tr > td:nth-child(2),
+.tr > td:nth-child(4) {
+  text-align: left;
 }
 
-table td:nth-child(4) {
-  padding-left: 0;
-  padding-right: 45px;
+.tr > td:nth-child(3) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-table td:nth-child(5) {
-  padding-left: 0;
-  padding-right: 45px;
-  width: 375px;
-}
-table td:nth-child(5) img {
+.tr > td:nth-child(5) img {
   max-height: 54px;
 }
-table td {
-  padding-left: 0;
-}
+
 /* Slider */
 .imageSlider {
   position: relative;
-  width: 375px; /* ширина як у td */
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  overflow: hidden;
+  padding: 0 28px;
+  box-sizing: border-box;
 }
 .nextBtn,
 .prevBtn {
-  position: absolute; /* додати */
-  z-index: 10; /* додати */
+  position: absolute;
+  z-index: 10;
   background-color: transparent;
   padding: 0;
   margin: 0;
 }
 .prevBtn {
-  left: -30px; /* позиція зліва */
+  left: 4px;
 }
 
 .nextBtn {
-  right: -30px; /* позиція справа */
+  right: 4px;
 }
 .prevBtn:disabled,
 .nextBtn:disabled,
@@ -197,17 +225,16 @@ table td {
 
 .imagesContainer {
   display: flex;
-  justify-content: flex-start; /* прижати до лівого краю */
-  gap: 0; /* прибрати фіксований gap */
+  justify-content: space-between;
+  gap: 10px;
   overflow: hidden;
   width: 100%;
 }
 .imageItem {
-  flex-shrink: 0;
-}
-
-.imageItem:not(:first-child) {
-  margin-left: auto; /* або використовувати calc для рівномірного розподілу */
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
 }
 .actionList {
   display: flex;
@@ -224,6 +251,7 @@ table td {
   gap: 5px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 0;
 }
 
 .actionList li:nth-child(1):hover {
@@ -238,7 +266,8 @@ table td {
   justify-content: flex-start;
   align-items: center;
   gap: 5px;
-  margin-left: 40px;
+  margin-left: 0;
+  width: 100%;
 }
 .pagination {
   display: flex;

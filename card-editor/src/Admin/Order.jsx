@@ -109,7 +109,7 @@ const mapCartCanvasToDesign = (canvas, index) => {
   };
 };
 
-const Order = ({orderId}) => {
+const Order = ({orderId,update}) => {
   const [order,setOrder]=useState();
   const [selectedMaterialKey, setSelectedMaterialKey] = useState('all');
   const [exportMode, setExportMode] = useState('Normal');
@@ -716,6 +716,7 @@ const Order = ({orderId}) => {
     try {
       const res=await $authHost.post('cart/setStatus', {orderId,newStatus});
       getOrder();
+      update();
     }catch {
       alert("Помилка задання статусу");
     }

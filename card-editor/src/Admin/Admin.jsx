@@ -168,7 +168,9 @@ const Admin = () => {
   useEffect(()=>{
     getOrders();
   },[page, status, start, finish, selectLang, search]);
-
+  const update=()=>{
+    getOrders();
+  }
  
   useEffect(() => {}, [isAdmin]);
 
@@ -322,7 +324,7 @@ const Admin = () => {
         </div>
         {orderId&&
           <div className="right">
-            <Order orderId={orderId} />
+            <Order orderId={orderId} update={update} />
           </div>
         }
       </div>

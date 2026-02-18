@@ -367,6 +367,20 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
     const baseOrders = Array.isArray(orders) ? orders : [];
 
+    const resolveOrderSigns = (order) => {
+      const canvases = order?.orderMongo?.project?.canvases;
+      if (Array.isArray(canvases) && canvases.length > 0) {
+        return canvases.reduce((sum, canvas) => {
+          const raw = canvas?.copiesCount ?? canvas?.toolbarState?.copiesCount ?? 1;
+          const copies = Math.max(1, Math.floor(Number(raw) || 1));
+          return sum + copies;
+        }, 0);
+      }
+
+      const legacy = Number(order?.signs);
+      return Number.isFinite(legacy) ? legacy : 0;
+    };
+
     const enrichedOrders= await Promise.all(
       baseOrders.map(async (order) => {
         try {
@@ -408,7 +422,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     
 
     return res.json({ 
-      orders: mappedOrders,
+      orders: enrichedOrders,
       page,
       totalSum:sum,
       count: orders.count

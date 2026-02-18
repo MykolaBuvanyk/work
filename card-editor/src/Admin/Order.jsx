@@ -116,7 +116,7 @@ const mapCartCanvasToDesign = (canvas, index) => {
   };
 };
 
-const Order = ({orderId,update}) => {
+const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [order,setOrder]=useState();
   const [selectedMaterialKey, setSelectedMaterialKey] = useState('all');
   const [exportMode, setExportMode] = useState('Normal');
@@ -141,6 +141,10 @@ const Order = ({orderId,update}) => {
   const [appliedMinPageHeight, setAppliedMinPageHeight] = useState(0);
   const [appliedMaxPageWidth, setAppliedMaxPageWidth] = useState(0);
   const [appliedMaxPageHeight, setAppliedMaxPageHeight] = useState(0);
+
+  const customerOrders = Array.isArray(order?.user?.orders) ? order.user.orders : [];
+  const customerOrdersCount = customerOrders.length;
+  const customerOrdersTotal = customerOrders.reduce((acc, item) => acc + (Number(item?.sum) || 0), 0);
   
   const getOrder=async()=>{
     try{
@@ -177,6 +181,13 @@ const Order = ({orderId,update}) => {
     }, 3000);
     return () => clearTimeout(timeoutId);
   }, [pdfMinPageWidth, pdfMinPageHeight, pdfMaxPageWidth, pdfMaxPageHeight]);
+
+  const handleCustomerOrdersCountClick = (e) => {
+    e.stopPropagation();
+    if (typeof onToggleUserOrdersFilter === 'function') {
+      onToggleUserOrdersFilter(order?.userId);
+    }
+  };
 
   const designs = useMemo(() => {
     const canvases = order?.orderMongo?.project?.canvases;
@@ -919,7 +930,13 @@ const Order = ({orderId,update}) => {
       </div>
       <div className="row">
         <p>Customer No</p>
-        <span>{order.userId} ({order.user.orders.length}; {order.user.orders.reduce((acc,x)=>acc+=x.sum,0).toFixed(2)}) </span>
+        <span>
+          {order.userId} (
+          <button type="button" className="order-count-link" onClick={handleCustomerOrdersCountClick}>
+            {customerOrdersCount}
+          </button>
+          ; {customerOrdersTotal.toFixed(2)})
+        </span>
         <div />
       </div>
       <div className="row">

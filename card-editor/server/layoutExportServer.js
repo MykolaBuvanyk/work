@@ -1387,18 +1387,34 @@ app.post('/api/layout-pdf', async (req, res) => {
         const leftStripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 0);
         const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
         const fallbackAreaWidthMm = leftStripWidthMm > 0 ? leftStripWidthMm : leftInsetMm;
-        const areaWidthMm = Math.max(0, Number(sheetInfo?.areaWidthMm) || fallbackAreaWidthMm);
+        const firstCanvasStartMm = (Array.isArray(sheet?.placements) ? sheet.placements : []).reduce((minX, placement) => {
+          const x = Number(placement?.x);
+          if (!Number.isFinite(x) || x < 0) return minX;
+          return Math.min(minX, x);
+        }, Number.POSITIVE_INFINITY);
+        const hasCanvasStart = Number.isFinite(firstCanvasStartMm) && firstCanvasStartMm > 0;
+        const areaWidthMm = Math.max(
+          0,
+          hasCanvasStart
+            ? firstCanvasStartMm
+            : Number(sheetInfo?.areaWidthMm) || fallbackAreaWidthMm
+        );
 
         if (areaWidthMm > 0) {
           const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
-          const fallbackXCenterMm = leftStripWidthMm > 0 ? leftStripWidthMm / 2 : Math.max(0, fallbackAreaWidthMm - 1);
-          const xCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm)) ? Number(sheetInfo.xCenterMm) : fallbackXCenterMm;
+          const fallbackXCenterMm = leftStripWidthMm > 0 ? leftStripWidthMm / 2 : areaWidthMm / 2;
+          const requestedXCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm))
+            ? Number(sheetInfo.xCenterMm)
+            : fallbackXCenterMm;
+          const xCenterMm = hasCanvasStart
+            ? areaWidthMm / 2
+            : Math.max(0, Math.min(areaWidthMm, requestedXCenterMm));
           const yCenterMm = Number.isFinite(Number(sheetInfo?.yCenterMm)) ? Number(sheetInfo.yCenterMm) : pageHeightMm / 2;
           const anchorXpt = mmToPoints(xCenterMm);
           const anchorYpt = mmToPoints(yCenterMm);
 
-          // Font size in pt, capped small so it fits within the left inset.
-          const fontSize = Math.max(5, Math.min(8, mmToPoints(areaWidthMm * 0.6)));
+          // Font size in pt: slightly smaller to avoid hugging the canvas edge.
+          const fontSize = Math.max(5.8, Math.min(9, mmToPoints(areaWidthMm * 0.58)));
 
           // Special handling for Sheet optimized (MJ) Fr. mode with a circle
           const isMjOptimized = (sheet?.exportMode || exportMode) === 'Sheet optimized (MJ) Fr.';
@@ -1416,7 +1432,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc.translate(anchorXpt, anchorYpt);
           doc.rotate(-90);
 
-          const drawVectorLabelText = (text, startX, startY) => {
+          const drawVectorLabelText = (text, startX, startY, anchor = TEXT_TO_SVG_ANCHOR) => {
             const runs = splitTextIntoFontRuns(String(text || ''), DEFAULT_FONT_ID);
             if (!runs.length) return;
 
@@ -1429,11 +1445,11 @@ app.post('/api/layout-pdf', async (req, res) => {
                 try {
                   const pathData = textToSvg.getD(run.text, {
                     fontSize,
-                    anchor: TEXT_TO_SVG_ANCHOR,
+                    anchor,
                   });
                   const metrics = textToSvg.getMetrics(run.text, {
                     fontSize,
-                    anchor: TEXT_TO_SVG_ANCHOR,
+                    anchor,
                   });
                   doc.save();
                   doc.translate(segmentX, startY);
@@ -1448,7 +1464,8 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
 
               // Fallback if TextToSVG is unavailable.
-              doc.text(run.text, segmentX, startY, {
+              const fallbackY = anchor === 'left middle' ? startY - fontSize * 0.5 : startY;
+              doc.text(run.text, segmentX, fallbackY, {
                 lineBreak: false,
                 stroke: true,
                 fill: false,
@@ -1474,11 +1491,12 @@ app.post('/api/layout-pdf', async (req, res) => {
             const leftWidth = doc.widthOfString(sheetNum);
             const rightWidth = doc.widthOfString(rightText);
             // Place number to the left of the first circle, project name to the right
-            const gapPt = mmToPoints(0.5); // 0.5mm gap from circle
+            const gapPt = mmToPoints(1.2); // 1.2mm gap from circle
+            const centeredAnchor = 'left middle';
             // Draw number (with 'Sh') left of the circle
-            drawVectorLabelText(sheetNum, -circleRadiusPt - gapPt - leftWidth, 0);
+            drawVectorLabelText(sheetNum, -circleRadiusPt - gapPt - leftWidth, 0, centeredAnchor);
             // Draw project name right of the circle
-            drawVectorLabelText(rightText, circleRadiusPt + gapPt, 0);
+            drawVectorLabelText(rightText, circleRadiusPt + gapPt, 0, centeredAnchor);
           } else {
             // Fallback: default label logic
             const projectId = sheetInfo.projectId ? String(sheetInfo.projectId) : '';
@@ -2095,9 +2113,13 @@ app.get('/health', (req, res) => {
 
 const start = async () => {
   try {
-    // Mongo is required for templates API
-    await connectMongo();
-    console.log('Mongo connected');
+    // Mongo is required for templates API; do not block PDF export during local dev
+    try {
+      await connectMongo();
+      console.log('Mongo connected');
+    } catch (mongoError) {
+      console.log('Mongo connection failed (server will still run):', mongoError);
+    }
 
     // MySQL is used for auth; do not block server startup during local dev
     try {
@@ -2108,11 +2130,20 @@ const start = async () => {
       console.log('MySQL connection failed (server will still run):', mysqlError);
     }
 
-    app.listen(DEFAULT_PORT, () => {
+    const server = app.listen(DEFAULT_PORT, () => {
       console.log(`Layout export server запущено на порту ${DEFAULT_PORT}`);
       if (ALLOWED_ORIGINS) {
         console.log(`Дозволені домени: ${ALLOWED_ORIGINS.join(', ')}`);
       }
+    });
+
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${DEFAULT_PORT} is already in use. Stop the process using it and retry.`);
+      } else {
+        console.error('HTTP server error:', err);
+      }
+      process.exitCode = 1;
     });
   } catch (error) {
     console.log(error);

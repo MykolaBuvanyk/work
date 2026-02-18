@@ -517,6 +517,21 @@ const hasVisibleFillPaint = (node, styleAttr) => {
   return isVisiblePaint(styleFill);
 };
 
+const isOpenContourGeometryNode = (node) => {
+  if (!node || typeof node.nodeName !== "string") return false;
+  const tag = node.nodeName.toLowerCase();
+  if (tag === "line" || tag === "polyline") {
+    return true;
+  }
+  if (tag !== "path") {
+    return false;
+  }
+  const d = typeof node.getAttribute === "function" ? node.getAttribute("d") : "";
+  const normalized = String(d || "").trim();
+  if (!normalized) return false;
+  return !/[zZ]\s*$/.test(normalized);
+};
+
 const isNodeInsideCutShape = (node) => {
   if (!node) return false;
 
@@ -1435,21 +1450,6 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         shapeNode.getAttribute("stroke-width");
       const styleAttr = shapeNode.getAttribute("style") || "";
 
-      if (isNodeInsideCutShape(shapeNode)) {
-        shapeNode.setAttribute("data-inner-contour-added", "true");
-        return;
-      }
-
-      const hasFillAttr =
-        shapeNode.getAttribute("data-shape-has-fill") === "true";
-      const hasVisibleFill = hasVisibleFillPaint(shapeNode, styleAttr);
-
-      if (hasFillAttr || hasVisibleFill) {
-        shapeNode.setAttribute("data-inner-contour-added", "true");
-        applyContourStrokeWidth(shapeNode, true);
-        return;
-      }
-
       // If overrideThicknessPx is provided (for border nodes), use it directly.
       let thicknessPx = Number.isFinite(overrideThicknessPx) && overrideThicknessPx > 0
         ? overrideThicknessPx
@@ -1476,6 +1476,78 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
             }
           }
         }
+      }
+
+      if (isNodeInsideCutShape(shapeNode)) {
+        shapeNode.setAttribute("data-inner-contour-added", "true");
+        return;
+      }
+
+      const hasFillAttr =
+        shapeNode.getAttribute("data-shape-has-fill") === "true";
+      const hasVisibleFill = hasVisibleFillPaint(shapeNode, styleAttr);
+
+      if (hasFillAttr || hasVisibleFill) {
+        shapeNode.setAttribute("data-inner-contour-added", "true");
+        applyContourStrokeWidth(shapeNode, true);
+        return;
+      }
+
+      if (isOpenContourGeometryNode(shapeNode)) {
+        try {
+          scope.project.clear();
+          const clone = shapeNode.cloneNode(true);
+          const imported = scope.project.importSVG(clone, {
+            insert: true,
+            expandShapes: true,
+            applyMatrix: true,
+          });
+
+          const pathItems = gatherPathItems(scope, imported);
+          const ownerDoc = shapeNode.ownerDocument ||
+            (typeof document !== "undefined" ? document : null);
+          const outlinedNodes = [];
+
+          if (ownerDoc && pathItems.length) {
+            pathItems.forEach((pathItem) => {
+              const built = buildOutlineElementsFromPathItem(scope, ownerDoc, pathItem) || [];
+              if (built.length) outlinedNodes.push(...built);
+            });
+          }
+
+          scope.project.clear();
+
+          const outlinedNode = outlinedNodes[0];
+          const parent = shapeNode.parentNode;
+          if (outlinedNode && parent) {
+            const nodeId = shapeNode.getAttribute("id") || null;
+            if (nodeId && typeof outlinedNode.setAttribute === "function") {
+              outlinedNode.setAttribute("id", nodeId);
+            }
+            parent.replaceChild(outlinedNode, shapeNode);
+            outlinedNode.setAttribute("data-inner-contour-added", "true");
+            applyContourStrokeWidth(outlinedNode, true);
+            return;
+          }
+        } catch {
+          try {
+            scope.project.clear();
+          } catch {}
+        }
+
+        shapeNode.setAttribute("fill", "none");
+        shapeNode.setAttribute("stroke", TEXT_STROKE_COLOR);
+        shapeNode.setAttribute("stroke-opacity", "1");
+        shapeNode.setAttribute("vector-effect", "non-scaling-stroke");
+        if (!shapeNode.getAttribute("stroke-linejoin")) {
+          shapeNode.setAttribute("stroke-linejoin", "round");
+        }
+        if (!shapeNode.getAttribute("stroke-linecap")) {
+          shapeNode.setAttribute("stroke-linecap", "round");
+        }
+        shapeNode.setAttribute("data-inner-contour-added", "true");
+        applyContourStrokeWidth(shapeNode, true);
+        return;
       }
 
       if (!Number.isFinite(thicknessPx) || thicknessPx <= 0) {

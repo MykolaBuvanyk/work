@@ -313,7 +313,7 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
 
 CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    let { page = 1, limit = 20, search, status, start, finish, lang } = req.query;
+    let { page = 1, limit = 20, search, status, start, finish, lang, userId } = req.query;
 
     page = parseInt(page);
     limit = parseInt(limit);
@@ -347,6 +347,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
     if (lang) {
       where.country = lang;
+    }
+
+    if (userId !== undefined && userId !== null && String(userId).trim() !== '') {
+      const normalizedUserId = Number(userId);
+      if (!Number.isFinite(normalizedUserId)) {
+        return res.status(400).json({ message: 'Invalid userId filter' });
+      }
+      where.userId = normalizedUserId;
     }
 
     let orders = await Order.findAndCountAll({

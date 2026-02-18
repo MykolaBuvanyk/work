@@ -86,6 +86,7 @@ const Admin = () => {
   const [selectLang, setSelectLang] = useState({ countryCode: 'ALL', label: 'ALL' });
   const [sum,setSum]=useState(0);
   const [orderId,setOrderId]=useState(null);
+  const [filteredUserId, setFilteredUserId] = useState(null);
 
   const handleStartDateChange = (nextStart) => {
     setStart(nextStart);
@@ -99,9 +100,12 @@ const Admin = () => {
   };
 
   
-  const getOrders=async()=>{
+  const getOrders=async({ pageOverride, userIdOverride, reopenOrderId } = {})=>{
     try{
-      let query=`?page=${page}&limit=${limit}`;
+      const requestPage = Number(pageOverride ?? page) || 1;
+      const activeFilteredUserId = userIdOverride !== undefined ? userIdOverride : filteredUserId;
+
+      let query=`?page=${requestPage}&limit=${limit}`;
       if(status!='ALL'){
         query+=`&status=${status}`
       }
@@ -122,13 +126,25 @@ const Admin = () => {
       if(selectLang.countryCode!='ALL'){
         query+=`&lang=${selectLang.countryCode.toLowerCase()}`
       }
+      if(activeFilteredUserId != null){
+        query+=`&userId=${activeFilteredUserId}`
+      }
       
       const res=await $authHost.get('cart/filter'+query);
       
      
       setOrders(res.data.orders);
       setSum(res.data.sum)
-      setCountPages(Math.ceil(res.data.count/limit))
+      const nextCountPages = Math.max(1, Math.ceil(Number(res?.data?.count || 0) / limit));
+      setCountPages(nextCountPages)
+
+      if (requestPage > nextCountPages) {
+        setPage(nextCountPages);
+      }
+
+      if (reopenOrderId != null) {
+        setOrderId(reopenOrderId);
+      }
     }catch(err){
       console.log(err);
       alert('Помилка при отримані замовлень.');
@@ -137,7 +153,7 @@ const Admin = () => {
 
   useEffect(()=>{
     getOrders();
-  },[page, status, start, finish, selectLang, search]);
+  },[page, status, start, finish, selectLang, search, filteredUserId]);
 
  
   useEffect(() => {}, [isAdmin]);
@@ -145,6 +161,19 @@ const Admin = () => {
   const update=()=>{
     getOrders();
   }
+
+  const handleUserOrdersToggle = (userId) => {
+    const normalizedUserId = Number(userId);
+    if (!Number.isFinite(normalizedUserId)) {
+      return;
+    }
+
+    const selectedOrderId = orderId;
+    const nextFilteredUserId = filteredUserId === normalizedUserId ? null : normalizedUserId;
+    setFilteredUserId(nextFilteredUserId);
+    setPage(1);
+    getOrders({ pageOverride: 1, userIdOverride: nextFilteredUserId, reopenOrderId: selectedOrderId });
+  };
 
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
@@ -296,7 +325,7 @@ const Admin = () => {
         </div>
         {orderId&&
           <div className="right">
-            <Order orderId={orderId} update={update} />
+            <Order orderId={orderId} update={update} onToggleUserOrdersFilter={handleUserOrdersToggle} />
           </div>
         }
       </div>

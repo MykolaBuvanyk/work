@@ -445,6 +445,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
     }
 
     if (shape) {
+
       // Позначаємо тип фігури для подальшої логіки UI
       // Для semiround ми вже встановили shape.shapeType вище як 'halfCircle'
       if (!shape.shapeType) {
@@ -453,6 +454,15 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       if (shapeType === "round") {
         // Спеціальний прапорець для кола, навіть якщо це Path
         shape.set({ isCircle: true });
+      }
+
+      // Заборонити розтягування у висоту та пропорційно для ліній
+      if (shapeType === "line" || shapeType === "dashedLine") {
+        shape.set({
+          lockScalingY: false,
+          lockUniScaling: false,
+          lockScalingX: false,
+        });
       }
 
       // Ініціалізуємо Corner Radius для підтримуваних path-фігур

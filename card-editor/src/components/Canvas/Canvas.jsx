@@ -154,7 +154,7 @@ const Canvas = ({ className }) => {
     // Smaller threshold + soft pull to make snapping less aggressive
     const SNAP_THRESHOLD_CSS_PX = 6; // perceived threshold in screen px
     const SNAP_HARD_THRESHOLD_CSS_PX = 3; // within this: snap exactly
-    const SNAP_SOFT_STRENGTH = 0.6; // outside hard threshold: apply part of delta
+    const SNAP_SOFT_STRENGTH = 0.5; // outside hard threshold: apply full delta (maximum snap)
     const getSnapThreshold = () => {
       const s = scaleRef.current || 1;
       return SNAP_THRESHOLD_CSS_PX / Math.max(1e-6, s);
@@ -162,6 +162,18 @@ const Canvas = ({ className }) => {
     const getSnapHardThreshold = () => {
       const s = scaleRef.current || 1;
       return SNAP_HARD_THRESHOLD_CSS_PX / Math.max(1e-6, s);
+    };
+    const getCanvasSnapCenterY = () => {
+      const H = (designRef.current && designRef.current.height) || fCanvas.getHeight();
+      if (!(H > 0)) return 0;
+      const currentShapeType =
+        (typeof fCanvas.get === 'function' && fCanvas.get('shapeType')) ||
+        fCanvas.currentShapeType ||
+        canvasShapeType;
+      if (currentShapeType !== 'lock') return H / 2;
+      const lockArchPx = LOCK_ARCH_HEIGHT_MM * PX_PER_MM;
+      const topInset = Math.max(0, Math.min(H, lockArchPx));
+      return topInset + (H - topInset) / 2;
     };
     const applySnapDelta = delta => {
       const d = Number(delta) || 0;
@@ -275,8 +287,7 @@ const Canvas = ({ className }) => {
 
       // --- Check against canvas center ---
       const W = (designRef.current && designRef.current.width) || fCanvas.getWidth();
-      const H = (designRef.current && designRef.current.height) || fCanvas.getHeight();
-      const canvasCenters = { x: W / 2, y: H / 2 };
+      const canvasCenters = { x: W / 2, y: getCanvasSnapCenterY() };
       // X: align element center/edges to canvas center X
       for (const tx of tX) {
         const dx = canvasCenters.x - tx;
@@ -1361,9 +1372,8 @@ const Canvas = ({ className }) => {
       const t = transform?.target;
       if (!t) return true;
       try {
-        const { height: H } = designRef.current || {};
         const currentCenter = t.getCenterPoint();
-        const newCenter = new fabric.Point(currentCenter.x, (H || fCanvas.getHeight()) / 2);
+        const newCenter = new fabric.Point(currentCenter.x, getCanvasSnapCenterY());
         t.setPositionByOrigin(newCenter, 'center', 'center');
         t.setCoords();
         // Flash horizontal dashed guide for 1s (centering along Y)
@@ -1486,6 +1496,9 @@ const Canvas = ({ className }) => {
           o.shapeType === 'round' ||
           o.shapeType === 'halfCircle');
 
+      const isWidthOnlyLine = o =>
+        !!o && (o.shapeType === 'line' || o.shapeType === 'dashedLine');
+
       const applyDotVisualToControl = key => {
         try {
           const base =
@@ -1540,9 +1553,15 @@ const Canvas = ({ className }) => {
       // Resize handles: skip for Cut elements (only show action panel + rotate)
       if (!obj.isCutElement) {
         const circleLock = isCircleLike(obj);
+        const widthOnlyLine = isWidthOnlyLine(obj);
         if (circleLock) {
           try {
             obj.lockUniScaling = true; // preserve 1:1 via Fabric constraint
+          } catch { }
+        }
+        if (widthOnlyLine) {
+          try {
+            obj.__widthOnlyScaleY = Math.abs(Number(obj.scaleY) || 1);
           } catch { }
         }
         // Use standard Fabric controls so scaling math stays consistent for any rotation.
@@ -1727,6 +1746,11 @@ const Canvas = ({ className }) => {
       const t = e?.target;
       if (!t) return;
       try {
+        if (t.shapeType === 'line' || t.shapeType === 'dashedLine') {
+          const sy = Math.abs(Number(t.__widthOnlyScaleY) || 1);
+          const signY = (Number(t.scaleY) || 1) >= 0 ? 1 : -1;
+          t.scaleY = signY * sy;
+        }
         const isCircleLike =
           t.isCircle === true ||
           t.type === 'circle' ||
@@ -2291,7 +2315,7 @@ const Canvas = ({ className }) => {
         typeof active.__centerFlashHExpireAt === 'number' &&
         nowTs2 < active.__centerFlashHExpireAt
       ) {
-        const midY = H / 2;
+        const midY = getCanvasSnapCenterY();
         ctx.setLineDash([6 / s, 4 / s]);
         ctx.strokeStyle = 'rgba(0, 108, 164, 1)';
         ctx.lineWidth = 2 / s;
@@ -2534,6 +2558,7 @@ const Canvas = ({ className }) => {
     });
 
     // Блокуємо переміщення отворів навіть якщо вони якось стали активними
+
     fCanvas.on('object:moving', e => {
       const t = e.target;
       if (isHole(t)) {
@@ -2546,11 +2571,15 @@ const Canvas = ({ className }) => {
         t._lastTop = t.top;
       }
 
-      // Alignment guides only (no snap)
       if (!t) return;
       try {
-        const { guides } = computeDragSnap(t);
-        // Do NOT apply any dx/dy, just show guides
+        const { dx, dy, guides } = computeDragSnap(t);
+        // Apply weak snapping: only a fraction of delta
+        const SNAP_MOVE_FRACTION = 0.5;
+        if ((dx || dy) && (!t.lockMovementX || !t.lockMovementY)) {
+          t.left += dx * SNAP_MOVE_FRACTION;
+          t.top += dy * SNAP_MOVE_FRACTION;
+        }
         t.__snapGuides = guides;
       } catch { }
     });

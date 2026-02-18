@@ -17,6 +17,17 @@
 
     span {
       width: 100%;
+
+      .order-count-link {
+        background: transparent;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        color: #007aff;
+        text-decoration: underline;
+        cursor: pointer;
+        font: inherit;
+      }
     }
 
     div {

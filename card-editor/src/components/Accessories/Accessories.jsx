@@ -22,9 +22,91 @@ import imgBallchain from "/images/accessories/Ballchain 1.png";
 import imgSHookSign from "/images/accessories/S-hook+sign 1.png";
 import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
 import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
+import iconCable from "/images/accessories/cable.svg";
+import iconScrews from "/images/accessories/screws.svg";
+import iconSHook from "/images/accessories/S-Hook.svg";
+import iconKeyring from "/images/accessories/Keyring.svg";
+import iconBallchain from "/images/accessories/Ballchain.svg";
+
+const BASE_ACCESSORIES = [
+  {
+    id: 1,
+    name: "Cable ties",
+    price: 0.05,
+    desc: "Black plastic cable ties, size 3.6 × 140 mm",
+    iconKey: "cable.svg",
+    img: imgCableTies,
+    hasExtra: false,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+  {
+    id: 2,
+    name: "Screws 9,5 mm",
+    price: 0.1,
+    desc: "Size 2.9 × 9.5 mm",
+    iconKey: "screws.svg",
+    img: imgPh95,
+    hasExtra: false,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+  {
+    id: 3,
+    name: "Screws 13 mm",
+    price: 0.1,
+    desc: "Size 2.9 × 13 mm",
+    iconKey: "screws.svg",
+    img: imgPh13,
+    hasExtra: false,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+  {
+    id: 4,
+    name: "S-Hooks",
+    price: 0.25,
+    desc: "Nickel plated",
+    iconKey: "s-hook.svg",
+    img: imgSHook,
+    extraImg: imgSHookSign,
+    hasExtra: true,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+  {
+    id: 5,
+    name: "Keyrings",
+    price: 0.7,
+    desc: "30 mm",
+    iconKey: "keyring.svg",
+    img: imgKeyring,
+    extraImg: imgKeyringSign1,
+    hasExtra: true,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+  {
+    id: 6,
+    name: "Ball chains",
+    price: 0.25,
+    desc: "Nickel plated, length 10 cm",
+    iconKey: "ballchain.svg",
+    img: imgBallchain,
+    extraImg: imgKeyringSign2,
+    hasExtra: true,
+    checked: false,
+    visible: false,
+    qty: "1",
+  },
+];
 
 const TopToolbar = ({ className, formData }) => {
-  console.log(9432943294, formData);
   const { canvas } = useCanvasContext();
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
@@ -32,99 +114,23 @@ const TopToolbar = ({ className, formData }) => {
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
 
   // Toolbar <-> Modal shared state
-  const [accessories, setAccessories] = useState([
-    {
-      id: 1,
-      name: "Cable ties",
-      price: 0.05,
-      desc: "Black plastic cable ties, size 3.6 × 140 mm",
-      iconKey: "cable.svg",
-      img: imgCableTies,
-      hasExtra: false,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-    {
-      id: 2,
-      name: "Screws",
-      price: 0.1,
-      desc: "Size 2.9 × 9.5 mm",
-      iconKey: "screws.svg",
-      img: imgPh95,
-      hasExtra: false,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-    {
-      id: 3,
-      name: "Screws 13 mm",
-      price: 0.1,
-      desc: "Size 2.9 × 13 mm",
-      iconKey: "screws.svg",
-      img: imgPh13,
-      hasExtra: false,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-    {
-      id: 4,
-      name: "S-Hooks",
-      price: 0.25,
-      desc: "Nickel plated",
-      iconKey: "s-hook.svg",
-      img: imgSHook,
-      extraImg: imgSHookSign,
-      hasExtra: true,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-    {
-      id: 5,
-      name: "Keyrings",
-      price: 0.7,
-      desc: "30 mm",
-      iconKey: "keyring.svg",
-      img: imgKeyring,
-      extraImg: imgKeyringSign1,
-      hasExtra: true,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-    {
-      id: 6,
-      name: "Ball chains",
-      price: 0.25,
-      desc: "Nickel plated, length 10 cm",
-      iconKey: "ballchain.svg",
-      img: imgBallchain,
-      extraImg: imgKeyringSign2,
-      hasExtra: true,
-      checked: false,
-      visible: false,
-      qty: "1",
-    },
-  ]);
+  const [accessories, setAccessories] = useState(() =>
+    BASE_ACCESSORIES.map((item) => ({ ...item }))
+  );
 
-  // Toolbar icons - using direct paths to public folder
+  // Toolbar icons
   const svgIcons = React.useMemo(() => {
-    const iconFiles = [
-      "cable.svg",
-      "screws.svg",
-      "S-Hook.svg",
-      "Keyring.svg",
-      "Ballchain.svg"
-    ];
-    const map = {};
-    iconFiles.forEach((file) => {
-      map[file] = `/images/accessories/${file}`;
-      map[file.toLowerCase()] = `/images/accessories/${file}`;
-    });
-    return map;
+    return {
+      "cable.svg": iconCable,
+      "screws.svg": iconScrews,
+      "s-hook.svg": iconSHook,
+      "s-hook.png": iconSHook,
+      "S-Hook.svg": iconSHook,
+      "keyring.svg": iconKeyring,
+      "Keyring.svg": iconKeyring,
+      "ballchain.svg": iconBallchain,
+      "Ballchain.svg": iconBallchain,
+    };
   }, []);
 
   const parseNumber = (raw) => {
@@ -522,13 +528,48 @@ const TopToolbar = ({ className, formData }) => {
 
   useEffect(() => {
     const hydrateAccessories = async () => {
-      let filterAccessories = accessories.filter(
-        (x) => formData.listAccessories.find((y) => y.text == x.name).isAvaible
-      );
-      filterAccessories = filterAccessories.map((x) => ({
-        ...x,
-        price: formData.listAccessories.find((y) => x.name == y.text).number,
-      }));
+      const listAccessories = Array.isArray(formData?.listAccessories)
+        ? formData.listAccessories
+        : [];
+
+      const normalize = (val) => String(val || "").trim().toLowerCase();
+      const extractInfoSize = (val) => {
+        const match = String(val || "").match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)/i);
+        if (!match) return "";
+        return `${match[1].replace(",", ".")}x${match[2].replace(",", ".")}`;
+      };
+
+      const getListItemForAccessory = (accessory) => {
+        const accessoryName = normalize(accessory?.name);
+        const direct = listAccessories.find((entry) => normalize(entry?.text) === accessoryName);
+        if (direct) return direct;
+
+        const accessorySize = extractInfoSize(accessory?.desc);
+        return listAccessories.find((entry) => {
+          if (normalize(entry?.text) !== accessoryName) return false;
+          if (!accessorySize) return true;
+          return extractInfoSize(entry?.info) === accessorySize;
+        });
+      };
+
+      let filterAccessories = BASE_ACCESSORIES
+        .map((item) => ({ ...item }))
+        .map((item) => {
+          const serverItem = getListItemForAccessory(item);
+          const isScrews = normalize(item?.name).startsWith("screws");
+          const canShow = serverItem
+            ? Boolean(serverItem?.isAvaible) || isScrews
+            : true;
+
+          if (!canShow) return null;
+
+          const parsedPrice = Number(serverItem?.number);
+          return {
+            ...item,
+            price: Number.isFinite(parsedPrice) ? parsedPrice : item.price,
+          };
+        })
+        .filter(Boolean);
 
       let pending = [];
       try {
@@ -633,7 +674,6 @@ const TopToolbar = ({ className, formData }) => {
     };
   }, []);
 
-  console.log(3434, accessories);
   useEffect(() => {
     try {
       window.getSelectedAccessories = () => accessories;
@@ -776,8 +816,21 @@ const TopToolbar = ({ className, formData }) => {
         <h3 className={styles.title}>Accessories:</h3>
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
-          {accessories.sort((a, b) => b.checked - a.checked).slice(0, 3)
-            .map((it) => {
+          {(() => {
+            const ordered = [...accessories].sort((a, b) => a.id - b.id);
+            const selected = ordered.filter((item) => item.checked);
+            const defaultVisibleIds = new Set(ordered.slice(0, 3).map((item) => item.id));
+            if (selected.length === 0) {
+              return ordered.slice(0, 3);
+            }
+
+            const selectedIds = new Set(selected.map((item) => item.id));
+            const restVisible = ordered.filter(
+              (item) => !selectedIds.has(item.id) && defaultVisibleIds.has(item.id)
+            );
+
+            return [...selected, ...restVisible];
+          })().map((it) => {
               const qtyNum = parseNumber(it.qty);
               const total = it.price * qtyNum;
               const iconUrl =

@@ -375,68 +375,16 @@ export async function generateCanvasPreviews(canvas, options = {}) {
 
   try {
     if (canvas.toSVG) {
-      const borderTweaks = [];
-      if (typeof canvas.getObjects === "function") {
-        canvas.getObjects().forEach((obj) => {
-          if (!obj || !obj.isBorderShape || typeof obj.set !== "function") {
-            return;
-          }
-
-          borderTweaks.push({
-            target: obj,
-            stroke: obj.stroke,
-            fill: obj.fill,
-          });
-
-          const exportStroke =
-            obj.cardBorderExportStrokeColor ||
-            (obj.cardBorderMode === "custom"
-              ? CUSTOM_BORDER_EXPORT_COLOR
-              : obj.stroke);
-          const exportFill =
-            obj.cardBorderMode === "custom"
-              ? obj.cardBorderExportFill || CUSTOM_BORDER_EXPORT_FILL
-              : obj.fill;
-
-          const nextProps = {
-            stroke: exportStroke,
-          };
-
-          if (exportFill !== undefined) {
-            nextProps.fill =
-              obj.cardBorderMode === "custom"
-                ? exportFill || CUSTOM_BORDER_EXPORT_FILL
-                : exportFill;
-          }
-
-          obj.set(nextProps);
-        });
-      }
-
-      let rawSvg = "";
-      try {
-        rawSvg = canvas.toSVG({
-          viewBox: {
-            x: 0,
-            y: 0,
-            width,
-            height,
-          },
+      const rawSvg = canvas.toSVG({
+        viewBox: {
+          x: 0,
+          y: 0,
           width,
           height,
-        });
-      } finally {
-        borderTweaks.forEach(({ target, stroke, fill }) => {
-          try {
-            target.set({ stroke, fill });
-          } catch (restoreError) {
-            console.warn(
-              "Failed to restore border after SVG export",
-              restoreError
-            );
-          }
-        });
-      }
+        },
+        width,
+        height,
+      });
 
       const sanitized = rawSvg
         .replace(/[\x00-\x1F\x7F]/g, "")
@@ -1887,33 +1835,138 @@ export async function saveNewProject(name, canvas) {
   const snap = await exportCanvas(canvas, toolbarState);
   const now = Date.now();
 
+  const cloneCanvasEntry = (entry) => {
+    try {
+      return JSON.parse(JSON.stringify(entry));
+    } catch {
+      return { ...entry };
+    }
+  };
+
+  // Якщо Save As викликається з уже відкритого проекту,
+  // копіюємо ВСІ його полотна, а не лише поточне.
+  let sourceProjectId = null;
+  let currentCanvasId = null;
+  let currentProjectCanvasId = null;
+  let currentProjectCanvasIndex = null;
+  let runtimeProjectCanvasId = null;
+  let runtimeProjectCanvasIndex = null;
+  try {
+    sourceProjectId = localStorage.getItem("currentProjectId");
+  } catch {}
+  try {
+    currentCanvasId = localStorage.getItem("currentCanvasId");
+  } catch {}
+  try {
+    currentProjectCanvasId = localStorage.getItem("currentProjectCanvasId");
+  } catch {}
+  try {
+    const storedIndex = localStorage.getItem("currentProjectCanvasIndex");
+    if (storedIndex !== null && storedIndex !== undefined) {
+      const parsed = Number(storedIndex);
+      if (!Number.isNaN(parsed)) {
+        currentProjectCanvasIndex = parsed;
+      }
+    }
+  } catch {}
+  try {
+    if (typeof window !== "undefined") {
+      runtimeProjectCanvasId = window.__currentProjectCanvasId || null;
+      runtimeProjectCanvasIndex = window.__currentProjectCanvasIndex || null;
+    }
+  } catch {}
+
   // Отримуємо поточний ID незбереженого знаку
   let currentUnsavedId = null;
   try {
     currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
   } catch {}
 
+  const activeProjectCanvasId =
+    runtimeProjectCanvasId || currentProjectCanvasId || null;
+  const activeProjectCanvasIndex =
+    typeof runtimeProjectCanvasIndex === "number" &&
+    runtimeProjectCanvasIndex >= 0
+      ? runtimeProjectCanvasIndex
+      : currentProjectCanvasIndex;
+
+  let canvases = [];
+  let activeCanvasIndex = 0;
+
+  if (sourceProjectId) {
+    try {
+      const sourceProject = await getProject(sourceProjectId);
+      const sourceCanvases = Array.isArray(sourceProject?.canvases)
+        ? sourceProject.canvases.slice(0, 10)
+        : [];
+
+      if (sourceCanvases.length > 0) {
+        canvases = sourceCanvases.map(cloneCanvasEntry);
+
+        let targetIndex = -1;
+        if (activeProjectCanvasId) {
+          targetIndex = canvases.findIndex((c) => c.id === activeProjectCanvasId);
+        }
+        if (
+          targetIndex === -1 &&
+          typeof activeProjectCanvasIndex === "number" &&
+          activeProjectCanvasIndex >= 0 &&
+          activeProjectCanvasIndex < canvases.length
+        ) {
+          targetIndex = activeProjectCanvasIndex;
+        }
+        if (targetIndex === -1 && currentCanvasId) {
+          targetIndex = canvases.findIndex((c) => c.id === currentCanvasId);
+        }
+
+        if (snap) {
+          if (targetIndex !== -1) {
+            canvases[targetIndex] = { ...canvases[targetIndex], ...snap };
+          } else if (canvases.length < 10) {
+            canvases.push({ id: uuid(), ...snap });
+            targetIndex = canvases.length - 1;
+          }
+        }
+
+        if (targetIndex >= 0) {
+          activeCanvasIndex = targetIndex;
+        }
+      }
+    } catch (error) {
+      console.warn("Save As: failed to clone source project canvases", error);
+    }
+  }
+
+  if (canvases.length === 0 && snap) {
+    canvases = [{ id: uuid(), ...snap }];
+    activeCanvasIndex = 0;
+  }
+
+  const activeCanvas = canvases[activeCanvasIndex] || canvases[0] || null;
+
   const project = {
     id: uuid(),
     name: name && String(name).trim() ? String(name).trim() : "Untitled",
     createdAt: now,
     updatedAt: now,
-    canvases: snap ? [{ id: uuid(), ...snap }] : [],
+    canvases,
   };
   await putProject(project);
   try {
     localStorage.setItem("currentProjectId", project.id);
     localStorage.setItem("currentProjectName", project.name);
-    const firstCanvas = project.canvases?.[0] || null;
-    if (firstCanvas) {
-      localStorage.setItem("currentCanvasId", firstCanvas.id);
-      localStorage.setItem("currentProjectCanvasId", firstCanvas.id);
-      localStorage.setItem("currentProjectCanvasIndex", "0");
+    if (activeCanvas) {
+      localStorage.setItem("currentCanvasId", activeCanvas.id);
+      localStorage.setItem("currentProjectCanvasId", activeCanvas.id);
+      localStorage.setItem(
+        "currentProjectCanvasIndex",
+        String(activeCanvasIndex)
+      );
       localStorage.removeItem("currentUnsavedSignId");
       try {
         if (typeof window !== "undefined") {
-          window.__currentProjectCanvasId = firstCanvas.id;
-          window.__currentProjectCanvasIndex = 0;
+          window.__currentProjectCanvasId = activeCanvas.id;
+          window.__currentProjectCanvasIndex = activeCanvasIndex;
         }
       } catch {}
     } else {

@@ -1201,6 +1201,222 @@ const drawBarcodeRectsDirect = (
   doc.restore();
 };
 
+const parseSvgLength = (value, fallback = 0) => {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
+  const raw = String(value).trim();
+  if (!raw) return fallback;
+  const numeric = parseFloat(raw);
+  return Number.isFinite(numeric) ? numeric : fallback;
+};
+
+const buildRoundedRectPathData = ({ x, y, width, height, rx = 0, ry = 0 }) => {
+  const safeWidth = Math.max(0, Number(width) || 0);
+  const safeHeight = Math.max(0, Number(height) || 0);
+  if (safeWidth <= 0 || safeHeight <= 0) return null;
+
+  let radiusX = Math.max(0, Number(rx) || 0);
+  let radiusY = Math.max(0, Number(ry) || 0);
+
+  if (!radiusX && radiusY) radiusX = radiusY;
+  if (!radiusY && radiusX) radiusY = radiusX;
+
+  radiusX = Math.min(radiusX, safeWidth / 2);
+  radiusY = Math.min(radiusY, safeHeight / 2);
+
+  const left = x;
+  const top = y;
+  const right = x + safeWidth;
+  const bottom = y + safeHeight;
+
+  if (radiusX <= 0 || radiusY <= 0) {
+    return `M ${left} ${top} H ${right} V ${bottom} H ${left} Z`;
+  }
+
+  return [
+    `M ${left + radiusX} ${top}`,
+    `H ${right - radiusX}`,
+    `A ${radiusX} ${radiusY} 0 0 1 ${right} ${top + radiusY}`,
+    `V ${bottom - radiusY}`,
+    `A ${radiusX} ${radiusY} 0 0 1 ${right - radiusX} ${bottom}`,
+    `H ${left + radiusX}`,
+    `A ${radiusX} ${radiusY} 0 0 1 ${left} ${bottom - radiusY}`,
+    `V ${top + radiusY}`,
+    `A ${radiusX} ${radiusY} 0 0 1 ${left + radiusX} ${top}`,
+    'Z',
+  ].join(' ');
+};
+
+const buildNodePathData = node => {
+  if (!node || typeof node.getAttribute !== 'function') return null;
+  const tag = (node.nodeName || '').toLowerCase();
+
+  if (tag === 'path') {
+    const d = node.getAttribute('d');
+    return d && d.trim() ? d.trim() : null;
+  }
+
+  if (tag === 'rect') {
+    const x = parseSvgLength(node.getAttribute('x'), 0);
+    const y = parseSvgLength(node.getAttribute('y'), 0);
+    const width = parseSvgLength(node.getAttribute('width'), 0);
+    const height = parseSvgLength(node.getAttribute('height'), 0);
+    const rx = parseSvgLength(node.getAttribute('rx'), 0);
+    const ry = parseSvgLength(node.getAttribute('ry'), 0);
+    return buildRoundedRectPathData({ x, y, width, height, rx, ry });
+  }
+
+  if (tag === 'circle') {
+    const cx = parseSvgLength(node.getAttribute('cx'), 0);
+    const cy = parseSvgLength(node.getAttribute('cy'), 0);
+    const r = parseSvgLength(node.getAttribute('r'), 0);
+    if (!Number.isFinite(r) || r <= 0) return null;
+    return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+  }
+
+  if (tag === 'ellipse') {
+    const cx = parseSvgLength(node.getAttribute('cx'), 0);
+    const cy = parseSvgLength(node.getAttribute('cy'), 0);
+    const rx = parseSvgLength(node.getAttribute('rx'), 0);
+    const ry = parseSvgLength(node.getAttribute('ry'), 0);
+    if (!Number.isFinite(rx) || !Number.isFinite(ry) || rx <= 0 || ry <= 0) return null;
+    return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy} Z`;
+  }
+
+  if (tag === 'polygon' || tag === 'polyline') {
+    const pointsRaw = node.getAttribute('points') || '';
+    const numericValues = pointsRaw
+      .trim()
+      .replace(/,/g, ' ')
+      .split(/\s+/)
+      .map(value => parseFloat(value))
+      .filter(Number.isFinite);
+
+    const points = [];
+    for (let i = 0; i + 1 < numericValues.length; i += 2) {
+      points.push([numericValues[i], numericValues[i + 1]]);
+    }
+
+    if (points.length < 2) return null;
+
+    const [firstX, firstY] = points[0];
+    const commands = [`M ${firstX} ${firstY}`];
+    for (let i = 1; i < points.length; i += 1) {
+      commands.push(`L ${points[i][0]} ${points[i][1]}`);
+    }
+    if (tag === 'polygon') {
+      commands.push('Z');
+    }
+    return commands.join(' ');
+  }
+
+  return null;
+};
+
+const invertAffineMatrix = matrix => {
+  if (!Array.isArray(matrix) || matrix.length < 6) return null;
+  const [a, b, c, d, e, f] = matrix;
+  const det = a * d - b * c;
+  if (!Number.isFinite(det) || Math.abs(det) < 1e-10) return null;
+
+  const invA = d / det;
+  const invB = -b / det;
+  const invC = -c / det;
+  const invD = a / det;
+  const invE = (c * f - d * e) / det;
+  const invF = (b * e - a * f) / det;
+  return [invA, invB, invC, invD, invE, invF];
+};
+
+const resolvePlacementClipBoundaryNode = svgRoot => {
+  if (!svgRoot || typeof svgRoot.querySelector !== 'function') return null;
+
+  const selectors = [
+    '[id="canvaShapeCustom"]',
+    '[id="canvaShape"]',
+    '[data-canvas-outline="true"]',
+    '[data-export-border="custom"]',
+    '[data-export-border-blue="true"]',
+  ];
+
+  for (const selector of selectors) {
+    try {
+      const node = svgRoot.querySelector(selector);
+      if (node) return node;
+    } catch {}
+  }
+
+  return null;
+};
+
+const applyPlacementBoundaryClip = (
+  doc,
+  svgRoot,
+  { xPt, yTopPt, widthPt, heightPt, contentWidth, contentHeight }
+) => {
+  if (!doc || !svgRoot) return false;
+  if (!Number.isFinite(contentWidth) || !Number.isFinite(contentHeight)) return false;
+  if (contentWidth <= 0 || contentHeight <= 0) return false;
+
+  const clipNode = resolvePlacementClipBoundaryNode(svgRoot);
+
+  let clipPathData = null;
+  if (clipNode) {
+    clipPathData = buildNodePathData(clipNode);
+  }
+
+  // Fallback: якщо не вдалося побудувати path з контуру,
+  // хоча б обмежуємо в межах placement rectangle.
+  if (!clipPathData) {
+    clipPathData = `M 0 0 H ${contentWidth} V ${contentHeight} H 0 Z`;
+  }
+
+  if (!clipPathData) return false;
+
+  const svgScaleX = widthPt / contentWidth;
+  const svgScaleY = heightPt / contentHeight;
+  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
+  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
+  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+
+  const placementMatrix = [svgScale, 0, 0, svgScale, offsetXPt, offsetYPt];
+  const clipNodeMatrix = computeCumulativeMatrix(clipNode);
+  const finalMatrix = multiplyMatrices(placementMatrix, clipNodeMatrix);
+  const inverseMatrix = invertAffineMatrix(finalMatrix);
+  if (!inverseMatrix) return false;
+
+  try {
+    doc.save();
+    doc.transform(
+      finalMatrix[0],
+      finalMatrix[1],
+      finalMatrix[2],
+      finalMatrix[3],
+      finalMatrix[4],
+      finalMatrix[5]
+    );
+    doc.path(clipPathData);
+    doc.clip();
+    doc.transform(
+      inverseMatrix[0],
+      inverseMatrix[1],
+      inverseMatrix[2],
+      inverseMatrix[3],
+      inverseMatrix[4],
+      inverseMatrix[5]
+    );
+    return true;
+  } catch (error) {
+    try {
+      doc.restore();
+    } catch {}
+    console.warn('Не вдалося застосувати кліп бордера:', error?.message || error);
+    return false;
+  }
+};
+
 const app = express();
 
 app.use(cors());
@@ -1558,6 +1774,7 @@ app.post('/api/layout-pdf', async (req, res) => {
             : null;
 
         if (placementSvgMarkup) {
+          let placementClipApplied = false;
           try {
             let svgElement = null;
 
@@ -1587,6 +1804,20 @@ app.post('/api/layout-pdf', async (req, res) => {
               placement.sourceWidth || placement.width,
               placement.sourceHeight || placement.height
             );
+
+            placementClipApplied = applyPlacementBoundaryClip(doc, svgElement, {
+              xPt,
+              yTopPt,
+              widthPt,
+              heightPt,
+              contentWidth,
+              contentHeight,
+            });
+            if (!placementClipApplied) {
+              console.warn(
+                `[layoutExportServer] Clip not applied for placement ${placement?.id || placementIndex}`
+              );
+            }
 
             // Render background: clone SVG, remove text nodes and barcode groups, serialize
             const backgroundSvg = svgElement.cloneNode(true);
@@ -2035,6 +2266,12 @@ app.post('/api/layout-pdf', async (req, res) => {
               `Не вдалося відрендерити SVG для ${placement?.id || placementIndex}`,
               error
             );
+          } finally {
+            if (placementClipApplied) {
+              try {
+                doc.restore();
+              } catch {}
+            }
           }
         }
 

@@ -1667,6 +1667,7 @@ const Toolbar = ({ formData }) => {
             widthMm: widthMm,
             heightMm: heightMm,
             cornerRadiusMm: cornerRadiusMm,
+            __skipAutoFit: true,
           });
           canvas.requestRenderAll();
         }
@@ -3605,6 +3606,7 @@ const Toolbar = ({ formData }) => {
       };
 
       const enforceAutoFitObjects = () => {
+        if (overrides.__skipAutoFit) return;
         if (!canvas || typeof canvas.getObjects !== 'function') return;
         const objects = canvas.getObjects() || [];
         objects.forEach(obj => {

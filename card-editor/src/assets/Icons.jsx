@@ -1,172 +1,131 @@
 // ShapeIcons.tsx
 
 export const Icon0 = (
-  <svg
-    width="20"
-    height="16"
-    viewBox="0 0 20 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
+  <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="0.5" y="0.5" width="19" height="15" stroke="black" />
   </svg>
+
 );
 
 export const Icon1 = (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="9.5" stroke="currentColor" strokeWidth={1} />
+  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M9.5 18.5C14.4706 18.5 18.5 14.4706 18.5 9.5C18.5 4.52944 14.4706 0.5 9.5 0.5C4.52944 0.5 0.5 4.52944 0.5 9.5C0.5 14.4706 4.52944 18.5 9.5 18.5Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
+
 );
 
 export const Icon2 = (
-  <svg width="20" height="14" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-      d="M10 0.5C12.6714 0.5 15.0683 1.25889 16.7842 2.45996C18.5016 3.66216 19.5 5.27494 19.5 7C19.5 8.72506 18.5016 10.3378 16.7842 11.54C15.0683 12.7411 12.6714 13.5 10 13.5C7.32861 13.5 4.93167 12.7411 3.21582 11.54C1.49839 10.3378 0.5 8.72506 0.5 7C0.5 5.27494 1.49839 3.66216 3.21582 2.45996C4.93167 1.25889 7.32861 0.5 10 0.5Z"
-      stroke="black"
-    />
+  <svg width="19" height="13" viewBox="0 0 19 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M9.5 12.5C14.4706 12.5 18.5 9.81371 18.5 6.5C18.5 3.18629 14.4706 0.5 9.5 0.5C4.52944 0.5 0.5 3.18629 0.5 6.5C0.5 9.81371 4.52944 12.5 9.5 12.5Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
+
 );
 
 export const Icon3 = (
-  <svg width="20" height="18" viewBox="0 0 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M16 7C16 3.68629 13.3137 1 10 1C6.68629 1 4 3.68629 4 7" stroke="black" />
-    <path d="M4.6 6H1V17H19V6H15.4" stroke="black" />
-    <path
-      d="M10 4C11.6569 4 13 5.34315 13 7C13 8.65685 11.6569 10 10 10C8.34315 10 7 8.65685 7 7C7 5.34315 8.34315 4 10 4Z"
-      stroke="black"
-    />
+  <svg width="21" height="19" viewBox="0 0 21 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20.5 7.6427V17.6427" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M20.5 17.6428H0.5" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M0.5 17.6427V9.07129" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M13.2143 6.35714C13.2143 4.77914 11.9351 3.5 10.3571 3.5C8.77914 3.5 7.5 4.77914 7.5 6.35714C7.5 7.93514 8.77914 9.21428 10.3571 9.21428C11.9351 9.21428 13.2143 7.93514 13.2143 6.35714Z" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M0.5 9.07127V7.6427" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M0.5 7.6427H3.35714" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M20.4999 7.6427H17.6428" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
+    <path d="M17.6429 7.64277C17.6429 5.09078 16.2815 2.73278 14.0715 1.45678C11.8615 0.181072 9.13866 0.181072 6.92866 1.45678C4.71867 2.73278 3.35724 5.09078 3.35724 7.64277" stroke="black" stroke-miterlimit="22.9256" stroke-linecap="square" stroke-linejoin="bevel" />
   </svg>
+
 );
 
 export const Icon4 = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="9.5" stroke="black" />
-    <rect x="4" y="9.5" width="12" height="1" rx="0.5" stroke="black" />
+    <g clip-path="url(#clip0_1_174)">
+      <path d="M4 10H16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M10 19C14.9706 19 19 14.9706 19 10C19 5.02944 14.9706 1 10 1C5.02944 1 1 5.02944 1 10C1 14.9706 5.02944 19 10 19Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_174">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
   </svg>
+
 );
 
 export const Icon5 = (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="10" cy="10" r="9.5" stroke="black" />
-    <rect x="3.5" y="8.5" width="13" height="1" rx="0.5" stroke="black" />
-    <rect x="9.5" y="10.5" width="1" height="5" rx="0.5" fill="#D9D9D9" stroke="black" />
+    <g clip-path="url(#clip0_1_177)">
+      <path d="M10 10L10 15" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M4 9H16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M10 19C14.9706 19 19 14.9706 19 10C19 5.02944 14.9706 1 10 1C5.02944 1 1 5.02944 1 10C1 14.9706 5.02944 19 10 19Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <defs>
+      <clipPath id="clip0_1_177">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
   </svg>
+
 );
 
 export const Icon6 = (
-  <svg width="16" height="18" viewBox="0 0 16 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M1 11V17.5H8.5H15V11L8 1L1 11Z" stroke="black" />
+  <svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0.5 10.8719V17.3719H8H14.5V10.8719L7.5 0.871948L0.5 10.8719Z" stroke="black" />
   </svg>
+
 );
 
 export const Icon7 = (
-  <svg width="20" height="10" viewBox="0 0 20 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="1.25" y="9.25" width="17.5" height="0.5" fill="#D9D9D9" stroke="black" strokeWidth="0.5" />
-    <path d="M19 10C19 5.02944 14.9706 1 10 1C5.02944 1 1 5.02944 1 10" stroke="black" />
+  <svg width="19" height="10" viewBox="0 0 19 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0.5 9.5C0.5 7.11305 1.44821 4.82387 3.13604 3.13604C4.82387 1.44821 7.11305 0.5 9.5 0.5C11.8869 0.5 14.1761 1.44821 15.864 3.13604C17.5518 4.82387 18.5 7.11305 18.5 9.5H0.5Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
+
 );
 
 export const Icon8 = (
-  <svg
-    width="20"
-    height="15"
-    viewBox="0 0 20 15"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M1 9C1 10.9526 1 14 1 14H10.6429H19V9" stroke="black" />
-    <path
-      d="M19 9.60215C19 4.53459 15.6806 1 9.99999 1C4.31935 1 1 4.82133 1 9.88889"
-      stroke="black"
-    />
+  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0.5 18.5V8.375C0.5 6.28642 1.44821 4.28338 3.13604 2.80653C4.82387 1.32969 7.11305 0.5 9.5 0.5C11.8869 0.5 14.1761 1.32969 15.864 2.80653C17.5518 4.28338 18.5 6.28642 18.5 8.375V18.5H0.5Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
+
 );
 
 export const Icon9 = (
-  <svg
-    width="21"
-    height="19"
-    viewBox="0 0 21 19"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M19.9477 9.52512L15.2861 17.5993L5.96169 17.5992L1.30026 9.52458L5.96188 1.45042L15.2859 1.44917L19.9477 9.52512Z"
-      stroke="black"
-    />
+  <svg width="20" height="18" viewBox="0 0 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.2248 8.57444L14.5632 16.6486L5.23885 16.6485L0.577423 8.5739L5.23904 0.499733L14.5631 0.498491L19.2248 8.57444Z" stroke="black" />
   </svg>
 );
 
 export const Icon10 = (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 20 20"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M13.6108 1.30824L18.702 6.40761L18.6962 13.6122L13.5974 18.7021L6.39152 18.6958L1.30194 13.5979L1.30735 6.3924L6.4071 1.30208L13.6108 1.30824Z"
-      stroke="black"
-    />
+  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12.8088 0.506233L17.9 5.60561L17.8942 12.8102L12.7954 17.9001L5.58952 17.8938L0.499939 12.7959L0.505351 5.5904L5.6051 0.500075L12.8088 0.506233Z" stroke="black" />
   </svg>
+
 );
 
 export const Icon11 = (
-  <svg
-    width="21"
-    height="18"
-    viewBox="0 0 21 18"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M19.5938 16.75H1.40625L10.5 0.999023L19.5938 16.75Z"
-      stroke="black"
-    />
+  <svg width="20" height="18" viewBox="0 0 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.0527 16.75H0.865234L9.95898 1L19.0527 16.75Z" stroke="black" />
   </svg>
+
 );
 
 export const Icon12 = (
-  <svg
-    width="20"
-    height="16"
-    viewBox="0 0 20 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M18.75 4.25L18.75 12.25L5.75 12.25L5.75 14.5L1 8.25L5.75 2L5.75 4.25L18.75 4.25Z"
-      stroke="black"
-    />
+  <svg width="19" height="16" viewBox="0 0 19 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18.3781 3.73425L18.3781 11.7343L5.37805 11.7343L5.37805 13.9843L0.628053 7.73425L5.37805 1.48425L5.37805 3.73425L18.3781 3.73425Z" stroke="black" />
   </svg>
+
 );
 
 export const Icon13 = (
-  <svg
-    width="20"
-    height="16"
-    viewBox="0 0 20 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M1 12.25V4.25H14V2L18.75 8.25L14 14.5V12.25H1Z" stroke="black" />
+  <svg width="19" height="16" viewBox="0 0 19 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0.499999 11.7343L0.5 3.73425H13.5L13.5 1.48425L18.25 7.73425L13.5 13.9843L13.5 11.7343H0.499999Z" stroke="black" />
   </svg>
+
 );
 
 export const Icon14 = (
-  <svg
-    width="19"
-    height="19"
-    viewBox="0 0 19 19"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M1 5.56923V16.4846L6.25 14.7077L13.3243 17.5L18.25 14.7077V5.56923H13.3243L7.67568 1L1 5.56923Z"
-      stroke="black"
-    />
+  <svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0.5 4.97368L7.25 0.5L12.875 4.97368H18.5V13.9211L11.75 17.5L7.25 14.8158L2.5 16.5L0.5 13.9211V4.97368Z" stroke="black" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
+
 );
 
 export const A1 = (props) => (
@@ -222,7 +181,7 @@ export const A2 = (props) => (
 );
 
 export const A3 = (props) => (
-    <svg
+  <svg
     width="36"
     height="36"
     viewBox="0 0 36 36"

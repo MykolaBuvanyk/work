@@ -7,6 +7,7 @@ import { $authHost } from '../http';
 import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
+import combinedCountries from '../components/Countries';
 
 const limit=25;
 
@@ -24,39 +25,6 @@ function formatDate(dateStr) {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
-
-const languages = [
-  { countryCode: 'ALL', label: 'ALL' }, // Belgium
-  { countryCode: 'BE', label: 'FR-BE' }, // Belgium
-  { countryCode: 'CH', label: 'DE-CH' }, // Switzerland
-
-  { countryCode: 'CZ', label: 'CS-CZ' }, // Czechia
-  { countryCode: 'DK', label: 'DA-DK' }, // Denmark
-  { countryCode: 'DE', label: 'DE-DE' }, // Germany
-  { countryCode: 'EE', label: 'ET-EE' }, // Estonia
-  { countryCode: 'FR', label: 'FR-FR' }, // France
-
-  { countryCode: 'GB', label: 'EN-GB' }, // UK
-  { countryCode: 'HU', label: 'HU-HU' }, // Hungary
-  { countryCode: 'IE', label: 'EN-IE' }, // Ireland
-
-  { countryCode: 'IT', label: 'IT-IT' }, // Italy
-  { countryCode: 'LT', label: 'LT-LT' }, // Lithuania
-  { countryCode: 'LU', label: 'LB-LU' }, // Luxembourg
-
-  { countryCode: 'NL', label: 'NL-NL' }, // Netherlands
-  { countryCode: 'PL', label: 'PL-PL' }, // Poland
-
-  { countryCode: 'RO', label: 'RO-RO' }, // Romania
-  { countryCode: 'SI', label: 'SL-SI' }, // Slovenia
-  { countryCode: 'SK', label: 'SK-SK' }, // Slovakia
-
-  { countryCode: 'SE', label: 'SV-SE' }, // Sweden
-  { countryCode: 'HR', label: 'HR-HR' }, // Croatia
-  { countryCode: 'ES', label: 'ES-ES' }, // Spain
-
-  { countryCode: 'UA', label: 'UK-UA' }, // Ukraine
-];
 
 const resolveOrderSigns = (order) => {
   const canvases = order?.orderMongo?.project?.canvases;
@@ -83,7 +51,7 @@ const Admin = () => {
   const [countPages, setCountPages]=useState(1);
 
   const [isLangOpen, setIsLangOpen] = useState(false);
-  const [selectLang, setSelectLang] = useState({ countryCode: 'ALL', label: 'ALL' });
+  const [selectLang, setSelectLang] = useState({ code: 'ALL', label: 'ALL' });
   const [sum,setSum]=useState(0);
   const [orderId,setOrderId]=useState(null);
   const [filteredUserId, setFilteredUserId] = useState(null);
@@ -123,14 +91,14 @@ const Admin = () => {
         }
         query+=`&finish=${finishWithTime}`
       }
-      if(selectLang.countryCode!='ALL'){
-        query+=`&lang=${selectLang.countryCode.toLowerCase()}`
+      if(selectLang.code!='ALL'){
+        query+=`&lang=${selectLang.code}`
       }
       if(activeFilteredUserId != null){
         query+=`&userId=${activeFilteredUserId}`
       }
-      
-      const res=await $authHost.get('cart/filter'+query);
+      /*
+        const res=await $authHost.get('cart/filter'+query);
       
      
       setOrders(res.data.orders);
@@ -145,6 +113,26 @@ const Admin = () => {
       if (reopenOrderId != null) {
         setOrderId(reopenOrderId);
       }
+      */
+      const res=await $authHost.get('cart/filter'+query);
+            
+     
+      setOrders(res.data.orders);
+      setSum(res.data.totalSum)
+      const nextCountPages = Math.max(1, Math.ceil(Number(res?.data?.count || 0) / limit));
+      setCountPages(nextCountPages)
+
+      if (requestPage > nextCountPages) {
+        setPage(nextCountPages);
+      }
+
+      if (reopenOrderId != null) {
+        setOrderId(reopenOrderId);
+      }
+     
+      /*setOrders(res.data.orders);
+      setSum(res.data.sum)
+      setCountPages(Math.ceil(res.data.count/limit))*/
     }catch(err){
       console.log(err);
       alert('Помилка при отримані замовлень.');
@@ -209,7 +197,7 @@ const Admin = () => {
                 <p>Status</p>
                 <select onChange={(e)=>setStatus(e.target.value)} value={status}>
                   <option value='ALL'>All</option>
-                  <option value='Recived'>Received</option>
+                  <option value='Received'>Received</option>
                   <option value='Printed'>Printed</option>
                   <option value='Manufact'>Manufact.</option>
                   <option value='Delivered'>Delivered</option>
@@ -239,23 +227,23 @@ const Admin = () => {
                   style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
                   onClick={() => setIsLangOpen(!isLangOpen)}
                 >
-                  {/*selectLang.label!='ALL'&&
-                    <Flag country={selectLang.countryCode} size={32} />
-                  */}
-                  {selectLang.countryCode}
+                  {selectLang.code}
                   <SlArrowDown size={14} />
                 </div>
                 <div className={isLangOpen ? 'dropdown' : 'open'}>
-                  {languages.map(lang => (
+                  {[{code:'ALL'},...combinedCountries].map(lang => (
                     <div
-                      key={lang.countryCode}
+                      key={lang.code}
                       onClick={() => {setIsLangOpen(false);setSelectLang(lang)}}
                       className={'countries'}
                     >
                       {/*lang.countryCode!='ALL'&&
                         <Flag country={lang.countryCode} size={32} />
                       */}
-                      {lang.countryCode}
+                      {lang.code!='ALL'&&
+                      <img src={`https://flagcdn.com/w20/${lang.code.toLowerCase()=='uk'?'gb':lang.code.toLowerCase()}.png`} alt=''/>
+}
+                      {lang.code}
                     </div>
                   ))}
                 </div>

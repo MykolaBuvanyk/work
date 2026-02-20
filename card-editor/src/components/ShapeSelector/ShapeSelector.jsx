@@ -421,7 +421,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
             globalColors.strokeColor ||
             globalColors.textColor ||
             DEFAULT_SHAPE_STROKE,
-          strokeWidth: 3,
+          strokeWidth: 1.42,
           strokeLineCap: "round",
         });
         break;
@@ -434,7 +434,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
             globalColors.strokeColor ||
             globalColors.textColor ||
             DEFAULT_SHAPE_STROKE,
-          strokeWidth: 3,
+          strokeWidth: 1.42,
           strokeDashArray: [5, 5],
           strokeLineCap: "round",
         });

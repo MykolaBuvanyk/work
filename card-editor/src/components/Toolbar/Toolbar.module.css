@@ -75,6 +75,11 @@
   flex-shrink: 0;
   user-select: none;
   pointer-events: none;
+  transition: filter 0.3s ease;
+}
+
+.icons span:hover img {
+  filter: brightness(0) saturate(100%) invert(23%) sepia(94%) saturate(1820%) hue-rotate(180deg) brightness(97%) contrast(102%);
 }
 
 .icons :first-child {
@@ -93,6 +98,10 @@
 
 .disabledIcon svg {
   pointer-events: none;
+}
+
+.disabledIcon img {
+  filter: none !important;
 }
 
 .colors svg {

@@ -64,6 +64,9 @@ const normalizeMaterialColorLabel = (value) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const resolveDeliveryType = (order) =>
+  String(order?.deliveryType || order?.orderMongo?.checkout?.deliveryLabel || '').trim();
+
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
   const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
@@ -885,6 +888,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   if(!order)return null;
   const manufacturerNote =
     String(order?.orderMongo?.manufacturerNote || order?.orderMongo?.project?.manufacturerNote || '').trim() || null;
+  const deliveryTypeLabel = resolveDeliveryType(order);
   return (
     <>
     <div className="order-container">
@@ -963,7 +967,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       </div>
       <div className="row">
         <p>Delivery Type</p>
-        <span>{order.deliveryType}</span>
+        <span>{deliveryTypeLabel || '---'}</span>
         <div />
       </div>
       <div className="row">

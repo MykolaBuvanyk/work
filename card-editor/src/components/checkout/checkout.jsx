@@ -395,6 +395,11 @@ export default function Checkout({
 		return deliveryOptions.find(o => o.label === delivery)?.price ?? 0
 	}, [delivery, deliveryOptions])
 
+	const deliveryHintText =
+		delivery === 'UPS Saturday Delivery'
+			? 'Available on Fridays only.'
+			: 'Delivery from Monday to Friday.'
+
 	useEffect(() => {
 		if (!Array.isArray(deliveryOptions) || deliveryOptions.length === 0) return
 		const exists = deliveryOptions.some(option => option.label === delivery)
@@ -832,7 +837,7 @@ export default function Checkout({
 											/>
 
 											<div className='delivery-comment__hint'>
-												Delivery from Monday to Friday.
+												{deliveryHintText}
 											</div>
 										</div>
 

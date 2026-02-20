@@ -208,6 +208,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const normalizedAccessories = normalizeAccessories(body.accessories);
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
+    const checkoutDeliveryLabel = String(body?.checkout?.deliveryLabel || body?.deliveryType || '').trim();
     const checkoutCountryRegion = String(body?.checkout?.deliveryAddress?.region || '').trim().toUpperCase();
     const checkoutCountryName = String(body?.checkout?.deliveryAddress?.country || '').trim();
 
@@ -238,6 +239,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       status:'Received',
       orderName:body.projectName,
       orderType:'',
+      deliveryType: checkoutDeliveryLabel,
       accessories:JSON.stringify(normalizedAccessories),
       idMongo: String(created._id)
     })

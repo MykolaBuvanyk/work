@@ -61,6 +61,7 @@ const AccountSetting = () => {
                 </div>
                 <div className="message-input-container">
                     <textarea 
+                        style={{fontFamily:'Inter'}}
                         className="message-textarea"
                         placeholder=""
                         value={message}

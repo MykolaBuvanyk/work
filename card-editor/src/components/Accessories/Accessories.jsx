@@ -14,8 +14,8 @@ import styles from "./Accessories.module.css";
 import AccessoriesModal from "../AccessoriesModal/AccessoriesModal";
 // Modal images (used only inside modal, but state lives here for two-way sync)
 import imgCableTies from "/images/accessories/CableTies 1.png";
-import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 1.png";
-import imgPh13 from "/images/accessories/ph1 2.9 x 13 mm 1.png";
+import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 2.png";
+import imgPh13 from "/images/accessories/ph1 2.9 x 13 mm 2.png";
 import imgSHook from "/images/accessories/S-Hook 1.png";
 import imgKeyring from "/images/accessories/Keyring 1.png";
 import imgBallchain from "/images/accessories/Ballchain 1.png";

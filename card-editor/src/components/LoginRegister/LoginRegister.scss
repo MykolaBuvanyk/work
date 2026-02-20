@@ -49,6 +49,10 @@
         transform: translateY(-50%);
         width: 20px;
         height: 20px;
+        min-width: 20px;
+        min-height: 20px;
+        max-width: 20px;
+        max-height: 20px;
         border: 2px solid #aebac7; // Сірий контур
         border-radius: 50%;
         transition: border-color 0.2s;
@@ -58,11 +62,15 @@
       &::after {
         content: '';
         position: absolute;
-        left: 4.5px; // Центруємо всередині кола
+        left: 4px; // Центруємо всередині кола
         top: 50%;
         transform: translateY(-50%) scale(0); // Сховано
         width: 14px;
         height: 14px;
+        min-width: 14px;
+        min-height: 14px;
+        max-width: 14px;
+        max-height: 14px;
         border-radius: 50%;
         background-color: #007bff; // Синій
         transition: transform 0.2s ease-in-out;

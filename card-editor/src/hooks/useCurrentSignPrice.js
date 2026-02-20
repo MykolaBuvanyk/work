@@ -66,15 +66,10 @@ const isBorderObject = (obj) => {
 
 const getObjectAreaCm2 = (obj) => {
   try {
-    const widthPx =
-      typeof obj.getScaledWidth === "function"
-        ? obj.getScaledWidth()
-        : safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
-
-    const heightPx =
-      typeof obj.getScaledHeight === "function"
-        ? obj.getScaledHeight()
-        : safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
+    // Use raw width*scaleX to match JSON-based computation exactly (getScaledWidth
+    // includes stroke in bbox and would diverge from the saved-entry path).
+    const widthPx = safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
+    const heightPx = safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
 
     const widthMm = pxToMm(widthPx);
     const heightMm = pxToMm(heightPx);
@@ -88,15 +83,9 @@ const getObjectAreaCm2 = (obj) => {
 
 const getObjectRectMm = (obj) => {
   try {
-    const widthPx =
-      typeof obj.getScaledWidth === "function"
-        ? obj.getScaledWidth()
-        : safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
-
-    const heightPx =
-      typeof obj.getScaledHeight === "function"
-        ? obj.getScaledHeight()
-        : safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
+    // Use raw width*scaleX to match JSON-based computation exactly.
+    const widthPx = safeNumber(obj.width) * (obj.scaleX === undefined ? 1 : safeNumber(obj.scaleX));
+    const heightPx = safeNumber(obj.height) * (obj.scaleY === undefined ? 1 : safeNumber(obj.scaleY));
 
     const widthMm = normalizeMm(pxToMm(widthPx));
     const heightMm = normalizeMm(pxToMm(heightPx));
@@ -134,6 +123,9 @@ const getJsonObjectRectMm = (obj) => {
 const getEntryJson = (entry) => {
   return entry?.jsonTemplate || entry?.json || null;
 };
+
+// Round to 2 decimal places (cents), using EPSILON to handle floating-point drift
+const round2 = (v) => Math.round((safeNumber(v) + Number.EPSILON) * 100) / 100;
 
 const hasCustomBorderEnabled = (toolbarState, objects) => {
   // Prefer objects presence as source-of-truth; toolbarState can be stale during
@@ -190,11 +182,11 @@ const computeEntrySubtotal = (entry, formData) => {
     safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
 
   // Canvas/base price formula
-  const canvasPrice = 1.15 + widthMm * heightMm * 0.00115 * kMaterial;
+  const canvasPrice = round2(1.15 + widthMm * heightMm * 0.00115 * kMaterial);
 
   const objects = Array.isArray(json?.objects) ? json.objects : [];
   const hasBorder = hasCustomBorderEnabled(toolbarState, objects);
-  const borderPrice = computeBorderPrice({ widthMm, heightMm, hasBorder });
+  const borderPrice = round2(computeBorderPrice({ widthMm, heightMm, hasBorder }));
   let engravingPrice = 0;
   for (const obj of objects) {
     if (!obj) continue;
@@ -203,11 +195,11 @@ const computeEntrySubtotal = (entry, formData) => {
     if (obj.excludeFromExport) continue;
 
     const { widthMm: objW, heightMm: objH } = getJsonObjectRectMm(obj);
-    // Engraving formula per element (except holes)
-    engravingPrice += (objW + objH) * 0.039 * kEngraving;
+    // Engraving formula per element (except holes), round each element contribution
+    engravingPrice = round2(engravingPrice + round2((objW + objH) * 0.039 * kEngraving));
   }
 
-  const subtotal = canvasPrice + engravingPrice + borderPrice;
+  const subtotal = round2(canvasPrice + engravingPrice + borderPrice);
   return Number.isFinite(subtotal) ? subtotal : 0;
 };
 
@@ -296,10 +288,10 @@ export const useCurrentSignPrice = () => {
         safeNumber(formData?.listThinkness?.[thicknessKey]?.engravingArea?.[tapeIndex]) || 0;
 
       // Canvas/base price formula
-      const basePrice = 1.15 + widthMm * heightMm * 0.00115 * kMaterial;
+      const basePrice = round2(1.15 + widthMm * heightMm * 0.00115 * kMaterial);
 
       const hasBorder = hasCustomBorderEnabled(toolbarState, canvas?.getObjects?.() || []);
-      const borderPrice = computeBorderPrice({ widthMm, heightMm, hasBorder });
+      const borderPrice = round2(computeBorderPrice({ widthMm, heightMm, hasBorder }));
 
       const objects = (canvas.getObjects?.() || []).filter(Boolean);
       let elementsPrice = 0;
@@ -310,8 +302,8 @@ export const useCurrentSignPrice = () => {
         if (obj.excludeFromExport) continue;
 
         const { widthMm: objW, heightMm: objH } = getObjectRectMm(obj);
-        // Engraving formula per element (except holes)
-        elementsPrice += (objW + objH) * 0.039 * kEngraving;
+        // Engraving formula per element (except holes), round each element contribution
+        elementsPrice = round2(elementsPrice + round2((objW + objH) * 0.039 * kEngraving));
       }
 
       const selectedAccessories = getSelectedAccessoriesSnapshot();
@@ -326,15 +318,16 @@ export const useCurrentSignPrice = () => {
           const name = String(sel.name || "");
           const match = formData.listAccessories.find((x) => String(x?.text) === name);
           const unitPrice = safeNumber(match?.number);
-          accessoriesPrice += qty * unitPrice;
+          accessoriesPrice = round2(accessoriesPrice + round2(qty * unitPrice));
         }
       }
 
-      // Current sign: active canvas + accessories (as requested earlier)
-      const currentCanvasSubtotal = basePrice + elementsPrice + borderPrice;
+      // Current sign: active canvas price shown in the per-canvas banner only
+      const currentCanvasSubtotal = round2(basePrice + elementsPrice + borderPrice);
       const currentSignSubtotal = currentCanvasSubtotal;
 
       // Order subtotal: sum of all canvases (project + unsaved) + accessories once
+      // Always computed from saved entry JSON so it never changes when switching canvases
       let orderCanvasesSubtotal = 0;
       let entriesCount = 0;
       let totalCopiesCount = 0;
@@ -388,7 +381,9 @@ export const useCurrentSignPrice = () => {
             Math.floor(safeNumber(entry?.copiesCount || entry?.toolbarState?.copiesCount || 1))
           );
           totalCopiesCount += copies;
-          orderCanvasesSubtotal += computeEntrySubtotal(entry, formData) * copies;
+          orderCanvasesSubtotal = round2(
+            orderCanvasesSubtotal + round2(computeEntrySubtotal(entry, formData) * copies)
+          );
         }
       } catch {
         // no-op
@@ -401,9 +396,6 @@ export const useCurrentSignPrice = () => {
 
       const isSingleCanvasNoAccessories =
         entriesCount === 1 && totalCopiesCount === 1 && !(accessoriesPrice > 0);
-      if (isSingleCanvasNoAccessories) {
-        orderCanvasesSubtotal = currentCanvasSubtotal;
-      }
 
       const orderSubtotal = orderCanvasesSubtotal;
 
@@ -452,8 +444,8 @@ export const useCurrentSignPrice = () => {
       };
 
       const percent = pickDiscountPercent(orderSubtotal);
-      const discAmount = orderSubtotal * (percent / 100);
-      const netAfterDiscount = orderSubtotal - discAmount + accessoriesPrice;
+      const discAmount = round2(orderSubtotal * (percent / 100));
+      const netAfterDiscount = round2(orderSubtotal - discAmount + accessoriesPrice);
 
       const vatCountryCode = resolveVatCountryCode();
       const vatP = resolveVatPercent({
@@ -461,8 +453,8 @@ export const useCurrentSignPrice = () => {
         userType,
         countryCode: vatCountryCode,
       });
-      const vat = netAfterDiscount * (vatP / 100);
-      const totalInclVat = netAfterDiscount + vat;
+      const vat = round2(netAfterDiscount * (vatP / 100));
+      const totalInclVat = round2(netAfterDiscount + vat);
       console.log("All price components", {
         currentCanvasSubtotal,
         accessoriesPrice,

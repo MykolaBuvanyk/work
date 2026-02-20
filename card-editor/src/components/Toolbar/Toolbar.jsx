@@ -39,20 +39,6 @@ import {
 } from '../../utils/qrFabricUtils';
 import {
   // Shape palette icons
-  Icon0,
-  Icon1,
-  Icon2,
-  Icon3,
-  Icon4,
-  Icon5,
-  Icon6,
-  Icon7,
-  Icon8,
-  Icon9,
-  Icon10,
-  Icon11,
-  Icon12,
-  Icon13,
   Icon14,
   // Color preview icons
   A1,
@@ -9112,46 +9098,46 @@ const Toolbar = ({ formData }) => {
         <div className={styles.icons}>
           <h3>Shape</h3>
           <span title="Rectangle" onClick={withShapePick(addRectangle)}>
-            {Icon0}
+            <img src="/images/icon/rectangle.png" alt="Rectangle" draggable={false} />
           </span>
           <span title="Round" onClick={withShapePick(addCircle)}>
-            {Icon1}
+            <img src="/images/icon/circle.png" alt="Round" draggable={false} />
           </span>
           <span title="Oval" onClick={withShapePick(addEllipse)}>
-            {Icon2}
+            <img src="/images/icon/elipse.png" alt="Oval" draggable={false} />
           </span>
           <span title="Rectangle with a loop (Hanging Sing)" onClick={withShapePick(addLock)}>
-            {Icon3}
+            <img src="/images/icon/lock.png" alt="Lock" draggable={false} />
           </span>
           <span title="Round with a line" onClick={withShapePick(addCircleWithLine)}>
-            {Icon4}
+            <img src="/images/icon/circle_line.png" alt="Circle with line" draggable={false} />
           </span>
           <span title="Round with a T-shaped line" onClick={withShapePick(addCircleWithCross)}>
-            {Icon5}
+            <img src="/images/icon/circle_t_shape.png" alt="Circle with T shape" draggable={false} />
           </span>
           <span title="Warning Triangle" onClick={withShapePick(addAdaptiveTriangle)}>
-            {Icon6}
+            <img src="/images/icon/adaptive_triangle.png" alt="Warning Triangle" draggable={false} />
           </span>
           <span title="Semi round" onClick={withShapePick(addHalfCircle)}>
-            {Icon7}
+            <img src="/images/icon/half_circle.png" alt="Semi round" draggable={false} />
           </span>
           <span title="Round Top" onClick={withShapePick(addExtendedHalfCircle)}>
-            {Icon8}
+            <img src="/images/icon/extend_half_circle.png" alt="Round Top" draggable={false} />
           </span>
           <span title="Hexagon" onClick={withShapePick(addHexagon)}>
-            {Icon9}
+            <img src="/images/icon/sexagon.png" alt="Hexagon" draggable={false} />
           </span>
           <span title="Octagon" onClick={withShapePick(addOctagon)}>
-            {Icon10}
+            <img src="/images/icon/octagon.png" alt="Octagon" draggable={false} />
           </span>
           <span title="Triangle" onClick={withShapePick(addTriangleUp)}>
-            {Icon11}
+            <img src="/images/icon/triangle.png" alt="Triangle" draggable={false} />
           </span>
           <span title="Left arrow" onClick={withShapePick(addArrowLeft)}>
-            {Icon12}
+            <img src="/images/icon/left_arrow.png" alt="Left arrow" draggable={false} />
           </span>
           <span title="Right arrow" onClick={withShapePick(addArrowRight)}>
-            {Icon13}
+            <img src="/images/icon/rigth_arrow.png" alt="Right arrow" draggable={false} />
           </span>
           {(() => {
             const disabled = blockedCustomTypes.has(currentShapeType);
@@ -9165,7 +9151,7 @@ const Toolbar = ({ formData }) => {
                 title={title}
                 // Прибрано inline-outline для активної іконки
               >
-                {Icon14}
+                <img src="/images/icon/custom.png" alt="Custom" draggable={false} />
               </span>
             );
           })()}

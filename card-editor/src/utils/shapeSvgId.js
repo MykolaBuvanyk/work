@@ -7,6 +7,7 @@ const DEFAULT_ATTRS = Object.freeze({
   thicknessMm: "data-shape-thickness-mm",
   width: "data-shape-bbox-width",
   height: "data-shape-bbox-height",
+  shapeType: "data-shape-type",
   fillEnabled: "data-shape-has-fill",
   cutFlag: "data-shape-cut",
   cutType: "data-shape-cut-type",
@@ -112,6 +113,14 @@ const patchShapeSvgSerialization = (object) => {
       const alreadyHasId = /\sid\s*=/.test(markup);
       if (!alreadyHasId && this.id) {
         attrParts.push(`id="${this.id}"`);
+      }
+
+      const shapeType =
+        typeof this.shapeType === "string" && this.shapeType.trim()
+          ? this.shapeType.trim()
+          : null;
+      if (shapeType && !markup.includes(`${DEFAULT_ATTRS.shapeType}=`)) {
+        attrParts.push(`${DEFAULT_ATTRS.shapeType}="${shapeType}"`);
       }
 
       const hasFillEnabled = (() => {

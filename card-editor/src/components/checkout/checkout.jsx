@@ -12,6 +12,8 @@ import { useCanvasContext } from '../../contexts/CanvasContext'
 
 import CloseIcon from '/images/icon/close.svg'
 
+const round2 = (v) => Math.round((Number(v || 0) + Number.EPSILON) * 100) / 100
+
 const DELIVERY_LABELS = [
 	'UPS Envelope',
 	'UPS Next Day Package',
@@ -456,9 +458,9 @@ export default function Checkout({
 	}, [selectedAccessories])
 
 	const accessoriesTypesCount = selectedAccessoriesNormalized.length
-	const priceExclVat = Number(orderSubtotal || 0) - Number(discountAmount || 0)
-	const sumForOrder = Number(priceExclVat || 0) + Number(accessoriesPrice || 0)
-	const subtotalExclVat = Number(sumForOrder || 0) + Number(deliveryPrice || 0)
+	const priceExclVat = round2(Number(orderSubtotal || 0) - Number(discountAmount || 0))
+	const sumForOrder = round2(priceExclVat + Number(accessoriesPrice || 0))
+	const subtotalExclVat = round2(sumForOrder + Number(deliveryPrice || 0))
 
 	const vatPercentForCheckout = useMemo(() => {
 		const rawCode = String(deliveryAddress.region || '').toUpperCase()
@@ -470,8 +472,8 @@ export default function Checkout({
 		return Number.isFinite(value) ? value : 0
 	}, [deliveryAddress.region, userType, vatConfig])
 
-	const vatAmountForCheckout = Number(subtotalExclVat || 0) * (Number(vatPercentForCheckout || 0) / 100)
-	const totalAmount = Number(subtotalExclVat || 0) + Number(vatAmountForCheckout || 0)
+	const vatAmountForCheckout = round2(subtotalExclVat * (Number(vatPercentForCheckout || 0) / 100))
+	const totalAmount = round2(subtotalExclVat + vatAmountForCheckout)
 
 	return (
 		<div className='checkout'>

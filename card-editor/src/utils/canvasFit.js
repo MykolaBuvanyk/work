@@ -7,6 +7,13 @@ const getCanvasDimensions = (canvas) => {
   return { width: Number(width) || 0, height: Number(height) || 0 };
 };
 
+const PX_PER_MM = 72 / 25.4;
+const BASE_CANVAS_WIDTH_MM = 120;
+const BASE_CANVAS_HEIGHT_MM = 80;
+const BASE_CANVAS_WIDTH_PX = BASE_CANVAS_WIDTH_MM * PX_PER_MM;
+const BASE_CANVAS_HEIGHT_PX = BASE_CANVAS_HEIGHT_MM * PX_PER_MM;
+const BASE_MIN_SIDE_PX = Math.min(BASE_CANVAS_WIDTH_PX, BASE_CANVAS_HEIGHT_PX);
+
 const getObjectBounds = (obj) => {
   if (!obj) return { width: 0, height: 0 };
   try {
@@ -74,6 +81,37 @@ export const fitObjectToCanvas = (canvas, obj, options = {}) => {
   }
 
   return { scaled: true, factor };
+};
+
+export const getCreationScaleByCanvas = (canvas) => {
+  const { width: canvasW, height: canvasH } = getCanvasDimensions(canvas);
+  if (canvasW <= 0 || canvasH <= 0) return 1;
+
+  const minSidePx = Math.max(0, Math.min(canvasW, canvasH));
+  if (!Number.isFinite(minSidePx) || minSidePx <= 0) return 1;
+
+  const scale = minSidePx / (BASE_MIN_SIDE_PX || 1);
+  if (!Number.isFinite(scale) || scale <= 0) return 1;
+  return scale;
+};
+
+export const applyCreationScaleByCanvas = (canvas, obj) => {
+  if (!canvas || !obj) return 1;
+  const factor = getCreationScaleByCanvas(canvas);
+  if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-6) return 1;
+
+  try {
+    const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
+    const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
+    const nextScaleX = signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * factor);
+    const nextScaleY = signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * factor);
+    obj.set?.({ scaleX: nextScaleX, scaleY: nextScaleY });
+    obj.setCoords?.();
+  } catch {
+    return 1;
+  }
+
+  return factor;
 };
 
 export const fitObjectsToCanvas = (canvas, objects, options = {}) => {

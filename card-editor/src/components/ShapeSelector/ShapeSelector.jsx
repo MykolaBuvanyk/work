@@ -8,7 +8,7 @@ import {
 } from "../ShapeProperties/ShapeProperties";
 import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
 import { ensureShapeSvgId } from "../../utils/shapeSvgId";
-import { fitObjectToCanvas } from "../../utils/canvasFit";
+import { fitObjectToCanvas, applyCreationScaleByCanvas } from "../../utils/canvasFit";
 
 const DEFAULT_SHAPE_FILL = "#FFFFFF";
 const DEFAULT_SHAPE_STROKE = "#000000";
@@ -19,6 +19,14 @@ const DEFAULT_SHAPE_THICKNESS_MM = 0.5;
 const PX_PER_MM = 72 / 25.4;
 const mmToPx = (mm) =>
   typeof mm === "number" && Number.isFinite(mm) ? Math.round(mm * PX_PER_MM) : 0;
+const pxToMm = (px) =>
+  typeof px === "number" && Number.isFinite(px) ? px / PX_PER_MM : 0;
+
+const BASE_CANVAS_WIDTH_MM = 120;
+const BASE_CANVAS_HEIGHT_MM = 80;
+const BASE_TEXT_SIZE_MM = 5;
+const MIN_TEXT_SIZE_MM = 3;
+const BASE_MIN_SIDE_MM = Math.min(BASE_CANVAS_WIDTH_MM, BASE_CANVAS_HEIGHT_MM);
 
 const DEFAULT_SHAPE_STROKE_WIDTH_PX = DEFAULT_SHAPE_THICKNESS_MM * PX_PER_MM;
 
@@ -72,6 +80,10 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   const addObjectToCanvas = (obj) => {
     if (!canvas || !obj) return;
     canvas.add(obj);
+
+    try {
+      applyCreationScaleByCanvas(canvas, obj);
+    } catch { }
 
     try {
       fitObjectToCanvas(canvas, obj, { maxRatio: 0.6 });
@@ -236,13 +248,27 @@ const ShapeSelector = ({ isOpen, onClose }) => {
 
     switch (shapeType) {
       case "text":
+        {
+          const canvasWidthMm = pxToMm(
+            typeof canvas.getWidth === "function" ? canvas.getWidth() : canvas.width || 0
+          );
+          const canvasHeightMm = pxToMm(
+            typeof canvas.getHeight === "function" ? canvas.getHeight() : canvas.height || 0
+          );
+          const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
+          const defaultTextSizeMm = Math.max(
+            MIN_TEXT_SIZE_MM,
+            Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1))) || BASE_TEXT_SIZE_MM
+          );
+
         shape = new fabric.IText("Новий текст", {
           ...baseOptions,
-          fontSize: 32,
+          fontSize: mmToPx(defaultTextSizeMm),
           fontFamily: "Arial",
           fill: globalColors.textColor || "#000000",
           selectable: true,
         });
+        }
         break;
       case "rectangle":
         shape = new fabric.Rect({

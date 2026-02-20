@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import styles from './IconMenu.module.css';
-import { fitObjectToCanvas } from '../../utils/canvasFit';
+import { fitObjectToCanvas, applyCreationScaleByCanvas } from '../../utils/canvasFit';
 import axios from 'axios';
 
 
@@ -129,6 +129,10 @@ const IconMenu = ({ isOpen, onClose }) => {
       });
 
       try {
+        applyCreationScaleByCanvas(canvas, svgObject);
+      } catch {}
+
+      try {
         fitObjectToCanvas(canvas, svgObject, { maxRatio: 0.6 });
       } catch {}
       return svgObject;
@@ -180,6 +184,9 @@ const IconMenu = ({ isOpen, onClose }) => {
               originX: 'center',
               originY: 'center',
             });
+            try {
+              applyCreationScaleByCanvas(canvas, imgObj);
+            } catch {}
             try {
               fitObjectToCanvas(canvas, imgObj, { maxRatio: 0.6 });
             } catch {}

@@ -11,7 +11,10 @@ const TextList = () => {
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState(DEFAULT_TEXT_LABEL);
   const [availableFonts, setAvailableFonts] = useState([]);
+  const [fontSizeDrafts, setFontSizeDrafts] = useState({});
+  const [editingFontSizeId, setEditingFontSizeId] = useState(null);
   const isUpdatingRef = useRef(false);
+  const fontSizeInitialRef = useRef({});
 
   // Units: show/edit in millimeters; convert to pixels for Fabric
   const PX_PER_MM = 72 / 25.4;
@@ -19,6 +22,64 @@ const TextList = () => {
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const MIN_FONT_MM = 3;
   const MAX_FONT_MM = pxToMm(256); // preserve previous 256px cap (~67.7 mm)
+  const MAX_FONT_MM_INT = Math.max(MIN_FONT_MM, Math.round(MAX_FONT_MM));
+  const BASE_CANVAS_WIDTH_MM = 120;
+  const BASE_CANVAS_HEIGHT_MM = 80;
+  const BASE_TEXT_SIZE_MM = 5;
+  const BASE_MIN_SIDE_MM = Math.min(BASE_CANVAS_WIDTH_MM, BASE_CANVAS_HEIGHT_MM);
+
+  const getTextScaleAbs = (obj) => {
+    const sx = Math.abs(Number(obj?.scaleX) || 1);
+    const sy = Math.abs(Number(obj?.scaleY) || 1);
+    return Math.max(sx, sy);
+  };
+
+  const getFontSizeMmInt = (obj) => {
+    if (!obj) return MIN_FONT_MM;
+    const fontPx = Number(obj.fontSize) || 20;
+    const effectivePx = fontPx * getTextScaleAbs(obj);
+    const mm = pxToMm(effectivePx);
+    const rounded = Math.round(mm);
+    return Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM_INT, rounded));
+  };
+
+  const applyFontSizeMmToObject = (obj, sizeMm) => {
+    if (!obj) return;
+    const parsed = Number(sizeMm);
+    if (!Number.isFinite(parsed)) return;
+    const clampedMm = Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM_INT, Math.round(parsed)));
+    const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
+    const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
+
+    obj.set("fontSize", mmToPx(clampedMm));
+    obj.set("scaleX", signX);
+    obj.set("scaleY", signY);
+    if (typeof obj.initDimensions === "function") obj.initDimensions();
+    if (typeof obj.setCoords === "function") obj.setCoords();
+  };
+
+  const getDefaultTextSizeMmForCanvas = (canvasInstance) => {
+    try {
+      const active = canvasInstance?.getActiveObject?.();
+      if (active && (active.type === "i-text" || active.type === "text" || active.type === "textbox")) {
+        return getFontSizeMmInt(active);
+      }
+
+      const existingTexts =
+        canvasInstance
+          ?.getObjects?.()
+          ?.filter?.((obj) => obj && (obj.type === "i-text" || obj.type === "text" || obj.type === "textbox")) || [];
+      if (existingTexts.length > 0) {
+        return getFontSizeMmInt(existingTexts[existingTexts.length - 1]);
+      }
+    } catch {}
+
+    const canvasWidthMm = pxToMm(canvasInstance?.getWidth?.() || 0);
+    const canvasHeightMm = pxToMm(canvasInstance?.getHeight?.() || 0);
+    const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
+    const sizeMm = Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)));
+    return Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM_INT, sizeMm || BASE_TEXT_SIZE_MM));
+  };
 
   // Функція для завантаження списку доступних шрифтів
   const loadAvailableFonts = async () => {
@@ -137,6 +198,7 @@ const TextList = () => {
         "object:added",
         "object:removed",
         "object:modified",
+        "object:scaling",
         "text:changed",
         "selection:created",
         "selection:updated",
@@ -168,8 +230,7 @@ const TextList = () => {
         top: canvasHeight / 2,
         originX: "center",
         originY: "center",
-        // default ~5 mm
-        fontSize: mmToPx(5),
+        fontSize: mmToPx(getDefaultTextSizeMmForCanvas(canvas)),
         fontFamily: "Arial",
         fontWeight: "normal",
         textAlign: "left",
@@ -312,12 +373,9 @@ const TextList = () => {
   const changeFontSize = (sizeMm) => {
     const activeText = getActiveText();
     if (activeText) {
-      const clamped = Math.max(
-        MIN_FONT_MM,
-        Math.min(MAX_FONT_MM, parseFloat(sizeMm) || MIN_FONT_MM)
-      );
-      activeText.set("fontSize", mmToPx(clamped));
+      applyFontSizeMmToObject(activeText, sizeMm);
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
@@ -500,7 +558,7 @@ const TextList = () => {
   const activeText = getActiveText();
   // Display current font size in mm
   const currentFontSize = activeText
-    ? pxToMm(activeText.fontSize || 20)
+    ? getFontSizeMmInt(activeText)
     : pxToMm(20);
   const currentFontFamily = activeText?.fontFamily || "Arial";
   const currentFontWeight = activeText?.fontWeight || "normal";
@@ -543,13 +601,13 @@ const TextList = () => {
                       const currentText = texts.find((t) => t.id === text.id);
                       if (
                         currentText?.object &&
-                        pxToMm(currentText.object.fontSize) > MIN_FONT_MM
+                        getFontSizeMmInt(currentText.object) > MIN_FONT_MM
                       ) {
                         const nextMm = Math.max(
                           MIN_FONT_MM,
-                          pxToMm(currentText.object.fontSize) - 1
+                          getFontSizeMmInt(currentText.object) - 1
                         );
-                        currentText.object.set("fontSize", mmToPx(nextMm));
+                        applyFontSizeMmToObject(currentText.object, nextMm);
                         canvas.renderAll();
                         forceUpdate();
                       }
@@ -561,24 +619,45 @@ const TextList = () => {
                   <input
                     type="number"
                     value={
-                      text.object
-                        ? Number(pxToMm(text.object.fontSize || 20).toFixed(1))
-                        : Number(pxToMm(20).toFixed(1))
+                      editingFontSizeId === text.id
+                        ? (fontSizeDrafts[text.id] ?? "")
+                        : String(text.object ? getFontSizeMmInt(text.object) : Math.round(pxToMm(20)))
                     }
                     onChange={(e) => {
-                      const mm = parseFloat(e.target.value);
-                      const newSize = Math.max(
-                        MIN_FONT_MM,
-                        Math.min(MAX_FONT_MM, isNaN(mm) ? MIN_FONT_MM : mm)
-                      );
+                      setFontSizeDrafts((prev) => ({ ...prev, [text.id]: e.target.value }));
+                    }}
+                    onFocus={() => {
+                      setEditingFontSizeId(text.id);
+                      const initialValue = text.object
+                        ? getFontSizeMmInt(text.object)
+                        : Math.round(pxToMm(20));
+                      fontSizeInitialRef.current[text.id] = initialValue;
+                      setFontSizeDrafts((prev) => ({ ...prev, [text.id]: String(initialValue) }));
+                    }}
+                    onBlur={() => {
+                      const rawValue = fontSizeDrafts[text.id];
+                      const parsed = Number(rawValue);
+                      const fallback =
+                        fontSizeInitialRef.current[text.id] ??
+                        (text.object ? getFontSizeMmInt(text.object) : MIN_FONT_MM);
+                      const nextValue = Number.isFinite(parsed) ? parsed : fallback;
+
                       if (text.object) {
-                        text.object.set("fontSize", mmToPx(newSize));
+                        applyFontSizeMmToObject(text.object, nextValue);
                         canvas.renderAll();
                         forceUpdate();
                       }
+
+                      setEditingFontSizeId((prev) => (prev === text.id ? null : prev));
+                      setFontSizeDrafts((prev) => {
+                        const next = { ...prev };
+                        delete next[text.id];
+                        return next;
+                      });
                     }}
                     min={MIN_FONT_MM}
-                    max={Number(MAX_FONT_MM.toFixed(1))}
+                    max={MAX_FONT_MM_INT}
+                    step={1}
                     className={styles.fontSizeInput}
                     onWheel={(e) =>
                       e.target.blur()
@@ -589,13 +668,13 @@ const TextList = () => {
                       const currentText = texts.find((t) => t.id === text.id);
                       if (
                         currentText?.object &&
-                        pxToMm(currentText.object.fontSize) < MAX_FONT_MM
+                        getFontSizeMmInt(currentText.object) < MAX_FONT_MM_INT
                       ) {
                         const nextMm = Math.min(
-                          MAX_FONT_MM,
-                          pxToMm(currentText.object.fontSize) + 1
+                          MAX_FONT_MM_INT,
+                          getFontSizeMmInt(currentText.object) + 1
                         );
-                        currentText.object.set("fontSize", mmToPx(nextMm));
+                        applyFontSizeMmToObject(currentText.object, nextMm);
                         canvas.renderAll();
                         forceUpdate();
                       }

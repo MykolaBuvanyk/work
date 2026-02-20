@@ -27,6 +27,8 @@ const TOP_PANEL_GAP = 25; // від рамки до центру кнопок (C
 const BOTTOM_ROTATE_GAP = 25; // від рамки до центру кнопки обертання
 const PANEL_BUTTON_DIAMETER = 24; // діаметр кнопки
 const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
+const PANEL_BG_WIDTH = 163; // ширина фону меню (CSS px)
+const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 
 // Стиль рамки: використовуємо акцентний синій як в інших компонентах
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
@@ -80,6 +82,17 @@ const Canvas = ({ className }) => {
       backgroundColor: '#f5f5f5',
       selection: true,
     });
+
+    // Гарантуємо, що верхній шар Fabric (контроли/меню редагування) завжди над контентом canvas.
+    // Це робить меню редагування візуально вище за будь-який текст/об'єкти на полотні.
+    try {
+      if (fCanvas.lowerCanvasEl?.style) {
+        fCanvas.lowerCanvasEl.style.zIndex = '1';
+      }
+      if (fCanvas.upperCanvasEl?.style) {
+        fCanvas.upperCanvasEl.style.zIndex = '2147483647';
+      }
+    } catch { }
     // Утилиты: скрыть/показать hiddenTextarea Fabric, чтобы не мигал нативный курсор
     const applyHiddenTextareaStyle = ta => {
       try {
@@ -481,93 +494,119 @@ const Canvas = ({ className }) => {
       setShapePropertiesOpen(false);
     });
 
-    fCanvas.on('mouse:down', e => {
-      // Если активен IText в режиме редактирования, перехватываем клики по оверлей-панели
+    const handleActionPanelClick = e => {
       try {
-        const active = fCanvas.getActiveObject();
-        const isTextEditing =
-          active && ['i-text', 'text', 'textbox'].includes(active.type) && active.isEditing;
-        if (isTextEditing) {
-          const pt = fCanvas.getPointer?.(e.e);
-          if (pt) {
-            const ac = active.aCoords;
-            if (ac && ac.tl && ac.tr && ac.br && ac.bl) {
-              const xs = [ac.tl.x, ac.tr.x, ac.br.x, ac.bl.x];
-              const ys = [ac.tl.y, ac.tr.y, ac.br.y, ac.bl.y];
-              const minX = Math.min(...xs),
-                maxX = Math.max(...xs),
-                minY = Math.min(...ys),
-                maxY = Math.max(...ys);
-              const s = scaleRef.current || 1;
-              const panelCx = (minX + maxX) / 2;
-              const panelCy = minY - TOP_PANEL_GAP / s;
-              const step = PANEL_BUTTON_DIAMETER + PANEL_BUTTON_GAP; // CSS px
-              const centerIndex = (5 - 1) / 2; // 5 кнопок
-              const buttonCenter = index => {
-                const cssOffsetX = (index - centerIndex) * step;
-                return {
-                  x: panelCx + cssOffsetX / s,
-                  y: panelCy,
-                };
-              };
-              const hitRadius = PANEL_BUTTON_DIAMETER / 2 / s;
-              const hit = pos => {
-                const dx = (pt.x || 0) - pos.x;
-                const dy = (pt.y || 0) - pos.y;
-                return dx * dx + dy * dy <= hitRadius * hitRadius;
-              };
-              const posA = buttonCenter(0);
-              const posB = buttonCenter(1);
-              const posC = buttonCenter(2);
-              const posDup = buttonCenter(3);
-              const posDel = buttonCenter(4);
+        const active = fCanvas.getActiveObject?.();
+        if (!active) return false;
 
-              // Если попали по одной из иконок — исполняем соответствующее действие и предотвращаем дальнейшую обработку
-              if (hit(posA)) {
-                // A: already in editing — ставим курсор в конец
-                try {
-                  const len = (active.text || '').length;
-                  if (typeof active.setSelectionStart === 'function') active.setSelectionStart(len);
-                  if (typeof active.setSelectionEnd === 'function') active.setSelectionEnd(len);
-                  if (active.hiddenTextarea && typeof active.hiddenTextarea.focus === 'function')
-                    active.hiddenTextarea.focus();
-                } catch { }
-                fCanvas.requestRenderAll();
-                return; // прервали обработку клика
-              }
-              if (hit(posB)) {
-                try {
-                  // Для действий вне текста завершаем редактирование, применяем команду, затем возвращаем фокус
-                  active.exitEditing && active.exitEditing();
-                } catch { }
-                centerHorizontallyHandler(e, { target: active });
-                return;
-              }
-              if (hit(posC)) {
-                try {
-                  active.exitEditing && active.exitEditing();
-                } catch { }
-                centerVerticallyHandler(e, { target: active });
-                return;
-              }
-              if (hit(posDup)) {
-                try {
-                  active.exitEditing && active.exitEditing();
-                } catch { }
-                duplicateHandler(e, { target: active });
-                return;
-              }
-              if (hit(posDel)) {
-                try {
-                  active.exitEditing && active.exitEditing();
-                } catch { }
-                deleteHandler(e, { target: active });
-                return;
-              }
-            }
-          }
+        if (typeof active.setCoords === 'function') {
+          try {
+            active.setCoords();
+          } catch { }
         }
-      } catch { }
+
+        const ac = active.aCoords;
+        if (!ac || !ac.tl || !ac.tr || !ac.br || !ac.bl) return false;
+
+        const pt = fCanvas.getPointer?.(e?.e);
+        if (!pt) return false;
+
+        const xs = [ac.tl.x, ac.tr.x, ac.br.x, ac.bl.x];
+        const ys = [ac.tl.y, ac.tr.y, ac.br.y, ac.bl.y];
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+
+        const s = scaleRef.current || 1;
+        const panelCx = (minX + maxX) / 2;
+        const panelCy = minY - TOP_PANEL_GAP / s;
+
+        const halfW = PANEL_BG_WIDTH / 2 / s;
+        const halfH = PANEL_BG_HEIGHT / 2 / s;
+        const insidePanel =
+          pt.x >= panelCx - halfW &&
+          pt.x <= panelCx + halfW &&
+          pt.y >= panelCy - halfH &&
+          pt.y <= panelCy + halfH;
+
+        const step = PANEL_BUTTON_DIAMETER + PANEL_BUTTON_GAP;
+        const centerIndex = (5 - 1) / 2;
+        const buttonCenter = index => {
+          const cssOffsetX = (index - centerIndex) * step;
+          return {
+            x: panelCx + cssOffsetX / s,
+            y: panelCy,
+          };
+        };
+
+        const hitRadius = (PANEL_BUTTON_DIAMETER / 2 + 4) / s;
+        const hit = pos => {
+          const dx = (pt.x || 0) - pos.x;
+          const dy = (pt.y || 0) - pos.y;
+          return dx * dx + dy * dy <= hitRadius * hitRadius;
+        };
+
+        const posA = buttonCenter(0);
+        const posB = buttonCenter(1);
+        const posC = buttonCenter(2);
+        const posDup = buttonCenter(3);
+        const posDel = buttonCenter(4);
+
+        let handledIcon = false;
+
+        if (hit(posA)) {
+          copyHandler(e, { target: active });
+          handledIcon = true;
+        } else if (hit(posB)) {
+          try {
+            if (active.isEditing && typeof active.exitEditing === 'function') active.exitEditing();
+          } catch { }
+          centerHorizontallyHandler(e, { target: active });
+          handledIcon = true;
+        } else if (hit(posC)) {
+          try {
+            if (active.isEditing && typeof active.exitEditing === 'function') active.exitEditing();
+          } catch { }
+          centerVerticallyHandler(e, { target: active });
+          handledIcon = true;
+        } else if (hit(posDup)) {
+          try {
+            if (active.isEditing && typeof active.exitEditing === 'function') active.exitEditing();
+          } catch { }
+          duplicateHandler(e, { target: active });
+          handledIcon = true;
+        } else if (hit(posDel)) {
+          try {
+            if (active.isEditing && typeof active.exitEditing === 'function') active.exitEditing();
+          } catch { }
+          deleteHandler(e, { target: active });
+          handledIcon = true;
+        }
+
+        // Якщо клік всередині меню (навіть між іконками) — не пропускаємо його до тексту під низом.
+        if (!handledIcon && !insidePanel) return false;
+
+        try {
+          if (e?.e) {
+            e.e.preventDefault?.();
+            e.e.stopPropagation?.();
+            e.e.stopImmediatePropagation?.();
+          }
+        } catch { }
+
+        try {
+          fCanvas.requestRenderAll?.();
+        } catch { }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    fCanvas.on('mouse:down', e => {
+      const panelHandled = handleActionPanelClick(e);
+      if (panelHandled) return;
+
       const t = e.target;
       // Якщо під курсором є текст — віддати йому пріоритет вибору
       try {
@@ -1771,6 +1810,25 @@ const Canvas = ({ className }) => {
           }
           t.scaleX = s;
           t.scaleY = s;
+        }
+
+        const isTextLike = t.type === 'i-text' || t.type === 'text' || t.type === 'textbox';
+        if (isTextLike) {
+          const sx = Math.abs(Number(t.scaleX) || 1);
+          const sy = Math.abs(Number(t.scaleY) || 1);
+          const corner = (e && e.transform && e.transform.corner) || '';
+          let s;
+          if (corner === 'ml' || corner === 'mr' || corner === 'mlc' || corner === 'mrc') {
+            s = sx;
+          } else if (corner === 'mt' || corner === 'mb' || corner === 'mtc' || corner === 'mbc') {
+            s = sy;
+          } else {
+            s = Math.max(sx, sy);
+          }
+          const signX = (Number(t.scaleX) || 1) >= 0 ? 1 : -1;
+          const signY = (Number(t.scaleY) || 1) >= 0 ? 1 : -1;
+          t.scaleX = signX * s;
+          t.scaleY = signY * s;
         }
       } catch { }
 

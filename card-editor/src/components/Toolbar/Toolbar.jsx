@@ -3582,7 +3582,11 @@ const Toolbar = ({ formData }) => {
         if (oldW <= 0 || oldH <= 0 || newW <= 0 || newH <= 0) return;
         const sx = newW / oldW;
         const sy = newH / oldH;
+        const uniformScale = Math.sqrt(Math.abs(sx * sy));
+        const effectiveScale =
+          uniformScale > 1 ? uniformScale * 1.5 : uniformScale < 1 ? uniformScale / 1.5 : 1;
         if (!Number.isFinite(sx) || !Number.isFinite(sy)) return;
+        if (!Number.isFinite(uniformScale) || uniformScale <= 0) return;
         if (Math.abs(sx - 1) < 1e-6 && Math.abs(sy - 1) < 1e-6) return;
 
         const objects = canvas.getObjects() || [];
@@ -3599,7 +3603,14 @@ const Toolbar = ({ formData }) => {
           if (typeof left !== 'number' || typeof top !== 'number') return;
 
           try {
-            obj.set({ left: left * sx, top: top * sy });
+            const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
+            const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
+            obj.set({
+              left: left * sx,
+              top: top * sy,
+              scaleX: signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
+              scaleY: signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
+            });
             obj.setCoords?.();
           } catch {}
         });
@@ -4751,6 +4762,9 @@ const Toolbar = ({ formData }) => {
         if (oldW > 0 && oldH > 0 && newW > 0 && newH > 0) {
           const sx = newW / oldW;
           const sy = newH / oldH;
+          const uniformScale = Math.sqrt(Math.abs(sx * sy));
+          const effectiveScale =
+            uniformScale > 1 ? uniformScale * 1.5 : uniformScale < 1 ? uniformScale / 1.5 : 1;
           if (Number.isFinite(sx) && Number.isFinite(sy)) {
             (canvas.getObjects?.() || []).forEach(obj => {
               if (!obj) return;
@@ -4758,7 +4772,14 @@ const Toolbar = ({ formData }) => {
               if (obj.isCutElement && obj.cutType === 'hole') return;
               if (typeof obj.id === 'string' && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
               if (typeof obj.left !== 'number' || typeof obj.top !== 'number') return;
-              obj.set?.({ left: obj.left * sx, top: obj.top * sy });
+              const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
+              const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
+              obj.set?.({
+                left: obj.left * sx,
+                top: obj.top * sy,
+                scaleX: signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
+                scaleY: signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
+              });
               obj.setCoords?.();
             });
           }
@@ -6070,6 +6091,46 @@ const Toolbar = ({ formData }) => {
   // Додавання тексту
   const addText = () => {
     if (canvas) {
+      const BASE_CANVAS_WIDTH_MM = 120;
+      const BASE_CANVAS_HEIGHT_MM = 80;
+      const BASE_TEXT_SIZE_MM = 5;
+      const MIN_FONT_MM = 3;
+      const BASE_MIN_SIDE_MM = Math.min(BASE_CANVAS_WIDTH_MM, BASE_CANVAS_HEIGHT_MM);
+      const canvasWidthMm = pxToMm(canvas.getWidth?.() || canvas.width || 0);
+      const canvasHeightMm = pxToMm(canvas.getHeight?.() || canvas.height || 0);
+      const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
+      let defaultFontSizeMm = Math.max(
+        MIN_FONT_MM,
+        Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1))) || BASE_TEXT_SIZE_MM
+      );
+
+      try {
+        const active = canvas.getActiveObject?.();
+        const isTextActive =
+          active && (active.type === 'i-text' || active.type === 'text' || active.type === 'textbox');
+
+        const readEffectiveMm = obj => {
+          const fontPx = Number(obj?.fontSize) || 0;
+          const sx = Math.abs(Number(obj?.scaleX) || 1);
+          const sy = Math.abs(Number(obj?.scaleY) || 1);
+          return pxToMm(fontPx * Math.max(sx, sy));
+        };
+
+        if (isTextActive) {
+          const eff = Math.round(readEffectiveMm(active));
+          if (Number.isFinite(eff) && eff > 0) defaultFontSizeMm = Math.max(MIN_FONT_MM, eff);
+        } else {
+          const existingTexts = (canvas.getObjects?.() || []).filter(
+            obj => obj && (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox')
+          );
+          if (existingTexts.length > 0) {
+            const ref = existingTexts[existingTexts.length - 1];
+            const eff = Math.round(readEffectiveMm(ref));
+            if (Number.isFinite(eff) && eff > 0) defaultFontSizeMm = Math.max(MIN_FONT_MM, eff);
+          }
+        }
+      } catch {}
+
       const text = new fabric.IText('Text', {
         left: canvas.width / 2,
         top: canvas.height / 2,
@@ -6077,7 +6138,7 @@ const Toolbar = ({ formData }) => {
         originY: 'center',
         fontFamily: 'Arial',
         fill: globalColors.textColor,
-        fontSize: mmToPx(5),
+        fontSize: mmToPx(defaultFontSizeMm),
       });
       canvas.add(text);
       canvas.setActiveObject(text);

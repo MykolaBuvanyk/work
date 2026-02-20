@@ -67,6 +67,16 @@
   overflow: visible;
 }
 
+.icons span img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
 .icons :first-child {
   align-items: center;
 }

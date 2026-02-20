@@ -158,6 +158,11 @@ const HOLE_ID_SELECTOR = `[id^="${HOLE_ID_PREFIX}"]`;
 const HOLE_NODE_SELECTOR = `${HOLE_DATA_SELECTOR}, ${HOLE_ID_SELECTOR}`;
 const HOLE_SHAPE_QUERY = HOLE_SHAPE_TAGS.join(", ");
 const BACKGROUND_ATTR = "data-layout-background";
+const SHAPE_TYPE_ATTRIBUTE = "data-shape-type";
+const ENGRAVING_CAPSULE_ATTRIBUTE = "data-shape-engraving-capsule";
+const ENGRAVING_LINE_TYPES = new Set(["line", "dashedline"]);
+const ENGRAVING_LINE_ID_PREFIXES = ["shape-line-", "shape-dashed-line-"];
+const GENERIC_SHAPE_ID_PREFIX = "shape-";
 
 const paperLib = paperNamespace?.default ?? paperNamespace;
 const ClipperLib = ClipperLibNamespace?.default ?? ClipperLibNamespace;
@@ -1294,6 +1299,384 @@ const convertPercentagesToAbsolute = (node, totals) => {
   });
 };
 
+const isEngravingLineShapeNode = (node) => {
+  if (!node || typeof node.getAttribute !== "function") return false;
+  const shapeTypeRaw = node.getAttribute(SHAPE_TYPE_ATTRIBUTE) || "";
+  const shapeType = shapeTypeRaw.trim().toLowerCase();
+  if (ENGRAVING_LINE_TYPES.has(shapeType)) {
+    return true;
+  }
+  const nodeId = (node.getAttribute("id") || "").trim().toLowerCase();
+  if (nodeId && ENGRAVING_LINE_ID_PREFIXES.some((prefix) => nodeId.startsWith(prefix))) {
+    return true;
+  }
+  if (hasStrokeDashPattern(node)) {
+    return true;
+  }
+
+  if (!nodeId || !nodeId.startsWith(GENERIC_SHAPE_ID_PREFIX)) {
+    return false;
+  }
+  if (!isOpenContourGeometryNode(node)) {
+    return false;
+  }
+  if (node.getAttribute("data-shape-has-fill") === "true") {
+    return false;
+  }
+  return !hasVisibleFillPaint(node, node.getAttribute("style") || "");
+};
+
+const removeStrokeDashDecorations = (node) => {
+  if (!node || typeof node.getAttribute !== "function") return;
+  node.removeAttribute("stroke-dasharray");
+  node.removeAttribute("stroke-dashoffset");
+
+  const styleAttr = node.getAttribute("style") || "";
+  if (!styleAttr) return;
+
+  const filtered = styleAttr
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter(
+      (part) =>
+        !/^stroke-dasharray\s*:/i.test(part) &&
+        !/^stroke-dashoffset\s*:/i.test(part)
+    );
+
+  if (filtered.length) {
+    node.setAttribute("style", filtered.join("; "));
+  } else {
+    node.removeAttribute("style");
+  }
+};
+
+const parseDashPatternValues = (value) => {
+  if (value == null) return [];
+  const source = String(value).trim();
+  if (!source) return [];
+  return source
+    .split(/[\s,]+/)
+    .map((part) => Number(part))
+    .filter((num) => Number.isFinite(num) && num > 0);
+};
+
+const extractDashPatternFromNode = (node) => {
+  if (!node || typeof node.getAttribute !== "function") {
+    return { pattern: [], offset: 0 };
+  }
+
+  const attrPattern = parseDashPatternValues(node.getAttribute("stroke-dasharray"));
+  const styleAttr = node.getAttribute("style") || "";
+  const stylePatternMatch = styleAttr.match(/stroke-dasharray\s*:\s*([^;]+)/i);
+  const stylePattern = stylePatternMatch
+    ? parseDashPatternValues(stylePatternMatch[1])
+    : [];
+
+  const pattern = attrPattern.length ? attrPattern : stylePattern;
+
+  const parseDashOffset = (raw) => {
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) ? numeric : 0;
+  };
+
+  const attrOffset = parseDashOffset(node.getAttribute("stroke-dashoffset"));
+  let styleOffset = 0;
+  const styleOffsetMatch = styleAttr.match(/stroke-dashoffset\s*:\s*([^;]+)/i);
+  if (styleOffsetMatch) {
+    styleOffset = parseDashOffset(styleOffsetMatch[1]);
+  }
+
+  return {
+    pattern,
+    offset: attrOffset || styleOffset || 0,
+  };
+};
+
+const hasStrokeDashPattern = (node) => {
+  const { pattern } = extractDashPatternFromNode(node);
+  return Array.isArray(pattern) && pattern.length > 0;
+};
+
+const toClipperOpenPath = (pathItem) => {
+  if (!pathItem) return null;
+  const clone = pathItem.clone({ insert: false });
+  const hasCurves =
+    Array.isArray(clone.curves) && clone.curves.some((curve) => !curve.isStraight());
+  clone.flatten(hasCurves ? 0.05 : 0.25);
+
+  const result = [];
+  clone.segments.forEach((segment) => {
+    const point = segment?.point;
+    if (!point) return;
+    const current = {
+      X: Math.round(point.x * CLIPPER_SCALE),
+      Y: Math.round(point.y * CLIPPER_SCALE),
+    };
+    const prev = result[result.length - 1];
+    if (!prev || prev.X !== current.X || prev.Y !== current.Y) {
+      result.push(current);
+    }
+  });
+
+  clone.remove();
+  return result.length >= 2 ? result : null;
+};
+
+const normalizeDashPattern = (pattern) => {
+  const cleaned = Array.isArray(pattern)
+    ? pattern.filter((num) => Number.isFinite(num) && num > 0)
+    : [];
+  if (!cleaned.length) return [];
+  if (cleaned.length % 2 === 1) {
+    return [...cleaned, ...cleaned];
+  }
+  return cleaned;
+};
+
+const buildDashedOpenPathsFromPathItem = (
+  pathItem,
+  dashPattern = [],
+  dashOffset = 0
+) => {
+  if (!pathItem) return [];
+
+  const pattern = normalizeDashPattern(dashPattern);
+  if (!pattern.length) {
+    const asSingle = toClipperOpenPath(pathItem);
+    return asSingle ? [asSingle] : [];
+  }
+
+  const pathLength = Number(pathItem.length);
+  if (!Number.isFinite(pathLength) || pathLength <= 0) {
+    return [];
+  }
+
+  const patternLength = pattern.reduce((sum, value) => sum + value, 0);
+  if (!Number.isFinite(patternLength) || patternLength <= 0) {
+    const asSingle = toClipperOpenPath(pathItem);
+    return asSingle ? [asSingle] : [];
+  }
+
+  const startOffset = Number.isFinite(dashOffset)
+    ? ((dashOffset % patternLength) + patternLength) % patternLength
+    : 0;
+
+  const openPaths = [];
+  let patternIndex = 0;
+  let drawDash = true;
+  let offsetRemaining = startOffset;
+
+  while (offsetRemaining > 0) {
+    const segmentLen = pattern[patternIndex];
+    if (offsetRemaining < segmentLen) {
+      break;
+    }
+    offsetRemaining -= segmentLen;
+    patternIndex = (patternIndex + 1) % pattern.length;
+    drawDash = !drawDash;
+  }
+
+  let distance = 0;
+  let segmentRemaining = pattern[patternIndex] - offsetRemaining;
+
+  while (distance < pathLength - 1e-4) {
+    const safeRemaining = Number.isFinite(segmentRemaining) && segmentRemaining > 0
+      ? segmentRemaining
+      : pattern[patternIndex];
+    const segmentEnd = Math.min(pathLength, distance + safeRemaining);
+
+    if (drawDash && segmentEnd - distance > 1e-4) {
+      const startPoint = pathItem.getPointAt(distance);
+      const endPoint = pathItem.getPointAt(segmentEnd);
+      if (startPoint && endPoint) {
+        const clipperSegment = [
+          {
+            X: Math.round(startPoint.x * CLIPPER_SCALE),
+            Y: Math.round(startPoint.y * CLIPPER_SCALE),
+          },
+          {
+            X: Math.round(endPoint.x * CLIPPER_SCALE),
+            Y: Math.round(endPoint.y * CLIPPER_SCALE),
+          },
+        ];
+        const first = clipperSegment[0];
+        const last = clipperSegment[1];
+        if (first.X !== last.X || first.Y !== last.Y) {
+          openPaths.push(clipperSegment);
+        }
+      }
+    }
+
+    distance = segmentEnd;
+    patternIndex = (patternIndex + 1) % pattern.length;
+    drawDash = !drawDash;
+    segmentRemaining = pattern[patternIndex];
+  }
+
+  return openPaths;
+};
+
+const clipperPathToSvgPath = (clipperPath) => {
+  if (!Array.isArray(clipperPath) || clipperPath.length < 3) return null;
+  const commands = clipperPath.map((point, index) => {
+    const x = point.X / CLIPPER_SCALE;
+    const y = point.Y / CLIPPER_SCALE;
+    return `${index === 0 ? "M" : "L"}${x.toFixed(6)} ${y.toFixed(6)}`;
+  });
+  return `${commands.join(" ")} Z`;
+};
+
+const buildEngravingCapsulePathData = (
+  scope,
+  shapeNode,
+  strokeWidthPx,
+  { isDashed = false, dashPattern = [], dashOffset = 0 } = {}
+) => {
+  if (!scope || !ClipperLib || !ClipperLib.ClipperOffset) return null;
+  const effectiveStrokeWidthPx = Number(strokeWidthPx);
+  if (!Number.isFinite(effectiveStrokeWidthPx) || effectiveStrokeWidthPx <= 0) {
+    return null;
+  }
+
+  try {
+    scope.project.clear();
+    const clone = shapeNode.cloneNode(true);
+    const imported = scope.project.importSVG(clone, {
+      applyMatrix: true,
+      expandShapes: true,
+      insert: true,
+    });
+
+    if (!imported) {
+      scope.project.clear();
+      return null;
+    }
+
+    const pathItems = gatherPathItems(scope, imported).filter((item) => {
+      if (!item) return false;
+      if (item.closed) return false;
+      return item.length > 0;
+    });
+
+    if (!pathItems.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    const offsetter = new ClipperLib.ClipperOffset(2, 0.1);
+    let added = 0;
+
+    pathItems.forEach((pathItem) => {
+      const clipperOpenPaths = isDashed
+        ? buildDashedOpenPathsFromPathItem(pathItem, dashPattern, dashOffset)
+        : (() => {
+            const asSingle = toClipperOpenPath(pathItem);
+            return asSingle ? [asSingle] : [];
+          })();
+
+      clipperOpenPaths.forEach((clipperOpenPath) => {
+        if (!clipperOpenPath || clipperOpenPath.length < 2) return;
+        offsetter.AddPath(
+          clipperOpenPath,
+          ClipperLib.JoinType.jtRound,
+          ClipperLib.EndType.etOpenRound
+        );
+        added += 1;
+      });
+    });
+
+    if (!added) {
+      scope.project.clear();
+      return null;
+    }
+
+    const solution = ClipperLib.Paths ? new ClipperLib.Paths() : [];
+    offsetter.Execute(solution, (effectiveStrokeWidthPx / 2) * CLIPPER_SCALE);
+
+    if (!solution.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    const pathData = solution
+      .map((poly) => clipperPathToSvgPath(poly))
+      .filter(Boolean)
+      .join(" ");
+
+    scope.project.clear();
+    return pathData || null;
+  } catch (error) {
+    console.warn("Failed to build engraving capsule path", error);
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
+
+const convertEngravingLineNodeToCapsule = (scope, shapeNode, thicknessPx) => {
+  if (!scope || !shapeNode) return null;
+
+  const nodeId = (shapeNode.getAttribute("id") || "").trim().toLowerCase();
+  const shapeType = (shapeNode.getAttribute(SHAPE_TYPE_ATTRIBUTE) || "")
+    .trim()
+    .toLowerCase();
+  const { pattern: dashPattern, offset: dashOffset } = extractDashPatternFromNode(shapeNode);
+  const inferredDashedFromId = nodeId.startsWith("shape-dashed-line-");
+  const inferredDashedFromPattern = Array.isArray(dashPattern) && dashPattern.length > 0;
+  const isDashedLine =
+    shapeType === "dashedline" || inferredDashedFromId || inferredDashedFromPattern;
+  const effectiveDashPattern =
+    isDashedLine && (!dashPattern || dashPattern.length === 0)
+      ? [5, 5]
+      : dashPattern;
+
+  let strokeWidthPx = Number(thicknessPx);
+  if (!Number.isFinite(strokeWidthPx) || strokeWidthPx <= 0) {
+    const attrStroke = Number(shapeNode.getAttribute("stroke-width"));
+    if (Number.isFinite(attrStroke) && attrStroke > 0) {
+      strokeWidthPx = attrStroke;
+    }
+  }
+
+  if (!Number.isFinite(strokeWidthPx) || strokeWidthPx <= 0) {
+    strokeWidthPx = 1;
+  }
+
+  const capsulePathData = buildEngravingCapsulePathData(scope, shapeNode, strokeWidthPx, {
+    isDashed: isDashedLine,
+    dashPattern: effectiveDashPattern,
+    dashOffset,
+  });
+  if (!capsulePathData) return null;
+
+  const baseId = shapeNode.getAttribute("id") || null;
+  const capsuleNode = createOffsetContourElement(shapeNode, capsulePathData, {
+    id: baseId,
+    isInner: false,
+  });
+  if (!capsuleNode) return null;
+
+  capsuleNode.setAttribute("fill", "none");
+  capsuleNode.setAttribute("stroke", TEXT_STROKE_COLOR);
+  capsuleNode.setAttribute("stroke-width", CONTOUR_STROKE_WIDTH_PX.toString());
+  capsuleNode.setAttribute("vector-effect", "non-scaling-stroke");
+  capsuleNode.setAttribute(ENGRAVING_CAPSULE_ATTRIBUTE, "true");
+  capsuleNode.setAttribute("data-inner-contour-added", "true");
+  removeStrokeDashDecorations(capsuleNode);
+
+  const shapeTypeRaw = shapeNode.getAttribute(SHAPE_TYPE_ATTRIBUTE);
+  if (shapeTypeRaw) {
+    capsuleNode.setAttribute(SHAPE_TYPE_ATTRIBUTE, shapeTypeRaw);
+  }
+
+  const parent = shapeNode.parentNode;
+  if (!parent) return null;
+  parent.replaceChild(capsuleNode, shapeNode);
+  return capsuleNode;
+};
+
 const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, borderThicknessPx = null } = {}) => {
   if (!rootElement?.querySelectorAll) return;
 
@@ -1475,6 +1858,17 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
               thicknessPx = parseFloat(styleMatch[1]);
             }
           }
+        }
+      }
+
+      if (isEngravingLineShapeNode(shapeNode)) {
+        const convertedNode = convertEngravingLineNodeToCapsule(
+          scope,
+          shapeNode,
+          thicknessPx
+        );
+        if (convertedNode) {
+          return;
         }
       }
 

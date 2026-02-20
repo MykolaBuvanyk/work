@@ -521,7 +521,13 @@ const ShapeSelector = ({ isOpen, onClose }) => {
       // Додаємо прапорець джерела (ShapeSelector)
       shape.fromShapeTab = true;
       shape.data = { ...(shape.data || {}), fromShapeTab: true };
-      ensureShapeSvgId(shape, canvas);
+      const shapeIdPrefix =
+        shapeType === "line"
+          ? "shape-line"
+          : shapeType === "dashedLine"
+            ? "shape-dashed-line"
+            : null;
+      ensureShapeSvgId(shape, canvas, shapeIdPrefix ? { prefix: shapeIdPrefix } : {});
       addObjectToCanvas(shape);
       setActiveObject(shape);
       setShapePropertiesOpen(true);

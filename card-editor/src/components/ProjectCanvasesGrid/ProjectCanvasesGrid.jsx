@@ -200,32 +200,68 @@ const ProjectCanvasesGrid = () => {
           }
 
           if (canvases.length > 0) {
-            const firstCanvas = canvases[0];
-            console.log('Auto-opening first project canvas after save:', firstCanvas.id);
+            // Якщо поточне активне полотно вже є в проекті — залишаємось на ньому
+            const activeCanvasId =
+              currentProjectCanvasIdRef.current ||
+              (() => {
+                try {
+                  return localStorage.getItem('currentCanvasId');
+                } catch {
+                  return null;
+                }
+              })();
+            const alreadyInProject = activeCanvasId && canvases.find(c => c.id === activeCanvasId);
 
-            // Встановлюємо його як активний
-            try {
-              localStorage.setItem('currentCanvasId', firstCanvas.id);
-              localStorage.setItem('currentProjectCanvasId', firstCanvas.id);
-              localStorage.setItem('currentProjectCanvasIndex', '0');
-              localStorage.removeItem('currentUnsavedSignId');
-            } catch {}
-            try {
-              if (typeof window !== 'undefined') {
-                window.__currentProjectCanvasId = firstCanvas.id;
-                window.__currentProjectCanvasIndex = 0;
-              }
-            } catch {}
-
-            // Даємо час на оновлення state
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Відкриваємо його
-            if (openCanvasRef.current && canvas) {
-              await openCanvasRef.current(firstCanvas);
-              console.log('Canvas opened successfully');
+            if (alreadyInProject) {
+              console.log(
+                'Active canvas already belongs to this project, staying on it:',
+                activeCanvasId
+              );
+              // Просто оновлюємо tracking без переключення
+              const activeIndex = canvases.findIndex(c => c.id === activeCanvasId);
+              try {
+                localStorage.setItem('currentProjectCanvasId', activeCanvasId);
+                if (activeIndex !== -1) {
+                  localStorage.setItem('currentProjectCanvasIndex', String(activeIndex));
+                }
+                localStorage.removeItem('currentUnsavedSignId');
+              } catch {}
+              try {
+                if (typeof window !== 'undefined') {
+                  window.__currentProjectCanvasId = activeCanvasId;
+                  window.__currentProjectCanvasIndex = activeIndex !== -1 ? activeIndex : null;
+                }
+              } catch {}
+              currentProjectCanvasIdRef.current = activeCanvasId;
+              currentUnsavedIdRef.current = null;
             } else {
-              console.log('openCanvasRef or canvas not available');
+              const firstCanvas = canvases[0];
+              console.log('Auto-opening first project canvas after save:', firstCanvas.id);
+
+              // Встановлюємо його як активний
+              try {
+                localStorage.setItem('currentCanvasId', firstCanvas.id);
+                localStorage.setItem('currentProjectCanvasId', firstCanvas.id);
+                localStorage.setItem('currentProjectCanvasIndex', '0');
+                localStorage.removeItem('currentUnsavedSignId');
+              } catch {}
+              try {
+                if (typeof window !== 'undefined') {
+                  window.__currentProjectCanvasId = firstCanvas.id;
+                  window.__currentProjectCanvasIndex = 0;
+                }
+              } catch {}
+
+              // Даємо час на оновлення state
+              await new Promise(resolve => setTimeout(resolve, 100));
+
+              // Відкриваємо його
+              if (openCanvasRef.current && canvas) {
+                await openCanvasRef.current(firstCanvas);
+                console.log('Canvas opened successfully');
+              } else {
+                console.log('openCanvasRef or canvas not available');
+              }
             }
           } else {
             console.log('No canvases in project');

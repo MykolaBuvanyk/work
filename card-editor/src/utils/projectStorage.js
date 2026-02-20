@@ -1892,6 +1892,9 @@ export async function saveNewProject(name, canvas) {
 
   let canvases = [];
   let activeCanvasIndex = 0;
+  // Track unsaved sign IDs that are already embedded in canvases
+  // so we can delete them from the unsaved store and exclude from transferUnsavedSignsToProject
+  let includedUnsavedIds = [];
 
   if (sourceProjectId) {
     try {
@@ -1937,9 +1940,48 @@ export async function saveNewProject(name, canvas) {
     }
   }
 
-  if (canvases.length === 0 && snap) {
-    canvases = [{ id: uuid(), ...snap }];
-    activeCanvasIndex = 0;
+  if (canvases.length === 0) {
+    // No source project — build canvases from ALL unsaved signs keeping their original
+    // creation order (oldest → newest), same as ProjectCanvasesGrid grid display.
+    // Apply the current snap to the currently-open unsaved sign in place so its
+    // position is preserved instead of being forced to index 0.
+    let allUnsaved = [];
+    try {
+      const rawUnsaved = await getAllUnsavedSigns();
+      allUnsaved = [...rawUnsaved].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    } catch {}
+
+    for (const s of allUnsaved) {
+      if (canvases.length >= 10) break;
+      const isCurrent = Boolean(currentUnsavedId && s.id === currentUnsavedId);
+      canvases.push({
+        id: uuid(),
+        ...(isCurrent && snap
+          ? snap
+          : {
+              json: s.json,
+              preview: s.preview,
+              previewSvg: s.previewSvg,
+              width: s.width,
+              height: s.height,
+              backgroundColor: s.backgroundColor,
+              backgroundType: s.backgroundType,
+              backgroundImage: s.backgroundImage,
+              canvasType: s.canvasType,
+              cornerRadius: s.cornerRadius,
+              toolbarState: s.toolbarState,
+              copiesCount: s.copiesCount,
+            }),
+      });
+      if (isCurrent) activeCanvasIndex = canvases.length - 1;
+      includedUnsavedIds.push(s.id);
+    }
+
+    // Fallback: no unsaved signs at all, just the current snap
+    if (canvases.length === 0 && snap) {
+      canvases = [{ id: uuid(), ...snap }];
+      activeCanvasIndex = 0;
+    }
   }
 
   const activeCanvas = canvases[activeCanvasIndex] || canvases[0] || null;
@@ -1981,10 +2023,20 @@ export async function saveNewProject(name, canvas) {
       } catch {}
     }
   } catch {}
-  // absorb unsaved signs if any (excluding current one to avoid duplication)
+  // Delete unsaved signs that were directly embedded into canvases above
+  if (includedUnsavedIds.length > 0) {
+    try {
+      await Promise.all(includedUnsavedIds.map((id) => deleteUnsavedSign(id)));
+      broadcastUnsavedUpdate();
+    } catch {}
+  }
+  // absorb any remaining unsaved signs (excluding current one and already included ones)
   try {
-    const exclude = currentUnsavedId ? [currentUnsavedId] : [];
-    await transferUnsavedSignsToProject(project.id, exclude);
+    const excludeSet = new Set([
+      ...(currentUnsavedId ? [currentUnsavedId] : []),
+      ...includedUnsavedIds,
+    ]);
+    await transferUnsavedSignsToProject(project.id, excludeSet);
   } catch {}
   return project;
 }

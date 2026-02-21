@@ -286,6 +286,10 @@ export const useFabricCanvas = () => {
           typeof window !== "undefined" &&
           typeof window.restoreToolbarState === "function"
         ) {
+          try {
+            canvas.set?.("hasSavedTheme", true);
+          } catch {}
+
           // 1) Відновлюємо стан тулбара
           scheduleFrame(() => {
             try {
@@ -307,9 +311,24 @@ export const useFabricCanvas = () => {
               console.warn("Failed to force restore canvas shape", shapeErr);
             }
           });
+
+          // 3) Після повного відновлення — повторно застосувати збережену тему,
+          // щоб синхронізувати кольори елементів і активний preset у тулбарі.
+          scheduleFrame(() => {
+            try {
+              if (typeof window.forceApplySavedTheme === "function") {
+                window.forceApplySavedTheme(canvasLoadedPayload.toolbarState);
+              }
+            } catch (themeErr) {
+              console.warn("Failed to force apply saved theme", themeErr);
+            }
+          });
         } else {
           // Нове полотно без збереженого стану тулбара — примусово встановлюємо білу тему за замовчуванням
           // Це не торкається існуючих полотен і гарантує, що новий дизайн не успадковує попередній «карбон»
+          try {
+            canvas.set?.("hasSavedTheme", false);
+          } catch {}
           try {
             updateGlobalColors?.({
               textColor: "#000000",

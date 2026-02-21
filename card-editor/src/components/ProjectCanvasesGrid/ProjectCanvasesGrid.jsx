@@ -7,6 +7,7 @@ import {
   extractToolbarState,
   restoreElementProperties,
   addBlankUnsavedSign,
+  addCanvasSnapshotToCurrentProject,
   updateCanvasInCurrentProject,
   deleteUnsavedSign,
   generateCanvasPreviews,
@@ -890,6 +891,9 @@ const ProjectCanvasesGrid = () => {
           // Скидаємо прапорець через затримку
           setTimeout(() => {
             canvas.__ignoreNextBackgroundUpdate = false;
+            try {
+              canvas.set?.('hasSavedTheme', false);
+            } catch {}
           }, 100);
         } else if (bgColor && bgColor !== '#FFFFFF') {
           console.log('Restoring canvas background:', {
@@ -1020,6 +1024,9 @@ const ProjectCanvasesGrid = () => {
 
 
         const savedToolbarState = extractToolbarState(canvasToLoad);
+        try {
+          canvas.set?.('hasSavedTheme', !!savedToolbarState?.globalColors);
+        } catch {}
 
         try {
           // ВИПРАВЛЕННЯ: Викликаємо restoreElementProperties з затримкою,
@@ -1066,13 +1073,22 @@ const ProjectCanvasesGrid = () => {
         }
 
         if (updateGlobalColors) {
+          const savedColors = savedToolbarState?.globalColors || {};
           // Встановлюємо прапорець щоб Canvas.jsx useEffect проігнорував цю зміну
           canvas.__ignoreNextBackgroundUpdate = true;
           updateGlobalColors({
+            textColor: savedColors.textColor || '#000000',
             backgroundColor: finalBgColor,
             backgroundType: finalBgType,
+            strokeColor:
+              savedColors.strokeColor || savedColors.textColor || '#000000',
+            fillColor:
+              savedColors.fillColor !== undefined
+                ? savedColors.fillColor
+                : 'transparent',
           });
           console.log('Updated globalColors after canvas load:', {
+            textColor: savedColors.textColor || '#000000',
             backgroundColor: finalBgColor,
             backgroundType: finalBgType,
           });
@@ -1117,6 +1133,27 @@ const ProjectCanvasesGrid = () => {
               finalBg: bgColorToUse,
             });
           }
+
+          // НОВЕ: Явно відновлюємо стан тулбара і примусово перевиставляємо
+          // саме збережену тему ПІСЛЯ відновлення всіх об'єктів.
+          // Це прибирає розсинхрон кольорів після перемикання між полотнами.
+          try {
+            if (typeof window.restoreToolbarState === 'function') {
+              window.restoreToolbarState(toolbarState);
+            }
+          } catch (restoreErr) {
+            console.warn('Failed to restore toolbar state after canvas load:', restoreErr);
+          }
+
+          setTimeout(() => {
+            try {
+              if (typeof window.forceApplySavedTheme === 'function') {
+                window.forceApplySavedTheme(toolbarState);
+              }
+            } catch (themeErr) {
+              console.warn('Failed to force apply saved theme:', themeErr);
+            }
+          }, 60);
 
           console.log('Canvas loaded, toolbar state:', toolbarState);
           console.log('Canvas data loaded:', {
@@ -1564,6 +1601,13 @@ const ProjectCanvasesGrid = () => {
 
   const handleNewSign = async () => {
     try {
+      let currentProjectId = project?.id || null;
+      if (!currentProjectId) {
+        try {
+          currentProjectId = localStorage.getItem('currentProjectId');
+        } catch {}
+      }
+
       let currentUnsavedId = null;
       try {
         currentUnsavedId = localStorage.getItem('currentUnsavedSignId');
@@ -1576,6 +1620,78 @@ const ProjectCanvasesGrid = () => {
       const PX_PER_MM = 72 / 25.4;
       const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM); // ~453 px
       const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM); // ~302 px
+
+      // If user edits a saved project, create a NEW canvas inside that project (not unsaved).
+      if (currentProjectId) {
+        const currentToolbarState =
+          typeof window !== 'undefined' && typeof window.getCurrentToolbarState === 'function'
+            ? window.getCurrentToolbarState() || {}
+            : {};
+
+        const snapshot = {
+          json: { objects: [], version: 'fabric' },
+          preview: '',
+          previewSvg: '',
+          width: DEFAULT_WIDTH,
+          height: DEFAULT_HEIGHT,
+          backgroundColor: '#FFFFFF',
+          backgroundType: 'solid',
+          canvasType: 'rectangle',
+          cornerRadius: 2,
+          toolbarState: {
+            ...currentToolbarState,
+            currentShapeType: 'rectangle',
+            // IMPORTANT: new canvas must start without carried-over holes from previous canvas
+            isHolesSelected: false,
+            activeHolesType: 1,
+            holesDiameter: 2.5,
+            sizeValues: {
+              width: 120,
+              height: 80,
+              cornerRadius: 2,
+            },
+            globalColors: {
+              textColor: '#000000',
+              backgroundColor: '#FFFFFF',
+              strokeColor: '#000000',
+              fillColor: 'transparent',
+              backgroundType: 'solid',
+            },
+          },
+          copiesCount: 1,
+        };
+
+        const updatedProject = await addCanvasSnapshotToCurrentProject(snapshot, {
+          setAsCurrent: true,
+        });
+
+        const canvases = updatedProject?.canvases || [];
+        const newCanvas = canvases[canvases.length - 1] || null;
+
+        if (newCanvas?.id) {
+          try {
+            localStorage.removeItem('currentUnsavedSignId');
+            localStorage.setItem('currentCanvasId', newCanvas.id);
+            localStorage.setItem('currentProjectCanvasId', newCanvas.id);
+            localStorage.setItem('currentProjectCanvasIndex', String(Math.max(0, canvases.length - 1)));
+          } catch {}
+          try {
+            if (typeof window !== 'undefined') {
+              window.__currentProjectCanvasId = newCanvas.id;
+              window.__currentProjectCanvasIndex = Math.max(0, canvases.length - 1);
+            }
+          } catch {}
+
+          try {
+            window.dispatchEvent(
+              new CustomEvent('canvas:autoOpen', {
+                detail: { canvasId: newCanvas.id, isUnsaved: false },
+              })
+            );
+          } catch {}
+        }
+        return;
+      }
 
       const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 

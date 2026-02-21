@@ -1379,6 +1379,9 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
       if (!v) return false;
       if (v === 'none') return false;
       if (v === 'transparent') return false;
+      // Reject fully transparent rgba/hsla values that visually make QR invisible
+      if (/^rgba\([^)]*,\s*0(?:\.0+)?\s*\)$/.test(v)) return false;
+      if (/^hsla\([^)]*,\s*0(?:\.0+)?\s*\)$/.test(v)) return false;
       return true;
     };
     // 1. Спочатку перевіряємо збережений qrColor

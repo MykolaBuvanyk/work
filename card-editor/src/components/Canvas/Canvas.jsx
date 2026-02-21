@@ -25,6 +25,7 @@ const LOCK_ARCH_HEIGHT_MM = 8;
 // Параметри панелі керування
 const TOP_PANEL_GAP = 25; // від рамки до центру кнопок (CSS px)
 const BOTTOM_ROTATE_GAP = 25; // від рамки до центру кнопки обертання
+const ROTATE_BUTTON_DIAMETER = 36;
 const PANEL_BUTTON_DIAMETER = 24; // діаметр кнопки
 const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
 const PANEL_BG_WIDTH = 163; // ширина фону меню (CSS px)
@@ -83,16 +84,6 @@ const Canvas = ({ className }) => {
       selection: true,
     });
 
-    // Гарантуємо, що верхній шар Fabric (контроли/меню редагування) завжди над контентом canvas.
-    // Це робить меню редагування візуально вище за будь-який текст/об'єкти на полотні.
-    try {
-      if (fCanvas.lowerCanvasEl?.style) {
-        fCanvas.lowerCanvasEl.style.zIndex = '1';
-      }
-      if (fCanvas.upperCanvasEl?.style) {
-        fCanvas.upperCanvasEl.style.zIndex = '2147483647';
-      }
-    } catch { }
     // Утилиты: скрыть/показать hiddenTextarea Fabric, чтобы не мигал нативный курсор
     const applyHiddenTextareaStyle = ta => {
       try {
@@ -161,6 +152,46 @@ const Canvas = ({ className }) => {
         const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
         texts.forEach(t => bringCanvasObjectToFront(t));
       } catch { }
+    };
+
+    const getActionPanelCenterY = (minY, maxY) => {
+      const s = scaleRef.current || 1;
+      const panelHalf = PANEL_BG_HEIGHT / 2 / s;
+      const preferredTop = minY - TOP_PANEL_GAP / s;
+      const preferredBottom = maxY + TOP_PANEL_GAP / s;
+      const canvasH =
+        (designRef.current && designRef.current.height) ||
+        (typeof fCanvas.getHeight === 'function' ? fCanvas.getHeight() : 0);
+
+      let cy = preferredTop;
+      if (preferredTop - panelHalf < 0) {
+        cy = preferredBottom;
+      }
+
+      if (canvasH > 0) {
+        const minCy = panelHalf;
+        const maxCy = Math.max(panelHalf, canvasH - panelHalf);
+        cy = Math.max(minCy, Math.min(maxCy, cy));
+      }
+
+      return cy;
+    };
+
+    const getActionPanelCenterX = (minX, maxX) => {
+      const s = scaleRef.current || 1;
+      const panelHalf = PANEL_BG_WIDTH / 2 / s;
+      const preferred = (minX + maxX) / 2;
+      const canvasW =
+        (designRef.current && designRef.current.width) ||
+        (typeof fCanvas.getWidth === 'function' ? fCanvas.getWidth() : 0);
+
+      let cx = preferred;
+      if (canvasW > 0) {
+        const minCx = panelHalf;
+        const maxCx = Math.max(panelHalf, canvasW - panelHalf);
+        cx = Math.max(minCx, Math.min(maxCx, cx));
+      }
+      return cx;
     };
 
     // Snapping (auto-alignment) while dragging: snap to other objects' edges/centers + show blue guide lines
@@ -494,6 +525,42 @@ const Canvas = ({ className }) => {
       setShapePropertiesOpen(false);
     });
 
+    // Deselect active object when clicking/tapping outside the canvas or its controls
+    const outsideClickHandler = e => {
+      try {
+        const el = e?.target;
+        // Consider only the actual fabric canvas DOM elements as "inside".
+        // This allows clicks on wrapper/labels/shadow to count as outside and clear selection.
+        const roots = [
+          canvasRef.current,
+          fCanvas && fCanvas.upperCanvasEl,
+          fCanvas && fCanvas.lowerCanvasEl,
+        ];
+        const clickedInside = roots.some(r => r && typeof r.contains === 'function' && r.contains(el));
+        // If the click happened inside the Shape Properties panel, ignore it.
+        try {
+          if (el && typeof el.closest === 'function' && el.closest('[data-shape-properties]')) return;
+        } catch { }
+
+        if (clickedInside) return;
+
+        try {
+          const active = fCanvas.getActiveObject && fCanvas.getActiveObject();
+          if (active) {
+            if (active.isEditing && typeof active.exitEditing === 'function') active.exitEditing();
+            try {
+              fCanvas.discardActiveObject && fCanvas.discardActiveObject();
+            } catch { }
+            fCanvas.requestRenderAll && fCanvas.requestRenderAll();
+          }
+        } catch { }
+
+        setActiveObject(null);
+        setShapePropertiesOpen(false);
+      } catch { }
+    };
+    document.addEventListener('pointerdown', outsideClickHandler, true);
+
     const handleActionPanelClick = e => {
       try {
         const active = fCanvas.getActiveObject?.();
@@ -518,8 +585,8 @@ const Canvas = ({ className }) => {
         const minY = Math.min(...ys);
 
         const s = scaleRef.current || 1;
-        const panelCx = (minX + maxX) / 2;
-        const panelCy = minY - TOP_PANEL_GAP / s;
+        const panelCx = getActionPanelCenterX(minX, maxX);
+        const panelCy = getActionPanelCenterY(minY, Math.max(...ys));
 
         const halfW = PANEL_BG_WIDTH / 2 / s;
         const halfH = PANEL_BG_HEIGHT / 2 / s;
@@ -1517,14 +1584,66 @@ const Canvas = ({ className }) => {
       const topCenterPos = (dim, m, o) => {
         const b = getAABB(o);
         if (!b) return new fabric.Point(0, 0);
-        const s = scaleRef.current || 1;
-        return new fabric.Point((b.minX + b.maxX) / 2, b.minY - TOP_PANEL_GAP / s);
+        return new fabric.Point(
+          getActionPanelCenterX(b.minX, b.maxX),
+          getActionPanelCenterY(b.minY, b.maxY)
+        );
       };
       const bottomCenterPos = (dim, m, o) => {
         const b = getAABB(o);
         if (!b) return new fabric.Point(0, 0);
         const s = scaleRef.current || 1;
-        return new fabric.Point((b.minX + b.maxX) / 2, b.maxY + BOTTOM_ROTATE_GAP / s);
+        const panelX = getActionPanelCenterX(b.minX, b.maxX);
+        const panelY = getActionPanelCenterY(b.minY, b.maxY);
+        const preferredBottomY = b.maxY + BOTTOM_ROTATE_GAP / s;
+        const rotateHalf = ROTATE_BUTTON_DIAMETER / 2 / s;
+        const canvasH =
+          (designRef.current && designRef.current.height) ||
+          (typeof fCanvas.getHeight === 'function' ? fCanvas.getHeight() : 0);
+
+        // Default: under the selected object
+        let rotateY = preferredBottomY;
+        let rotateX = (b.minX + b.maxX) / 2;
+
+        // Clamp rotateX to stay within canvas bounds (like menu)
+        if (canvasH > 0) {
+          const s = scaleRef.current || 1;
+          const canvasW =
+            (designRef.current && designRef.current.width) ||
+            (typeof fCanvas.getWidth === 'function' ? fCanvas.getWidth() : 0);
+          const rotateHalf = ROTATE_BUTTON_DIAMETER / 2 / s;
+          if (canvasW > 0) {
+            const minX = rotateHalf;
+            const maxX = Math.max(rotateHalf, canvasW - rotateHalf);
+            rotateX = Math.max(minX, Math.min(maxX, rotateX));
+          }
+        }
+
+        // If action panel has jumped below the object (near top edge),
+        // place rotate control below the panel to avoid overlap with the object.
+        const panelIsBelowObject = panelY >= b.maxY;
+        if (panelIsBelowObject) {
+          const stackedOffset =
+            (PANEL_BG_HEIGHT / 2 + ROTATE_BUTTON_DIAMETER / 2 + PANEL_BUTTON_GAP) / s;
+          rotateX = panelX;
+          rotateY = panelY + stackedOffset;
+        }
+
+        // If control falls below canvas, mirror it above the action panel
+        if (canvasH > 0 && preferredBottomY + rotateHalf > canvasH) {
+          const stackedOffset =
+            (PANEL_BG_HEIGHT / 2 + ROTATE_BUTTON_DIAMETER / 2 + PANEL_BUTTON_GAP) / s;
+          rotateX = panelX;
+          rotateY = panelY - stackedOffset;
+        }
+
+        if (canvasH > 0) {
+          const minY = rotateHalf;
+          const maxY = Math.max(rotateHalf, canvasH - rotateHalf);
+          rotateY = Math.max(minY, Math.min(maxY, rotateY));
+        }
+
+        return new fabric.Point(rotateX, rotateY);
       };
 
       // Helper: detect circle-like objects (must keep 1:1 aspect)
@@ -1744,8 +1863,8 @@ const Canvas = ({ className }) => {
         actionName: 'rotate',
         actionHandler: fabric.controlsUtils.rotationWithSnapping,
         render: renderRotateIcon,
-        sizeX: 36 / (scaleRef.current || 1),
-        sizeY: 36 / (scaleRef.current || 1),
+        sizeX: ROTATE_BUTTON_DIAMETER / (scaleRef.current || 1),
+        sizeY: ROTATE_BUTTON_DIAMETER / (scaleRef.current || 1),
       });
     };
 
@@ -2465,8 +2584,8 @@ const Canvas = ({ className }) => {
             panelHcss = 33;
           const panelW = panelWcss / s,
             panelH = panelHcss / s;
-          const panelCx = (minX + maxX) / 2;
-          const panelCy = minY - TOP_PANEL_GAP / s;
+          const panelCx = getActionPanelCenterX(minX, maxX);
+          const panelCy = getActionPanelCenterY(minY, maxY);
           const px = panelCx - panelW / 2;
           const py = panelCy - panelH / 2;
           const pr = 4 / s;
@@ -2675,6 +2794,9 @@ const Canvas = ({ className }) => {
 
     return () => {
       window.removeEventListener('resize', resizeToViewport);
+      try {
+        document.removeEventListener('pointerdown', outsideClickHandler, true);
+      } catch { }
       fCanvas.off('before:render', clearTop);
       fCanvas.off('after:render', drawFrame);
       fCanvas.off('display:scale', onDisplayScale);

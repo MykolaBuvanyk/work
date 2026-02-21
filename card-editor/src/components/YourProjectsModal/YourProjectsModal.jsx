@@ -15,7 +15,9 @@ import {
   addUnsavedSignFromSnapshot,
   exportCanvas,
   addCanvasesFromProjectsToUnsavedSigns,
-  transferUnsavedSignsToProjectByIds
+  transferUnsavedSignsToProjectByIds,
+  restoreElementProperties,
+  extractToolbarState,
 } from "../../utils/projectStorage";
 
 
@@ -117,6 +119,65 @@ const YourProjectsModal = ({ onClose }) => {
 
   const { canvas } = useCanvasContext();
 
+  const loadCanvasWithRestore = async (canvasEntry) => {
+    if (!canvas || !canvasEntry?.json || typeof canvas.loadFromJSON !== "function") return;
+
+    const toolbarState = canvasEntry?.toolbarState || extractToolbarState(canvasEntry);
+    canvas.__suspendUndoRedo = true;
+
+    try {
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+        try {
+          const maybePromise = canvas.loadFromJSON(canvasEntry.json, done);
+          if (maybePromise && typeof maybePromise.then === "function") {
+            maybePromise.then(done).catch((err) => {
+              if (settled) return;
+              settled = true;
+              reject(err);
+            });
+          }
+        } catch (e) {
+          if (!settled) {
+            settled = true;
+            reject(e);
+          }
+        }
+      });
+
+      await restoreElementProperties(canvas, toolbarState);
+
+      try {
+        canvas.set?.("hasSavedTheme", true);
+      } catch {}
+
+      try {
+        if (typeof window.restoreToolbarState === "function") {
+          window.restoreToolbarState(toolbarState);
+        }
+      } catch {}
+
+      setTimeout(() => {
+        try {
+          if (typeof window.forceApplySavedTheme === "function") {
+            window.forceApplySavedTheme(toolbarState);
+          }
+        } catch {}
+      }, 60);
+
+      try {
+        canvas.renderAll();
+      } catch {}
+    } finally {
+      canvas.__suspendUndoRedo = false;
+    }
+  };
+
   const handleDelete = async (id) => {
     try { await deleteProject(id); } catch {}
     try {
@@ -162,12 +223,8 @@ const YourProjectsModal = ({ onClose }) => {
             window.__currentProjectCanvasIndex = 0;
           }
         } catch {}
-        if (canvas && first.json && typeof canvas.loadFromJSON === "function") {
-          canvas.__suspendUndoRedo = true;
-          canvas.loadFromJSON(first.json, () => {
-            try { canvas.renderAll(); } catch {}
-            canvas.__suspendUndoRedo = false;
-          });
+        if (canvas && first?.json) {
+          await loadCanvasWithRestore(first);
         }
       } else if (canvas) {
         // Empty project - clear current canvas
@@ -305,14 +362,8 @@ const YourProjectsModal = ({ onClose }) => {
           }
         } catch {}
 
-        if (canvas && addedCanvas?.json && typeof canvas.loadFromJSON === "function") {
-          canvas.__suspendUndoRedo = true;
-          canvas.loadFromJSON(addedCanvas.json, () => {
-            try {
-              canvas.renderAll();
-            } catch {}
-            canvas.__suspendUndoRedo = false;
-          });
+        if (canvas && addedCanvas?.json) {
+          await loadCanvasWithRestore(addedCanvas);
         }
 
         try {

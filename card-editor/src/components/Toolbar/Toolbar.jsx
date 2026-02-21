@@ -79,6 +79,40 @@ const HOLE_FILL_COLOR = '#FFFFFF';
 const HOLE_ID_PREFIX = 'hole';
 const DEFAULT_RECT_CANVAS_CORNER_RADIUS_MM = 2;
 const SIZE_INPUT_DEBOUNCE_MS = 1000;
+const COLOR_THEME_PRESETS = [
+  { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 1, textColor: '#0000FF', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 2, textColor: '#FF0000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 3, textColor: '#FFFFFF', backgroundColor: '#000000', backgroundType: 'solid' },
+  { index: 4, textColor: '#FFFFFF', backgroundColor: '#0000FF', backgroundType: 'solid' },
+  { index: 5, textColor: '#FFFFFF', backgroundColor: '#FF0000', backgroundType: 'solid' },
+  { index: 6, textColor: '#FFFFFF', backgroundColor: '#018001', backgroundType: 'solid' },
+  { index: 7, textColor: '#000000', backgroundColor: '#FFFF00', backgroundType: 'solid' },
+  { index: 8, textColor: '#000000', backgroundColor: '#F0F0F0', backgroundType: 'gradient' },
+  { index: 9, textColor: '#FFFFFF', backgroundColor: '#8B4513', backgroundType: 'solid' },
+  { index: 10, textColor: '#FFFFFF', backgroundColor: '#FFA500', backgroundType: 'solid' },
+  { index: 11, textColor: '#FFFFFF', backgroundColor: '#808080', backgroundType: 'solid' },
+  { index: 12, textColor: '#000000', backgroundColor: '/textures/Wood.jpg', backgroundType: 'texture' },
+  { index: 13, textColor: '#FFFFFF', backgroundColor: '/textures/Carbon.jpg', backgroundType: 'texture' },
+];
+
+const normalizeThemeValue = value =>
+  typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+const inferThemeIndexByColors = (textColor, backgroundColor, backgroundType = 'solid') => {
+  const txt = normalizeThemeValue(textColor);
+  const bg = normalizeThemeValue(backgroundColor);
+  const type = normalizeThemeValue(backgroundType || 'solid') || 'solid';
+  const found = COLOR_THEME_PRESETS.find(theme => {
+    return (
+      normalizeThemeValue(theme.textColor) === txt &&
+      normalizeThemeValue(theme.backgroundColor) === bg &&
+      normalizeThemeValue(theme.backgroundType) === type
+    );
+  });
+  return found ? found.index : 0;
+};
+
 const Toolbar = ({ formData }) => {
   const {
     canvas,
@@ -1343,6 +1377,13 @@ const Toolbar = ({ formData }) => {
           const parsed = Number(incoming.selectedColorIndex);
           return Number.isFinite(parsed) ? parsed : prev;
         });
+      } else if (incoming.globalColors) {
+        const inferredIndex = inferThemeIndexByColors(
+          incoming.globalColors.textColor,
+          incoming.globalColors.backgroundColor,
+          incoming.globalColors.backgroundType
+        );
+        setSelectedColorIndex(inferredIndex);
       }
 
       if (incoming.isAdhesiveTape !== undefined) {
@@ -1555,7 +1596,14 @@ const Toolbar = ({ formData }) => {
         delete window.recreateBorder;
       }
     };
-  }, [canvas, applyToolbarState, ensureBorderPresence, getBorderColor, getToolbarState, thickness]);
+  }, [
+    canvas,
+    applyToolbarState,
+    ensureBorderPresence,
+    getBorderColor,
+    getToolbarState,
+    thickness,
+  ]);
 
   // НОВИЙ: Окремий useEffect для forceRestoreCanvasShape (після updateSize)
   useEffect(() => {
@@ -2772,7 +2820,11 @@ const Toolbar = ({ formData }) => {
   // Застосовуємо дефолтну схему кольорів при завантаженні
   useEffect(() => {
     if (canvas) {
-      updateColorScheme('#000000', '#FFFFFF', 'solid', 0);
+      const hasObjects = (canvas.getObjects?.() || []).length > 0;
+      const hasSavedTheme = !!canvas.get?.('hasSavedTheme');
+      if (!hasObjects && !hasSavedTheme) {
+        updateColorScheme('#000000', '#FFFFFF', 'solid', 0);
+      }
     }
   }, [canvas]);
 
@@ -3810,14 +3862,28 @@ const Toolbar = ({ formData }) => {
       const prevW = canvas.getWidth?.() || canvas.width || 0;
       const prevH = canvas.getHeight?.() || canvas.height || 0;
 
+      // Detect if only cornerRadius was edited (no width/height change).
+      const onlyCornerEdited =
+        Object.prototype.hasOwnProperty.call(overrides, 'cornerRadiusMm') &&
+        (
+          overrides.__editedKey === 'cornerRadius' ||
+          (!Object.prototype.hasOwnProperty.call(overrides, 'widthMm') &&
+            !Object.prototype.hasOwnProperty.call(overrides, 'heightMm'))
+        );
+
       // Встановлюємо нові розміри canvas
       canvas.setDimensions({ width, height });
 
-      // Keep elements in the same relative position after resize.
-      repositionObjectsForResize(prevW, prevH, width, height);
+      // If only the corner radius changed, avoid repositioning/rescaling objects.
+      // Resizing objects here causes unexpected size changes for user objects
+      // when we only tweak visual corner rounding. Preserve objects in-place.
+      if (!onlyCornerEdited) {
+        // Keep elements in the same relative position after resize.
+        repositionObjectsForResize(prevW, prevH, width, height);
 
-      // Keep certain newly-added elements within 60% of canvas after resize.
-      enforceAutoFitObjects();
+        // Keep certain newly-added elements within 60% of canvas after resize.
+        enforceAutoFitObjects();
+      }
 
       // Створюємо новий clipPath з новими розмірами
       let newClipPath = null;
@@ -6070,6 +6136,31 @@ const Toolbar = ({ formData }) => {
     if (selectedColorIndex === idx) return; // нічого не робимо якщо вже вибрано
     updateColorScheme(textColor, bgColor, type, idx);
   };
+
+  const forceApplySavedTheme = useCallback(
+    toolbarState => {
+      const colors = toolbarState?.globalColors || {};
+      const textColor = colors.textColor || '#000000';
+      const backgroundType = colors.backgroundType || 'solid';
+      const backgroundColor = colors.backgroundColor || '#FFFFFF';
+      const explicitIndex = Number(toolbarState?.selectedColorIndex);
+      const idx = Number.isFinite(explicitIndex)
+        ? explicitIndex
+        : inferThemeIndexByColors(textColor, backgroundColor, backgroundType);
+
+      updateColorScheme(textColor, backgroundColor, backgroundType, idx);
+    },
+    [updateColorScheme]
+  );
+
+  useEffect(() => {
+    window.forceApplySavedTheme = forceApplySavedTheme;
+    return () => {
+      if (window.forceApplySavedTheme === forceApplySavedTheme) {
+        delete window.forceApplySavedTheme;
+      }
+    };
+  }, [forceApplySavedTheme]);
 
   // Додавання тексту
   const addText = () => {

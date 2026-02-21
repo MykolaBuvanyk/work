@@ -1611,7 +1611,7 @@ const ShapeProperties = ({
   })();
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay} data-shape-properties="true" onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.titleWrapper}>
           <h3 className={styles.title}>Shape</h3>

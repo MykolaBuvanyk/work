@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './CartAuthModal.scss';
 import MyTextInput from '../MyInput/MyTextInput';
 import MyTextPassword from '../MyInput/MyTextPassword';
@@ -59,12 +60,13 @@ const CartAuthModal = ({ isOpen, onClose }) => {
     setIsForgotPass(prev => !prev);
   };
 
-  return (
+  return createPortal(
     <div onClick={onClose} className="cart-auth-modal__overlay">
-      <div onClick={(e)=>{e.stopPropagation();}} role="dialog" aria-modal>
+      <div className="cart-auth-modal__panel" onClick={(e)=>{e.stopPropagation();}} role="dialog" aria-modal="true">
         <LoginForm toRegister onSuccess={onClose} />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

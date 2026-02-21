@@ -160,6 +160,7 @@ const HOLE_SHAPE_QUERY = HOLE_SHAPE_TAGS.join(", ");
 const BACKGROUND_ATTR = "data-layout-background";
 const SHAPE_TYPE_ATTRIBUTE = "data-shape-type";
 const ENGRAVING_CAPSULE_ATTRIBUTE = "data-shape-engraving-capsule";
+const CLIPPER_MITER_LIMIT = 8;
 const ENGRAVING_LINE_TYPES = new Set(["line", "dashedline"]);
 const ENGRAVING_LINE_ID_PREFIXES = ["shape-line-", "shape-dashed-line-"];
 const GENERIC_SHAPE_ID_PREFIX = "shape-";
@@ -233,7 +234,46 @@ const gatherPathItems = (scope, item, acc = []) => {
   return acc;
 };
 
-const pathItemToClipperInput = (scope, pathItem) => {
+const shouldUseRoundOffsetJoins = (shapeNode) => {
+  if (!shapeNode?.getAttribute) return false;
+
+  const toPositiveNumber = (raw) => {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const rx = toPositiveNumber(shapeNode.getAttribute("rx"));
+  const ry = toPositiveNumber(shapeNode.getAttribute("ry"));
+  if (rx > 0 || ry > 0) return true;
+
+  const roundedHints = [
+    "data-shape-corner-radius-mm",
+    "data-corner-radius-mm",
+    "data-shape-corner-radius-px",
+    "data-corner-radius-px",
+    "data-shape-display-corner-radius-mm",
+    "data-display-corner-radius-mm",
+  ];
+
+  if (roundedHints.some((attr) => toPositiveNumber(shapeNode.getAttribute(attr)) > 0)) {
+    return true;
+  }
+
+  const shapeType = (shapeNode.getAttribute(SHAPE_TYPE_ATTRIBUTE) || "")
+    .trim()
+    .toLowerCase();
+  if (
+    shapeType.includes("round") ||
+    shapeType === "circle" ||
+    shapeType === "ellipse"
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const pathItemToClipperInput = (scope, pathItem, { forceRoundJoin = false } = {}) => {
   if (!pathItem || !ClipperLib) return null;
   const clone = pathItem.clone({ insert: false });
   clone.closed = true;
@@ -261,7 +301,7 @@ const pathItemToClipperInput = (scope, pathItem) => {
   return {
     clipperPath,
     hasCurves,
-    joinType: hasCurves
+    joinType: forceRoundJoin || hasCurves
       ? ClipperLib.JoinType.jtRound
       : ClipperLib.JoinType.jtMiter,
   };
@@ -292,8 +332,11 @@ const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
       return null;
     }
 
+    const forceRoundJoin = shouldUseRoundOffsetJoins(shapeNode);
     const clipperInputs = pathItems
-      .map((pathItem) => pathItemToClipperInput(scope, pathItem))
+      .map((pathItem) =>
+        pathItemToClipperInput(scope, pathItem, { forceRoundJoin })
+      )
       .filter(Boolean);
 
     if (!clipperInputs.length) {
@@ -304,7 +347,7 @@ const buildInnerContourPathData = (scope, shapeNode, offsetDistancePx) => {
     const arcTolerance = clipperInputs.some((entry) => entry.hasCurves)
       ? 0.05
       : 0.25;
-    const offsetter = new ClipperLib.ClipperOffset(2, arcTolerance);
+    const offsetter = new ClipperLib.ClipperOffset(CLIPPER_MITER_LIMIT, arcTolerance);
 
     clipperInputs.forEach((entry) => {
       offsetter.AddPath(
@@ -2343,12 +2386,10 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     if (!node || processed.has(node)) return;
     processed.add(node);
 
-    // If the template does not contain an explicit blue outline node (usually `#canvaShape`),
-    // we must keep a blue contour AND a green contour on the same geometry.
-    // In that case, create a blue copy of this border node before recoloring it to green.
-    const hasBlueMainOutline = Boolean(rootElement.querySelector?.('[id="canvaShape"]'));
+    // Keep a visible blue contour for custom border export preview.
+    // Insert the blue copy AFTER the green node so it is not visually hidden.
     const baseId = node.getAttribute("id") || "";
-    if (!hasBlueMainOutline || baseId === "canvaShape") {
+    if (baseId !== "canvaShape") {
       try {
         const blueCopy = node.cloneNode(true);
         if (blueCopy && typeof blueCopy.setAttribute === "function") {
@@ -2369,7 +2410,7 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
             blueCopy.getAttribute("stroke-linecap") || "round"
           );
           blueCopy.setAttribute("vector-effect", "non-scaling-stroke");
-          node.parentNode?.insertBefore(blueCopy, node);
+          node.parentNode?.insertBefore(blueCopy, node.nextSibling);
         }
       } catch {
         // ignore

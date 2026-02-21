@@ -846,17 +846,14 @@ const Toolbar = ({ formData }) => {
       let borderShape = null;
       switch (clip.type) {
         case 'rect': {
-          // IMPORTANT: If a stroked rect sits exactly on the canvas bounds,
-          // half of the stroke can be clipped by the HTML canvas edge and look thinner (often noticeable on the right).
-          // To keep the OUTER edge on the canvas boundary while keeping the full stroke visible,
-          // inset the rect geometry by strokeWidth/2 (i.e., reduce width/height by strokeWidth).
-          const insetPx = !makeMask ? strokeForBorder / 2 : 0;
-          const rectWidth = !makeMask ? Math.max(0, baseWidth - strokeForBorder) : baseWidth;
-          const rectHeight = !makeMask ? Math.max(0, baseHeight - strokeForBorder) : baseHeight;
+          // Keep border geometry equal to clip size: no inset, otherwise contour loses
+          // approximately one stroke width (~0.43mm for current default setup).
+          const rectWidth = baseWidth;
+          const rectHeight = baseHeight;
           const rxRaw = clip.rx ?? 0;
           const ryRaw = clip.ry ?? 0;
-          const rx = !makeMask ? Math.max(0, rxRaw - insetPx) : rxRaw;
-          const ry = !makeMask ? Math.max(0, ryRaw - insetPx) : ryRaw;
+          const rx = rxRaw;
+          const ry = ryRaw;
 
           borderShape = new fabric.Rect({
             ...baseOpts,

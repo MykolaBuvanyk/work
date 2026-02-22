@@ -77,7 +77,7 @@ const TextList = () => {
     const canvasWidthMm = pxToMm(canvasInstance?.getWidth?.() || 0);
     const canvasHeightMm = pxToMm(canvasInstance?.getHeight?.() || 0);
     const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
-    const sizeMm = Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)));
+    const sizeMm = Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)) * 1.8);
     return Math.max(MIN_FONT_MM, Math.min(MAX_FONT_MM_INT, sizeMm || BASE_TEXT_SIZE_MM));
   };
 

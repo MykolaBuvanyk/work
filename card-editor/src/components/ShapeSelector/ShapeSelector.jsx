@@ -258,7 +258,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
           const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
           const defaultTextSizeMm = Math.max(
             MIN_TEXT_SIZE_MM,
-            Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1))) || BASE_TEXT_SIZE_MM
+            Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)) * 1.8) || BASE_TEXT_SIZE_MM
           );
 
         shape = new fabric.IText("Новий текст", {

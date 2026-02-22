@@ -231,13 +231,33 @@ const ShapeProperties = ({
   const DEFAULT_THICKNESS_MM = 0.5;
   const DEFAULT_THICKNESS_PX = mmToPx(DEFAULT_THICKNESS_MM);
 
-  const getOuterSizePx = (obj) => {
+  const shouldIgnoreStrokeInDimensions = (obj) => {
+    if (!obj) return false;
+    const isManualCut = !!obj.isCutElement || obj.cutType === "manual";
+    const fillMeta =
+      typeof obj.hasFillEnabled === "boolean"
+        ? obj.hasFillEnabled
+        : typeof obj?.data?.hasFillEnabled === "boolean"
+          ? obj.data.hasFillEnabled
+          : null;
+    const fillVal = obj.fill;
+    const hasVisibleFill =
+      typeof fillVal === "string" &&
+      fillVal !== "" &&
+      fillVal !== "transparent" &&
+      fillVal !== "none";
+
+    return isManualCut || fillMeta === true || hasVisibleFill;
+  };
+
+  const getOuterSizePx = (obj, options = {}) => {
+    const includeStroke = options.includeStroke !== false;
     if (!obj) return { width: 0, height: 0 };
     const baseW = Number(obj.width) || 0;
     const baseH = Number(obj.height) || 0;
     const scaleX = Math.abs(Number(obj.scaleX) || 1);
     const scaleY = Math.abs(Number(obj.scaleY) || 1);
-    const strokeWidth = Math.max(0, Number(obj.strokeWidth) || 0);
+    const strokeWidth = includeStroke ? Math.max(0, Number(obj.strokeWidth) || 0) : 0;
     const strokeUniform = obj.strokeUniform === true;
     const strokeW = strokeUniform ? strokeWidth : strokeWidth * scaleX;
     const strokeH = strokeUniform ? strokeWidth : strokeWidth * scaleY;
@@ -247,6 +267,11 @@ const ShapeProperties = ({
       height: Math.max(0, baseH * scaleY + strokeH),
     };
   };
+
+  const getDisplaySizePx = (obj) =>
+    getOuterSizePx(obj, {
+      includeStroke: !shouldIgnoreStrokeInDimensions(obj),
+    });
 
   const solveScaleForOuterSize = (opts) => {
     const {
@@ -921,8 +946,8 @@ const ShapeProperties = ({
           );
           storeFillMetadata(activeObject, !isManualCut && hasFill);
           setProperties({
-            width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
-            height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
+            width: roundMm(pxToMm(getDisplaySizePx(activeObject).width)),
+            height: roundMm(pxToMm(getDisplaySizePx(activeObject).height)),
             rotation: Math.round(activeObject.angle || 0),
             cornerRadius:
               activeObject.type === "rect" ||
@@ -1032,8 +1057,8 @@ const ShapeProperties = ({
         );
         storeFillMetadata(activeObject, !isManualCut && hasFill);
         setProperties({
-          width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
-          height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
+          width: roundMm(pxToMm(getDisplaySizePx(activeObject).width)),
+          height: roundMm(pxToMm(getDisplaySizePx(activeObject).height)),
           rotation: Math.round(activeObject.angle || 0),
           cornerRadius:
             activeObject.type === "rect" ||
@@ -1130,8 +1155,8 @@ const ShapeProperties = ({
     storeThicknessMetadata(activeObject, pxToMm(activeObject.strokeWidth ?? 0));
     storeFillMetadata(activeObject, !isManualCut && hasFill);
     setProperties({
-      width: roundMm(pxToMm(getOuterSizePx(activeObject).width)),
-      height: roundMm(pxToMm(getOuterSizePx(activeObject).height)),
+      width: roundMm(pxToMm(getDisplaySizePx(activeObject).width)),
+      height: roundMm(pxToMm(getDisplaySizePx(activeObject).height)),
       rotation: Math.round(activeObject.angle || 0),
       cornerRadius:
         activeObject.type === "rect" ||
@@ -1227,7 +1252,9 @@ const ShapeProperties = ({
         const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
           const baseW = Number(o.width) || 1;
-          const sw = Number(o.strokeWidth) || 0;
+          const sw = shouldIgnoreStrokeInDimensions(o)
+            ? 0
+            : Number(o.strokeWidth) || 0;
           const strokeUniform = o.strokeUniform === true;
           const signX = (o.scaleX || 1) < 0 ? -1 : 1;
           const signY = (o.scaleY || 1) < 0 ? -1 : 1;
@@ -1258,7 +1285,9 @@ const ShapeProperties = ({
         const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
           const baseH = Number(o.height) || 1;
-          const sw = Number(o.strokeWidth) || 0;
+          const sw = shouldIgnoreStrokeInDimensions(o)
+            ? 0
+            : Number(o.strokeWidth) || 0;
           const strokeUniform = o.strokeUniform === true;
           const signX = (o.scaleX || 1) < 0 ? -1 : 1;
           const signY = (o.scaleY || 1) < 0 ? -1 : 1;
@@ -1341,7 +1370,7 @@ const ShapeProperties = ({
 
           // Важливо: зміна thickness впливає на outer size (width/height).
           // Оновлюємо UI одразу, не чекаючи подій/перевибору об'єкта.
-          const outer = getOuterSizePx(o);
+          const outer = getDisplaySizePx(o);
           setProperties((prev) => ({
             ...prev,
             thickness: roundMm(applied),
@@ -1553,9 +1582,9 @@ const ShapeProperties = ({
 
     switch (property) {
       case "width":
-        return roundMm(pxToMm(getOuterSizePx(obj).width));
+        return roundMm(pxToMm(getDisplaySizePx(obj).width));
       case "height":
-        return roundMm(pxToMm(getOuterSizePx(obj).height));
+        return roundMm(pxToMm(getDisplaySizePx(obj).height));
       case "rotation":
         return Math.round(obj.angle || 0);
       case "cornerRadius":

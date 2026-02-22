@@ -784,7 +784,7 @@ export const useUndoRedo = () => {
           // Перегенеровуємо QR коди
           const recreateQrPromise = Promise.resolve().then(async () => {
             if (!qrToRecreate?.length) return;
-            
+
             const fabricLib = fabric?.fabric || fabric?.default || fabric;
             if (!fabricLib?.loadSVGFromString) return;
 
@@ -829,6 +829,30 @@ export const useUndoRedo = () => {
                   qrColor: color,
                   backgroundColor: "transparent",
                 });
+
+                // Before adding, remove any existing QR object with same qrText
+                try {
+                  const existing = (canvas.getObjects && canvas.getObjects()) || [];
+                  for (const ex of existing.slice()) {
+                    if (!ex) continue;
+                    const exText = (ex.qrText?.toString().trim()) || (ex.data?.qrText?.toString().trim()) || null;
+                    if (exText && q.qrText && exText === q.qrText) {
+                      try { canvas.remove(ex); } catch (e) {}
+                      break;
+                    }
+                    const exChildren = Array.isArray(ex.objects) ? ex.objects : null;
+                    if (exChildren && exChildren.length) {
+                      const hasQrLayer = exChildren.some(c => c && (c.id === QR_DISPLAY_LAYER_ID || c.id === QR_EXPORT_LAYER_ID));
+                      if (hasQrLayer) {
+                        const innerText = (ex.qrText?.toString().trim()) || (ex.data?.qrText?.toString().trim()) || null;
+                        if (!innerText || innerText === q.qrText) {
+                          try { canvas.remove(ex); } catch (e) {}
+                          break;
+                        }
+                      }
+                    }
+                  }
+                } catch (e) {}
 
                 canvas.add(obj);
                 obj.setCoords?.();

@@ -50,7 +50,8 @@ const Header = () => {
     },
     {
       name: 'Templates',
-      url: '/templates',
+      name: 'FAQ',
+      url: '/faq',
     },
     {
       name: 'Products',
@@ -91,12 +92,12 @@ const Header = () => {
           url: '/',
         },
         {
-          name: 'Templates',
-          url: '/templates',
-        },
-        {
           name: 'Products',
           url: '/products',
+        },
+        {
+          name: 'FAQ',
+          url: '/faq',
         },
         {
           name: 'Quick Guide',

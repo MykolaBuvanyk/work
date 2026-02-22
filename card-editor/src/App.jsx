@@ -12,6 +12,7 @@ import LanguageGuard from './LanguageGuard';
 import './App.css';
 import Contacts from './components/Contacts/Contacts';
 import QuickGuide from './components/QuickGuide/QuickGuide';
+import FAQPage from './components/FAQ/FAQPage';
 import UpdateBaner from './components/UpdateBaner/UpdateBaner';
 import Account from './components/Account/Account';
 import AccountSetting from './components/Account/AccountSetting';
@@ -28,6 +29,7 @@ function App() {
   const mainRoutes = (
     <>
       <Route index element={<Home />} />
+    <Route path="faq" element={<FAQPage />} />
       <Route path="login" element={<Login />} />
       <Route path="login/enter/:id" element={<Enter />} />
       <Route path="terms-of-purchasing" element={<TermsOfPurchasing />} />

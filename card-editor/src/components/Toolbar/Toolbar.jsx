@@ -6175,7 +6175,7 @@ const Toolbar = ({ formData }) => {
       const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
       let defaultFontSizeMm = Math.max(
         MIN_FONT_MM,
-        Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1))) || BASE_TEXT_SIZE_MM
+        Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)) * 1.8) || BASE_TEXT_SIZE_MM
       );
 
       try {

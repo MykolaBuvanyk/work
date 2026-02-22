@@ -7,7 +7,6 @@ import styles from "./YourProjectsModal.module.css";
 import { 
   getAllProjects, 
   deleteProject, 
-  formatDate, 
   getProject,
   addCanvasesFromProjectsToCurrentProject,
   clearAllUnsavedSigns,
@@ -23,13 +22,34 @@ import {
 
 
 const YourProjectsModal = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState("saved");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3; // по 3 записи на сторінку
+  const itemsPerPage = 6;
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]); // Для чекбоксів
   const [isCartConfirmOpen, setIsCartConfirmOpen] = useState(false);
+
+  const formatDateTimeParts = (ts) => {
+    if (typeof ts !== "number" || ts <= 0) {
+      return { date: "-", time: "" };
+    }
+
+    try {
+      const dateObj = new Date(ts);
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const yyyy = dateObj.getFullYear();
+      const hh = String(dateObj.getHours()).padStart(2, "0");
+      const min = String(dateObj.getMinutes()).padStart(2, "0");
+
+      return {
+        date: `${dd} - ${mm} - ${yyyy}`,
+        time: `${hh}:${min}`,
+      };
+    } catch {
+      return { date: "-", time: "" };
+    }
+  };
 
   useEffect(() => {
     getAllProjects()
@@ -43,7 +63,11 @@ const YourProjectsModal = ({ onClose }) => {
           return {
           id: p.id,
           name: p.name,
-          date: formatDate(ts),
+          lastDateSavedTs: ts,
+          lastOrderDateTs:
+            typeof p?.lastOrderedAt === "number" && p.lastOrderedAt > 0
+              ? p.lastOrderedAt
+              : 0,
           sortTs: ts,
           images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
           };
@@ -562,8 +586,12 @@ const YourProjectsModal = ({ onClose }) => {
         </svg>
       </div>
       <div className={styles.addInfoWrapper}>
-        You can choose from your saved projects and add them to your current
-        projects or place an ORDER.
+        <span className={styles.infoText}>
+          You can choose from your saved projects or place an ORDER.
+        </span>
+        <span className={styles.infoTextSecondary}>
+          Also, you can add selected projects to the current project.
+        </span>
         <button
           type="button"
           disabled={isCartDisabled}
@@ -580,7 +608,7 @@ const YourProjectsModal = ({ onClose }) => {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <g clip-path="url(#clip0_129_5336)">
+            <g clipPath="url(#clip0_129_5336)">
               <path
                 d="M2.36288 1.59688C2.23226 1.07448 1.7029 0.756878 1.1805 0.887491C0.658101 1.0181 0.340497 1.54747 0.471109 2.06987L1.41699 1.83337L2.36288 1.59688ZM5.7855 15.3866L6.37156 14.6074L5.7855 15.3866ZM3.26984 9.39747L4.21799 9.17023L3.26984 9.39747ZM5.62058 15.2566L6.24173 14.505L5.62058 15.2566ZM20.6846 9.84737L21.6327 10.0746L20.6846 9.84737ZM18.7326 14.9944L18.0495 14.2986L18.7326 14.9944ZM17.954 15.6084L18.4714 16.4348L17.954 15.6084ZM20.6139 6.19302L21.2831 5.48392L20.6139 6.19302ZM20.9455 6.61347L21.791 6.12798L20.9455 6.61347ZM13.3338 9.10837C12.7953 9.10837 12.3588 9.5449 12.3588 10.0834C12.3588 10.6219 12.7953 11.0584 13.3338 11.0584V10.0834V9.10837ZM16.0838 11.8584C15.5453 11.8584 15.1088 12.2949 15.1088 12.8334C15.1088 13.3719 15.5453 13.8084 16.0838 13.8084V12.8334V11.8584ZM2.382 5.69302V6.66802H17.4082V5.69302V4.71802H2.382V5.69302ZM12.4938 16.3071V15.3321H12.0311V16.3071V17.2821H12.4938V16.3071ZM3.26984 9.39747L4.21799 9.17023L3.33015 5.46578L2.382 5.69302L1.43385 5.92026L2.32169 9.62472L3.26984 9.39747ZM2.382 5.69302L3.32788 5.45653L2.36288 1.59688L1.41699 1.83337L0.471109 2.06987L1.43612 5.92952L2.382 5.69302ZM12.0311 16.3071V15.3321C10.3341 15.3321 9.14499 15.3305 8.22431 15.2235C7.32829 15.1194 6.79369 14.9249 6.37156 14.6074L5.7855 15.3866L5.19943 16.1658C6.00105 16.7688 6.91531 17.0345 7.99919 17.1605C9.0584 17.2836 10.3802 17.2821 12.0311 17.2821V16.3071ZM3.26984 9.39747L2.32169 9.62472C2.70647 11.2302 3.01305 12.5159 3.37964 13.5173C3.75476 14.5419 4.22628 15.3691 4.99944 16.0081L5.62058 15.2566L6.24173 14.505C5.83459 14.1685 5.52089 13.694 5.21079 12.8469C4.89215 11.9765 4.61351 10.8205 4.21799 9.17023L3.26984 9.39747ZM5.7855 15.3866L6.37156 14.6074C6.32751 14.5743 6.28422 14.5402 6.24173 14.505L5.62058 15.2566L4.99944 16.0081C5.06489 16.0622 5.13157 16.1148 5.19943 16.1658L5.7855 15.3866ZM12.4938 16.3071V17.2821C13.9221 17.2821 15.0658 17.2832 15.9897 17.1898C16.9332 17.0944 17.7387 16.8936 18.4714 16.4348L17.954 15.6084L17.4366 14.7821C17.0535 15.0219 16.577 15.1704 15.7935 15.2497C14.9903 15.3309 13.9617 15.3321 12.4938 15.3321V16.3071ZM18.7326 14.9944L18.0495 14.2986C17.8633 14.4815 17.6578 14.6436 17.4366 14.7821L17.954 15.6084L18.4714 16.4348C18.8122 16.2215 19.1287 15.9718 19.4156 15.6902L18.7326 14.9944ZM17.4082 5.69302V6.66802C18.3255 6.66802 18.924 6.66974 19.3633 6.72334C19.7865 6.77498 19.8992 6.85912 19.9447 6.90211L20.6139 6.19302L21.2831 5.48392C20.7988 5.02692 20.2007 4.86106 19.5994 4.7877C19.0143 4.7163 18.2749 4.71802 17.4082 4.71802V5.69302ZM20.6846 9.84737L21.6327 10.0746C21.8347 9.23184 22.0087 8.51315 22.0757 7.92752C22.1444 7.32577 22.1226 6.70541 21.791 6.12798L20.9455 6.61347L20.1 7.09896C20.1311 7.15328 20.1867 7.28249 20.1383 7.70606C20.088 8.14575 19.9502 8.72813 19.7364 9.62013L20.6846 9.84737ZM20.6139 6.19302L19.9447 6.90211C20.0058 6.95978 20.0581 7.0261 20.1 7.09896L20.9455 6.61347L21.791 6.12798C21.6541 5.88959 21.483 5.67259 21.2831 5.48392L20.6139 6.19302ZM19.7504 12.8334V11.8584H16.0838V12.8334V13.8084H19.7504V12.8334ZM20.628 10.0834V9.10837L13.3338 9.10837V10.0834V11.0584L20.628 11.0584V10.0834ZM20.6846 9.84737L19.7364 9.62013C19.7173 9.69993 19.6985 9.7785 19.6799 9.85594L20.628 10.0834L21.5761 10.3108C21.5947 10.2331 21.6136 10.1544 21.6327 10.0746L20.6846 9.84737ZM20.628 10.0834L19.6799 9.85594C19.4064 10.996 19.1967 11.8535 18.9784 12.5366L19.9071 12.8334L20.8359 13.1301C21.0804 12.3649 21.307 11.4325 21.5761 10.3108L20.628 10.0834ZM19.9071 12.8334L18.9784 12.5366C18.6858 13.4522 18.41 13.9448 18.0495 14.2986L18.7326 14.9944L19.4156 15.6902C20.1046 15.0138 20.5027 14.1728 20.8359 13.1301L19.9071 12.8334ZM19.7504 12.8334V13.8084H19.9071V12.8334V11.8584H19.7504V12.8334Z"
                 fill="#1EA600"
@@ -627,20 +655,6 @@ const YourProjectsModal = ({ onClose }) => {
           </div>
         </div>
       )}
-      <div className={styles.savedOrderedWrapper}>
-        <button
-          className={activeTab === "saved" ? styles.active : ""}
-          onClick={() => setActiveTab("saved")}
-        >
-          Saved
-        </button>
-        <button
-          className={activeTab === "ordered" ? styles.active : ""}
-          onClick={() => setActiveTab("ordered")}
-        >
-          Ordered
-        </button>
-      </div>
       <div className={styles.projectsTableWrapper}>
         <table className={styles.table}>
           <tbody>
@@ -648,15 +662,16 @@ const YourProjectsModal = ({ onClose }) => {
               <td></td>
               <td>Nr.</td>
               <td>Name</td>
-              <td>Date</td>
+              <td>Last date saved</td>
+              <td>Last order date</td>
               <td>Image</td>
+              <td></td>
               <td></td>
             </tr>
 
             {currentProjects.map((project, index) => {
-              const imageWidth = 115; // Припускаємо, що ширина зображення 115px (54px висота + маржин)
-              const marginRight = 10; // Відповідно до CSS margin-right: 10px
-              const totalImageWidth = imageWidth + marginRight;
+              const savedAt = formatDateTimeParts(project.lastDateSavedTs);
+              const orderedAt = formatDateTimeParts(project.lastOrderDateTs);
 
               return (
                 <tr key={project.id} className={styles.tr}>
@@ -668,19 +683,28 @@ const YourProjectsModal = ({ onClose }) => {
                     />
                   </td>
                   <td>{startIndex + index + 1}</td>
-                  <td>{project.name}</td>
-                  <td>{project.date}</td>
+                  <td className={styles.projectNameCell}>{project.name}</td>
+                  <td className={styles.dateCell}>
+                    <span>{savedAt.date}</span>
+                    {savedAt.time ? <span>{savedAt.time}</span> : null}
+                  </td>
+                  <td className={styles.dateCell}>
+                    <span>{orderedAt.date}</span>
+                    {orderedAt.time ? <span>{orderedAt.time}</span> : null}
+                  </td>
                   <td>
                     <div className={styles.imageSlider}>
-                      {needsSliderButtons(project) && (
-                        <button
-                          className={styles.prevBtn}
-                          onClick={() => handleSlideChange(project.id, "prev")}
-                          disabled={(currentSlideIndex[project.id] || 0) === 0}
-                        >
-                          &lt;&lt;
-                        </button>
-                      )}
+                      <button
+                        className={styles.prevBtn}
+                        onClick={() => handleSlideChange(project.id, "prev")}
+                        disabled={
+                          !needsSliderButtons(project) ||
+                          (currentSlideIndex[project.id] || 0) === 0
+                        }
+                        aria-label="Previous images"
+                      >
+                        &lt;
+                      </button>
 
                       <div className={styles.imagesContainer}>
                         {getVisibleImages(project).map((image, imgIndex) => (
@@ -695,18 +719,18 @@ const YourProjectsModal = ({ onClose }) => {
                         ))}
                       </div>
 
-                      {needsSliderButtons(project) && (
-                        <button
-                          className={styles.nextBtn}
-                          onClick={() => handleSlideChange(project.id, "next")}
-                          disabled={
-                            (currentSlideIndex[project.id] || 0) >=
+                      <button
+                        className={styles.nextBtn}
+                        onClick={() => handleSlideChange(project.id, "next")}
+                        disabled={
+                          !needsSliderButtons(project) ||
+                          (currentSlideIndex[project.id] || 0) >=
                             Math.ceil(project.images.length / 3) - 1
-                          }
-                        >
-                          &gt;&gt;
-                        </button>
-                      )}
+                        }
+                        aria-label="Next images"
+                      >
+                        &gt;
+                      </button>
                     </div>
                   </td>
                   <td>
@@ -767,6 +791,27 @@ const YourProjectsModal = ({ onClose }) => {
                       </li>
                     </ul>
                   </td>
+                  <td>
+                    <div className={styles.shareCell} title="Share Project">
+                      <svg
+                        width="23"
+                        height="23"
+                        viewBox="0 0 23 23"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <g clipPath="url(#clip0_8598_5095)">
+                          <path d="M16.1719 20.6434H1.34766V8.51453H6.73828V7.16687H0V21.9911H17.5195V15.2528H16.1719V20.6434Z" fill="black"/>
+                          <path d="M5.39062 18.6219H6.73828C6.73828 14.1633 10.3656 10.536 14.8242 10.536V14.6725L23 7.84067L14.8242 1.00891V5.16742C9.61054 5.50865 5.39062 9.84046 5.39062 15.2537V18.6219ZM15.4981 6.49302L16.1719 6.49297V3.89123L20.8983 7.84067L16.1719 11.7902V9.18838H14.8242C11.5182 9.18838 8.60393 10.8978 6.91891 13.4792C7.74157 9.4969 11.2758 6.49342 15.4981 6.49302Z" fill="#006CA4"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_8598_5095">
+                            <rect width="23" height="23" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
@@ -805,13 +850,14 @@ const YourProjectsModal = ({ onClose }) => {
         {/* Пагінація */}
         {projects.length > itemsPerPage && (
           <div className={styles.pagination}>
-            <button
-              className={styles.pageBtn}
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              &lt;&lt;
-            </button>
+              <button
+                className={styles.pageBtn}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                &lt;&lt;
+              </button>
 
             {ranges.map((range) => (
               <button
@@ -819,6 +865,7 @@ const YourProjectsModal = ({ onClose }) => {
                 className={`${styles.pageBtn} ${
                   currentPage === range.page ? styles.activePage : ""
                 }`}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setCurrentPage(range.page)}
               >
                 {range.start}–{range.end}
@@ -827,6 +874,7 @@ const YourProjectsModal = ({ onClose }) => {
 
             <button
               className={styles.pageBtn}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
             >

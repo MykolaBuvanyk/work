@@ -7,22 +7,22 @@
   box-shadow: 0 0 24px 0 rgba(0, 0, 0, 0.25);
   z-index: 2000;
   border-radius: 8px;
-  width: 1000px;
-  padding: 40px 50px;
+  width: 950px;
+  padding: 30px 24px;
   max-height: 90vh;
 }
 .headerWrapper {
   position: relative;
   text-align: center;
-  font-size: 16px;
+  font-weight: 700;
   color: rgba(0, 108, 164, 1);
-  padding: 15px 40px;
+  padding: 12px 32px;
 }
 
 .headerWrapper svg {
   position: absolute;
-  top: -30px;
-  right: -40px;
+  top: 2px;
+  right: 4px;
   cursor: pointer;
 }
 .headerWrapperText {
@@ -72,39 +72,77 @@
   align-items: center;
   gap: 10px;
 }
+/* Make the SaveAs input explicitly white with dark text */
+.inputName {
+  background-color: #ffffff;
+  color: #000000;
+  border: 1px solid #e6e6e6;
+  padding: 2px 4px;
+}
+/* Remove focus/active outlines and borders for buttons inside the modal */
+.yourProjectsModal button:focus,
+.yourProjectsModal button:active,
+.yourProjectsModal button:focus-visible,
+.yourProjectsModal .pageBtn:focus,
+.yourProjectsModal .pageBtn:active,
+.yourProjectsModal .pageBtn:focus-visible,
+.yourProjectsModal button::-moz-focus-inner,
+.yourProjectsModal .pageBtn::-moz-focus-inner {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  transition: none !important;
+}
+
+/* Prevent tap highlight (mobile) and any transient focus visuals */
+.yourProjectsModal button,
+.yourProjectsModal .pageBtn {
+  -webkit-tap-highlight-color: transparent;
+}
 /* Table */
 table {
   border-collapse: separate;
-  width: max-content;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 12px;
 }
-input[type="checkbox"] {
-  margin-top: 8px;
+/* ensure padding is included in width calculations for td */
+table td {
+  box-sizing: border-box;
 }
+/* checkbox removed in JSX */
+
+/* Column allocations (width + right padding included via box-sizing)
+   Numbering: 10px width + 70px right padding = 80px
+   Name: 150px width + 70px right padding = 220px
+   Date: 100px width + 50px right padding = 150px
+   Rest allocated to image column */
 table td:nth-child(1) {
-  padding-right: 15px;
+  width: 10px;
+  padding-left: 0;
+  padding-right: 70px;
 }
 
 table td:nth-child(2) {
+  width: 150px;
   padding-left: 0;
-  padding-right: 65px;
+  padding-right: 70px;
 }
 
 table td:nth-child(3) {
+  width: 100px;
   padding-left: 0;
-  padding-right: 115px;
+  padding-right: 50px;
 }
 
 table td:nth-child(4) {
+  /* remaining space for images and arrows */
   padding-left: 0;
-  padding-right: 45px;
+  padding-right: 0;
 }
-
-table td:nth-child(5) {
-  padding-left: 0;
-  padding-right: 45px;
-  width: 375px;
-}
-table td:nth-child(5) img {
+table td:nth-child(4) img {
   max-height: 54px;
 }
 table td {
@@ -113,25 +151,31 @@ table td {
 /* Slider */
 .imageSlider {
   position: relative;
-  width: 375px; /* ширина як у td */
-  display: flex;
+  width: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 18px 1fr 18px;
   align-items: center;
-  justify-content: flex-start;
+  column-gap: 8px;
+  padding: 0;
+  box-sizing: border-box;
 }
 .nextBtn,
 .prevBtn {
-  position: absolute; /* додати */
-  z-index: 10; /* додати */
+  display: inline-block;
+  margin: 0 4px;
   background-color: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  appearance: none;
+  color: #4f4f4f;
+  font-size: 12px;
+  line-height: 1;
   padding: 0;
-  margin: 0;
-}
-.prevBtn {
-  left: -30px; /* позиція зліва */
-}
-
-.nextBtn {
-  right: -30px; /* позиція справа */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: center;
 }
 .prevBtn:disabled,
 .nextBtn:disabled,
@@ -149,7 +193,9 @@ table td {
 
 .imageSlider img {
   max-height: 54px;
-  margin-right: 10px;
+  margin: 0; /* remove extra right margin to match YourProjectsModal */
+  max-width: 100%;
+  display: block;
   flex-shrink: 0;
 }
 
@@ -185,9 +231,10 @@ table td {
 }
 
 .imagesContainer {
-  display: flex;
-  justify-content: flex-start; /* прижати до лівого краю */
-  gap: 0; /* прибрати фіксований gap */
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)); /* show 4 thumbnails per row */
+  gap: 15px; /* 15px gap between thumbnails to match YourProjectsModal */
   overflow: hidden;
   width: 100%;
 }
@@ -195,8 +242,24 @@ table td {
   flex-shrink: 0;
 }
 
-.imageItem:not(:first-child) {
-  margin-left: auto; /* або використовувати calc для рівномірного розподілу */
+.imageItem {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+}
+
+.projectsTableWrapper {
+  width: 100%;
+  overflow: auto;
+}
+
+/* Ensure project name wraps like in YourProjectsModal */
+.projectNameCell {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .actionList {
   display: flex;

@@ -766,6 +766,39 @@ export async function deleteProject(id) {
   });
 }
 
+export async function markProjectAsOrdered(projectId, orderedAt = Date.now()) {
+  if (!projectId) return null;
+
+  try {
+    const existing = await getProject(projectId);
+    if (!existing) return null;
+
+    const nextTimestamp = Number.isFinite(Number(orderedAt))
+      ? Number(orderedAt)
+      : Date.now();
+
+    const updated = {
+      ...existing,
+      lastOrderedAt: nextTimestamp,
+      updatedAt: Math.max(Number(existing.updatedAt || 0), nextTimestamp),
+    };
+
+    await putProject(updated);
+
+    try {
+      window.dispatchEvent(
+        new CustomEvent("project:canvasesUpdated", {
+          detail: { projectId: updated.id },
+        })
+      );
+    } catch {}
+
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
 export function uuid() {
   // RFC4122-ish simple UUID
   return (

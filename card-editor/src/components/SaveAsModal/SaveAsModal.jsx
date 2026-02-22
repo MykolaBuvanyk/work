@@ -9,8 +9,9 @@ import { getAllProjects, formatDate } from "../../utils/projectStorage";
 const SaveAsModal = ({ onClose, onSaveAs }) => {
   const [activeTab, setActiveTab] = useState("saved");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3; // по 3 записи на сторінку
+  const itemsPerPage = 6; // по 6 записів на сторінку
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
+  const perSlide = 4; // кількість прев'ю на слайд
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
 
@@ -39,6 +40,8 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
     loadProjects();
   }, []);
 
+  // За замовчуванням залишаємо першу сторінку (перші 7 проєктів)
+
   // 3. Ініціалізація слайдерів для кожного проекту
   useEffect(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -57,11 +60,11 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
   // 4. Логіка переключення слайдера
   const handleSlideChange = (projectId, direction) => {
     const project = projects.find((p) => p.id === projectId);
-    if (!project || project.images.length <= 3) return;
+    if (!project || project.images.length <= perSlide) return;
 
     setCurrentSlideIndex((prev) => {
       const currentIndex = prev[projectId] || 0;
-      const maxSlides = Math.ceil(project.images.length / 3) - 1;
+      const maxSlides = Math.ceil(project.images.length / perSlide) - 1;
 
       let newIndex;
       if (direction === "next") {
@@ -76,13 +79,13 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
 
   // 5. Функція для отримання видимих зображень
   const getVisibleImages = (project) => {
-    const startIndex = (currentSlideIndex[project.id] || 0) * 3;
-    return project.images.slice(startIndex, startIndex + 3);
+    const startIndex = (currentSlideIndex[project.id] || 0) * perSlide;
+    return project.images.slice(startIndex, startIndex + perSlide);
   };
 
   // 6. Перевірка чи потрібні кнопки слайдера
   const needsSliderButtons = (project) => {
-    return project.images.length > 3;
+    return project.images.length > perSlide;
   };
   // Вираховуємо кількість сторінок
   const totalPages = Math.ceil(projects.length / itemsPerPage || 1);
@@ -131,7 +134,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
         </svg>
       </div>
       <div className={styles.buttonsWrapper}>
-        <button onClick={async () => {
+        <button onMouseDown={(e)=>e.preventDefault()} onClick={async () => {
           if (onSaveAs) {
             await onSaveAs(name);
             // Невелика затримка щоб дати час IndexedDB оновити дані
@@ -168,7 +171,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
           </svg>
           Save
         </button>
-        <button onClick={onClose}>
+        <button onMouseDown={(e)=>e.preventDefault()} onClick={onClose}>
           <svg
             width="24"
             height="24"
@@ -198,7 +201,6 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
         <table className={styles.table}>
           <tbody>
             <tr className={styles.tr}>
-              <td></td>
               <td>Nr.</td>
               <td>Name</td>
               <td>Date</td>
@@ -212,21 +214,20 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
 
               return (
                 <tr key={project.id} className={styles.tr}>
-                  <td>
-                    <input type="checkbox" />
-                  </td>
                   <td>{startIndex + index + 1}</td>
-                  <td>{project.name}</td>
+                  <td className={styles.projectNameCell}>{project.name}</td>
                   <td>{project.date}</td>
                   <td>
                     <div className={styles.imageSlider}>
                       {needsSliderButtons(project) && (
                         <button
                           className={styles.prevBtn}
+                          onMouseDown={(e)=>e.preventDefault()}
                           onClick={() => handleSlideChange(project.id, "prev")}
                           disabled={(currentSlideIndex[project.id] || 0) === 0}
+                          aria-label="Previous images"
                         >
-                          &lt;&lt;
+                          &lt;
                         </button>
                       )}
 
@@ -246,13 +247,15 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                       {needsSliderButtons(project) && (
                         <button
                           className={styles.nextBtn}
+                          onMouseDown={(e)=>e.preventDefault()}
                           onClick={() => handleSlideChange(project.id, "next")}
                           disabled={
                             (currentSlideIndex[project.id] || 0) >=
-                            Math.ceil(project.images.length / 3) - 1
+                            Math.ceil(project.images.length / perSlide) - 1
                           }
+                          aria-label="Next images"
                         >
-                          &gt;&gt;
+                          &gt;
                         </button>
                       )}
                     </div>
@@ -268,6 +271,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
           <div className={styles.pagination}>
             <button
               className={styles.pageBtn}
+              onMouseDown={(e)=>e.preventDefault()}
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
             >
@@ -280,6 +284,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                 className={`${styles.pageBtn} ${
                   currentPage === range.page ? styles.activePage : ""
                 }`}
+                onMouseDown={(e)=>e.preventDefault()}
                 onClick={() => setCurrentPage(range.page)}
               >
                 {range.start}–{range.end}
@@ -288,6 +293,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
 
             <button
               className={styles.pageBtn}
+              onMouseDown={(e)=>e.preventDefault()}
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
             >

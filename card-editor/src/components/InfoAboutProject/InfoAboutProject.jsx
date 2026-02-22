@@ -8,6 +8,7 @@ import CartSaveProjectModal from "../CartSaveProjectModal/CartSaveProjectModal";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import { saveNewProject } from "../../utils/projectStorage";
 import { saveCurrentProject } from "../../utils/projectStorage";
+import { markProjectAsOrdered } from "../../utils/projectStorage";
 import { addProjectToCart } from "../../http/cart";
 import { jwtDecode } from "jwt-decode";
 import Checkout from "../checkout/checkout";
@@ -278,7 +279,23 @@ const InfoAboutProject = () => {
         }
       } catch {}
 
-      await addProjectToCart(payload);
+      const cartResult = await addProjectToCart(payload);
+
+      try {
+        const orderedAtTs = (() => {
+          const fromOrder = Date.parse(cartResult?.order?.createdAt || "");
+          if (Number.isFinite(fromOrder) && fromOrder > 0) return fromOrder;
+          const fromCreated = Date.parse(cartResult?.createdAt || "");
+          if (Number.isFinite(fromCreated) && fromCreated > 0) return fromCreated;
+          return Date.now();
+        })();
+
+        const targetProjectId = String(project?.id || currentProjectId || "").trim();
+        if (targetProjectId) {
+          await markProjectAsOrdered(targetProjectId, orderedAtTs);
+        }
+      } catch {}
+
       return true;
     } catch (e) {
       console.error("Failed to add to cart", e);

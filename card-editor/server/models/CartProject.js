@@ -20,6 +20,9 @@ const CartProjectSchema = new mongoose.Schema(
     // Accessories snapshot from UI
     accessories: { type: mongoose.Schema.Types.Mixed, default: [] },
 
+    // Checkout snapshot from UI
+    checkout: { type: mongoose.Schema.Types.Mixed, default: null },
+
     status: {
       type: String,
       enum: ['pending', 'submitted', 'paid', 'cancelled'],

@@ -263,6 +263,8 @@ const InfoAboutProject = () => {
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),
           deliveryAddress: checkoutTotals?.deliveryAddress || null,
+          invoiceAddress: checkoutTotals?.invoiceAddress || null,
+          invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),
         },
         manufacturerNote:
           typeof window.getManufacturerNote === "function"

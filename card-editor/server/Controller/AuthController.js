@@ -26,6 +26,7 @@ class AuthController {
       const {
         email,
         eMailInvoice,
+        weWill,
         type,
         company,
         vatNumber,
@@ -110,6 +111,7 @@ class AuthController {
         city2: city2 || null,
         country2: country2 || null,
         state2: state2 || null,
+        weWill: weWill || null,
         password: hashedPassword,
       });
       console.log(94234324);

@@ -67,6 +67,9 @@ const normalizeMaterialColorLabel = (value) =>
 const resolveDeliveryType = (order) =>
   String(order?.deliveryType || order?.orderMongo?.checkout?.deliveryLabel || '').trim();
 
+const resolveInvoiceEmails = (order) =>
+  String(order?.orderMongo?.checkout?.invoiceEmail || order?.user?.weWill || '').trim();
+
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
   const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
@@ -138,6 +141,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [frameSpacingMm, setFrameSpacingMm] = useState(3);
   const [pdfSignSpacing, setPdfSignSpacing] = useState(2);
   const [pdfSortOrder, setPdfSortOrder] = useState('high-first');
+
+  const invoiceEmails = useMemo(() => resolveInvoiceEmails(order), [order]);
   const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
 
   const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
@@ -1021,6 +1026,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Phone:</p>
         <span>{order.user.phone}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Invoice emails:</p>
+        <span>{invoiceEmails || '---'}</span>
         <div />
       </div>
       <div className="row">

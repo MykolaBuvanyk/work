@@ -48,6 +48,7 @@ const AccoutDetail = () => {
       // Розподіляємо дані з fullUser по двох об'єктах стейту
       const addrData = {};
       addressFields.forEach(f => addrData[f.key] = user[f.key] || '');
+      addrData.weWill = user.weWill || '';
       setAddress(addrData);
 
       const invData = {};
@@ -129,6 +130,18 @@ const AccoutDetail = () => {
         <div className="grid-col">
           <h3>Address</h3>
           {renderTable(addressFields, address, setAddress)}
+
+          <div className="invoice-email-block">
+            <p>We will send the invoice to the e-mail you provided.</p>
+            <p>You can also add another e-mail, separated by a comma, if you wish.</p>
+
+            <div className="invoice-input-row">
+              <MyTextInput
+                value={address.weWill || ''}
+                setValue={handleInput(setAddress)('weWill')}
+              />
+            </div>
+          </div>
         </div>
         <div className="grid-col">
           <h3>Invoice or delivery address (if different from the left)</h3>

@@ -86,6 +86,20 @@ const INITIAL_DELIVERY_ADDRESS = {
 	mobile: '',
 }
 
+const INITIAL_INVOICE_ADDRESS = {
+	fullName: '',
+	companyName: '',
+	address1: '',
+	address2: '',
+	address3: '',
+	town: '',
+	postalCode: '',
+	country: '',
+	region: '',
+	email: '',
+	mobile: '',
+}
+
 const CHECKOUT_COUNTRY_STORAGE_KEY = 'checkout:selected-country'
 
 const readStoredCountrySelection = () => {
@@ -161,6 +175,9 @@ export default function Checkout({
 		...INITIAL_DELIVERY_ADDRESS,
 		...readStoredCountrySelection(),
 	}))
+	const [invoiceAddress, setInvoiceAddress] = useState(() => ({
+		...INITIAL_INVOICE_ADDRESS,
+	}))
 	const [deliveryConfig, setDeliveryConfig] = useState({ deliveryDE: [], deliveryOther: [] })
 	const [vatConfig, setVatConfig] = useState({})
 	const [isPhoneOk, setIsPhoneOk] = useState(false)
@@ -181,6 +198,7 @@ export default function Checkout({
 			const surname = String(user.surname || '').trim()
 			const fullName = [firstName, surname].filter(Boolean).join(' ')
 			const profileCountry = normalizeCountrySelection(user.country)
+			const invoiceCountry = normalizeCountrySelection(user.country2)
 
 			setDeliveryAddress(prev => ({
 				...prev,
@@ -197,6 +215,24 @@ export default function Checkout({
 				email: String(user.email || ''),
 				mobile: String(user.phone || ''),
 			}))
+
+			setInvoiceAddress(prev => ({
+				...prev,
+				...(String(prev.country || '').trim() || String(prev.region || '').trim()
+					? {}
+					: invoiceCountry),
+				fullName: String(user.firstName2 || ''),
+				companyName: String(user.company2 || ''),
+				address1: String(user.address4 || ''),
+				address2: String(user.address5 || ''),
+				address3: String(user.address6 || ''),
+				town: String(user.city2 || ''),
+				postalCode: String(user.postcode2 || ''),
+				email: String(user.eMailInvoice || ''),
+				mobile: String(user.phone2 || ''),
+			}))
+
+			setInvoiceEmail(String(user.weWill || ''))
 		}
 
 		const loadProfile = async () => {
@@ -342,6 +378,20 @@ export default function Checkout({
 		})
 	}
 
+	const updateInvoiceField = (field, value) => {
+		setInvoiceAddress(prev => {
+			if (field === 'country') {
+				const selected = COUNTRY_OPTIONS.find(item => item.name === value)
+				return {
+					...prev,
+					country: value,
+					region: selected?.code || '',
+				}
+			}
+			return { ...prev, [field]: value }
+		})
+	}
+
 	const handlePlaceOrder = e => {
 		e?.preventDefault?.()
 		if (!String(deliveryAddress?.country || '').trim()) {
@@ -357,6 +407,8 @@ export default function Checkout({
 				vatPercent: Number(vatPercentForCheckout || 0),
 				vatAmount: Number(vatAmountForCheckout || 0),
 				deliveryAddress,
+				invoiceAddress: isInvoiceDifferent ? invoiceAddress : null,
+				invoiceEmail: isInvoiceDifferent ? String(invoiceEmail || '') : '',
 			})
 		}
 	}
@@ -527,7 +579,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											{(isBusiness || isInvoiceDifferent) && (
+											{(isBusiness) && (
 												<FieldRow id='companyName' label='Company Name'>
 													<input
 														id='companyName'
@@ -708,6 +760,146 @@ export default function Checkout({
 											label='Invoice address (if different from above)'
 											strong
 										/>
+
+										{isInvoiceDifferent && (
+											<fieldset className='address-card'>
+												<legend className='address-card__legend'>
+													Invoice address
+												</legend>
+
+												<div className='field-row-wrap'>
+													<FieldRow id='invoiceFullName' label='First name and surname'>
+														<input
+															id='invoiceFullName'
+															name='invoiceFullName'
+															type='text'
+															value={invoiceAddress.fullName}
+															onChange={e => updateInvoiceField('fullName', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceCompanyName' label='Company Name'>
+														<input
+															id='invoiceCompanyName'
+															name='invoiceCompanyName'
+															type='text'
+															value={invoiceAddress.companyName}
+															onChange={e => updateInvoiceField('companyName', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceAddress1' label='Address 1'>
+														<input
+															id='invoiceAddress1'
+															name='invoiceAddress1'
+															type='text'
+															value={invoiceAddress.address1}
+															onChange={e => updateInvoiceField('address1', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceAddress2' label='Address 2'>
+														<input
+															id='invoiceAddress2'
+															name='invoiceAddress2'
+															type='text'
+															value={invoiceAddress.address2}
+															onChange={e => updateInvoiceField('address2', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceAddress3' label='Address 3'>
+														<input
+															id='invoiceAddress3'
+															name='invoiceAddress3'
+															type='text'
+															value={invoiceAddress.address3}
+															onChange={e => updateInvoiceField('address3', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceTown' label='Town'>
+														<input
+															id='invoiceTown'
+															name='invoiceTown'
+															type='text'
+															value={invoiceAddress.town}
+															onChange={e => updateInvoiceField('town', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoicePostalCode' label='Postal code'>
+														<input
+															id='invoicePostalCode'
+															name='invoicePostalCode'
+															type='text'
+															value={invoiceAddress.postalCode}
+															onChange={e => updateInvoiceField('postalCode', e.target.value)}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceCountry' label='Country'>
+														<select
+															className='select-country'
+															id='invoiceCountry'
+															name='invoiceCountry'
+															value={invoiceAddress.country}
+															onChange={e => updateInvoiceField('country', e.target.value)}
+															required
+														>
+															<option value='' disabled>
+																Select country
+															</option>
+															{COUNTRY_OPTIONS.map(country => (
+																<option key={`invoice-${country.code}`} value={country.name}>
+																	{country.name}
+																</option>
+															))}
+														</select>
+
+														<select
+															className='select-region'
+															id='invoiceRegion'
+															name='invoiceRegion'
+															aria-label='Invoice region'
+															value={invoiceAddress.region}
+															onChange={e => updateInvoiceField('region', e.target.value)}
+															disabled
+														>
+															<option value=''></option>
+															{COUNTRY_OPTIONS.map(country => (
+																<option key={`invoice-${country.code}-region`} value={country.code}>
+																	{country.code}
+																</option>
+															))}
+														</select>
+													</FieldRow>
+
+													<FieldRow id='invoiceEmailAddress' label='E-Mail address'>
+														<input
+															id='invoiceEmailAddress'
+															name='invoiceEmailAddress'
+															type='email'
+															value={invoiceAddress.email}
+															onChange={e => {
+																setInvoiceEmail(e.target.value)
+																updateInvoiceField('email', e.target.value)
+															}}
+														/>
+													</FieldRow>
+
+													<FieldRow id='invoiceMobile' label='Mobile Phone'>
+														<input
+															id='invoiceMobile'
+															name='invoiceMobile'
+															type='tel'
+															value={invoiceAddress.mobile}
+															onChange={e => updateInvoiceField('mobile', e.target.value)}
+														/>
+													</FieldRow>
+												</div>
+											</fieldset>
+										)}
 									</div>
 								</section>
 

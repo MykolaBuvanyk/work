@@ -208,6 +208,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const normalizedAccessories = normalizeAccessories(body.accessories);
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
+    const checkoutSnapshot = body?.checkout && typeof body.checkout === 'object' ? body.checkout : null;
     const checkoutDeliveryLabel = String(body?.checkout?.deliveryLabel || body?.deliveryType || '').trim();
     const checkoutCountryRegion = String(body?.checkout?.deliveryAddress?.region || '').trim().toUpperCase();
     const checkoutCountryName = String(body?.checkout?.deliveryAddress?.country || '').trim();
@@ -222,6 +223,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       totalPrice: totalPriceInclVat,
       project,
       accessories: normalizedAccessories,
+      checkout: checkoutSnapshot,
       status: 'pending',
     });
 

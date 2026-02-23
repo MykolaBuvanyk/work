@@ -744,6 +744,7 @@ const Toolbar = ({ formData }) => {
       const { makeMask = false } = options || {};
       if (!canvas) return null;
       const clip = canvas.clipPath;
+      const canvasShapeType = canvas?.get?.('shapeType');
       const effectiveStroke = Math.max(0, thicknessPx);
       const metrics = deriveClipMetrics(clip);
       const baseWidth = metrics?.width || 0;
@@ -926,7 +927,11 @@ const Toolbar = ({ formData }) => {
             ? clip.points.map(p => ({ x: p.x, y: p.y }))
             : [];
           if (points.length > 0) {
-            const insetPx = !makeMask ? strokeForBorder / 2 : 0;
+            // Keep lock geometry equal to clip size: no inset, same rationale as rect fix
+            // (otherwise contour loses approximately one stroke width ~0.43mm).
+            const keepExactPolygonSize =
+              canvasShapeType === 'lock' || canvasShapeType === 'halfCircle';
+            const insetPx = !makeMask && !keepExactPolygonSize ? strokeForBorder / 2 : 0;
             const borderPoints = insetPx > 0 ? insetConvexPolygon(points, insetPx) : points;
             borderShape = new fabric.Polygon(borderPoints, baseOpts);
           }
@@ -969,10 +974,18 @@ const Toolbar = ({ formData }) => {
         const currentScaleX = borderShape.scaleX ?? 1;
         const currentScaleY = borderShape.scaleY ?? 1;
 
-        // NOTE: For circles/ellipses a simple scale-inset is geometrically correct.
-        // For polygons/paths it can create visible gaps because scaling is not a true normal offset.
+        // NOTE: For circles/ellipses we keep exact geometry for the requested shape family
+        // (circle, circleWithLine, circleWithCross, ellipse) to avoid losing ~0.43mm.
         const shouldScaleInset =
-          !makeMask && clip && (clip.type === 'circle' || clip.type === 'ellipse');
+          !makeMask &&
+          clip &&
+          (clip.type === 'circle' || clip.type === 'ellipse') &&
+          !(
+            canvasShapeType === 'circle' ||
+            canvasShapeType === 'circleWithLine' ||
+            canvasShapeType === 'circleWithCross' ||
+            canvasShapeType === 'ellipse'
+          );
         const insetScaleX =
           shouldScaleInset && baseWidth > 0 && baseWidth > strokeForBorder
             ? Math.max(0, (baseWidth - strokeForBorder) / baseWidth)

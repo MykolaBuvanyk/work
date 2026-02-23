@@ -250,6 +250,7 @@ const Toolbar = ({ formData }) => {
         };
         byDesign[key].count = nextCount;
         setEditableCopiesCount(nextCount);
+        if (!editableCopiesFocusedRef.current) setEditableCopiesDraft('0');
         return;
       }
 
@@ -347,9 +348,11 @@ const Toolbar = ({ formData }) => {
               added += 1;
             }
 
-            state.count = prevCount + added;
+            // Reset editable copies count for the source canvas to 0 after creating copies
+            state.count = 0;
             byDesign[key] = state;
-            setEditableCopiesCount(state.count);
+            setEditableCopiesCount(0);
+            if (!editableCopiesFocusedRef.current) setEditableCopiesDraft('0');
             try {
               window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
             } catch {}
@@ -515,10 +518,12 @@ const Toolbar = ({ formData }) => {
             added += 1;
           }
 
+          // After creating copies, reset the source canvas' editable copies to 0
           const finalCount = prevCount + added;
-          state.count = finalCount;
+          state.count = 0;
           byDesign[key] = state;
-          setEditableCopiesCount(finalCount);
+          setEditableCopiesCount(0);
+          if (!editableCopiesFocusedRef.current) setEditableCopiesDraft('0');
           const nextCanvasId = createdIds[0] || null;
           if (nextCanvasId) {
             try {
@@ -577,6 +582,8 @@ const Toolbar = ({ formData }) => {
       } finally {
         editableCopiesBusyRef.current = false;
         setIsEditableCopiesBusy(false);
+        // After any sync requested by user (arrows or blur/enter), reset the visible draft to 0
+        if (!editableCopiesFocusedRef.current) setEditableCopiesDraft('0');
       }
     },
     [canvas, currentDesignId, getEditableCopiesKey]
@@ -2649,6 +2656,32 @@ const Toolbar = ({ formData }) => {
     };
   };
 
+  const getCurrentCanvasDesignSizeMm = () => {
+    if (!canvas) {
+      return {
+        widthMm: Number(sizeValues?.width) || 0,
+        heightMm: Number(sizeValues?.height) || 0,
+      };
+    }
+    const storedW = Number(canvas.get?.('designWidthMm'));
+    const storedH = Number(canvas.get?.('designHeightMm'));
+    const actualWidthMm = Number(
+      pxToMm(typeof canvas.getWidth === 'function' ? canvas.getWidth() : canvas.width || 0).toFixed(1)
+    );
+    const actualHeightMm = Number(
+      pxToMm(typeof canvas.getHeight === 'function' ? canvas.getHeight() : canvas.height || 0).toFixed(1)
+    );
+    const widthMm =
+      Number.isFinite(storedW) && Math.abs(storedW - actualWidthMm) <= 0.2
+        ? Math.round(storedW * 10) / 10
+        : actualWidthMm;
+    const heightMm =
+      Number.isFinite(storedH) && Math.abs(storedH - actualHeightMm) <= 0.2
+        ? Math.round(storedH * 10) / 10
+        : actualHeightMm;
+    return { widthMm, heightMm };
+  };
+
   // (Видалено mouse:down: заважав drag якорів)
   useEffect(() => {
     if (!canvas) return;
@@ -3497,6 +3530,9 @@ const Toolbar = ({ formData }) => {
     const cornerRadiusMm = overrides.cornerRadiusMm ?? sizeValues.cornerRadius;
     const editedKey = overrides.__editedKey;
     const editedIsDecrease = !!overrides.__editedIsDecrease;
+    const hasWidthOverride = Object.prototype.hasOwnProperty.call(overrides, 'widthMm');
+    const hasHeightOverride = Object.prototype.hasOwnProperty.call(overrides, 'heightMm');
+    const hasCornerOverride = Object.prototype.hasOwnProperty.call(overrides, 'cornerRadiusMm');
 
     // ВИПРАВЛЕННЯ: Зберігаємо поточний cornerRadius прямо на canvas (в міліметрах)
     if (canvas && typeof canvas.set === 'function') {
@@ -3717,11 +3753,21 @@ const Toolbar = ({ formData }) => {
         // Встановлюємо розміри canvas
         canvas.setDimensions({ width: finalWidth, height: finalHeight });
 
-        // Keep elements in the same relative position after resize.
-        repositionObjectsForResize(prevW, prevH, finalWidth, finalHeight);
+        const dimensionsActuallyChanged =
+          Math.abs(finalWidth - prevW) > 1e-6 || Math.abs(finalHeight - prevH) > 1e-6;
+        const onlyCornerEdited =
+          hasCornerOverride &&
+          (editedKey === 'cornerRadius' ||
+            (!hasWidthOverride && !hasHeightOverride) ||
+            !dimensionsActuallyChanged);
 
-        // Keep certain newly-added elements within 60% of canvas after resize.
-        enforceAutoFitObjects();
+        if (!onlyCornerEdited && dimensionsActuallyChanged) {
+          // Keep elements in the same relative position after resize.
+          repositionObjectsForResize(prevW, prevH, finalWidth, finalHeight);
+
+          // Keep certain newly-added elements within 60% of canvas after resize.
+          enforceAutoFitObjects();
+        }
 
         // Створюємо clipPath з оновленими розмірами
         const triData = getAdaptiveTriangleData(finalWidth, finalHeight);
@@ -3861,15 +3907,15 @@ const Toolbar = ({ formData }) => {
 
       const prevW = canvas.getWidth?.() || canvas.width || 0;
       const prevH = canvas.getHeight?.() || canvas.height || 0;
+      const dimensionsActuallyChanged =
+        Math.abs(width - prevW) > 1e-6 || Math.abs(height - prevH) > 1e-6;
 
       // Detect if only cornerRadius was edited (no width/height change).
       const onlyCornerEdited =
-        Object.prototype.hasOwnProperty.call(overrides, 'cornerRadiusMm') &&
-        (
-          overrides.__editedKey === 'cornerRadius' ||
-          (!Object.prototype.hasOwnProperty.call(overrides, 'widthMm') &&
-            !Object.prototype.hasOwnProperty.call(overrides, 'heightMm'))
-        );
+        hasCornerOverride &&
+        (editedKey === 'cornerRadius' ||
+          (!hasWidthOverride && !hasHeightOverride) ||
+          !dimensionsActuallyChanged);
 
       // Встановлюємо нові розміри canvas
       canvas.setDimensions({ width, height });
@@ -3877,7 +3923,7 @@ const Toolbar = ({ formData }) => {
       // If only the corner radius changed, avoid repositioning/rescaling objects.
       // Resizing objects here causes unexpected size changes for user objects
       // when we only tweak visual corner rounding. Preserve objects in-place.
-      if (!onlyCornerEdited) {
+      if (!onlyCornerEdited && dimensionsActuallyChanged) {
         // Keep elements in the same relative position after resize.
         repositionObjectsForResize(prevW, prevH, width, height);
 
@@ -7665,6 +7711,8 @@ const Toolbar = ({ formData }) => {
       const wPx = mmToPx(widthMM);
       const totalHPx = mmToPx(totalHeightMM);
       canvas.setDimensions({ width: wPx, height: totalHPx });
+      canvas.set('designWidthMm', widthMM);
+      canvas.set('designHeightMm', totalHeightMM);
 
       // Генеруємо полігон: напівколо зверху по центру + прямокутник
       const buildLockPoints = () => {
@@ -8841,6 +8889,13 @@ const Toolbar = ({ formData }) => {
       cornerRadius: key === 'cornerRadius' ? value : baseSizeValues.cornerRadius,
     };
 
+    // Corner radius must never mutate canvas size.
+    if (key === 'cornerRadius') {
+      const canvasSizeMm = getCurrentCanvasDesignSizeMm();
+      next.width = canvasSizeMm.widthMm;
+      next.height = canvasSizeMm.heightMm;
+    }
+
     // --- Глобальні обмеження для картки ---
     // 1) Кожна сторона максимум 600 мм
     // 2) Якщо одна сторона > 295, інша не може бути > 295
@@ -8940,6 +8995,16 @@ const Toolbar = ({ formData }) => {
         newValue = 0;
       }
       let updated = { ...prev, [key]: newValue };
+
+      // Corner radius must never mutate canvas size.
+      if (key === 'cornerRadius') {
+        const canvasSizeMm = getCurrentCanvasDesignSizeMm();
+        updated = {
+          ...updated,
+          width: canvasSizeMm.widthMm,
+          height: canvasSizeMm.heightMm,
+        };
+      }
 
       // --- Глобальні обмеження для картки (аналогічно handleInputChange) ---
       const LIMIT_SIDE_MAX = 600;

@@ -675,10 +675,44 @@ const Canvas = ({ className }) => {
       if (panelHandled) return;
 
       const t = e.target;
-      // Якщо під курсором є текст — віддати йому пріоритет вибору
+      const active = fCanvas.getActiveObject?.();
+
+      // If pointer is on active object's transform control (corner/side/rotate),
+      // keep active object priority over overlapping text.
       try {
+        if (active && e?.e) {
+          const pt = fCanvas.getPointer?.(e.e);
+          let hitControl = false;
+
+          if (pt && typeof active._findTargetCorner === 'function') {
+            const corner = active._findTargetCorner(pt, false);
+            hitControl = !!corner;
+          }
+
+          if (!hitControl && pt && typeof active.findControl === 'function') {
+            const controlHit = active.findControl(pt, false);
+            hitControl = !!controlHit;
+          }
+
+          if (hitControl) {
+            try {
+              fCanvas.setActiveObject(active);
+              ensureActionControls(active);
+            } catch { }
+            return;
+          }
+        }
+      } catch { }
+
+      // Якщо під курсором є текст — віддати йому пріоритет вибору,
+      // але НЕ перехоплювати клік, коли вже редагуємо інший елемент
+      // (рамка/хендли активного об'єкта мають бути вище тексту).
+      try {
+        const hasActiveNonText = !!active && !isTextObj(active);
+        const shouldAllowTextPriority = !hasActiveNonText && (!t || isTextObj(t));
+
         const pt = fCanvas.getPointer?.(e.e);
-        if (pt) {
+        if (pt && shouldAllowTextPriority) {
           const textsUnder = (fCanvas.getObjects?.() || []).filter(isTextObj).filter(o => {
             try {
               return typeof o.containsPoint === 'function' ? o.containsPoint(pt) : false;

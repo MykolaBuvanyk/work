@@ -3,7 +3,7 @@
   background-color: #fff;
 
   .registration-table {
-    border: 1px solid #ccc;
+    border: 1px solid #777;
     border-radius: 4px;
     overflow: hidden;
     background-color: #FFFFFF;
@@ -46,6 +46,47 @@
           height: 28px;
         }
 
+        .vat-row{
+          display:flex;
+          align-items:center;
+          gap:7px;
+          width:100%;
+
+          .text-input-container{ /* MyTextInput wrapper */
+            flex:1 1 auto;
+          }
+
+          .vat-check-btn{
+            flex:0 0 60px;
+            height:28px;
+            background:#006ca4;
+            color:#fff;
+            border:0;
+            border-radius:4px;
+            cursor:pointer;
+            font-size:13px;
+          }
+
+          .vat-checkbox{
+            width:24px;
+            height:24px;
+            border-radius:6px;
+            border:2px solid #006CA4;
+            background:#fff;
+            flex:0 0 24px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-sizing:border-box;
+          }
+
+          .vat-checkbox svg{
+            width:20px;
+            height:20px;
+            display:block;
+          }
+        }
+
         &.country-row {
           gap: 10px;
           select {
@@ -67,6 +108,17 @@
     color: #333;
     a { color: #006ca4; text-decoration: underline; }
   }
+
+  .vat-check-result{
+    font-family: Inter, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    margin-top: 8px;
+    margin-left: 25px;
+    padding-left: 10px;
+  }
+  .vat-check-result.valid{ color: #001CD3; }
+  .vat-check-result.invalid{ color: #FF0000; }
 
   .checkbox-section {
     display: flex;

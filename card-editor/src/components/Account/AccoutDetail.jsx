@@ -118,11 +118,11 @@ const AccoutDetail = () => {
       <AccountHeader />
       <br />
       <p className="blue-notice">
-        *The invoice and Delivery Note will be included with the shipment...
+        *The invoice and Delivery Note will be included with the shipment and sent to the same address.
       </p>
 
       <p className="update-text">
-        If you want to update your registration details, do it here and click <strong>“Save Changes.”</strong>
+        If you want to update your registration details, do it here and click “Save Changes.”
       </p>
 
       <div className="tables-grid">

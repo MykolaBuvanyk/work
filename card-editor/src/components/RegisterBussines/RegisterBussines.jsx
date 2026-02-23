@@ -3,6 +3,7 @@ import './RegisterBussines.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
 import { Link, useNavigate } from 'react-router-dom';
+import ReadMoreModal from './ReadMoreModal';
 import { $host } from '../../http';
 import combinedCountries from '../Countries';
 
@@ -20,6 +21,8 @@ const tellAboutList=[
 
 const RegisterBussines = () => {
     const [isInvoice,setIsInvoice]=useState(false);
+  const [isReadMoreOpen, setIsReadMoreOpen] = useState(false);
+    const [vatCheckState, setVatCheckState] = useState(null); // null | 'valid' | 'invalid'
   const [tellAboutSelection, setTellAboutSelection] = useState('');
   
   const [formData, setFormData] = useState({
@@ -116,7 +119,36 @@ const RegisterBussines = () => {
         </div>
         <div className="table-row">
           <div className="label-cell">Vat Number</div>
-          <div className="input-cell"><MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} /></div>
+          <div className="input-cell">
+            <div className="vat-row">
+              <MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} placeholder={"No VAT? Continue without it."} />
+              {formData.country !== 'DE' && (
+                <>
+                  <button
+                    type="button"
+                    className="vat-check-btn"
+                    onClick={() => setVatCheckState(prev => (prev === 'valid' ? 'invalid' : 'valid'))}
+                  >
+                    Check
+                  </button>
+                  <div className="vat-checkbox" aria-hidden="true">
+                    {vatCheckState === 'valid' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M6.5 12.5L10 16L17.5 7.5" stroke="#34C759" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
+                    )}
+                    {vatCheckState === 'invalid' && (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                          <path d="M7 7L17 17M7 17L17 7" stroke="#FF383C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                      </svg>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
         {/* Password Fields */}
         <div className="table-row">
@@ -133,10 +165,16 @@ const RegisterBussines = () => {
           <div className="input-cell"><MyTextInput value={formData.additional} setValue={handleInput('additional')} /></div>
         </div>
       </div>
-
       <p className="vat-notice">
-        *Companies can only receive VAT-free orders when providing a valid VAT-number. <Link to="/read-more">Read more</Link>
+        *Companies can only receive VAT-free orders when providing a valid VAT-number. <a href="#" onClick={e => { e.preventDefault(); setIsReadMoreOpen(true); }}>Read more</a>
       </p>
+
+      {vatCheckState === 'valid' && (
+        <div className="vat-check-result valid">VAT Confirmed. Thank you!</div>
+      )}
+      {vatCheckState === 'invalid' && (
+        <div className="vat-check-result invalid">VAT not Confirmed. Check the number and try again.</div>
+      )}
 
       <div className="checkbox-section">
         <label className="radio-style">
@@ -266,6 +304,7 @@ const RegisterBussines = () => {
         SignXpert gathers your personal information when you set up an account, using it for
         advertising purposes and to handle and complete any future orders. You can learn more in our <Link to="/privacy-policy">privacy policy.</Link>
       </div>
+      {isReadMoreOpen && <ReadMoreModal onClose={() => setIsReadMoreOpen(false)} />}
     </form>
   );
 };

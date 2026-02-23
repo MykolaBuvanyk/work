@@ -1540,7 +1540,11 @@ app.post('/api/layout-pdf', async (req, res) => {
 
     const expandedSheets = [];
     sheets.forEach(sheet => {
-      expandedSheets.push(...splitSheetByMaterial(sheet));
+      if (sheet?.skipMaterialSplit === true) {
+        expandedSheets.push(sheet);
+      } else {
+        expandedSheets.push(...splitSheetByMaterial(sheet));
+      }
     });
 
     const parser = new DOMParser();
@@ -1563,9 +1567,10 @@ app.post('/api/layout-pdf', async (req, res) => {
       doc.addPage({ size: [pageWidthPt, pageHeightPt], margin: 0 });
 
       const shouldRenderMjFrame =
-        exportMode === 'Sheet optimized (MJ) Fr.' ||
-        sheet?.exportMode === 'Sheet optimized (MJ) Fr.' ||
-        (Number(sheet?.leftStripWidthMm) || 0) > 0;
+        sheet?.disableMjStrip !== true &&
+        (exportMode === 'Sheet optimized (MJ) Fr.' ||
+          sheet?.exportMode === 'Sheet optimized (MJ) Fr.' ||
+          (Number(sheet?.leftStripWidthMm) || 0) > 0);
 
       if (shouldRenderMjFrame) {
         const stripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 9.5);
@@ -2306,31 +2311,154 @@ app.post('/api/layout-pdf', async (req, res) => {
       });
 
       // Draw the wrapping frame AFTER placements so it stays visible.
-      const frameRect = sheet?.frameRect;
-      if (
-        frameRect &&
-        Number.isFinite(Number(frameRect?.x)) &&
-        Number.isFinite(Number(frameRect?.y)) &&
-        Number.isFinite(Number(frameRect?.width)) &&
-        Number.isFinite(Number(frameRect?.height))
-      ) {
+      const frameRects = Array.isArray(sheet?.frameRects) && sheet.frameRects.length
+        ? sheet.frameRects
+        : sheet?.frameRect
+          ? [sheet.frameRect]
+          : [];
+      const frameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
+      const isMjOptimizedSheet = (sheet?.exportMode || exportMode) === 'Sheet optimized (MJ) Fr.';
+
+      frameRects.forEach((frameRect, frameIndex) => {
+        if (
+          !frameRect ||
+          !Number.isFinite(Number(frameRect?.x)) ||
+          !Number.isFinite(Number(frameRect?.y)) ||
+          !Number.isFinite(Number(frameRect?.width)) ||
+          !Number.isFinite(Number(frameRect?.height))
+        ) {
+          return;
+        }
+
         const frameWidthMm = Math.max(0, Number(frameRect.width) || 0);
         const frameHeightMm = Math.max(0, Number(frameRect.height) || 0);
-        if (frameWidthMm > 0 && frameHeightMm > 0) {
-          const frameXPt = mmToPoints(frameRect.x);
-          const frameYPt = mmToPoints(frameRect.y);
-          const frameWidthPt = mmToPoints(frameWidthMm);
-          const frameHeightPt = mmToPoints(frameHeightMm);
+        if (frameWidthMm <= 0 || frameHeightMm <= 0) return;
+
+        const frameXPt = mmToPoints(frameRect.x);
+        const frameYPt = mmToPoints(frameRect.y);
+        const frameWidthPt = mmToPoints(frameWidthMm);
+        const frameHeightPt = mmToPoints(frameHeightMm);
+
+        doc.save();
+        doc.lineWidth(0.5);
+        doc.strokeColor('#8B4513');
+
+        const radiusPt = mmToPoints(1.5);
+        doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
+        doc.restore();
+
+        if (isMjOptimizedSheet) {
+          const frameInfo = frameInfos[frameIndex] || null;
+          const stripWidthMm = Math.max(0, Number(frameInfo?.stripWidthMm) || 9.5);
+          const holeDiameterMm = 5.5;
+          const holeRadiusMm = holeDiameterMm / 2;
+          const holeSpacingMm = 80;
+          const secondHoleMinHeightMm = 135;
+          const stripLeftXmm = frameRect.x;
+          const stripRightXmm = frameRect.x + stripWidthMm;
+          // Compute hole center X so there is exactly 2mm clearance
+          // from the circle edge to the brown frame edge (left) and
+          // 2mm clearance from the circle edge to the canvas start (right).
+          // holeCenterXmm must satisfy both:
+          //   holeCenterXmm - holeRadiusMm - frameRect.x >= 2
+          //   (frameRect.x + stripWidthMm) - (holeCenterXmm + holeRadiusMm) >= 2
+          // Solve ideal position: frameRect.x + holeRadiusMm + 2
+          // Clamp to available strip if strip is narrower than required.
+          const minCenterXmm = frameRect.x + holeRadiusMm + 2;
+          const maxCenterXmm = frameRect.x + stripWidthMm - holeRadiusMm - 2;
+          // Prefer centered-ish placement but respect clearances
+          let holeCenterXmm = Math.max(minCenterXmm, Math.min(maxCenterXmm, frameRect.x + stripWidthMm * 0.5));
+          const holeCentersYmm = frameHeightMm >= secondHoleMinHeightMm
+            ? [frameRect.y + frameHeightMm / 2 - holeSpacingMm / 2, frameRect.y + frameHeightMm / 2 + holeSpacingMm / 2]
+            : [frameRect.y + frameHeightMm / 2];
+
+          // Separator line removed: keep only the rounded frame outline
+          // (previously drew a straight separator at `separatorXmm`, removed per request)
 
           doc.save();
-          doc.lineWidth(0.5);
-          doc.strokeColor('#8B4513');
-
-          const radiusPt = mmToPoints(1.5);
-          doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
+          doc.lineWidth(0.75);
+          holeCentersYmm.forEach((cyMm) => {
+            doc
+              .circle(mmToPoints(holeCenterXmm), mmToPoints(cyMm), mmToPoints(holeRadiusMm))
+              .fillAndStroke('#FFFFFF', '#8B4513');
+          });
           doc.restore();
+
+          const topLabel = (typeof frameInfo?.topLabel === 'string' && frameInfo.topLabel.trim()) || '';
+          const bottomLabel =
+            (typeof frameInfo?.bottomLabel === 'string' && frameInfo.bottomLabel.trim()) || `Sh ${frameIndex + 1}/${frameRects.length}`;
+
+          const drawRotatedLabel = (label, anchorXmm, anchorYmm, fontSize) => {
+            if (!label) return;
+            doc.save();
+            doc.strokeColor(TEXT_OUTLINE_COLOR);
+            doc.fillOpacity(0);
+            doc.strokeOpacity(1);
+            doc.lineJoin('round');
+            doc.lineCap('round');
+            doc.lineWidth(Math.max(TEXT_STROKE_WIDTH_PT, 0.2));
+            doc.font(DEFAULT_FONT_ID);
+            doc.fontSize(fontSize);
+            doc.translate(mmToPoints(anchorXmm), mmToPoints(anchorYmm));
+            doc.rotate(-90);
+            const labelWidthPt = doc.widthOfString(label);
+            doc.text(label, -labelWidthPt / 2, -fontSize * 0.4, {
+              lineBreak: false,
+              stroke: true,
+              fill: false,
+            });
+            doc.restore();
+          };
+
+          const fontSize = Math.max(5.8, Math.min(9, mmToPoints(Math.max(8, stripWidthMm) * 0.9)));
+          const firstHoleY = holeCentersYmm[0];
+          const lastHoleY = holeCentersYmm[holeCentersYmm.length - 1];
+          const topZoneTop = frameRect.y;
+          const topZoneBottom = firstHoleY - holeRadiusMm - 0.8;
+          const bottomZoneTop = lastHoleY + holeRadiusMm + 0.8;
+          const bottomZoneBottom = frameRect.y + frameHeightMm;
+
+          // If there are two holes, draw the main label between them vertically.
+          if (holeCentersYmm.length === 2) {
+            // Place both labels between the two holes, stacked vertically, with 2mm
+            // clearance from hole edges. If space is tight, shrink font (but not below 5.8pt).
+            const topHoleY = holeCentersYmm[0];
+            const bottomHoleY = holeCentersYmm[1];
+            const betweenTop = topHoleY + holeRadiusMm + 2; // 2mm clearance from top hole
+            const betweenBottom = bottomHoleY - holeRadiusMm - 2; // 2mm clearance from bottom hole
+            const availableMm = Math.max(0, betweenBottom - betweenTop);
+
+            if (availableMm > 0 && (topLabel || bottomLabel)) {
+              // Compute current font size in mm
+              const fontSizePt = fontSize;
+              const fontSizeMm = fontSizePt / MM_TO_PT;
+              const desiredTwoLinesMm = fontSizeMm * 2 + 0.5; // slight gap between lines
+
+              let useFontPt = fontSizePt;
+              if (availableMm < desiredTwoLinesMm) {
+                const ratio = availableMm / desiredTwoLinesMm;
+                useFontPt = Math.max(5.8, Math.floor(fontSizePt * ratio));
+              }
+
+              const lineHeightMm = (useFontPt / MM_TO_PT);
+              const gapBetweenLinesMm = Math.max(0.4, (availableMm - lineHeightMm * 2) / 3);
+              // Position first line slightly below betweenTop + gap
+              const firstLineY = betweenTop + gapBetweenLinesMm + lineHeightMm / 2;
+              const secondLineY = firstLineY + lineHeightMm + gapBetweenLinesMm;
+
+              if (topLabel) drawRotatedLabel(topLabel, holeCenterXmm, firstLineY, useFontPt);
+              if (bottomLabel) drawRotatedLabel(bottomLabel, holeCenterXmm, secondLineY, useFontPt);
+            }
+          } else {
+            if (topLabel && topZoneBottom - topZoneTop > 2.5) {
+              drawRotatedLabel(topLabel, holeCenterXmm, (topZoneTop + topZoneBottom) / 2, fontSize);
+            }
+            if (bottomLabel && bottomZoneBottom - bottomZoneTop > 2.5) {
+              drawRotatedLabel(bottomLabel, holeCenterXmm, (bottomZoneTop + bottomZoneBottom) / 2, fontSize);
+            }
+          }
         }
-      }
+      });
     });
 
     doc.end();

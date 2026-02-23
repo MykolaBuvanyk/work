@@ -994,7 +994,18 @@ const planSheets = (
     optimizeToContent = false,
     maxSheetWidthMm = null,
     maxSheetHeightMm = null,
+    maxPlacementWidthMm = null,
+    maxPlacementHeightMm = null,
   } = layoutOptions || {};
+
+  const safeMaxPlacementWidthMm =
+    Number.isFinite(Number(maxPlacementWidthMm)) && Number(maxPlacementWidthMm) > 0
+      ? Number(maxPlacementWidthMm)
+      : null;
+  const safeMaxPlacementHeightMm =
+    Number.isFinite(Number(maxPlacementHeightMm)) && Number(maxPlacementHeightMm) > 0
+      ? Number(maxPlacementHeightMm)
+      : null;
 
   const safePageMargin = Math.max(0, Number(pageMarginMm) || 0);
   const safeFrameSpacing = Math.max(0, Number(frameSpacingMm) || 0);
@@ -1037,6 +1048,18 @@ const planSheets = (
     if (candidate.x < 0 || candidate.y < 0) return false;
     if (candidate.x + candidate.width > sheetInnerWidth + EPS) return false;
     if (candidate.y + candidate.height > sheetInnerHeight + EPS) return false;
+    if (
+      safeMaxPlacementWidthMm !== null &&
+      candidate.width > safeMaxPlacementWidthMm + EPS
+    ) {
+      return false;
+    }
+    if (
+      safeMaxPlacementHeightMm !== null &&
+      candidate.height > safeMaxPlacementHeightMm + EPS
+    ) {
+      return false;
+    }
 
     const inflatedExisting = (p) => {
       const r = getInnerRect(p);
@@ -1094,17 +1117,40 @@ const planSheets = (
 
     const rotated = { width: item.heightMm, height: item.widthMm, rotated: true };
 
-    const fits = (candidate) =>
+    const fitsSheet = (candidate) =>
       candidate.width <= sheetInnerWidth + 0.001 &&
       candidate.height <= sheetInnerHeight + 0.001;
 
+    const fitsPlacementLimits = (candidate) => {
+      if (
+        safeMaxPlacementWidthMm !== null &&
+        candidate.width > safeMaxPlacementWidthMm + 0.001
+      ) {
+        return false;
+      }
+      if (
+        safeMaxPlacementHeightMm !== null &&
+        candidate.height > safeMaxPlacementHeightMm + 0.001
+      ) {
+        return false;
+      }
+      return true;
+    };
+
     // If it doesn't fit by width in the default orientation but fits when rotated,
     // try rotated first (auto-rotate to ensure it can be placed).
-    if (!fits(normal) && fits(rotated)) {
-      return [rotated, normal];
+    let ordered = [normal, rotated];
+    if (!fitsSheet(normal) && fitsSheet(rotated)) {
+      ordered = [rotated, normal];
     }
 
-    return [normal, rotated];
+    const fittingLimits = ordered.filter(fitsPlacementLimits);
+    if (fittingLimits.length > 0) {
+      const notFittingLimits = ordered.filter((candidate) => !fitsPlacementLimits(candidate));
+      return [...fittingLimits, ...notFittingLimits];
+    }
+
+    return ordered;
   };
 
   const queue = [];

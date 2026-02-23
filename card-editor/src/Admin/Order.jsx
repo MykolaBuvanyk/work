@@ -17,6 +17,12 @@ import { useNavigate } from 'react-router-dom';
 import combinedCountries from '../components/Countries';
 
 const PX_PER_MM = 72 / 25.4;
+const GIT_OPTIMIZED_SHEET_WIDTH_MM = 600;
+const GIT_OPTIMIZED_SHEET_HEIGHT_MM = 300;
+const GIT_OPTIMIZED_MAX_FRAME_WIDTH_MM = 188.5;
+const GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM = 295;
+const GIT_OPTIMIZED_FRAME_GAP_MM = 2;
+const MJ_FRAME_DECOR_STRIP_WIDTH_MM = 9.5;
 
 const exportModeOptions = [
   'Normal',
@@ -248,7 +254,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     const a4 = FORMATS.A4;
     const base = FORMATS[formatKey] || FORMATS.A4;
     const oriented = isMjFrameMode
-      ? { width: a4.width, height: a4.height }
+      ? { width: GIT_OPTIMIZED_SHEET_WIDTH_MM, height: GIT_OPTIMIZED_SHEET_HEIGHT_MM }
       : orientation === 'landscape'
         ? { width: base.height, height: base.width }
         : { width: base.width, height: base.height };
@@ -269,14 +275,14 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     if (maxH > 0) height = Math.min(height, maxH);
 
     if (isMjFrameMode) {
-      width = Math.min(width, a4.width);
-      height = Math.min(height, a4.height);
+      width = GIT_OPTIMIZED_SHEET_WIDTH_MM;
+      height = GIT_OPTIMIZED_SHEET_HEIGHT_MM;
     }
 
     return {
       width,
       height,
-      label: isMjFrameMode ? a4.label : base.label,
+      label: isMjFrameMode ? '600x300 mm' : base.label,
     };
   }, [appliedMaxPageHeight, appliedMaxPageWidth, appliedMinPageHeight, appliedMinPageWidth, exportMode, formatKey, orientation]);
 
@@ -284,16 +290,270 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const hasBrownFrame = exportMode === 'Normal (MJ) Frame' || exportMode === 'Sheet optimized (MJ) Fr.';
 
   const planned = useMemo(() => {
-    const a4 = FORMATS.A4;
-    const layoutOptions = isMjFrameMode
-      ? {
-          leftStripWidthMm: 9.5,
-          disableLeftFrameSpacing: true,
-          optimizeToContent: true,
-          maxSheetWidthMm: a4.width,
-          maxSheetHeightMm: a4.height,
-        }
-      : {};
+    if (isMjFrameMode) {
+      const mjItems = normalizedItems.map((item) => ({
+        ...item,
+        materialThicknessMm: null,
+        isAdhesiveTape: false,
+      }));
+
+      const groups = new Map();
+      mjItems.forEach((item) => {
+        const key = getMaterialKey(item);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      });
+
+      const resultSheets = [];
+      const resultLeftovers = [];
+
+      groups.forEach((groupItems, materialKey) => {
+        const maxContentFrameWidthMm = Math.max(
+          0,
+          GIT_OPTIMIZED_MAX_FRAME_WIDTH_MM - MJ_FRAME_DECOR_STRIP_WIDTH_MM
+        );
+        const framePlan = planSheets(
+          groupItems,
+          {
+            width: maxContentFrameWidthMm,
+            height: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+            sortOrder: pdfSortOrder,
+          },
+          effectiveSignSpacingMm,
+          0,
+          0,
+          {
+            leftStripWidthMm: 0,
+            disableLeftFrameSpacing: true,
+            optimizeToContent: true,
+            maxSheetWidthMm: maxContentFrameWidthMm,
+            maxSheetHeightMm: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+            maxPlacementWidthMm: maxContentFrameWidthMm,
+            maxPlacementHeightMm: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+          }
+        );
+
+        const frameSheets = Array.isArray(framePlan?.sheets) ? framePlan.sheets : [];
+        const frameLeftovers = Array.isArray(framePlan?.leftovers) ? framePlan.leftovers : [];
+        resultLeftovers.push(...frameLeftovers);
+        if (!frameSheets.length) return;
+
+        const frameItems = frameSheets.map((frameSheet, frameIndex) => {
+          const frameId = `${materialKey}::frame-${frameIndex + 1}`;
+          const frameWidth = Math.max(0, safeNumber(frameSheet?.width, 0));
+          const frameHeight = Math.max(0, safeNumber(frameSheet?.height, 0));
+          const decoratedWidth = frameWidth + MJ_FRAME_DECOR_STRIP_WIDTH_MM;
+          return {
+            id: frameId,
+            name: frameId,
+            widthMm: decoratedWidth,
+            heightMm: frameHeight,
+            area: decoratedWidth * frameHeight,
+            copies: 1,
+            sourceFrame: frameSheet,
+            frameIndex: frameIndex + 1,
+            frameCount: frameSheets.length,
+            decorStripWidthMm: MJ_FRAME_DECOR_STRIP_WIDTH_MM,
+            materialColor: groupItems?.[0]?.materialColor ?? null,
+            materialThicknessMm: null,
+            isAdhesiveTape: false,
+            themeStrokeColor: groupItems?.[0]?.themeStrokeColor ?? null,
+          };
+        });
+
+        const packFramesIntoFixedSheets = (frames) => {
+          const gap = GIT_OPTIMIZED_FRAME_GAP_MM;
+          const sheetWidth = GIT_OPTIMIZED_SHEET_WIDTH_MM;
+          const sheetHeight = GIT_OPTIMIZED_SHEET_HEIGHT_MM;
+          const EPS = 0.001;
+
+          const ordered = [...frames].sort((a, b) => {
+            const areaA = Number(a?.area) || 0;
+            const areaB = Number(b?.area) || 0;
+            if (areaA === areaB) return String(a?.id || '').localeCompare(String(b?.id || ''));
+            return pdfSortOrder === 'low-first' ? areaA - areaB : areaB - areaA;
+          });
+
+          const sheets = [];
+          const leftovers = [];
+
+          const intersects = (a, b) => (
+            a.x < b.x + b.width - EPS &&
+            a.x + a.width > b.x + EPS &&
+            a.y < b.y + b.height - EPS &&
+            a.y + a.height > b.y + EPS
+          );
+
+          const canPlaceAt = (sheet, candidate) => {
+            if (candidate.x < 0 || candidate.y < 0) return false;
+            if (candidate.x + candidate.width > sheetWidth + EPS) return false;
+            if (candidate.y + candidate.height > sheetHeight + EPS) return false;
+
+            for (const existing of sheet.frames) {
+              const inflated = {
+                x: existing.x - gap,
+                y: existing.y - gap,
+                width: existing.width + gap * 2,
+                height: existing.height + gap * 2,
+              };
+              if (intersects(candidate, inflated)) return false;
+            }
+            return true;
+          };
+
+          const findTopLeftPosition = (sheet, width, height) => {
+            const xs = new Set([0]);
+            const ys = new Set([0]);
+
+            sheet.frames.forEach((frame) => {
+              xs.add(frame.x);
+              xs.add(frame.x + frame.width + gap);
+              ys.add(frame.y);
+              ys.add(frame.y + frame.height + gap);
+            });
+
+            const xCandidates = Array.from(xs).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
+            const yCandidates = Array.from(ys).filter((y) => Number.isFinite(y)).sort((a, b) => a - b);
+
+            for (const y of yCandidates) {
+              for (const x of xCandidates) {
+                const candidate = { x, y, width, height };
+                if (canPlaceAt(sheet, candidate)) return { x, y };
+              }
+            }
+            return null;
+          };
+
+          ordered.forEach((frame) => {
+            const width = Math.max(0, Number(frame?.widthMm) || 0);
+            const height = Math.max(0, Number(frame?.heightMm) || 0);
+            if (width <= 0 || height <= 0) {
+              leftovers.push(frame);
+              return;
+            }
+            if (width > sheetWidth + EPS || height > sheetHeight + EPS) {
+              leftovers.push(frame);
+              return;
+            }
+
+            let placed = false;
+
+            for (const sheet of sheets) {
+              const pos = findTopLeftPosition(sheet, width, height);
+              if (!pos) continue;
+              sheet.frames.push({
+                ...frame,
+                x: pos.x,
+                y: pos.y,
+                width,
+                height,
+              });
+              placed = true;
+              break;
+            }
+
+            if (!placed) {
+              const newSheet = {
+                width: sheetWidth,
+                height: sheetHeight,
+                frames: [],
+              };
+              const pos = findTopLeftPosition(newSheet, width, height);
+              if (!pos) {
+                leftovers.push(frame);
+                return;
+              }
+              newSheet.frames.push({
+                ...frame,
+                x: pos.x,
+                y: pos.y,
+                width,
+                height,
+              });
+              sheets.push(newSheet);
+            }
+          });
+
+          return { sheets, leftovers };
+        };
+
+        const { sheets: packedSheets, leftovers: sheetLeftovers } = packFramesIntoFixedSheets(frameItems);
+        resultLeftovers.push(...sheetLeftovers);
+
+        packedSheets.forEach((packedSheet) => {
+          const packedFramePlacements = Array.isArray(packedSheet?.frames) ? packedSheet.frames : [];
+          const frameRects = [];
+          const frameInfos = [];
+          const mergedPlacements = [];
+
+          packedFramePlacements.forEach((framePlacement) => {
+            const sourceFrame = framePlacement?.sourceFrame;
+            if (!sourceFrame) return;
+
+            const decorStripWidth = Math.max(0, safeNumber(framePlacement?.decorStripWidthMm, MJ_FRAME_DECOR_STRIP_WIDTH_MM));
+            const frameX = safeNumber(framePlacement?.x, 0);
+            const frameY = safeNumber(framePlacement?.y, 0);
+            const frameWidth = Math.max(0, safeNumber(framePlacement?.width, 0));
+            const frameHeight = Math.max(0, safeNumber(framePlacement?.height, 0));
+            if (frameWidth <= 0 || frameHeight <= 0) return;
+            if (
+              frameX + frameWidth > GIT_OPTIMIZED_SHEET_WIDTH_MM + 0.001 ||
+              frameY + frameHeight > GIT_OPTIMIZED_SHEET_HEIGHT_MM + 0.001
+            ) {
+              return;
+            }
+
+            frameRects.push({
+              x: frameX,
+              y: frameY,
+              width: frameWidth,
+              height: frameHeight,
+            });
+
+            frameInfos.push({
+              x: frameX,
+              y: frameY,
+              width: frameWidth,
+              height: frameHeight,
+              frameIndex: Number(framePlacement?.frameIndex) || 1,
+              frameCount: Number(framePlacement?.frameCount) || packedFramePlacements.length,
+              stripWidthMm: decorStripWidth,
+            });
+
+            const sourcePlacements = Array.isArray(sourceFrame?.placements) ? sourceFrame.placements : [];
+            sourcePlacements.forEach((placement) => {
+              mergedPlacements.push({
+                ...placement,
+                x: frameX + decorStripWidth + safeNumber(placement?.x, 0),
+                y: frameY + safeNumber(placement?.y, 0),
+              });
+            });
+          });
+
+          resultSheets.push({
+            ...packedSheet,
+            width: GIT_OPTIMIZED_SHEET_WIDTH_MM,
+            height: GIT_OPTIMIZED_SHEET_HEIGHT_MM,
+            pageMarginMm: 0,
+            frameSpacingMm: 0,
+            leftInset: 0,
+            topInset: 0,
+            rightInset: 0,
+            bottomInset: 0,
+            leftStripWidthMm: 0,
+            frameRect: null,
+            frameRects,
+            frameInfos,
+            placements: mergedPlacements,
+          });
+        });
+      });
+
+      return {
+        sheets: resultSheets,
+        leftovers: resultLeftovers,
+      };
+    }
 
     const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
     const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
@@ -305,9 +565,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       normalizedItems,
       { ...sheetSize, sortOrder: pdfSortOrder },
       effectiveSignSpacingMm,
-      isMjFrameMode ? 0 : pageInsetMm,
+      pageInsetMm,
       frameInsetMm,
-      layoutOptions
+      {}
     );
   }, [effectiveSignSpacingMm, frameSpacingMm, hasBrownFrame, isMjFrameMode, normalizedItems, pdfPageMargin, pdfSortOrder, sheetSize]);
 
@@ -350,6 +610,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
     const computeFrameRect = (sheet) => {
       if (!hasBrownFrame) return null;
+      if (isMjFrameMode) return null;
       const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
       if (!placements.length) return null;
 
@@ -460,13 +721,27 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           sourceHeight: placement.sourceHeight || placement.height,
           customBorder: placement.customBorder || null,
           materialColor: placement.materialColor ?? null,
-          materialThicknessMm: placement.materialThicknessMm ?? null,
-          isAdhesiveTape: placement.isAdhesiveTape ?? false,
+          materialThicknessMm: isMjFrameMode ? null : (placement.materialThicknessMm ?? null),
+          isAdhesiveTape: isMjFrameMode ? false : (placement.isAdhesiveTape ?? false),
           themeStrokeColor: placement.themeStrokeColor ?? null,
         };
       });
 
       const frameRect = computeFrameRect(sheet);
+      const frameRects = Array.isArray(sheet?.frameRects) ? sheet.frameRects : [];
+      const frameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
+      const preparedFrameInfos = isMjFrameMode
+        ? frameInfos.map((info) => {
+            const index = Number(info?.frameIndex) || 1;
+            const count = Number(info?.frameCount) || frameInfos.length || 1;
+            const projectId = resolvedProjectId ? String(resolvedProjectId) : '';
+            return {
+              ...info,
+              topLabel: projectId || '',
+              bottomLabel: `Sh ${index}/${count}`,
+            };
+          })
+        : frameInfos;
 
       // For Normal and Normal (MJ) Frame: no sheetInfo at all
       let sheetInfo = null;
@@ -562,7 +837,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         width: sheet.width,
         height: sheet.height,
         frameRect,
+        frameRects,
+        frameInfos: preparedFrameInfos,
         exportMode,
+        disableMjStrip: isMjFrameMode,
+        skipMaterialSplit: isMjFrameMode,
         leftStripWidthMm: sheet.leftStripWidthMm ?? 0,
         leftInset: sheet.leftInset ?? null,
         topInset: sheet.topInset ?? null,

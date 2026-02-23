@@ -21,6 +21,7 @@ import Enter from './components/Enter/Enter';
 import Checkout from './components/checkout/checkout';
 import ThankYou from './components/order-success/order-success';
 import RequireSavedProject from './components/guards/RequireSavedProject';
+import ShareProjectPage from './components/ShareProject/ShareProjectPage';
 
 
 
@@ -36,6 +37,7 @@ function App() {
       <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="contacts" element={<Contacts />} />
       <Route path="quick-guide" element={<QuickGuide />} />
+      <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />

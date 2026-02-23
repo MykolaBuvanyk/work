@@ -18,6 +18,7 @@ import {
   restoreElementProperties,
   extractToolbarState,
 } from "../../utils/projectStorage";
+import { createShareLink } from "../../http/share";
 
 
 
@@ -28,6 +29,7 @@ const YourProjectsModal = ({ onClose }) => {
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]); // Для чекбоксів
   const [isCartConfirmOpen, setIsCartConfirmOpen] = useState(false);
+  const [sharingProjectId, setSharingProjectId] = useState(null);
 
   const formatDateTimeParts = (ts) => {
     if (typeof ts !== "number" || ts <= 0) {
@@ -274,6 +276,50 @@ const YourProjectsModal = ({ onClose }) => {
       onClose && onClose();
     } catch (e) {
       console.error("Failed to open project", e);
+    }
+  };
+
+  const handleShare = async (id) => {
+    if (!id || sharingProjectId) return;
+
+    try {
+      setSharingProjectId(id);
+      const project = await getProject(id);
+      if (!project) {
+        alert("Project not found");
+        return;
+      }
+
+      const response = await createShareLink({
+        projectId: project.id,
+        projectName: project.name,
+        project,
+        accessories: Array.isArray(project?.accessories) ? project.accessories : [],
+        checkout:
+          project?.checkout && typeof project.checkout === "object"
+            ? project.checkout
+            : null,
+      });
+
+      const token = String(response?.token || "").trim();
+      if (!token) {
+        alert("Failed to create share link");
+        return;
+      }
+
+      const shareUrl = `${window.location.origin}/share/${token}`;
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("Share link copied to clipboard");
+      } catch {
+        window.prompt("Copy share link", shareUrl);
+      }
+    } catch (error) {
+      console.error("Failed to share project", error);
+      alert("Failed to create share link");
+    } finally {
+      setSharingProjectId(null);
     }
   };
 
@@ -792,7 +838,15 @@ const YourProjectsModal = ({ onClose }) => {
                     </ul>
                   </td>
                   <td>
-                    <div className={styles.shareCell} title="Share Project">
+                    <div
+                      className={styles.shareCell}
+                      title="Share Project"
+                      onClick={() => handleShare(project.id)}
+                      style={{
+                        cursor: sharingProjectId ? "wait" : "pointer",
+                        opacity: sharingProjectId === project.id ? 0.6 : 1,
+                      }}
+                    >
                       <svg
                         width="23"
                         height="23"

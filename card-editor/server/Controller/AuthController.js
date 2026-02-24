@@ -21,7 +21,6 @@ const generateJwt = async (id, phone, firstName, surname, type, isRemember = tru
 
 class AuthController {
   static Register = async (req, res, next) => {
-    console.log(52423432)
     try {
       const {
         email,

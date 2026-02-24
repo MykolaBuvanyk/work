@@ -52,7 +52,7 @@ const Order=sequelize.define('orders',{
   sum:{type:DataTypes.FLOAT, allowNull:false},
   signs:{type:DataTypes.INTEGER,defaultValue:1},
   country:{type:DataTypes.STRING,allowNull:false,defaultValue:"NO"},
-  status:{type:DataTypes.ENUM('Returned','Manufact','Delivered','Printed','Waiting','Received','Deleted'),allowNull:false,defaultValue:'Received'},
+  status:{type:DataTypes.ENUM('Returned','Manufact','Delivered','Printed','Shipped','Waiting','Received','Deleted'),allowNull:false,defaultValue:'Received'},
   deliveryType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},
   orderName:{type:DataTypes.STRING,defaultValue:'',allowNull:false},
   orderType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},

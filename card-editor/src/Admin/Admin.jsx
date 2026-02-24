@@ -8,7 +8,7 @@ import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 import combinedCountries from '../components/Countries';
 
-const limit=15;
+const limit=25;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -324,7 +324,7 @@ const Admin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
-                    <td>{Number.isFinite(Number(order.sum)) ? Number(order.totalPrice).toFixed(2) : '—'}</td>
+                    <td>{order.sum}</td>
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>

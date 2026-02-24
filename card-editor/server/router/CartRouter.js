@@ -234,7 +234,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const user=await User.findOne({where:{id:req.user.id}});
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order=await Order.create({
-      sum: Math.round(netAfterDiscount * 100) / 100,
+      sum: totalPriceInclVat,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,
@@ -317,8 +317,7 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
 
 CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    let { page = 1, limit = 20, search, status, start, finish, lang, userId } = req.query;
-
+    let { page = 1, limit = 20, search, status, start, finish, lang, userId, isPaid } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     const offset = limit * (page - 1);
@@ -348,6 +347,11 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       if (start) where.createdAt[Op.gte] = new Date(start);
       if (finish) where.createdAt[Op.lte] = new Date(finish);
     }
+    
+
+    if (isPaid !== undefined) {
+      where.isPaid = isPaid === 'true';
+    }
 
     if (lang) {
       where.country = lang;
@@ -368,6 +372,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       order: [['createdAt', 'DESC']],
       include: [{ model: User }],
     });
+    let ordersForSum = await Order.findAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      attributes:['sum']
+    });
+
+    let totalSum=0;
+    ordersForSum.forEach(x=>totalSum+=x.sum);
 
     const mappedOrders = await Promise.all(
       (orders.rows || []).map(async (order) => {
@@ -443,10 +455,11 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     return res.json({
       orders: enrichedOrders,
       page,
-      totalSum:sum,
+      totalSum,
       count: orders.count
     });
   } catch (err) {
+    console.error(4234,err)
     return res.status(400).json(err);
   }
 });
@@ -1336,6 +1349,19 @@ CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
     });
   }catch(err){
     console.error('GET MY ORDERS ERROR:', err);
+    return res.status(500).json({ message: 'Failed to load orders' });
+  }
+})
+
+CartRouter.post('/setPay',requireAuth, requireAdmin, async(req,res,next)=>{
+  try{
+    const {orderId}=req.body;
+    const order=await Order.findOne({where:{id:Number(orderId)}});
+    order.isPaid=!order.isPaid;
+    await order.save();
+    return res.json({message:'is pay updated'});
+  }catch(err){
+    console.error('ERROR GET PAY:', err);
     return res.status(500).json({ message: 'Failed to load orders' });
   }
 })

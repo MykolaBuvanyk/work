@@ -3655,6 +3655,101 @@ const Toolbar = ({ formData }) => {
       }
     }
 
+    const isLegacyCircleServiceObject = obj =>
+      !!obj &&
+      (
+        obj.isCircleWithLineCenterLine ||
+        obj.isCircleWithLineTopText ||
+        obj.isCircleWithLineBottomText ||
+        obj.isCircleWithCrossHorizontalLine ||
+        obj.isCircleWithCrossVerticalLine ||
+        obj.isCircleWithCrossTopText ||
+        obj.isCircleWithCrossBottomLeftText ||
+        obj.isCircleWithCrossBottomRightText ||
+        obj.name === 'circleWithLineCenterLine' ||
+        obj.name === 'circleWithLineTopText' ||
+        obj.name === 'circleWithLineBottomText' ||
+        obj.name === 'circleWithCrossHorizontalLine' ||
+        obj.name === 'circleWithCrossVerticalLine' ||
+        obj.name === 'circleWithCrossTopText' ||
+        obj.name === 'circleWithCrossBottomLeftText' ||
+        obj.name === 'circleWithCrossBottomRightText'
+      );
+
+    const fitOversizedTextObjectsAfterResize = () => {
+      if (!canvas || typeof canvas.getObjects !== 'function') return;
+      const canvasW = Number(canvas.getWidth?.() || canvas.width || 0);
+      const canvasH = Number(canvas.getHeight?.() || canvas.height || 0);
+      if (canvasW <= 0 || canvasH <= 0) return;
+
+      const objects = canvas.getObjects() || [];
+      objects.forEach(obj => {
+        if (!obj) return;
+        if (isLegacyCircleServiceObject(obj)) return;
+
+        const objType = String(obj.type || '').toLowerCase();
+        const isTextObject = objType === 'text' || objType === 'i-text' || objType === 'textbox';
+        if (!isTextObject) return;
+
+        const getRect = () => {
+          try {
+            return obj.getBoundingRect(true, true);
+          } catch {
+            return null;
+          }
+        };
+
+        const isOverflowing = rect => {
+          if (!rect) return false;
+          return (
+            rect.width > canvasW ||
+            rect.height > canvasH ||
+            rect.left < 0 ||
+            rect.top < 0 ||
+            rect.left + rect.width > canvasW ||
+            rect.top + rect.height > canvasH
+          );
+        };
+
+        const clampInsideCanvas = () => {
+          const rect = getRect();
+          if (!rect || typeof obj.left !== 'number' || typeof obj.top !== 'number') return;
+          let nextLeft = obj.left;
+          let nextTop = obj.top;
+
+          if (rect.left < 0) nextLeft += -rect.left;
+          if (rect.top < 0) nextTop += -rect.top;
+          if (rect.left + rect.width > canvasW) nextLeft -= rect.left + rect.width - canvasW;
+          if (rect.top + rect.height > canvasH) nextTop -= rect.top + rect.height - canvasH;
+
+          obj.set({ left: nextLeft, top: nextTop });
+          obj.setCoords?.();
+        };
+
+        let rect = getRect();
+        if (!isOverflowing(rect)) return;
+
+        const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
+        const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
+        let sxAbs = Math.max(1e-4, Math.abs(Number(obj.scaleX) || 1));
+        let syAbs = Math.max(1e-4, Math.abs(Number(obj.scaleY) || 1));
+
+        for (let i = 0; i < 40; i += 1) {
+          rect = getRect();
+          if (!isOverflowing(rect)) break;
+          sxAbs = Math.max(1e-4, sxAbs * 0.95);
+          syAbs = Math.max(1e-4, syAbs * 0.95);
+          obj.set({
+            scaleX: signX * sxAbs,
+            scaleY: signY * syAbs,
+          });
+          obj.setCoords?.();
+        }
+
+        clampInsideCanvas();
+      });
+    };
+
     // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
     if (canvas && effectiveShapeType) {
       const repositionObjectsForResize = (prevW, prevH, nextW, nextH) => {
@@ -3687,17 +3782,24 @@ const Toolbar = ({ formData }) => {
           if (typeof left !== 'number' || typeof top !== 'number') return;
 
           try {
+            const isLegacyCircleServiceElement = isLegacyCircleServiceObject(obj);
             const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
             const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
             obj.set({
               left: left * sx,
               top: top * sy,
-              scaleX: signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
-              scaleY: signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
+              scaleX: isLegacyCircleServiceElement
+                ? signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1))
+                : signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
+              scaleY: isLegacyCircleServiceElement
+                ? signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1))
+                : signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
             });
             obj.setCoords?.();
           } catch {}
         });
+
+        fitOversizedTextObjectsAfterResize();
       };
 
       const enforceAutoFitObjects = () => {
@@ -4673,6 +4775,8 @@ const Toolbar = ({ formData }) => {
             height: mmToPx(lineThicknessMm),
             left: diameterPx / 2,
             top: canvas.height / 2,
+            scaleX: 1,
+            scaleY: 1,
           });
           lineObj.setCoords();
         }
@@ -4704,6 +4808,8 @@ const Toolbar = ({ formData }) => {
             topText.set({
               left: diameterPx / 2,
               top: centerY - mmToPx(gapMm),
+              scaleX: 1,
+              scaleY: 1,
             });
             topText.setCoords();
           }
@@ -4711,6 +4817,8 @@ const Toolbar = ({ formData }) => {
             bottomText.set({
               left: diameterPx / 2,
               top: centerY + mmToPx(gapMm),
+              scaleX: 1,
+              scaleY: 1,
             });
             bottomText.setCoords();
           }
@@ -4753,6 +4861,8 @@ const Toolbar = ({ formData }) => {
             height: lineThicknessPx,
             left: centerX,
             top: canvasH / 2,
+            scaleX: 1,
+            scaleY: 1,
           });
           hLine.setCoords();
         }
@@ -4763,6 +4873,8 @@ const Toolbar = ({ formData }) => {
             height: mmToPx(vHeightMm),
             left: centerX,
             top: canvasH / 2 + 2,
+            scaleX: 1,
+            scaleY: 1,
           });
           vLine.setCoords();
         }
@@ -4804,6 +4916,8 @@ const Toolbar = ({ formData }) => {
             textAlign: 'center',
             width: Math.max(20, lineWidthPx - paddingPx * 2),
             fontSize: desiredFontPx2,
+            scaleX: 1,
+            scaleY: 1,
           });
           topText.initDimensions && topText.initDimensions();
           // Використовуємо ту ж логіку що й при створенні
@@ -4821,6 +4935,8 @@ const Toolbar = ({ formData }) => {
             originX: 'left',
             textAlign: 'center',
             fontSize: desiredFontPx2,
+            scaleX: 1,
+            scaleY: 1,
           });
           blText.initDimensions && blText.initDimensions();
           // Використовуємо ту ж логіку що й при створенні
@@ -4838,6 +4954,8 @@ const Toolbar = ({ formData }) => {
             originX: 'left',
             textAlign: 'center',
             fontSize: desiredFontPx2,
+            scaleX: 1,
+            scaleY: 1,
           });
           brText.initDimensions && brText.initDimensions();
           // Використовуємо ту ж логіку що й при створенні
@@ -4880,16 +4998,23 @@ const Toolbar = ({ formData }) => {
               if (obj.isCutElement && obj.cutType === 'hole') return;
               if (typeof obj.id === 'string' && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
               if (typeof obj.left !== 'number' || typeof obj.top !== 'number') return;
+              const isLegacyCircleServiceElement = isLegacyCircleServiceObject(obj);
               const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
               const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
               obj.set?.({
                 left: obj.left * sx,
                 top: obj.top * sy,
-                scaleX: signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
-                scaleY: signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
+                scaleX: isLegacyCircleServiceElement
+                  ? signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1))
+                  : signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
+                scaleY: isLegacyCircleServiceElement
+                  ? signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1))
+                  : signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
               });
               obj.setCoords?.();
             });
+
+            fitOversizedTextObjectsAfterResize();
           }
         }
       } catch {}

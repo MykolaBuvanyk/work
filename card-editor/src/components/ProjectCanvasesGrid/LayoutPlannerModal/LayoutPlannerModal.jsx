@@ -1961,10 +1961,7 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         }
       }
 
-      if (isNodeInsideCutShape(shapeNode)) {
-        shapeNode.setAttribute("data-inner-contour-added", "true");
-        return;
-      }
+      const isInsideCutShape = isNodeInsideCutShape(shapeNode);
 
       const hasFillAttr =
         shapeNode.getAttribute("data-shape-has-fill") === "true";
@@ -2030,6 +2027,11 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
         }
         shapeNode.setAttribute("data-inner-contour-added", "true");
         applyContourStrokeWidth(shapeNode, true);
+        return;
+      }
+
+      if (isInsideCutShape) {
+        shapeNode.setAttribute("data-inner-contour-added", "true");
         return;
       }
 
@@ -2805,6 +2807,7 @@ const BARCODE_STYLE_PROPS = [
 
 const BARCODE_EXPORT_ATTR = "data-layout-barcode";
 const BARCODE_BAR_ATTR = "data-layout-barcode-bar";
+const BARCODE_BAR_ID_PREFIX = "layout-barcode-bar";
 
 const BARCODE_OUTLINE_COLOR = TEXT_STROKE_COLOR;
 const BARCODE_OUTLINE_WIDTH = 1;
@@ -2814,6 +2817,7 @@ const outlineBarcodeRects = (rootElement) => {
   if (!rootElement) return;
 
   let outlinedGroups = 0;
+  let outlinedBars = 0;
 
   const walk = (node) => {
     if (!node || node.nodeType !== 1) return;
@@ -2831,6 +2835,11 @@ const outlineBarcodeRects = (rootElement) => {
         rects.forEach((rect) => {
           try {
             rect.setAttribute(BARCODE_BAR_ATTR, "true");
+            const currentId = String(rect.getAttribute("id") || "").trim();
+            if (!currentId || !currentId.startsWith(BARCODE_BAR_ID_PREFIX)) {
+              outlinedBars += 1;
+              rect.setAttribute("id", `${BARCODE_BAR_ID_PREFIX}-${outlinedBars}`);
+            }
           } catch {}
 
           const rectWidth = parseFloat(rect.getAttribute("width") || "0");
@@ -2893,6 +2902,140 @@ const outlineBarcodeRects = (rootElement) => {
 
   walk(rootElement);
   return outlinedGroups;
+};
+
+const resolveCanvasClipBoundsWithPaper = (svgElement) => {
+  if (!svgElement?.cloneNode) return null;
+
+  const scope = ensurePaperScope();
+  if (!scope) return null;
+
+  try {
+    scope.project.clear();
+
+    const imported = scope.project.importSVG(svgElement.cloneNode(true), {
+      applyMatrix: true,
+      expandShapes: true,
+      insert: true,
+    });
+
+    if (!imported) {
+      scope.project.clear();
+      return null;
+    }
+
+    const clipSourceItems = scope.project.getItems({
+      recursive: true,
+      match: (item) => isIntersectClipName(item?.name),
+    });
+
+    const rawClipItems = [];
+    clipSourceItems.forEach((item) => {
+      gatherPathItems(scope, item, rawClipItems);
+    });
+
+    rawClipItems.forEach((clipItem) => {
+      try {
+        if (
+          clipItem instanceof scope.Path &&
+          !clipItem.closed &&
+          Array.isArray(clipItem.segments) &&
+          clipItem.segments.length >= 3
+        ) {
+          clipItem.closed = true;
+        }
+      } catch {}
+    });
+
+    let bestClipItem = rawClipItems.reduce((best, item) => {
+      if (!item || !hasDrawablePaperGeometry(scope, item)) return best;
+      if (!best) return item;
+      return getPaperItemClipScore(item) > getPaperItemClipScore(best) ? item : best;
+    }, null);
+
+    if (!bestClipItem || getPaperItemClipScore(bestClipItem) <= 1e-6) {
+      const viewBoxSize = parseSvgViewBoxSize(svgElement);
+      if (viewBoxSize) {
+        bestClipItem = new scope.Path.Rectangle({
+          point: [0, 0],
+          size: [viewBoxSize.width, viewBoxSize.height],
+          insert: false,
+        });
+      }
+    }
+
+    if (!bestClipItem?.bounds) {
+      scope.project.clear();
+      return null;
+    }
+
+    const bounds = {
+      left: Number(bestClipItem.bounds.left),
+      top: Number(bestClipItem.bounds.top),
+      right: Number(bestClipItem.bounds.right),
+      bottom: Number(bestClipItem.bounds.bottom),
+    };
+
+    scope.project.clear();
+    if (
+      !Number.isFinite(bounds.left) ||
+      !Number.isFinite(bounds.top) ||
+      !Number.isFinite(bounds.right) ||
+      !Number.isFinite(bounds.bottom)
+    ) {
+      return null;
+    }
+
+    return bounds;
+  } catch {
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
+
+const clipBarcodeRectsByBounds = (rootElement, clipBounds, eps = 1e-4) => {
+  if (!rootElement?.querySelectorAll || !clipBounds) return 0;
+
+  const rects = Array.from(rootElement.querySelectorAll(`rect[${BARCODE_BAR_ATTR}="true"]`));
+  if (!rects.length) return 0;
+
+  let processed = 0;
+  rects.forEach((rect) => {
+    const x = Number(rect.getAttribute("x") || 0);
+    const y = Number(rect.getAttribute("y") || 0);
+    const width = Number(rect.getAttribute("width") || 0);
+    const height = Number(rect.getAttribute("height") || 0);
+
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(width) || !Number.isFinite(height)) {
+      return;
+    }
+    if (width <= eps || height <= eps) {
+      rect.parentNode?.removeChild(rect);
+      processed += 1;
+      return;
+    }
+
+    const left = Math.max(x, clipBounds.left);
+    const top = Math.max(y, clipBounds.top);
+    const right = Math.min(x + width, clipBounds.right);
+    const bottom = Math.min(y + height, clipBounds.bottom);
+
+    if (right - left <= eps || bottom - top <= eps) {
+      rect.parentNode?.removeChild(rect);
+      processed += 1;
+      return;
+    }
+
+    rect.setAttribute("x", String(left));
+    rect.setAttribute("y", String(top));
+    rect.setAttribute("width", String(right - left));
+    rect.setAttribute("height", String(bottom - top));
+    processed += 1;
+  });
+
+  return processed;
 };
 
 let textOutlineScope = null;
@@ -4234,6 +4377,431 @@ const styleLineFromCircleElements = (svgElement) => {
   });
 };
 
+const INTERSECT_CLIP_ITEM_NAMES = new Set([
+  "canvashape",
+  "canvashapecustom",
+]);
+
+const isIntersectClipName = (value) => {
+  const name = String(value || "").trim().toLowerCase();
+  if (!name) return false;
+  if (name.startsWith(HOLE_ID_PREFIX)) return false;
+  return INTERSECT_CLIP_ITEM_NAMES.has(name);
+};
+
+const hasDrawablePaperGeometry = (scope, item) => {
+  if (!item) return false;
+
+  if (item instanceof scope.Path) {
+    const segmentCount = Array.isArray(item.segments) ? item.segments.length : 0;
+    if (segmentCount < 2) return false;
+    const length = Number(item.length);
+    if (Number.isFinite(length) && length > 1e-6) return true;
+    const area = Number(item.area);
+    return Number.isFinite(area) ? Math.abs(area) > 1e-6 : true;
+  }
+
+  if (item instanceof scope.CompoundPath) {
+    const children = Array.isArray(item.children) ? item.children : [];
+    return children.some((child) => hasDrawablePaperGeometry(scope, child));
+  }
+
+  return false;
+};
+
+const getPaperItemClipScore = (item) => {
+  if (!item) return 0;
+  const area = Math.abs(Number(item.area) || 0);
+  return Number.isFinite(area) && area > 1e-6 ? area : 0;
+};
+
+const parseSvgViewBoxSize = (svgElement) => {
+  if (!svgElement?.getAttribute) return null;
+
+  const viewBox = String(svgElement.getAttribute("viewBox") || "")
+    .trim()
+    .split(/[\s,]+/)
+    .map((value) => Number(value));
+
+  if (viewBox.length >= 4) {
+    const width = Number(viewBox[2]);
+    const height = Number(viewBox[3]);
+    if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+      return { width, height };
+    }
+  }
+
+  const widthAttr = Number(svgElement.getAttribute("width"));
+  const heightAttr = Number(svgElement.getAttribute("height"));
+  if (
+    Number.isFinite(widthAttr) &&
+    Number.isFinite(heightAttr) &&
+    widthAttr > 0 &&
+    heightAttr > 0
+  ) {
+    return { width: widthAttr, height: heightAttr };
+  }
+
+  return null;
+};
+
+const isPaperItemDescendantOfAny = (item, ancestors = []) => {
+  if (!item || !Array.isArray(ancestors) || ancestors.length === 0) {
+    return false;
+  }
+  let current = item.parent || null;
+  while (current) {
+    if (ancestors.includes(current)) {
+      return true;
+    }
+    current = current.parent || null;
+  }
+  return false;
+};
+
+const isPaperBoundsInside = (innerBounds, outerBounds, eps = 1e-4) => {
+  if (!innerBounds || !outerBounds) return false;
+
+  const leftOk = Number(innerBounds.left) >= Number(outerBounds.left) - eps;
+  const topOk = Number(innerBounds.top) >= Number(outerBounds.top) - eps;
+  const rightOk = Number(innerBounds.right) <= Number(outerBounds.right) + eps;
+  const bottomOk = Number(innerBounds.bottom) <= Number(outerBounds.bottom) + eps;
+
+  return leftOk && topOk && rightOk && bottomOk;
+};
+
+const isPaperBoundsIntersecting = (aBounds, bBounds, eps = 1e-4) => {
+  if (!aBounds || !bBounds) return false;
+
+  const separatedHorizontally =
+    Number(aBounds.right) < Number(bBounds.left) - eps ||
+    Number(aBounds.left) > Number(bBounds.right) + eps;
+  const separatedVertically =
+    Number(aBounds.bottom) < Number(bBounds.top) - eps ||
+    Number(aBounds.top) > Number(bBounds.bottom) + eps;
+
+  return !separatedHorizontally && !separatedVertically;
+};
+
+const getPaperBoundsIntersection = (aBounds, bBounds, eps = 1e-4) => {
+  if (!aBounds || !bBounds) return null;
+
+  const left = Math.max(Number(aBounds.left), Number(bBounds.left));
+  const top = Math.max(Number(aBounds.top), Number(bBounds.top));
+  const right = Math.min(Number(aBounds.right), Number(bBounds.right));
+  const bottom = Math.min(Number(aBounds.bottom), Number(bBounds.bottom));
+
+  if (!Number.isFinite(left) || !Number.isFinite(top) || !Number.isFinite(right) || !Number.isFinite(bottom)) {
+    return null;
+  }
+
+  if (right - left <= eps || bottom - top <= eps) {
+    return null;
+  }
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+};
+
+const isPaperItemTouchingClipShape = (scope, targetItem, clipItems = []) => {
+  if (!scope || !targetItem || !Array.isArray(clipItems) || clipItems.length === 0) {
+    return false;
+  }
+
+  const bounds = targetItem?.bounds;
+  if (!bounds) return false;
+
+  const samplePoints = [
+    bounds.center,
+    bounds.topLeft,
+    bounds.topRight,
+    bounds.bottomLeft,
+    bounds.bottomRight,
+    new scope.Point(bounds.left + bounds.width * 0.5, bounds.top),
+    new scope.Point(bounds.left + bounds.width * 0.5, bounds.bottom),
+    new scope.Point(bounds.left, bounds.top + bounds.height * 0.5),
+    new scope.Point(bounds.right, bounds.top + bounds.height * 0.5),
+  ].filter(Boolean);
+
+  for (const clipItem of clipItems) {
+    if (!clipItem) continue;
+
+    try {
+      const hasInsidePoint = samplePoints.some((point) => clipItem.contains(point));
+      if (hasInsidePoint) return true;
+    } catch {}
+
+    try {
+      const intersections = targetItem.getIntersections?.(clipItem) || [];
+      if (Array.isArray(intersections) && intersections.length > 0) {
+        return true;
+      }
+    } catch {}
+  }
+
+  return false;
+};
+
+const isLikelyBarcodeBarPath = (scope, item) => {
+  if (!(item instanceof scope.Path)) return false;
+  if (!item.closed) return false;
+
+  const segmentCount = Array.isArray(item.segments) ? item.segments.length : 0;
+  if (segmentCount < 4 || segmentCount > 6) return false;
+
+  const bounds = item.bounds;
+  const width = Number(bounds?.width);
+  const height = Number(bounds?.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 1e-6 || height <= 1e-6) {
+    return false;
+  }
+
+  const minSide = Math.min(width, height);
+  const maxSide = Math.max(width, height);
+  const aspect = maxSide / minSide;
+
+  return Number.isFinite(aspect) && aspect >= 3.5;
+};
+
+const copyPaperPathStyle = (fromPath, toPath) => {
+  if (!fromPath || !toPath) return;
+
+  try {
+    toPath.style = fromPath.style;
+  } catch {}
+
+  try {
+    toPath.opacity = fromPath.opacity;
+    toPath.visible = fromPath.visible;
+    toPath.blendMode = fromPath.blendMode;
+    toPath.locked = fromPath.locked;
+    toPath.guide = fromPath.guide;
+    toPath.data = { ...(fromPath.data || {}) };
+    toPath.name = fromPath.name || toPath.name;
+  } catch {}
+};
+
+const clipSvgByCanvasShapeWithPaper = (svgElement) => {
+  if (!svgElement?.cloneNode) return null;
+
+  const scope = ensurePaperScope();
+  if (!scope) return null;
+
+  try {
+    scope.project.clear();
+
+    const imported = scope.project.importSVG(svgElement.cloneNode(true), {
+      applyMatrix: true,
+      expandShapes: true,
+      insert: true,
+    });
+
+    if (!imported) {
+      scope.project.clear();
+      return null;
+    }
+
+    const pathItems = scope.project.getItems({
+      recursive: true,
+      match: (item) =>
+        item instanceof scope.Path || item instanceof scope.CompoundPath,
+    });
+
+    if (!Array.isArray(pathItems) || pathItems.length === 0) {
+      scope.project.clear();
+      return null;
+    }
+
+    const clipSourceItems = scope.project.getItems({
+      recursive: true,
+      match: (item) => isIntersectClipName(item?.name),
+    });
+
+    const rawClipItems = [];
+    clipSourceItems.forEach((item) => {
+      gatherPathItems(scope, item, rawClipItems);
+    });
+
+    if (!rawClipItems.length) {
+      scope.project.clear();
+      return null;
+    }
+
+    rawClipItems.forEach((clipItem) => {
+      try {
+        if (
+          clipItem instanceof scope.Path &&
+          !clipItem.closed &&
+          Array.isArray(clipItem.segments) &&
+          clipItem.segments.length >= 3
+        ) {
+          clipItem.closed = true;
+        }
+      } catch {}
+    });
+
+    let bestClipItem = rawClipItems.reduce((best, item) => {
+      if (!item || !hasDrawablePaperGeometry(scope, item)) return best;
+      if (!best) return item;
+      return getPaperItemClipScore(item) > getPaperItemClipScore(best) ? item : best;
+    }, null);
+
+    if (!bestClipItem || getPaperItemClipScore(bestClipItem) <= 1e-6) {
+      const viewBoxSize = parseSvgViewBoxSize(svgElement);
+      if (viewBoxSize) {
+        bestClipItem = new scope.Path.Rectangle({
+          point: [0, 0],
+          size: [viewBoxSize.width, viewBoxSize.height],
+          insert: false,
+        });
+      }
+    }
+
+    if (!bestClipItem) {
+      scope.project.clear();
+      return null;
+    }
+
+    const clipItems = [bestClipItem];
+    const clipBounds = bestClipItem?.bounds || null;
+
+    const clipSet = new Set(clipItems);
+    const targetItems = pathItems.filter((item) => {
+      if (!item || clipSet.has(item)) return false;
+      if (isPaperItemDescendantOfAny(item, clipSourceItems)) return false;
+      const name = String(item?.name || "").trim().toLowerCase();
+      if (name.startsWith(HOLE_ID_PREFIX)) return false;
+      return true;
+    });
+
+    targetItems.forEach((targetItem) => {
+      let clipped = null;
+      const targetBounds = targetItem?.bounds || null;
+      const shouldUseBarcodeRectClip =
+        clipBounds &&
+        targetBounds &&
+        (() => {
+          const itemName = String(targetItem?.name || "").trim().toLowerCase();
+          const isMarkedBarcodeBar = itemName.startsWith(BARCODE_BAR_ID_PREFIX);
+          return isMarkedBarcodeBar || isLikelyBarcodeBarPath(scope, targetItem);
+        })();
+
+      if (shouldUseBarcodeRectClip) {
+        try {
+          let barClipResult = null;
+          const sourceRect = new scope.Path.Rectangle({
+            point: [targetBounds.left, targetBounds.top],
+            size: [targetBounds.width, targetBounds.height],
+            insert: false,
+          });
+
+          clipItems.forEach((clipItem, idx) => {
+            const source = idx === 0 ? sourceRect : barClipResult;
+            if (!source) return;
+            const next = source.intersect(clipItem, { insert: false });
+            if (idx > 0 && barClipResult) {
+              barClipResult.remove();
+            }
+            barClipResult = next;
+          });
+
+          try {
+            sourceRect.remove();
+          } catch {}
+
+          if (barClipResult && hasDrawablePaperGeometry(scope, barClipResult)) {
+            copyPaperPathStyle(targetItem, barClipResult);
+            barClipResult.insertAbove(targetItem);
+            targetItem.remove();
+            return;
+          }
+
+          try {
+            if (barClipResult) barClipResult.remove();
+          } catch {}
+
+          targetItem.remove();
+        } catch {}
+        return;
+      }
+
+      try {
+        clipItems.forEach((clipItem, idx) => {
+          const source = idx === 0 ? targetItem : clipped;
+          if (!source) return;
+          const next = source.intersect(clipItem, { insert: false });
+          if (idx > 0 && clipped) {
+            clipped.remove();
+          }
+          clipped = next;
+        });
+
+        if (!clipped || !hasDrawablePaperGeometry(scope, clipped)) {
+          try {
+            if (clipped) clipped.remove();
+          } catch {}
+
+          const targetOverlapsClip = isPaperItemTouchingClipShape(
+            scope,
+            targetItem,
+            clipItems
+          );
+
+          if (!targetOverlapsClip) {
+            targetItem.remove();
+          }
+          return;
+        }
+
+        clipped.insertAbove(targetItem);
+        targetItem.remove();
+      } catch (error) {
+        try {
+          if (clipped) clipped.remove();
+        } catch {}
+
+        const targetOverlapsClip = isPaperItemTouchingClipShape(
+          scope,
+          targetItem,
+          clipItems
+        );
+
+        if (!targetOverlapsClip) {
+          try {
+            targetItem.remove();
+          } catch {}
+        }
+      }
+    });
+
+    const exportedSvg = scope.project.exportSVG({ asString: false, precision: 6 });
+    if (!exportedSvg || exportedSvg.nodeName?.toLowerCase() !== "svg") {
+      scope.project.clear();
+      return null;
+    }
+
+    ["viewBox", "width", "height", "preserveAspectRatio"].forEach((attr) => {
+      const value = svgElement.getAttribute?.(attr);
+      if (value != null && value !== "") {
+        exportedSvg.setAttribute(attr, value);
+      }
+    });
+
+    scope.project.clear();
+    return exportedSvg;
+  } catch (error) {
+    console.warn("Paper.js intersect clipping failed", error);
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
+
 const buildPlacementPreview = (placement, options = {}) => {
   const { enableGaps = true, hideFrames = false } = options;
   const { svg, preview, customBorder } = placement || {};
@@ -4455,7 +5023,7 @@ const buildPlacementPreview = (placement, options = {}) => {
         });
       };
 
-      const exportElement = svgElement.cloneNode(true);
+      let exportElement = svgElement.cloneNode(true);
 
       stripBorderNodesWhenDisabled(exportElement);
 
@@ -4567,7 +5135,25 @@ const buildPlacementPreview = (placement, options = {}) => {
 
       applyRotationIfNeeded(exportElement, viewBoxWidth, viewBoxHeight);
 
-      const previewElement = svgElement.cloneNode(true);
+      try {
+        outlineBarcodeRects(exportElement);
+        const exportClipBounds = resolveCanvasClipBoundsWithPaper(exportElement);
+        if (exportClipBounds) {
+          clipBarcodeRectsByBounds(exportElement, exportClipBounds);
+        }
+      } catch (barcodeExportPreClipError) {
+        console.warn(
+          "Barcode preprocess (export) failed:",
+          barcodeExportPreClipError?.message || barcodeExportPreClipError
+        );
+      }
+
+      const clippedExportElement = clipSvgByCanvasShapeWithPaper(exportElement);
+      if (clippedExportElement) {
+        exportElement = clippedExportElement;
+      }
+
+      let previewElement = svgElement.cloneNode(true);
       previewElement.setAttribute("width", "100%");
       previewElement.setAttribute("height", "100%");
 
@@ -4628,26 +5214,26 @@ const buildPlacementPreview = (placement, options = {}) => {
 
       applyRotationIfNeeded(previewElement, viewBoxWidth, viewBoxHeight);
 
-      if (hideFrames) {
-        stripPreviewFrames(previewElement);
-      }
-
-      try {
-        outlineBarcodeRects(exportElement);
-      } catch (barcodeExportError) {
-        console.warn(
-          "Barcode outline (export) failed:",
-          barcodeExportError?.message || barcodeExportError
-        );
-      }
-
       try {
         outlineBarcodeRects(previewElement);
-      } catch (barcodePreviewError) {
+        const previewClipBounds = resolveCanvasClipBoundsWithPaper(previewElement);
+        if (previewClipBounds) {
+          clipBarcodeRectsByBounds(previewElement, previewClipBounds);
+        }
+      } catch (barcodePreviewPreClipError) {
         console.warn(
-          "Barcode outline (preview) failed:",
-          barcodePreviewError?.message || barcodePreviewError
+          "Barcode preprocess (preview) failed:",
+          barcodePreviewPreClipError?.message || barcodePreviewPreClipError
         );
+      }
+
+      const clippedPreviewElement = clipSvgByCanvasShapeWithPaper(previewElement);
+      if (clippedPreviewElement) {
+        previewElement = clippedPreviewElement;
+      }
+
+      if (hideFrames) {
+        stripPreviewFrames(previewElement);
       }
 
       const serializer = new XMLSerializer();

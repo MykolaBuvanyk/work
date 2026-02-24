@@ -1732,7 +1732,7 @@ app.post('/api/layout-pdf', async (req, res) => {
         }
       }
 
-      (sheet.placements || []).forEach((placement, placementIndex) => {
+      (sheet.placements || []).forEach(async (placement, placementIndex) => {
         const widthPt = mmToPoints(placement?.width);
         const heightPt = mmToPoints(placement?.height);
         const xPt = mmToPoints(placement?.x);

@@ -133,6 +133,170 @@ const Canvas = ({ className }) => {
 
     const isTextObj = o => !!o && ['i-text', 'text', 'textbox'].includes(o.type);
 
+    const isQrObject = o =>
+      !!o && (o.isQRCode === true || (o.data && o.data.isQRCode === true));
+
+    const isPointOnSegment = (point, a, b, eps = 1e-6) => {
+      if (!point || !a || !b) return false;
+      const cross = (point.y - a.y) * (b.x - a.x) - (point.x - a.x) * (b.y - a.y);
+      if (Math.abs(cross) > eps) return false;
+      const dot = (point.x - a.x) * (b.x - a.x) + (point.y - a.y) * (b.y - a.y);
+      if (dot < -eps) return false;
+      const lenSq = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+      if (dot - lenSq > eps) return false;
+      return true;
+    };
+
+    const isPointInPolygon = (point, polygonPoints) => {
+      if (!point || !Array.isArray(polygonPoints) || polygonPoints.length < 3) return false;
+
+      for (let i = 0; i < polygonPoints.length; i += 1) {
+        const a = polygonPoints[i];
+        const b = polygonPoints[(i + 1) % polygonPoints.length];
+        if (isPointOnSegment(point, a, b)) return true;
+      }
+
+      let inside = false;
+      for (let i = 0, j = polygonPoints.length - 1; i < polygonPoints.length; j = i++) {
+        const pi = polygonPoints[i];
+        const pj = polygonPoints[j];
+        const intersects =
+          pi.y > point.y !== pj.y > point.y &&
+          point.x < ((pj.x - pi.x) * (point.y - pi.y)) / ((pj.y - pi.y) || 1e-9) + pi.x;
+        if (intersects) inside = !inside;
+      }
+      return inside;
+    };
+
+    const getClipPolygonPoints = cp => {
+      if (!cp) return null;
+
+      const matrix =
+        typeof cp.calcTransformMatrix === 'function'
+          ? cp.calcTransformMatrix()
+          : fabric.iMatrix;
+      const pathOffset = cp.pathOffset || { x: 0, y: 0 };
+
+      const toWorldPoint = (x, y) => {
+        const local = new fabric.Point(x - pathOffset.x, y - pathOffset.y);
+        return fabric.util.transformPoint(local, matrix);
+      };
+
+      if (Array.isArray(cp.__baseCustomCorners) && cp.__baseCustomCorners.length >= 3) {
+        return cp.__baseCustomCorners.map(p => ({ x: Number(p.x) || 0, y: Number(p.y) || 0 }));
+      }
+
+      if (cp.type === 'polygon' && Array.isArray(cp.points) && cp.points.length >= 3) {
+        return cp.points.map(p => {
+          const wp = toWorldPoint(Number(p.x) || 0, Number(p.y) || 0);
+          return { x: wp.x, y: wp.y };
+        });
+      }
+
+      if (cp.type === 'path' && Array.isArray(cp.path) && cp.path.length) {
+        const rawPoints = [];
+        cp.path.forEach(seg => {
+          if (!Array.isArray(seg) || !seg.length) return;
+          const cmd = String(seg[0] || '').toUpperCase();
+          let x = null;
+          let y = null;
+          if (cmd === 'M' || cmd === 'L' || cmd === 'T') {
+            x = Number(seg[1]);
+            y = Number(seg[2]);
+          } else if (cmd === 'Q' || cmd === 'S') {
+            x = Number(seg[3]);
+            y = Number(seg[4]);
+          } else if (cmd === 'C') {
+            x = Number(seg[5]);
+            y = Number(seg[6]);
+          }
+          if (Number.isFinite(x) && Number.isFinite(y)) {
+            rawPoints.push({ x, y });
+          }
+        });
+
+        if (rawPoints.length >= 3) {
+          return rawPoints.map(p => {
+            const wp = toWorldPoint(p.x, p.y);
+            return { x: wp.x, y: wp.y };
+          });
+        }
+      }
+
+      return null;
+    };
+
+    const isPointInsideClipGeometry = (point, cp) => {
+      if (!point || !cp) return true;
+
+      const polygonPoints = getClipPolygonPoints(cp);
+      if (Array.isArray(polygonPoints) && polygonPoints.length >= 3) {
+        return isPointInPolygon(point, polygonPoints);
+      }
+
+      try {
+        return typeof cp.containsPoint === 'function' ? cp.containsPoint(point) : true;
+      } catch {
+        return true;
+      }
+    };
+
+    const storeQrLastValidTransform = target => {
+      if (!target || !isQrObject(target)) return;
+      target.__qrLastValidTransform = {
+        left: Number(target.left) || 0,
+        top: Number(target.top) || 0,
+        scaleX: Number(target.scaleX) || 1,
+        scaleY: Number(target.scaleY) || 1,
+        angle: Number(target.angle) || 0,
+      };
+    };
+
+    const restoreQrLastValidTransform = target => {
+      if (!target || !isQrObject(target)) return false;
+      const saved = target.__qrLastValidTransform;
+      if (!saved) return false;
+      try {
+        target.set({
+          left: saved.left,
+          top: saved.top,
+          scaleX: saved.scaleX,
+          scaleY: saved.scaleY,
+          angle: saved.angle,
+        });
+        target.setCoords?.();
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const isQrInsideCanvasClip = target => {
+      if (!target || !isQrObject(target)) return true;
+      const cp = fCanvas?.clipPath;
+      if (!cp) return true;
+      try {
+        target.setCoords?.();
+        const corners = typeof target.getCoords === 'function' ? target.getCoords() : [];
+        if (!Array.isArray(corners) || corners.length === 0) return true;
+        const center = target.getCenterPoint?.();
+        const points = center ? [...corners, center] : corners;
+        return points.every(p => isPointInsideClipGeometry(p, cp));
+      } catch {
+        return true;
+      }
+    };
+
+    const enforceQrInsideCanvasClip = target => {
+      if (!target || !isQrObject(target)) return true;
+      if (isQrInsideCanvasClip(target)) {
+        storeQrLastValidTransform(target);
+        return true;
+      }
+      restoreQrLastValidTransform(target);
+      return false;
+    };
+
     const isFromIconMenu = o =>
       !!o && (o.fromIconMenu === true || (o.data && o.data.fromIconMenu === true));
 
@@ -2700,6 +2864,12 @@ const Canvas = ({ className }) => {
     fCanvas.on('object:added', e => {
       const target = e.target;
       if (!target) return;
+      if (isQrObject(target)) {
+        try {
+          target.setCoords?.();
+          storeQrLastValidTransform(target);
+        } catch { }
+      }
       if (isHole(target)) {
         hardenHole(target);
         return; // не робимо активним
@@ -2793,6 +2963,16 @@ const Canvas = ({ className }) => {
         }
         t.__snapGuides = guides;
       } catch { }
+
+      if (isQrObject(t)) {
+        const isValidQrPosition = enforceQrInsideCanvasClip(t);
+        if (!isValidQrPosition) {
+          try {
+            t.__snapGuides = null;
+            t.setCoords?.();
+          } catch { }
+        }
+      }
     });
 
     const clearSnapGuides = e => {
@@ -2823,7 +3003,16 @@ const Canvas = ({ className }) => {
       } else if (t) {
         t._lastScaleX = t.scaleX;
         t._lastScaleY = t.scaleY;
+        if (isQrObject(t)) {
+          enforceQrInsideCanvasClip(t);
+        }
       }
+    });
+
+    fCanvas.on('object:modified', e => {
+      const t = e?.target;
+      if (!t || !isQrObject(t)) return;
+      enforceQrInsideCanvasClip(t);
     });
 
     return () => {

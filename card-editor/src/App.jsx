@@ -30,7 +30,7 @@ function App() {
   const mainRoutes = (
     <>
       <Route index element={<Home />} />
-    <Route path="faq" element={<FAQPage />} />
+      <Route path="faq" element={<FAQPage />} />
       <Route path="login" element={<Login />} />
       <Route path="login/enter/:id" element={<Enter />} />
       <Route path="terms-of-purchasing" element={<TermsOfPurchasing />} />

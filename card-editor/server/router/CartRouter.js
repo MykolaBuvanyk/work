@@ -317,8 +317,7 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
 
 CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    let { page = 1, limit = 20, search, status, start, finish, lang, userId } = req.query;
-
+    let { page = 1, limit = 20, search, status, start, finish, lang, userId, isPaid } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     const offset = limit * (page - 1);
@@ -347,6 +346,12 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       where.createdAt = {};
       if (start) where.createdAt[Op.gte] = new Date(start);
       if (finish) where.createdAt[Op.lte] = new Date(finish);
+    }
+    
+
+    if (isPaid !== undefined) {
+      console.log(4324,isPaid,isPaid==='true')
+      where.isPaid = isPaid === 'true';
     }
 
     if (lang) {
@@ -447,6 +452,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       count: orders.count
     });
   } catch (err) {
+    console.log(4234,err)
     return res.status(400).json(err);
   }
 });

@@ -43,7 +43,6 @@ const User = sequelize.define('users', {
   weWill:{type:DataTypes.STRING,allowNull:true},
   tellAbout:{type:DataTypes.STRING,allowNull:true},
   timePasswordUpdate: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-  isPaid:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:false}
   //codeFor
 });
 
@@ -57,7 +56,8 @@ const Order=sequelize.define('orders',{
   orderName:{type:DataTypes.STRING,defaultValue:'',allowNull:false},
   orderType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},
   accessories:{type:DataTypes.TEXT,allowNull:false,defaultValue:''},
-  idMongo:{type:DataTypes.STRING,allowNull:false}
+  idMongo:{type:DataTypes.STRING,allowNull:false},
+  isPaid:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:false}
 })
 
 User.hasMany(Order);

@@ -49,8 +49,11 @@ const Admin = () => {
   const [start,setStart]=useState('');
   const [finish,setFinish]=useState('');
   const [countPages, setCountPages]=useState(1);
+  const [isPaid,setIsPaid]=useState('all')//<'all'||'true'||'false'>
 
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isPaidOpen, setIsPaidOpen] = useState(false);
+
   const [selectLang, setSelectLang] = useState({ code: 'ALL', label: 'ALL' });
   const [sum,setSum]=useState(0);
   const [orderId,setOrderId]=useState(null);
@@ -82,6 +85,9 @@ const Admin = () => {
       }
       if(start){
         query+=`&start=${start}`
+      }
+      if(isPaid!='all'){
+        query+=`&isPaid=${isPaid}`
       }
       if(finish){
         // Додаємо кінець дня, якщо не вказано час
@@ -141,7 +147,7 @@ const Admin = () => {
 
   useEffect(()=>{
     getOrders();
-  },[page, status, start, finish, selectLang, search, filteredUserId]);
+  },[page, status, start, finish, selectLang, search, filteredUserId, isPaid]);
 
  
   useEffect(() => {}, [isAdmin]);
@@ -199,8 +205,9 @@ const Admin = () => {
                   <option value='ALL'>All</option>
                   <option value='Received'>Received</option>
                   <option value='Printed'>Printed</option>
-                  <option value='Manufact'>Manufact.</option>
+                  <option value='Manufact'>Manufact</option>
                   <option value='Delivered'>Delivered</option>
+                  <option value='Shipped'>Shipped</option>
                   <option value='Returned'>Returned</option>
                   <option value='Waiting'>Waiting</option>
                   <option value='Deleted'>Deleted</option>
@@ -222,30 +229,53 @@ const Admin = () => {
               </div>
             </div>
             <div className="lang-and-check-and-sum">
-              <div className={'lang'}>
-                <div
-                  style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                >
-                  {selectLang.code}
-                  <SlArrowDown size={14} />
+              <div style={{display:'flex',flexDirection:'row',gap:'7.5px'}} className="row">
+                <div className={'lang'}>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
+                    onClick={() => setIsPaidOpen(!isPaidOpen)}
+                  >
+                    {(isPaid=='all'?'all':isPaid=='true'?'Paid':'UnPaid').toUpperCase()}
+                    <SlArrowDown size={14} />
+                  </div>
+                  <div className={isPaidOpen ? 'dropdown' : 'open'}>
+                    {[{value:'all',name:'all',color:'#000'},{value:'true',name:'Paid',color:'green'},{value:'false',name:'Unpaid',color:'red'}].map(paid => (
+                      <div
+                        key={paid.value}
+                        onClick={() => {setIsPaidOpen(false);setIsPaid(paid.value)}}
+                        className={'countries'}
+                        style={{color:paid.color,textAlign:'left'}}
+                      >
+                        {paid.name}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className={isLangOpen ? 'dropdown' : 'open'}>
-                  {[{code:'ALL'},...combinedCountries].map(lang => (
-                    <div
-                      key={lang.code}
-                      onClick={() => {setIsLangOpen(false);setSelectLang(lang)}}
-                      className={'countries'}
-                    >
-                      {/*lang.countryCode!='ALL'&&
-                        <Flag country={lang.countryCode} size={32} />
-                      */}
-                      {lang.code!='ALL'&&
-                      <img src={`https://flagcdn.com/w20/${lang.code.toLowerCase()=='uk'?'gb':lang.code.toLowerCase()}.png`} alt=''/>
-}
-                      {lang.code}
-                    </div>
-                  ))}
+                <div className={'lang'}>
+                  <div
+                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
+                    onClick={() => setIsLangOpen(!isLangOpen)}
+                  >
+                    {selectLang.code}
+                    <SlArrowDown size={14} />
+                  </div>
+                  <div className={isLangOpen ? 'dropdown' : 'open'}>
+                    {[{code:'ALL'},...combinedCountries].map(lang => (
+                      <div
+                        key={lang.code}
+                        onClick={() => {setIsLangOpen(false);setSelectLang(lang)}}
+                        className={'countries'}
+                      >
+                        {/*lang.countryCode!='ALL'&&
+                          <Flag country={lang.countryCode} size={32} />
+                        */}
+                        {lang.code!='ALL'&&
+                        <img src={`https://flagcdn.com/w20/${lang.code.toLowerCase()=='uk'?'gb':lang.code.toLowerCase()}.png`} alt=''/>
+  }
+                        {lang.code}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="check">
@@ -268,6 +298,7 @@ const Admin = () => {
                 <th>Status</th>
                 <th>Order Date</th>
                 <th>Delivery Type</th>
+                <th>Inv. St</th>
               </tr>
             </thead>
 
@@ -290,6 +321,7 @@ const Admin = () => {
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>
                     <td>{order.deliveryType}</td>
+                    <td style={{color:order.isPaid?'green':'red'}}>{order.isPaid?'Paid':'Unpaid'}</td>
                 </tr>
               ))}
             </tbody>

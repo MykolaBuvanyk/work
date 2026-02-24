@@ -99,7 +99,7 @@ class AuthController {
         country:country||null,
         state:state||null,
         isDifferent:isDifferent||null,
-        isSubscribe:isSubscribe||null,
+        isSubscribe:isSubscribe||false,
         company2: company2 || null,
         firstName2: firstName2 || null,
         surname2: surname2 || null,

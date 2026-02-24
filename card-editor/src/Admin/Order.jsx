@@ -1246,6 +1246,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>
         <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
         <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
+        <button className={order.status=='Shipped'?'active':''} onClick={()=>setStatus('Shipped')}>Shipped</button>
         {//<button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button>
         }<button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
       </div>

@@ -234,7 +234,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const user=await User.findOne({where:{id:req.user.id}});
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order=await Order.create({
-      sum: Math.round(netAfterDiscount * 100) / 100,
+      sum: totalPriceInclVat,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,

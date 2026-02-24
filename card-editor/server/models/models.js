@@ -10,6 +10,7 @@ const User = sequelize.define('users', {
     defaultValue: 'Consumer',
     allowNull: false,
   },
+  weWill:{type:DataTypes.STRING,allowNull:true},
   company: { type: DataTypes.STRING, allowNull: true },
   vatNumber: { type: DataTypes.STRING, allowNull: true },
   reference: { type: DataTypes.STRING, allowNull: true },
@@ -42,6 +43,7 @@ const User = sequelize.define('users', {
   weWill:{type:DataTypes.STRING,allowNull:true},
   tellAbout:{type:DataTypes.STRING,allowNull:true},
   timePasswordUpdate: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+  isPaid:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:false}
   //codeFor
 });
 

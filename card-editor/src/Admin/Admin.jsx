@@ -230,12 +230,12 @@ const Admin = () => {
             </div>
             <div className="lang-and-check-and-sum">
               <div style={{display:'flex',flexDirection:'row',gap:'7.5px'}} className="row">
-                <div className={'lang'}>
+                <div style={{alignItems:'center',display:'flex'}} className={'lang'}>
                   <div
-                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px' }}
+                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px', color: isPaid=='all' ? '#000' : isPaid == 'true' ? 'green' : 'red', alignItems: 'center' }}
                     onClick={() => setIsPaidOpen(!isPaidOpen)}
                   >
-                    {(isPaid=='all'?'all':isPaid=='true'?'Paid':'UnPaid').toUpperCase()}
+                    {(isPaid=='all'?'all':isPaid=='true'?'Paid':'UnPaid').toUpperCase()+' '}
                     <SlArrowDown size={14} />
                   </div>
                   <div className={isPaidOpen ? 'dropdown' : 'open'}>

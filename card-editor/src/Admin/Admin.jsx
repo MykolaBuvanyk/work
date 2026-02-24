@@ -4,12 +4,11 @@ import Order from './Order';
 import { NavLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { $authHost } from '../http';
-import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 import combinedCountries from '../components/Countries';
 
-const limit=25;
+const limit=15;
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -169,6 +168,15 @@ const Admin = () => {
     getOrders({ pageOverride: 1, userIdOverride: nextFilteredUserId, reopenOrderId: selectedOrderId });
   };
 
+  const setPaid=async(orderId)=>{
+    try{
+      await $authHost.post('cart/setPay',{orderId});
+      await getOrders();
+    }catch(err){
+      alert('error set paid');
+    }
+  }
+
   if (!isAdmin) return <>У вас не достатньо прав</>;
   return (
     <>
@@ -316,12 +324,12 @@ const Admin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
-                    <td>{Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice).toFixed(2) : '—'}</td>
+                    <td>{Number.isFinite(Number(order.sum)) ? Number(order.totalPrice).toFixed(2) : '—'}</td>
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>
                     <td>{order.deliveryType}</td>
-                    <td style={{color:order.isPaid?'green':'red'}}>{order.isPaid?'Paid':'Unpaid'}</td>
+                    <td onClick={(e)=>{setPaid(order.id);e.stopPropagation();e.preventDefault();return false}} style={{color:order.isPaid?'green':'red'}}>{order.isPaid?'Paid':'Unpaid'}</td>
                 </tr>
               ))}
             </tbody>

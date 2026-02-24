@@ -170,7 +170,7 @@ const Account = () => {
                                 <td className="row-number">{myOrders.length- index }</td>
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>{order.id}</td>
-                                <td>{order.orderName || 'Water signs 23'}</td>
+                                <td>{order.orderName || 'Water sifgns 23'}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
                                 <td>{Number.isFinite(Number(order?.orderMongo?.totalPrice)) ? Number(order.orderMongo.totalPrice).toFixed(2) : '—'}</td>
                                 <td>{order.status || 'Received'}</td>
@@ -182,8 +182,8 @@ const Account = () => {
                                         <InvoiceIcon />
                                     </div>
                                 </td>
-                                <td className={order.paid ? 'status-paid' : 'status-unpaid'}>
-                                    {order.paid ? 'Paid' : 'Unpaid'}
+                                <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
+                                    {order.isPaid ? 'Paid' : 'Unpaid'}
                                 </td>
                                 <td>{!order.paid && <span className="to-pay-icon">💳</span>}</td>
                                 <td

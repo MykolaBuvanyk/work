@@ -350,7 +350,6 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     
 
     if (isPaid !== undefined) {
-      console.log(4324,isPaid,isPaid==='true')
       where.isPaid = isPaid === 'true';
     }
 
@@ -373,6 +372,14 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       order: [['createdAt', 'DESC']],
       include: [{ model: User }],
     });
+    let ordersForSum = await Order.findAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      attributes:['sum']
+    });
+
+    let totalSum=0;
+    ordersForSum.forEach(x=>totalSum+=x.sum);
 
     const mappedOrders = await Promise.all(
       (orders.rows || []).map(async (order) => {
@@ -448,11 +455,11 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     return res.json({
       orders: enrichedOrders,
       page,
-      totalSum:sum,
+      totalSum,
       count: orders.count
     });
   } catch (err) {
-    console.log(4234,err)
+    console.error(4234,err)
     return res.status(400).json(err);
   }
 });
@@ -1342,6 +1349,19 @@ CartRouter.get('/getMyOrders', requireAuth, async (req,res, next)=>{
     });
   }catch(err){
     console.error('GET MY ORDERS ERROR:', err);
+    return res.status(500).json({ message: 'Failed to load orders' });
+  }
+})
+
+CartRouter.post('/setPay',requireAuth, requireAdmin, async(req,res,next)=>{
+  try{
+    const {orderId}=req.body;
+    const order=await Order.findOne({where:{id:Number(orderId)}});
+    order.isPaid=!order.isPaid;
+    await order.save();
+    return res.json({message:'is pay updated'});
+  }catch(err){
+    console.error('ERROR GET PAY:', err);
     return res.status(500).json({ message: 'Failed to load orders' });
   }
 })

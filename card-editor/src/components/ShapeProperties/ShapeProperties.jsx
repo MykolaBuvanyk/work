@@ -85,6 +85,9 @@ const ShapeProperties = ({
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
   const [isEditingThickness, setIsEditingThickness] = useState(false);
   const commitHistoryTimerRef = useRef(null);
+  // Debounce timers for user-typed inputs (property -> timer id)
+  const pendingInputTimersRef = useRef({});
+  const DEBOUNCE_INPUT_MS = 1500; // 1.5s
   // Запам'ятовуємо попередню товщину перед увімкненням Cut, щоб відновити її після вимкнення Cut
   const [prevThicknessBeforeCut, setPrevThicknessBeforeCut] = useState(null);
 
@@ -135,6 +138,14 @@ const ShapeProperties = ({
         clearTimeout(commitHistoryTimerRef.current);
         commitHistoryTimerRef.current = null;
       }
+      // clear any pending input debounce timers on unmount
+      const dict = pendingInputTimersRef.current || {};
+      Object.keys(dict).forEach((k) => {
+        try {
+          clearTimeout(dict[k]);
+        } catch {}
+      });
+      pendingInputTimersRef.current = {};
     };
   }, []);
 
@@ -1260,6 +1271,48 @@ const ShapeProperties = ({
       return { ...prev, [property]: value };
     });
 
+    const reapplyCornerRadiusAfterResize = (o) => {
+      if (!o) return;
+
+      const radiusMmRaw =
+        typeof o.displayCornerRadiusMm === "number"
+          ? o.displayCornerRadiusMm
+          : typeof o.cornerRadiusMm === "number"
+            ? o.cornerRadiusMm
+            : 0;
+      const radiusMm = Math.max(0, Math.min(30, Math.round(radiusMmRaw || 0)));
+      if (!radiusMm) return;
+
+      const shapeType = o.shapeType;
+      const rPxScaled = Math.max(0, mmToPx(radiusMm) * RADIUS_DAMPING);
+
+      if (o.type === "rect" || shapeType === "roundedCorners") {
+        const sx = Math.max(1e-6, Math.abs(Number(o.scaleX) || 1));
+        const sy = Math.max(1e-6, Math.abs(Number(o.scaleY) || 1));
+        const baseRx = rPxScaled / sx;
+        const baseRy = rPxScaled / sy;
+        const maxBaseRx = Math.max(0, (Number(o.width) || 0) / 2 - 0.001);
+        const maxBaseRy = Math.max(0, (Number(o.height) || 0) / 2 - 0.001);
+        const clampedBaseRx = Math.max(0, Math.min(baseRx, maxBaseRx));
+        const clampedBaseRy = Math.max(0, Math.min(baseRy, maxBaseRy));
+
+        o.set({
+          rx: clampedBaseRx,
+          ry: clampedBaseRy,
+          displayCornerRadiusMm: radiusMm,
+          cornerRadiusMm: radiusMm,
+        });
+        return;
+      }
+
+      if (supportsCornerRadiusForPath(o)) {
+        const localRadiusPx =
+          shapeType === "warningTriangle" ? rPxScaled * 0.5 : rPxScaled;
+        applyCornerRadiusToPathShape(o, localRadiusPx);
+        o.set({ displayCornerRadiusMm: radiusMm, cornerRadiusMm: radiusMm });
+      }
+    };
+
     switch (property) {
       case "width": {
         const targetOuterPx = Math.max(0, mmToPx(value));
@@ -1291,6 +1344,8 @@ const ShapeProperties = ({
           ) {
             o.set({ scaleY: signY * nextAbsScaleX });
           }
+
+          reapplyCornerRadiusAfterResize(o);
         });
         break;
       }
@@ -1323,6 +1378,8 @@ const ShapeProperties = ({
           ) {
             o.set({ scaleX: signX * nextAbsScaleY });
           }
+
+          reapplyCornerRadiusAfterResize(o);
         });
         break;
       }
@@ -1516,6 +1573,41 @@ const ShapeProperties = ({
     // Режим завершается в onBlur соответствующих инпутов
   };
 
+  // Schedule an updateProperty call after a debounce delay (for keyboard input)
+  const scheduleUpdateProperty = (property, value) => {
+    if (!pendingInputTimersRef.current) pendingInputTimersRef.current = {};
+    // clear previous timer for this property
+    const prev = pendingInputTimersRef.current[property];
+    if (prev) {
+      try {
+        clearTimeout(prev);
+      } catch {}
+    }
+    // schedule
+    pendingInputTimersRef.current[property] = setTimeout(() => {
+      try {
+        updateProperty(property, value);
+      } catch {}
+      delete pendingInputTimersRef.current[property];
+    }, DEBOUNCE_INPUT_MS);
+  };
+
+  // Flush pending debounce for a property (call immediately)
+  const flushPendingProperty = (property) => {
+    if (!pendingInputTimersRef.current) return;
+    const t = pendingInputTimersRef.current[property];
+    if (t) {
+      try {
+        clearTimeout(t);
+      } catch {}
+      delete pendingInputTimersRef.current[property];
+      // Use the current staged value from state
+      try {
+        updateProperty(property, properties[property]);
+      } catch {}
+    }
+  };
+
   const incrementValue = (property, increment = 1) => {
     setIsManuallyEditing(true);
     const toNumber = (v, fallback = 0) => {
@@ -1707,7 +1799,7 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
-                    updateProperty("width", values.floatValue);
+                    scheduleUpdateProperty("width", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
@@ -1718,6 +1810,8 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
+                  // Flush any pending debounced update and exit manual edit mode
+                  flushPendingProperty("width");
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
               />
@@ -1752,7 +1846,7 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
-                    updateProperty("rotation", Math.trunc(values.floatValue));
+                    scheduleUpdateProperty("rotation", Math.trunc(values.floatValue));
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
@@ -1766,6 +1860,7 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
+                  flushPendingProperty("rotation");
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
               />
@@ -1801,7 +1896,7 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
-                    updateProperty("height", values.floatValue);
+                    scheduleUpdateProperty("height", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
@@ -1815,6 +1910,7 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
+                  flushPendingProperty("height");
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
               />
@@ -1864,7 +1960,7 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
-                    updateProperty(
+                    scheduleUpdateProperty(
                       "cornerRadius",
                       Math.max(0, Math.trunc(values.floatValue))
                     );
@@ -1884,6 +1980,7 @@ const ShapeProperties = ({
                       }
                       return prev;
                     });
+                    flushPendingProperty("cornerRadius");
                     setTimeout(() => setIsManuallyEditing(false), 100);
                   }
                 }}
@@ -2026,7 +2123,7 @@ const ShapeProperties = ({
                           ...prev,
                           thickness: values.floatValue,
                         }));
-                        updateProperty("thickness", values.floatValue);
+                          scheduleUpdateProperty("thickness", values.floatValue);
                       }
                     }}
                     onFocus={() => {
@@ -2046,6 +2143,7 @@ const ShapeProperties = ({
                         width: freshWidth,
                         height: freshHeight,
                       }));
+                      flushPendingProperty("thickness");
                       setTimeout(() => setIsManuallyEditing(false), 100);
                     }}
                   />

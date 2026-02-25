@@ -13,6 +13,11 @@ import './models/models.js';
 import router from './router/index.js';
 import { connectMongo } from './mongo.js';
 import errorMiddleware from './middleware/errorMiddleware.js';
+import { Order, User } from './models/models.js';
+import { Op } from 'sequelize';
+import SendEmailForStatus from './Controller/SendEmailForStatus.js';
+import cron from 'node-cron';
+
 
 dotenv.config();
 
@@ -2514,5 +2519,35 @@ const start = async () => {
     console.log(error);
   }
 };
+
+
+const CheckIsPay=async()=>{
+  try{
+    const date21DaysAgo = new Date();
+    date21DaysAgo.setDate(date21DaysAgo.getDate() - 21);
+
+    const orders = await Order.findAll({
+      where: {
+        isPaid: false,
+        createdAt: {
+          [Op.lte]: date21DaysAgo
+        }
+      },
+      include:[{
+        model:User
+      }]
+    });
+    for(let i=0;i<orders.length;i++){
+      SendEmailForStatus.ReminderPay(orders[i]);
+    }
+  }catch(err){
+    console.error(4234,err);
+  }
+}
+
+cron.schedule('0 3 * * *', async () => {
+  console.log('Running CheckIsPay job...');
+  await CheckIsPay();
+});
 
 start();

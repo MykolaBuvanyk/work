@@ -2,8 +2,9 @@ import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
 import { Order, User } from '../models/models.js';
-import { col, fn, Op } from 'sequelize';
+import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
+import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
 
 
 
@@ -251,7 +252,16 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       order.status='Deleted';
       await order.save();
     }
+    const orderWithUser=await Order.findOne({
+      where:{id:order.id},
+      include:[
+        {
+          model:User
+        }
+      ]
+    })
     
+    SendEmailForStatus.CreateOrder(orderWithUser);
 
     return res.json({
       id: String(created._id),
@@ -521,10 +531,31 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
       );
     }
 
+    const orderWithUser=await Order.findOne({
+      where:{id:Number(orderId)},
+      include:[
+        {
+          model:User
+        }
+      ]
+    });
+    if(newStatus=='Printed'){
+      SendEmailForStatus.StatusPrinted(orderWithUser);
+    }
+    if(newStatus=='Shipped'){
+      SendEmailForStatus.StatusShipped(orderWithUser);
+      SendEmailForStatus.StatusShipped2(orderWithUser);
+    }
+    if(newStatus=='Delivered'){
+      setTimeout(() => {
+        SendEmailForStatus.StatusDelivered(orderWithUser);
+      }, 48 * 60 * 60 * 1000);
+    }
+    
     if (updatedCount === 0) {
       return res.status(404).json({ message: 'Order not found' });
     }
-
+    
     return res.json({
       success: true,
       orderId,

@@ -605,8 +605,10 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       return;
     }
 
-    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
-    const sheetLabel = FORMATS[formatKey]?.label || 'sheet';
+    setIsExporting(true);
+    try {
+      const timestamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+      const sheetLabel = FORMATS[formatKey]?.label || 'sheet';
 
     const computeFrameRect = (sheet) => {
       if (!hasBrownFrame) return null;
@@ -852,10 +854,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       };
     });
 
-    const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
+      const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
 
-    setIsExporting(true);
-    try {
       const response = await fetch(exportEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

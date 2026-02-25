@@ -5128,9 +5128,6 @@ const buildPlacementPreview = (placement, options = {}) => {
       });
 
       applyCustomBorderOverrides(exportElement, customBorder);
-      if (enableGaps) {
-        applyCenteredGapsToCanvasOutline(exportElement, OUTLINE_CENTER_GAP_PX);
-      }
       styleLineFromCircleElements(exportElement);
 
       applyRotationIfNeeded(exportElement, viewBoxWidth, viewBoxHeight);
@@ -5151,6 +5148,10 @@ const buildPlacementPreview = (placement, options = {}) => {
       const clippedExportElement = clipSvgByCanvasShapeWithPaper(exportElement);
       if (clippedExportElement) {
         exportElement = clippedExportElement;
+      }
+
+      if (enableGaps) {
+        applyCenteredGapsToCanvasOutline(exportElement, OUTLINE_CENTER_GAP_PX);
       }
 
       let previewElement = svgElement.cloneNode(true);

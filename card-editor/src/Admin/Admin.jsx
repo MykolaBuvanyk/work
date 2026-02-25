@@ -328,7 +328,12 @@ const Admin = () => {
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>
-                    <td>{order.deliveryType}</td>
+                    <td
+                      className="delivery-type-cell"
+                      title={order.deliveryType || ''}
+                    >
+                      <span>{order.deliveryType || '---'}</span>
+                    </td>
                     <td onClick={(e)=>{setPaid(order.id);e.stopPropagation();e.preventDefault();return false}} style={{color:order.isPaid?'green':'red'}}>{order.isPaid?'Paid':'Unpaid'}</td>
                 </tr>
               ))}

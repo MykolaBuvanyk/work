@@ -72,6 +72,25 @@ const normalizeCountrySelection = rawCountry => {
 	return { country: value, region: '' }
 }
 
+const hasInvoiceProfileData = user => {
+	if (!user || typeof user !== 'object') return false
+
+	const invoiceKeys = [
+		'firstName2',
+		'company2',
+		'address4',
+		'address5',
+		'address6',
+		'city2',
+		'postcode2',
+		'eMailInvoice',
+		'phone2',
+		'country2',
+	]
+
+	return invoiceKeys.some(key => String(user[key] || '').trim() !== '')
+}
+
 const INITIAL_DELIVERY_ADDRESS = {
 	fullName: '',
 	companyName: '',
@@ -233,6 +252,7 @@ export default function Checkout({
 			}))
 
 			setInvoiceEmail(String(user.weWill || ''))
+			setIsInvoiceDifferent(prev => prev || hasInvoiceProfileData(user))
 		}
 
 		const loadProfile = async () => {
@@ -408,7 +428,7 @@ export default function Checkout({
 				vatAmount: Number(vatAmountForCheckout || 0),
 				deliveryAddress,
 				invoiceAddress: isInvoiceDifferent ? invoiceAddress : null,
-				invoiceEmail: isInvoiceDifferent ? String(invoiceEmail || '') : '',
+				invoiceEmail: String(invoiceEmail || ''),
 			})
 		}
 	}
@@ -733,9 +753,7 @@ export default function Checkout({
 										<div className='address-extra__row address-extra__row--invoice'>
 											<label
 												htmlFor='invoiceEmail'
-												className={`address-extra__invoice-text ${
-													!isInvoiceDifferent ? 'address-extra__invoice-text--disabled' : ''
-												}`}
+												className='address-extra__invoice-text'
 											>
 												This email will be used to send you the invoice
 											</label>
@@ -747,7 +765,6 @@ export default function Checkout({
 												id='invoiceEmail'
 												value={invoiceEmail}
 												onChange={e => setInvoiceEmail(e.target.value)}
-												disabled={!isInvoiceDifferent}
 											/>
 										</div>
 

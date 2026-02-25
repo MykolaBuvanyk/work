@@ -5,6 +5,8 @@ import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import ChangePassword from './ChangePassword';
 import combinedCountries from '../Countries';
+import { useDispatch } from 'react-redux';
+import { mergeUser } from '../../store/reducers/user';
 
 // Оновлені ключі, що відповідають вашій моделі Sequelize
 const addressFields = [
@@ -39,6 +41,7 @@ const AccoutDetail = () => {
   const [address, setAddress] = useState({});
   const [invoice, setInvoice] = useState({});
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   const getMy = async () => {
     try {
@@ -77,6 +80,19 @@ const AccoutDetail = () => {
       const updateData = { ...address, ...invoice };
       
       await $authHost.put('auth/updateProfile', updateData); // Замініть на ваш ендпоінт
+      // Refresh server-side user and update redux store + local state
+      try {
+        const res = await $authHost.get('auth/getMy');
+        const updatedUser = res?.data?.user || null;
+        if (updatedUser) {
+          dispatch(mergeUser(updatedUser));
+          // Refresh local editable state
+          await getMy();
+        }
+      } catch (e) {
+        console.warn('Failed to refresh user after save', e);
+      }
+
       alert("Changes saved successfully!");
     } catch (err) {
       console.error(err);
@@ -144,7 +160,7 @@ const AccoutDetail = () => {
           </div>
         </div>
         <div className="grid-col">
-          <h3>Invoice or delivery address (if different from the left)</h3>
+          <h3>Invoice address (if different from the left)</h3>
           {renderTable(invoiceFields, invoice, setInvoice)}
         </div>
       </div>

@@ -325,11 +325,18 @@ const InfoAboutProject = () => {
       return;
     }
 
-    const snapshot = getSelectedAccessoriesSnapshot().map((item) => ({
-      ...item,
-      qty: String(item?.qty ?? "1"),
-      checked: !!item?.checked,
-    }));
+    const snapshot = getSelectedAccessoriesSnapshot()
+      .map((item) => ({
+        ...item,
+        qty: String(item?.qty ?? "1"),
+        checked: !!item?.checked,
+      }))
+      .filter((item) => {
+        // include if explicitly checked by user or if admin marked it available
+        if (item && item.checked) return true;
+        if (item && (item.available === true)) return true;
+        return false;
+      });
     updateCartAccessories(snapshot);
     setIsCartAccessoriesOpen(true);
   };

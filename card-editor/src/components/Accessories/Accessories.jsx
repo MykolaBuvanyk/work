@@ -541,35 +541,58 @@ const TopToolbar = ({ className, formData }) => {
 
       const getListItemForAccessory = (accessory) => {
         const accessoryName = normalize(accessory?.name);
-        const direct = listAccessories.find((entry) => normalize(entry?.text) === accessoryName);
+
+        // derive base name by stripping size/measurement tokens (e.g. "9,5 mm", "13 mm", "2.9 x 9.5")
+        const accessoryBaseName = accessoryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
+
+        // try exact match first (entry text may include size or not)
+        const direct = listAccessories.find((entry) => normalize(entry?.text) === accessoryName || normalize(entry?.text) === accessoryBaseName);
         if (direct) return direct;
 
         const accessorySize = extractInfoSize(accessory?.desc);
+
+        // try match by base name + size in entry.info
+        if (accessorySize) {
+          const bySize = listAccessories.find((entry) => {
+            const entryName = normalize(entry?.text);
+            if (!entryName) return false;
+            // match if names align (either entry is base or equals accessoryName without size)
+            const entryBase = entryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
+            if (entryBase !== accessoryBaseName) return false;
+            // ensure sizes match
+            return extractInfoSize(entry?.info) === accessorySize;
+          });
+          if (bySize) return bySize;
+        }
+
+        // fallback: try entry that starts with same base name
         return listAccessories.find((entry) => {
-          if (normalize(entry?.text) !== accessoryName) return false;
-          if (!accessorySize) return true;
-          return extractInfoSize(entry?.info) === accessorySize;
+          const entryName = normalize(entry?.text || "");
+          if (!entryName) return false;
+          const entryBase = entryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
+          return entryBase === accessoryBaseName;
         });
       };
 
-      let filterAccessories = BASE_ACCESSORIES
-        .map((item) => ({ ...item }))
-        .map((item) => {
-          const serverItem = getListItemForAccessory(item);
-          const isScrews = normalize(item?.name).startsWith("screws");
-          const canShow = serverItem
-            ? Boolean(serverItem?.isAvaible) || isScrews
-            : true;
+      // Keep all base items for placeholders, but mark availability coming from admin
+      let filterAccessories = BASE_ACCESSORIES.map((item) => ({ ...item })).map((item) => {
+        const serverItem = getListItemForAccessory(item);
+        const parsedPrice = Number(serverItem?.number);
+        const serverProvided = Boolean(serverItem);
+        const available = serverProvided ? Boolean(serverItem?.isAvaible) : false;
 
-          if (!canShow) return null;
-
-          const parsedPrice = Number(serverItem?.number);
-          return {
-            ...item,
-            price: Number.isFinite(parsedPrice) ? parsedPrice : item.price,
-          };
-        })
-        .filter(Boolean);
+        return {
+          ...item,
+          price: Number.isFinite(parsedPrice) ? parsedPrice : item.price,
+          // flags used by UI to decide visibility (admin-controlled)
+          serverProvided,
+          available,
+          // default interaction state
+          checked: false,
+          visible: available ? true : false,
+          qty: "1",
+        };
+      });
 
       let pending = [];
       try {
@@ -611,7 +634,6 @@ const TopToolbar = ({ className, formData }) => {
           if (item.id != null) byId.set(String(item.id), item);
           if (item.name != null) byName.set(String(item.name).trim().toLowerCase(), item);
         });
-
         filterAccessories = filterAccessories.map((item) => {
           const matchById = item?.id != null ? byId.get(String(item.id)) : null;
           const matchByName = item?.name != null ? byName.get(String(item.name).trim().toLowerCase()) : null;
@@ -619,8 +641,9 @@ const TopToolbar = ({ className, formData }) => {
           if (!incoming) {
             return {
               ...item,
+              // keep defaults (invisible placeholders)
               checked: false,
-              visible: false,
+              visible: item.available ? true : false,
               qty: "1",
             };
           }
@@ -819,9 +842,21 @@ const TopToolbar = ({ className, formData }) => {
           {(() => {
             const ordered = [...accessories].sort((a, b) => a.id - b.id);
             const selected = ordered.filter((item) => item.checked);
-            const defaultVisibleIds = new Set(ordered.slice(0, 3).map((item) => item.id));
+
+            // prefer first 3 admin-available items.
+            // If admin provided the `listAccessories` (even if empty), do NOT fallback to static items.
+            const firstAvailable = ordered.filter((it) => !!it.available).slice(0, 3).map((it) => it.id);
+            const adminListPresent = formData && Object.prototype.hasOwnProperty.call(formData, "listAccessories");
+            const defaultVisibleIds = new Set(
+              firstAvailable.length > 0
+                ? firstAvailable
+                : adminListPresent
+                ? []
+                : ordered.slice(0, 3).map((item) => item.id)
+            );
+
             if (selected.length === 0) {
-              return ordered.slice(0, 3);
+              return ordered.filter((item) => defaultVisibleIds.has(item.id));
             }
 
             const selectedIds = new Set(selected.map((item) => item.id));

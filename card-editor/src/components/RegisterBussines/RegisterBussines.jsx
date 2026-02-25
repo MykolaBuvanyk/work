@@ -184,7 +184,7 @@ const RegisterBussines = () => {
             onChange={e => setIsInvoice(e.target.checked)} 
           />
           <span className="checkmark"></span>
-          Invoice or delivery address (if different from above)
+          Invoice address (if different from above)
         </label>
 
         {isInvoice&&

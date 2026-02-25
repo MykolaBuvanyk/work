@@ -343,6 +343,19 @@ const ShapeProperties = ({
     obj.data.isFrameElement = normalized;
   };
 
+  const isStaticCutShapeObject = (obj) => {
+    if (!obj || obj.isCutElement !== true || obj.cutType !== "shape") return false;
+    if (
+      obj.isStaticCutShape === true ||
+      obj.cutSource === "cut-tab" ||
+      (obj.data && (obj.data.isStaticCutShape === true || obj.data.cutSource === "cut-tab"))
+    ) {
+      return true;
+    }
+    const fromShapeTab = obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
+    return !fromShapeTab && obj.hasControls === false && obj.lockScalingX === true && obj.lockScalingY === true;
+  };
+
   const buildRoundedPolygonPath = (points, radius, options) => {
     if (!points || points.length < 3) return "";
     const { clampFactor = 0.5 } = options || {};
@@ -1178,7 +1191,7 @@ const ShapeProperties = ({
     const obj = canvas.getActiveObject();
     if (!obj) return;
     // Не трогаем врожденные cut-элементы из CUT-селектора
-    const isCutShape = obj.isCutElement && obj.cutType === "shape";
+    const isCutShape = isStaticCutShapeObject(obj);
     if (isCutShape) return;
     // Если включен Cut manual — оставляем белую заливку
     if (obj.isCutElement && obj.cutType === "manual") return;
@@ -1385,7 +1398,7 @@ const ShapeProperties = ({
           globalColors?.strokeColor || globalColors?.textColor || "#000000";
 
         holdCenterIfArrow((o) => {
-          const isCutShape = o?.cutType === "shape";
+          const isCutShape = isStaticCutShapeObject(o);
           if (isCutShape) return;
 
           if (value) {
@@ -1429,7 +1442,7 @@ const ShapeProperties = ({
         // Используем фирменный оранжевый, как в остальных элементах UI
         const ORANGE = "#FD7714";
         holdCenterIfArrow((o) => {
-          const isCutShape = o?.cutType === "shape"; // объекты, добавленные из CUT-селектора
+          const isCutShape = isStaticCutShapeObject(o); // статичні об'єкти, додані з CUT-вкладки
           const isFromShapeTab = !!(o?.fromShapeTab || o?.data?.fromShapeTab);
           if (value) {
             // Cut ON

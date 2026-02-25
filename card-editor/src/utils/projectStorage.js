@@ -822,6 +822,8 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "shapeType",
       "isCutElement",
       "cutType",
+      "cutSource",
+      "isStaticCutShape",
       "fromIconMenu",
       "isCircle",
       "clipPath",
@@ -1667,6 +1669,9 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
         obj.set({
           isCutElement: true,
           cutType: obj.cutType || "hole",
+          cutSource: obj.cutSource || (obj?.data?.cutSource || null),
+          isStaticCutShape:
+            obj.isStaticCutShape === true || obj?.data?.isStaticCutShape === true,
         });
       }
 

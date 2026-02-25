@@ -23,7 +23,7 @@ export const useSimpleUndoRedo = () => {
     try {
       const extraProps = [
         "shapeType", "baseCornerRadius", "displayCornerRadiusMm",
-        "cornerRadiusMm", "isCutElement", "cutType", "strokeUniform",
+        "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
         "strokeLineJoin", "strokeMiterLimit", "isCircle"
       ];
 

@@ -748,8 +748,21 @@ export const useUndoRedo = () => {
               obj.visible = true;
             }
 
-            // Cut elements
-            if (obj.isCutElement && obj.cutType === "shape") {
+            // Cut elements: lock scaling only for static CUT-tab shapes.
+            const isStaticCutShape = (() => {
+              if (!obj || obj.isCutElement !== true || obj.cutType !== "shape") return false;
+              if (
+                obj.isStaticCutShape === true ||
+                obj.cutSource === "cut-tab" ||
+                (obj.data && (obj.data.isStaticCutShape === true || obj.data.cutSource === "cut-tab"))
+              ) {
+                return true;
+              }
+              const fromShapeTab = obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
+              return !fromShapeTab && obj.hasControls === false && obj.lockScalingX === true && obj.lockScalingY === true;
+            })();
+
+            if (isStaticCutShape) {
               obj.set({
                 hasControls: false,
                 lockScalingX: true,

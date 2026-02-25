@@ -83,6 +83,13 @@ const AccessoriesModal = ({
         .map(({ item }) => item)
     : [];
 
+  // Show only admin-provided & available items, or those already selected (checked).
+  const visibleItems = orderedItems.filter((it) => {
+    if (it?.checked) return true;
+    if (it?.serverProvided && it?.available) return true;
+    return false;
+  });
+
   return (
     <div className={styles.modalRoot}>
       <div className={styles.dropdown} ref={ref}>
@@ -119,7 +126,7 @@ const AccessoriesModal = ({
         </div>
         <div className={styles.content}>
           <ol className={styles.list}>
-            {orderedItems.map((it, idx) => (
+            {visibleItems.map((it, idx) => (
               <li key={it.id} className={styles.row}>
                 <div className={styles.colIndex}>{idx + 1}</div>
                 <div className={styles.colCheckbox}>

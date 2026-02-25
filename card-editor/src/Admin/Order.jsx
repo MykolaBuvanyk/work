@@ -291,6 +291,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
   const planned = useMemo(() => {
     if (isMjFrameMode) {
+      const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
       const mjItems = normalizedItems.map((item) => ({
         ...item,
         materialThicknessMm: null,
@@ -321,7 +322,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           },
           effectiveSignSpacingMm,
           0,
-          0,
+          safeFrameSpacingMm,
           {
             leftStripWidthMm: 0,
             disableLeftFrameSpacing: true,

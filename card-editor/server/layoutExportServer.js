@@ -1648,7 +1648,6 @@ app.post('/api/layout-pdf', async (req, res) => {
 
           doc.save();
           doc.strokeColor(TEXT_OUTLINE_COLOR);
-          doc.fillOpacity(0);
           doc.strokeOpacity(1);
           doc.lineJoin('round');
           doc.lineCap('round');
@@ -2397,7 +2396,6 @@ app.post('/api/layout-pdf', async (req, res) => {
             if (!label) return;
             doc.save();
             doc.strokeColor(TEXT_OUTLINE_COLOR);
-            doc.fillOpacity(0);
             doc.strokeOpacity(1);
             doc.lineJoin('round');
             doc.lineCap('round');
@@ -2406,11 +2404,71 @@ app.post('/api/layout-pdf', async (req, res) => {
             doc.fontSize(fontSize);
             doc.translate(mmToPoints(anchorXmm), mmToPoints(anchorYmm));
             doc.rotate(-90);
-            const labelWidthPt = doc.widthOfString(label);
-            doc.text(label, -labelWidthPt / 2, -fontSize * 0.4, {
-              lineBreak: false,
-              stroke: true,
-              fill: false,
+
+            const runs = splitTextIntoFontRuns(String(label || ''), DEFAULT_FONT_ID);
+            if (!runs.length) {
+              doc.restore();
+              return;
+            }
+
+            const centeredAnchor = 'left middle';
+            const runMetrics = runs.map((run) => {
+              if (!run?.text) return { run, width: 0, textToSvg: null };
+              const textToSvg = getTextToSvgInstance(run.fontId) || getTextToSvgInstance(DEFAULT_FONT_ID);
+              if (textToSvg) {
+                try {
+                  const metrics = textToSvg.getMetrics(run.text, {
+                    fontSize,
+                    anchor: centeredAnchor,
+                  });
+                  return {
+                    run,
+                    width: Number(metrics?.width) || 0,
+                    textToSvg,
+                  };
+                } catch (metricsError) {
+                  console.warn('Frame label TextToSVG metrics failed:', metricsError.message);
+                }
+              }
+
+              return {
+                run,
+                width: doc.widthOfString(run.text),
+                textToSvg: null,
+              };
+            });
+
+            const totalWidthPt = runMetrics.reduce((acc, entry) => acc + (Number(entry?.width) || 0), 0);
+            let segmentX = -totalWidthPt / 2;
+
+            runMetrics.forEach((entry) => {
+              const run = entry?.run;
+              if (!run?.text) return;
+
+              if (entry?.textToSvg) {
+                try {
+                  const pathData = entry.textToSvg.getD(run.text, {
+                    fontSize,
+                    anchor: centeredAnchor,
+                  });
+                  doc.save();
+                  doc.translate(segmentX, 0);
+                  doc.path(pathData);
+                  doc.stroke();
+                  doc.restore();
+                  segmentX += Number(entry?.width) || 0;
+                  return;
+                } catch (pathError) {
+                  console.warn('Frame label TextToSVG path failed:', pathError.message);
+                }
+              }
+
+              doc.text(run.text, segmentX, -fontSize * 0.5, {
+                lineBreak: false,
+                stroke: true,
+                fill: false,
+              });
+              segmentX += Number(entry?.width) || doc.widthOfString(run.text);
             });
             doc.restore();
           };

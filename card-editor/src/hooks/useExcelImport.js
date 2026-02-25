@@ -233,6 +233,12 @@ export const useExcelImport = () => {
           if (obj.fromShapeTab) {
             objData.fromShapeTab = true;
           }
+          if (obj.cutSource) {
+            objData.cutSource = obj.cutSource;
+          }
+          if (obj.isStaticCutShape) {
+            objData.isStaticCutShape = true;
+          }
           if (typeof obj.useThemeColor === "boolean") {
             objData.useThemeColor = obj.useThemeColor;
           }
@@ -1046,6 +1052,12 @@ export const useExcelImport = () => {
                 }
                 if (objData.fromShapeTab) {
                   fabricObj.fromShapeTab = true;
+                }
+                if (objData.cutSource) {
+                  fabricObj.cutSource = objData.cutSource;
+                }
+                if (objData.isStaticCutShape) {
+                  fabricObj.isStaticCutShape = true;
                 }
                 if (typeof objData.useThemeColor === "boolean") {
                   fabricObj.useThemeColor = objData.useThemeColor;

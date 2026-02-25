@@ -141,7 +141,7 @@ const RegisterConsumer = () => {
             onChange={e => setIsInvoice(e.target.checked)} 
           />
           <span className="checkmark"></span>
-          Invoice or delivery address (if different from above)
+          Invoice address (if different from above)
         </label>
         {isInvoice&&
 
@@ -150,12 +150,6 @@ const RegisterConsumer = () => {
             <div className="label-cell">*First name and Surname</div>
             <div className="input-cell">
               <MyTextInput value={formData.firstName2} setValue={handleInput('firstName2')} required />
-            </div>
-          </div>
-          <div className="table-row">
-            <div className="label-cell">*Company Name</div>
-            <div className="input-cell">
-              <MyTextInput value={formData.company2} setValue={handleInput('company2')} required />
             </div>
           </div>
           <div className="table-row">

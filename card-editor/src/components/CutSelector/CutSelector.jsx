@@ -211,6 +211,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true, // Позначаємо як Cut елемент
           cutType: "shape", // Додаємо тип cut елементу
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
 
@@ -245,6 +247,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true, // Позначаємо як Cut елемент
           cutType: "shape", // Додаємо тип cut елементу
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -278,6 +282,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true, // Позначаємо як Cut елемент
           cutType: "shape", // Додаємо тип cut елементу
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -311,6 +317,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true, // Позначаємо як Cut елемент
           cutType: "shape", // Додаємо тип cut елементу
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -344,6 +352,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true,
           cutType: "shape",
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -404,6 +414,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockUniScaling: true,
         isCutElement: true,
         cutType: "shape",
+        cutSource: "cut-tab",
+        isStaticCutShape: true,
       });
 
       canvas.add(group);
@@ -438,6 +450,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true,
           cutType: "shape",
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
 
@@ -472,6 +486,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true,
           cutType: "shape",
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -506,6 +522,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true,
           cutType: "shape",
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
       canvas.add(path);
@@ -568,6 +586,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockUniScaling: true,
         isCutElement: true,
         cutType: "shape",
+        cutSource: "cut-tab",
+        isStaticCutShape: true,
       });
 
       canvas.add(group);
@@ -602,6 +622,8 @@ const CutSelector = ({ isOpen, onClose }) => {
           lockUniScaling: true,
           isCutElement: true,
           cutType: "shape",
+          cutSource: "cut-tab",
+          isStaticCutShape: true,
         }
       );
 
@@ -636,6 +658,8 @@ const CutSelector = ({ isOpen, onClose }) => {
         lockUniScaling: true,
         isCutElement: true,
         cutType: "shape",
+        cutSource: "cut-tab",
+        isStaticCutShape: true,
       });
 
       canvas.add(group);

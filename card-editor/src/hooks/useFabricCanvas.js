@@ -41,6 +41,8 @@ const CUSTOM_PROPS = [
   "fromShapeTab",
   "isCutElement",
   "cutType",
+  "cutSource",
+  "isStaticCutShape",
   "clipPathId",
   "originalWidth",
   "originalHeight",

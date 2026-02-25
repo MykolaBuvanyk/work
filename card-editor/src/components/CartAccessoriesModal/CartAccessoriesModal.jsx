@@ -69,6 +69,17 @@ const CartAccessoriesModal = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
+  const orderedItems = Array.isArray(items)
+    ? items
+        .map((item, originalIndex) => ({ item, originalIndex }))
+        .sort((a, b) => {
+          const aChecked = a.item?.checked ? 1 : 0;
+          const bChecked = b.item?.checked ? 1 : 0;
+          if (aChecked !== bChecked) return bChecked - aChecked;
+          return a.originalIndex - b.originalIndex;
+        })
+        .map(({ item }) => item)
+    : [];
 
   return (
     <div className={baseStyles.modalRoot}>
@@ -109,7 +120,7 @@ const CartAccessoriesModal = ({
         </div>
         <div className={baseStyles.content}>
           <ol className={baseStyles.list}>
-            {items?.map((it, idx) => (
+            {orderedItems.map((it, idx) => (
               <li key={it.id} className={baseStyles.row}>
                 <div className={baseStyles.colIndex}>{idx + 1}</div>
                 <div className={baseStyles.colCheckbox}>

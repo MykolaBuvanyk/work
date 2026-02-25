@@ -39,6 +39,22 @@ const authSlice = createSlice({
         console.error('Помилка декодування токена:', e);
       }
     },
+    // Merge partial user info into store (used after profile updates)
+    mergeUser: (state, action) => {
+      const payload = action.payload || {};
+      try {
+        state.user = {
+          ...state.user,
+          ...(payload.firstName !== undefined ? { firstName: payload.firstName } : {}),
+          ...(payload.surname !== undefined ? { surname: payload.surname } : {}),
+          ...(payload.email !== undefined ? { email: payload.email } : {}),
+          ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
+          ...(payload.company !== undefined ? { company: payload.company } : {}),
+        };
+      } catch (e) {
+        console.error('mergeUser failed', e);
+      }
+    },
     logout: state => {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
@@ -75,5 +91,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, logout, initializeFromLocalStorage } = authSlice.actions;
+export const { setUser, logout, initializeFromLocalStorage, mergeUser } = authSlice.actions;
 export default authSlice.reducer;

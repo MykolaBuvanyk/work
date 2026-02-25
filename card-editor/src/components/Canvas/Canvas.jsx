@@ -128,6 +128,21 @@ const Canvas = ({ className }) => {
     // Події вибору
     const isHole = o => !!o && o.isCutElement && o.cutType === 'hole';
     const isCut = o => !!o && o.isCutElement === true;
+    const isStaticCutShape = o => {
+      if (!o || !isCut(o) || o.cutType !== 'shape') return false;
+
+      const explicitStatic =
+        o.isStaticCutShape === true ||
+        o.cutSource === 'cut-tab' ||
+        (o.data && (o.data.isStaticCutShape === true || o.data.cutSource === 'cut-tab'));
+      if (explicitStatic) return true;
+
+      const fromShapeTab = o.fromShapeTab === true || (o.data && o.data.fromShapeTab === true);
+      const looksLockedLikeCutTab =
+        o.hasControls === false && o.lockScalingX === true && o.lockScalingY === true;
+
+      return !fromShapeTab && looksLockedLikeCutTab;
+    };
     const isShapeWithProps = o =>
       !!o && ['path', 'rect', 'circle', 'ellipse'].includes(o.type) && !isHole(o);
 
@@ -652,16 +667,10 @@ const Canvas = ({ className }) => {
       }
       // Тримати тексти поверх при кожному виборі
       bringAllTextsToFront();
-      // Cut elements: якщо додані з Shape Selector (fromShapeTab), завжди відкриваємо Shape Properties
+      // Cut elements: лише CUT-tab фігури (static) не відкривають Shape Properties.
       if (obj && isCut(obj)) {
-        if (obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true)) {
-          setActiveObject(obj);
-          setShapePropertiesOpen(true);
-          return;
-        }
-        // Звичайний cut-елемент (з Cut Selector) — не відкриваємо Shape Properties
         setActiveObject(obj);
-        setShapePropertiesOpen(false);
+        setShapePropertiesOpen(!isStaticCutShape(obj));
         return;
       }
       // Якщо фігура має fromShapeTab=true, завжди відкриваємо Shape Properties
@@ -902,10 +911,10 @@ const Canvas = ({ className }) => {
         setShapePropertiesOpen(true);
         return;
       }
-      // Cut elements: активуємо без відкриття Shape Properties
+      // Cut elements: лише CUT-tab фігури (static) без Shape Properties.
       if (t && isCut(t)) {
         setActiveObject(t);
-        setShapePropertiesOpen(false);
+        setShapePropertiesOpen(!isStaticCutShape(t));
         return;
       }
       // IconMenu elements: активуємо без відкриття Shape Properties
@@ -1906,8 +1915,9 @@ const Canvas = ({ className }) => {
         } catch { }
       };
 
-      // Resize handles: skip for Cut elements (only show action panel + rotate)
-      if (!obj.isCutElement) {
+      // Resize handles: hide only for static CUT-tab shapes (and holes).
+      const shouldHideResizeHandles = isHole(obj) || isStaticCutShape(obj);
+      if (!shouldHideResizeHandles) {
         const circleLock = isCircleLike(obj);
         const widthOnlyLine = isWidthOnlyLine(obj);
         if (circleLock) {
@@ -1924,7 +1934,7 @@ const Canvas = ({ className }) => {
         // We only override visuals to keep our blue dot handles.
         ['tl', 'tr', 'bl', 'br', 'ml', 'mr', 'mt', 'mb'].forEach(applyDotVisualToControl);
       } else {
-        // Cut elements: hide all resize handles
+        // Static cut elements: hide all resize handles
         if (obj.setControlsVisibility)
           obj.setControlsVisibility({
             tl: false,
@@ -2890,12 +2900,12 @@ const Canvas = ({ className }) => {
           texts.forEach(t => bringCanvasObjectToFront(t));
         }
       } catch { }
-      // Якщо додано Cut-форму (з блоку Cut) — одразу активуємо і малюємо панель/рамку
+      // Якщо додано статичну CUT-tab форму — фіксуємо розмір і не відкриваємо Shape Properties.
       try {
-        if (target.isCutElement === true && target.cutType === 'shape') {
-          // Фіксовані розміри для фігур з Cut-модалки: забороняємо масштабування
+        if (isStaticCutShape(target)) {
           try {
             target.set({
+              hasControls: false,
               lockScalingX: true,
               lockScalingY: true,
               lockUniScaling: true,
@@ -2990,7 +3000,7 @@ const Canvas = ({ className }) => {
     // Додатковий запобіжник: не дозволяти масштабування Cut-формам з модалки
     fCanvas.on('object:scaling', e => {
       const t = e?.target;
-      if (t && t.isCutElement === true && t.cutType === 'shape') {
+      if (t && isStaticCutShape(t)) {
         try {
           // Відкочуємо спробу масштабування
           t.set({

@@ -175,6 +175,18 @@
                 white-space: nowrap; // Запобігає переносу тексту
             }
 
+            .delivery-type-cell {
+                max-width: 100px;
+                width: 100px;
+
+                span {
+                    display: block;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+
             // Стиль для рядків з чергуванням фону (як на зображенні: сірий/білий)
             tr:nth-child(odd) {
                 background-color: #f9f9f9; // Дуже світло-сірий для непарних

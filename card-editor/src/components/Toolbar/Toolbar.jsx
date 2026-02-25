@@ -930,7 +930,10 @@ const Toolbar = ({ formData }) => {
             // Keep lock geometry equal to clip size: no inset, same rationale as rect fix
             // (otherwise contour loses approximately one stroke width ~0.43mm).
             const keepExactPolygonSize =
-              canvasShapeType === 'lock' || canvasShapeType === 'halfCircle';
+              canvasShapeType === 'lock' ||
+              canvasShapeType === 'halfCircle' ||
+              canvasShapeType === 'adaptiveTriangle' ||
+              canvasShapeType === 'warningTriangle';
             const insetPx = !makeMask && !keepExactPolygonSize ? strokeForBorder / 2 : 0;
             const borderPoints = insetPx > 0 ? insetConvexPolygon(points, insetPx) : points;
             borderShape = new fabric.Polygon(borderPoints, baseOpts);

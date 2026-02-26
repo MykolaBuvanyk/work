@@ -171,8 +171,8 @@ const Account = () => {
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>{order.id}</td>
                                 <td>{order.orderName || 'Water sifgns 23'}</td>
+                                <td>{order.netAfterDiscount?.toFixed(2)}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
-                                <td>{Number.isFinite(Number(order?.orderMongo?.totalPrice)) ? Number(order.orderMongo.totalPrice).toFixed(2) : '—'}</td>
                                 <td>{order.status || 'Received'}</td>
                                 <td onClick={() => downloadPdf(order.id, '1')} className="clickable"><DelNoteIcon /></td>
                                 <td className="clickable"><TrackingIcon /></td>

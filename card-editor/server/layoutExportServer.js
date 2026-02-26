@@ -35,6 +35,9 @@ const CUSTOM_BORDER_STROKE_COLOR = '#008181';
 const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = '#008181';
 const TEXT_STROKE_WIDTH_PT = 0.5;
+const FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE =0.99;
+const PDF_TEXT_X_NUDGE_EM = 0.03;
+const PDF_TEXT_Y_NUDGE_EM = 0.15;
 
 const normalizeColorForGrouping = value => {
   if (typeof value !== 'string') return null;
@@ -581,6 +584,158 @@ const parseStyleStringValue = (styleAttr = '', property) => {
   const regex = new RegExp(`${property}\\s*:\\s*([^;]+)`, 'i');
   const match = styleAttr.match(regex);
   return match ? match[1].trim() : null;
+};
+
+const parseCssLengthToPx = (value, relativeBasePx = 16) => {
+  if (value === null || value === undefined) return null;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  const match = raw.match(/^(-?\d*\.?\d+)\s*([a-z%]*)$/i);
+  if (!match) return null;
+
+  const numeric = parseFloat(match[1]);
+  if (!Number.isFinite(numeric)) return null;
+
+  const unit = (match[2] || 'px').toLowerCase();
+  switch (unit) {
+    case '':
+    case 'px':
+      return numeric;
+    case 'pt':
+      return numeric;
+    case 'pc':
+      return numeric * 12;
+    case 'in':
+      return numeric * 72;
+    case 'cm':
+      return numeric * (72 / 2.54);
+    case 'mm':
+      return numeric * (72 / 25.4);
+    case 'q':
+      return numeric * (72 / 101.6);
+    case 'em':
+    case 'rem':
+      return numeric * (Number.isFinite(relativeBasePx) && relativeBasePx > 0 ? relativeBasePx : 16);
+    case '%':
+      return (Number.isFinite(relativeBasePx) && relativeBasePx > 0 ? relativeBasePx : 16) * (numeric / 100);
+    default:
+      return numeric;
+  }
+};
+
+const parseFontSizeFromFontShorthand = (fontValue, relativeBasePx = 16) => {
+  if (!fontValue) return null;
+  const raw = String(fontValue).trim();
+  if (!raw) return null;
+
+  const match = raw.match(/(-?\d*\.?\d+)\s*(px|pt|pc|in|cm|mm|q|em|rem|%)\s*(?:\/[^\s]+)?/i);
+  if (!match) return null;
+
+  return parseCssLengthToPx(`${match[1]}${match[2]}`, relativeBasePx);
+};
+
+const getNodeStyleValue = (node, property) => {
+  if (!node || typeof node.getAttribute !== 'function') return null;
+
+  const attributeValue = node.getAttribute(property);
+  if (attributeValue !== null && attributeValue !== undefined && String(attributeValue).trim()) {
+    return String(attributeValue).trim();
+  }
+
+  const styleAttr = node.getAttribute('style') || '';
+  const styleValue = parseStyleStringValue(styleAttr, property);
+  if (styleValue !== null && styleValue !== undefined && String(styleValue).trim()) {
+    return String(styleValue).trim();
+  }
+
+  return null;
+};
+
+const getDeclaredNodeFontSizePx = (node, inheritedSizePx = 16) => {
+  if (!node || typeof node.getAttribute !== 'function') return null;
+
+  const fontSizeValue = getNodeStyleValue(node, 'font-size');
+  const parsedFontSize = parseCssLengthToPx(fontSizeValue, inheritedSizePx);
+  if (Number.isFinite(parsedFontSize) && parsedFontSize > 0) {
+    return parsedFontSize;
+  }
+
+  const fontAttrValue = node.getAttribute('font') || parseStyleStringValue(node.getAttribute('style') || '', 'font');
+  const parsedFromFont = parseFontSizeFromFontShorthand(fontAttrValue, inheritedSizePx);
+  if (Number.isFinite(parsedFromFont) && parsedFromFont > 0) {
+    return parsedFromFont;
+  }
+
+  return null;
+};
+
+const resolveComputedFontSizePx = (node, fallbackPx = 16, depth = 0) => {
+  if (!node || node.nodeType !== 1 || depth > 100) {
+    return fallbackPx;
+  }
+
+  const parentSize = resolveComputedFontSizePx(node.parentNode, fallbackPx, depth + 1);
+  const declaredSize = getDeclaredNodeFontSizePx(node, parentSize);
+  if (Number.isFinite(declaredSize) && declaredSize > 0) {
+    return declaredSize;
+  }
+
+  return parentSize;
+};
+
+const resolveTextNodeFontSize = textNode => {
+  const directSize = resolveComputedFontSizePx(textNode, 16);
+  if (Number.isFinite(directSize) && directSize > 0) {
+    return directSize;
+  }
+
+  if (textNode && typeof textNode.getElementsByTagName === 'function') {
+    const tspans = textNode.getElementsByTagName('tspan');
+    for (let idx = 0; idx < tspans.length; idx += 1) {
+      const tspanSize = resolveComputedFontSizePx(tspans[idx], directSize || 16);
+      if (Number.isFinite(tspanSize) && tspanSize > 0) {
+        return tspanSize;
+      }
+    }
+  }
+
+  return 16;
+};
+
+const normalizeFontSizeForSvgUnits = (fontSize, svgScale) => {
+  const numericFontSize = Number(fontSize);
+  if (!Number.isFinite(numericFontSize) || numericFontSize <= 0) {
+    return 16;
+  }
+
+  const numericSvgScale = Number(svgScale);
+  if (!Number.isFinite(numericSvgScale) || numericSvgScale <= 0) {
+    return numericFontSize;
+  }
+
+  // When svgScale ≈ 1, exported SVG geometry is typically already in pt units,
+  // while text font-size values still come in CSS px. Convert px -> pt.
+  if (Math.abs(numericSvgScale - 1) <= 0.08) {
+    return numericFontSize * FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE;
+  }
+
+  // When svgScale ≈ 0.75, geometry is in CSS px and svgScale already converts px -> pt.
+  return numericFontSize;
+};
+
+const computeBaselineOffset = (scaledFontSize, ascender, lineHeight) => {
+  const safeFontSize = Number.isFinite(scaledFontSize) && scaledFontSize > 0 ? scaledFontSize : 16;
+  const minOffset = safeFontSize * 0.67;
+  const maxOffset = safeFontSize * 0.76;
+
+  const candidate =
+    (Number.isFinite(ascender) && ascender > 0 && ascender) ||
+    (Number.isFinite(lineHeight) && lineHeight > 0 && lineHeight * 0.7) ||
+    safeFontSize * 0.72;
+
+  return Math.min(Math.max(candidate, minOffset), maxOffset);
 };
 
 const parseNumericListValue = (value, fallback = 0) => {
@@ -1987,15 +2142,8 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const anchorAttr =
                   textNode.getAttribute('text-anchor') ||
                   parseStyleStringValue(styleAttr, 'text-anchor') ||
-                  'start';
-                let fontSizeValue =
-                  textNode.getAttribute('font-size') ||
-                  parseStyleStringValue(styleAttr, 'font-size');
-
-                let fontSize = parseFloat(fontSizeValue || '');
-                if (!Number.isFinite(fontSize)) {
-                  fontSize = 16;
-                }
+                  '';
+                const fontSize = resolveTextNodeFontSize(textNode);
 
                 const xAttr = textNode.getAttribute('x');
                 const yAttr = textNode.getAttribute('y');
@@ -2028,7 +2176,11 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const fontScaleX = combinedScaleX || svgScale;
                 const fontScaleY = combinedScaleY || svgScale;
                 const averageScale = (fontScaleX + fontScaleY) / 2 || svgScale;
-                const scaledFontSize = fontSize * fontScaleY;
+                const normalizedFontSize = normalizeFontSizeForSvgUnits(
+                  fontSize,
+                  svgScale
+                );
+                const scaledFontSize = normalizedFontSize * fontScaleY;
                 const strokeWidthPt = Math.max(TEXT_STROKE_WIDTH_PT * averageScale, 0.01);
                 const anchorMode = (anchorAttr || '').trim().toLowerCase();
 
@@ -2057,6 +2209,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   return {
                     width,
                     lineHeight,
+                    baselineOffset: computeBaselineOffset(scaledFontSize, null, lineHeight),
                     fontId: resolvedFontId,
                     textToSvg: null,
                   };
@@ -2097,6 +2250,11 @@ app.post('/api/layout-pdf', async (req, res) => {
                       fontId: activeFontId,
                       width,
                       lineHeight: height,
+                      baselineOffset: computeBaselineOffset(
+                        scaledFontSize,
+                        metrics?.ascender,
+                        height
+                      ),
                       textToSvg: textToSvgInstance,
                     };
                   } catch (metricsError) {
@@ -2111,6 +2269,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                       fontId: fallback.fontId,
                       width: fallback.width,
                       lineHeight: fallback.lineHeight,
+                      baselineOffset: fallback.baselineOffset,
                       textToSvg: null,
                     };
                   }
@@ -2120,10 +2279,17 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const maxLineHeight =
                   segmentMetrics.reduce((max, segment) => Math.max(max, segment.lineHeight), 0) ||
                   scaledFontSize;
-                const halfLineHeight = maxLineHeight / 2;
+                const maxBaselineOffset =
+                  segmentMetrics.reduce(
+                    (max, segment) => Math.max(max, Number(segment.baselineOffset) || 0),
+                    0
+                  ) ||
+                  scaledFontSize * 0.8;
 
                 console.log(
                   `Text #${idx}: fontSize=${fontSize.toFixed(
+                    2
+                  )}, normalized=${normalizedFontSize.toFixed(
                     2
                   )}, scaled=${scaledFontSize.toFixed(2)}, ` +
                     `contentWidth=${contentWidth.toFixed(
@@ -2147,15 +2313,20 @@ app.post('/api/layout-pdf', async (req, res) => {
                   drawXLocal -= textWidth;
                 } else if (anchorMode === 'middle' || anchorMode === 'center') {
                   drawXLocal -= textWidth / 2;
+                } else if (anchorMode === 'start' || anchorMode === 'left') {
+                  drawXLocal += 0;
                 } else {
                   // Fabric text usually stores anchor via styles; if not provided we assume centered placement.
                   drawXLocal -= textWidth / 2;
                 }
 
-                const drawYLocal = -halfLineHeight;
+                const drawYLocal = -maxBaselineOffset;
 
                 let drawX = normalizedX + drawXLocal;
                 let drawY = normalizedY + drawYLocal;
+
+                drawX += scaledFontSize * PDF_TEXT_X_NUDGE_EM;
+                drawY += scaledFontSize * PDF_TEXT_Y_NUDGE_EM;
 
                 if (!hasMatrixRotation) {
                   const outOfBounds =
@@ -2167,7 +2338,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   if (outOfBounds) {
                     drawX = xPt + widthPt / 2 - textWidth / 2;
                     const centerY = yTopPt + heightPt / 2;
-                    drawY = centerY - halfLineHeight;
+                    drawY = centerY - maxBaselineOffset;
                   }
                 }
 

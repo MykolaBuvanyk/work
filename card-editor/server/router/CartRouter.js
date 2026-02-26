@@ -236,6 +236,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order=await Order.create({
       sum: totalPriceInclVat,
+      netAfterDiscount: netAfterDiscount,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,

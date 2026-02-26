@@ -4,7 +4,8 @@ import * as fabric from "fabric";
 import CircleWithCut from "../../utils/CircleWithCut";
 import styles from "./ShapeSelector.module.css";
 import {
-  /* ...existing code... */ makeRoundedSemiRoundPath,
+  /* ...existing code... */ makeAdaptiveRoundTopPath,
+  makeRoundedSemiRoundPath,
 } from "../ShapeProperties/ShapeProperties";
 import { copyHandler as canvasCopyHandler } from "../Canvas/Canvas";
 import { ensureShapeSvgId } from "../../utils/shapeSvgId";
@@ -415,10 +416,16 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         break;
 
       case "roundTop":
-        shape = createPath(
-          "M 0 100 L 0 50 Q 0 0 50 0 Q 100 0 100 50 L 100 100 Z",
-          baseOptions
-        );
+        (() => {
+          const width = 100;
+          const height = 50; // 2:1 baseline, without side walls
+          const d = makeAdaptiveRoundTopPath(width, height, 0);
+          shape = createPath(d, {
+            ...baseOptions,
+            width,
+            height,
+          });
+        })();
         break;
 
       case "leftArrow":

@@ -58,6 +58,55 @@ export const makeRoundedSemiRoundPath = (w, h, r) => {
   return d;
 };
 
+// RoundTop: adaptive geometry like extendedHalfCircle
+// - if h <= w/2: no vertical walls (arc meets base)
+// - if h >  w/2: add left/right vertical walls between top arc and base
+export const makeAdaptiveRoundTopPath = (w, h, r = 0) => {
+  const width = Number(w);
+  const inputHeight = Number(h);
+  if (!Number.isFinite(width) || !Number.isFinite(inputHeight) || width <= 0 || inputHeight <= 0) {
+    return "";
+  }
+
+  const left = 0;
+  const right = width;
+  const radiusTop = width / 2;
+  // Keep the top arc from flattening: minimal proportion is 2:1.
+  // If user makes shape lower than w/2, keep geometry at h = w/2.
+  const height = Math.max(inputHeight, radiusTop);
+  const bottom = height;
+
+  // Exactly 2:1 -> pure top semicircle with flat base, no side walls.
+  if (Math.abs(height - radiusTop) <= 0.01) {
+    return `M ${left} ${bottom} A ${radiusTop} ${radiusTop} 0 0 1 ${right} ${bottom} L ${left} ${bottom} Z`;
+  }
+
+  const sideTopY = bottom - (height - radiusTop); // equals radiusTop
+  const maxBottomRadius = Math.max(0, Math.min(width / 4 - 0.001, (bottom - sideTopY) - 0.001));
+  const rClamped = Math.max(0, Math.min(r || 0, maxBottomRadius));
+
+  let d = "";
+  if (rClamped > 0) {
+    d += `M ${left + rClamped} ${bottom}`;
+    d += `Q ${left} ${bottom} ${left} ${bottom - rClamped}`;
+  } else {
+    d += `M ${left} ${bottom}`;
+  }
+
+  d += `L ${left} ${sideTopY}`;
+  d += `A ${radiusTop} ${radiusTop} 0 0 1 ${right} ${sideTopY}`;
+  d += `L ${right} ${bottom - rClamped}`;
+
+  if (rClamped > 0) {
+    d += `Q ${right} ${bottom} ${right - rClamped} ${bottom}`;
+  } else {
+    d += `L ${right} ${bottom}`;
+  }
+
+  d += `L ${left + rClamped} ${bottom} Z`;
+  return d;
+};
+
 const ShapeProperties = ({
   isOpen: propIsOpen,
   activeShape: propActiveShape,
@@ -85,6 +134,7 @@ const ShapeProperties = ({
   const [isManuallyEditing, setIsManuallyEditing] = useState(false);
   const [isEditingThickness, setIsEditingThickness] = useState(false);
   const commitHistoryTimerRef = useRef(null);
+  const isNormalizingRoundTopRef = useRef(false);
   // Debounce timers for user-typed inputs (property -> timer id)
   const pendingInputTimersRef = useRef({});
   const DEBOUNCE_INPUT_MS = 1500; // 1.5s
@@ -283,6 +333,72 @@ const ShapeProperties = ({
     getOuterSizePx(obj, {
       includeStroke: !shouldIgnoreStrokeInDimensions(obj),
     });
+
+  const normalizeRoundTopGeometry = (obj, preferredOuter = {}) => {
+    if (!obj || obj.type !== "path" || obj.shapeType !== "roundTop") return;
+
+    const signX = (obj.scaleX || 1) < 0 ? -1 : 1;
+    const signY = (obj.scaleY || 1) < 0 ? -1 : 1;
+    const includeStroke = !shouldIgnoreStrokeInDimensions(obj);
+    const sw = includeStroke ? Math.max(0, Number(obj.strokeWidth) || 0) : 0;
+
+    const measuredOuter = getDisplaySizePx(obj);
+    const hasPreferredWidth = Number.isFinite(Number(preferredOuter.widthPx));
+    const hasPreferredHeight = Number.isFinite(Number(preferredOuter.heightPx));
+
+    const targetOuterWidth = Math.max(
+      1,
+      Number(preferredOuter.widthPx) || measuredOuter.width || 1
+    );
+    const targetOuterHeight = Math.max(
+      1,
+      Number(preferredOuter.heightPx) || measuredOuter.height || 1
+    );
+
+    let adjustedOuterWidth = targetOuterWidth;
+    let adjustedOuterHeight = targetOuterHeight;
+
+    // Keep minimal proportion 2:1 for the top arc zone.
+    // If user keeps decreasing only height below this limit, reduce width too.
+    if (adjustedOuterHeight < adjustedOuterWidth / 2) {
+      if (hasPreferredHeight && !hasPreferredWidth) {
+        adjustedOuterWidth = Math.max(1, adjustedOuterHeight * 2);
+      } else if (!hasPreferredWidth && !hasPreferredHeight) {
+        adjustedOuterWidth = Math.max(1, adjustedOuterHeight * 2);
+      } else {
+        adjustedOuterHeight = Math.max(1, adjustedOuterWidth / 2);
+      }
+    }
+
+    const baseW = Math.max(1, adjustedOuterWidth - sw);
+    const baseH = Math.max(1, adjustedOuterHeight - sw);
+    const rMmRaw =
+      typeof obj.displayCornerRadiusMm === "number"
+        ? obj.displayCornerRadiusMm
+        : typeof obj.cornerRadiusMm === "number"
+          ? obj.cornerRadiusMm
+          : 0;
+    const rLocal = Math.max(0, mmToPx(Math.max(0, Number(rMmRaw) || 0)) * RADIUS_DAMPING);
+
+    const d = makeAdaptiveRoundTopPath(baseW, baseH, rLocal);
+    if (!d) return;
+
+    try {
+      const temp = new fabric.Path(d);
+      obj.set({
+        path: temp.path,
+        pathOffset: temp.pathOffset,
+        width: temp.width,
+        height: temp.height,
+        scaleX: signX,
+        scaleY: signY,
+        dirty: true,
+      });
+      if (typeof obj.setCoords === "function") obj.setCoords();
+    } catch {
+      // no-op
+    }
+  };
 
   const solveScaleForOuterSize = (opts) => {
     const {
@@ -770,7 +886,7 @@ const ShapeProperties = ({
 
   // RoundTop: используем ту же логику (дуга сверху + скругление только нижних углов)
   const makeRoundedRoundTopPath = (w, h, r) => {
-    return makeRoundedSemiRoundPath(w, h, r);
+    return makeAdaptiveRoundTopPath(w, h, r);
   };
 
   // Turn Left: аппроксимація ламаною з оригінального шляху з очень сильним скругленням
@@ -1020,6 +1136,18 @@ const ShapeProperties = ({
 
     const updateProperties = () => {
       const currentActiveObject = canvas.getActiveObject();
+      if (
+        currentActiveObject?.shapeType === "roundTop" &&
+        currentActiveObject?.type === "path" &&
+        !isNormalizingRoundTopRef.current
+      ) {
+        try {
+          isNormalizingRoundTopRef.current = true;
+          normalizeRoundTopGeometry(currentActiveObject);
+        } finally {
+          isNormalizingRoundTopRef.current = false;
+        }
+      }
       if (currentActiveObject === activeObject && !isManuallyEditing) {
         const isManualCut =
           !!activeObject.isCutElement || activeObject.cutType === "manual";
@@ -1317,6 +1445,12 @@ const ShapeProperties = ({
       case "width": {
         const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
+          if (o.shapeType === "roundTop" && o.type === "path") {
+            normalizeRoundTopGeometry(o, { widthPx: targetOuterPx });
+            reapplyCornerRadiusAfterResize(o);
+            return;
+          }
+
           const baseW = Number(o.width) || 1;
           const sw = shouldIgnoreStrokeInDimensions(o)
             ? 0
@@ -1352,6 +1486,12 @@ const ShapeProperties = ({
       case "height": {
         const targetOuterPx = Math.max(0, mmToPx(value));
         holdCenterIfArrow((o) => {
+          if (o.shapeType === "roundTop" && o.type === "path") {
+            normalizeRoundTopGeometry(o, { heightPx: targetOuterPx });
+            reapplyCornerRadiusAfterResize(o);
+            return;
+          }
+
           const baseH = Number(o.height) || 1;
           const sw = shouldIgnoreStrokeInDimensions(o)
             ? 0

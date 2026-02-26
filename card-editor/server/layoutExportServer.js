@@ -35,6 +35,12 @@ const CUSTOM_BORDER_STROKE_COLOR = '#008181';
 const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = '#008181';
 const TEXT_STROKE_WIDTH_PT = 0.5;
+const PDF_SHEET_INFO_LEFT_SHIFT_MODES = new Set([
+  'Sheet A4 portrait',
+  'Sheet A5 portrait',
+  'Sheet A4 landscape',
+]);
+const PDF_SHEET_INFO_LEFT_SHIFT_MM = 2;
 
 const normalizeColorForGrouping = value => {
   if (typeof value !== 'string') return null;
@@ -1632,9 +1638,15 @@ app.post('/api/layout-pdf', async (req, res) => {
           const requestedXCenterMm = Number.isFinite(Number(sheetInfo?.xCenterMm))
             ? Number(sheetInfo.xCenterMm)
             : fallbackXCenterMm;
-          const xCenterMm = hasCanvasStart
+          const resolvedExportMode = sheet?.exportMode || exportMode;
+          const shiftSheetInfoLeft = PDF_SHEET_INFO_LEFT_SHIFT_MODES.has(resolvedExportMode);
+          const xCenterBaseMm = hasCanvasStart
             ? areaWidthMm / 2
             : Math.max(0, Math.min(areaWidthMm, requestedXCenterMm));
+          const xCenterMm = Math.max(
+            0,
+            Math.min(areaWidthMm, xCenterBaseMm - (shiftSheetInfoLeft ? PDF_SHEET_INFO_LEFT_SHIFT_MM : 0))
+          );
           const yCenterMm = Number.isFinite(Number(sheetInfo?.yCenterMm)) ? Number(sheetInfo.yCenterMm) : pageHeightMm / 2;
           const anchorXpt = mmToPoints(xCenterMm);
           const anchorYpt = mmToPoints(yCenterMm);
@@ -2343,13 +2355,15 @@ app.post('/api/layout-pdf', async (req, res) => {
         const frameWidthPt = mmToPoints(frameWidthMm);
         const frameHeightPt = mmToPoints(frameHeightMm);
 
-        doc.save();
-        doc.lineWidth(0.5);
-        doc.strokeColor('#8B4513');
+        if (isMjOptimizedSheet) {
+          doc.save();
+          doc.lineWidth(0.5);
+          doc.strokeColor('#8B4513');
 
-        const radiusPt = mmToPoints(1.5);
-        doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
-        doc.restore();
+          const radiusPt = mmToPoints(1.5);
+          doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
+          doc.restore();
+        }
 
         if (isMjOptimizedSheet) {
           const frameInfo = frameInfos[frameIndex] || null;

@@ -6327,10 +6327,21 @@ const Toolbar = ({ formData }) => {
   const forceApplySavedTheme = useCallback(
     toolbarState => {
       const colors = toolbarState?.globalColors || {};
-      const textColor = colors.textColor || '#000000';
-      const backgroundType = colors.backgroundType || 'solid';
-      const backgroundColor = colors.backgroundColor || '#FFFFFF';
       const explicitIndex = Number(toolbarState?.selectedColorIndex);
+      const presetByExplicitIndex = Number.isFinite(explicitIndex)
+        ? COLOR_THEME_PRESETS.find(theme => theme.index === explicitIndex)
+        : null;
+
+      const textColor = presetByExplicitIndex
+        ? presetByExplicitIndex.textColor
+        : colors.textColor || '#000000';
+      const backgroundType = presetByExplicitIndex
+        ? presetByExplicitIndex.backgroundType
+        : colors.backgroundType || 'solid';
+      const backgroundColor = presetByExplicitIndex
+        ? presetByExplicitIndex.backgroundColor
+        : colors.backgroundColor || '#FFFFFF';
+
       const idx = Number.isFinite(explicitIndex)
         ? explicitIndex
         : inferThemeIndexByColors(textColor, backgroundColor, backgroundType);

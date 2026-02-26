@@ -222,5 +222,24 @@
                 }
             }
         }
+
+        /* Underline current page number with a visible bar at the bottom */
+        .pagination ul li.active a,
+        .pagination ul li.active button {
+            position: relative;
+            padding-bottom: 8px; /* space for the underline */
+        }
+
+        .pagination ul li.active a::after,
+        .pagination ul li.active button::after {
+            content: '';
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            bottom: 2px;
+            height: 3px;
+            background: #4785df; /* match existing accent color */
+            border-radius: 2px;
+        }
     }
 }

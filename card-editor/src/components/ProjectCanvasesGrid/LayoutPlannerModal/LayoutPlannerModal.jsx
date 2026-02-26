@@ -5815,16 +5815,10 @@ const LayoutPlannerModal = ({
             };
           }
 
-          // Other modes: center inside the left frameSpacing band.
-          if (safeFrameSpacingMm <= 0) return null;
-
-          const contentLeftMm = (() => {
-            if (placementsBounds && Number.isFinite(placementsBounds.minX)) {
-              return placementsBounds.minX;
-            }
-            if (frameRect) return frameRect.x + safeFrameSpacingMm;
-            return safePageMarginMm + safeFrameSpacingMm;
-          })();
+          // Other modes: center in the full band between page-left edge and canvas-left edge.
+          const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
+          const labelBandWidthMm = leftInsetMm > 0 ? leftInsetMm : safeFrameSpacingMm;
+          if (labelBandWidthMm <= 0) return null;
 
           const fallbackYCenterMm = (() => {
             if (frameRect) return frameRect.y + frameRect.height / 2;
@@ -5835,12 +5829,9 @@ const LayoutPlannerModal = ({
           })();
 
           return {
-            xCenterMm: Math.max(
-              safePageMarginMm + safeFrameSpacingMm / 2,
-              contentLeftMm - safeFrameSpacingMm / 2
-            ),
+            xCenterMm: labelBandWidthMm / 2,
             yCenterMm: fallbackYCenterMm,
-            areaWidthMm: safeFrameSpacingMm,
+            areaWidthMm: labelBandWidthMm,
           };
         })();
 
@@ -6309,15 +6300,9 @@ const LayoutPlannerModal = ({
                     };
                   }
 
-                  if (safeFrameSpacingMm <= 0) return null;
-
-                  const contentLeftMm = (() => {
-                    if (placementsBounds && Number.isFinite(placementsBounds.minX)) {
-                      return placementsBounds.minX;
-                    }
-                    if (hasBrownFrame && frameRect) return frameRect.x + safeFrameSpacingMm;
-                    return safePageMarginMm + safeFrameSpacingMm;
-                  })();
+                  const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
+                  const labelBandWidthMm = leftInsetMm > 0 ? leftInsetMm : safeFrameSpacingMm;
+                  if (labelBandWidthMm <= 0) return null;
 
                   const fallbackYCenterMm = (() => {
                     if (hasBrownFrame && frameRect) return frameRect.y + frameRect.height / 2;
@@ -6326,11 +6311,8 @@ const LayoutPlannerModal = ({
                   })();
 
                   return {
-                    xLeftMm: Math.max(
-                      safePageMarginMm,
-                      contentLeftMm - safeFrameSpacingMm
-                    ),
-                    areaWidthMm: safeFrameSpacingMm,
+                    xLeftMm: 0,
+                    areaWidthMm: labelBandWidthMm,
                     yCenterMm: fallbackYCenterMm,
                   };
                 })();

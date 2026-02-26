@@ -3,9 +3,10 @@ import styles from './Header.module.css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/reducers/user';
+import { logout, mergeUser } from '../../store/reducers/user';
 import combinedCountries from '../Countries';
 import Flag from 'react-flagkit';
+import { $authHost } from '../../http';
  
 const languageCountries = [
   // { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
@@ -120,6 +121,46 @@ const Header = () => {
   const dispatch = useDispatch();
 
   const exit = () => dispatch(logout());
+
+  useEffect(() => {
+    if (!isAuth) return;
+
+    let isMounted = true;
+
+    const refreshUserFromDb = async () => {
+      try {
+        const res = await $authHost.get('auth/getMy');
+        const freshUser = res?.data?.user;
+        if (isMounted && freshUser) {
+          dispatch(mergeUser(freshUser));
+        }
+      } catch (err) {
+        console.warn('Header: failed to refresh user from DB', err);
+      }
+    };
+
+    // initial sync after mount/auth
+    refreshUserFromDb();
+
+    const onWindowFocus = () => {
+      refreshUserFromDb();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUserFromDb();
+      }
+    };
+
+    window.addEventListener('focus', onWindowFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('focus', onWindowFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [isAuth, dispatch]);
 
   const navigate=useNavigate();
   
@@ -314,8 +355,8 @@ const Header = () => {
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
-            <p className={styles.name}>{isAuth && user.firstName||'' + ' ' + user.surname||''}</p>
-            <p className={styles.company} style={{textAlign:'right'}}>{user.company||''}</p>
+            <p className={styles.name}>{isAuth ? `${user?.firstName || ''} ${user?.surname || ''}`.trim() : ''}</p>
+            <p className={styles.company} style={{textAlign:'right'}}>{isAuth ? (user?.company || '') : ''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
             {isAuth ? 'Log out' : <>Log in or <span style={{color:'red'}}>Register</span></>}

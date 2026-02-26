@@ -75,33 +75,39 @@ const Admin = () => {
       const requestPage = Number(pageOverride ?? page) || 1;
       const activeFilteredUserId = userIdOverride !== undefined ? userIdOverride : filteredUserId;
 
-      let query=`?page=${requestPage}&limit=${limit}`;
-      if(status!='ALL'){
-        query+=`&status=${status}`
+      const params = new URLSearchParams();
+      params.set('page', String(requestPage));
+      params.set('limit', String(limit));
+
+      if (status !== 'ALL') {
+        params.set('status', status);
       }
-      if(search){
-        query+=`&search=${search}`;
+      if (search) {
+        params.set('search', search);
       }
-      if(start){
-        query+=`&start=${start}`
+      if (start) {
+        params.set('start', start);
       }
-      if(isPaid!='all'){
-        query+=`&isPaid=${isPaid}`
+      if (isPaid !== 'all') {
+        params.set('isPaid', isPaid);
       }
-      if(finish){
-        // Додаємо кінець дня, якщо не вказано час
+      if (finish) {
         let finishWithTime = finish;
         if (!finish.includes('T')) {
-          finishWithTime = finish + 'T23:59:59';
+          finishWithTime = `${finish}T23:59:59`;
         }
-        query+=`&finish=${finishWithTime}`
+        params.set('finish', finishWithTime);
       }
-      if(selectLang.code!='ALL'){
-        query+=`&lang=${selectLang.code}`
+      if (selectLang.code !== 'ALL') {
+        params.set('lang', selectLang.code);
       }
-      if(activeFilteredUserId != null){
-        query+=`&userId=${activeFilteredUserId}`
+
+      const normalizedUserId = Number(activeFilteredUserId);
+      if (activeFilteredUserId != null && Number.isFinite(normalizedUserId)) {
+        params.set('userId', String(normalizedUserId));
       }
+
+      const query = `?${params.toString()}`;
       /*
         const res=await $authHost.get('cart/filter'+query);
       

@@ -25,6 +25,22 @@ import LayoutPlannerModal from './LayoutPlannerModal/LayoutPlannerModal';
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
+const COLOR_THEME_PRESETS = [
+  { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 1, textColor: '#0000FF', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 2, textColor: '#FF0000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 3, textColor: '#FFFFFF', backgroundColor: '#000000', backgroundType: 'solid' },
+  { index: 4, textColor: '#FFFFFF', backgroundColor: '#0000FF', backgroundType: 'solid' },
+  { index: 5, textColor: '#FFFFFF', backgroundColor: '#FF0000', backgroundType: 'solid' },
+  { index: 6, textColor: '#FFFFFF', backgroundColor: '#018001', backgroundType: 'solid' },
+  { index: 7, textColor: '#000000', backgroundColor: '#FFFF00', backgroundType: 'solid' },
+  { index: 8, textColor: '#000000', backgroundColor: '#F0F0F0', backgroundType: 'gradient' },
+  { index: 9, textColor: '#FFFFFF', backgroundColor: '#8B4513', backgroundType: 'solid' },
+  { index: 10, textColor: '#FFFFFF', backgroundColor: '#FFA500', backgroundType: 'solid' },
+  { index: 11, textColor: '#FFFFFF', backgroundColor: '#808080', backgroundType: 'solid' },
+  { index: 12, textColor: '#000000', backgroundColor: '/textures/Wood.jpg', backgroundType: 'texture' },
+  { index: 13, textColor: '#FFFFFF', backgroundColor: '/textures/Carbon.jpg', backgroundType: 'texture' },
+];
 
 const mapEntryToDesign = entry => {
   if (!entry) return null;
@@ -49,6 +65,15 @@ const mapEntryToDesign = entry => {
       sourceType: entry._unsaved ? 'unsaved' : 'project',
     },
   };
+};
+
+const getLiveToolbarStateSnapshot = () => {
+  try {
+    if (typeof window !== 'undefined' && typeof window.getCurrentToolbarState === 'function') {
+      return window.getCurrentToolbarState() || null;
+    }
+  } catch {}
+  return null;
 };
 
 const ProjectCanvasesGrid = () => {
@@ -395,7 +420,12 @@ const ProjectCanvasesGrid = () => {
 
       // Sync lightweight state (like copiesCount) immediately for UI
       if (activeUnsaved || activeProjectCanvas) {
-        const nextToolbarState = extractToolbarState(canvas);
+        const nextToolbarState =
+          getLiveToolbarStateSnapshot() ||
+          (activeUnsaved
+            ? unsavedSigns.find(sign => sign.id === activeUnsaved)?.toolbarState
+            : project?.canvases?.find(canv => canv.id === activeProjectCanvas)?.toolbarState) ||
+          null;
         const nextCopiesCount = nextToolbarState?.copiesCount;
 
         if (activeUnsaved) {
@@ -854,18 +884,39 @@ const ProjectCanvasesGrid = () => {
           setTimeout(() => forceFontUpdate(i + 1), delay);
         });
 
-        // ВИПРАВЛЕННЯ: Відновлюємо фон з урахуванням текстур
-        // Для нових карток завжди встановлюємо білий фон
+        const savedToolbarState = extractToolbarState(canvasToLoad);
+        const savedColors = savedToolbarState?.globalColors || {};
+        const selectedThemeIndex = Number(savedToolbarState?.selectedColorIndex);
+        const presetBySelectedTheme = Number.isFinite(selectedThemeIndex)
+          ? COLOR_THEME_PRESETS.find(theme => theme.index === selectedThemeIndex)
+          : null;
+
+        // ВИПРАВЛЕННЯ: Відновлюємо фон з урахуванням toolbarState/preset.
         const isNewCanvas =
           !canvasToLoad.json ||
           !canvasToLoad.json.objects ||
           canvasToLoad.json.objects.length === 0;
-        const bgColor = canvasToLoad.backgroundColor || '#FFFFFF';
-        const bgType = canvasToLoad.backgroundType || 'solid';
+        const hasSavedThemePreference =
+          (typeof savedColors.backgroundColor === 'string' && savedColors.backgroundColor.trim()) ||
+          (typeof savedColors.backgroundType === 'string' && savedColors.backgroundType !== 'solid') ||
+          (Number.isFinite(selectedThemeIndex) && selectedThemeIndex !== 0);
 
-        // ВИПРАВЛЕННЯ: Завжди встановлюємо білий фон для нових карток або якщо збережений фон білий
-        if (isNewCanvas || (bgColor === '#FFFFFF' && bgType === 'solid')) {
-          console.log('New canvas or white background detected, forcing white background', {
+        const bgType =
+          canvasToLoad.backgroundType ||
+          (typeof savedColors.backgroundType === 'string' && savedColors.backgroundType.trim()) ||
+          presetBySelectedTheme?.backgroundType ||
+          'solid';
+
+        const bgColor =
+          (typeof canvasToLoad.backgroundColor === 'string' && canvasToLoad.backgroundColor.trim()) ||
+          (typeof savedColors.backgroundColor === 'string' && savedColors.backgroundColor.trim()) ||
+          presetBySelectedTheme?.backgroundColor ||
+          '#FFFFFF';
+
+        const shouldForceWhiteForFreshCanvas = isNewCanvas && !hasSavedThemePreference;
+
+        if (shouldForceWhiteForFreshCanvas) {
+          console.log('Fresh empty canvas without saved theme, forcing white background', {
             isNewCanvas,
             bgColor,
             bgType,
@@ -895,99 +946,86 @@ const ProjectCanvasesGrid = () => {
               canvas.set?.('hasSavedTheme', false);
             } catch {}
           }, 100);
-        } else if (bgColor && bgColor !== '#FFFFFF') {
+        } else if (bgType === 'texture' && bgColor) {
           console.log('Restoring canvas background:', {
             backgroundColor: bgColor,
             backgroundType: bgType,
             canvasId: canvasToLoad.id,
           });
+          const img = document.createElement('img');
+          img.crossOrigin = 'anonymous';
 
-          if (bgType === 'texture') {
-            // Якщо це текстура, завантажуємо її через ту саму логіку
-            const img = document.createElement('img');
-            img.crossOrigin = 'anonymous';
+          // ВИПРАВЛЕННЯ: Зберігаємо ID canvas для перевірки в onload
+          const targetCanvasId = canvasToLoad.id;
+          const targetTextureUrl = bgColor;
 
-            // ВИПРАВЛЕННЯ: Зберігаємо ID canvas для перевірки в onload
-            const targetCanvasId = canvasToLoad.id;
-            const targetTextureUrl = canvasToLoad.backgroundColor;
-
-            img.onload = () => {
-              try {
-                // ВИПРАВЛЕННЯ: Перевіряємо чи це все ще той самий canvas
-                const currentId = currentProjectCanvasIdRef.current || currentUnsavedIdRef.current;
-                if (currentId !== targetCanvasId) {
-                  console.log('[ProjectCanvasesGrid] Skipping stale texture load:', {
-                    targetCanvasId,
-                    currentId,
-                    targetTextureUrl,
-                  });
-                  return;
-                }
-
-                // Також перевіряємо чи canvas не перемикається
-                if (canvas.__switching) {
-                  console.log('[ProjectCanvasesGrid] Skipping texture load - canvas switching');
-                  return;
-                }
-
-                const scaleX = canvas.width / img.width;
-                const scaleY = canvas.height / img.height;
-
-                const patternCanvas = document.createElement('canvas');
-                const ctx = patternCanvas.getContext('2d');
-
-                patternCanvas.width = img.width * scaleX;
-                patternCanvas.height = img.height * scaleY;
-
-                ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
-
-                const pattern = new fabric.Pattern({
-                  source: patternCanvas,
-                  repeat: 'repeat',
+          img.onload = () => {
+            try {
+              // ВИПРАВЛЕННЯ: Перевіряємо чи це все ще той самий canvas
+              const currentId = currentProjectCanvasIdRef.current || currentUnsavedIdRef.current;
+              if (currentId !== targetCanvasId) {
+                console.log('[ProjectCanvasesGrid] Skipping stale texture load:', {
+                  targetCanvasId,
+                  currentId,
+                  targetTextureUrl,
                 });
-
-                canvas.set('backgroundColor', pattern);
-                canvas.set('backgroundTextureUrl', targetTextureUrl);
-                canvas.set('backgroundType', 'texture');
-                canvas.renderAll();
-
-                console.log('Texture background restored successfully:', targetTextureUrl);
-
-                // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
-                // після завершення завантаження всього canvas
-              } catch (error) {
-                console.error('Error restoring texture pattern:', error);
-                canvas.set('backgroundColor', '#FFFFFF');
-                canvas.renderAll();
+                return;
               }
-            };
-            img.onerror = () => {
-              console.error('Error loading texture image:', canvasToLoad.backgroundColor);
+
+              // Також перевіряємо чи canvas не перемикається
+              if (canvas.__switching) {
+                console.log('[ProjectCanvasesGrid] Skipping texture load - canvas switching');
+                return;
+              }
+
+              const scaleX = canvas.width / img.width;
+              const scaleY = canvas.height / img.height;
+
+              const patternCanvas = document.createElement('canvas');
+              const ctx = patternCanvas.getContext('2d');
+
+              patternCanvas.width = img.width * scaleX;
+              patternCanvas.height = img.height * scaleY;
+
+              ctx.drawImage(img, 0, 0, patternCanvas.width, patternCanvas.height);
+
+              const pattern = new fabric.Pattern({
+                source: patternCanvas,
+                repeat: 'repeat',
+              });
+
+              canvas.set('backgroundColor', pattern);
+              canvas.set('backgroundTextureUrl', targetTextureUrl);
+              canvas.set('backgroundType', 'texture');
+              canvas.renderAll();
+
+              console.log('Texture background restored successfully:', targetTextureUrl);
+
+              // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
+              // після завершення завантаження всього canvas
+            } catch (error) {
+              console.error('Error restoring texture pattern:', error);
               canvas.set('backgroundColor', '#FFFFFF');
               canvas.renderAll();
-            };
-            img.src = canvasToLoad.backgroundColor;
-          } else {
-            // Звичайний колір
-            canvas.set('backgroundColor', bgColor);
-            canvas.set('backgroundTextureUrl', null);
-            canvas.set('backgroundType', bgType);
+            }
+          };
+          img.onerror = () => {
+            console.error('Error loading texture image:', bgColor);
+            canvas.set('backgroundColor', '#FFFFFF');
             canvas.renderAll();
-
-            console.log('Solid background restored successfully:', bgColor);
-
-            // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
-            // після завершення завантаження всього canvas
-          }
+          };
+          img.src = bgColor;
         } else {
-          // Якщо немає збереженого кольору, встановлюємо білий за замовчуванням
-          console.log('No background color in saved data, setting white default');
-          canvas.set('backgroundColor', '#FFFFFF');
+          // Звичайний колір
+          canvas.set('backgroundColor', bgColor || '#FFFFFF');
           canvas.set('backgroundTextureUrl', null);
-          canvas.set('backgroundType', 'solid');
+          canvas.set('backgroundType', bgType || 'solid');
           canvas.renderAll();
 
+          console.log('Solid/gradient background restored successfully:', bgColor, bgType);
+
           // НЕ викликаємо updateGlobalColors тут - це буде зроблено пізніше
+          // після завершення завантаження всього canvas
         }
 
         // НОВЕ: Відновлюємо фон-картинку, якщо збережено backgroundImage
@@ -1023,7 +1061,6 @@ const ProjectCanvasesGrid = () => {
         }
 
 
-        const savedToolbarState = extractToolbarState(canvasToLoad);
         try {
           canvas.set?.('hasSavedTheme', !!savedToolbarState?.globalColors);
         } catch {}
@@ -1069,7 +1106,11 @@ const ProjectCanvasesGrid = () => {
         if (finalBgType === 'texture' && finalBgUrl) {
           finalBgColor = finalBgUrl;
         } else if (typeof finalBgColor === 'object' && finalBgColor !== null) {
-          finalBgColor = canvasToLoad.backgroundColor || '#FFFFFF';
+          finalBgColor =
+            (typeof savedColors.backgroundColor === 'string' && savedColors.backgroundColor.trim()) ||
+            presetBySelectedTheme?.backgroundColor ||
+            canvasToLoad.backgroundColor ||
+            '#FFFFFF';
         }
 
         if (updateGlobalColors) {

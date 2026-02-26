@@ -6264,11 +6264,76 @@ const Toolbar = ({ formData }) => {
       canvas.renderAll();
       trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     } else if (backgroundType === 'gradient') {
-      // Місце для градієнта - буде реалізовано пізніше
-      canvas.set('backgroundColor', backgroundColor); // Тимчасово використовуємо solid color
+      const applySilverGradient = (attempt = 0) => {
+        try {
+          if (!canvas || canvas.get('backgroundType') !== 'gradient') return;
+          if (canvas.__switching || canvas.__suspendUndoRedo) {
+            const retryDelay = Math.min(600, 80 + attempt * 60);
+            clearTimeout(canvas.__toolbarGradientRetryTimer);
+            canvas.__toolbarGradientRetryTimer = setTimeout(
+              () => applySilverGradient(attempt + 1),
+              retryDelay
+            );
+            return;
+          }
+
+          const W = typeof canvas.getWidth === 'function' ? canvas.getWidth() : canvas.width || 0;
+          const H = typeof canvas.getHeight === 'function' ? canvas.getHeight() : canvas.height || 0;
+          const off = document.createElement('canvas');
+          off.width = Math.max(1, W);
+          off.height = Math.max(1, H);
+          const ctx = off.getContext('2d');
+          if (!ctx) {
+            const retryDelay = Math.min(600, 80 + attempt * 60);
+            clearTimeout(canvas.__toolbarGradientRetryTimer);
+            canvas.__toolbarGradientRetryTimer = setTimeout(
+              () => applySilverGradient(attempt + 1),
+              retryDelay
+            );
+            return;
+          }
+
+          const cssDeg = 152.22;
+          const rad = (cssDeg * Math.PI) / 180;
+          const dirX = Math.sin(rad);
+          const dirY = -Math.cos(rad);
+          const cx = W / 2;
+          const cy = H / 2;
+          const L = Math.abs(W * dirX) + Math.abs(H * dirY);
+          const x0 = cx - (dirX * L) / 2;
+          const y0 = cy - (dirY * L) / 2;
+          const x1 = cx + (dirX * L) / 2;
+          const y1 = cy + (dirY * L) / 2;
+
+          const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+          grad.addColorStop(0.2828, '#B5B5B5');
+          grad.addColorStop(0.5241, '#F5F5F5');
+          grad.addColorStop(0.7414, '#979797');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, W, H);
+
+          const pattern = new fabric.Pattern({
+            source: off,
+            repeat: 'no-repeat',
+          });
+
+          clearTimeout(canvas.__toolbarGradientRetryTimer);
+          canvas.__toolbarGradientRetryTimer = null;
+          canvas.set('backgroundColor', pattern);
+          canvas.renderAll();
+        } catch {
+          const retryDelay = Math.min(600, 80 + attempt * 60);
+          clearTimeout(canvas.__toolbarGradientRetryTimer);
+          canvas.__toolbarGradientRetryTimer = setTimeout(
+            () => applySilverGradient(attempt + 1),
+            retryDelay
+          );
+        }
+      };
+
       canvas.set('backgroundTextureUrl', null);
       canvas.set('backgroundType', 'gradient');
-      canvas.renderAll();
+      applySilverGradient();
       trackColorThemeChange({ textColor, backgroundColor, backgroundType });
     } else if (backgroundType === 'texture') {
       // Завантажуємо текстуру

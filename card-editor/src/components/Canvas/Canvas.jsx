@@ -35,6 +35,49 @@ const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 
+const buildSilverGradientPattern = targetCanvas => {
+  try {
+    if (!targetCanvas || !fabric?.Pattern) return null;
+    const W =
+      typeof targetCanvas.getWidth === 'function' ? targetCanvas.getWidth() : targetCanvas.width || 0;
+    const H =
+      typeof targetCanvas.getHeight === 'function'
+        ? targetCanvas.getHeight()
+        : targetCanvas.height || 0;
+    const off = document.createElement('canvas');
+    off.width = Math.max(1, W);
+    off.height = Math.max(1, H);
+    const ctx = off.getContext('2d');
+    if (!ctx) return null;
+
+    const cssDeg = 152.22;
+    const rad = (cssDeg * Math.PI) / 180;
+    const dirX = Math.sin(rad);
+    const dirY = -Math.cos(rad);
+    const cx = W / 2;
+    const cy = H / 2;
+    const L = Math.abs(W * dirX) + Math.abs(H * dirY);
+    const x0 = cx - (dirX * L) / 2;
+    const y0 = cy - (dirY * L) / 2;
+    const x1 = cx + (dirX * L) / 2;
+    const y1 = cy + (dirY * L) / 2;
+
+    const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+    grad.addColorStop(0.2828, '#B5B5B5');
+    grad.addColorStop(0.5241, '#F5F5F5');
+    grad.addColorStop(0.7414, '#979797');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    return new fabric.Pattern({
+      source: off,
+      repeat: 'no-repeat',
+    });
+  } catch {
+    return null;
+  }
+};
+
 const Canvas = ({ className }) => {
   const canvasRef = useRef(null);
   const shadowHostRef = useRef(null);
@@ -1155,47 +1198,32 @@ const Canvas = ({ className }) => {
 
     // Перегенерація фону-градієнта під поточні розміри canvasa
     // (інакше при збільшенні полотна можуть зʼявлятися білі ділянки, бо Pattern має repeat: 'no-repeat')
-    const rebuildBackgroundGradient = () => {
+    const rebuildBackgroundGradient = (attempt = 0) => {
       try {
         const type = fCanvas.get && fCanvas.get('backgroundType');
         if (type !== 'gradient') return;
 
-        if (fCanvas.__switching || fCanvas.__suspendUndoRedo) return;
+        if (fCanvas.__switching || fCanvas.__suspendUndoRedo) {
+          const retryDelay = Math.min(600, 80 + attempt * 60);
+          clearTimeout(fCanvas.__gradientRebuildRetryTimer);
+          fCanvas.__gradientRebuildRetryTimer = setTimeout(() => {
+            rebuildBackgroundGradient(attempt + 1);
+          }, retryDelay);
+          return;
+        }
 
-        const W = typeof fCanvas.getWidth === 'function' ? fCanvas.getWidth() : fCanvas.width || 0;
-        const H =
-          typeof fCanvas.getHeight === 'function' ? fCanvas.getHeight() : fCanvas.height || 0;
+        const pattern = buildSilverGradientPattern(fCanvas);
+        if (!pattern) {
+          const retryDelay = Math.min(600, 80 + attempt * 60);
+          clearTimeout(fCanvas.__gradientRebuildRetryTimer);
+          fCanvas.__gradientRebuildRetryTimer = setTimeout(() => {
+            rebuildBackgroundGradient(attempt + 1);
+          }, retryDelay);
+          return;
+        }
 
-        const off = document.createElement('canvas');
-        off.width = Math.max(1, W);
-        off.height = Math.max(1, H);
-        const ctx = off.getContext('2d');
-        if (!ctx) return;
-
-        const cssDeg = 152.22;
-        const rad = (cssDeg * Math.PI) / 180;
-        const dirX = Math.sin(rad);
-        const dirY = -Math.cos(rad);
-        const cx = W / 2;
-        const cy = H / 2;
-        const L = Math.abs(W * dirX) + Math.abs(H * dirY);
-        const x0 = cx - (dirX * L) / 2;
-        const y0 = cy - (dirY * L) / 2;
-        const x1 = cx + (dirX * L) / 2;
-        const y1 = cy + (dirY * L) / 2;
-
-        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-        grad.addColorStop(0.2828, '#B5B5B5');
-        grad.addColorStop(0.5241, '#F5F5F5');
-        grad.addColorStop(0.7414, '#979797');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        const pattern = new fabric.Pattern({
-          source: off,
-          repeat: 'no-repeat',
-        });
-
+        clearTimeout(fCanvas.__gradientRebuildRetryTimer);
+        fCanvas.__gradientRebuildRetryTimer = null;
         fCanvas.set('backgroundColor', pattern);
         fCanvas.requestRenderAll && fCanvas.requestRenderAll();
       } catch { }
@@ -3027,6 +3055,8 @@ const Canvas = ({ className }) => {
 
     return () => {
       window.removeEventListener('resize', resizeToViewport);
+      clearTimeout(fCanvas.__gradientRebuildRetryTimer);
+      fCanvas.__gradientRebuildRetryTimer = null;
       try {
         document.removeEventListener('pointerdown', outsideClickHandler, true);
       } catch { }
@@ -3068,6 +3098,7 @@ const Canvas = ({ className }) => {
     }
 
     let disposed = false;
+    let gradientRetryTimer = null;
 
     const refreshActiveObject = () => {
       if (disposed) return;
@@ -3098,41 +3129,34 @@ const Canvas = ({ className }) => {
       refreshActiveObject();
     };
 
-    const applyGradient = () => {
+    const applyGradient = (attempt = 0) => {
+      if (disposed) return;
       try {
-        const W = typeof canvas.getWidth === 'function' ? canvas.getWidth() : canvas.width || 0;
-        const H = typeof canvas.getHeight === 'function' ? canvas.getHeight() : canvas.height || 0;
-        const off = document.createElement('canvas');
-        off.width = Math.max(1, W);
-        off.height = Math.max(1, H);
-        const ctx = off.getContext('2d');
-        const cssDeg = 152.22;
-        const rad = (cssDeg * Math.PI) / 180;
-        const dirX = Math.sin(rad);
-        const dirY = -Math.cos(rad);
-        const cx = W / 2;
-        const cy = H / 2;
-        const L = Math.abs(W * dirX) + Math.abs(H * dirY);
-        const x0 = cx - (dirX * L) / 2;
-        const y0 = cy - (dirY * L) / 2;
-        const x1 = cx + (dirX * L) / 2;
-        const y1 = cy + (dirY * L) / 2;
-        const grad = ctx.createLinearGradient(x0, y0, x1, y1);
-        grad.addColorStop(0.2828, '#B5B5B5');
-        grad.addColorStop(0.5241, '#F5F5F5');
-        grad.addColorStop(0.7414, '#979797');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-        const pattern = new fabric.Pattern({
-          source: off,
-          repeat: 'no-repeat',
-        });
+        if (canvas.__switching || canvas.__suspendUndoRedo) {
+          const retryDelay = Math.min(600, 80 + attempt * 60);
+          clearTimeout(gradientRetryTimer);
+          gradientRetryTimer = setTimeout(() => applyGradient(attempt + 1), retryDelay);
+          return;
+        }
+
+        const pattern = buildSilverGradientPattern(canvas);
+        if (!pattern) {
+          const retryDelay = Math.min(600, 80 + attempt * 60);
+          clearTimeout(gradientRetryTimer);
+          gradientRetryTimer = setTimeout(() => applyGradient(attempt + 1), retryDelay);
+          return;
+        }
+
+        clearTimeout(gradientRetryTimer);
+        gradientRetryTimer = null;
         canvas.set('backgroundColor', pattern);
         canvas.set('backgroundType', 'gradient');
         canvas.set('backgroundTextureUrl', null);
         refreshActiveObject();
       } catch {
-        applySolid(globalColors?.backgroundColor);
+        const retryDelay = Math.min(600, 80 + attempt * 60);
+        clearTimeout(gradientRetryTimer);
+        gradientRetryTimer = setTimeout(() => applyGradient(attempt + 1), retryDelay);
       }
     };
 
@@ -3260,6 +3284,8 @@ const Canvas = ({ className }) => {
 
     return () => {
       disposed = true;
+      clearTimeout(gradientRetryTimer);
+      gradientRetryTimer = null;
     };
   }, [canvas, globalColors?.backgroundColor, globalColors?.backgroundType]);
 

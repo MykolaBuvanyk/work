@@ -118,6 +118,7 @@ const TopToolbar = ({ className, formData }) => {
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
   const [projectSignsCount, setProjectSignsCount] = useState(0);
   const [hasActiveProject, setHasActiveProject] = useState(false);
+  const [unsavedSignsCount, setUnsavedSignsCount] = useState(0);
 
   // Toolbar <-> Modal shared state
   const [accessories, setAccessories] = useState(() =>
@@ -186,6 +187,9 @@ const TopToolbar = ({ className, formData }) => {
 
   const isProjectLimitReached =
     hasActiveProject && projectSignsCount >= MAX_SIGNS_PER_PROJECT;
+  const isUnsavedLimitReached =
+    !hasActiveProject && unsavedSignsCount >= MAX_SIGNS_PER_PROJECT;
+  const isCreateNewSignDisabled = isProjectLimitReached || isUnsavedLimitReached;
 
   useEffect(() => {
     let isMounted = true;
@@ -221,12 +225,25 @@ const TopToolbar = ({ className, formData }) => {
       }
     };
 
+    const syncUnsavedSignsCount = async () => {
+      try {
+        const unsavedSigns = await getAllUnsavedSigns();
+        if (!isMounted) return;
+        setUnsavedSignsCount(Array.isArray(unsavedSigns) ? unsavedSigns.length : 0);
+      } catch {
+        if (!isMounted) return;
+        setUnsavedSignsCount(0);
+      }
+    };
+
     syncProjectSignsCount();
+    syncUnsavedSignsCount();
 
     window.addEventListener("project:canvasesUpdated", syncProjectSignsCount);
     window.addEventListener("project:switched", syncProjectSignsCount);
     window.addEventListener("project:reset", syncProjectSignsCount);
     window.addEventListener("project:opened", syncProjectSignsCount);
+    window.addEventListener("unsaved:signsUpdated", syncUnsavedSignsCount);
 
     return () => {
       isMounted = false;
@@ -234,6 +251,7 @@ const TopToolbar = ({ className, formData }) => {
       window.removeEventListener("project:switched", syncProjectSignsCount);
       window.removeEventListener("project:reset", syncProjectSignsCount);
       window.removeEventListener("project:opened", syncProjectSignsCount);
+      window.removeEventListener("unsaved:signsUpdated", syncUnsavedSignsCount);
     };
   }, []);
 
@@ -253,6 +271,16 @@ const TopToolbar = ({ className, formData }) => {
           : 0;
 
         if (currentProjectCanvasesCount >= MAX_SIGNS_PER_PROJECT) {
+          alert(MAX_SIGNS_REACHED_MESSAGE);
+          return;
+        }
+      } else {
+        const unsavedSigns = await getAllUnsavedSigns().catch(() => []);
+        const currentUnsavedSignsCount = Array.isArray(unsavedSigns)
+          ? unsavedSigns.length
+          : unsavedSignsCount;
+
+        if (currentUnsavedSignsCount >= MAX_SIGNS_PER_PROJECT) {
           alert(MAX_SIGNS_REACHED_MESSAGE);
           return;
         }
@@ -823,10 +851,10 @@ const TopToolbar = ({ className, formData }) => {
       <div className={styles.firstPart}>
         <ul className={styles.toolbarList}>
           <li
-            className={`${styles.toolbarItem} ${isProjectLimitReached ? styles.toolbarItemDisabled : ""}`}
-            onClick={handleNewSign}
+            className={`${styles.toolbarItem} ${isCreateNewSignDisabled ? styles.toolbarItemDisabled : ""}`}
+            onClick={isCreateNewSignDisabled ? undefined : handleNewSign}
             title={
-              isProjectLimitReached
+              isCreateNewSignDisabled
                 ? "Maximum number of signs reached (30). Create a new project."
                 : "Create new canvas (sign)"
             }

@@ -567,6 +567,19 @@ export async function addCanvasesFromProjectsToUnsavedSigns(
 }
 
 export async function addBlankUnsavedSign(width = 0, height = 0) {
+  const existingUnsavedSigns = await getAllUnsavedSigns();
+  const currentUnsavedCount = Array.isArray(existingUnsavedSigns)
+    ? existingUnsavedSigns.length
+    : 0;
+
+  if (currentUnsavedCount >= MAX_CANVASES_PER_PROJECT) {
+    const error = new Error(
+      `Maximum unsaved signs limit reached (${MAX_CANVASES_PER_PROJECT})`
+    );
+    error.code = "MAX_UNSAVED_SIGNS_LIMIT_REACHED";
+    throw error;
+  }
+
   const entry = {
     id: uuid(),
     json: { objects: [], version: "fabric" },

@@ -1747,6 +1747,16 @@ const ProjectCanvasesGrid = () => {
         return;
       }
 
+      const latestUnsavedSigns = await getAllUnsavedSigns().catch(() => []);
+      const latestUnsavedSignsCount = Array.isArray(latestUnsavedSigns)
+        ? latestUnsavedSigns.length
+        : sortedUnsavedSigns.length;
+
+      if (latestUnsavedSignsCount >= MAX_SIGNS_PER_PROJECT) {
+        alert(MAX_SIGNS_REACHED_MESSAGE);
+        return;
+      }
+
       const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
       // IMPORTANT: mark this sign as the active unsaved canvas immediately.
@@ -1790,6 +1800,8 @@ const ProjectCanvasesGrid = () => {
   if (!project) return null;
 
   const isProjectLimitReached = Boolean(project?.id) && storedCanvases.length >= MAX_SIGNS_PER_PROJECT;
+  const isUnsavedLimitReached = !project?.id && sortedUnsavedSigns.length >= MAX_SIGNS_PER_PROJECT;
+  const isCreateNewSignDisabled = isProjectLimitReached || isUnsavedLimitReached;
 
   return (
     <>
@@ -1898,15 +1910,15 @@ const ProjectCanvasesGrid = () => {
             {/* Кнопка створення нового полотна */}
             <div
               className={styles.newSignButton}
-              onClick={handleNewSign}
+              onClick={isCreateNewSignDisabled ? undefined : handleNewSign}
               title={
-                isProjectLimitReached
+                isCreateNewSignDisabled
                   ? 'Maximum number of signs reached (30). Create a new project.'
                   : 'Create new canvas (sign)'
               }
               style={{
-                opacity: isProjectLimitReached ? 0.7 : 1,
-                cursor: isProjectLimitReached ? 'not-allowed' : 'pointer',
+                opacity: isCreateNewSignDisabled ? 0.7 : 1,
+                cursor: isCreateNewSignDisabled ? 'not-allowed' : 'pointer',
               }}
             >
               <div className={styles.newSignButtonContent}>

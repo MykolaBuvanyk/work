@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { fetchSharedProjectByToken, markSharedProjectCopied } from '../../http/share';
 import { getProject, putProject, uuid } from '../../utils/projectStorage';
 
-const MAX_CANVASES = 10;
+const MAX_CANVASES = 30;
 
 const deepClone = (value) => {
   try {

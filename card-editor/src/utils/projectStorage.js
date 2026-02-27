@@ -32,6 +32,8 @@ const DEFAULT_SIGN_SIZE_MM = {
   height: 80,
 };
 
+const MAX_CANVASES_PER_PROJECT = 30;
+
 const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_EXPORT_FILL = "none";
 
@@ -354,11 +356,12 @@ export async function generateCanvasPreviews(canvas, options = {}) {
 
   let previewSvg = "";
   let previewPng = "";
+  const svgBleed = 1.5; // Відступ для уникнення обрізання країв у SVG
 
   const pngMultiplier =
     typeof options.pngMultiplier === "number" && isFinite(options.pngMultiplier)
       ? options.pngMultiplier
-      : 0.5;
+      :4;
 
   const maxPngDimension =
     typeof options.maxPngDimension === "number" &&
@@ -377,10 +380,10 @@ export async function generateCanvasPreviews(canvas, options = {}) {
     if (canvas.toSVG) {
       const rawSvg = canvas.toSVG({
         viewBox: {
-          x: 0,
-          y: 0,
-          width,
-          height,
+          x: -svgBleed,
+          y: -svgBleed,
+          width: width + svgBleed * 2,
+          height: height + svgBleed * 2,
         },
         width,
         height,
@@ -1941,7 +1944,7 @@ export async function saveNewProject(name, canvas) {
     try {
       const sourceProject = await getProject(sourceProjectId);
       const sourceCanvases = Array.isArray(sourceProject?.canvases)
-        ? sourceProject.canvases.slice(0, 10)
+        ? sourceProject.canvases.slice(0, MAX_CANVASES_PER_PROJECT)
         : [];
 
       if (sourceCanvases.length > 0) {
@@ -1966,7 +1969,7 @@ export async function saveNewProject(name, canvas) {
         if (snap) {
           if (targetIndex !== -1) {
             canvases[targetIndex] = { ...canvases[targetIndex], ...snap };
-          } else if (canvases.length < 10) {
+          } else if (canvases.length < MAX_CANVASES_PER_PROJECT) {
             canvases.push({ id: uuid(), ...snap });
             targetIndex = canvases.length - 1;
           }
@@ -1993,7 +1996,7 @@ export async function saveNewProject(name, canvas) {
     } catch {}
 
     for (const s of allUnsaved) {
-      if (canvases.length >= 10) break;
+      if (canvases.length >= MAX_CANVASES_PER_PROJECT) break;
       const isCurrent = Boolean(currentUnsavedId && s.id === currentUnsavedId);
       canvases.push({
         id: uuid(),
@@ -2150,7 +2153,9 @@ export async function saveCurrentProject(canvas) {
   const snap = await exportCanvas(canvas, toolbarState);
   const now = Date.now();
   const canvases = Array.isArray(existing.canvases)
-    ? existing.canvases.slice(0, 10).map((canvasEntry) => ({ ...canvasEntry }))
+    ? existing.canvases
+        .slice(0, MAX_CANVASES_PER_PROJECT)
+        .map((canvasEntry) => ({ ...canvasEntry }))
     : [];
 
   if (snap) {
@@ -2362,7 +2367,7 @@ function broadcastProjectUpdate(projectId) {
   } catch {}
 }
 
-// Transfer all unsaved signs into the specified project (append, max 10 total). Clears unsaved store.
+// Transfer all unsaved signs into the specified project (append, max 30 total). Clears unsaved store.
 // excludeId - ID незбереженого знаку, який не потрібно додавати (щоб уникнути дублювання поточного полотна)
 export async function transferUnsavedSignsToProject(
   projectId,
@@ -2398,7 +2403,7 @@ export async function transferUnsavedSignsToProject(
   const transferredIds = [];
   for (const s of unsaved) {
     if (excludeSet.has(s.id)) continue; // Пропускаємо виключені знаки
-    if (existing.length >= 10) break; // respect limit
+    if (existing.length >= MAX_CANVASES_PER_PROJECT) break; // respect limit
     const newCanvasId = uuid();
     existing.push({
       id: newCanvasId,
@@ -2437,7 +2442,7 @@ export async function transferUnsavedSignsToProject(
   return project;
 }
 
-// Transfer selected unsaved signs into the specified project (append, max 10 total).
+// Transfer selected unsaved signs into the specified project (append, max 30 total).
 // Unlike transferUnsavedSignsToProject, this ONLY migrates the provided ids.
 export async function transferUnsavedSignsToProjectByIds(
   projectId,
@@ -2464,7 +2469,7 @@ export async function transferUnsavedSignsToProjectByIds(
 
   const transferredIds = [];
   for (const s of toTransfer) {
-    if (existing.length >= 10) break;
+    if (existing.length >= MAX_CANVASES_PER_PROJECT) break;
     const newCanvasId = uuid();
     existing.push({
       id: newCanvasId,
@@ -2566,7 +2571,7 @@ export async function updateCanvasInCurrentProject(canvasId, canvas) {
   }
 }
 
-// Append a new (blank or current state) canvas snapshot to current project (max 10)
+// Append a new (blank or current state) canvas snapshot to current project (max 30)
 export async function addCanvasSnapshotToCurrentProject(
   snapshot,
   { setAsCurrent = true } = {}
@@ -2609,7 +2614,7 @@ export async function addCanvasSnapshotToCurrentProject(
   const project = await getProject(currentId);
   if (!project) return null;
   project.canvases = Array.isArray(project.canvases) ? project.canvases : [];
-  if (project.canvases.length >= 10) {
+  if (project.canvases.length >= MAX_CANVASES_PER_PROJECT) {
     return project; // max reached; silently ignore
   }
   const canvasEntry = { id: uuid(), ...snapshot };
@@ -2681,7 +2686,7 @@ export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
     : [];
 
   let addedCount = 0;
-  const MAX_CANVASES = 10;
+  const MAX_CANVASES = MAX_CANVASES_PER_PROJECT;
 
   // Iterate through selected projects
   for (const projectId of projectIds) {

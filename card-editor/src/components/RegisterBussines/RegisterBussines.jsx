@@ -31,7 +31,7 @@ const RegisterBussines = () => {
     phone: '',vatNumber:'', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false,firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
-    country2: '', state2: '', type: 'Consumer', company2:'',address4:'',
+    country2: '', state2: '', type: 'Business', company2:'',address4:'',
     address5:'',address6:'', city:'',eMailInvoice:'',tellAbout:''
   });
 

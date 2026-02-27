@@ -15,6 +15,54 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
 
+  const buildSafePreviewSvgDataUrl = (svgMarkup) => {
+    if (!svgMarkup || typeof svgMarkup !== "string") return "";
+    try {
+      let next = svgMarkup;
+      const viewBoxMatch = next.match(/viewBox\s*=\s*['\"]([^'\"]+)['\"]/i);
+      if (viewBoxMatch && viewBoxMatch[1]) {
+        const nums = viewBoxMatch[1]
+          .trim()
+          .split(/[\s,]+/)
+          .map((n) => Number(n));
+        if (nums.length === 4 && nums.every((n) => Number.isFinite(n))) {
+          const bleed = 1.5; // Відступ для уникнення обрізання
+          const [x, y, w, h] = nums;
+          const patched = `${x - bleed} ${y - bleed} ${w + bleed * 2} ${h + bleed * 2}`;
+          next = next.replace(viewBoxMatch[0], `viewBox=\"${patched}\"`);
+        }
+      }
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(next)}`;
+    } catch {
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+    }
+  };
+
+  const resolveCanvasPreview = (canvasEntry) => {
+    const hasSvg =
+      canvasEntry?.previewSvg &&
+      typeof canvasEntry.previewSvg === "string" &&
+      canvasEntry.previewSvg.trim().length > 0;
+    const fallbackPng =
+      canvasEntry?.preview &&
+      typeof canvasEntry.preview === "string" &&
+      canvasEntry.preview.trim().length > 0
+        ? canvasEntry.preview
+        : "";
+
+    if (hasSvg) {
+      return {
+        src: buildSafePreviewSvgDataUrl(canvasEntry.previewSvg),
+        fallback: fallbackPng,
+      };
+    }
+
+    return {
+      src: fallbackPng,
+      fallback: "",
+    };
+  };
+
   // Функція для завантаження проектів
   const loadProjects = () => {
     getAllProjects().then((list) => {
@@ -29,7 +77,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
         id: p.id,
         name: p.name,
         date: formatDate(p.updatedAt || p.createdAt),
-        images: (p.canvases || []).map((c) => c.preview).filter(Boolean),
+        images: (p.canvases || []).map(resolveCanvasPreview).filter((entry) => !!entry?.src),
         updatedAt: p.updatedAt || p.createdAt, // Зберігаємо для сортування
       }));
       setProjects(mapped);
@@ -235,10 +283,15 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                         {getVisibleImages(project).map((image, imgIndex) => (
                           <div key={imgIndex} className={styles.imageItem}>
                             <img
-                              src={image}
+                              src={image.src}
                               alt={`Project ${project.name} image ${
                                 imgIndex + 1
                               }`}
+                              onError={(e) => {
+                                if (image.fallback && e.currentTarget.src !== image.fallback) {
+                                  e.currentTarget.src = image.fallback;
+                                }
+                              }}
                             />
                           </div>
                         ))}

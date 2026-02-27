@@ -49,6 +49,7 @@ const authSlice = createSlice({
           ...(payload.surname !== undefined ? { surname: payload.surname } : {}),
           ...(payload.email !== undefined ? { email: payload.email } : {}),
           ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
+          ...(payload.type !== undefined ? { type: payload.type } : {}),
           ...(payload.company !== undefined ? { company: payload.company } : {}),
         };
       } catch (e) {

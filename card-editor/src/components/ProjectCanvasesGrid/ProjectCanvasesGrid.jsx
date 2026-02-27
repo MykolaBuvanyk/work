@@ -24,6 +24,9 @@ import LayoutPlannerModal from './LayoutPlannerModal/LayoutPlannerModal';
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
+const MAX_SIGNS_PER_PROJECT = 30;
+const MAX_SIGNS_REACHED_MESSAGE =
+  'Maximum number of signs in this project has been reached (30). Please create a new project.';
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
 const COLOR_THEME_PRESETS = [
   { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
@@ -1664,6 +1667,16 @@ const ProjectCanvasesGrid = () => {
 
       // If user edits a saved project, create a NEW canvas inside that project (not unsaved).
       if (currentProjectId) {
+        const latestProject = await getProject(currentProjectId).catch(() => null);
+        const latestProjectCanvasesCount = Array.isArray(latestProject?.canvases)
+          ? latestProject.canvases.length
+          : storedCanvases.length;
+
+        if (latestProjectCanvasesCount >= MAX_SIGNS_PER_PROJECT) {
+          alert(MAX_SIGNS_REACHED_MESSAGE);
+          return;
+        }
+
         const currentToolbarState =
           typeof window !== 'undefined' && typeof window.getCurrentToolbarState === 'function'
             ? window.getCurrentToolbarState() || {}
@@ -1776,6 +1789,8 @@ const ProjectCanvasesGrid = () => {
 
   if (!project) return null;
 
+  const isProjectLimitReached = Boolean(project?.id) && storedCanvases.length >= MAX_SIGNS_PER_PROJECT;
+
   return (
     <>
       <div className={styles.wrapper}>
@@ -1884,7 +1899,15 @@ const ProjectCanvasesGrid = () => {
             <div
               className={styles.newSignButton}
               onClick={handleNewSign}
-              title="Create new canvas (sign)"
+              title={
+                isProjectLimitReached
+                  ? 'Maximum number of signs reached (30). Create a new project.'
+                  : 'Create new canvas (sign)'
+              }
+              style={{
+                opacity: isProjectLimitReached ? 0.7 : 1,
+                cursor: isProjectLimitReached ? 'not-allowed' : 'pointer',
+              }}
             >
               <div className={styles.newSignButtonContent}>
                 <svg

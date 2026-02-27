@@ -27,6 +27,10 @@ const CartOrderDetails = ({ order, isLoading }) => {
       .join("; ");
   }, [order]);
 
+  const deliveryComment = useMemo(() => {
+    return String(order?.checkout?.deliveryComment || "").trim();
+  }, [order]);
+
   const canvasesLines = useMemo(() => {
     const canvases = order?.project?.canvases;
     if (!Array.isArray(canvases) || canvases.length === 0) return [];
@@ -227,6 +231,12 @@ const CartOrderDetails = ({ order, isLoading }) => {
           <div />
         </div>
       ) : null}
+
+      <div className="row">
+        <p>Delivery comment:</p>
+        <span>{deliveryComment || "---"}</span>
+        <div />
+      </div>
 
       {canvasesLines.length ? (
         <div className="row">

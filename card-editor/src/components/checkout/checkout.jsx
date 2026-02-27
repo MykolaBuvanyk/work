@@ -85,7 +85,6 @@ const hasInvoiceProfileData = user => {
 		'postcode2',
 		'eMailInvoice',
 		'phone2',
-		'country2',
 	]
 
 	return invoiceKeys.some(key => String(user[key] || '').trim() !== '')
@@ -202,6 +201,7 @@ export default function Checkout({
 	const [isPhoneOk, setIsPhoneOk] = useState(false)
 	const [isInvoiceDifferent, setIsInvoiceDifferent] = useState(false)
 	const [invoiceEmail, setInvoiceEmail] = useState('')
+	const [deliveryComment, setDeliveryComment] = useState('')
 	const [productionComment, setProductionComment] = useState('')
 	const { designs } = useCanvasContext()
 	const userType = useSelector(state => state?.user?.user?.type)
@@ -252,7 +252,7 @@ export default function Checkout({
 			}))
 
 			setInvoiceEmail(String(user.weWill || ''))
-			setIsInvoiceDifferent(prev => prev || hasInvoiceProfileData(user))
+			setIsInvoiceDifferent(hasInvoiceProfileData(user))
 		}
 
 		const loadProfile = async () => {
@@ -429,6 +429,7 @@ export default function Checkout({
 				deliveryAddress,
 				invoiceAddress: isInvoiceDifferent ? invoiceAddress : null,
 				invoiceEmail: String(invoiceEmail || ''),
+				deliveryComment: String(deliveryComment || '').trim(),
 			})
 		}
 	}
@@ -1043,6 +1044,8 @@ export default function Checkout({
 												name='deliveryComment'
 												type='text'
 												className='delivery-comment__input'
+												value={deliveryComment}
+												onChange={e => setDeliveryComment(e.target.value)}
 											/>
 
 											<div className='delivery-comment__hint'>

@@ -137,7 +137,7 @@ const ShapeProperties = ({
   const isNormalizingRoundTopRef = useRef(false);
   // Debounce timers for user-typed inputs (property -> timer id)
   const pendingInputTimersRef = useRef({});
-  const DEBOUNCE_INPUT_MS = 1500; // 1.5s
+  const DEBOUNCE_INPUT_MS = 750; // 0.75s
   // Запам'ятовуємо попередню товщину перед увімкненням Cut, щоб відновити її після вимкнення Cut
   const [prevThicknessBeforeCut, setPrevThicknessBeforeCut] = useState(null);
 
@@ -1733,7 +1733,7 @@ const ShapeProperties = ({
   };
 
   // Flush pending debounce for a property (call immediately)
-  const flushPendingProperty = (property) => {
+  const flushPendingProperty = (property, forcedValue) => {
     if (!pendingInputTimersRef.current) return;
     const t = pendingInputTimersRef.current[property];
     if (t) {
@@ -1743,9 +1743,30 @@ const ShapeProperties = ({
       delete pendingInputTimersRef.current[property];
       // Use the current staged value from state
       try {
-        updateProperty(property, properties[property]);
+        const nextValue = forcedValue !== undefined ? forcedValue : properties[property];
+        updateProperty(property, nextValue);
       } catch {}
     }
+  };
+
+  const parseInputNumber = (raw, { allowNegative = false, integer = false } = {}) => {
+    const normalized = String(raw ?? "").trim().replace(",", ".");
+    if (normalized === "") return null;
+    const parsed = parseFloat(normalized);
+    if (!Number.isFinite(parsed)) return null;
+    let value = parsed;
+    if (!allowNegative) value = Math.max(0, value);
+    if (integer) value = Math.trunc(value);
+    return value;
+  };
+
+  const commitInputNow = (property, rawValue, parserOptions = {}) => {
+    const parsed = parseInputNumber(rawValue, parserOptions);
+    if (parsed == null) {
+      flushPendingProperty(property);
+      return;
+    }
+    flushPendingProperty(property, parsed);
   };
 
   const incrementValue = (property, increment = 1) => {
@@ -1939,20 +1960,27 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
+                    setProperties((prev) => ({ ...prev, width: values.floatValue }));
                     scheduleUpdateProperty("width", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => {
+                onBlur={(e) => {
                   setProperties((prev) => {
                     if (prev.width === "") {
                       return { ...prev, width: getFreshPropertyValue("width") };
                     }
                     return prev;
                   });
-                  // Flush any pending debounced update and exit manual edit mode
-                  flushPendingProperty("width");
+                  commitInputNow("width", e?.target?.value, { allowNegative: false, integer: false });
                   setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitInputNow("width", e?.currentTarget?.value, { allowNegative: false, integer: false });
+                    e.currentTarget.blur();
+                  }
                 }}
               />
               <div className={styles.arrows}>
@@ -1986,11 +2014,13 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
-                    scheduleUpdateProperty("rotation", Math.trunc(values.floatValue));
+                    const normalizedRotation = Math.trunc(values.floatValue);
+                    setProperties((prev) => ({ ...prev, rotation: normalizedRotation }));
+                    scheduleUpdateProperty("rotation", normalizedRotation);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => {
+                onBlur={(e) => {
                   setProperties((prev) => {
                     if (prev.rotation === "") {
                       return {
@@ -2000,8 +2030,15 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
-                  flushPendingProperty("rotation");
+                  commitInputNow("rotation", e?.target?.value, { allowNegative: true, integer: true });
                   setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitInputNow("rotation", e?.currentTarget?.value, { allowNegative: true, integer: true });
+                    e.currentTarget.blur();
+                  }
                 }}
               />
               <div className={styles.arrows}>
@@ -2036,11 +2073,12 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
+                    setProperties((prev) => ({ ...prev, height: values.floatValue }));
                     scheduleUpdateProperty("height", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
-                onBlur={() => {
+                onBlur={(e) => {
                   setProperties((prev) => {
                     if (prev.height === "") {
                       return {
@@ -2050,8 +2088,15 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
-                  flushPendingProperty("height");
+                  commitInputNow("height", e?.target?.value, { allowNegative: false, integer: false });
                   setTimeout(() => setIsManuallyEditing(false), 100);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitInputNow("height", e?.currentTarget?.value, { allowNegative: false, integer: false });
+                    e.currentTarget.blur();
+                  }
                 }}
               />
               <div className={styles.arrows}>
@@ -2100,16 +2145,18 @@ const ShapeProperties = ({
                     return;
                   }
                   if (typeof values.floatValue === "number") {
+                    const normalizedRadius = Math.max(0, Math.trunc(values.floatValue));
+                    setProperties((prev) => ({ ...prev, cornerRadius: normalizedRadius }));
                     scheduleUpdateProperty(
                       "cornerRadius",
-                      Math.max(0, Math.trunc(values.floatValue))
+                      normalizedRadius
                     );
                   }
                 }}
                 onFocus={() =>
                   !isCircle && supportsCornerRadius && setIsManuallyEditing(true)
                 }
-                onBlur={() => {
+                onBlur={(e) => {
                   if (!isCircle && supportsCornerRadius) {
                     setProperties((prev) => {
                       if (prev.cornerRadius === "") {
@@ -2120,8 +2167,15 @@ const ShapeProperties = ({
                       }
                       return prev;
                     });
-                    flushPendingProperty("cornerRadius");
+                    commitInputNow("cornerRadius", e?.target?.value, { allowNegative: false, integer: true });
                     setTimeout(() => setIsManuallyEditing(false), 100);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isCircle && supportsCornerRadius) {
+                    e.preventDefault();
+                    commitInputNow("cornerRadius", e?.currentTarget?.value, { allowNegative: false, integer: true });
+                    e.currentTarget.blur();
                   }
                 }}
               />
@@ -2270,7 +2324,7 @@ const ShapeProperties = ({
                       setIsEditingThickness(true);
                       setIsManuallyEditing(true);
                     }}
-                    onBlur={() => {
+                    onBlur={(e) => {
                       setIsEditingThickness(false);
                       // Гарантуємо, що поле ніколи не залишиться пустим,
                       // і синхронізуємо width/height після зміни strokeWidth.
@@ -2283,8 +2337,15 @@ const ShapeProperties = ({
                         width: freshWidth,
                         height: freshHeight,
                       }));
-                      flushPendingProperty("thickness");
+                      commitInputNow("thickness", e?.target?.value, { allowNegative: false, integer: false });
                       setTimeout(() => setIsManuallyEditing(false), 100);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitInputNow("thickness", e?.currentTarget?.value, { allowNegative: false, integer: false });
+                        e.currentTarget.blur();
+                      }
                     }}
                   />
                   <div

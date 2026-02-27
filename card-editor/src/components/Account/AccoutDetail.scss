@@ -76,12 +76,6 @@
     }
   }
 
-  .action-right {
-    display: flex;
-    justify-content: flex-end;
-    margin: 15px 0;
-  }
-
   .password-section {
     margin-top: 30px;
     h3 { 
@@ -93,7 +87,10 @@
 
     .password-flex-row {
       display: flex;
-      gap: 30px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 500px;
 
       .pass-table { width: 500px; }
 
@@ -123,7 +120,7 @@
   }
 
   .invoice-email-block {
-    margin-top: 40px;
+    margin-top: 30px;
     p { font-size: 15px; margin-bottom: 10px; }
     
     .invoice-input-row {
@@ -138,6 +135,12 @@
         border-radius: 4px;
         background-color: #ffffff;
       }
+    }
+
+    .save-changes-row {
+      margin-top: 15px;
+      display: flex;
+      justify-content: flex-end;
     }
   }
 

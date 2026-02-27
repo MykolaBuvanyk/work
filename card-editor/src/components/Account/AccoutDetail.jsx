@@ -157,16 +157,15 @@ const AccoutDetail = () => {
                 setValue={handleInput(setAddress)('weWill')}
               />
             </div>
+            <div className="save-changes-row">
+              <button className="btn-blue-rect" onClick={handleSave}>Save Changes</button>
+            </div>
           </div>
         </div>
         <div className="grid-col">
           <h3>Invoice address (if different from the left)</h3>
           {renderTable(invoiceFields, invoice, setInvoice)}
         </div>
-      </div>
-
-      <div className="action-right">
-        <button className="btn-blue-rect" onClick={handleSave}>Save Changes</button>
       </div>
       <ChangePassword/>
     </div>

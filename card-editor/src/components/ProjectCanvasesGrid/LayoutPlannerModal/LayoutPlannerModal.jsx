@@ -823,9 +823,8 @@ const getMaterialKey = (item) => {
   // Primary: canvas/background color + material thickness
   // Fallbacks remain for older data so export doesn't regress.
   const colorRaw =
+    normalizeSlashLabel(item?.materialColor) ??
     item?.materialColor ??
-    item?.customBorder?.exportStrokeColor ??
-    item?.customBorder?.displayStrokeColor ??
     item?.themeStrokeColor ??
     null;
   const thicknessMm =
@@ -835,7 +834,7 @@ const getMaterialKey = (item) => {
         ? item?.customBorder?.thicknessPx / PX_PER_MM
         : null
     );
-  const color = normalizeHexColor(colorRaw) || "unknown";
+  const color = normalizeSlashLabel(colorRaw) || normalizeHexColor(colorRaw) || "unknown";
   const thickness = thicknessMm !== null ? String(thicknessMm) : "unknown";
 
   const tapeRaw =

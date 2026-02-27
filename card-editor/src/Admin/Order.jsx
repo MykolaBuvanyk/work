@@ -76,6 +76,9 @@ const resolveDeliveryType = (order) =>
 const resolveInvoiceEmails = (order) =>
   String(order?.orderMongo?.checkout?.invoiceEmail || order?.user?.weWill || '').trim();
 
+const resolveDeliveryComment = (order) =>
+  String(order?.orderMongo?.checkout?.deliveryComment || '').trim();
+
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
   const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
@@ -149,6 +152,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [pdfSortOrder, setPdfSortOrder] = useState('high-first');
 
   const invoiceEmails = useMemo(() => resolveInvoiceEmails(order), [order]);
+  const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
   const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
 
   const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
@@ -1317,6 +1321,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Instruction:</p>
         <span>{order?.user?.additional || '---'}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Delivery comment:</p>
+        <span>{deliveryComment || '---'}</span>
         <div />
       </div>
       <div className="row">

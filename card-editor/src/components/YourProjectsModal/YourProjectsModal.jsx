@@ -729,7 +729,15 @@ const YourProjectsModal = ({ onClose }) => {
                     />
                   </td>
                   <td>{startIndex + index + 1}</td>
-                  <td className={styles.projectNameCell}>{project.name}</td>
+                  <td className={styles.projectNameCell}>
+                    <button
+                      type="button"
+                      className={styles.projectLink}
+                      onClick={() => handleEdit(project.id)}
+                    >
+                      {project.name}
+                    </button>
+                  </td>
                   <td className={styles.dateCell}>
                     <span>{savedAt.date}</span>
                     {savedAt.time ? <span>{savedAt.time}</span> : null}

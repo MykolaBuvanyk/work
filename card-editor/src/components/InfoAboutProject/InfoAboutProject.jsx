@@ -265,6 +265,7 @@ const InfoAboutProject = () => {
           deliveryAddress: checkoutTotals?.deliveryAddress || null,
           invoiceAddress: checkoutTotals?.invoiceAddress || null,
           invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),
+          deliveryComment: String(checkoutTotals?.deliveryComment || ""),
         },
         manufacturerNote:
           typeof window.getManufacturerNote === "function"

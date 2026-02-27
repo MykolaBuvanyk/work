@@ -78,7 +78,7 @@ const CUT_STROKE_COLOR = '#FD7714';
 const HOLE_FILL_COLOR = '#FFFFFF';
 const HOLE_ID_PREFIX = 'hole';
 const DEFAULT_RECT_CANVAS_CORNER_RADIUS_MM = 2;
-const SIZE_INPUT_DEBOUNCE_MS = 1000;
+const SIZE_INPUT_DEBOUNCE_MS = 500;
 const COLOR_THEME_PRESETS = [
   { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
   { index: 1, textColor: '#0000FF', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
@@ -9330,6 +9330,55 @@ const Toolbar = ({ formData }) => {
     };
   }, []);
 
+  const applyPendingSizeChanges = useCallback(
+    (max = 1200, preferredKey = null) => {
+      const dirty = sizeInputDirtyRef.current;
+      const inputs = latestSizeInputValuesRef.current;
+      const shape = latestShapeTypeRef.current;
+      const lastKey = lastEditedSizeKeyRef.current;
+
+      const isCircleFamily =
+        shape === 'circle' || shape === 'circleWithLine' || shape === 'circleWithCross';
+
+      if (isCircleFamily) {
+        if (dirty.width || dirty.height) {
+          dirty.width = false;
+          dirty.height = false;
+          const keyToApply =
+            preferredKey === 'height' || preferredKey === 'width'
+              ? preferredKey
+              : lastKey === 'height'
+                ? 'height'
+                : 'width';
+          handleInputChange(
+            keyToApply,
+            max,
+            keyToApply === 'width' ? inputs.width : inputs.height
+          );
+        }
+        return;
+      }
+
+      const applyKey = key => {
+        if (!dirty[key]) return;
+        dirty[key] = false;
+        handleInputChange(key, max, key === 'width' ? inputs.width : inputs.height);
+      };
+
+      const orderedKeys =
+        preferredKey === 'height'
+          ? ['height', 'width']
+          : preferredKey === 'width'
+            ? ['width', 'height']
+            : lastKey === 'height'
+              ? ['height', 'width']
+              : ['width', 'height'];
+
+      orderedKeys.forEach(applyKey);
+    },
+    [handleInputChange]
+  );
+
   const scheduleDebouncedSizeApply = useCallback(
     (max = 1200) => {
       if (sizeInputTimerRef.current) {
@@ -9338,46 +9387,21 @@ const Toolbar = ({ formData }) => {
 
       sizeInputTimerRef.current = setTimeout(() => {
         sizeInputTimerRef.current = null;
-
-        const dirty = sizeInputDirtyRef.current;
-        const inputs = latestSizeInputValuesRef.current;
-        const shape = latestShapeTypeRef.current;
-        const lastKey = lastEditedSizeKeyRef.current;
-
-        const isCircleFamily =
-          shape === 'circle' || shape === 'circleWithLine' || shape === 'circleWithCross';
-
-        if (isCircleFamily) {
-          if (dirty.width || dirty.height) {
-            dirty.width = false;
-            dirty.height = false;
-            const keyToApply = lastKey === 'height' ? 'height' : 'width';
-            handleInputChange(
-              keyToApply,
-              max,
-              keyToApply === 'width' ? inputs.width : inputs.height
-            );
-          }
-          return;
-        }
-
-        // For non-circle shapes, apply both changed values (last edited first).
-        const applyKey = key => {
-          if (!dirty[key]) return;
-          dirty[key] = false;
-          handleInputChange(key, max, key === 'width' ? inputs.width : inputs.height);
-        };
-
-        if (lastKey === 'height') {
-          applyKey('height');
-          applyKey('width');
-        } else {
-          applyKey('width');
-          applyKey('height');
-        }
+        applyPendingSizeChanges(max);
       }, SIZE_INPUT_DEBOUNCE_MS);
     },
-    [handleInputChange]
+    [applyPendingSizeChanges]
+  );
+
+  const flushSizeApplyImmediately = useCallback(
+    preferredKey => {
+      if (sizeInputTimerRef.current) {
+        clearTimeout(sizeInputTimerRef.current);
+        sizeInputTimerRef.current = null;
+      }
+      applyPendingSizeChanges(1200, preferredKey);
+    },
+    [applyPendingSizeChanges]
   );
 
   const bumpDebouncedSizeValue = useCallback(
@@ -9546,6 +9570,16 @@ const Toolbar = ({ formData }) => {
                   lastEditedSizeKeyRef.current = 'width';
                   scheduleDebouncedSizeApply(1200);
                 }}
+                onBlur={() => {
+                  flushSizeApplyImmediately('width');
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    flushSizeApplyImmediately('width');
+                    e.currentTarget.blur();
+                  }
+                }}
               />
               <div className={styles.arrows}>
                 <i
@@ -9664,6 +9698,16 @@ const Toolbar = ({ formData }) => {
                   setHeightInputValue(val);
                   lastEditedSizeKeyRef.current = 'height';
                   scheduleDebouncedSizeApply(1200);
+                }}
+                onBlur={() => {
+                  flushSizeApplyImmediately('height');
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    flushSizeApplyImmediately('height');
+                    e.currentTarget.blur();
+                  }
                 }}
               />
               <div className={styles.arrows}>

@@ -14,8 +14,8 @@ import {
 } from '../../utils/qrFabricUtils';
 import { ensureShapeSvgId } from '../../utils/shapeSvgId';
 
-// Відступи в межах viewport
-const MARGIN = 40;
+// Відступи в межах viewport (мінімальний без притискання до рамки)
+const MARGIN = 32;
 const DEFAULT_DESIGN = { width: 340.5, height: 227 };
 // Unit conversion (96 DPI)
 const PX_PER_MM = 72 / 25.4;

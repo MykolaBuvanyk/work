@@ -28,6 +28,10 @@ import iconSHook from "/images/accessories/S-Hook.svg";
 import iconKeyring from "/images/accessories/Keyring.svg";
 import iconBallchain from "/images/accessories/Ballchain.svg";
 
+const MAX_SIGNS_PER_PROJECT = 30;
+const MAX_SIGNS_REACHED_MESSAGE =
+  "Maximum number of signs in this project has been reached (30). Please create a new project.";
+
 const BASE_ACCESSORIES = [
   {
     id: 1,
@@ -112,6 +116,8 @@ const TopToolbar = ({ className, formData }) => {
   const [working, setWorking] = useState(false);
   const [isAccessoriesOpen, setAccessoriesOpen] = useState(false);
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
+  const [projectSignsCount, setProjectSignsCount] = useState(0);
+  const [hasActiveProject, setHasActiveProject] = useState(false);
 
   // Toolbar <-> Modal shared state
   const [accessories, setAccessories] = useState(() =>
@@ -178,10 +184,80 @@ const TopToolbar = ({ className, formData }) => {
   const openAccessories = () => setAccessoriesOpen(true);
   const closeAccessories = () => setAccessoriesOpen(false);
 
+  const isProjectLimitReached =
+    hasActiveProject && projectSignsCount >= MAX_SIGNS_PER_PROJECT;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncProjectSignsCount = async () => {
+      let currentProjectId = null;
+      try {
+        currentProjectId = localStorage.getItem("currentProjectId");
+      } catch { }
+
+      if (!currentProjectId) {
+        if (isMounted) {
+          setHasActiveProject(false);
+          setProjectSignsCount(0);
+        }
+        return;
+      }
+
+      try {
+        const currentProject = await getProject(currentProjectId);
+        if (!isMounted) return;
+
+        const count = Array.isArray(currentProject?.canvases)
+          ? currentProject.canvases.length
+          : 0;
+
+        setHasActiveProject(true);
+        setProjectSignsCount(count);
+      } catch {
+        if (!isMounted) return;
+        setHasActiveProject(true);
+        setProjectSignsCount(0);
+      }
+    };
+
+    syncProjectSignsCount();
+
+    window.addEventListener("project:canvasesUpdated", syncProjectSignsCount);
+    window.addEventListener("project:switched", syncProjectSignsCount);
+    window.addEventListener("project:reset", syncProjectSignsCount);
+    window.addEventListener("project:opened", syncProjectSignsCount);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("project:canvasesUpdated", syncProjectSignsCount);
+      window.removeEventListener("project:switched", syncProjectSignsCount);
+      window.removeEventListener("project:reset", syncProjectSignsCount);
+      window.removeEventListener("project:opened", syncProjectSignsCount);
+    };
+  }, []);
+
   const handleNewSign = async () => {
     if (working) return;
     setWorking(true);
     try {
+      let currentProjectId = null;
+      try {
+        currentProjectId = localStorage.getItem("currentProjectId");
+      } catch { }
+
+      if (currentProjectId) {
+        const currentProject = await getProject(currentProjectId).catch(() => null);
+        const currentProjectCanvasesCount = Array.isArray(currentProject?.canvases)
+          ? currentProject.canvases.length
+          : 0;
+
+        if (currentProjectCanvasesCount >= MAX_SIGNS_PER_PROJECT) {
+          alert(MAX_SIGNS_REACHED_MESSAGE);
+          return;
+        }
+      }
+
       let currentUnsavedId = null;
       try {
         currentUnsavedId = localStorage.getItem("currentUnsavedSignId");
@@ -747,9 +823,13 @@ const TopToolbar = ({ className, formData }) => {
       <div className={styles.firstPart}>
         <ul className={styles.toolbarList}>
           <li
-            className={styles.toolbarItem}
+            className={`${styles.toolbarItem} ${isProjectLimitReached ? styles.toolbarItemDisabled : ""}`}
             onClick={handleNewSign}
-            title="Create new canvas (sign)"
+            title={
+              isProjectLimitReached
+                ? "Maximum number of signs reached (30). Create a new project."
+                : "Create new canvas (sign)"
+            }
           >
             <svg
               width="24"

@@ -90,6 +90,29 @@ const hasInvoiceProfileData = user => {
 	return invoiceKeys.some(key => String(user[key] || '').trim() !== '')
 }
 
+const hasInvoiceAddressContent = invoice => {
+	if (!invoice || typeof invoice !== 'object') return false
+	const meaningfulKeys = [
+		'fullName',
+		'companyName',
+		'address1',
+		'address2',
+		'address3',
+		'town',
+		'postalCode',
+		'email',
+		'mobile',
+	]
+	return meaningfulKeys.some(key => String(invoice[key] || '').trim() !== '')
+}
+
+const hasBusinessProfileHint = user => {
+	if (!user || typeof user !== 'object') return false
+	const company = String(user.company || '').trim()
+	const vatNumber = String(user.vatNumber || '').trim()
+	return company.length > 0 || vatNumber.length > 0
+}
+
 const INITIAL_DELIVERY_ADDRESS = {
 	fullName: '',
 	companyName: '',
@@ -203,16 +226,27 @@ export default function Checkout({
 	const [invoiceEmail, setInvoiceEmail] = useState('')
 	const [deliveryComment, setDeliveryComment] = useState('')
 	const [productionComment, setProductionComment] = useState('')
+	const [profileUserType, setProfileUserType] = useState('')
+	const [profileBusinessHint, setProfileBusinessHint] = useState(false)
 	const { designs } = useCanvasContext()
 	const userType = useSelector(state => state?.user?.user?.type)
 	const reduxUser = useSelector(state => state?.user?.user)
-	const isBusiness = String(userType || '').toLowerCase() === 'business'
+	const normalizedUserType = useMemo(() => {
+		const rawType = profileUserType || userType || reduxUser?.type || ''
+		return String(rawType).trim().toLowerCase()
+	}, [profileUserType, reduxUser?.type, userType])
+	const isBusiness =
+		normalizedUserType === 'business' || normalizedUserType === 'admin' ||
+		profileBusinessHint ||
+		String(reduxUser?.company || '').trim().length > 0
 
 	useEffect(() => {
 		let active = true
 
 		const setFromProfile = user => {
 			if (!active || !user) return
+			setProfileUserType(String(user.type || '').trim())
+			setProfileBusinessHint(hasBusinessProfileHint(user))
 			const firstName = String(user.firstName || '').trim()
 			const surname = String(user.surname || '').trim()
 			const fullName = [firstName, surname].filter(Boolean).join(' ')
@@ -418,6 +452,8 @@ export default function Checkout({
 			alert('Please select a country')
 			return
 		}
+		const shouldIncludeInvoiceAddress =
+			isInvoiceDifferent && hasInvoiceAddressContent(invoiceAddress)
 		if (typeof onPlaceOrder === 'function') {
 			onPlaceOrder({
 				sum: Number(sumForOrder || 0),
@@ -427,7 +463,7 @@ export default function Checkout({
 				vatPercent: Number(vatPercentForCheckout || 0),
 				vatAmount: Number(vatAmountForCheckout || 0),
 				deliveryAddress,
-				invoiceAddress: isInvoiceDifferent ? invoiceAddress : null,
+				invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
 				invoiceEmail: String(invoiceEmail || ''),
 				deliveryComment: String(deliveryComment || '').trim(),
 			})
@@ -543,12 +579,11 @@ export default function Checkout({
 	const vatPercentForCheckout = useMemo(() => {
 		const rawCode = String(deliveryAddress.region || '').toUpperCase()
 		const code = rawCode === 'UK' ? 'GB' : rawCode
-		const normalizedType = String(userType || '').toLowerCase()
-		const isConsumer = normalizedType === 'consumer'
+		const isConsumer = normalizedUserType === 'consumer'
 		const key = isConsumer ? `${code}_CONS` : code
 		const value = Number(vatConfig?.[key])
 		return Number.isFinite(value) ? value : 0
-	}, [deliveryAddress.region, userType, vatConfig])
+	}, [deliveryAddress.region, normalizedUserType, vatConfig])
 
 	const vatAmountForCheckout = round2(subtotalExclVat * (Number(vatPercentForCheckout || 0) / 100))
 	const totalAmount = round2(subtotalExclVat + vatAmountForCheckout)

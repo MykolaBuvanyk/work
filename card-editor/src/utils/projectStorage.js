@@ -510,6 +510,20 @@ function broadcastUnsavedUpdate() {
 
 export async function addUnsavedSignFromSnapshot(snapshot) {
   if (!snapshot) return null;
+
+  const existingUnsavedSigns = await getAllUnsavedSigns();
+  const currentUnsavedCount = Array.isArray(existingUnsavedSigns)
+    ? existingUnsavedSigns.length
+    : 0;
+
+  if (currentUnsavedCount >= MAX_CANVASES_PER_PROJECT) {
+    const error = new Error(
+      `Maximum unsaved signs limit reached (${MAX_CANVASES_PER_PROJECT})`
+    );
+    error.code = "MAX_UNSAVED_SIGNS_LIMIT_REACHED";
+    throw error;
+  }
+
   const now = Date.now();
   const entry = { id: uuid(), ...snapshot, createdAt: now, updatedAt: now };
   await putUnsavedSign(entry);
@@ -521,13 +535,16 @@ export async function addUnsavedSignFromSnapshot(snapshot) {
 // Returns number of canvases added.
 export async function addCanvasesFromProjectsToUnsavedSigns(
   projectIds,
-  { maxCanvases = 10 } = {}
+  { maxCanvases = MAX_CANVASES_PER_PROJECT } = {}
 ) {
   if (!Array.isArray(projectIds) || projectIds.length === 0) return 0;
 
   const existingUnsaved = await getAllUnsavedSigns();
   const currentCount = Array.isArray(existingUnsaved) ? existingUnsaved.length : 0;
-  const limit = typeof maxCanvases === "number" && maxCanvases > 0 ? maxCanvases : 10;
+  const limit =
+    typeof maxCanvases === "number" && maxCanvases > 0
+      ? Math.min(maxCanvases, MAX_CANVASES_PER_PROJECT)
+      : MAX_CANVASES_PER_PROJECT;
 
   let added = 0;
   let remaining = Math.max(0, limit - currentCount);
@@ -762,12 +779,24 @@ export async function getProject(id) {
   });
 }
 
+function normalizeProjectCanvasLimit(project) {
+  if (!project || typeof project !== "object") return project;
+  if (!Array.isArray(project.canvases)) return project;
+  if (project.canvases.length <= MAX_CANVASES_PER_PROJECT) return project;
+
+  return {
+    ...project,
+    canvases: project.canvases.slice(0, MAX_CANVASES_PER_PROJECT),
+  };
+}
+
 export async function putProject(project) {
+  const normalizedProject = normalizeProjectCanvasLimit(project);
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db, "readwrite");
-    const req = store.put(project);
-    req.onsuccess = () => resolve(project);
+    const req = store.put(normalizedProject);
+    req.onsuccess = () => resolve(normalizedProject);
     req.onerror = () => reject(req.error);
   });
 }
@@ -2247,6 +2276,116 @@ export async function saveCurrentProject(canvas) {
           }
         );
       } else {
+        if (canvases.length >= MAX_CANVASES_PER_PROJECT) {
+          const fallbackIndex =
+            hasStoredIndex && activeProjectCanvasIndex < canvases.length
+              ? activeProjectCanvasIndex
+              : canvases.length - 1;
+          const resolvedId = canvases[fallbackIndex]?.id;
+
+          if (resolvedId) {
+            canvases[fallbackIndex] = { ...canvases[fallbackIndex], ...snap };
+            currentCanvasId = resolvedId;
+            try {
+              localStorage.setItem("currentCanvasId", resolvedId);
+              localStorage.setItem("currentProjectCanvasId", resolvedId);
+              localStorage.setItem(
+                "currentProjectCanvasIndex",
+                String(fallbackIndex)
+              );
+            } catch {}
+            try {
+              if (typeof window !== "undefined") {
+                window.__currentProjectCanvasId = resolvedId;
+                window.__currentProjectCanvasIndex = fallbackIndex;
+              }
+            } catch {}
+          }
+
+          console.warn(
+            "[projectStorage] saveCurrentProject: max canvases reached, updated existing canvas instead of append",
+            {
+              canvasesCount: canvases.length,
+              fallbackIndex,
+              resolvedId,
+              targetCanvasId,
+              hasStoredIndex,
+              storedIndex: currentProjectCanvasIndex,
+              isActiveUnsaved,
+            }
+          );
+          const updated = { ...existing, canvases, updatedAt: now };
+          await putProject(updated);
+          try {
+            const detail = {
+              projectId: updated.id,
+              activeCanvasId: (() => {
+                try {
+                  return typeof window !== "undefined"
+                    ? window.__currentProjectCanvasId ||
+                        currentProjectCanvasId ||
+                        currentCanvasId ||
+                        null
+                    : currentProjectCanvasId || currentCanvasId || null;
+                } catch {
+                  return currentProjectCanvasId || currentCanvasId || null;
+                }
+              })(),
+              activeCanvasIndex: (() => {
+                try {
+                  return typeof window !== "undefined"
+                    ? window.__currentProjectCanvasIndex ??
+                        currentProjectCanvasIndex ??
+                        null
+                    : currentProjectCanvasIndex ?? null;
+                } catch {
+                  return currentProjectCanvasIndex ?? null;
+                }
+              })(),
+            };
+            window.dispatchEvent(
+              new CustomEvent("project:canvasesUpdated", { detail })
+            );
+          } catch {}
+          try {
+            await transferUnsavedSignsToProject(updated.id, currentUnsavedId);
+          } catch {}
+
+          const unsavedToRemove = new Set();
+          if (currentUnsavedId) unsavedToRemove.add(currentUnsavedId);
+          if (
+            pendingUnsavedCleanupId &&
+            !unsavedToRemove.has(pendingUnsavedCleanupId)
+          ) {
+            unsavedToRemove.add(pendingUnsavedCleanupId);
+          }
+
+          if (unsavedToRemove.size) {
+            try {
+              await Promise.all(
+                [...unsavedToRemove].map((id) => deleteUnsavedSign(id))
+              );
+              broadcastUnsavedUpdate();
+            } catch (err) {
+              console.warn("Failed to clean up unsaved signs after project save:", err);
+            }
+
+            try {
+              if (typeof window !== "undefined") {
+                if (unsavedToRemove.has(pendingUnsavedCleanupId)) {
+                  window.__pendingUnsavedCleanupId = null;
+                }
+              }
+              if (unsavedToRemove.has(currentUnsavedId)) {
+                try {
+                  localStorage.removeItem("currentUnsavedSignId");
+                } catch {}
+              }
+            } catch {}
+          }
+          return updated;
+        }
+
         const newCanvasId = uuid();
         canvases.push({ id: newCanvasId, ...snap });
         currentCanvasId = newCanvasId;

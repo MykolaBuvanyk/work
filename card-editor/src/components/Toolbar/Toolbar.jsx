@@ -340,7 +340,16 @@ const Toolbar = ({ formData }) => {
                 },
               };
 
-              const created = await addUnsavedSignFromSnapshot(snap);
+              let created = null;
+              try {
+                created = await addUnsavedSignFromSnapshot(snap);
+              } catch (err) {
+                if (err?.code === 'MAX_UNSAVED_SIGNS_LIMIT_REACHED') {
+                  alert('Maximum number of signs reached (30). Please create a new project.');
+                  break;
+                }
+                throw err;
+              }
               const newId = created?.id || null;
               if (!newId) break;
               state.copyCanvasIds.push(newId);

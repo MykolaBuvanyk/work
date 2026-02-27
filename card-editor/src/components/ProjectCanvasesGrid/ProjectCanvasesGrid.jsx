@@ -24,7 +24,7 @@ import LayoutPlannerModal from './LayoutPlannerModal/LayoutPlannerModal';
 // Renders 4x2 grid of canvases for the current project (from localStorage currentProjectId)
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
-const MAX_SIGNS_PER_PROJECT = 30;
+const MAX_SIGNS_PER_PROJECT = 100;
 const MAX_SIGNS_REACHED_MESSAGE =
   'Maximum number of signs in this project has been reached (30). Please create a new project.';
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };

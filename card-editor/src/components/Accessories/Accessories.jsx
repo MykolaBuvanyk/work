@@ -28,7 +28,7 @@ import iconSHook from "/images/accessories/S-Hook.svg";
 import iconKeyring from "/images/accessories/Keyring.svg";
 import iconBallchain from "/images/accessories/Ballchain.svg";
 
-const MAX_SIGNS_PER_PROJECT = 30;
+const MAX_SIGNS_PER_PROJECT = 100;
 const MAX_SIGNS_REACHED_MESSAGE =
   "Maximum number of signs in this project has been reached (30). Please create a new project.";
 

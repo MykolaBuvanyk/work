@@ -821,19 +821,13 @@ const resolveMaterialColorLabel = ({ selectedColorIndex, backgroundColor, stroke
 
 const getMaterialKey = (item) => {
   // Primary: canvas/background color + material thickness
-  // Fallbacks remain for older data so export doesn't regress.
+  // Border/frame must NOT affect grouping key.
   const colorRaw =
     normalizeSlashLabel(item?.materialColor) ??
     item?.materialColor ??
-    item?.themeStrokeColor ??
     null;
   const thicknessMm =
-    normalizeThicknessMm(item?.materialThicknessMm) ??
-    normalizeThicknessMm(
-      item?.customBorder?.thicknessPx
-        ? item?.customBorder?.thicknessPx / PX_PER_MM
-        : null
-    );
+    normalizeThicknessMm(item?.materialThicknessMm);
   const color = normalizeSlashLabel(colorRaw) || normalizeHexColor(colorRaw) || "unknown";
   const thickness = thicknessMm !== null ? String(thicknessMm) : "unknown";
 

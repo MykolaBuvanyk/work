@@ -76,6 +76,14 @@ const resolveDeliveryType = (order) =>
 const resolveInvoiceEmails = (order) =>
   String(order?.orderMongo?.checkout?.invoiceEmail || order?.user?.weWill || '').trim();
 
+const resolveInvoiceAddressEmail = (order) =>
+  String(
+    order?.orderMongo?.checkout?.invoiceAddressEmail ||
+      order?.orderMongo?.checkout?.invoiceAddress?.email ||
+      order?.user?.eMailInvoice ||
+      ''
+  ).trim();
+
 const resolveDeliveryComment = (order) =>
   String(order?.orderMongo?.checkout?.deliveryComment || '').trim();
 
@@ -152,6 +160,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [pdfSortOrder, setPdfSortOrder] = useState('high-first');
 
   const invoiceEmails = useMemo(() => resolveInvoiceEmails(order), [order]);
+  const invoiceAddressEmail = useMemo(() => resolveInvoiceAddressEmail(order), [order]);
   const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
   const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
 
@@ -298,8 +307,6 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
       const mjItems = normalizedItems.map((item) => ({
         ...item,
-        materialThicknessMm: null,
-        isAdhesiveTape: false,
       }));
 
       const groups = new Map();
@@ -360,8 +367,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
             frameCount: frameSheets.length,
             decorStripWidthMm: MJ_FRAME_DECOR_STRIP_WIDTH_MM,
             materialColor: groupItems?.[0]?.materialColor ?? null,
-            materialThicknessMm: null,
-            isAdhesiveTape: false,
+            materialThicknessMm: groupItems?.[0]?.materialThicknessMm ?? null,
+            isAdhesiveTape: groupItems?.[0]?.isAdhesiveTape ?? false,
             themeStrokeColor: groupItems?.[0]?.themeStrokeColor ?? null,
           };
         });
@@ -1316,6 +1323,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Invoice emails:</p>
         <span>{invoiceEmails || '---'}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Invoice E-Mail address:</p>
+        <span>{invoiceAddressEmail || '---'}</span>
         <div />
       </div>
       <div className="row">

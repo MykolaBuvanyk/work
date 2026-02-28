@@ -465,6 +465,7 @@ export default function Checkout({
 				deliveryAddress,
 				invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
 				invoiceEmail: String(invoiceEmail || ''),
+				invoiceAddressEmail: String(invoiceAddress?.email || '').trim(),
 				deliveryComment: String(deliveryComment || '').trim(),
 			})
 		}

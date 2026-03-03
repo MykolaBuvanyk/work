@@ -5955,8 +5955,39 @@ const Toolbar = ({ formData }) => {
     return sampleRoundedPolygon(base, rPx, segments);
   };
 
+  const getColorOptionsForConfig = (nextThickness = thickness, nextIsAdhesiveTape = isAdhesiveTape) => {
+    const colorKey = `${nextIsAdhesiveTape ? 'A' : ''}colour${String(nextThickness).replace('.', '')}`;
+    const options = formData?.[colorKey];
+    return Array.isArray(options) ? options : [];
+  };
+
+  const isThemeAvailableForConfig = (
+    themeIndex,
+    nextThickness = thickness,
+    nextIsAdhesiveTape = isAdhesiveTape
+  ) => {
+    const parsedIndex = Number(themeIndex);
+    if (!Number.isInteger(parsedIndex) || parsedIndex < 0) return false;
+    const options = getColorOptionsForConfig(nextThickness, nextIsAdhesiveTape);
+    return !!options[parsedIndex]?.isSelect;
+  };
+
+  const applyThemeByIndex = themeIndex => {
+    const parsedIndex = Number(themeIndex);
+    const preset =
+      COLOR_THEME_PRESETS.find(theme => theme.index === parsedIndex) ||
+      COLOR_THEME_PRESETS[0];
+
+    updateColorScheme(
+      preset.textColor,
+      preset.backgroundColor,
+      preset.backgroundType,
+      preset.index
+    );
+  };
+
   // Оновлення товщини обводки
-  const updateThickness = value => {
+  const updateThickness = (value, nextIsAdhesiveTape = isAdhesiveTape) => {
     // Thickness slider must not toggle Border and must not affect border thickness.
 
     // Пункт 3 (товщина) стосується лише внутрішніх бордерів/елементів картки, не змінює активні об'єкти
@@ -5966,8 +5997,14 @@ const Toolbar = ({ formData }) => {
 
       // Відстежуємо зміну товщини
       trackThicknessChange(value);
-      // Reset color scheme to default: black text, white background
-      updateColorScheme('#000000', '#FFFFFF', 'solid', 0);
+
+      const shouldKeepCurrentTheme = isThemeAvailableForConfig(
+        selectedColorIndex,
+        value,
+        nextIsAdhesiveTape
+      );
+
+      applyThemeByIndex(shouldKeepCurrentTheme ? selectedColorIndex : 0);
     }
   };
 
@@ -9788,8 +9825,9 @@ const Toolbar = ({ formData }) => {
               type="checkbox"
               checked={isAdhesiveTape}
               onChange={e => {
-                setIsAdhesiveTape(e.target.checked);
-                updateThickness(thickness);
+                const nextAdhesiveTape = e.target.checked;
+                setIsAdhesiveTape(nextAdhesiveTape);
+                updateThickness(thickness, nextAdhesiveTape);
               }}
             />
           </div>

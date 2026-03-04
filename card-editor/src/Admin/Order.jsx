@@ -74,18 +74,35 @@ const resolveDeliveryType = (order) =>
   String(order?.deliveryType || order?.orderMongo?.checkout?.deliveryLabel || '').trim();
 
 const resolveInvoiceEmails = (order) =>
-  String(order?.orderMongo?.checkout?.invoiceEmail || order?.user?.weWill || '').trim();
+  String(order?.orderMongo?.checkout?.invoiceEmail || '').trim();
 
 const resolveInvoiceAddressEmail = (order) =>
   String(
     order?.orderMongo?.checkout?.invoiceAddressEmail ||
       order?.orderMongo?.checkout?.invoiceAddress?.email ||
-      order?.user?.eMailInvoice ||
       ''
   ).trim();
 
 const resolveDeliveryComment = (order) =>
   String(order?.orderMongo?.checkout?.deliveryComment || '').trim();
+
+const resolveCountryLabel = (rawValue) => {
+  const value = String(rawValue || '').trim();
+  if (!value) return '';
+
+  const normalizedCode = value.toUpperCase() === 'GB' ? 'UK' : value.toUpperCase();
+  const byCode = combinedCountries.find((item) =>
+    String(item?.code || '').toUpperCase() === normalizedCode
+  );
+  if (byCode?.label) return String(byCode.label);
+
+  const byLabel = combinedCountries.find((item) =>
+    String(item?.label || '').toLowerCase() === value.toLowerCase()
+  );
+  if (byLabel?.label) return String(byLabel.label);
+
+  return value;
+};
 
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
@@ -158,10 +175,53 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [frameSpacingMm, setFrameSpacingMm] = useState(3);
   const [pdfSignSpacing, setPdfSignSpacing] = useState(2);
   const [pdfSortOrder, setPdfSortOrder] = useState('high-first');
+  const [isInvoiceExpanded, setIsInvoiceExpanded] = useState(false);
 
   const invoiceEmails = useMemo(() => resolveInvoiceEmails(order), [order]);
   const invoiceAddressEmail = useMemo(() => resolveInvoiceAddressEmail(order), [order]);
   const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
+
+  const invoiceSectionData = useMemo(() => {
+    const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
+    const countryRaw =
+      checkoutInvoice?.country ||
+      checkoutInvoice?.region ||
+      '';
+
+    return {
+      fullName: String(checkoutInvoice?.fullName || '').trim(),
+      companyName: String(checkoutInvoice?.companyName || '').trim(),
+      address1: String(checkoutInvoice?.address1 || '').trim(),
+      address2: String(checkoutInvoice?.address2 || '').trim(),
+      address3: String(checkoutInvoice?.address3 || '').trim(),
+      town: String(checkoutInvoice?.town || '').trim(),
+      postalCode: String(checkoutInvoice?.postalCode || '').trim(),
+      countryLabel: resolveCountryLabel(countryRaw),
+      mobile: String(checkoutInvoice?.mobile || '').trim(),
+    };
+  }, [order]);
+
+  const invoiceAddressLines = useMemo(() => {
+    const lines = [
+      invoiceSectionData.fullName,
+      invoiceSectionData.companyName,
+      invoiceSectionData.address1,
+      invoiceSectionData.address2,
+      invoiceSectionData.address3,
+      invoiceSectionData.town,
+      invoiceSectionData.postalCode,
+      invoiceSectionData.countryLabel,
+    ];
+
+    return lines.filter((line) => String(line || '').trim() !== '');
+  }, [invoiceSectionData]);
+
+  const hasInvoiceSectionData = useMemo(() => {
+    if (String(invoiceEmails || '').trim() !== '') return true;
+    if (String(invoiceAddressEmail || '').trim() !== '') return true;
+    if (String(invoiceSectionData.mobile || '').trim() !== '') return true;
+    return invoiceAddressLines.length > 0;
+  }, [invoiceAddressEmail, invoiceAddressLines.length, invoiceEmails, invoiceSectionData.mobile]);
   const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
 
   const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
@@ -186,6 +246,10 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   useEffect(()=>{
     getOrder()
   },[orderId])
+
+  useEffect(() => {
+    setIsInvoiceExpanded(false);
+  }, [orderId]);
 
   // Apply export mode presets (same logic as LayoutPlannerModal).
   useEffect(() => {
@@ -1310,6 +1374,65 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           <div>{(combinedCountries.find(x=>x.code===(order.country||order.user.country))||{}).label||order.country||order.user.country||''}</div>    
         </div>
       </div>
+      <div className="row invoice-row">
+        <div className="invoice-section">
+          <button
+            type="button"
+            className="invoice-section__toggle"
+            onClick={() => setIsInvoiceExpanded((prev) => !prev)}
+          >
+            <span
+              className={`invoice-section__indicator ${
+                hasInvoiceSectionData ? 'invoice-section__indicator--has-data' : 'invoice-section__indicator--empty'
+              }`}
+              aria-hidden="true"
+            />
+            <span className="invoice-section__toggle-label">Invoice Address:</span>
+          </button>
+
+          {isInvoiceExpanded && (
+            <div className="invoice-section__content">
+              {invoiceAddressLines.length > 0 ? (
+                <>
+                  <div className="invoice-section__field-row" key={`${invoiceAddressLines[0]}-0`}>
+                    <span className="invoice-section__field-label">Invoice Address:</span>
+                    <span className="invoice-section__field-value">{invoiceAddressLines[0]}</span>
+                  </div>
+
+                  {invoiceAddressLines.slice(1).map((line, idx) => (
+                    <div className="invoice-section__field-row" key={`${line}-${idx + 1}`}>
+                      <span
+                        className='invoice-section__field-label invoice-section__field-label--empty'
+                        aria-hidden='true'
+                      >
+                        Invoice Address:
+                      </span>
+                      <span className="invoice-section__field-value">{line}</span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="invoice-section__field-row">
+                  <span className='invoice-section__field-label'>Invoice Address:</span>
+                  <span className="invoice-section__field-value">---</span>
+                </div>
+              )}
+              <div className="invoice-section__field-row">
+                <span className="invoice-section__field-label">Invoice E-Mail address:</span>
+                <span className="invoice-section__field-value">{invoiceAddressEmail || '---'}</span>
+              </div>
+              <div className="invoice-section__field-row">
+                <span className="invoice-section__field-label">Mobile Phone:</span>
+                <span className="invoice-section__field-value">{invoiceSectionData.mobile || '---'}</span>
+              </div>
+              <div className="invoice-section__field-row">
+                <span className="invoice-section__field-label">Invoice emails:</span>
+                <span className="invoice-section__field-value">{invoiceEmails || '---'}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="row">
         <p>E-Mail:</p>
         <span>{order.user.email}</span>
@@ -1318,16 +1441,6 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Phone:</p>
         <span>{order.user.phone}</span>
-        <div />
-      </div>
-      <div className="row">
-        <p>Invoice emails:</p>
-        <span>{invoiceEmails || '---'}</span>
-        <div />
-      </div>
-      <div className="row">
-        <p>Invoice E-Mail address:</p>
-        <span>{invoiceAddressEmail || '---'}</span>
         <div />
       </div>
       <div className="row">

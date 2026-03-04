@@ -58,6 +58,124 @@
     }
   }
 
+  .invoice-section {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+
+    .invoice-section__toggle {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      color: #000000;
+      font: inherit;
+      text-align: left;
+    }
+
+    .invoice-section__toggle-label {
+      font-weight: 600;
+    }
+
+    .invoice-section__indicator {
+      position: relative;
+      display: inline-flex;
+      width: 14px;
+      height: 14px;
+      min-width: 14px;
+      border-radius: 50%;
+      box-sizing: border-box;
+
+      &::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      &.invoice-section__indicator--has-data {
+        border: 2px solid #ff2828;
+
+        &::after {
+          background-color: #ff2828;
+        }
+      }
+
+      &.invoice-section__indicator--empty {
+        border: 2px solid #007aff;
+
+        &::after {
+          background-color: #007aff;
+        }
+      }
+    }
+
+    .invoice-section__content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      color: #000000;
+      width: 100%;
+      background-color: #f2f0f0;
+      padding: 7.5px;
+      border-radius: 10px;
+    }
+
+    .invoice-section__field-label {
+      display: block;
+      font-weight: 600;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .invoice-section__field-label--empty {
+      visibility: hidden;
+    }
+
+    .invoice-section__field-row {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: flex-start;
+      width: 100%;
+      min-width: 0;
+      white-space: normal;
+      justify-content: initial;
+    }
+
+    .invoice-section__field-value {
+      display: block;
+      text-align: left;
+      white-space: normal;
+      word-break: break-word;
+      min-width: 0;
+    }
+  }
+
+  .row.invoice-row {
+    justify-content: flex-start;
+
+    > div {
+      width: 100%;
+      justify-content: flex-start;
+      min-width: 0;
+      white-space: normal;
+    }
+  }
+
   .delivery {
     margin: 5px 0;
 

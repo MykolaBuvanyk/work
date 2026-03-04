@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import styles from './ProjectCanvasesGrid.module.css';
 import {
   getProject,
@@ -80,6 +81,8 @@ const getLiveToolbarStateSnapshot = () => {
 };
 
 const ProjectCanvasesGrid = () => {
+  const userType = useSelector(state => state?.user?.user?.type);
+  const isAdmin = String(userType || '').trim().toLowerCase() === 'admin';
   const { setDesigns: setContextDesigns, updateGlobalColors } = useCanvasContext();
   const { canvas, loadDesign, selectDesign } = useFabricCanvas();
   const [project, setProject] = useState(null);
@@ -1820,15 +1823,6 @@ const ProjectCanvasesGrid = () => {
               className={`${styles.rangesBtn} ${page === r.page ? styles.rangesBtnActive : ''}`}
               onClick={() => setPage(r.page)}
             >
-              <div className={styles.layoutControls}>
-                <button
-                  type="button"
-                  className={styles.layoutPlannerBtn}
-                  onClick={() => setIsLayoutModalOpen(true)}
-                >
-                  PDF
-                </button>
-              </div>
               {r.start}–{r.end}
             </button>
           ))}
@@ -1839,6 +1833,18 @@ const ProjectCanvasesGrid = () => {
           >
             &gt;&gt;
           </button>
+
+          {isAdmin ? (
+            <div className={styles.layoutControls}>
+              <button
+                type="button"
+                className={styles.layoutPlannerBtn}
+                onClick={() => setIsLayoutModalOpen(true)}
+              >
+                PDF
+              </button>
+            </div>
+          ) : null}
         </div>
 
         {current.length === 0 ? (

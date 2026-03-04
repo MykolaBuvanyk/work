@@ -130,6 +130,10 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
+.orientationToggle button:disabled {
+  cursor: not-allowed;
+}
+
 .orientationActive {
   background: #0f172a;
   color: white !important;

@@ -48,7 +48,7 @@ const Admin = () => {
   const [start,setStart]=useState('');
   const [finish,setFinish]=useState('');
   const [countPages, setCountPages]=useState(1);
-  const [isPaid,setIsPaid]=useState('all')//<'all'||'true'||'false'>
+  const [isPaid,setIsPaid]=useState('all')//<'all'||'true'||'false'||'admin'>
 
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isPaidOpen, setIsPaidOpen] = useState(false);
@@ -246,14 +246,14 @@ const Admin = () => {
               <div style={{display:'flex',flexDirection:'row',gap:'7.5px'}} className="row">
                 <div style={{alignItems:'center',display:'flex'}} className={'lang'}>
                   <div
-                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px', color: isPaid=='all' ? '#000' : isPaid == 'true' ? 'green' : 'red', alignItems: 'center' }}
+                    style={{ display: 'flex', flexDirection: 'row', gap: '5px', alignItems: 'center', height: '32px', color: (isPaid=='all'||isPaid=='admin') ? '#000' : isPaid == 'true' ? 'green' : 'red', alignItems: 'center' }}
                     onClick={() => setIsPaidOpen(!isPaidOpen)}
                   >
-                    {(isPaid=='all'?'all':isPaid=='true'?'Paid':'UnPaid').toUpperCase()+' '}
+                    {(isPaid=='all'?'all':isPaid=='true'?'Paid':isPaid=='admin'?'admin':'UnPaid').toUpperCase()+' '}
                     <SlArrowDown size={14} />
                   </div>
                   <div className={isPaidOpen ? 'dropdown' : 'open'}>
-                    {[{value:'all',name:'all',color:'#000'},{value:'true',name:'Paid',color:'green'},{value:'false',name:'Unpaid',color:'red'}].map(paid => (
+                    {[{value:'all',name:'all',color:'#000'},{value:'true',name:'Paid',color:'green'},{value:'false',name:'Unpaid',color:'red'},{value:'admin',name:'admin',color:'black'}].map(paid => (
                       <div
                         key={paid.value}
                         onClick={() => {setIsPaidOpen(false);setIsPaid(paid.value)}}
@@ -330,7 +330,7 @@ const Admin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
-                    <td>{order.sum}</td>
+                    <td>{order.user.type=='Admin'? '-':order.sum}</td>
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>
@@ -340,7 +340,7 @@ const Admin = () => {
                     >
                       <span>{order.deliveryType || '---'}</span>
                     </td>
-                    <td onClick={(e)=>{setPaid(order.id);e.stopPropagation();e.preventDefault();return false}} style={{color:order.isPaid?'green':'red'}}>{order.isPaid?'Paid':'Unpaid'}</td>
+                    <td onClick={(e)=>{if(order.user.type!='Admin')setPaid(order.id);e.stopPropagation();e.preventDefault();return false}} style={{color:order.user.type=='Admin'? 'black':order.isPaid?'green':'red',cursor:order.user.type=='Admin'? 'default':'pointer'}}>{order.user.type=='Admin'? 'Admin':order.isPaid?'Paid':'Unpaid'}</td>
                 </tr>
               ))}
             </tbody>

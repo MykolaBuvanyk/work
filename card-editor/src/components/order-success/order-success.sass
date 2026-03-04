@@ -58,12 +58,23 @@
     gap: 7px
     cursor: pointer
 
+    .success__star-btn
+      width: 36px
+      height: 36px
+      padding: 0
+      border: none
+      background: transparent
+      display: inline-flex
+      align-items: center
+      justify-content: center
+      cursor: pointer
+
     .success__star
       width: 36px
       height: 36px
       transition: transform 120ms ease
 
-    .success__star:hover
+    .success__star-btn:hover .success__star
       transform: scale(1.08)
 
   &__feedback

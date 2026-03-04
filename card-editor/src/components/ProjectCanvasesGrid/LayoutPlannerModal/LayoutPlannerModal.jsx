@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import JSZip from "jszip";
 import * as paperNamespace from "paper";
 import * as ClipperLibNamespace from "clipper-lib";
 import paper from "paper";
@@ -88,12 +87,24 @@ const FORMATS = {
   MJ_295x600: { label: "MJ 295×600", width: 295, height: 600 },
 };
 
+const GIT_OPTIMIZED_SHEET_WIDTH_MM = 600;
+const GIT_OPTIMIZED_SHEET_HEIGHT_MM = 300;
+const GIT_OPTIMIZED_MAX_FRAME_WIDTH_MM = 188.5;
+const GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM = 295;
+const GIT_OPTIMIZED_FRAME_GAP_MM = 2;
+
 const MJ_FRAME_STRIP_WIDTH_MM = 9.5;
+const MJ_FRAME_DECOR_STRIP_WIDTH_MM = MJ_FRAME_STRIP_WIDTH_MM;
 const MJ_FRAME_HOLE_DIAMETER_MM = 5.5;
 const MJ_FRAME_HOLE_SPACING_MM = 80;
 const MJ_FRAME_SECOND_HOLE_MIN_HEIGHT_MM = 135;
 const MJ_FRAME_STRIP_COLOR = "#8B4513";
 const MJ_FRAME_CORNER_RADIUS_MM = 5;
+
+const safeNumber = (value, fallback = 0) => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+};
 
 const normalizeProjectIdForLabel = (value) => {
   if (value === null || value === undefined) return null;
@@ -5277,12 +5288,13 @@ const LayoutPlannerModal = ({
 
   const exportModePresets = useMemo(
     () => ({
-      Normal: { enableGaps: false, formatKey: "MJ_295x600", orientation: "portrait" },
-      "Normal (MJ) Frame": { enableGaps: true, formatKey: "MJ_295x600", orientation: "portrait" },
+      Normal: { enableGaps: false, formatKey: "MJ_295x600", orientation: "landscape" },
+      "Normal (MJ) Frame": { enableGaps: true, formatKey: "MJ_295x600", orientation: "landscape" },
       "Sheet optimized (MJ) Fr.": { enableGaps: true, formatKey: "A4", orientation: "portrait" },
-      "Sheet A4 portrait": { formatKey: "A4", orientation: "portrait" },
-      "Sheet A5 portrait": { formatKey: "A5", orientation: "portrait" },
-      "Sheet A4 landscape": { formatKey: "A4", orientation: "landscape" },
+      "Sheet A4 portrait": { enableGaps: false, formatKey: "A4", orientation: "portrait" },
+      "Sheet A5 portrait": { enableGaps: false, formatKey: "A5", orientation: "portrait" },
+      "Sheet A4 landscape": { enableGaps: false, formatKey: "A4", orientation: "landscape" },
+      "Production optimized": { enableGaps: false, formatKey: "A4", orientation: "portrait" },
     }),
     []
   );
@@ -5376,11 +5388,10 @@ const LayoutPlannerModal = ({
 
   const sheetSize = useMemo(() => {
     const isMjFrameMode = exportMode === "Sheet optimized (MJ) Fr.";
-    const a4 = FORMATS.A4;
 
     const base = FORMATS[formatKey] || FORMATS.A4;
     const oriented = isMjFrameMode
-      ? { width: a4.width, height: a4.height }
+      ? { width: GIT_OPTIMIZED_SHEET_WIDTH_MM, height: GIT_OPTIMIZED_SHEET_HEIGHT_MM }
       : orientation === "landscape"
         ? { width: base.height, height: base.width }
         : { width: base.width, height: base.height };
@@ -5406,15 +5417,14 @@ const LayoutPlannerModal = ({
     if (maxH > 0) height = Math.min(height, maxH);
 
     if (isMjFrameMode) {
-      // Hard constraint: must not exceed A4.
-      width = Math.min(width, a4.width);
-      height = Math.min(height, a4.height);
+      width = GIT_OPTIMIZED_SHEET_WIDTH_MM;
+      height = GIT_OPTIMIZED_SHEET_HEIGHT_MM;
     }
 
     return {
       width,
       height,
-      label: isMjFrameMode ? a4.label : base.label,
+      label: isMjFrameMode ? "600x300 mm" : base.label,
     };
   }, [
     formatKey,
@@ -5488,16 +5498,293 @@ const LayoutPlannerModal = ({
   );
 
   const { sheets, leftovers } = useMemo(() => {
-    const a4 = FORMATS.A4;
-    const layoutOptions = isMjFrameMode
-      ? {
-          leftStripWidthMm: MJ_FRAME_STRIP_WIDTH_MM,
-          disableLeftFrameSpacing: true,
-          optimizeToContent: true,
-          maxSheetWidthMm: a4.width,
-          maxSheetHeightMm: a4.height,
-        }
-      : {};
+    if (isMjFrameMode) {
+      const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
+      const mjItems = normalizedItems.map((item) => ({
+        ...item,
+      }));
+
+      const groups = new Map();
+      mjItems.forEach((item) => {
+        const key = getMaterialKey(item);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      });
+
+      const resultSheets = [];
+      const resultLeftovers = [];
+
+      groups.forEach((groupItems, materialKey) => {
+        const maxContentFrameWidthMm = Math.max(
+          0,
+          GIT_OPTIMIZED_MAX_FRAME_WIDTH_MM - MJ_FRAME_DECOR_STRIP_WIDTH_MM
+        );
+
+        const framePlan = planSheets(
+          groupItems,
+          {
+            width: maxContentFrameWidthMm,
+            height: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+            sortOrder: pdfSortOrder,
+          },
+          effectiveSignSpacingMm,
+          0,
+          safeFrameSpacingMm,
+          {
+            leftStripWidthMm: 0,
+            disableLeftFrameSpacing: true,
+            optimizeToContent: true,
+            maxSheetWidthMm: maxContentFrameWidthMm,
+            maxSheetHeightMm: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+            maxPlacementWidthMm: maxContentFrameWidthMm,
+            maxPlacementHeightMm: GIT_OPTIMIZED_MAX_FRAME_HEIGHT_MM,
+          }
+        );
+
+        const frameSheets = Array.isArray(framePlan?.sheets) ? framePlan.sheets : [];
+        const frameLeftovers = Array.isArray(framePlan?.leftovers) ? framePlan.leftovers : [];
+        resultLeftovers.push(...frameLeftovers);
+        if (!frameSheets.length) return;
+
+        const frameItems = frameSheets.map((frameSheet, frameIndex) => {
+          const frameId = `${materialKey}::frame-${frameIndex + 1}`;
+          const frameWidth = Math.max(0, safeNumber(frameSheet?.width, 0));
+          const frameHeight = Math.max(0, safeNumber(frameSheet?.height, 0));
+          const decoratedWidth = frameWidth + MJ_FRAME_DECOR_STRIP_WIDTH_MM;
+
+          return {
+            id: frameId,
+            name: frameId,
+            widthMm: decoratedWidth,
+            heightMm: frameHeight,
+            area: decoratedWidth * frameHeight,
+            copies: 1,
+            sourceFrame: frameSheet,
+            frameIndex: frameIndex + 1,
+            frameCount: frameSheets.length,
+            decorStripWidthMm: MJ_FRAME_DECOR_STRIP_WIDTH_MM,
+            materialColor: groupItems?.[0]?.materialColor ?? null,
+            materialThicknessMm: groupItems?.[0]?.materialThicknessMm ?? null,
+            isAdhesiveTape: groupItems?.[0]?.isAdhesiveTape ?? false,
+            themeStrokeColor: groupItems?.[0]?.themeStrokeColor ?? null,
+          };
+        });
+
+        const packFramesIntoFixedSheets = (frames) => {
+          const gap = GIT_OPTIMIZED_FRAME_GAP_MM;
+          const sheetWidth = GIT_OPTIMIZED_SHEET_WIDTH_MM;
+          const sheetHeight = GIT_OPTIMIZED_SHEET_HEIGHT_MM;
+          const EPS = 0.001;
+
+          const ordered = [...frames].sort((a, b) => {
+            const areaA = Number(a?.area) || 0;
+            const areaB = Number(b?.area) || 0;
+            if (areaA === areaB) return String(a?.id || "").localeCompare(String(b?.id || ""));
+            return pdfSortOrder === "low-first" ? areaA - areaB : areaB - areaA;
+          });
+
+          const sheets = [];
+          const leftovers = [];
+
+          const intersects = (a, b) => (
+            a.x < b.x + b.width - EPS &&
+            a.x + a.width > b.x + EPS &&
+            a.y < b.y + b.height - EPS &&
+            a.y + a.height > b.y + EPS
+          );
+
+          const canPlaceAt = (sheet, candidate) => {
+            if (candidate.x < 0 || candidate.y < 0) return false;
+            if (candidate.x + candidate.width > sheetWidth + EPS) return false;
+            if (candidate.y + candidate.height > sheetHeight + EPS) return false;
+
+            for (const existing of sheet.frames) {
+              const inflated = {
+                x: existing.x - gap,
+                y: existing.y - gap,
+                width: existing.width + gap * 2,
+                height: existing.height + gap * 2,
+              };
+              if (intersects(candidate, inflated)) return false;
+            }
+            return true;
+          };
+
+          const findTopLeftPosition = (sheet, width, height) => {
+            const xs = new Set([0]);
+            const ys = new Set([0]);
+
+            sheet.frames.forEach((frame) => {
+              xs.add(frame.x);
+              xs.add(frame.x + frame.width + gap);
+              ys.add(frame.y);
+              ys.add(frame.y + frame.height + gap);
+            });
+
+            const xCandidates = Array.from(xs).filter((x) => Number.isFinite(x)).sort((a, b) => a - b);
+            const yCandidates = Array.from(ys).filter((y) => Number.isFinite(y)).sort((a, b) => a - b);
+
+            for (const y of yCandidates) {
+              for (const x of xCandidates) {
+                const candidate = { x, y, width, height };
+                if (canPlaceAt(sheet, candidate)) return { x, y };
+              }
+            }
+
+            return null;
+          };
+
+          ordered.forEach((frame) => {
+            const width = Math.max(0, Number(frame?.widthMm) || 0);
+            const height = Math.max(0, Number(frame?.heightMm) || 0);
+
+            if (width <= 0 || height <= 0) {
+              leftovers.push(frame);
+              return;
+            }
+
+            if (width > sheetWidth + EPS || height > sheetHeight + EPS) {
+              leftovers.push(frame);
+              return;
+            }
+
+            let placed = false;
+
+            for (const sheet of sheets) {
+              const pos = findTopLeftPosition(sheet, width, height);
+              if (!pos) continue;
+              sheet.frames.push({
+                ...frame,
+                x: pos.x,
+                y: pos.y,
+                width,
+                height,
+              });
+              placed = true;
+              break;
+            }
+
+            if (!placed) {
+              const newSheet = {
+                width: sheetWidth,
+                height: sheetHeight,
+                frames: [],
+              };
+              const pos = findTopLeftPosition(newSheet, width, height);
+              if (!pos) {
+                leftovers.push(frame);
+                return;
+              }
+              newSheet.frames.push({
+                ...frame,
+                x: pos.x,
+                y: pos.y,
+                width,
+                height,
+              });
+              sheets.push(newSheet);
+            }
+          });
+
+          return { sheets, leftovers };
+        };
+
+        const { sheets: packedSheets, leftovers: sheetLeftovers } =
+          packFramesIntoFixedSheets(frameItems);
+        resultLeftovers.push(...sheetLeftovers);
+
+        packedSheets.forEach((packedSheet) => {
+          const packedFramePlacements = Array.isArray(packedSheet?.frames)
+            ? packedSheet.frames
+            : [];
+          const frameRects = [];
+          const frameInfos = [];
+          const mergedPlacements = [];
+
+          packedFramePlacements.forEach((framePlacement) => {
+            const sourceFrame = framePlacement?.sourceFrame;
+            if (!sourceFrame) return;
+
+            const decorStripWidth = Math.max(
+              0,
+              safeNumber(
+                framePlacement?.decorStripWidthMm,
+                MJ_FRAME_DECOR_STRIP_WIDTH_MM
+              )
+            );
+            const frameX = safeNumber(framePlacement?.x, 0);
+            const frameY = safeNumber(framePlacement?.y, 0);
+            const frameWidth = Math.max(0, safeNumber(framePlacement?.width, 0));
+            const frameHeight = Math.max(0, safeNumber(framePlacement?.height, 0));
+            if (frameWidth <= 0 || frameHeight <= 0) return;
+            if (
+              frameX + frameWidth > GIT_OPTIMIZED_SHEET_WIDTH_MM + 0.001 ||
+              frameY + frameHeight > GIT_OPTIMIZED_SHEET_HEIGHT_MM + 0.001
+            ) {
+              return;
+            }
+
+            frameRects.push({
+              x: frameX,
+              y: frameY,
+              width: frameWidth,
+              height: frameHeight,
+            });
+
+            frameInfos.push({
+              x: frameX,
+              y: frameY,
+              width: frameWidth,
+              height: frameHeight,
+              frameIndex: Number(framePlacement?.frameIndex) || 1,
+              frameCount:
+                Number(framePlacement?.frameCount) || packedFramePlacements.length,
+              stripWidthMm: decorStripWidth,
+            });
+
+            const sourcePlacements = Array.isArray(sourceFrame?.placements)
+              ? sourceFrame.placements
+              : [];
+            sourcePlacements.forEach((placement) => {
+              mergedPlacements.push({
+                ...placement,
+                x: frameX + decorStripWidth + safeNumber(placement?.x, 0),
+                y: frameY + safeNumber(placement?.y, 0),
+              });
+            });
+          });
+
+          resultSheets.push({
+            ...packedSheet,
+            width: GIT_OPTIMIZED_SHEET_WIDTH_MM,
+            height: GIT_OPTIMIZED_SHEET_HEIGHT_MM,
+            pageMarginMm: 0,
+            frameSpacingMm: 0,
+            leftInset: 0,
+            topInset: 0,
+            rightInset: 0,
+            bottomInset: 0,
+            leftStripWidthMm: 0,
+            frameRect: null,
+            frameRects,
+            frameInfos,
+            placements: mergedPlacements,
+          });
+        });
+      });
+
+      const sheetCount = resultSheets.length;
+      const sheetsWithIndex = resultSheets.map((s, idx) => ({
+        ...s,
+        globalSheetIndex: idx + 1,
+        globalSheetCount: sheetCount,
+      }));
+
+      return {
+        sheets: sheetsWithIndex,
+        leftovers: resultLeftovers,
+      };
+    }
 
     const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
     const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
@@ -5510,9 +5797,9 @@ const LayoutPlannerModal = ({
       normalizedItems,
       { ...sheetSize, sortOrder: pdfSortOrder },
       effectiveSignSpacingMm,
-      isMjFrameMode ? 0 : pageInsetMm,
+      pageInsetMm,
       frameInsetMm,
-      layoutOptions
+      {}
     );
 
     const sheetCount = Array.isArray(planned?.sheets) ? planned.sheets.length : 0;
@@ -5573,10 +5860,9 @@ const LayoutPlannerModal = ({
   const nothingToPlace = totalRequestedCopies === 0;
 
   const handleExportPdf = useCallback(async () => {
-    // Export always uses ALL groups to keep PDF rules intact.
-    if (!sheets.length || isExporting) return;
+    if (!visibleSheets.length || isExporting) return;
 
-    const totalSheets = sheets.length;
+    const totalSheets = visibleSheets.length;
     if (totalSheets > 10) {
       if (typeof window !== "undefined" && typeof window.alert === "function") {
         window.alert(
@@ -5598,10 +5884,6 @@ const LayoutPlannerModal = ({
         .replace(/[:T]/g, "-")
         .slice(0, 19);
       const sheetLabel = FORMATS[formatKey]?.label || "sheet";
-      const zip = new JSZip();
-      const svgAssets = {};
-      const markupToAssetKey = new Map();
-      let svgAssetCounter = 0;
 
       const computeFrameRect = (sheet) => {
         if (!hasBrownFrame) return null;
@@ -5714,32 +5996,41 @@ const LayoutPlannerModal = ({
         return { minX, minY, maxX, maxY };
       };
 
-      const preparedSheets = sheets.map((sheet, sheetIndex) => {
+      const resolvedProjectId =
+        normalizeProjectIdForLabel(projectId) ||
+        (() => {
+          try {
+            return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
+          } catch {
+            return null;
+          }
+        })();
+
+      const groupKeyBySheet = (sheet) => {
+        const first = sheet?.placements?.[0] || null;
+        return first ? getMaterialKey(first) : "unknown";
+      };
+
+      const groupSheets = {};
+      visibleSheets.forEach((sheet) => {
+        const key = groupKeyBySheet(sheet);
+        if (!groupSheets[key]) groupSheets[key] = [];
+        groupSheets[key].push(sheet);
+      });
+
+      const sheetGroupNumbers = {};
+      Object.entries(groupSheets).forEach(([key, grouped]) => {
+        grouped.forEach((sheet, idx) => {
+          sheetGroupNumbers[sheet.index ?? sheet.globalSheetIndex ?? idx] = {
+            groupIndex: idx + 1,
+            groupCount: grouped.length,
+          };
+        });
+      });
+
+      const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
           const previewData = buildPlacementPreview(placement, { enableGaps });
-          let svgAssetKey = null;
-
-          if (previewData?.type === "svg" && previewData.exportMarkup) {
-            try {
-              const fileName =
-                previewData.fileName ||
-                `${placement.baseId || placement.id}.svg`;
-              zip.file(fileName, previewData.exportMarkup);
-            } catch (zipError) {
-              console.error("Не вдалося додати SVG у ZIP", zipError);
-            }
-
-            const markup = previewData.exportMarkup;
-            const existingAssetKey = markupToAssetKey.get(markup);
-            if (existingAssetKey) {
-              svgAssetKey = existingAssetKey;
-            } else {
-              svgAssetCounter += 1;
-              svgAssetKey = `svg-${svgAssetCounter}`;
-              markupToAssetKey.set(markup, svgAssetKey);
-              svgAssets[svgAssetKey] = markup;
-            }
-          }
 
           return {
             id: placement.id,
@@ -5749,35 +6040,37 @@ const LayoutPlannerModal = ({
             y: placement.y,
             width: placement.width,
             height: placement.height,
-            rotated: !!placement.rotated,
             copyIndex: placement.copyIndex ?? 1,
             copies: placement.copies ?? 1,
-            svgAssetKey,
-            svgMarkup: null,
+            svgMarkup: previewData?.type === "svg" ? previewData.exportMarkup : null,
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,
             materialColor: placement.materialColor ?? null,
-            materialThicknessMm: placement.materialThicknessMm ?? null,
-            isAdhesiveTape: placement.isAdhesiveTape ?? false,
+            materialThicknessMm: isMjFrameMode ? null : (placement.materialThicknessMm ?? null),
+            isAdhesiveTape: isMjFrameMode ? false : (placement.isAdhesiveTape ?? false),
             themeStrokeColor: placement.themeStrokeColor ?? null,
           };
         });
 
         const frameRect = computeFrameRect(sheet);
         const placementsBounds = computePlacementsBounds(sheet);
-
-        const resolvedProjectId =
-          normalizeProjectIdForLabel(projectId) ||
-          (() => {
-            try {
-              return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
-            } catch {
-              return null;
-            }
-          })();
-
         const sheetInfoEnabled = !!pdfAddSheetInfo;
+
+        const frameRects = Array.isArray(sheet?.frameRects) ? sheet.frameRects : [];
+        const frameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
+        const preparedFrameInfos = isMjFrameMode
+          ? frameInfos.map((info) => {
+              const index = Number(info?.frameIndex) || 1;
+              const count = Number(info?.frameCount) || frameInfos.length || 1;
+              const projectIdLabel = resolvedProjectId ? String(resolvedProjectId) : "";
+              return {
+                ...info,
+                topLabel: projectIdLabel || "",
+                bottomLabel: `Sh ${index}/${count}`,
+              };
+            })
+          : frameInfos;
 
         const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
         const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
@@ -5796,6 +6089,7 @@ const LayoutPlannerModal = ({
 
         const sheetInfoPlacement = (() => {
           if (!sheetInfoEnabled) return null;
+
           if (exportMode === "Sheet optimized (MJ) Fr.") {
             if (stripWidthMm <= 0) return null;
             const centerYmm = holeCentersY.length
@@ -5808,12 +6102,21 @@ const LayoutPlannerModal = ({
             };
           }
 
-          // Other modes: center in the full band between page-left edge and canvas-left edge.
-          const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
-          const labelBandWidthMm = leftInsetMm > 0 ? leftInsetMm : safeFrameSpacingMm;
-          if (labelBandWidthMm <= 0) return null;
+          if (exportMode === "Normal" || exportMode === "Normal (MJ) Frame") {
+            return null;
+          }
 
-          const fallbackYCenterMm = (() => {
+          if (safeFrameSpacingMm <= 0) return null;
+
+          const contentLeftMm = (() => {
+            if (placementsBounds && Number.isFinite(placementsBounds.minX)) {
+              return placementsBounds.minX;
+            }
+            if (frameRect) return frameRect.x + safeFrameSpacingMm;
+            return safePageMarginMm + safeFrameSpacingMm;
+          })();
+
+          const yCenterMm = (() => {
             if (frameRect) return frameRect.y + frameRect.height / 2;
             if (placementsBounds) {
               return (placementsBounds.minY + placementsBounds.maxY) / 2;
@@ -5822,27 +6125,48 @@ const LayoutPlannerModal = ({
           })();
 
           return {
-            xCenterMm: labelBandWidthMm / 2,
-            yCenterMm: fallbackYCenterMm,
-            areaWidthMm: labelBandWidthMm,
+            xCenterMm: Math.max(
+              safePageMarginMm + safeFrameSpacingMm / 2,
+              contentLeftMm - safeFrameSpacingMm / 2
+            ),
+            yCenterMm,
+            areaWidthMm: safeFrameSpacingMm,
           };
         })();
 
-        const sheetInfo = sheetInfoPlacement
-          ? {
-              projectId: resolvedProjectId,
-              sheetIndex: sheet?.globalSheetIndex ?? sheetIndex + 1,
-              sheetCount: sheet?.globalSheetCount ?? sheets.length,
+        const groupNum =
+          sheetGroupNumbers[sheet.index ?? sheet.globalSheetIndex ?? sheetIndex] ||
+          { groupIndex: sheetIndex + 1, groupCount: visibleSheets.length };
+
+        const sheetInfo = (() => {
+          if (!sheetInfoPlacement) return null;
+          if (exportMode === "Sheet optimized (MJ) Fr.") {
+            return {
               ...sheetInfoPlacement,
-            }
-          : null;
+              projectId: resolvedProjectId,
+              sheetIndex: groupNum.groupIndex,
+              sheetCount: groupNum.groupCount,
+              customLabel: `${resolvedProjectId || ""} ● ${groupNum.groupIndex}/${groupNum.groupCount}`,
+            };
+          }
+          return {
+            projectId: resolvedProjectId,
+            sheetIndex: groupNum.groupIndex,
+            sheetCount: groupNum.groupCount,
+            ...sheetInfoPlacement,
+          };
+        })();
 
         return {
           index: sheetIndex,
           width: sheet.width,
           height: sheet.height,
           frameRect,
+          frameRects,
+          frameInfos: preparedFrameInfos,
           exportMode,
+          disableMjStrip: isMjFrameMode,
+          skipMaterialSplit: isMjFrameMode,
           leftStripWidthMm: sheet.leftStripWidthMm ?? 0,
           leftInset: sheet.leftInset ?? null,
           topInset: sheet.topInset ?? null,
@@ -5856,52 +6180,17 @@ const LayoutPlannerModal = ({
       const exportEndpoint =
         import.meta.env.VITE_LAYOUT_EXPORT_URL || "/api/layout-pdf";
 
-      const payload = {
-        sheetLabel,
-        timestamp,
-        formatKey,
-        exportMode,
-        spacingMm: effectiveSignSpacingMm,
-        svgAssets,
-        sheets: preparedSheets,
-      };
-
-      const payloadJson = JSON.stringify(payload);
-      const requestHeaders = {
-        "Content-Type": "application/json",
-      };
-
-      let requestBody = payloadJson;
-      if (typeof CompressionStream !== "undefined") {
-        try {
-          const encoder = new TextEncoder();
-          const input = encoder.encode(payloadJson);
-          const compressionStream = new CompressionStream("gzip");
-          const writer = compressionStream.writable.getWriter();
-          await writer.write(input);
-          await writer.close();
-
-          const compressedBuffer = await new Response(
-            compressionStream.readable
-          ).arrayBuffer();
-
-          if (
-            compressedBuffer &&
-            compressedBuffer.byteLength > 0 &&
-            compressedBuffer.byteLength < input.byteLength
-          ) {
-            requestBody = compressedBuffer;
-            requestHeaders["Content-Encoding"] = "gzip";
-          }
-        } catch (compressionError) {
-          console.warn("PDF payload compression failed, using plain JSON", compressionError);
-        }
-      }
-
       const response = await fetch(exportEndpoint, {
         method: "POST",
-        headers: requestHeaders,
-        body: requestBody,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sheetLabel,
+          timestamp,
+          formatKey,
+          exportMode,
+          spacingMm: effectiveSignSpacingMm,
+          sheets: preparedSheets,
+        }),
       });
 
       if (!response.ok) {
@@ -5911,30 +6200,13 @@ const LayoutPlannerModal = ({
 
       const pdfBlob = await response.blob();
       const pdfUrl = URL.createObjectURL(pdfBlob);
-
       const link = document.createElement("a");
       link.href = pdfUrl;
       link.download = `layout-${sheetLabel}-${timestamp}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
-
-      const hasSvgExports = Object.keys(zip.files || {}).length > 0;
-      if (hasSvgExports) {
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        const zipUrl = URL.createObjectURL(zipBlob);
-
-        const svgLink = document.createElement("a");
-        svgLink.href = zipUrl;
-        svgLink.download = `layout-${sheetLabel}-${timestamp}-svg.zip`;
-        document.body.appendChild(svgLink);
-        svgLink.click();
-        document.body.removeChild(svgLink);
-
-        setTimeout(() => URL.revokeObjectURL(zipUrl), 1000);
-      }
     } catch (error) {
       console.error("Failed to export PDF", error);
       if (typeof window !== "undefined" && typeof window.alert === "function") {
@@ -5950,13 +6222,14 @@ const LayoutPlannerModal = ({
     exportMode,
     isExporting,
     sheets,
-    spacingMm,
+    visibleSheets,
     effectiveSignSpacingMm,
     enableGaps,
     pdfPageMargin,
     frameSpacingMm,
     pdfAddSheetInfo,
     projectId,
+    isMjFrameMode,
   ]);
 
   if (!isOpen) return null;
@@ -6005,8 +6278,9 @@ const LayoutPlannerModal = ({
             <span>Формат аркуша</span>
             <select
               value={formatKey}
-              onChange={(event) => setFormatKey(event.target.value)}
-              disabled={isMjFrameMode}
+              onChange={() => {}}
+              disabled
+              title="Автоматично визначається вибраним режимом"
             >
               {Object.entries(FORMATS).map(([key, format]) => (
                 <option key={key} value={key}>
@@ -6026,8 +6300,9 @@ const LayoutPlannerModal = ({
                   className={
                     value === orientation ? styles.orientationActive : ""
                   }
-                  onClick={() => setOrientation(value)}
-                  disabled={isMjFrameMode}
+                  onClick={() => {}}
+                  disabled
+                  title="Автоматично визначається вибраним режимом"
                 >
                   {ORIENTATION_LABELS[value]}
                 </button>
@@ -6040,13 +6315,15 @@ const LayoutPlannerModal = ({
             <button
               type="button"
               className={enableGaps ? styles.orientationActive : ""}
-              onClick={() => setEnableGaps(!enableGaps)}
+              onClick={() => {}}
+              disabled
+              title="Автоматично визначається вибраним режимом"
               style={{
                 padding: "6px 12px",
                 borderRadius: "4px",
                 border: "1px solid #ccc",
                 background: enableGaps ? "#e6f7ff" : "#fff",
-                cursor: "pointer",
+                cursor: "not-allowed",
                 marginLeft: "10px"
               }}
             >
@@ -6279,56 +6556,6 @@ const LayoutPlannerModal = ({
                 const showSheetInfo = !!pdfAddSheetInfo;
                 const safePageMarginMm = Math.max(0, Number(pdfPageMargin) || 0);
                 const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
-                const sheetInfoPlacement = (() => {
-                  if (!showSheetInfo) return null;
-                  if (exportMode === "Sheet optimized (MJ) Fr.") {
-                    if (stripWidthMm <= 0) return null;
-                    const centerYmm = holeCentersY.length
-                      ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
-                      : (Number(sheet?.height) || 0) / 2;
-                    return {
-                      xLeftMm: 0,
-                      areaWidthMm: stripWidthMm,
-                      yCenterMm: centerYmm,
-                    };
-                  }
-
-                  const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
-                  const labelBandWidthMm = leftInsetMm > 0 ? leftInsetMm : safeFrameSpacingMm;
-                  if (labelBandWidthMm <= 0) return null;
-
-                  const fallbackYCenterMm = (() => {
-                    if (hasBrownFrame && frameRect) return frameRect.y + frameRect.height / 2;
-                    if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
-                    return (Number(sheet?.height) || 0) / 2;
-                  })();
-
-                  return {
-                    xLeftMm: 0,
-                    areaWidthMm: labelBandWidthMm,
-                    yCenterMm: fallbackYCenterMm,
-                  };
-                })();
-
-                const resolvedProjectId =
-                  normalizeProjectIdForLabel(projectId) ||
-                  (() => {
-                    try {
-                      return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
-                    } catch {
-                      return null;
-                    }
-                  })();
-
-                const sheetInfoLine1 = resolvedProjectId ? `${resolvedProjectId}` : "";
-                const sheetInfoLine2 = `Sh ${sheet?.globalSheetIndex ?? sheetIndex + 1} / ${sheet?.globalSheetCount ?? sheets.length}`;
-
-                const sheetInfoFontPx = (() => {
-                  const bandPx = Math.max(0, (sheetInfoPlacement?.areaWidthMm || 0) * scale);
-                  if (bandPx <= 0) return 0;
-                  return Math.max(3, Math.min(9, bandPx * 0.9));
-                })();
-
                 const frameRect = (() => {
                   const placements = Array.isArray(sheet?.placements)
                     ? sheet.placements
@@ -6408,6 +6635,55 @@ const LayoutPlannerModal = ({
 
                   if (width <= 0 || height <= 0) return null;
                   return { x, y, width, height };
+                })();
+                const sheetInfoPlacement = (() => {
+                  if (!showSheetInfo) return null;
+                  if (exportMode === "Sheet optimized (MJ) Fr.") {
+                    if (stripWidthMm <= 0) return null;
+                    const centerYmm = holeCentersY.length
+                      ? holeCentersY.reduce((a, b) => a + b, 0) / holeCentersY.length
+                      : (Number(sheet?.height) || 0) / 2;
+                    return {
+                      xLeftMm: 0,
+                      areaWidthMm: stripWidthMm,
+                      yCenterMm: centerYmm,
+                    };
+                  }
+
+                  const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);
+                  const labelBandWidthMm = leftInsetMm > 0 ? leftInsetMm : safeFrameSpacingMm;
+                  if (labelBandWidthMm <= 0) return null;
+
+                  const fallbackYCenterMm = (() => {
+                    if (hasBrownFrame && frameRect) return frameRect.y + frameRect.height / 2;
+                    if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
+                    return (Number(sheet?.height) || 0) / 2;
+                  })();
+
+                  return {
+                    xLeftMm: 0,
+                    areaWidthMm: labelBandWidthMm,
+                    yCenterMm: fallbackYCenterMm,
+                  };
+                })();
+
+                const resolvedProjectId =
+                  normalizeProjectIdForLabel(projectId) ||
+                  (() => {
+                    try {
+                      return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
+                    } catch {
+                      return null;
+                    }
+                  })();
+
+                const sheetInfoLine1 = resolvedProjectId ? `${resolvedProjectId}` : "";
+                const sheetInfoLine2 = `Sh ${sheet?.globalSheetIndex ?? sheetIndex + 1} / ${sheet?.globalSheetCount ?? sheets.length}`;
+
+                const sheetInfoFontPx = (() => {
+                  const bandPx = Math.max(0, (sheetInfoPlacement?.areaWidthMm || 0) * scale);
+                  if (bandPx <= 0) return 0;
+                  return Math.max(3, Math.min(9, bandPx * 0.9));
                 })();
 
                 return (
@@ -6493,21 +6769,21 @@ const LayoutPlannerModal = ({
                         />
                       ) : null}
                       {sheet.placements.map((placement) => {
-                        const previewData = buildPlacementPreview(placement, {
-                          enableGaps,
-                          hideFrames: true,
-                        });
-                        const hasPreview = !!previewData;
-                        const rotatedPreviewStyle = placement?.rotated
-                          ? {
-                              width: `${placement.height * scale}px`,
-                              height: `${placement.width * scale}px`,
-                              transform: "rotate(90deg)",
-                              transformOrigin: "center center",
-                              objectFit: "contain",
-                              flex: "0 0 auto",
-                            }
-                          : undefined;
+                        // const previewData = buildPlacementPreview(placement, {
+                        //   enableGaps,
+                        //   hideFrames: true,
+                        // });
+                        // const hasPreview = !!previewData;
+                        // const rotatedPreviewStyle = placement?.rotated
+                        //   ? {
+                        //       width: `${placement.height * scale}px`,
+                        //       height: `${placement.width * scale}px`,
+                        //       transform: "rotate(90deg)",
+                        //       transformOrigin: "center center",
+                        //       objectFit: "contain",
+                        //       flex: "0 0 auto",
+                        //     }
+                        //   : undefined;
 
                         return (
                           <div
@@ -6520,6 +6796,7 @@ const LayoutPlannerModal = ({
                               top: `${placement.y * scale}px`,
                             }}
                           >
+                            {/*
                             <div className={styles.placementPreview}>
                               {previewData?.previewMarkup ? (
                                 <div
@@ -6537,6 +6814,7 @@ const LayoutPlannerModal = ({
                                 />
                               ) : null}
                             </div>
+                            */}
                           </div>
                         );
                       })}

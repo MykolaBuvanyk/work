@@ -57,7 +57,7 @@ const Order=sequelize.define('orders',{
   orderType:{type:DataTypes.STRING,allowNull:false,defaultValue:''},
   accessories:{type:DataTypes.TEXT,allowNull:false,defaultValue:''},
   idMongo:{type:DataTypes.STRING,allowNull:false},
-  isPaid:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:false},
+  isPaid:{type:DataTypes.BOOLEAN,allowNull:true,defaultValue:false},
   netAfterDiscount:{type:DataTypes.FLOAT,allowNull:false}
 })
 

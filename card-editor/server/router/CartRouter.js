@@ -235,8 +235,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const user=await User.findOne({where:{id:req.user.id}});
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order=await Order.create({
-      sum: totalPriceInclVat,
-      netAfterDiscount: netAfterDiscount,
+      sum: user.type == 'Admin' ? 0 : totalPriceInclVat,
+      netAfterDiscount: user.type ==' Admin'? 0 : netAfterDiscount,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country:checkoutCountryRegion || checkoutCountryName || fallbackCountry,
@@ -245,7 +245,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       orderType:'',
       deliveryType: checkoutDeliveryLabel,
       accessories:JSON.stringify(normalizedAccessories),
-      idMongo: String(created._id)
+      idMongo: String(created._id),
+      isPaid:user.type == 'Admin' ?null:false
     })
 
     const userOrders=await Order.findOne({where:{userId:req.user.id,status:'Deleted'}});
@@ -334,6 +335,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     const offset = limit * (page - 1);
 
     const where = {};
+    const userWhere={};
 
     if (status) {
       where.status = status;
@@ -361,7 +363,11 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     
 
     if (isPaid !== undefined) {
-      where.isPaid = isPaid === 'true';
+      if(isPaid=='admin'){
+        userWhere.type='Admin';
+      }else{
+        where.isPaid = isPaid === 'true';
+      }
     }
 
     if (lang) {
@@ -381,7 +387,7 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
       limit,
       where,
       order: [['createdAt', 'DESC']],
-      include: [{ model: User }],
+      include: [{ model: User,where:userWhere }],
     });
     let ordersForSum = await Order.findAll({
       where,

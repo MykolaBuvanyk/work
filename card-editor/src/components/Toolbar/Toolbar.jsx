@@ -133,6 +133,7 @@ const Toolbar = ({ formData }) => {
   const RECT_HOLE_HEIGHT_MM = 2;
   const RECT_HOLE_MIN_OFFSET_X_MM = 3;
   const RECT_HOLE_MIN_OFFSET_Y_MM = 2;
+  const CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM = 3;
   // const mmToPx = mm => (typeof mm === 'number' ? Math.round(mm * PX_PER_MM) : 0);
   // NOTE: Fabric supports sub-pixel geometry; avoid rounding to keep holes/cuts accurate.
   const mmToPx = mm => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
@@ -4779,7 +4780,7 @@ const Toolbar = ({ formData }) => {
           .find(o => o.isCircleWithLineCenterLine || o.name === 'circleWithLineCenterLine');
         if (lineObj) {
           const diameterMm = pxToMm(diameterPx);
-          const lineWidthMm = diameterMm * 0.65;
+          const lineWidthMm = Math.max(1, diameterMm - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
           // Fixed 1mm thickness: must NOT depend on toolbar thickness.
           const lineThicknessMm = 1;
           lineObj.set({
@@ -4850,7 +4851,7 @@ const Toolbar = ({ formData }) => {
         const vLine = canvas
           .getObjects()
           .find(o => o.isCircleWithCrossVerticalLine || o.name === 'circleWithCrossVerticalLine');
-        const lineWidthMm = diameterMm * 0.65;
+        const lineWidthMm = Math.max(1, diameterMm - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
         // Fixed 1mm thickness: must NOT depend on toolbar thickness.
         const lineThicknessMm = 1;
         const lineThicknessPx = mmToPx(lineThicknessMm);
@@ -4879,7 +4880,7 @@ const Toolbar = ({ formData }) => {
           hLine.setCoords();
         }
         if (vLine) {
-          const vHeightMm = diameterMm * 0.33;
+          const vHeightMm = Math.max(1, diameterMm / 2 - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
           vLine.set({
             width: lineThicknessPx,
             height: mmToPx(vHeightMm),
@@ -8130,7 +8131,7 @@ const Toolbar = ({ formData }) => {
 
       // Додаємо горизонтальну лінію по центру (65% ширини кола)
       const diameterMm = 100;
-      const lineWidthMm = diameterMm * 0.65;
+      const lineWidthMm = Math.max(1, diameterMm - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
       const lineThicknessMm = 1; // Fixed 1mm thickness
 
       // Лінії повинні відповідати поточному кольору тексту/обводки (включно з синім/червоним).
@@ -8243,7 +8244,7 @@ const Toolbar = ({ formData }) => {
       updateCanvasOutline();
       // Додаємо горизонтальну лінію (як у icon4)
       const diameterMm = 100;
-      const lineWidthMm = diameterMm * 0.65;
+      const lineWidthMm = Math.max(1, diameterMm - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
       const lineThicknessMm = 1; // Fixed 1mm thickness
 
       // Лінії повинні відповідати поточному кольору тексту/обводки (включно з синім/червоним).
@@ -8281,7 +8282,7 @@ const Toolbar = ({ formData }) => {
       });
       canvas.add(hLine);
       // Додаємо вертикальну лінію: висота 33% діаметра, починається від центру вниз
-      const vHeightMm = diameterMm * 0.33;
+      const vHeightMm = Math.max(1, diameterMm / 2 - CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM);
       const vLine = new fabric.Rect({
         left: mmToPx(100) / 2,
         top: mmToPx(100) / 2 + 2, // верх вертикальної лінії у центрі

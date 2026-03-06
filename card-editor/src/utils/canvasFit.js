@@ -101,10 +101,15 @@ export const applyCreationScaleByCanvas = (canvas, obj) => {
   if (!Number.isFinite(factor) || Math.abs(factor - 1) < 1e-6) return 1;
 
   try {
+    const roundToTenths = (value) => Math.round((Number(value) || 0) * 10) / 10;
     const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
     const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
-    const nextScaleX = signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * factor);
-    const nextScaleY = signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * factor);
+    const nextScaleX = roundToTenths(
+      signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * factor)
+    );
+    const nextScaleY = roundToTenths(
+      signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * factor)
+    );
     obj.set?.({ scaleX: nextScaleX, scaleY: nextScaleY });
     obj.setCoords?.();
   } catch {

@@ -1228,6 +1228,48 @@ const Canvas = ({ className }) => {
         fCanvas.requestRenderAll && fCanvas.requestRenderAll();
       } catch { }
     };
+
+    const logCanvasSizeDebug = (reason, requested = null) => {
+      try {
+        if (typeof window !== 'undefined' && window.__CARD_SIZE_DEBUG__ === false) return;
+      } catch { }
+
+      try {
+        const design = designRef.current || {};
+        const actualFabricW = Number(fCanvas.getWidth?.() || fCanvas.width || 0);
+        const actualFabricH = Number(fCanvas.getHeight?.() || fCanvas.height || 0);
+        const lowerEl = fCanvas.lowerCanvasEl;
+        const rect = lowerEl?.getBoundingClientRect?.();
+        const cssW = Number((rect?.width || 0).toFixed(2));
+        const cssH = Number((rect?.height || 0).toFixed(2));
+        const currentScale = Number((scaleRef.current || 1).toFixed(4));
+
+        console.log('[SizeDebug][Canvas] set-vs-real', {
+          reason,
+          requested,
+          designRef: {
+            widthPx: Number((Number(design.width) || 0).toFixed(2)),
+            heightPx: Number((Number(design.height) || 0).toFixed(2)),
+            widthMm: Number(pxToMm(Number(design.width) || 0).toFixed(2)),
+            heightMm: Number(pxToMm(Number(design.height) || 0).toFixed(2)),
+          },
+          actualFabric: {
+            widthPx: Number(actualFabricW.toFixed(2)),
+            heightPx: Number(actualFabricH.toFixed(2)),
+            widthMm: Number(pxToMm(actualFabricW).toFixed(2)),
+            heightMm: Number(pxToMm(actualFabricH).toFixed(2)),
+          },
+          actualDomCss: {
+            widthPx: cssW,
+            heightPx: cssH,
+          },
+          displayScale: currentScale,
+        });
+      } catch (error) {
+        console.warn('[SizeDebug][Canvas] failed to log diagnostics', error);
+      }
+    };
+
     const resizeToViewport = () => {
       if (!viewportRef.current) return;
       const { width: baseW, height: baseH } = designRef.current;
@@ -1277,6 +1319,11 @@ const Canvas = ({ className }) => {
       try {
         syncShadowHost();
       } catch { }
+
+      logCanvasSizeDebug('resizeToViewport', {
+        widthPx: Number(baseW || 0),
+        heightPx: Number(baseH || 0),
+      });
     };
 
     // Helper: compute max display scale percent allowed so canvas fits inside viewport - 10px
@@ -1390,6 +1437,13 @@ const Canvas = ({ className }) => {
           try {
             fCanvas.fire('canvas:resized', { width: nextW, height: nextH, prevW, prevH });
           } catch { }
+
+          logCanvasSizeDebug('setDimensions', {
+            widthPx: Number(nextW || 0),
+            heightPx: Number(nextH || 0),
+            prevWidthPx: Number(prevW || 0),
+            prevHeightPx: Number(prevH || 0),
+          });
 
         } finally {
           resizingRef.current = false;

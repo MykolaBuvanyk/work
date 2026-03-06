@@ -356,7 +356,8 @@ export async function generateCanvasPreviews(canvas, options = {}) {
 
   let previewSvg = "";
   let previewPng = "";
-  const svgBleed = 1.5; // Відступ для уникнення обрізання країв у SVG
+  const ORIGINAL_SIZE_MODE = true;
+  const svgBleed = ORIGINAL_SIZE_MODE ? 0 : 1.5; // Original mode keeps strict 1:1 geometry.
 
   const pngMultiplier =
     typeof options.pngMultiplier === "number" && isFinite(options.pngMultiplier)

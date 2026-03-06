@@ -284,6 +284,28 @@ const YourProjectsModal = ({ onClose }) => {
         localStorage.setItem("currentProjectId", project.id);
         localStorage.setItem("currentProjectName", project.name || "");
       } catch {}
+
+      try {
+        const openedAccessories = Array.isArray(project?.accessories)
+          ? project.accessories
+          : [];
+        localStorage.setItem(
+          "pendingOpenedProjectAccessories",
+          JSON.stringify(openedAccessories)
+        );
+        sessionStorage.setItem(
+          "pendingOpenedProjectAccessories",
+          JSON.stringify(openedAccessories)
+        );
+
+        if (typeof window !== "undefined") {
+          const setter = window.setSelectedAccessories;
+          if (typeof setter === "function") {
+            setter(openedAccessories);
+          }
+        }
+      } catch {}
+
       const first = project.canvases && project.canvases[0];
       if (first) {
         try {

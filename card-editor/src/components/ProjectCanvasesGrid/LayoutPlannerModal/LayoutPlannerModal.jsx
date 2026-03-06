@@ -2434,6 +2434,29 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
       : "none";
 
   const processed = new Set();
+
+  // Keep exactly one blue contour: prefer the base #canvaShape from export markup.
+  // Remove previously generated extra blue copies to avoid overlapping duplicates in PDF/Laser tools.
+  const hasBaseBlueOutline = !!rootElement.querySelector?.("#canvaShape");
+  if (hasBaseBlueOutline && rootElement.querySelectorAll) {
+    Array.from(
+      rootElement.querySelectorAll('[data-export-border-blue="true"]') || []
+    ).forEach((node) => {
+      try {
+        node.parentNode?.removeChild(node);
+      } catch {
+        // ignore
+      }
+    });
+  }
+
+  const hasAnyBlueOutline = () => {
+    if (!rootElement?.querySelector) return false;
+    return !!rootElement.querySelector(
+      '#canvaShape, [data-export-border-blue="true"]'
+    );
+  };
+
   const processNode = (node) => {
     if (!node || processed.has(node)) return;
     processed.add(node);
@@ -2441,7 +2464,7 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     // Keep a visible blue contour for custom border export preview.
     // Insert the blue copy AFTER the green node so it is not visually hidden.
     const baseId = node.getAttribute("id") || "";
-    if (baseId !== "canvaShape") {
+    if (baseId !== "canvaShape" && !hasAnyBlueOutline()) {
       try {
         const blueCopy = node.cloneNode(true);
         if (blueCopy && typeof blueCopy.setAttribute === "function") {

@@ -34,6 +34,33 @@ const DEFAULT_SIGN_SIZE_MM = {
 
 const MAX_CANVASES_PER_PROJECT = 100;
 
+const getSelectedAccessoriesSnapshot = () => {
+  try {
+    const getter =
+      typeof window !== "undefined" ? window.getSelectedAccessories : null;
+    const list = typeof getter === "function" ? getter() : null;
+    if (!Array.isArray(list)) return [];
+
+    return list
+      .filter((item) => item && typeof item === "object" && item.checked)
+      .map((item) => {
+        const qtyRaw = Number(item.qty);
+        const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
+        return {
+          id: item.id,
+          name: item.name,
+          qty,
+          price: item.price,
+          desc: item.desc,
+          checked: true,
+          visible: true,
+        };
+      });
+  } catch {
+    return [];
+  }
+};
+
 const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_EXPORT_FILL = "none";
 
@@ -2078,6 +2105,7 @@ export async function saveNewProject(name, canvas) {
     createdAt: now,
     updatedAt: now,
     canvases,
+    accessories: getSelectedAccessoriesSnapshot(),
   };
   await putProject(project);
   try {
@@ -2314,7 +2342,12 @@ export async function saveCurrentProject(canvas) {
               isActiveUnsaved,
             }
           );
-          const updated = { ...existing, canvases, updatedAt: now };
+          const updated = {
+            ...existing,
+            canvases,
+            updatedAt: now,
+            accessories: getSelectedAccessoriesSnapshot(),
+          };
           await putProject(updated);
           try {
             const detail = {
@@ -2418,7 +2451,12 @@ export async function saveCurrentProject(canvas) {
       }
     }
   }
-  const updated = { ...existing, canvases, updatedAt: now };
+  const updated = {
+    ...existing,
+    canvases,
+    updatedAt: now,
+    accessories: getSelectedAccessoriesSnapshot(),
+  };
   await putProject(updated);
   try {
     const detail = {

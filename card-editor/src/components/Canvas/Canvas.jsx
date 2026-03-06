@@ -1035,6 +1035,19 @@ const Canvas = ({ className }) => {
         } catch { }
         try {
           if (t.hiddenTextarea) {
+            // On-canvas text must stay single-line: block Enter before Fabric adds a newline.
+            if (!t.__preventEnterHandler) {
+              t.__preventEnterHandler = evt => {
+                if (evt?.key === 'Enter') {
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                }
+              };
+            }
+            try {
+              t.hiddenTextarea.removeEventListener('keydown', t.__preventEnterHandler);
+            } catch { }
+            t.hiddenTextarea.addEventListener('keydown', t.__preventEnterHandler);
             try {
               t.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
             } catch { }
@@ -1053,6 +1066,11 @@ const Canvas = ({ className }) => {
       } catch { }
       try {
         if (t) t.__caretHideTimer = null;
+      } catch { }
+      try {
+        if (t && t.hiddenTextarea && t.__preventEnterHandler) {
+          t.hiddenTextarea.removeEventListener('keydown', t.__preventEnterHandler);
+        }
       } catch { }
       try {
         if (t && t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);

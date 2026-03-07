@@ -6297,7 +6297,7 @@ const LayoutPlannerModal = ({
         </div>
 
         <div className={styles.controls}>
-          <label className={styles.controlGroup}>
+          <label className={`${styles.controlGroup} ${styles.hiddenControl}`}>
             <span>Формат аркуша</span>
             <select
               value={formatKey}
@@ -6313,7 +6313,7 @@ const LayoutPlannerModal = ({
             </select>
           </label>
 
-          <div className={styles.controlGroup}>
+          <div className={`${styles.controlGroup} ${styles.hiddenControl}`}>
             <span>Орієнтація</span>
             <div className={styles.orientationToggle}>
               {["portrait", "landscape"].map((value) => (
@@ -6333,7 +6333,7 @@ const LayoutPlannerModal = ({
             </div>
           </div>
 
-          <div className={styles.controlGroup}>
+          <div className={`${styles.controlGroup} ${styles.hiddenControl}`}>
             <span>Розриви контуру</span>
             <button
               type="button"
@@ -6487,6 +6487,7 @@ const LayoutPlannerModal = ({
             <span>Add sheet info</span>
             <div className={styles.controlInline}>
               <input
+                className={styles.sheetInfoCheckbox}
                 type="checkbox"
                 checked={pdfAddSheetInfo}
                 onChange={(e) => setPdfAddSheetInfo(e.target.checked)}

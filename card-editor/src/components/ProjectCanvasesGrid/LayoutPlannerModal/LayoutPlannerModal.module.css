@@ -47,11 +47,16 @@
   border: none;
   width: 36px;
   height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   font-size: 20px;
+  line-height: 1;
   cursor: pointer;
   transition: transform 0.2s ease;
   padding: 0;
+  padding-bottom: 5px;
 }
 
 .closeBtn:hover {
@@ -73,12 +78,17 @@
   color: #475569;
 }
 
+.hiddenControl {
+  display: none;
+}
+
 .controlGroup select {
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border: 1px solid #565656;
   min-width: 180px;
   font-size: 14px;
+  background: #3b3b3b;
   color: white;
 }
 
@@ -86,11 +96,12 @@
 .controlGroup input[type="text"] {
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border: 1px solid #565656;
   min-width: 80px;
   width: 90px;
   font-size: 14px;
-  color: #0f172a;
+  background: #3b3b3b;
+  color: #ffffff;
 }
 
 .controlGroup input[type="checkbox"] {
@@ -99,10 +110,29 @@
   accent-color: #0f172a;
 }
 
+.controlGroup select:disabled,
+.controlGroup input[type="number"]:disabled,
+.controlGroup input[type="text"]:disabled {
+  background: #3b3b3b;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.controlGroup input[type="number"]::placeholder,
+.controlGroup input[type="text"]::placeholder {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .controlInline {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.sheetInfoCheckbox::after {
+  position: relative;
+  top: 0px !important;
+  left: 5px !important;
 }
 
 .hint {

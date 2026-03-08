@@ -34,6 +34,7 @@ const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 // Стиль рамки: використовуємо акцентний синій як в інших компонентах
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
+const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
 
 const buildSilverGradientPattern = targetCanvas => {
   try {
@@ -185,6 +186,70 @@ const Canvas = ({ className }) => {
         o.hasControls === false && o.lockScalingX === true && o.lockScalingY === true;
 
       return !fromShapeTab && looksLockedLikeCutTab;
+    };
+
+    const getCutOwner = object => {
+      let current = object;
+      while (current) {
+        if (current.isCutElement === true) return current;
+        current = current.group || null;
+      }
+      return null;
+    };
+
+    const shouldKeepCutStrokeFixed = object => {
+      const cutOwner = getCutOwner(object);
+      return !!cutOwner;
+    };
+
+    const ensureCutStrokeVisual = object => {
+      if (!object) return;
+
+      if (typeof object.forEachObject === 'function') {
+        object.forEachObject(child => ensureCutStrokeVisual(child));
+      }
+
+      if (object.__cutStrokeVisualPatched || typeof object._renderStroke !== 'function') {
+        return;
+      }
+
+      object.__cutStrokeVisualPatched = true;
+      object.__originalRenderStroke = object._renderStroke;
+      object._renderStroke = function patchedCutStrokeRender(ctx) {
+        if (!shouldKeepCutStrokeFixed(this)) {
+          return object.__originalRenderStroke.call(this, ctx);
+        }
+
+        const displayScale = Math.max(scaleRef.current || 1, 0.0001);
+        const nextStrokeWidth = CUT_VISUAL_STROKE_WIDTH_CSS / displayScale;
+        const prevStrokeWidth = this.strokeWidth;
+
+        this.strokeWidth = nextStrokeWidth;
+        try {
+          return object.__originalRenderStroke.call(this, ctx);
+        } finally {
+          this.strokeWidth = prevStrokeWidth;
+        }
+      };
+    };
+
+    const refreshCutStrokeVisual = object => {
+      if (!object) return;
+
+      ensureCutStrokeVisual(object);
+
+      if (typeof object.forEachObject === 'function') {
+        object.forEachObject(child => refreshCutStrokeVisual(child));
+      }
+
+      if (!getCutOwner(object) && object.isCutElement !== true) return;
+
+      try {
+        object.set({ objectCaching: false, dirty: true });
+      } catch {
+        object.objectCaching = false;
+        object.dirty = true;
+      }
     };
     const isShapeWithProps = o =>
       !!o && ['path', 'rect', 'circle', 'ellipse'].includes(o.type) && !isHole(o);
@@ -3024,6 +3089,12 @@ const Canvas = ({ className }) => {
       try {
         syncShadowHost();
       } catch { }
+      try {
+        (fCanvas.getObjects?.() || []).forEach(obj => refreshCutStrokeVisual(obj));
+      } catch { }
+      try {
+        fCanvas.requestRenderAll();
+      } catch { }
     };
     fCanvas.on('display:scale', onDisplayScale);
 
@@ -3031,6 +3102,7 @@ const Canvas = ({ className }) => {
     fCanvas.on('object:added', e => {
       const target = e.target;
       if (!target) return;
+      refreshCutStrokeVisual(target);
       if (isQrObject(target)) {
         try {
           target.setCoords?.();
@@ -3104,6 +3176,13 @@ const Canvas = ({ className }) => {
         fCanvas.requestRenderAll();
       }
     });
+
+    const refreshModifiedCutObject = e => {
+      const target = e?.target;
+      if (!target) return;
+      refreshCutStrokeVisual(target);
+    };
+    fCanvas.on('object:modified', refreshModifiedCutObject);
 
     // Блокуємо переміщення отворів навіть якщо вони якось стали активними
 
@@ -3196,6 +3275,7 @@ const Canvas = ({ className }) => {
       fCanvas.off('object:scaling');
       fCanvas.off('mouse:up');
       fCanvas.off('object:modified');
+      fCanvas.off('object:modified', refreshModifiedCutObject);
       fCanvas.off('object:added');
       fCanvas.dispose();
       if (canvasRef.current) canvasRef.current.__fabricCanvas = undefined;

@@ -232,10 +232,23 @@ const ShapeProperties = ({
       }
       if (defaults.cut === true) {
         try {
-          activeObject.set({ isCutElement: true, cutType: "manual" });
+          activeObject.set({
+            isCutElement: true,
+            cutType: "manual",
+            strokeUniform: true,
+            strokeLineCap: "round",
+            strokeLineJoin: "round",
+            objectCaching: false,
+            dirty: true,
+          });
         } catch {
           activeObject.isCutElement = true;
           activeObject.cutType = "manual";
+          activeObject.strokeUniform = true;
+          activeObject.strokeLineCap = "round";
+          activeObject.strokeLineJoin = "round";
+          activeObject.objectCaching = false;
+          activeObject.dirty = true;
         }
       } else if (defaults.cut === false) {
         try {
@@ -1644,7 +1657,15 @@ const ShapeProperties = ({
           if (value) {
             // Cut ON
             o.set("stroke", ORANGE);
-            o.set({ fill: "#FFFFFF", useThemeColor: false });
+            o.set({
+              fill: "#FFFFFF",
+              useThemeColor: false,
+              strokeUniform: true,
+              strokeLineCap: "round",
+              strokeLineJoin: "round",
+              objectCaching: false,
+              dirty: true,
+            });
             storeFillMetadata(o, false);
             if (isCutShape) {
               // Не трогаем блокировки для врожденных CUT-элементов
@@ -1676,6 +1697,7 @@ const ShapeProperties = ({
                 lockScalingX: false,
                 lockScalingY: false,
                 lockUniScaling: false,
+                dirty: true,
               });
               // При включённом Fill заливаем поточним кольором stroke, иначе прозрачная заливка
               if (properties.fill) {

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as fontkitModule from 'fontkit';
 import TextToSVG from 'text-to-svg';
+import paper from 'paper';
 import sequelize from './db.js';
 import './models/models.js';
 import router from './router/index.js';
@@ -36,8 +37,14 @@ const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = '#008181';
 const TEXT_STROKE_WIDTH_PT = 0.5;
 const FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE =0.99;
-const PDF_TEXT_X_NUDGE_EM = 0.03;
-const PDF_TEXT_Y_NUDGE_EM = 0.15;
+const PDF_TEXT_X_NUDGE_EM = 0;
+const PDF_TEXT_Y_NUDGE_EM = 0;
+const PLACEMENT_TEXT_GLOBAL_Y_SHIFT_MM = -0.25;
+const PLACEMENT_TEXT_GLOBAL_Y_SHIFT_PT = PLACEMENT_TEXT_GLOBAL_Y_SHIFT_MM * MM_TO_PT;
+const FABRIC_FONT_SIZE_FRACTION = 0.222;
+const FABRIC_FONT_SIZE_MULT = 1.13;
+const FABRIC_TEXT_BASELINE_OFFSET_EM =
+  FABRIC_FONT_SIZE_MULT * (1 - FABRIC_FONT_SIZE_FRACTION);
 const PDF_SHEET_INFO_LEFT_SHIFT_MODES = new Set([
   'Sheet A4 portrait',
   'Sheet A5 portrait',
@@ -208,6 +215,31 @@ const FONT_DEFINITIONS = [
     aliases: ['comic sans ms bold italic', 'comic-sans-ms bold italic'],
   },
   {
+    id: 'CourierNewPSMT',
+    path: 'C:/Windows/Fonts/cour.ttf',
+    aliases: ['courier new', 'couriernew', 'courier'],
+  },
+  {
+    id: 'CourierNewPS-BoldMT',
+    path: 'C:/Windows/Fonts/courbd.ttf',
+    aliases: ['courier new bold', 'couriernew bold', 'courier bold'],
+  },
+  {
+    id: 'CourierNewPS-ItalicMT',
+    path: 'C:/Windows/Fonts/couri.ttf',
+    aliases: ['courier new italic', 'couriernew italic', 'courier italic'],
+  },
+  {
+    id: 'CourierNewPS-BoldItalicMT',
+    path: 'C:/Windows/Fonts/courbi.ttf',
+    aliases: [
+      'courier new bold italic',
+      'couriernew bold italic',
+      'courier new bolditalic',
+      'courier bold italic',
+    ],
+  },
+  {
     id: 'Courgette-Regular',
     file: 'Courgette-Regular.ttf',
     aliases: ['courgette'],
@@ -278,6 +310,26 @@ const FONT_DEFINITIONS = [
     id: 'GreatVibes-Regular',
     file: 'GreatVibes-Regular.ttf',
     aliases: ['great vibes', 'great-vibes'],
+  },
+  {
+    id: 'Georgia',
+    path: 'C:/Windows/Fonts/georgia.ttf',
+    aliases: ['georgia'],
+  },
+  {
+    id: 'Georgia-Bold',
+    path: 'C:/Windows/Fonts/georgiab.ttf',
+    aliases: ['georgia bold'],
+  },
+  {
+    id: 'Georgia-Italic',
+    path: 'C:/Windows/Fonts/georgiai.ttf',
+    aliases: ['georgia italic'],
+  },
+  {
+    id: 'Georgia-BoldItalic',
+    path: 'C:/Windows/Fonts/georgiaz.ttf',
+    aliases: ['georgia bold italic', 'georgia bolditalic'],
   },
   { id: 'Handlee-Regular', file: 'Handlee-Regular.ttf', aliases: ['handlee'] },
   {
@@ -402,6 +454,7 @@ const FONT_DEFINITION_MAP = new Map(FONT_DEFINITIONS.map(def => [def.id, def]));
 const FONTKIT_CACHE = new Map();
 const TEXT_TO_SVG_CACHE = new Map();
 const TEXT_TO_SVG_ANCHOR = 'left top';
+const PLACEMENT_TEXT_TO_SVG_ANCHOR = 'left baseline';
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -419,6 +472,9 @@ const resolveFontPath = fontId => {
   const def = getFontDefinition(fontId);
   if (!def) {
     return null;
+  }
+  if (def.path) {
+    return def.path;
   }
   return path.resolve(FONT_DIR, def.file);
 };
@@ -467,6 +523,150 @@ const getTextToSvgInstance = fontId => {
   } catch (error) {
     console.warn(`Не вдалося підготувати TextToSVG для ${fontId}:`, error.message);
     TEXT_TO_SVG_CACHE.set(fontId, null);
+    return null;
+  }
+};
+
+let PAPER_GLYPH_SCOPE = null;
+
+const getPaperGlyphScope = () => {
+  if (PAPER_GLYPH_SCOPE) {
+    return PAPER_GLYPH_SCOPE;
+  }
+
+  try {
+    const scope = new paper.PaperScope();
+    scope.setup(new scope.Size(1000, 1000));
+    PAPER_GLYPH_SCOPE = scope;
+    return PAPER_GLYPH_SCOPE;
+  } catch (error) {
+    console.warn('Не вдалося ініціалізувати Paper.js для гліф-інтерсекту:', error.message);
+    PAPER_GLYPH_SCOPE = null;
+    return null;
+  }
+};
+
+const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
+  if (!textToSvgInstance || !text || !Number.isFinite(fontSize) || fontSize <= 0) {
+    return null;
+  }
+
+  const font = textToSvgInstance.font;
+  if (!font || typeof font.stringToGlyphs !== 'function') {
+    return null;
+  }
+
+  const scope = getPaperGlyphScope();
+  if (!scope) {
+    return null;
+  }
+
+  try {
+    scope.project.clear();
+
+    const glyphs = font.stringToGlyphs(String(text));
+    if (!Array.isArray(glyphs) || glyphs.length === 0) {
+      scope.project.clear();
+      return null;
+    }
+
+    const glyphItems = [];
+    const unitsPerEm = Number(font.unitsPerEm) || 1000;
+    const unitToPx = fontSize / unitsPerEm;
+    let cursorXPx = 0;
+
+    for (let i = 0; i < glyphs.length; i += 1) {
+      const glyph = glyphs[i];
+      if (!glyph) continue;
+
+      let glyphPathData = '';
+      try {
+        const glyphPath = glyph.getPath(cursorXPx, 0, fontSize, { kerning: false });
+        glyphPathData = typeof glyphPath?.toPathData === 'function' ? glyphPath.toPathData(5) : '';
+      } catch {
+        glyphPathData = '';
+      }
+
+      if (glyphPathData && glyphPathData.trim()) {
+        try {
+          const pathItem = new scope.CompoundPath(glyphPathData);
+          glyphItems.push(pathItem);
+        } catch {
+          // Ignore single-glyph parse failures and keep the rest.
+        }
+      } else {
+        glyphItems.push(null);
+      }
+
+      const advance = Number(glyph.advanceWidth) || 0;
+      const nextGlyph = i + 1 < glyphs.length ? glyphs[i + 1] : null;
+      const kerning =
+        nextGlyph && typeof font.getKerningValue === 'function'
+          ? Number(font.getKerningValue(glyph, nextGlyph)) || 0
+          : 0;
+      cursorXPx += (advance + kerning) * unitToPx;
+    }
+
+    for (let i = 0; i + 1 < glyphItems.length; i += 1) {
+      const leftGlyph = glyphItems[i];
+      const rightGlyph = glyphItems[i + 1];
+      if (!leftGlyph || !rightGlyph || !leftGlyph.bounds || !rightGlyph.bounds) continue;
+
+      const leftBounds = leftGlyph.bounds;
+      const rightBounds = rightGlyph.bounds;
+      if (!leftBounds.intersects(rightBounds)) continue;
+
+      let overlap = null;
+      let clipped = null;
+      try {
+        // Detect the actual contour-overlap region between neighbor glyphs.
+        overlap = leftGlyph.intersect(rightGlyph, { insert: false });
+      } catch {
+        overlap = null;
+      }
+
+      if (!overlap || !overlap.pathData || !overlap.pathData.trim()) {
+        try {
+          if (overlap) overlap.remove();
+        } catch {}
+        continue;
+      }
+
+      try {
+        // Trim only where contours actually intersect, preserving non-overlapping parts.
+        clipped = leftGlyph.subtract(overlap, { insert: false });
+      } catch {
+        clipped = null;
+      }
+
+      try {
+        overlap.remove();
+      } catch {}
+
+      if (clipped && clipped.pathData) {
+        try {
+          leftGlyph.remove();
+        } catch {}
+        glyphItems[i] = clipped;
+      } else {
+        try {
+          if (clipped) clipped.remove();
+        } catch {}
+      }
+    }
+
+    const pathData = glyphItems
+      .filter(item => item && typeof item.pathData === 'string' && item.pathData.trim())
+      .map(item => item.pathData)
+      .join(' ')
+      .trim();
+
+    scope.project.clear();
+    return pathData || null;
+  } catch (error) {
+    try {
+      scope.project.clear();
+    } catch {}
     return null;
   }
 };
@@ -550,14 +750,46 @@ const registerDocumentFonts = doc => {
   });
 };
 
+const FONT_GENERIC_FAMILIES = new Set([
+  'serif',
+  'sans-serif',
+  'monospace',
+  'cursive',
+  'fantasy',
+  'system-ui',
+  'ui-sans-serif',
+  'ui-serif',
+  'ui-monospace',
+  'emoji',
+  'math',
+  'fangsong',
+]);
+
+const parseFontFamilyCandidates = value => {
+  if (!value) return [];
+
+  return String(value)
+    .split(',')
+    .map(candidate => normalizeFontFamily(candidate))
+    .filter(Boolean);
+};
+
 const normalizeFontFamily = value => {
   if (!value) return '';
-  return value.replace(/"|'/g, '').trim().toLowerCase();
+  return value.replace(/"|'/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+};
+
+const getFontAliasMatch = family => {
+  const normalizedFamily = normalizeFontFamily(family);
+  if (!normalizedFamily || FONT_GENERIC_FAMILIES.has(normalizedFamily)) {
+    return null;
+  }
+
+  return FONT_ALIAS_LOOKUP.get(normalizedFamily) || null;
 };
 
 const resolveFontId = (fontFamily, fontWeight = '', fontStyle = '') => {
-  const normalizedFamily = normalizeFontFamily(fontFamily);
-  const baseId = FONT_ALIAS_LOOKUP.get(normalizedFamily) || DEFAULT_FONT_ID;
+  const familyCandidates = parseFontFamilyCandidates(fontFamily);
 
   const weight =
     typeof fontWeight === 'string' ? fontWeight.toLowerCase() : String(fontWeight || '');
@@ -565,13 +797,34 @@ const resolveFontId = (fontFamily, fontWeight = '', fontStyle = '') => {
   const style = (fontStyle || '').toLowerCase();
   const isItalic = style.includes('italic') || style.includes('oblique');
 
-  if (baseId.startsWith('Arial')) {
-    if (weightIsBold && isItalic) return 'Arial-BoldItalicMT';
-    if (weightIsBold) return 'Arial-BoldMT';
-    if (isItalic) return 'Arial-ItalicMT';
+  const buildVariantCandidates = family => {
+    const variants = [];
+
+    if (weightIsBold && isItalic) {
+      variants.push(`${family} bold italic`);
+    }
+    if (weightIsBold) {
+      variants.push(`${family} bold`);
+    }
+    if (isItalic) {
+      variants.push(`${family} italic`);
+    }
+    variants.push(family);
+
+    return variants;
+  };
+
+  for (const family of familyCandidates) {
+    const variantCandidates = buildVariantCandidates(family);
+    for (const candidate of variantCandidates) {
+      const match = getFontAliasMatch(candidate);
+      if (match) {
+        return match;
+      }
+    }
   }
 
-  return baseId;
+  return DEFAULT_FONT_ID;
 };
 
 const decodeHtmlEntities = (input = '') =>
@@ -659,6 +912,51 @@ const getNodeStyleValue = (node, property) => {
   return null;
 };
 
+const getInheritedNodeStyleValue = (node, property) => {
+  let current = node;
+
+  while (current && current.nodeType === 1) {
+    const value = getNodeStyleValue(current, property);
+    if (value !== null && value !== undefined && String(value).trim()) {
+      return String(value).trim();
+    }
+
+    const tagName = String(current.nodeName || '').toLowerCase();
+    if (tagName === 'svg') {
+      break;
+    }
+
+    current = current.parentNode;
+  }
+
+  return null;
+};
+
+const getDescendantNodeStyleValue = (node, tagName, property) => {
+  if (!node || typeof node.getElementsByTagName !== 'function') {
+    return null;
+  }
+
+  const descendants = node.getElementsByTagName(tagName);
+  for (let idx = 0; idx < descendants.length; idx += 1) {
+    const value = getNodeStyleValue(descendants[idx], property);
+    if (value !== null && value !== undefined && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+
+  return null;
+};
+
+const resolveTextStyleValue = (textNode, property) => {
+  const inheritedValue = getInheritedNodeStyleValue(textNode, property);
+  if (inheritedValue) {
+    return inheritedValue;
+  }
+
+  return getDescendantNodeStyleValue(textNode, 'tspan', property) || '';
+};
+
 const getDeclaredNodeFontSizePx = (node, inheritedSizePx = 16) => {
   if (!node || typeof node.getAttribute !== 'function') return null;
 
@@ -731,17 +1029,9 @@ const normalizeFontSizeForSvgUnits = (fontSize, svgScale) => {
   return numericFontSize;
 };
 
-const computeBaselineOffset = (scaledFontSize, ascender, lineHeight) => {
+const computeBaselineOffset = scaledFontSize => {
   const safeFontSize = Number.isFinite(scaledFontSize) && scaledFontSize > 0 ? scaledFontSize : 16;
-  const minOffset = safeFontSize * 0.67;
-  const maxOffset = safeFontSize * 0.76;
-
-  const candidate =
-    (Number.isFinite(ascender) && ascender > 0 && ascender) ||
-    (Number.isFinite(lineHeight) && lineHeight > 0 && lineHeight * 0.7) ||
-    safeFontSize * 0.72;
-
-  return Math.min(Math.max(candidate, minOffset), maxOffset);
+  return safeFontSize * FABRIC_TEXT_BASELINE_OFFSET_EM;
 };
 
 const parseNumericListValue = (value, fallback = 0) => {
@@ -757,6 +1047,48 @@ const parseNumericListValue = (value, fallback = 0) => {
     }
   }
   return fallback;
+};
+
+const resolveTextNodePosition = textNode => {
+  if (!textNode || typeof textNode.getAttribute !== 'function') {
+    return { baseX: 0, baseY: 0, source: 'default' };
+  }
+
+  const textXAttr = textNode.getAttribute('x');
+  const textYAttr = textNode.getAttribute('y');
+  const hasTextPosition =
+    (typeof textXAttr === 'string' && textXAttr.trim() !== '') ||
+    (typeof textYAttr === 'string' && textYAttr.trim() !== '');
+
+  if (hasTextPosition) {
+    return {
+      baseX: parseNumericListValue(textXAttr, 0),
+      baseY: parseNumericListValue(textYAttr, 0),
+      source: 'text',
+    };
+  }
+
+  if (typeof textNode.getElementsByTagName === 'function') {
+    const tspans = textNode.getElementsByTagName('tspan');
+    for (let idx = 0; idx < tspans.length; idx += 1) {
+      const tspan = tspans[idx];
+      const tspanXAttr = tspan.getAttribute('x');
+      const tspanYAttr = tspan.getAttribute('y');
+      const hasTspanPosition =
+        (typeof tspanXAttr === 'string' && tspanXAttr.trim() !== '') ||
+        (typeof tspanYAttr === 'string' && tspanYAttr.trim() !== '');
+
+      if (hasTspanPosition) {
+        return {
+          baseX: parseNumericListValue(tspanXAttr, 0),
+          baseY: parseNumericListValue(tspanYAttr, 0),
+          source: 'tspan',
+        };
+      }
+    }
+  }
+
+  return { baseX: 0, baseY: 0, source: 'default' };
 };
 
 const extractSvgContentDimensions = (svgElement, fallbackWidth, fallbackHeight) => {
@@ -1995,10 +2327,10 @@ app.post('/api/layout-pdf', async (req, res) => {
               );
             }
 
-            // Render background: clone SVG, remove text nodes and barcode groups, serialize
+            // Render background without text nodes. Placement text is drawn separately
+            // as vector paths so downstream tools like LightBurn see geometry, not PDF text.
             const backgroundSvg = svgElement.cloneNode(true);
             const backgroundTextNodes = backgroundSvg.getElementsByTagName('text');
-            // HTMLCollection is live; remove iteratively
             while (backgroundTextNodes.length > 0) {
               const node = backgroundTextNodes[0];
               node.parentNode?.removeChild(node);
@@ -2103,6 +2435,7 @@ app.post('/api/layout-pdf', async (req, res) => {
             const barcodeGroups = markedBarcodeRects.length ? [] : collectBarcodeGroups(svgElement);
 
             const textNodes = svgElement.getElementsByTagName('text');
+
             if (!textNodes || textNodes.length === 0) {
               if (markedBarcodeRects && markedBarcodeRects.length) {
                 try {
@@ -2138,29 +2471,14 @@ app.post('/api/layout-pdf', async (req, res) => {
             for (let idx = 0; idx < textNodes.length; idx += 1) {
               const textNode = textNodes[idx];
               try {
-                const styleAttr = textNode.getAttribute('style') || '';
-                const fontFamilyAttr =
-                  textNode.getAttribute('font-family') ||
-                  parseStyleStringValue(styleAttr, 'font-family') ||
-                  '';
-                const fontWeightAttr =
-                  textNode.getAttribute('font-weight') ||
-                  parseStyleStringValue(styleAttr, 'font-weight') ||
-                  '';
-                const fontStyleAttr =
-                  textNode.getAttribute('font-style') ||
-                  parseStyleStringValue(styleAttr, 'font-style') ||
-                  '';
-                const anchorAttr =
-                  textNode.getAttribute('text-anchor') ||
-                  parseStyleStringValue(styleAttr, 'text-anchor') ||
-                  '';
+                const anchorAttr = resolveTextStyleValue(textNode, 'text-anchor');
+                const fontFamilyAttr = resolveTextStyleValue(textNode, 'font-family');
+                const fontWeightAttr = resolveTextStyleValue(textNode, 'font-weight');
+                const fontStyleAttr = resolveTextStyleValue(textNode, 'font-style');
                 const fontSize = resolveTextNodeFontSize(textNode);
 
-                const xAttr = textNode.getAttribute('x');
-                const yAttr = textNode.getAttribute('y');
-                const baseX = parseNumericListValue(xAttr, 0);
-                const baseY = parseNumericListValue(yAttr, 0);
+                const { baseX, baseY, source: positionSource } =
+                  resolveTextNodePosition(textNode);
 
                 const cumulativeMatrix = computeCumulativeMatrix(textNode);
                 const point = applyMatrixToPoint(cumulativeMatrix, baseX, baseY);
@@ -2221,7 +2539,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   return {
                     width,
                     lineHeight,
-                    baselineOffset: computeBaselineOffset(scaledFontSize, null, lineHeight),
+                    baselineOffset: computeBaselineOffset(scaledFontSize),
                     fontId: resolvedFontId,
                     textToSvg: null,
                   };
@@ -2253,7 +2571,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   try {
                     const metrics = textToSvgInstance.getMetrics(run.text || '', {
                       fontSize: scaledFontSize,
-                      anchor: TEXT_TO_SVG_ANCHOR,
+                      anchor: PLACEMENT_TEXT_TO_SVG_ANCHOR,
                     });
                     const width = metrics?.width ?? 0;
                     const height = metrics?.height ?? scaledFontSize;
@@ -2262,11 +2580,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                       fontId: activeFontId,
                       width,
                       lineHeight: height,
-                      baselineOffset: computeBaselineOffset(
-                        scaledFontSize,
-                        metrics?.ascender,
-                        height
-                      ),
+                      baselineOffset: computeBaselineOffset(scaledFontSize),
                       textToSvg: textToSvgInstance,
                     };
                   } catch (metricsError) {
@@ -2298,28 +2612,6 @@ app.post('/api/layout-pdf', async (req, res) => {
                   ) ||
                   scaledFontSize * 0.8;
 
-                console.log(
-                  `Text #${idx}: fontSize=${fontSize.toFixed(
-                    2
-                  )}, normalized=${normalizedFontSize.toFixed(
-                    2
-                  )}, scaled=${scaledFontSize.toFixed(2)}, ` +
-                    `contentWidth=${contentWidth.toFixed(
-                      2
-                    )}, contentHeight=${contentHeight.toFixed(2)}, ` +
-                    `matrixScale=(${matrixScaleX.toFixed(3)}, ${matrixScaleY.toFixed(
-                      3
-                    )}), svgScale=${svgScale.toFixed(3)}, ` +
-                    `effectiveScale=(${fontScaleX.toFixed(
-                      3
-                    )}, ${fontScaleY.toFixed(3)}), point=(${point.x.toFixed(
-                      2
-                    )}, ${point.y.toFixed(2)}), ` +
-                    `anchor=${anchorMode || '(fallback-center)'}, runs=${segmentMetrics
-                      .map(run => run.fontId)
-                      .join(' -> ')}`
-                );
-
                 let drawXLocal = 0;
                 if (anchorMode === 'end' || anchorMode === 'right') {
                   drawXLocal -= textWidth;
@@ -2328,19 +2620,25 @@ app.post('/api/layout-pdf', async (req, res) => {
                 } else if (anchorMode === 'start' || anchorMode === 'left') {
                   drawXLocal += 0;
                 } else {
-                  // Fabric text usually stores anchor via styles; if not provided we assume centered placement.
-                  drawXLocal -= textWidth / 2;
+                  // Fabric exports actual line positions on tspans. If we recovered coordinates
+                  // from a tspan x/y, they already represent the line start, so don't center again.
+                  if (positionSource === 'tspan') {
+                    drawXLocal += 0;
+                  } else {
+                    drawXLocal -= textWidth / 2;
+                  }
                 }
 
-                const drawYLocal = -maxBaselineOffset;
+                const drawYLocal = 0;
 
                 let drawX = normalizedX + drawXLocal;
                 let drawY = normalizedY + drawYLocal;
 
                 drawX += scaledFontSize * PDF_TEXT_X_NUDGE_EM;
                 drawY += scaledFontSize * PDF_TEXT_Y_NUDGE_EM;
+                drawY += PLACEMENT_TEXT_GLOBAL_Y_SHIFT_PT;
 
-                if (!hasMatrixRotation) {
+                if (!hasMatrixRotation && positionSource === 'default') {
                   const outOfBounds =
                     drawX < xPt - widthPt * 0.25 ||
                     drawX > xPt + widthPt * 1.25 ||
@@ -2350,7 +2648,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   if (outOfBounds) {
                     drawX = xPt + widthPt / 2 - textWidth / 2;
                     const centerY = yTopPt + heightPt / 2;
-                    drawY = centerY - maxBaselineOffset;
+                    drawY = centerY;
                   }
                 }
 
@@ -2373,19 +2671,30 @@ app.post('/api/layout-pdf', async (req, res) => {
                         doc.font(DEFAULT_FONT_ID);
                       }
                       doc.fontSize(scaledFontSize);
-                      doc.text(segment.text, segmentX, baselineY, {
+                      doc.text(
+                        segment.text,
+                        segmentX,
+                        baselineY - (Number(segment.baselineOffset) || maxBaselineOffset),
+                        {
                         lineBreak: false,
                         stroke: true,
                         fill: false,
-                      });
+                        }
+                      );
                     };
 
                     if (segment.textToSvg) {
                       try {
-                        const pathData = segment.textToSvg.getD(segment.text, {
-                          fontSize: scaledFontSize,
-                          anchor: TEXT_TO_SVG_ANCHOR,
-                        });
+                        const pathData =
+                          buildIntersectedGlyphPathData(
+                            segment.textToSvg,
+                            segment.text,
+                            scaledFontSize
+                          ) ||
+                          segment.textToSvg.getD(segment.text, {
+                            fontSize: scaledFontSize,
+                            anchor: PLACEMENT_TEXT_TO_SVG_ANCHOR,
+                          });
                         doc.save();
                         doc.translate(segmentX, baselineY);
                         doc.path(pathData);
@@ -2411,7 +2720,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   doc.save();
                   doc.translate(normalizedX, normalizedY);
                   doc.rotate(matrixRotationDeg);
-                  drawSegments(drawXLocal, drawYLocal);
+                  drawSegments(drawXLocal, 0);
                   doc.restore();
                 } else {
                   drawSegments(drawX, drawY);

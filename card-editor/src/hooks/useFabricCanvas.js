@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import * as fabric from "fabric";
 import "../utils/CircleWithCut";
 import { useCanvasContext } from "../contexts/CanvasContext";
-import { ensureShapeSvgId } from "../utils/shapeSvgId";
+import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
 
 const scheduleFrame = (fn) => {
   if (typeof window === "undefined") {
@@ -233,7 +233,7 @@ export const useFabricCanvas = () => {
                 obj.fromShapeTab === true ||
                 (obj.data && obj.data.fromShapeTab === true);
               if (fromShapeTab) {
-                ensureShapeSvgId(obj, canvas);
+                ensureShapeObjectSvgId(obj, canvas);
                 if (obj.useThemeColor === undefined) {
                   obj.useThemeColor = false;
                 }

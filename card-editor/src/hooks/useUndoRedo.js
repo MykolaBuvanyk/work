@@ -5,7 +5,7 @@ import { exportCanvas, restoreElementProperties } from "../utils/projectStorage"
 import * as fabric from "fabric";
 import LZString from "lz-string";
 import "../utils/CircleWithCut";
-import { ensureShapeSvgId } from "../utils/shapeSvgId";
+import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
 import {
   buildQrSvgMarkup,
   computeQrVectorData,
@@ -276,7 +276,7 @@ export const useUndoRedo = () => {
 
           if (fromShapeTab) {
             try {
-              ensureShapeSvgId(obj, canvas);
+              ensureShapeObjectSvgId(obj, canvas);
             } catch {}
 
             if (obj.useThemeColor === undefined) {

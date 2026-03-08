@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './OrderContainer.scss';
 import { $authHost } from '../http';
-import { clearAllUnsavedSigns, putProject } from '../utils/projectStorage';
+import {
+  clearAllUnsavedSigns,
+  putProject,
+  collectFontFamiliesFromJson,
+  ensureFontsLoaded,
+} from '../utils/projectStorage';
 import {
   FORMATS,
   buildPlacementPreview,
@@ -56,6 +61,51 @@ const downloadBlob = (blob, fileName) => {
   } catch (e) {
     console.error('Failed to download blob', e);
   }
+};
+
+const buildSafePdfFileName = (rawName, fallback = 'download') => {
+  const baseName =
+    typeof rawName === 'string' && rawName.trim() ? rawName.trim() : String(fallback || 'download');
+
+  const sanitized = baseName
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\.pdf\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.\s]+$/g, '');
+
+  return `${sanitized || 'download'}.pdf`;
+};
+
+const buildDownloadPdfButtonLabel = ({
+  orderId,
+  selectedMaterialKey,
+  materialGroups,
+  exportMode,
+  signCount,
+}) => {
+  const orderNumber = String(orderId || '').trim() || 'Order';
+  const groups = Array.isArray(materialGroups) ? materialGroups : [];
+  const resolvedMode = String(exportMode || 'Normal').trim() || 'Normal';
+  const resolvedCount = Math.max(1, Number(signCount) || 1);
+
+  if (selectedMaterialKey === 'all') {
+    return `${orderNumber} ALL MATERIALS ${resolvedMode} (${resolvedCount} signs)`;
+  }
+
+  const group = groups.find((item) => item?.key === selectedMaterialKey) || null;
+  if (!group) {
+    return `${orderNumber} ${resolvedMode} (${resolvedCount} signs)`;
+  }
+
+  const colorLabel = normalizeMaterialColorLabel(group.color || 'UNKNOWN').toUpperCase();
+  const thicknessNum = Number(group.thickness);
+  const thicknessLabel =
+    Number.isFinite(thicknessNum) && Math.abs(thicknessNum - 1.6) > 1e-6 ? ` ${thicknessNum}` : '';
+  const tapePart = String(group.tape || '').trim();
+  const tapeLabel = tapePart === 'tape' ? '' : ' NO TAPE';
+
+  return `${orderNumber} ${colorLabel}${thicknessLabel}${tapeLabel} ${resolvedMode} (${resolvedCount} signs)`;
 };
 
 const safeNumber = (value, fallback = 0) => {
@@ -154,6 +204,27 @@ const mapCartCanvasToDesign = (canvas, index) => {
       isAdhesiveTape: toolbarState.isAdhesiveTape ?? null,
     },
   };
+};
+
+const ensureOrderDesignFontsLoaded = async (designs = []) => {
+  const fontFamilies = new Set();
+
+  (Array.isArray(designs) ? designs : []).forEach((design) => {
+    const jsonTemplate =
+      design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
+    collectFontFamiliesFromJson(jsonTemplate).forEach((family) => {
+      if (family) fontFamilies.add(family);
+    });
+  });
+
+  if (!fontFamilies.size) return;
+
+  await ensureFontsLoaded(Array.from(fontFamilies));
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
 };
 
 const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
@@ -683,6 +754,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
     setIsExporting(true);
     try {
+      await ensureOrderDesignFontsLoaded(designs);
+
       const timestamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
       const sheetLabel = FORMATS[formatKey]?.label || 'sheet';
 
@@ -951,8 +1024,18 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       }
 
       const pdfBlob = await response.blob();
-      const materialSuffix = selectedMaterialKey === 'all' ? 'all' : 'material';
-      const fileName = `order-${orderId}-${materialSuffix}-${timestamp}.pdf`;
+      const visibleSignCount = visibleSheets.reduce(
+        (acc, sheet) => acc + (Array.isArray(sheet?.placements) ? sheet.placements.length : 0),
+        0
+      );
+      const rawFileName = buildDownloadPdfButtonLabel({
+        orderId,
+        selectedMaterialKey,
+        materialGroups,
+        exportMode,
+        signCount: visibleSignCount,
+      });
+      const fileName = buildSafePdfFileName(rawFileName, `order-${orderId}-${timestamp}`);
       downloadBlob(pdfBlob, fileName);
     } catch (e) {
       console.error('PDF export failed', e);
@@ -1060,6 +1143,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
     setIsExporting(true);
     try {
+      await ensureOrderDesignFontsLoaded(designs);
+
       const response = await fetch(exportEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1081,9 +1166,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       const pdfBlob = await response.blob();
       // Use the visible label as filename when provided, but sanitize for filesystem
       const rawName = typeof displayLabel === 'string' && displayLabel.trim() ? displayLabel.trim() : `order-${orderId}-${group.key}`;
-      const sanitize = (s) => s.replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim();
-      const sanitized = sanitize(rawName);
-      const fileName = sanitized.endsWith('.pdf') ? sanitized : `${sanitized}.pdf`;
+      const fileName = buildSafePdfFileName(rawName, `order-${orderId}-${group.key}`);
       downloadBlob(pdfBlob, fileName);
     } catch (e) {
       console.error('PDF export failed', e);

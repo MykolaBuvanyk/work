@@ -15,6 +15,29 @@ const DEFAULT_ATTRS = Object.freeze({
 
 const PX_PER_MM = 72 / 25.4;
 
+const SHAPE_SERIALIZATION_PROPS = Object.freeze([
+  "shapeSvgId",
+  "data",
+  "shapeType",
+  "fromShapeTab",
+  "fromIconMenu",
+  "useThemeColor",
+  "followThemeStroke",
+  "initialFillColor",
+  "initialStrokeColor",
+  "hasFrameEnabled",
+  "isFrameElement",
+  "shapeThicknessMm",
+  "isCutElement",
+  "cutType",
+  "cutSource",
+  "isStaticCutShape",
+  "isCircle",
+  "cornerRadiusMm",
+  "baseCornerRadius",
+  "displayCornerRadiusMm",
+]);
+
 const toFixedNumber = (value) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return null;
@@ -172,7 +195,12 @@ const patchShapeSvgSerialization = (object) => {
   if (!object.__shapeSvgPatchedToObject && typeof object.toObject === "function") {
     const originalToObject = object.toObject.bind(object);
     object.toObject = (additionalProps = []) =>
-      originalToObject([...additionalProps, "shapeSvgId"]);
+      originalToObject([
+        ...new Set([
+          ...additionalProps,
+          ...SHAPE_SERIALIZATION_PROPS,
+        ]),
+      ]);
     object.__shapeSvgPatchedToObject = true;
   }
 
@@ -244,6 +272,70 @@ export const ensureShapeSvgId = (object, canvas, options = {}) => {
   }
 
   patchShapeSvgSerialization(object);
+
+  return resolved;
+};
+
+const normalizeShapeType = (value) => {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
+};
+
+const isDashedStroke = (value) => {
+  if (!Array.isArray(value)) return false;
+  return value.some((entry) => Number(entry) > 0);
+};
+
+export const resolveShapeIdPrefixFromObject = (object) => {
+  if (!object) return SHAPE_ID_PREFIX;
+
+  const rawShapeType = object.shapeType || object?.data?.shapeType || "";
+  const shapeType = normalizeShapeType(rawShapeType);
+
+  const sourceId =
+    object.id || object.svgTagId || object.shapeSvgId || object?.data?.shapeSvgId || "";
+  const sourceIdLower = typeof sourceId === "string" ? sourceId.trim().toLowerCase() : "";
+
+  const inferredDashedFromId = sourceIdLower.startsWith("shape-dashed-line-");
+  const inferredLineFromId = sourceIdLower.startsWith("shape-line-");
+  const inferredDashedFromStroke =
+    isDashedStroke(object.strokeDashArray) || isDashedStroke(object?.data?.strokeDashArray);
+  const inferredLineFromType = object?.type === "line";
+
+  const isLineShape =
+    shapeType === "line" ||
+    shapeType === "dashedline" ||
+    inferredDashedFromId ||
+    inferredLineFromId ||
+    inferredLineFromType;
+
+  if (!isLineShape) {
+    return SHAPE_ID_PREFIX;
+  }
+
+  return shapeType === "dashedline" || inferredDashedFromId || inferredDashedFromStroke
+    ? "shape-dashed-line"
+    : "shape-line";
+};
+
+export const ensureShapeObjectSvgId = (object, canvas, options = {}) => {
+  const forcedPrefix =
+    typeof options.prefix === "string" && options.prefix.trim()
+      ? options.prefix.trim()
+      : null;
+  const prefix = forcedPrefix || resolveShapeIdPrefixFromObject(object);
+  const resolved = ensureShapeSvgId(object, canvas, { prefix });
+
+  if (prefix === "shape-line" || prefix === "shape-dashed-line") {
+    const resolvedShapeType =
+      object?.shapeType || (prefix === "shape-dashed-line" ? "dashedLine" : "line");
+
+    object.shapeType = resolvedShapeType;
+    if (!object.data || typeof object.data !== "object") {
+      object.data = {};
+    }
+    object.data.shapeType = resolvedShapeType;
+  }
 
   return resolved;
 };

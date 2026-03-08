@@ -4,6 +4,10 @@ import * as ClipperLibNamespace from "clipper-lib";
 import paper from "paper";
 import Shape from "clipper-js";
 import styles from "./LayoutPlannerModal.module.css";
+import {
+  collectFontFamiliesFromJson,
+  ensureFontsLoaded,
+} from "../../../utils/projectStorage";
 
 const PX_PER_MM = 72 / 25.4;
 
@@ -897,6 +901,27 @@ const extractCopies = (design) => {
   }
 
   return 1;
+};
+
+const ensureDesignFontsLoaded = async (designs = []) => {
+  const fontFamilies = new Set();
+
+  (Array.isArray(designs) ? designs : []).forEach((design) => {
+    const jsonTemplate =
+      design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
+    collectFontFamiliesFromJson(jsonTemplate).forEach((family) => {
+      if (family) fontFamilies.add(family);
+    });
+  });
+
+  if (!fontFamilies.size) return;
+
+  await ensureFontsLoaded(Array.from(fontFamilies));
+  if (typeof document !== "undefined" && document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
 };
 
 const normalizeDesigns = (designs = []) =>
@@ -4621,7 +4646,47 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
   try {
     scope.project.clear();
 
-    const imported = scope.project.importSVG(svgElement.cloneNode(true), {
+    // --- Preserve <text> elements: Paper.js loses tspan coordinates on import ---
+    const svgClone = svgElement.cloneNode(true);
+    const textEls = Array.from(svgClone.querySelectorAll("text"));
+    const savedTextTrees = [];
+    textEls.forEach((textEl) => {
+      // Build chain of ancestor <g> transforms from textEl up to the <svg> root
+      const ancestors = [];
+      let cur = textEl.parentElement;
+      while (cur && cur !== svgClone && cur.nodeName?.toLowerCase() !== "svg") {
+        if (cur.nodeName?.toLowerCase() === "g" && cur.hasAttribute("transform")) {
+          ancestors.unshift(cur); // prepend — outermost first
+        }
+        cur = cur.parentElement;
+      }
+      // Rebuild the minimal <g> nesting that wraps this text element
+      let outermost = null;
+      let innermost = null;
+      ancestors.forEach((gNode) => {
+        const gShell = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const tf = gNode.getAttribute("transform");
+        if (tf) gShell.setAttribute("transform", tf);
+        if (!outermost) {
+          outermost = gShell;
+          innermost = gShell;
+        } else {
+          innermost.appendChild(gShell);
+          innermost = gShell;
+        }
+      });
+      const textClone = textEl.cloneNode(true);
+      if (innermost) {
+        innermost.appendChild(textClone);
+        savedTextTrees.push(outermost);
+      } else {
+        savedTextTrees.push(textClone);
+      }
+      // Remove text from clone so Paper.js does not mangle it
+      textEl.remove();
+    });
+
+    const imported = scope.project.importSVG(svgClone, {
       applyMatrix: true,
       expandShapes: true,
       insert: true,
@@ -4817,6 +4882,11 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
         exportedSvg.setAttribute(attr, value);
       }
     });
+
+    // Re-insert original <text> elements that were removed before Paper.js import
+    if (savedTextTrees.length > 0) {
+      savedTextTrees.forEach((tree) => exportedSvg.appendChild(tree));
+    }
 
     scope.project.clear();
     return exportedSvg;
@@ -5902,6 +5972,8 @@ const LayoutPlannerModal = ({
 
     setIsExporting(true);
     try {
+      await ensureDesignFontsLoaded(designs);
+
       const timestamp = new Date()
         .toISOString()
         .replace(/[:T]/g, "-")

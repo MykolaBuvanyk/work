@@ -12,7 +12,7 @@ import {
   decorateQrGroup,
   DEFAULT_QR_CELL_SIZE,
 } from '../../utils/qrFabricUtils';
-import { ensureShapeSvgId } from '../../utils/shapeSvgId';
+import { ensureShapeObjectSvgId, ensureShapeSvgId } from '../../utils/shapeSvgId';
 
 // Відступи в межах viewport (мінімальний без притискання до рамки)
 const MARGIN = 32;
@@ -1628,6 +1628,63 @@ const Canvas = ({ className }) => {
         }
 
         const cloned = await target.clone();
+        const cloneSerializableValue = value => {
+          if (value === undefined) return undefined;
+          try {
+            return JSON.parse(JSON.stringify(value));
+          } catch {
+            return value;
+          }
+        };
+
+        try {
+          const copiedCustomProps = {
+            shapeType: target.shapeType,
+            fromShapeTab: target.fromShapeTab,
+            useThemeColor: target.useThemeColor,
+            followThemeStroke: target.followThemeStroke,
+            initialFillColor: target.initialFillColor,
+            initialStrokeColor: target.initialStrokeColor,
+            hasFrameEnabled: target.hasFrameEnabled,
+            isFrameElement: target.isFrameElement,
+            shapeThicknessMm: target.shapeThicknessMm,
+            isCutElement: target.isCutElement,
+            cutType: target.cutType,
+            cutSource: target.cutSource,
+            isStaticCutShape: target.isStaticCutShape,
+            isCircle: target.isCircle,
+            cornerRadiusMm: target.cornerRadiusMm,
+            baseCornerRadius: target.baseCornerRadius,
+            displayCornerRadiusMm: target.displayCornerRadiusMm,
+          };
+
+          Object.entries(copiedCustomProps).forEach(([key, value]) => {
+            if (value !== undefined) {
+              cloned[key] = cloneSerializableValue(value);
+            }
+          });
+
+          if (target.data && typeof target.data === 'object') {
+            cloned.data = {
+              ...(cloned.data && typeof cloned.data === 'object' ? cloned.data : {}),
+              ...cloneSerializableValue(target.data),
+            };
+          }
+
+          if (Array.isArray(target.strokeDashArray)) {
+            cloned.strokeDashArray = [...target.strokeDashArray];
+          }
+          if (typeof target.strokeLineCap === 'string') {
+            cloned.strokeLineCap = target.strokeLineCap;
+          }
+          if (typeof target.strokeLineJoin === 'string') {
+            cloned.strokeLineJoin = target.strokeLineJoin;
+          }
+          if (typeof target.strokeUniform === 'boolean') {
+            cloned.strokeUniform = target.strokeUniform;
+          }
+        } catch { }
+
         // preserve halfCircle base bbox for stable scaling via inputs
         try {
           if (target.shapeType === 'halfCircle') {
@@ -1651,7 +1708,7 @@ const Canvas = ({ className }) => {
               target.fromShapeTab === true ||
               (target.data && target.data.fromShapeTab === true))
           ) {
-            ensureShapeSvgId(cloned, fCanvas);
+            ensureShapeObjectSvgId(cloned, fCanvas);
           }
         } catch { }
 
@@ -2934,7 +2991,7 @@ const Canvas = ({ className }) => {
         const fromShapeTab =
           target.fromShapeTab === true || (target.data && target.data.fromShapeTab === true);
         if (fromShapeTab) {
-          ensureShapeSvgId(target, fCanvas);
+          ensureShapeObjectSvgId(target, fCanvas);
         }
       } catch { }
       // Правило шарів: текст завжди поверх усіх інших фігур

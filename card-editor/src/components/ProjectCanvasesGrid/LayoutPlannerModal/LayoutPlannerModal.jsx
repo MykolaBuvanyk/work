@@ -146,6 +146,8 @@ const ORIENTATION_LABELS = {
   landscape: "Горизонтально",
 };
 
+const HIDE_PROJECT_NAME_IN_MAIN_PAGE_PDF = true;
+
 const LAYOUT_OUTLINE_COLOR = "#0000FF";
 const PREVIEW_OUTLINE_COLOR = "#0000FF";
 const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
@@ -6158,10 +6160,9 @@ const LayoutPlannerModal = ({
           ? frameInfos.map((info) => {
               const index = Number(info?.frameIndex) || 1;
               const count = Number(info?.frameCount) || frameInfos.length || 1;
-              const projectIdLabel = resolvedProjectId ? String(resolvedProjectId) : "";
               return {
                 ...info,
-                topLabel: projectIdLabel || "",
+                topLabel: HIDE_PROJECT_NAME_IN_MAIN_PAGE_PDF ? "" : (resolvedProjectId ? String(resolvedProjectId) : ""),
                 bottomLabel: `Sh ${index}/${count}`,
               };
             })
@@ -6238,14 +6239,14 @@ const LayoutPlannerModal = ({
           if (exportMode === "Sheet optimized (MJ) Fr.") {
             return {
               ...sheetInfoPlacement,
-              projectId: resolvedProjectId,
+              projectId: HIDE_PROJECT_NAME_IN_MAIN_PAGE_PDF ? null : resolvedProjectId,
               sheetIndex: groupNum.groupIndex,
               sheetCount: groupNum.groupCount,
-              customLabel: `${resolvedProjectId || ""} ● ${groupNum.groupIndex}/${groupNum.groupCount}`,
+              customLabel: null,
             };
           }
           return {
-            projectId: resolvedProjectId,
+            projectId: HIDE_PROJECT_NAME_IN_MAIN_PAGE_PDF ? null : resolvedProjectId,
             sheetIndex: groupNum.groupIndex,
             sheetCount: groupNum.groupCount,
             ...sheetInfoPlacement,
@@ -6763,17 +6764,7 @@ const LayoutPlannerModal = ({
                   };
                 })();
 
-                const resolvedProjectId =
-                  normalizeProjectIdForLabel(projectId) ||
-                  (() => {
-                    try {
-                      return normalizeProjectIdForLabel(localStorage.getItem("currentProjectId"));
-                    } catch {
-                      return null;
-                    }
-                  })();
-
-                const sheetInfoLine1 = resolvedProjectId ? `${resolvedProjectId}` : "";
+                const sheetInfoLine1 = "";
                 const sheetInfoLine2 = `Sh ${sheet?.globalSheetIndex ?? sheetIndex + 1} / ${sheet?.globalSheetCount ?? sheets.length}`;
 
                 const sheetInfoFontPx = (() => {

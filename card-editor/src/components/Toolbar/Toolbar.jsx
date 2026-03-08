@@ -3906,6 +3906,7 @@ const Toolbar = ({ formData }) => {
           if (obj.isBorderShape || obj.isBorderMask || obj.isCanvasOutline) return;
           if (obj.isCutElement && obj.cutType === 'hole') return;
           if (typeof obj.id === 'string' && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
+          if (shouldKeepObjectScaleOnCanvasResize(obj)) return;
 
           const isCandidate =
             !!obj.fromIconMenu ||

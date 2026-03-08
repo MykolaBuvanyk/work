@@ -133,7 +133,7 @@ const Toolbar = ({ formData }) => {
   const RECT_HOLE_HEIGHT_MM = 2;
   const RECT_HOLE_MIN_OFFSET_X_MM = 3;
   const RECT_HOLE_MIN_OFFSET_Y_MM = 2;
-  const CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM = 3;
+  const CIRCLE_SERVICE_LINE_DIAMETER_OFFSET_MM = 6;
   // const mmToPx = mm => (typeof mm === 'number' ? Math.round(mm * PX_PER_MM) : 0);
   // NOTE: Fabric supports sub-pixel geometry; avoid rounding to keep holes/cuts accurate.
   const mmToPx = mm => (typeof mm === 'number' ? mm * PX_PER_MM : 0);
@@ -141,6 +141,8 @@ const Toolbar = ({ formData }) => {
   const holeRadiusPxFromDiameterMm = diameterMm => (Number(diameterMm) || 0) * (PX_PER_MM / 2);
   // Единое округление до 1 знака после запятой для значений в мм (во избежание 5.1999999999)
   const round1 = n => Math.round((Number(n) || 0) * 10) / 10;
+  // Debug mode: preserve original geometry without production compensations.
+  const ORIGINAL_SIZE_MODE = true;
   const [activeObject, setActiveObject] = useState(null);
   const [sizeValues, setSizeValues] = useState({
     // Store UI values in millimeters
@@ -641,7 +643,7 @@ const Toolbar = ({ formData }) => {
     mode: 'default',
     thicknessPx: DEFAULT_BORDER_THICKNESS_PX,
     // Border button must always create a 2mm custom border (independent from thickness slider)
-    customThicknessPx: mmToPx(2),
+    customThicknessPx: mmToPx(4),
     defaultThicknessPx: DEFAULT_BORDER_THICKNESS_PX,
   });
 
@@ -764,7 +766,7 @@ const Toolbar = ({ formData }) => {
       // Custom border (created via Border button) must be exactly 2mm; keep default scaling as-is.
       const strokeForBorder = makeMask
         ? 0
-        : mode === 'custom'
+        : mode === 'custom' || ORIGINAL_SIZE_MODE
           ? effectiveStroke
           : effectiveStroke * 1.8; // зменшено в 3 рази
       if (!clip) {
@@ -940,6 +942,7 @@ const Toolbar = ({ formData }) => {
             // Keep lock geometry equal to clip size: no inset, same rationale as rect fix
             // (otherwise contour loses approximately one stroke width ~0.43mm).
             const keepExactPolygonSize =
+              ORIGINAL_SIZE_MODE ||
               canvasShapeType === 'lock' ||
               canvasShapeType === 'halfCircle' ||
               canvasShapeType === 'adaptiveTriangle' ||
@@ -990,6 +993,7 @@ const Toolbar = ({ formData }) => {
         // NOTE: For circles/ellipses we keep exact geometry for the requested shape family
         // (circle, circleWithLine, circleWithCross, ellipse) to avoid losing ~0.43mm.
         const shouldScaleInset =
+          !ORIGINAL_SIZE_MODE &&
           !makeMask &&
           clip &&
           (clip.type === 'circle' || clip.type === 'ellipse') &&
@@ -2708,6 +2712,71 @@ const Toolbar = ({ formData }) => {
     return { widthMm, heightMm };
   };
 
+  const logSizeDiagnostics = useCallback(
+    (reason = 'unknown') => {
+      if (!canvas) return;
+      try {
+        if (typeof window !== 'undefined' && window.__CARD_SIZE_DEBUG__ === false) return;
+      } catch {}
+
+      const requestedWidthMm = Number(sizeValues?.width) || 0;
+      const requestedHeightMm = Number(sizeValues?.height) || 0;
+      const requestedWidthPx = mmToPx(requestedWidthMm);
+      const requestedHeightPx = mmToPx(requestedHeightMm);
+      const actualWidthPx = Number(
+        typeof canvas.getWidth === 'function' ? canvas.getWidth() : canvas.width || 0
+      );
+      const actualHeightPx = Number(
+        typeof canvas.getHeight === 'function' ? canvas.getHeight() : canvas.height || 0
+      );
+      const actualWidthMm = Number(pxToMm(actualWidthPx).toFixed(2));
+      const actualHeightMm = Number(pxToMm(actualHeightPx).toFixed(2));
+
+      const domEl = canvas?.lowerCanvasEl || canvas?.upperCanvasEl || null;
+      const domRect = domEl?.getBoundingClientRect?.();
+      const domCssWidthPx = Number((domRect?.width || 0).toFixed(2));
+      const domCssHeightPx = Number((domRect?.height || 0).toFixed(2));
+
+      console.log('[SizeDebug][Toolbar] requested-vs-actual', {
+        reason,
+        shapeType: canvas?.get?.('shapeType') || currentShapeType || 'unknown',
+        requested: {
+          widthMm: requestedWidthMm,
+          heightMm: requestedHeightMm,
+          widthPx: Number(requestedWidthPx.toFixed(2)),
+          heightPx: Number(requestedHeightPx.toFixed(2)),
+        },
+        actualFabric: {
+          widthPx: Number(actualWidthPx.toFixed(2)),
+          heightPx: Number(actualHeightPx.toFixed(2)),
+          widthMm: actualWidthMm,
+          heightMm: actualHeightMm,
+        },
+        actualDomCss: {
+          widthPx: domCssWidthPx,
+          heightPx: domCssHeightPx,
+        },
+      });
+    },
+    [canvas, currentShapeType, mmToPx, pxToMm, sizeValues?.height, sizeValues?.width]
+  );
+
+  useEffect(() => {
+    if (!canvas) return;
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        logSizeDiagnostics('sizeValues-or-shape-changed');
+      });
+    });
+
+    return () => {
+      if (raf1) window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+    };
+  }, [canvas, currentShapeType, logSizeDiagnostics, sizeValues?.height, sizeValues?.width]);
+
   // (Видалено mouse:down: заважав drag якорів)
   useEffect(() => {
     if (!canvas) return;
@@ -3857,7 +3926,7 @@ const Toolbar = ({ formData }) => {
         let finalHeight = inputHeight;
 
         // Якщо співвідношення виходить за еталон (ширше за 190/165)
-        if (currentRatio > refRatio) {
+        if (!ORIGINAL_SIZE_MODE && currentRatio > refRatio) {
           if (editedKey === 'height' && editedIsDecrease) {
             // НОВА ЛОГІКА: дозвіл зменшувати висоту — пропорційно зменшуємо ширину
             finalHeight = inputHeight;
@@ -3989,7 +4058,7 @@ const Toolbar = ({ formData }) => {
       let effWidthMm = widthMm;
       let effHeightMm = heightMm;
 
-      if (effectiveShapeType === 'halfCircle') {
+      if (!ORIGINAL_SIZE_MODE && effectiveShapeType === 'halfCircle') {
         // Зберігаємо справжній півкруг: ширина = 2 * висота (height = width/2)
         // Визначаємо, яку величину змінював користувач (прийшла в overrides)
         const changedWidth = Object.prototype.hasOwnProperty.call(overrides, 'widthMm');
@@ -4008,7 +4077,7 @@ const Toolbar = ({ formData }) => {
           width: effWidthMm,
           height: effHeightMm,
         }));
-      } else if (effectiveShapeType === 'roundTop') {
+      } else if (!ORIGINAL_SIZE_MODE && effectiveShapeType === 'roundTop') {
         // roundTop: пропорція верхнього півкола повинна зберігатися — воно ідеально кругле (діаметр = ширина фігури)
         // Вихідний базовий path: ширина 100, висота 100 (верхній півкруг радіуса 50 + прямі стінки вниз)
         // Щоб зберегти півкруг, половина верхньої висоти повинна дорівнювати радіусу = width/2.
@@ -6776,8 +6845,8 @@ const Toolbar = ({ formData }) => {
     // Stroke у Fabric малюється по центру контуру, тому зовнішній край stroke "з'їдає" halfStroke.
     // Додаємо halfStroke + невеликий fudge (аналогічно прямокутним отворам), щоб у CAM було рівно по формулі.
     const holeStrokeWidthPx = 1;
-    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
-    const edgeFudgeMm = 0.04;
+    const halfStrokeMm = ORIGINAL_SIZE_MODE ? 0 : pxToMm(holeStrokeWidthPx) / 2;
+    const edgeFudgeMm = ORIGINAL_SIZE_MODE ? 0 : 0.04;
     // const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
 
     // У Fabric отвір позиціонуємо по центру (origin='center'), тому переводимо edgeGap -> centerOffset.
@@ -6825,10 +6894,10 @@ const Toolbar = ({ formData }) => {
   // Координата центру = offsetEdge + 0.5*stroke + (width/2).
   const getRectHoleOffsetsPx = () => {
     const holeStrokeWidthPx = 1;
-    const halfStrokeMm = pxToMm(holeStrokeWidthPx) / 2;
+    const halfStrokeMm = ORIGINAL_SIZE_MODE ? 0 : pxToMm(holeStrokeWidthPx) / 2;
 
     // Small calibration tweak to match CAM measurement precisely.
-    const edgeFudgeMm = 0.04;
+    const edgeFudgeMm = ORIGINAL_SIZE_MODE ? 0 : 0.04;
 
     const desiredCenterOffsetXmm =
       RECT_HOLE_MIN_OFFSET_X_MM + edgeFudgeMm + halfStrokeMm + RECT_HOLE_WIDTH_MM / 2;

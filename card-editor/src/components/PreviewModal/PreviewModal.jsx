@@ -47,9 +47,8 @@ const PreviewModal = ({ canvas, onClose }) => {
           const hMmStr = String(Math.round(hMm * 1000) / 1000);
           svgEl.setAttribute("width", `${wMmStr}mm`);
           svgEl.setAttribute("height", `${hMmStr}mm`);
-          if (!svgEl.getAttribute("viewBox")) {
-            svgEl.setAttribute("viewBox", `0 0 ${wPx} ${hPx}`);
-          }
+          // Always enforce canonical viewBox to avoid inheriting stale scaled bounds.
+          svgEl.setAttribute("viewBox", `0 0 ${wPx} ${hPx}`);
           // Avoid stretching when opening in different viewers.
           if (!svgEl.getAttribute("preserveAspectRatio")) {
             svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");

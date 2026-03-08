@@ -3834,6 +3834,17 @@ const Toolbar = ({ formData }) => {
 
     // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
     if (canvas && effectiveShapeType) {
+      const shouldKeepObjectScaleOnCanvasResize = obj => {
+        if (!obj) return false;
+        const isShapeObject =
+          obj.type === 'circle-with-cut' ||
+          obj.fromShapeTab === true ||
+          obj?.data?.fromShapeTab === true ||
+          !!obj.shapeType;
+        const isCutObject = obj.isCutElement === true;
+        return isShapeObject || isCutObject;
+      };
+
       const repositionObjectsForResize = (prevW, prevH, nextW, nextH) => {
         if (!canvas || typeof canvas.getObjects !== 'function') return;
         const oldW = Number(prevW) || 0;
@@ -3865,15 +3876,16 @@ const Toolbar = ({ formData }) => {
 
           try {
             const isLegacyCircleServiceElement = isLegacyCircleServiceObject(obj);
+            const keepScale = shouldKeepObjectScaleOnCanvasResize(obj);
             const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
             const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
             obj.set({
               left: left * sx,
               top: top * sy,
-              scaleX: isLegacyCircleServiceElement
+              scaleX: isLegacyCircleServiceElement || keepScale
                 ? signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1))
                 : signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
-              scaleY: isLegacyCircleServiceElement
+              scaleY: isLegacyCircleServiceElement || keepScale
                 ? signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1))
                 : signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
             });
@@ -5081,15 +5093,16 @@ const Toolbar = ({ formData }) => {
               if (typeof obj.id === 'string' && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
               if (typeof obj.left !== 'number' || typeof obj.top !== 'number') return;
               const isLegacyCircleServiceElement = isLegacyCircleServiceObject(obj);
+              const keepScale = shouldKeepObjectScaleOnCanvasResize(obj);
               const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
               const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
               obj.set?.({
                 left: obj.left * sx,
                 top: obj.top * sy,
-                scaleX: isLegacyCircleServiceElement
+                scaleX: isLegacyCircleServiceElement || keepScale
                   ? signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1))
                   : signX * Math.max(1e-6, Math.abs(Number(obj.scaleX) || 1) * effectiveScale),
-                scaleY: isLegacyCircleServiceElement
+                scaleY: isLegacyCircleServiceElement || keepScale
                   ? signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1))
                   : signY * Math.max(1e-6, Math.abs(Number(obj.scaleY) || 1) * effectiveScale),
               });

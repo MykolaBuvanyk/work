@@ -1561,11 +1561,11 @@ const drawBarcodePaths = (
     return;
   }
 
-  const svgScaleX = widthPt / contentWidth;
-  const svgScaleY = heightPt / contentHeight;
-  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
-  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
-  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+  const safeContentWidth = Number(contentWidth) || 1;
+  const safeContentHeight = Number(contentHeight) || 1;
+  const svgScaleX = widthPt / safeContentWidth;
+  const svgScaleY = heightPt / safeContentHeight;
+  const outlineScale = Math.max(Math.min(svgScaleX, svgScaleY), 0.0001);
 
   doc.save();
   doc.strokeColor(TEXT_OUTLINE_COLOR);
@@ -1593,15 +1593,15 @@ const drawBarcodePaths = (
 
       const matrix = computeCumulativeMatrix(rect);
       const quad = rectToTransformedQuad(matrix, x, y, w, h).map(point => ({
-        x: offsetXPt + point.x * svgScale,
-        y: offsetYPt + point.y * svgScale,
+        x: xPt + point.x * svgScaleX,
+        y: yTopPt + point.y * svgScaleY,
       }));
 
       const edgeLength01 = Math.hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y);
       const edgeLength12 = Math.hypot(quad[2].x - quad[1].x, quad[2].y - quad[1].y);
       const barWidthPt = Math.min(edgeLength01, edgeLength12);
       // Mirror client-side outline heuristics so PDF export matches preview.
-      const barWidthPx = barWidthPt / svgScale;
+      const barWidthPx = barWidthPt / outlineScale;
       const defaultOutlinePx = 1;
       const minOutlinePx = 0.3;
       const maxByRectWidthPx =
@@ -1616,7 +1616,7 @@ const drawBarcodePaths = (
         outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
       }
 
-      const outlineWidthPt = Math.max(outlineWidthPx * svgScale, minOutlinePx * svgScale);
+      const outlineWidthPt = Math.max(outlineWidthPx * outlineScale, minOutlinePx * outlineScale);
 
       doc.lineWidth(outlineWidthPt);
       doc.moveTo(quad[0].x, quad[0].y);
@@ -1638,11 +1638,11 @@ const drawBarcodeRectsDirect = (
 ) => {
   if (!doc || !Array.isArray(rects) || rects.length === 0) return;
 
-  const svgScaleX = widthPt / contentWidth;
-  const svgScaleY = heightPt / contentHeight;
-  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
-  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
-  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+  const safeContentWidth = Number(contentWidth) || 1;
+  const safeContentHeight = Number(contentHeight) || 1;
+  const svgScaleX = widthPt / safeContentWidth;
+  const svgScaleY = heightPt / safeContentHeight;
+  const outlineScale = Math.max(Math.min(svgScaleX, svgScaleY), 0.0001);
 
   doc.save();
   doc.strokeColor(TEXT_OUTLINE_COLOR);
@@ -1662,15 +1662,15 @@ const drawBarcodeRectsDirect = (
 
     const matrix = computeCumulativeMatrix(rect);
     const quad = rectToTransformedQuad(matrix, x, y, w, h).map(point => ({
-      x: offsetXPt + point.x * svgScale,
-      y: offsetYPt + point.y * svgScale,
+      x: xPt + point.x * svgScaleX,
+      y: yTopPt + point.y * svgScaleY,
     }));
 
     const edgeLength01 = Math.hypot(quad[1].x - quad[0].x, quad[1].y - quad[0].y);
     const edgeLength12 = Math.hypot(quad[2].x - quad[1].x, quad[2].y - quad[1].y);
     const barWidthPt = Math.min(edgeLength01, edgeLength12);
 
-    const barWidthPx = barWidthPt / svgScale;
+    const barWidthPx = barWidthPt / outlineScale;
     const defaultOutlinePx = 1;
     const minOutlinePx = 0.3;
     const maxByRectWidthPx =
@@ -1685,7 +1685,7 @@ const drawBarcodeRectsDirect = (
       outlineWidthPx = Math.min(outlineWidthPx, maxByRectWidthPx);
     }
 
-    const outlineWidthPt = Math.max(outlineWidthPx * svgScale, minOutlinePx * svgScale);
+    const outlineWidthPt = Math.max(outlineWidthPx * outlineScale, minOutlinePx * outlineScale);
 
     doc.lineWidth(outlineWidthPt);
     doc.moveTo(quad[0].x, quad[0].y);
@@ -1873,13 +1873,13 @@ const applyPlacementBoundaryClip = (
 
   if (!clipPathData) return false;
 
-  const svgScaleX = widthPt / contentWidth;
-  const svgScaleY = heightPt / contentHeight;
-  const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
-  const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
-  const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
+  const safeContentWidth = Number(contentWidth) || 1;
+  const safeContentHeight = Number(contentHeight) || 1;
+  const svgScaleX = widthPt / safeContentWidth;
+  const svgScaleY = heightPt / safeContentHeight;
 
-  const placementMatrix = [svgScale, 0, 0, svgScale, offsetXPt, offsetYPt];
+  // Use independent axis scaling so placement clipping matches 1:1 canvas geometry.
+  const placementMatrix = [svgScaleX, 0, 0, svgScaleY, xPt, yTopPt];
   const clipNodeMatrix = computeCumulativeMatrix(clipNode);
   const finalMatrix = multiplyMatrices(placementMatrix, clipNodeMatrix);
   const inverseMatrix = invertAffineMatrix(finalMatrix);
@@ -2094,7 +2094,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc
             .circle(centerXpt, cyPt, radiusPt)
             .lineWidth(0.75)
-            .fillAndStroke('#FFFFFF', '#8B4513');
+            .fillAndStroke('#FFFFFF', '#FF0000');
         });
 
         doc.restore();
@@ -2336,23 +2336,8 @@ app.post('/api/layout-pdf', async (req, res) => {
               node.parentNode?.removeChild(node);
             }
 
-            const backgroundBarcodeGroups = collectBarcodeGroups(backgroundSvg, {
-              suppressLogs: true,
-            });
-            // Prefer explicit markers from the client export markup.
-            // This avoids heuristics accidentally stripping unrelated artwork.
-            const strippedMarkedBarcodeRects = stripMarkedBarcodeRectsFromRoot(backgroundSvg, {
-              suppressLogs: true,
-            });
-
-            if (!strippedMarkedBarcodeRects) {
-              // Fallback: heuristic stripping (older exports without markers)
-              // Important: do NOT remove whole groups (barcode may be grouped with other artwork).
-              // Strip only the barcode bar rects so the rest of the SVG still renders.
-              backgroundBarcodeGroups.forEach(group => {
-                stripBarcodeRectsFromNode(group);
-              });
-            }
+            // Keep barcode geometry inside the original SVG background markup.
+            // This ensures PDF output matches canvas dimensions 1:1.
 
             // NOTE: Do not recolor border elements on the server.
             // Client-side export markup already contains:
@@ -2393,7 +2378,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   assumePt: false,
                   width: widthPt,
                   height: heightPt,
-                  preserveAspectRatio: 'xMidYMid meet',
+                  preserveAspectRatio: 'none',
                 });
               } catch (backgroundError) {
                 console.warn('Не вдалося відрендерити фон SVG:', backgroundError.message);
@@ -2430,41 +2415,9 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
             }
 
-            // Collect barcode bars from original SVG for later outline rendering
-            const markedBarcodeRects = collectMarkedBarcodeRects(svgElement);
-            const barcodeGroups = markedBarcodeRects.length ? [] : collectBarcodeGroups(svgElement);
-
             const textNodes = svgElement.getElementsByTagName('text');
 
             if (!textNodes || textNodes.length === 0) {
-              if (markedBarcodeRects && markedBarcodeRects.length) {
-                try {
-                  drawBarcodeRectsDirect(doc, markedBarcodeRects, {
-                    xPt,
-                    yTopPt,
-                    widthPt,
-                    heightPt,
-                    contentWidth,
-                    contentHeight,
-                  });
-                } catch (barcodeDrawError) {
-                  console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
-                }
-              } else if (barcodeGroups && barcodeGroups.length) {
-                try {
-                  drawBarcodePaths(doc, barcodeGroups, {
-                    xPt,
-                    yTopPt,
-                    widthPt,
-                    heightPt,
-                    contentWidth,
-                    contentHeight,
-                  });
-                } catch (barcodeDrawError) {
-                  console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
-                }
-              }
-
               return;
             }
 
@@ -2732,35 +2685,6 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
             }
 
-            // After drawing text, draw barcode outlines if present
-            if (markedBarcodeRects && markedBarcodeRects.length) {
-              try {
-                drawBarcodeRectsDirect(doc, markedBarcodeRects, {
-                  xPt,
-                  yTopPt,
-                  widthPt,
-                  heightPt,
-                  contentWidth,
-                  contentHeight,
-                });
-              } catch (barcodeDrawError) {
-                console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
-              }
-            } else if (barcodeGroups && barcodeGroups.length) {
-              try {
-                drawBarcodePaths(doc, barcodeGroups, {
-                  xPt,
-                  yTopPt,
-                  widthPt,
-                  heightPt,
-                  contentWidth,
-                  contentHeight,
-                });
-              } catch (barcodeDrawError) {
-                console.warn('Не вдалося намалювати каркас штрихкоду:', barcodeDrawError.message);
-              }
-            }
-
             return;
           } catch (error) {
             console.error(
@@ -2813,7 +2737,11 @@ app.post('/api/layout-pdf', async (req, res) => {
           ? [sheet.frameRect]
           : [];
       const frameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
-      const isMjOptimizedSheet = (sheet?.exportMode || exportMode) === 'Sheet optimized (MJ) Fr.';
+      const sheetMode = sheet?.exportMode || exportMode;
+      const isMjOptimizedSheet = sheetMode === 'Sheet optimized (MJ) Fr.';
+      const isMjFrameSheet =
+        isMjOptimizedSheet ||
+        sheetMode === 'Normal (MJ) Frame';
 
       frameRects.forEach((frameRect, frameIndex) => {
         if (
@@ -2835,7 +2763,7 @@ app.post('/api/layout-pdf', async (req, res) => {
         const frameWidthPt = mmToPoints(frameWidthMm);
         const frameHeightPt = mmToPoints(frameHeightMm);
 
-        if (isMjOptimizedSheet) {
+        if (isMjFrameSheet) {
           doc.save();
           doc.lineWidth(0.5);
           doc.strokeColor('#8B4513');
@@ -2878,7 +2806,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           holeCentersYmm.forEach((cyMm) => {
             doc
               .circle(mmToPoints(holeCenterXmm), mmToPoints(cyMm), mmToPoints(holeRadiusMm))
-              .fillAndStroke('#FFFFFF', '#8B4513');
+              .fillAndStroke('#FFFFFF', '#FF0000');
           });
           doc.restore();
 

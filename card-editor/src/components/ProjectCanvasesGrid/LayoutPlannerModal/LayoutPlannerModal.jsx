@@ -5256,10 +5256,6 @@ const buildPlacementPreview = (placement, options = {}) => {
 
       try {
         outlineBarcodeRects(exportElement);
-        const exportClipBounds = resolveCanvasClipBoundsWithPaper(exportElement);
-        if (exportClipBounds) {
-          clipBarcodeRectsByBounds(exportElement, exportClipBounds);
-        }
       } catch (barcodeExportPreClipError) {
         console.warn(
           "Barcode preprocess (export) failed:",
@@ -5339,10 +5335,6 @@ const buildPlacementPreview = (placement, options = {}) => {
 
       try {
         outlineBarcodeRects(previewElement);
-        const previewClipBounds = resolveCanvasClipBoundsWithPaper(previewElement);
-        if (previewClipBounds) {
-          clipBarcodeRectsByBounds(previewElement, previewClipBounds);
-        }
       } catch (barcodePreviewPreClipError) {
         console.warn(
           "Barcode preprocess (preview) failed:",

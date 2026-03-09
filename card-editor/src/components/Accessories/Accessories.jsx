@@ -807,18 +807,46 @@ const TopToolbar = ({ className, formData }) => {
       window.setSelectedAccessories = (nextAccessories) => {
         if (!Array.isArray(nextAccessories)) return;
         setAccessories((prev) => {
-          const byId = new Map(nextAccessories.map((item) => [item?.id, item]));
+          const byId = new Map();
+          const byName = new Map();
+
+          nextAccessories.forEach((item) => {
+            if (!item || typeof item !== "object") return;
+            if (item.id != null) {
+              byId.set(String(item.id), item);
+            }
+            if (item.name != null) {
+              byName.set(String(item.name).trim().toLowerCase(), item);
+            }
+          });
+
           return (Array.isArray(prev) ? prev : []).map((item) => {
-            const incoming = byId.get(item?.id);
-            if (!incoming) return item;
+            const incomingById = item?.id != null ? byId.get(String(item.id)) : null;
+            const incomingByName = item?.name != null
+              ? byName.get(String(item.name).trim().toLowerCase())
+              : null;
+            const incoming = incomingById || incomingByName;
+
+            if (!incoming) {
+              return {
+                ...item,
+                checked: false,
+                qty: "1",
+                visible: !!item.available,
+              };
+            }
+
+            const qtyRaw = Number(incoming.qty);
+            const qty = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Math.floor(qtyRaw) : 1;
+
             return {
               ...item,
-              checked: !!incoming.checked,
-              qty: String(incoming.qty ?? item.qty ?? "1"),
+              checked: incoming.checked !== undefined ? !!incoming.checked : true,
+              qty: String(qty),
               visible:
                 incoming.visible !== undefined
                   ? !!incoming.visible
-                  : item.visible || !!incoming.checked,
+                  : true,
             };
           });
         });

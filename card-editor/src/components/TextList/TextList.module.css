@@ -78,6 +78,11 @@
   background: transparent;
 }
 
+.textInputEditing {
+  border-color: rgba(0, 108, 164, 1);
+  box-shadow: 0 0 0 1px rgba(0, 108, 164, 1);
+}
+
 .fontSizeControl {
   border: 1px solid rgba(125, 125, 125, 1);
   border-radius: 10px;
@@ -132,6 +137,11 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
 
+.textInputEditing:focus {
+  border-color: rgba(0, 108, 164, 1);
+  box-shadow: 0 0 0 1px rgba(0, 108, 164, 1);
+}
+
 .textControls {
   display: flex;
   justify-content: space-between; /* Равномерное распределение элементов */
@@ -154,6 +164,7 @@
   border: 1px solid rgba(125, 125, 125, 1);
   border-radius: 10px;
   font-size: 12px;
+  font-family: Arial, sans-serif;
   background: transparent;
   cursor: pointer;
   min-width: 80px;

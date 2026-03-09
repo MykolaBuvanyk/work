@@ -2232,6 +2232,26 @@ const colorsMatch = (color1, color2) => {
   return norm1 === norm2;
 };
 
+const isBorderOrOutlineNode = (node) => {
+  let current = node;
+  while (current && current.nodeType === 1) {
+    const id = String(current.getAttribute?.("id") || "").trim();
+    if (
+      id === "canvaShape" ||
+      id === "canvaShapeCustom" ||
+      id.startsWith("border") ||
+      id.endsWith("-inner") ||
+      current.getAttribute?.("data-export-border") ||
+      current.getAttribute?.("data-export-border-blue") === "true" ||
+      current.getAttribute?.("data-canvas-outline") === "true"
+    ) {
+      return true;
+    }
+    current = current.parentNode;
+  }
+  return false;
+};
+
 const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
   if (!rootElement?.querySelectorAll || !themeStrokeColor) return;
 
@@ -2244,6 +2264,9 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
       return;
     }
     if (node.getAttribute(BACKGROUND_ATTR) === "true") {
+      return;
+    }
+    if (isBorderOrOutlineNode(node)) {
       return;
     }
     const tagName = node?.tagName ? node.tagName.toLowerCase() : "";

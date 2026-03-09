@@ -2,6 +2,72 @@ export const QR_DISPLAY_LAYER_ID = "qr-display-layer";
 export const QR_EXPORT_LAYER_ID = "qr-export-layer";
 export const DEFAULT_QR_CELL_SIZE = 4;
 
+const buildMergedQrExportPath = (qr, moduleCount, cellSize) => {
+  const finalizedRects = [];
+  let activeRects = new Map();
+
+  for (let row = 0; row < moduleCount; row += 1) {
+    const rowRuns = [];
+    let col = 0;
+
+    while (col < moduleCount) {
+      if (!qr.isDark(row, col)) {
+        col += 1;
+        continue;
+      }
+
+      const startCol = col;
+      while (col < moduleCount && qr.isDark(row, col)) {
+        col += 1;
+      }
+
+      rowRuns.push({ startCol, endCol: col });
+    }
+
+    const nextActiveRects = new Map();
+
+    rowRuns.forEach((run) => {
+      const key = `${run.startCol}:${run.endCol}`;
+      const existingRect = activeRects.get(key);
+
+      if (existingRect && existingRect.endRow === row) {
+        existingRect.endRow = row + 1;
+        nextActiveRects.set(key, existingRect);
+        return;
+      }
+
+      nextActiveRects.set(key, {
+        startCol: run.startCol,
+        endCol: run.endCol,
+        startRow: row,
+        endRow: row + 1,
+      });
+    });
+
+    activeRects.forEach((rect, key) => {
+      if (!nextActiveRects.has(key)) {
+        finalizedRects.push(rect);
+      }
+    });
+
+    activeRects = nextActiveRects;
+  }
+
+  activeRects.forEach((rect) => {
+    finalizedRects.push(rect);
+  });
+
+  return finalizedRects
+    .map((rect) => {
+      const x = rect.startCol * cellSize;
+      const y = rect.startRow * cellSize;
+      const width = (rect.endCol - rect.startCol) * cellSize;
+      const height = (rect.endRow - rect.startRow) * cellSize;
+      return `M${x},${y}h${width}v${height}h-${width}z`;
+    })
+    .join("");
+};
+
 // ============================================================================
 // DEBUG FLAGS - Встановіть false щоб вимкнути функцію та перевірити вплив
 // ============================================================================
@@ -109,9 +175,6 @@ export const computeQrVectorData = (qr, cellSize = DEFAULT_QR_CELL_SIZE) => {
   if (!moduleCount || moduleCount <= 0) {
     return { optimizedPath: "", displayPath: "", size: 0 };
   }
-
-  const horizontalLines = new Set();
-  const verticalLines = new Set();
   let displayPath = "";
 
   for (let row = 0; row < moduleCount; row += 1) {
@@ -123,36 +186,11 @@ export const computeQrVectorData = (qr, cellSize = DEFAULT_QR_CELL_SIZE) => {
 
       // Display path (filled squares)
       displayPath += `M${x},${y}h${cellSize}v${cellSize}h-${cellSize}z`;
-
-      // Top edge
-      if (row === 0 || !qr.isDark(row - 1, col)) {
-        horizontalLines.add(`${x},${y},${x + cellSize},${y}`);
-      }
-
-      // Bottom edge
-      if (row === moduleCount - 1 || !qr.isDark(row + 1, col)) {
-        horizontalLines.add(`${x},${y + cellSize},${x + cellSize},${y + cellSize}`);
-      }
-
-      // Left edge
-      if (col === 0 || !qr.isDark(row, col - 1)) {
-        verticalLines.add(`${x},${y},${x},${y + cellSize}`);
-      }
-
-      // Right edge
-      if (col === moduleCount - 1 || !qr.isDark(row, col + 1)) {
-        verticalLines.add(`${x + cellSize},${y},${x + cellSize},${y + cellSize}`);
-      }
     }
   }
 
-  const optimizedPathLines = [...horizontalLines, ...verticalLines].map((line) => {
-    const [x1, y1, x2, y2] = line.split(",").map(Number);
-    return `M${x1},${y1}L${x2},${y2}`;
-  });
-
   return {
-    optimizedPath: optimizedPathLines.join(""),
+    optimizedPath: buildMergedQrExportPath(qr, moduleCount, cellSize),
     displayPath,
     size: moduleCount * cellSize,
   };

@@ -462,6 +462,7 @@ export default function Checkout({
 				deliveryLabel: String(delivery || ''),
 				vatPercent: Number(vatPercentForCheckout || 0),
 				vatAmount: Number(vatAmountForCheckout || 0),
+				vatNumber: String(reduxUser?.vatNumber || '').trim(),
 				deliveryAddress,
 				invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
 				invoiceEmail: String(invoiceEmail || ''),

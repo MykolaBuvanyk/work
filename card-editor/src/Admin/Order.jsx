@@ -136,6 +136,9 @@ const resolveInvoiceAddressEmail = (order) =>
 const resolveDeliveryComment = (order) =>
   String(order?.orderMongo?.checkout?.deliveryComment || '').trim();
 
+const resolveVatId = (order) =>
+  String(order?.orderMongo?.checkout?.vatNumber || order?.user?.vatNumber || '').trim();
+
 const resolveCountryLabel = (rawValue) => {
   const value = String(rawValue || '').trim();
   if (!value) return '';
@@ -251,6 +254,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const invoiceEmails = useMemo(() => resolveInvoiceEmails(order), [order]);
   const invoiceAddressEmail = useMemo(() => resolveInvoiceAddressEmail(order), [order]);
   const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
+  const vatId = useMemo(() => resolveVatId(order), [order]);
 
   const invoiceSectionData = useMemo(() => {
     const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
@@ -1524,6 +1528,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Phone:</p>
         <span>{order.user.phone}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>VAT ID:</p>
+        <span>{vatId || '---'}</span>
         <div />
       </div>
       <div className="row">

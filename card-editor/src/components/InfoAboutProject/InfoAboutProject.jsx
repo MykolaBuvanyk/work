@@ -262,6 +262,7 @@ const InfoAboutProject = () => {
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),
+          vatNumber: String(checkoutTotals?.vatNumber || ""),
           deliveryAddress: checkoutTotals?.deliveryAddress || null,
           invoiceAddress: checkoutTotals?.invoiceAddress || null,
           invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),

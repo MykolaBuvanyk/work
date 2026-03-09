@@ -9,6 +9,7 @@ const TextList = () => {
   const DEFAULT_TEXT_LABEL = "Text";
   const [texts, setTexts] = useState([]);
   const [selectedTextId, setSelectedTextId] = useState(null);
+  const [editingTextId, setEditingTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState(DEFAULT_TEXT_LABEL);
   const [availableFonts, setAvailableFonts] = useState([]);
   const [fontSizeDrafts, setFontSizeDrafts] = useState({});
@@ -20,6 +21,9 @@ const TextList = () => {
   const PX_PER_MM = 72 / 25.4;
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
+  const getFontOptionStyle = (fontFamily) => ({
+    fontFamily: `"${String(fontFamily || "Arial").replace(/"/g, "")}\", Arial, sans-serif`,
+  });
   const MIN_FONT_MM = 3;
   const MAX_FONT_MM = pxToMm(256); // preserve previous 256px cap (~67.7 mm)
   const MAX_FONT_MM_INT = Math.max(MIN_FONT_MM, Math.round(MAX_FONT_MM));
@@ -179,6 +183,19 @@ const TextList = () => {
       });
 
       setTexts(textList);
+
+      const activeCanvasObject = canvas?.getActiveObject?.();
+      const isActiveTextObject =
+        activeCanvasObject &&
+        (activeCanvasObject.type === "i-text" ||
+          activeCanvasObject.type === "text" ||
+          activeCanvasObject.type === "textbox");
+      setSelectedTextId(isActiveTextObject ? activeCanvasObject.id || null : null);
+
+      const editingObject =
+        textObjects.find((obj) => obj?.isEditing) ||
+        null;
+      setEditingTextId(editingObject?.id || null);
     }
   };
 
@@ -200,8 +217,11 @@ const TextList = () => {
         "object:modified",
         "object:scaling",
         "text:changed",
+        "text:editing:entered",
+        "text:editing:exited",
         "selection:created",
         "selection:updated",
+        "selection:cleared",
       ];
 
       events.forEach((event) => {
@@ -591,7 +611,11 @@ const TextList = () => {
                       forceUpdate();
                     }
                   }}
-                  className={styles.textInput}
+                  className={`${styles.textInput} ${
+                    selectedTextId === text.id || editingTextId === text.id
+                      ? styles.textInputEditing
+                      : ""
+                  }`}
                 />
               </div>
               <div className={styles.textControls}>
@@ -694,13 +718,12 @@ const TextList = () => {
                     }
                   }}
                   className={styles.fontFamilySelect}
-                  style={{ fontFamily: text.object?.fontFamily || "Arial" }}
                 >
                   {availableFonts.map((font) => (
                     <option
                       key={font.value}
                       value={font.value}
-                      style={{ fontFamily: font.value }}
+                      style={getFontOptionStyle(font.value)}
                     >
                       {font.name}
                     </option>

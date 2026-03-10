@@ -5591,6 +5591,8 @@ const LayoutPlannerModal = ({
   }, [isOpen, materialGroups, selectedMaterialKey]);
 
   const isMjFrameMode = exportMode === "Sheet optimized (MJ) Fr.";
+  const isAnyMjFrameMode =
+    exportMode === "Normal (MJ) Frame" || exportMode === "Sheet optimized (MJ) Fr.";
   const hasBrownFrame =
     exportMode === "Normal (MJ) Frame" || exportMode === "Sheet optimized (MJ) Fr.";
 
@@ -5909,7 +5911,9 @@ const LayoutPlannerModal = ({
       effectiveSignSpacingMm,
       pageInsetMm,
       frameInsetMm,
-      {}
+      {
+        leftStripWidthMm: exportMode === "Normal (MJ) Frame" ? MJ_FRAME_STRIP_WIDTH_MM : 0,
+      }
     );
 
     const sheetCount = Array.isArray(planned?.sheets) ? planned.sheets.length : 0;
@@ -6036,17 +6040,11 @@ const LayoutPlannerModal = ({
         let width = maxX - minX + safeFrameSpacing * 2;
         let height = maxY - minY + safeFrameSpacing * 2;
 
-        // MJ optimized: the left frame edge must pass on the LEFT side of binder holes
-        // (tangent to hole outer edge), so no brown line appears on the right side of holes.
-        const stripWidthMm = exportMode === "Sheet optimized (MJ) Fr." ? MJ_FRAME_STRIP_WIDTH_MM : 0;
-        if (exportMode === "Sheet optimized (MJ) Fr.") {
-          const holeRadiusMm = MJ_FRAME_HOLE_DIAMETER_MM / 2;
-          // Keep the same side gap to hole as the previous right-side layout.
-          const legacyHoleSideGapMm = Math.max(
-            0,
-            stripWidthMm - (stripWidthMm / 2 + holeRadiusMm)
-          );
-          x = Math.max(0, stripWidthMm / 2 - holeRadiusMm - legacyHoleSideGapMm);
+        const stripWidthMm = isAnyMjFrameMode
+          ? Math.max(0, Number(sheet?.leftStripWidthMm) || MJ_FRAME_STRIP_WIDTH_MM)
+          : 0;
+        if (isAnyMjFrameMode && stripWidthMm > 0) {
+          x = exportMode === "Sheet optimized (MJ) Fr." ? 0 : safePageMargin;
           y = minY - safeFrameSpacing;
           width = maxX - x + safeFrameSpacing;
           height = maxY - minY + safeFrameSpacing * 2;
@@ -6056,7 +6054,7 @@ const LayoutPlannerModal = ({
         const leftLimit =
           exportMode === "Sheet optimized (MJ) Fr."
             ? 0
-            : Math.max(safePageMargin, stripWidthMm);
+            : safePageMargin;
         const topLimit = safePageMargin;
         const rightLimit = Math.max(
           leftLimit,
@@ -6169,8 +6167,29 @@ const LayoutPlannerModal = ({
         const placementsBounds = computePlacementsBounds(sheet);
         const sheetInfoEnabled = !!pdfAddSheetInfo;
 
-        const frameRects = Array.isArray(sheet?.frameRects) ? sheet.frameRects : [];
-        const frameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
+        const rawFrameRects = Array.isArray(sheet?.frameRects) ? sheet.frameRects : [];
+        const rawFrameInfos = Array.isArray(sheet?.frameInfos) ? sheet.frameInfos : [];
+        const frameRects =
+          !isMjFrameMode && exportMode === "Normal (MJ) Frame" && frameRect
+            ? [frameRect]
+            : rawFrameRects;
+        const frameInfos =
+          !isMjFrameMode && exportMode === "Normal (MJ) Frame" && frameRect
+            ? [
+                {
+                  x: frameRect.x,
+                  y: frameRect.y,
+                  width: frameRect.width,
+                  height: frameRect.height,
+                  frameIndex: 1,
+                  frameCount: 1,
+                  stripWidthMm: Math.max(
+                    0,
+                    Number(sheet?.leftStripWidthMm) || MJ_FRAME_STRIP_WIDTH_MM
+                  ),
+                },
+              ]
+            : rawFrameInfos;
         const preparedFrameInfos = isMjFrameMode
           ? frameInfos.map((info) => {
               const index = Number(info?.frameIndex) || 1;
@@ -6276,7 +6295,7 @@ const LayoutPlannerModal = ({
           frameRects,
           frameInfos: preparedFrameInfos,
           exportMode,
-          disableMjStrip: isMjFrameMode,
+          disableMjStrip: isAnyMjFrameMode,
           skipMaterialSplit: isMjFrameMode,
           leftStripWidthMm: sheet.leftStripWidthMm ?? 0,
           leftInset: sheet.leftInset ?? null,
@@ -6710,26 +6729,18 @@ const LayoutPlannerModal = ({
                   let width = maxX - minX + safeFrameSpacing * 2;
                   let height = maxY - minY + safeFrameSpacing * 2;
 
-                  const stripWidthMm =
-                    exportMode === "Sheet optimized (MJ) Fr."
-                      ? Math.max(0, Number(sheet?.leftStripWidthMm) || MJ_FRAME_STRIP_WIDTH_MM)
-                      : 0;
-                  if (exportMode === "Sheet optimized (MJ) Fr.") {
-                    const holeRadiusMm = MJ_FRAME_HOLE_DIAMETER_MM / 2;
-                    const legacyHoleSideGapMm = Math.max(
-                      0,
-                      stripWidthMm - (stripWidthMm / 2 + holeRadiusMm)
-                    );
-                    x = Math.max(0, stripWidthMm / 2 - holeRadiusMm - legacyHoleSideGapMm);
+                  const stripWidthMm = isAnyMjFrameMode
+                    ? Math.max(0, Number(sheet?.leftStripWidthMm) || MJ_FRAME_STRIP_WIDTH_MM)
+                    : 0;
+                  if (isAnyMjFrameMode && stripWidthMm > 0) {
+                    x = exportMode === "Sheet optimized (MJ) Fr." ? 0 : safePageMargin;
                     y = minY - safeFrameSpacing;
                     width = maxX - x + safeFrameSpacing;
                     height = maxY - minY + safeFrameSpacing * 2;
                   }
 
                   const leftLimit =
-                    exportMode === "Sheet optimized (MJ) Fr."
-                      ? 0
-                      : safePageMargin;
+                    exportMode === "Sheet optimized (MJ) Fr." ? 0 : safePageMargin;
                   const topLimit = safePageMargin;
                   const rightLimit = Math.max(
                     leftLimit,
@@ -6760,6 +6771,10 @@ const LayoutPlannerModal = ({
                       areaWidthMm: stripWidthMm,
                       yCenterMm: centerYmm,
                     };
+                  }
+
+                  if (exportMode === "Normal (MJ) Frame") {
+                    return null;
                   }
 
                   const leftInsetMm = Math.max(0, Number(sheet?.leftInset) || 0);

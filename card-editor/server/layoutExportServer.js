@@ -2773,7 +2773,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc.restore();
         }
 
-        if (isMjOptimizedSheet) {
+        if (isMjFrameSheet) {
           const frameInfo = frameInfos[frameIndex] || null;
           const stripWidthMm = Math.max(0, Number(frameInfo?.stripWidthMm) || 9.5);
           const holeDiameterMm = 5.5;
@@ -2809,6 +2809,10 @@ app.post('/api/layout-pdf', async (req, res) => {
               .fillAndStroke('#FFFFFF', '#FF0000');
           });
           doc.restore();
+
+          if (!isMjOptimizedSheet) {
+            return;
+          }
 
           const topLabel = (typeof frameInfo?.topLabel === 'string' && frameInfo.topLabel.trim()) || '';
           const bottomLabel =

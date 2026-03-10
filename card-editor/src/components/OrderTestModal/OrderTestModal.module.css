@@ -1,0 +1,156 @@
+.modal {
+  width: min(1080px, calc(100vw - 32px));
+  min-width: min(1080px, calc(100vw - 32px));
+  max-width: min(1080px, calc(100vw - 32px));
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.headerActions {
+  position: absolute;
+  right: 56px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid rgba(0, 108, 164, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(0, 108, 164, 0.05) 0%, rgba(0, 108, 164, 0.02) 100%);
+}
+
+.summaryCardWide {
+  grid-column: span 1;
+}
+
+.summaryLabel {
+  color: rgba(0, 108, 164, 1);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.signsList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.signCard {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 18px 20px;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.signHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.signHeader h4 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.signHeader p {
+  margin: 0;
+  color: #334155;
+  font-size: 14px;
+}
+
+.copiesBadge {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 108, 164, 0.1);
+  color: rgba(0, 108, 164, 1);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.textLine {
+  margin: 0 0 12px;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.textLine span {
+  color: rgba(0, 108, 164, 1);
+  font-weight: 700;
+}
+
+.countsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.countsRow span {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.emptyState {
+  padding: 24px;
+  border: 1px dashed rgba(0, 108, 164, 0.28);
+  border-radius: 12px;
+  color: #475569;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .headerActions {
+    position: static;
+    margin-left: auto;
+    margin-right: 56px;
+  }
+
+  .signHeader {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    gap: 18px;
+  }
+
+  .headerActions {
+    margin-right: 0;
+  }
+
+  .countsRow span {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -14,6 +14,7 @@ import { jwtDecode } from "jwt-decode";
 import Checkout from "../checkout/checkout";
 import ThankYou from "../order-success/order-success";
 import CartAccessoriesModal from "../CartAccessoriesModal/CartAccessoriesModal";
+import OrderTestModal from "../OrderTestModal/OrderTestModal";
 
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: "WHITE / BLACK",
@@ -63,12 +64,245 @@ const resolveColorThemeCaps = (toolbarState = {}, canvasSnap = {}) => {
   return "UNKNOWN";
 };
 
+const formatDisplayNumber = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const rounded = Math.round(n * 100) / 100;
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+};
+
+const formatCanvasSizeMm = (canvasSnap = {}) => {
+  const mmWidth = Number(canvasSnap?.toolbarState?.sizeValues?.width);
+  const mmHeight = Number(canvasSnap?.toolbarState?.sizeValues?.height);
+
+  if (Number.isFinite(mmWidth) && Number.isFinite(mmHeight)) {
+    return `${formatDisplayNumber(mmWidth)} x ${formatDisplayNumber(mmHeight)} mm`;
+  }
+
+  const width = Number(canvasSnap?.width);
+  const height = Number(canvasSnap?.height);
+  if (Number.isFinite(width) && Number.isFinite(height)) {
+    const fallbackWidthMm = (width * 25.4) / 72;
+    const fallbackHeightMm = (height * 25.4) / 72;
+    return `${formatDisplayNumber(fallbackWidthMm)} x ${formatDisplayNumber(fallbackHeightMm)} mm`;
+  }
+
+  return "Unknown size";
+};
+
+const resolveTapeLabel = (canvasSnap = {}) => {
+  if (typeof canvasSnap?.Tape === "string" && canvasSnap.Tape.trim()) {
+    return canvasSnap.Tape.trim().toUpperCase();
+  }
+  return canvasSnap?.toolbarState?.isAdhesiveTape ? "TAPE" : "NO TAPE";
+};
+
+const resolveCanvasObjects = (canvasSnap = {}) => {
+  if (Array.isArray(canvasSnap?.json?.objects)) return canvasSnap.json.objects;
+  if (Array.isArray(canvasSnap?.jsonTemplate?.objects)) return canvasSnap.jsonTemplate.objects;
+  if (Array.isArray(canvasSnap?.objects)) return canvasSnap.objects;
+  return [];
+};
+
+const hasObjectFlag = (obj, key) => obj?.[key] === true || obj?.data?.[key] === true;
+
+const isQrObject = (obj) => hasObjectFlag(obj, "isQRCode");
+
+const isBarcodeObject = (obj) => hasObjectFlag(obj, "isBarCode");
+
+const isHoleObject = (obj) => {
+  if (!obj || typeof obj !== "object") return false;
+  if (obj.isCutElement === true && String(obj.cutType || "").toLowerCase() === "hole") return true;
+  if (typeof obj.id === "string" && obj.id.startsWith("hole-")) return true;
+  if (typeof obj.id === "string" && obj.id.startsWith("holes-")) return true;
+  if (typeof obj.name === "string" && obj.name.toLowerCase().includes("hole")) return true;
+  if (obj.isHole === true) return true;
+  return false;
+};
+
+const isCutFigureObject = (obj) => {
+  if (!obj || typeof obj !== "object") return false;
+  if (isHoleObject(obj)) return false;
+  if (obj.isCutElement === true) {
+    const cutType = String(obj.cutType || "").toLowerCase();
+    return cutType === "shape" || cutType === "manual";
+  }
+  return false;
+};
+
+const isTextObject = (obj) => {
+  const type = String(obj?.type || "").toLowerCase();
+  return ["text", "textbox", "i-text"].includes(type) || (typeof obj?.text === "string" && obj.text.trim());
+};
+
+const isImageObject = (obj) => {
+  const type = String(obj?.type || "").toLowerCase();
+  return type === "image";
+};
+
+const isHelperObject = (obj) => {
+  if (!obj || typeof obj !== "object") return true;
+  return Boolean(
+    obj.isBorderShape ||
+      obj.cardBorderMode ||
+      obj.excludeFromExport ||
+      obj.excludeFromSummary ||
+      obj.isSafeZone ||
+      obj.isBleedZone ||
+      obj.isGuide ||
+      obj.isGrid ||
+      obj.isFrameHole ||
+      obj.isHole
+  );
+};
+
+const isShapeObject = (obj) => {
+  const type = String(obj?.type || "").toLowerCase();
+  return ["path", "rect", "circle", "ellipse", "triangle", "polygon", "polyline", "line"].includes(type);
+};
+
+const analyzeCanvasContent = (canvasSnap = {}) => {
+  const summary = {
+    texts: [],
+    shapes: 0,
+    cutFigures: 0,
+    holes: 0,
+    qrCodes: 0,
+    barcodes: 0,
+    images: 0,
+  };
+
+  const walk = (obj) => {
+    if (!obj || isHelperObject(obj)) return;
+
+    if (isQrObject(obj)) {
+      summary.qrCodes += 1;
+      return;
+    }
+
+    if (isHoleObject(obj)) {
+      summary.holes += 1;
+      return;
+    }
+
+    if (isCutFigureObject(obj)) {
+      summary.cutFigures += 1;
+      return;
+    }
+
+    if (isBarcodeObject(obj)) {
+      summary.barcodes += 1;
+      return;
+    }
+
+    if (isTextObject(obj)) {
+      const text = String(obj?.text || "").trim();
+      if (text) {
+        summary.texts.push(text);
+      }
+      return;
+    }
+
+    if (isImageObject(obj)) {
+      summary.images += 1;
+      return;
+    }
+
+    if (Array.isArray(obj?.objects) && obj.objects.length > 0) {
+      obj.objects.forEach(walk);
+      return;
+    }
+
+    if (isShapeObject(obj)) {
+      summary.shapes += 1;
+    }
+  };
+
+  resolveCanvasObjects(canvasSnap).forEach(walk);
+  return summary;
+};
+
+const resolveCopiesCount = (canvasSnap = {}) => {
+  const raw = canvasSnap?.copiesCount ?? canvasSnap?.toolbarState?.copiesCount ?? 1;
+  const count = Math.floor(Number(raw));
+  return Number.isFinite(count) && count > 0 ? count : 1;
+};
+
+const resolveTotalSignsFromCanvases = (canvases = []) => {
+  try {
+    if (typeof window !== "undefined" && typeof window.getToolbarFooterTotalSigns === "function") {
+      const value = Number(window.getToolbarFooterTotalSigns());
+      if (Number.isFinite(value) && value >= 0) return value;
+    }
+  } catch {
+    // no-op
+  }
+
+  return canvases.reduce((sum, canvasSnap) => sum + resolveCopiesCount(canvasSnap), 0);
+};
+
+const buildOrderTestSummary = ({ projectTitle, projectSnapshot, accessories }) => {
+  const canvases = Array.isArray(projectSnapshot?.canvases) ? projectSnapshot.canvases : [];
+  const normalizedAccessories = Array.isArray(accessories)
+    ? accessories
+        .filter((item) => item && item.checked)
+        .map((item) => {
+          const qty = Math.max(0, Math.floor(Number(item?.qty) || 0));
+          return {
+            id: item?.id ?? item?.name,
+            name: String(item?.name || "Accessory"),
+            qty,
+          };
+        })
+        .filter((item) => item.qty > 0)
+    : [];
+
+  const signs = canvases.map((canvasSnap, index) => {
+    const content = analyzeCanvasContent(canvasSnap);
+    const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
+    const metaParts = [
+      formatCanvasSizeMm(canvasSnap),
+      resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap),
+      thickness ? `${thickness}` : null,
+      resolveTapeLabel(canvasSnap),
+    ].filter(Boolean);
+
+    return {
+      id: String(canvasSnap?.id || index),
+      title: `Sign ${index + 1}`,
+      metaLine: metaParts.join(", "),
+      textLine: content.texts.length > 0 ? content.texts.join(", ") : "—",
+      counts: {
+        shapes: content.shapes,
+        cutFigures: content.cutFigures,
+        holes: content.holes,
+        qrCodes: content.qrCodes,
+        barcodes: content.barcodes,
+        images: content.images,
+      },
+      copiesCount: resolveCopiesCount(canvasSnap),
+    };
+  });
+
+  return {
+    projectTitle,
+    totalSigns: resolveTotalSignsFromCanvases(canvases),
+    accessories: normalizedAccessories,
+    signs,
+  };
+};
+
 const InfoAboutProject = () => {
   const { isAuth } = useSelector((state) => state.user);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
   const [isSaveAsModalOpen, setIsSaveAsModalOpen] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isPreparingOrderSummary, setIsPreparingOrderSummary] = useState(false);
+  const [isOrderTestOpen, setIsOrderTestOpen] = useState(false);
+  const [orderTestSummary, setOrderTestSummary] = useState(null);
   const [isCartAccessoriesOpen, setIsCartAccessoriesOpen] = useState(false);
   const [cartAccessories, setCartAccessories] = useState([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -328,6 +562,8 @@ const InfoAboutProject = () => {
       return;
     }
 
+    if (!canvas || isPreparingOrderSummary) return;
+
     const snapshot = getSelectedAccessoriesSnapshot()
       .map((item) => ({
         ...item,
@@ -340,7 +576,34 @@ const InfoAboutProject = () => {
         if (item && (item.available === true)) return true;
         return false;
       });
-    updateCartAccessories(snapshot);
+
+    setIsPreparingOrderSummary(true);
+    syncAccessoriesToProject(snapshot);
+    setCartAccessories(snapshot);
+
+    try {
+      const projectSnapshot = await saveCurrentProject(canvas);
+      const reviewSummary = buildOrderTestSummary({
+        projectTitle,
+        projectSnapshot,
+        accessories: snapshot,
+      });
+      setOrderTestSummary(reviewSummary);
+      setIsOrderTestOpen(true);
+    } catch (error) {
+      console.error("Failed to prepare order summary", error);
+      alert("Failed to prepare order summary. Please try again.");
+    } finally {
+      setIsPreparingOrderSummary(false);
+    }
+  };
+
+  const handleOrderTestClose = () => {
+    setIsOrderTestOpen(false);
+  };
+
+  const handleProceedToAccessories = () => {
+    setIsOrderTestOpen(false);
     setIsCartAccessoriesOpen(true);
   };
 
@@ -381,7 +644,7 @@ const InfoAboutProject = () => {
           className={styles.cartButton}
           onClick={onCartClick}
           type="button"
-          disabled={isAddingToCart}
+          disabled={isAddingToCart || isPreparingOrderSummary}
         >
           <svg
             width="22"
@@ -464,6 +727,17 @@ const InfoAboutProject = () => {
           }}
         />
       )}
+
+      <OrderTestModal
+        isOpen={isOrderTestOpen}
+        onClose={handleOrderTestClose}
+        onProceed={handleProceedToAccessories}
+        proceedDisabled={isPreparingOrderSummary}
+        projectTitle={orderTestSummary?.projectTitle || projectTitle}
+        totalSigns={orderTestSummary?.totalSigns || 0}
+        accessories={orderTestSummary?.accessories || []}
+        signs={orderTestSummary?.signs || []}
+      />
 
       <CartAccessoriesModal
         isOpen={isCartAccessoriesOpen}

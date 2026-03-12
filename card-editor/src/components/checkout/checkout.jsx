@@ -1003,7 +1003,7 @@ export default function Checkout({
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>Price (excl. VAT): {Number(priceExclVat || 0).toFixed(2)} €</td>
+														<td>Price: {Number(priceExclVat || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
@@ -1031,7 +1031,7 @@ export default function Checkout({
 													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>Price (excl. VAT): {Number(accessoriesPrice || 0).toFixed(2)} €</td>
+														<td>Price: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
@@ -1062,7 +1062,7 @@ export default function Checkout({
 												<tr>
 													<td className='summary-table__blank'></td>
 													<td>
-														Del. Price (excl. VAT): {deliveryPrice.toFixed(2)} €
+														Del. Price: {deliveryPrice.toFixed(2)} €
 													</td>
 												</tr>
 											</tbody>
@@ -1092,10 +1092,10 @@ export default function Checkout({
 
 										<table className='summary-table' aria-label='VAT and total'>
 											<tbody>
-												<tr>
+												{/* <tr>
 													<td>VAT {Number(vatPercentForCheckout || 0).toFixed(0)}%</td>
 													<td>{Number(vatAmountForCheckout || 0).toFixed(2)} €</td>
-												</tr>
+												</tr> */}
 												<tr>
 													<td>
 														<strong>Total amount</strong>
@@ -1104,7 +1104,7 @@ export default function Checkout({
 												</tr>
 											</tbody>
 										</table>
-
+											<p className='checkout__vat-note'>No VAT is charged according to § 19 UStG.</p>
 										<div className='production-comment'>
 											<label
 												className='production-comment__label'

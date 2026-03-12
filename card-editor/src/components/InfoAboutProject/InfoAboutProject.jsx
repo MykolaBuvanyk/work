@@ -479,6 +479,15 @@ const InfoAboutProject = () => {
       const totalSum = Number.isFinite(normalizedTotalSum)
         ? normalizedTotalSum
         : fallbackTotal;
+      const persistedOrderTestSummary = buildOrderTestSummary({
+        projectTitle: project?.name || projectTitle || "Untitled",
+        projectSnapshot: projectWithCanvasMeta,
+        accessories: accessoriesSelected.map((item) => ({
+          ...item,
+          checked: true,
+          qty: String(item?.qty ?? 0),
+        })),
+      });
 
       const payload = {
         projectId: project?.id || currentProjectId,
@@ -502,6 +511,7 @@ const InfoAboutProject = () => {
           invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),
           invoiceAddressEmail: String(checkoutTotals?.invoiceAddressEmail || ""),
           deliveryComment: String(checkoutTotals?.deliveryComment || ""),
+          orderTestSummary: persistedOrderTestSummary,
         },
         manufacturerNote:
           typeof window.getManufacturerNote === "function"
@@ -679,7 +689,7 @@ const InfoAboutProject = () => {
         <span className={styles.price}>{isLoading ? "…" : formattedDiscount}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
-        <p className={styles.para}>Total Price incl. VAT</p>
+        <p className={styles.para}>Total Price</p>
         <span className={styles.price}>{isLoading ? "…" : formattedTotal}</span>
       </div>
 

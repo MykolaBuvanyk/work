@@ -110,9 +110,6 @@ const OrderTestModal = ({
                       <h4>{sign.title}</h4>
                       <p>{sign.metaLine}</p>
                     </div>
-                    {sign.copiesCount > 1 ? (
-                      <span className={styles.copiesBadge}>{sign.copiesCount} pcs</span>
-                    ) : null}
                   </div>
 
                   <p className={styles.textLine}>

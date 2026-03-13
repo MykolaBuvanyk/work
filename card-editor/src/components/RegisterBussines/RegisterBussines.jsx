@@ -122,7 +122,7 @@ const RegisterBussines = () => {
           <div className="input-cell">
             <div className="vat-row">
               <MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} placeholder={"No VAT? Continue without it."} />
-              {formData.country !== 'DE' && (
+              {/* {formData.country !== 'DE' && (
                 <>
                   <button
                     type="button"
@@ -146,7 +146,7 @@ const RegisterBussines = () => {
                     )}
                   </div>
                 </>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -165,10 +165,12 @@ const RegisterBussines = () => {
           <div className="input-cell"><MyTextInput value={formData.additional} setValue={handleInput('additional')} /></div>
         </div>
       </div>
-      <p className="vat-notice">
+      {/* <p className="vat-notice">
         *Companies can only receive VAT-free orders when providing a valid VAT-number. <a href="#" onClick={e => { e.preventDefault(); setIsReadMoreOpen(true); }}>Read more</a>
+      </p> */}
+      <p className="vat-notice">
+        *Currently no VAT charged per § 19 UStG (Small Business).
       </p>
-
       {vatCheckState === 'valid' && (
         <div className="vat-check-result valid">VAT Confirmed. Thank you!</div>
       )}

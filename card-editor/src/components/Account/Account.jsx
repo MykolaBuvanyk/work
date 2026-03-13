@@ -154,7 +154,7 @@ const Account = () => {
                             <th>Ord. No</th>
                             <th>Project Name</th>
                             <th>Order Sum</th>
-                            <th>Sum (Incl.VAT & Del.)</th>
+                            <th>Sum & Del.</th>
                             <th>Status</th>
                             <th>Del. Note</th>
                             <th>Tracking</th>
@@ -174,7 +174,7 @@ const Account = () => {
                                 <td>{order.netAfterDiscount?.toFixed(2)}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
                                 <td>{order.status || 'Received'}</td>
-                                <td onClick={() => downloadPdf(order.id, '1')} className="clickable"><DelNoteIcon /></td>
+                                <td onClick={() => downloadPdf(order.id, '2')} className="clickable"><DelNoteIcon /></td>
                                 <td className="clickable"><TrackingIcon /></td>
                                 <td onClick={() => downloadPdf(order.id, '3')} className="clickable">
                                     <div className="invoice-cell">

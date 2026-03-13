@@ -934,6 +934,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       // Image properties
       "originalSrc",
       "imageSource",
+      "isUploadedImage",
       "filters",
       "isUploadedImage",
 

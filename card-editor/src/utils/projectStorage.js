@@ -935,6 +935,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "originalSrc",
       "imageSource",
       "filters",
+      "isUploadedImage",
 
       // Text properties (already covered by Fabric, but ensuring custom text data)
       "customTextData",
@@ -1003,6 +1004,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
 
       // THEME FOLLOW PROPS (to keep dynamic coloring after reload)
       "useThemeColor",
+      "followThemeFill",
       "followThemeStroke",
       "initialFillColor",
       "initialStrokeColor",

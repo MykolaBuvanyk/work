@@ -8,6 +8,143 @@ import combinedCountries from '../Countries';
 import { useDispatch } from 'react-redux';
 import { mergeUser } from '../../store/reducers/user';
 
+const AUTO_EMAIL_PREFS_KEY = 'account-detail-invoice-email-sync';
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const parseEmailList = (value) =>
+  String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const dedupeEmails = (emails) => {
+  const seen = new Set();
+  const result = [];
+
+  emails.forEach((email) => {
+    const key = normalizeEmail(email);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(email.trim());
+  });
+
+  return result;
+};
+
+const defaultAutoEmailSyncState = {
+  initialized: false,
+  linked: {
+    address: false,
+    invoice: false,
+  },
+  sourceValues: {
+    address: '',
+    invoice: '',
+  },
+};
+
+const loadAutoEmailSyncState = (userId) => {
+  if (!userId) return defaultAutoEmailSyncState;
+
+  try {
+    const raw = localStorage.getItem(AUTO_EMAIL_PREFS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return {
+      initialized: !!parsed?.[userId]?.initialized,
+      linked: {
+        address: !!parsed?.[userId]?.linked?.address,
+        invoice: !!parsed?.[userId]?.linked?.invoice,
+      },
+      sourceValues: {
+        address: String(parsed?.[userId]?.sourceValues?.address || ''),
+        invoice: String(parsed?.[userId]?.sourceValues?.invoice || ''),
+      },
+    };
+  } catch {
+    return defaultAutoEmailSyncState;
+  }
+};
+
+const saveAutoEmailSyncState = (userId, syncState) => {
+  if (!userId) return;
+
+  try {
+    const raw = localStorage.getItem(AUTO_EMAIL_PREFS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    parsed[userId] = {
+      initialized: !!syncState?.initialized,
+      linked: {
+        address: !!syncState?.linked?.address,
+        invoice: !!syncState?.linked?.invoice,
+      },
+      sourceValues: {
+        address: String(syncState?.sourceValues?.address || ''),
+        invoice: String(syncState?.sourceValues?.invoice || ''),
+      },
+    };
+    localStorage.setItem(AUTO_EMAIL_PREFS_KEY, JSON.stringify(parsed));
+  } catch {}
+};
+
+const replaceEmailInList = (emails, previousEmail, nextEmail) => {
+  const normalizedPrevious = normalizeEmail(previousEmail);
+  if (!normalizedPrevious) return { emails, replaced: false };
+
+  const nextEmails = [...emails];
+  const index = nextEmails.findIndex((item) => normalizeEmail(item) === normalizedPrevious);
+
+  if (index === -1) {
+    return { emails: nextEmails, replaced: false };
+  }
+
+  if (String(nextEmail || '').trim()) {
+    nextEmails[index] = String(nextEmail).trim();
+  } else {
+    nextEmails.splice(index, 1);
+  }
+
+  return { emails: nextEmails, replaced: true };
+};
+
+const syncManagedInvoiceEmails = ({ currentValue, syncState, nextSourceValues }) => {
+  let nextEmails = parseEmailList(currentValue);
+  const nextLinked = {
+    address: !!syncState?.linked?.address,
+    invoice: !!syncState?.linked?.invoice,
+  };
+
+  ['address', 'invoice'].forEach((key) => {
+    if (!nextLinked[key]) return;
+
+    const previousEmail = syncState?.sourceValues?.[key] || '';
+    const nextEmail = nextSourceValues?.[key] || '';
+    const replacement = replaceEmailInList(nextEmails, previousEmail, nextEmail);
+    nextEmails = replacement.emails;
+
+    if (!replacement.replaced) {
+      nextLinked[key] = false;
+      return;
+    }
+
+    if (!String(nextEmail || '').trim()) {
+      nextLinked[key] = false;
+    }
+  });
+
+  return {
+    value: dedupeEmails(nextEmails).join(', '),
+    syncState: {
+      initialized: true,
+      linked: nextLinked,
+      sourceValues: {
+        address: String(nextSourceValues?.address || ''),
+        invoice: String(nextSourceValues?.invoice || ''),
+      },
+    },
+  };
+};
+
 // Оновлені ключі, що відповідають вашій моделі Sequelize
 const addressFields = [
   { label: 'Name', key: 'firstName' },
@@ -40,6 +177,8 @@ const invoiceFields = [
 const AccoutDetail = () => {
   const [address, setAddress] = useState({});
   const [invoice, setInvoice] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [autoEmailSyncState, setAutoEmailSyncState] = useState(defaultAutoEmailSyncState);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
 
@@ -47,11 +186,66 @@ const AccoutDetail = () => {
     try {
       const res = await $authHost.get('auth/getMy');
       const user = res.data.user;
+      const addressEmail = String(user.email || '').trim();
+      const invoiceEmail = String(user.eMailInvoice || '').trim();
+      const nextSourceValues = {
+        address: addressEmail,
+        invoice: invoiceEmail,
+      };
+      const savedAutoEmailSyncState = loadAutoEmailSyncState(user.id);
+      const savedInvoiceEmails = parseEmailList(user.weWill || '');
+      const normalizedSavedEmails = new Set(savedInvoiceEmails.map(normalizeEmail));
+      let nextAutoEmailSyncState = {
+        initialized: !!savedAutoEmailSyncState.initialized,
+        linked: {
+          address: !!savedAutoEmailSyncState.linked?.address,
+          invoice: !!savedAutoEmailSyncState.linked?.invoice,
+        },
+        sourceValues: {
+          address: String(savedAutoEmailSyncState.sourceValues?.address || ''),
+          invoice: String(savedAutoEmailSyncState.sourceValues?.invoice || ''),
+        },
+      };
+      let combinedInvoiceEmails = String(user.weWill || '');
+
+      if (!savedAutoEmailSyncState.initialized) {
+        if (savedInvoiceEmails.length === 0) {
+          combinedInvoiceEmails = dedupeEmails([addressEmail, invoiceEmail]).join(', ');
+          nextAutoEmailSyncState = {
+            initialized: true,
+            linked: {
+              address: !!addressEmail,
+              invoice: !!invoiceEmail,
+            },
+            sourceValues: nextSourceValues,
+          };
+        } else {
+          nextAutoEmailSyncState = {
+            initialized: true,
+            linked: {
+              address: !!addressEmail && normalizedSavedEmails.has(normalizeEmail(addressEmail)),
+              invoice: !!invoiceEmail && normalizedSavedEmails.has(normalizeEmail(invoiceEmail)),
+            },
+            sourceValues: nextSourceValues,
+          };
+        }
+      } else {
+        const syncResult = syncManagedInvoiceEmails({
+          currentValue: user.weWill || '',
+          syncState: savedAutoEmailSyncState,
+          nextSourceValues,
+        });
+        combinedInvoiceEmails = syncResult.value;
+        nextAutoEmailSyncState = syncResult.syncState;
+      }
+
+      setCurrentUserId(user.id);
+      setAutoEmailSyncState(nextAutoEmailSyncState);
 
       // Розподіляємо дані з fullUser по двох об'єктах стейту
       const addrData = {};
       addressFields.forEach(f => addrData[f.key] = user[f.key] || '');
-      addrData.weWill = user.weWill || '';
+      addrData.weWill = combinedInvoiceEmails;
       setAddress(addrData);
 
       const invData = {};
@@ -69,8 +263,61 @@ const AccoutDetail = () => {
     getMy();
   }, []);
 
+  useEffect(() => {
+    if (!autoEmailSyncState.initialized) return;
+
+    const syncResult = syncManagedInvoiceEmails({
+      currentValue: address.weWill || '',
+      syncState: autoEmailSyncState,
+      nextSourceValues: {
+        address: String(address.email || '').trim(),
+        invoice: String(invoice.eMailInvoice || '').trim(),
+      },
+    });
+
+    setAddress((prev) => {
+      if ((prev?.weWill || '') === syncResult.value) return prev;
+      return { ...prev, weWill: syncResult.value };
+    });
+
+    setAutoEmailSyncState((prev) => {
+      const prevSerialized = JSON.stringify(prev);
+      const nextSerialized = JSON.stringify(syncResult.syncState);
+      return prevSerialized === nextSerialized ? prev : syncResult.syncState;
+    });
+  }, [address.email, invoice.eMailInvoice, autoEmailSyncState, address.weWill]);
+
+  useEffect(() => {
+    saveAutoEmailSyncState(currentUserId, autoEmailSyncState);
+  }, [currentUserId, autoEmailSyncState]);
+
   const handleInput = (setter) => (field) => (val) => {
     setter(prev => ({ ...prev, [field]: val }));
+  };
+
+  const handleInvoiceEmailsInput = (value) => {
+    const parsedEmails = parseEmailList(value);
+    const normalizedEmails = new Set(parsedEmails.map(normalizeEmail));
+    const nextSourceValues = {
+      address: String(address.email || '').trim(),
+      invoice: String(invoice.eMailInvoice || '').trim(),
+    };
+
+    setAddress((prev) => ({ ...prev, weWill: value }));
+    setAutoEmailSyncState((prev) => ({
+      initialized: true,
+      linked: {
+        address:
+          !!prev?.linked?.address &&
+          !!nextSourceValues.address &&
+          normalizedEmails.has(normalizeEmail(nextSourceValues.address)),
+        invoice:
+          !!prev?.linked?.invoice &&
+          !!nextSourceValues.invoice &&
+          normalizedEmails.has(normalizeEmail(nextSourceValues.invoice)),
+      },
+      sourceValues: nextSourceValues,
+    }));
   };
 
   // Метод для відправки оновлених даних
@@ -154,7 +401,7 @@ const AccoutDetail = () => {
             <div className="invoice-input-row">
               <MyTextInput
                 value={address.weWill || ''}
-                setValue={handleInput(setAddress)('weWill')}
+                setValue={handleInvoiceEmailsInput}
               />
             </div>
             <div className="save-changes-row">

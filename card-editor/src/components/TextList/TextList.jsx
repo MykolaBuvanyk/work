@@ -62,22 +62,46 @@ const TextList = () => {
     if (typeof obj.setCoords === "function") obj.setCoords();
   };
 
+  const refreshTextObjectLayout = async (obj, { waitForFont = false } = {}) => {
+    if (!obj) return;
+
+    const applyLayout = () => {
+      try {
+        obj.set("objectCaching", false);
+        obj.set("dirty", true);
+      } catch {}
+      try {
+        if (typeof obj.initDimensions === "function") obj.initDimensions();
+      } catch {}
+      try {
+        if (typeof obj.setCoords === "function") obj.setCoords();
+      } catch {}
+      try {
+        canvas?.requestRenderAll?.();
+      } catch {}
+    };
+
+    applyLayout();
+
+    if (waitForFont && typeof document !== "undefined" && document.fonts) {
+      try {
+        const family = String(obj.fontFamily || "Arial").replace(/"/g, "").trim() || "Arial";
+        await Promise.allSettled([
+          document.fonts.ready,
+          document.fonts.load(`16px "${family}"`),
+        ]);
+      } catch {}
+    }
+
+    requestAnimationFrame(() => {
+      applyLayout();
+      requestAnimationFrame(() => {
+        applyLayout();
+      });
+    });
+  };
+
   const getDefaultTextSizeMmForCanvas = (canvasInstance) => {
-    try {
-      const active = canvasInstance?.getActiveObject?.();
-      if (active && (active.type === "i-text" || active.type === "text" || active.type === "textbox")) {
-        return getFontSizeMmInt(active);
-      }
-
-      const existingTexts =
-        canvasInstance
-          ?.getObjects?.()
-          ?.filter?.((obj) => obj && (obj.type === "i-text" || obj.type === "text" || obj.type === "textbox")) || [];
-      if (existingTexts.length > 0) {
-        return getFontSizeMmInt(existingTexts[existingTexts.length - 1]);
-      }
-    } catch {}
-
     const canvasWidthMm = pxToMm(canvasInstance?.getWidth?.() || 0);
     const canvasHeightMm = pxToMm(canvasInstance?.getHeight?.() || 0);
     const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
@@ -241,11 +265,26 @@ const TextList = () => {
     if (canvas) {
       isUpdatingRef.current = true;
 
+      const normalizedTextValue = (newTextValue || DEFAULT_TEXT_LABEL).trim() || DEFAULT_TEXT_LABEL;
+
+      // Unified path: use Toolbar addText so both buttons behave identically.
+      if (typeof window.cardEditorAddText === "function") {
+        try {
+          window.cardEditorAddText({ textValue: normalizedTextValue, startEditing: true });
+          setNewTextValue(DEFAULT_TEXT_LABEL);
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+            forceUpdate();
+          }, 100);
+          return;
+        } catch {}
+      }
+
       // Розраховуємо центр полотна
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
-      const text = new fabric.IText(newTextValue || DEFAULT_TEXT_LABEL, {
+      const text = new fabric.IText(normalizedTextValue, {
         left: canvasWidth / 2,
         top: canvasHeight / 2,
         originX: "center",
@@ -400,11 +439,13 @@ const TextList = () => {
   };
 
   // Зміна шрифту
-  const changeFontFamily = (family) => {
+  const changeFontFamily = async (family) => {
     const activeText = getActiveText();
     if (activeText) {
       activeText.set("fontFamily", family);
+      await refreshTextObjectLayout(activeText, { waitForFont: true });
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
@@ -710,9 +751,10 @@ const TextList = () => {
                 </div>
                 <select
                   value={text.object?.fontFamily || "Arial"}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     if (text.object) {
                       text.object.set("fontFamily", e.target.value);
+                      await refreshTextObjectLayout(text.object, { waitForFont: true });
                       canvas.renderAll();
                       forceUpdate();
                     }

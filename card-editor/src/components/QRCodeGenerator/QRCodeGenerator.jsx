@@ -94,9 +94,64 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
 
   const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
 
+  const hydrateFormFromQrText = (rawText) => {
+    const text = String(rawText || "").trim();
+    if (!text) {
+      setSelectedType("url");
+      return;
+    }
+
+    if (text.startsWith("mailto:")) {
+      setSelectedType("email");
+      setFormData((prev) => ({ ...prev, email: text.replace(/^mailto:/, "") }));
+      return;
+    }
+
+    if (text.startsWith("tel:")) {
+      setSelectedType("phone");
+      setFormData((prev) => ({ ...prev, phone: text.replace(/^tel:/, "") }));
+      return;
+    }
+
+    if (/^https:\/\/wa\.me\//i.test(text)) {
+      setSelectedType("whatsapp");
+      setFormData((prev) => ({ ...prev, phone: text.replace(/^https:\/\/wa\.me\//i, "") }));
+      return;
+    }
+
+    if (/^WIFI:/i.test(text)) {
+      const ssidMatch = text.match(/S:([^;]*)/i);
+      const passMatch = text.match(/P:([^;]*)/i);
+      const secMatch = text.match(/T:([^;]*)/i);
+      setSelectedType("wifi");
+      setFormData((prev) => ({
+        ...prev,
+        wifiSSID: ssidMatch?.[1] || "",
+        wifiPassword: passMatch?.[1] || "",
+        wifiSecurity: secMatch?.[1] || "WPA",
+      }));
+      return;
+    }
+
+    if (/^https?:\/\//i.test(text)) {
+      setSelectedType("url");
+      setFormData((prev) => ({ ...prev, url: text }));
+      return;
+    }
+
+    setSelectedType("message");
+    setFormData((prev) => ({ ...prev, message: text }));
+  };
+
   // При відкритті вікна завжди активуємо URL та генеруємо дефолтний QR (якщо ще не додано або немає активного QR)
   useEffect(() => {
     if (!isOpen) return;
+    const active = canvas?.getActiveObject?.();
+    if (active?.isQRCode) {
+      hydrateFormFromQrText(active.qrText || "");
+      return;
+    }
+
     setSelectedType("url");
     if (canvas) {
       const existing = canvas.getObjects()?.find((o) => o.isQRCode);
@@ -172,7 +227,11 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     // Пошук цільового QR для update
     const allQrs = canvas.getObjects().filter((o) => o.isQRCode);
     const active = canvas.getActiveObject();
-    const target = active && active.isQRCode ? active : allQrs[0];
+    const target = active && active.isQRCode ? active : null;
+    if (mode === "update" && !target) {
+      if (!auto) alert("Select a QR code on canvas to update");
+      return;
+    }
     let left, top, scaleX, scaleY, angle;
     let replacing = false;
     if (mode === "update" && target) {

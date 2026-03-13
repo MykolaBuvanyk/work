@@ -5912,7 +5912,8 @@ const LayoutPlannerModal = ({
       pageInsetMm,
       frameInsetMm,
       {
-        leftStripWidthMm: exportMode === "Normal (MJ) Frame" ? MJ_FRAME_STRIP_WIDTH_MM : 0,
+        // Normal MJ frame should have only the brown frame, without strip offset area.
+        leftStripWidthMm: 0,
       }
     );
 

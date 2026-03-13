@@ -113,6 +113,11 @@ const Canvas = ({ className }) => {
   const scaleRef = useRef(1);
   const resizingRef = useRef(false);
   const outlineColorRef = useRef(OUTLINE_COLOR);
+  const themeTextColorRef = useRef(globalColors?.textColor || '#000000');
+
+  useEffect(() => {
+    themeTextColorRef.current = globalColors?.textColor || '#000000';
+  }, [globalColors?.textColor]);
 
   // Main Fabric canvas lifecycle
   useEffect(() => {
@@ -255,6 +260,44 @@ const Canvas = ({ className }) => {
       !!o && ['path', 'rect', 'circle', 'ellipse'].includes(o.type) && !isHole(o);
 
     const isTextObj = o => !!o && ['i-text', 'text', 'textbox'].includes(o.type);
+
+    const refreshTextLayout = async target => {
+      if (!isTextObj(target)) return;
+
+      const applyLayout = () => {
+        try {
+          target.set({ objectCaching: false, dirty: true });
+        } catch {}
+        try {
+          target.initDimensions && target.initDimensions();
+        } catch {}
+        try {
+          target.setCoords && target.setCoords();
+        } catch {}
+        try {
+          fCanvas.requestRenderAll();
+        } catch {}
+      };
+
+      applyLayout();
+
+      try {
+        if (typeof document !== 'undefined' && document.fonts) {
+          const family = String(target.fontFamily || 'Arial').replace(/"/g, '').trim() || 'Arial';
+          await Promise.allSettled([
+            document.fonts.ready,
+            document.fonts.load(`16px "${family}"`),
+          ]);
+        }
+      } catch {}
+
+      requestAnimationFrame(() => {
+        applyLayout();
+        requestAnimationFrame(() => {
+          applyLayout();
+        });
+      });
+    };
 
     const isQrObject = o =>
       !!o && (o.isQRCode === true || (o.data && o.data.isQRCode === true));
@@ -1140,6 +1183,9 @@ const Canvas = ({ className }) => {
       try {
         if (t && t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
       } catch { }
+      try {
+        refreshTextLayout(t);
+      } catch { }
     });
 
     const mirrorIfPath = e => {
@@ -1667,8 +1713,27 @@ const Canvas = ({ className }) => {
         },
       });
 
+    const resolveCodeOwnerObject = rawObj => {
+      let current = rawObj || null;
+      let guard = 0;
+      while (current && guard < 12) {
+        if (
+          current.isQRCode === true ||
+          (current.data && current.data.isQRCode === true) ||
+          current.isBarCode === true ||
+          (current.data && current.data.isBarCode === true)
+        ) {
+          return current;
+        }
+        current = current.group || current.parent || null;
+        guard += 1;
+      }
+      return null;
+    };
+
     const duplicateHandler = async (evt, transform) => {
-      const target = transform?.target;
+      const rawTarget = transform?.target;
+      const target = resolveCodeOwnerObject(rawTarget) || rawTarget;
       if (!target) return true;
       try {
         // QR codes: do NOT clone. Cloning can copy internal locked fill descriptors
@@ -1686,7 +1751,7 @@ const Canvas = ({ className }) => {
           const qrColor =
             target.qrColor ||
             (target.data && target.data.qrColor) ||
-            globalColors?.textColor ||
+            themeTextColorRef.current ||
             '#000000';
 
           try {
@@ -1737,8 +1802,97 @@ const Canvas = ({ className }) => {
               ensureActionControls(obj);
             } catch { }
             try {
+              fCanvas.fire('selection:updated', { selected: [obj], target: obj });
+            } catch { }
+            try {
               setShapePropertiesOpen(false);
             } catch { }
+            fCanvas.requestRenderAll();
+            return true;
+          } catch {
+            // Fall through to generic clone as a safety net.
+          }
+        }
+
+        const isBarCode =
+          target.isBarCode === true || (target.data && target.data.isBarCode === true);
+        const barCodeText = target.barCodeText || (target.data && target.data.barCodeText);
+        const barCodeType = target.barCodeType || (target.data && target.data.barCodeType) || 'CODE128';
+        if (isBarCode && barCodeText) {
+          const nextLeft = (target.left || 0) + 10;
+          const nextTop = (target.top || 0) + 10;
+          const scaleX = target.scaleX ?? 1;
+          const scaleY = target.scaleY ?? 1;
+          const angle = target.angle ?? 0;
+          const originX = target.originX || 'center';
+          const originY = target.originY || 'center';
+          const barColor =
+            themeTextColorRef.current ||
+            target.barCodeColor ||
+            (target.data && target.data.barCodeColor) ||
+            '#000000';
+
+          try {
+            const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            JsBarcode(svgEl, barCodeText, {
+              format: barCodeType,
+              width: 2,
+              height: 100,
+              displayValue: false,
+              fontSize: 14,
+              textMargin: 5,
+              margin: 0,
+              background: 'transparent',
+              lineColor: barColor,
+            });
+
+            const svgText = new XMLSerializer().serializeToString(svgEl);
+            const res = await fabric.loadSVGFromString(svgText);
+            const obj =
+              res?.objects?.length === 1
+                ? res.objects[0]
+                : fabric.util.groupSVGElements(res.objects || [], res.options || {});
+
+            obj.set({
+              left: nextLeft,
+              top: nextTop,
+              scaleX,
+              scaleY,
+              angle,
+              originX,
+              originY,
+              selectable: true,
+              hasControls: true,
+              hasBorders: true,
+              isBarCode: true,
+              barCodeText,
+              barCodeType,
+              suppressBarText: true,
+              fill: barColor,
+              barCodeColor: barColor,
+              data: {
+                ...(obj.data && typeof obj.data === 'object' ? obj.data : {}),
+                isBarCode: true,
+                barCodeText,
+                barCodeType,
+                barCodeColor: barColor,
+              },
+            });
+
+            try {
+              if (typeof obj.setCoords === 'function') obj.setCoords();
+            } catch {}
+            fCanvas.add(obj);
+            fCanvas.setActiveObject(obj);
+            try {
+              ensureActionControls(obj);
+            } catch {}
+            try {
+              fCanvas.fire('selection:updated', { selected: [obj], target: obj });
+            } catch {}
+            try {
+              setShapePropertiesOpen(false);
+            } catch {}
             fCanvas.requestRenderAll();
             return true;
           } catch {
@@ -1775,6 +1929,15 @@ const Canvas = ({ className }) => {
             cornerRadiusMm: target.cornerRadiusMm,
             baseCornerRadius: target.baseCornerRadius,
             displayCornerRadiusMm: target.displayCornerRadiusMm,
+            isQRCode: target.isQRCode,
+            qrText: target.qrText,
+            qrSize: target.qrSize,
+            qrColor: target.qrColor,
+            isBarCode: target.isBarCode,
+            barCodeText: target.barCodeText,
+            barCodeType: target.barCodeType,
+            barCodeColor: target.barCodeColor,
+            suppressBarText: target.suppressBarText,
           };
 
           Object.entries(copiedCustomProps).forEach(([key, value]) => {
@@ -1788,6 +1951,46 @@ const Canvas = ({ className }) => {
               ...(cloned.data && typeof cloned.data === 'object' ? cloned.data : {}),
               ...cloneSerializableValue(target.data),
             };
+          }
+
+          // Explicitly persist code metadata for duplicates created from frame controls.
+          const isSourceBarCode =
+            target.isBarCode === true || (target.data && target.data.isBarCode === true);
+          if (isSourceBarCode) {
+            cloned.isBarCode = true;
+            if (target.barCodeText !== undefined) cloned.barCodeText = cloneSerializableValue(target.barCodeText);
+            if (target.barCodeType !== undefined) cloned.barCodeType = cloneSerializableValue(target.barCodeType);
+            if (target.barCodeColor !== undefined) cloned.barCodeColor = cloneSerializableValue(target.barCodeColor);
+            if (!cloned.data || typeof cloned.data !== 'object') cloned.data = {};
+            cloned.data.isBarCode = true;
+            if (target.barCodeText !== undefined)
+              cloned.data.barCodeText = cloneSerializableValue(target.barCodeText);
+            if (target.barCodeType !== undefined)
+              cloned.data.barCodeType = cloneSerializableValue(target.barCodeType);
+          }
+
+          const isSourceQrCode =
+            target.isQRCode === true || (target.data && target.data.isQRCode === true);
+          if (isSourceQrCode) {
+            cloned.isQRCode = true;
+            if (target.qrText !== undefined) cloned.qrText = cloneSerializableValue(target.qrText);
+            if (target.qrColor !== undefined) cloned.qrColor = cloneSerializableValue(target.qrColor);
+            if (!cloned.data || typeof cloned.data !== 'object') cloned.data = {};
+            cloned.data.isQRCode = true;
+            if (target.qrText !== undefined) cloned.data.qrText = cloneSerializableValue(target.qrText);
+          }
+
+          // Keep code flags in `data` as well for consumers that read nested metadata.
+          if (target.isBarCode === true || (target.data && target.data.isBarCode === true)) {
+            if (!cloned.data || typeof cloned.data !== 'object') cloned.data = {};
+            cloned.data.isBarCode = true;
+            if (target.barCodeText !== undefined) cloned.data.barCodeText = cloneSerializableValue(target.barCodeText);
+            if (target.barCodeType !== undefined) cloned.data.barCodeType = cloneSerializableValue(target.barCodeType);
+          }
+          if (target.isQRCode === true || (target.data && target.data.isQRCode === true)) {
+            if (!cloned.data || typeof cloned.data !== 'object') cloned.data = {};
+            cloned.data.isQRCode = true;
+            if (target.qrText !== undefined) cloned.data.qrText = cloneSerializableValue(target.qrText);
           }
 
           if (Array.isArray(target.strokeDashArray)) {
@@ -1853,6 +2056,9 @@ const Canvas = ({ className }) => {
         fCanvas.setActiveObject(cloned);
         try {
           ensureActionControls(cloned);
+        } catch { }
+        try {
+          fCanvas.fire('selection:updated', { selected: [cloned], target: cloned });
         } catch { }
         try {
           if (cloned.fromIconMenu === true || (cloned.data && cloned.data.fromIconMenu === true)) {
@@ -3511,10 +3717,7 @@ const Canvas = ({ className }) => {
 
     const textColor = globalColors?.textColor || '#000000';
     const backgroundType = globalColors?.backgroundType || 'solid';
-    const barcodeBackground =
-      backgroundType === 'texture' || backgroundType === 'gradient'
-        ? 'transparent'
-        : globalColors?.backgroundColor || '#FFFFFF';
+    const barcodeBackground = 'transparent';
     const objs = canvas.getObjects?.() || [];
     // Перефарбовуємо усі об'єкти, що позначені як залежні від кольору теми
     try {

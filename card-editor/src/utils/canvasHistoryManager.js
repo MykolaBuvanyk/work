@@ -125,7 +125,9 @@ export class CanvasHistoryManager {
       "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
       "strokeLineJoin", "strokeMiterLimit", "isCircle", "selectable",
       "evented", "hasControls", "hasBorders", "customProperties",
-      "id", "name", "originalSrc", "filters", ...(options.extraProps || [])
+      "id", "name", "originalSrc", "filters", "isUploadedImage", "useThemeColor",
+      "followThemeFill", "followThemeStroke", "initialFillColor", "initialStrokeColor",
+      ...(options.extraProps || [])
     ];
 
     const state = canvas.toJSON(extraProps);

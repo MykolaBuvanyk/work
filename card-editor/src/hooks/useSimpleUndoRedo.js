@@ -24,7 +24,8 @@ export const useSimpleUndoRedo = () => {
       const extraProps = [
         "shapeType", "baseCornerRadius", "displayCornerRadiusMm",
         "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
-        "strokeLineJoin", "strokeMiterLimit", "isCircle"
+        "strokeLineJoin", "strokeMiterLimit", "isCircle", "isUploadedImage", "useThemeColor",
+        "followThemeFill", "followThemeStroke", "initialFillColor", "initialStrokeColor"
       ];
 
       const currentState = canvas.toJSON(extraProps);

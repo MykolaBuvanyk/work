@@ -1374,6 +1374,31 @@ const stripMarkedBarcodeRectsFromRoot = (root, { suppressLogs = false } = {}) =>
   return rects.length;
 };
 
+const stripBarcodeBackgroundRectsFromRoot = (root, { suppressLogs = false } = {}) => {
+  if (!root || typeof root.querySelectorAll !== 'function') return 0;
+
+  const groups = Array.from(root.querySelectorAll(`[${BARCODE_EXPORT_ATTR}="true"]`));
+  if (!groups.length) return 0;
+
+  let removed = 0;
+  groups.forEach(group => {
+    const rects = Array.from(group.querySelectorAll('rect'));
+    rects.forEach(rect => {
+      if (rect.getAttribute(BARCODE_BAR_ATTR) === 'true') return;
+      try {
+        rect.parentNode?.removeChild(rect);
+        removed += 1;
+      } catch {}
+    });
+  });
+
+  if (!suppressLogs && removed > 0) {
+    console.log(`[layoutExportServer] Removed barcode background rects: ${removed}`);
+  }
+
+  return removed;
+};
+
 const filterBarcodeBarRects = rects => {
   if (!Array.isArray(rects) || rects.length === 0) return [];
 
@@ -2064,41 +2089,8 @@ app.post('/api/layout-pdf', async (req, res) => {
 
       doc.addPage({ size: [pageWidthPt, pageHeightPt], margin: 0 });
 
-      const shouldRenderMjFrame =
-        sheet?.disableMjStrip !== true &&
-        (exportMode === 'Sheet optimized (MJ) Fr.' ||
-          sheet?.exportMode === 'Sheet optimized (MJ) Fr.' ||
-          (Number(sheet?.leftStripWidthMm) || 0) > 0);
-
-      if (shouldRenderMjFrame) {
-        const stripWidthMm = Math.max(0, Number(sheet?.leftStripWidthMm) || 9.5);
-        const holeDiameterMm = 5.5;
-        const holeSpacingMm = 80;
-        const secondHoleMinHeightMm = 135;
-
-        doc.save();
-        // Strip background is the page itself (white).
-        // Do not draw a separate strip edge line here: the frame outline is drawn later.
-
-        const pageHeightMm = Math.max(0, Number(sheet?.height) || 0);
-        const holeCentersYmm =
-          pageHeightMm >= secondHoleMinHeightMm
-            ? [pageHeightMm / 2 - holeSpacingMm / 2, pageHeightMm / 2 + holeSpacingMm / 2]
-            : [pageHeightMm / 2];
-
-        const centerXpt = mmToPoints(stripWidthMm / 2);
-        const radiusPt = mmToPoints(holeDiameterMm / 2);
-
-        holeCentersYmm.forEach((cyMm) => {
-          const cyPt = mmToPoints(cyMm);
-          doc
-            .circle(centerXpt, cyPt, radiusPt)
-            .lineWidth(0.75)
-            .fillAndStroke('#FFFFFF', '#FF0000');
-        });
-
-        doc.restore();
-      }
+      // Left-side pre-render strip holes disabled.
+      // Frame-related hole rendering (when needed) is handled later in frame block.
 
       // Optional: left-side sheet info label (rotated), if provided by client.
       const sheetInfo = sheet?.sheetInfo || null;
@@ -2368,6 +2360,10 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
             }
             rectsToRemove.forEach(rect => rect.parentNode?.removeChild(rect));
+
+            // Barcode groups may still contain a solid background rect matching the canvas/theme.
+            // Remove any non-bar rectangles inside marked barcode containers so PDF export keeps only the bars.
+            stripBarcodeBackgroundRectsFromRoot(backgroundSvg, { suppressLogs: true });
 
             const serializer = new XMLSerializer();
             const backgroundMarkup = serializer.serializeToString(backgroundSvg);
@@ -2773,7 +2769,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           doc.restore();
         }
 
-        if (isMjFrameSheet) {
+        if (isMjOptimizedSheet) {
           const frameInfo = frameInfos[frameIndex] || null;
           const stripWidthMm = Math.max(0, Number(frameInfo?.stripWidthMm) || 9.5);
           const holeDiameterMm = 5.5;
@@ -2809,10 +2805,6 @@ app.post('/api/layout-pdf', async (req, res) => {
               .fillAndStroke('#FFFFFF', '#FF0000');
           });
           doc.restore();
-
-          if (!isMjOptimizedSheet) {
-            return;
-          }
 
           const topLabel = (typeof frameInfo?.topLabel === 'string' && frameInfo.topLabel.trim()) || '';
           const bottomLabel =

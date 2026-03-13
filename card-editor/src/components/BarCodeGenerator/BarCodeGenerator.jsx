@@ -8,8 +8,9 @@ import { fitObjectToCanvas } from "../../utils/canvasFit";
 const BarCodeGenerator = ({ isOpen, onClose }) => {
   const { canvas, globalColors } = useCanvasContext();
   const dropdownRef = useRef(null);
+  const autoCreateOnOpenRef = useRef(false);
   const [formData, setFormData] = useState({
-    text: "",
+    text: "ABC-abc-1234",
     codeType: "CODE128",
   });
 
@@ -72,7 +73,12 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     // 2. Завантаження в Fabric як вектор
     const allBars = canvas.getObjects().filter((o) => o.isBarCode);
     const active = canvas.getActiveObject();
-    let target = active && active.isBarCode ? active : allBars[0];
+    let target = active && active.isBarCode ? active : null;
+
+    if (!createNew && !target) {
+      alert("Select a barcode on canvas to update");
+      return;
+    }
 
     // Якщо replace=true або є target і не просили createNew — замінюємо, інакше створюємо новий
     const willReplace = replace || (!createNew && !!target);
@@ -218,16 +224,52 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         : canvas.getObjects().find((o) => o.isBarCode);
     if (!target) return;
     try {
-      const clone = await target.clone();
+      const barColor = globalColors?.textColor || target.barCodeColor || "#000000";
+      const svgEl = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+      );
+      JsBarcode(svgEl, target.barCodeText || "", {
+        format: target.barCodeType || "CODE128",
+        width: 2,
+        height: 100,
+        displayValue: false,
+        fontSize: 14,
+        textMargin: 5,
+        margin: 0,
+        background: "transparent",
+        lineColor: barColor,
+      });
+      const svgText = new XMLSerializer().serializeToString(svgEl);
+      const result = await fabric.loadSVGFromString(svgText);
+      const clone =
+        result?.objects?.length === 1
+          ? result.objects[0]
+          : fabric.util.groupSVGElements(result.objects || [], result.options || {});
       clone.set({
         left: target.left + 30,
         top: target.top + 30,
+        scaleX: target.scaleX ?? 1,
+        scaleY: target.scaleY ?? 1,
+        angle: target.angle ?? 0,
+        originX: target.originX || "center",
+        originY: target.originY || "center",
+        selectable: true,
+        hasControls: true,
+        hasBorders: true,
         isBarCode: true,
         barCodeText: target.barCodeText,
         barCodeType: target.barCodeType,
-        fill: target.barCodeColor || globalColors?.textColor || "#000000",
-        barCodeColor:
-          target.barCodeColor || globalColors?.textColor || "#000000",
+        suppressBarText: true,
+        fill: barColor,
+        barCodeColor: barColor,
+        data: {
+          ...(clone.data && typeof clone.data === "object" ? clone.data : {}),
+          isBarCode: true,
+          barCodeText: target.barCodeText,
+          barCodeType: target.barCodeType,
+          barCodeColor: barColor,
+        },
       });
       canvas.add(clone);
       try {
@@ -266,18 +308,32 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
 
   // Автогенерація дефолтного бар-коду при відкритті (як у QR)
   useEffect(() => {
-    if (!isOpen || !canvas) return;
-    // Якщо немає жодного bar-коду – задаємо дефолтний текст і генеруємо
-    const existing = canvas.getObjects().some((o) => o.isBarCode);
-    if (!existing) {
-      setFormData((prev) => ({ ...prev, text: prev.text || "ABC-abc-1234" }));
-      // Викликаємо після мікротіку щоб state встиг оновитись
-    } else if (!formData.text) {
-      // Якщо вже є баркоди, але поле порожнє – ставимо дефолт для можливості New
-      setFormData((prev) => ({ ...prev, text: "ABC-abc-1234" }));
+    if (!isOpen || !canvas) {
+      autoCreateOnOpenRef.current = false;
+      return;
     }
+    const active = canvas.getActiveObject?.();
+    if (active?.isBarCode) {
+      setFormData((prev) => ({
+        ...prev,
+        text: active.barCodeText || prev.text,
+        codeType: active.barCodeType || prev.codeType,
+      }));
+      autoCreateOnOpenRef.current = false;
+      return;
+    }
+
+    // Якщо немає жодного bar-коду – автогенеруємо його з поточного значення інпута.
+    const existing = canvas.getObjects().some((o) => o.isBarCode);
+    if (!existing && !autoCreateOnOpenRef.current) {
+      autoCreateOnOpenRef.current = true;
+      requestAnimationFrame(() => {
+        generateBarCode({ createNew: true });
+      });
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, canvas]);
 
   // Guard during manual scaling: prevent shrinking below 30mm
   useEffect(() => {

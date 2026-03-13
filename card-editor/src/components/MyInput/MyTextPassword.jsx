@@ -5,6 +5,7 @@ import { FaEye } from 'react-icons/fa';
 
 const MyTextPassword = ({ value, setValue, name, required = false }) => {
   const [isPass, setIsPass] = useState(true);
+  const EyeIcon = isPass ? FaEyeSlash : FaEye;
 
   return (
     <div className="pass-input-container">
@@ -15,8 +16,8 @@ const MyTextPassword = ({ value, setValue, name, required = false }) => {
         value={value}
         onChange={e => setValue(e.target.value)}
       />
-      <div onClick={() => setIsPass(!isPass)} className="svg-cont">
-        {isPass ? <FaEyeSlash /> : <FaEye />}
+      <div onClick={() => setIsPass(prev => !prev)} className="svg-cont" aria-label="Toggle password visibility">
+        <EyeIcon key={isPass ? 'hidden' : 'visible'} />
       </div>
     </div>
   );

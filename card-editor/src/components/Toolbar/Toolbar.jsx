@@ -199,6 +199,20 @@ const Toolbar = ({ formData }) => {
   const editableCopiesBusyRef = useRef(false);
   const editableCopiesByDesignRef = useRef({});
   const [holesDiameter, setHolesDiameter] = useState(2.5);
+  const lockedCodeObjectRef = useRef(null);
+  const isCodeEditorLockedRef = useRef(false);
+
+  const closeQrModal = useCallback(() => {
+    isCodeEditorLockedRef.current = false;
+    lockedCodeObjectRef.current = null;
+    setIsQrOpen(false);
+  }, []);
+
+  const closeBarCodeModal = useCallback(() => {
+    isCodeEditorLockedRef.current = false;
+    lockedCodeObjectRef.current = null;
+    setIsBarCodeOpen(false);
+  }, []);
 
   useEffect(() => {
     editableCopiesBusyRef.current = isEditableCopiesBusy;
@@ -2839,31 +2853,67 @@ const Toolbar = ({ formData }) => {
         if (typeof obj.setCoords === 'function') obj.setCoords();
       } catch {}
     };
-    // init canvas listeners
-    canvas.on('selection:created', () => {
-      const obj = canvas.getActiveObject();
-      // Санітуємо контролли активного об'єкта для виключення падіння при першому кліку
-      sanitizeObjectControls(obj);
-      if (obj && (obj.name === 'vertex' || obj.name === 'cornerHandle')) {
-        canvas.discardActiveObject();
-        canvas.requestRenderAll();
+    const isCodeObject = obj =>
+      !!obj && (
+        obj.isQRCode === true ||
+        obj?.data?.isQRCode === true ||
+        obj.isBarCode === true ||
+        obj?.data?.isBarCode === true
+      );
+    const isCodeEditorOpen = () => isCodeEditorLockedRef.current && (isQrOpen || isBarCodeOpen);
+    const ensureLockedCodeSelection = () => {
+      if (!canvas || !isCodeEditorOpen()) return;
+      const locked = lockedCodeObjectRef.current;
+      if (!locked) return;
+
+      const objects = canvas.getObjects?.() || [];
+      if (!objects.includes(locked)) {
+        isCodeEditorLockedRef.current = false;
+        lockedCodeObjectRef.current = null;
+        setIsQrOpen(false);
+        setIsBarCodeOpen(false);
         return;
       }
-      setActiveObject(obj);
-    });
-    canvas.on('selection:updated', () => {
-      const obj = canvas.getActiveObject();
-      sanitizeObjectControls(obj);
-      if (obj && (obj.name === 'vertex' || obj.name === 'cornerHandle')) {
-        canvas.discardActiveObject();
+
+      const active = canvas.getActiveObject?.();
+      if (active === locked) return;
+
+      try {
+        canvas.setActiveObject(locked);
+      } catch {}
+      try {
+        setActiveObject(locked);
+      } catch {}
+      try {
+        locked.setCoords?.();
+      } catch {}
+      try {
         canvas.requestRenderAll();
-        return;
+      } catch {}
+    };
+    const openCodeEditorForObject = obj => {
+      if (!isCodeObject(obj)) return;
+      lockedCodeObjectRef.current = obj;
+      isCodeEditorLockedRef.current = true;
+      try {
+        canvas.setActiveObject(obj);
+      } catch {}
+      try {
+        setActiveObject(obj);
+      } catch {}
+      try {
+        if (isShapePropertiesOpen) setIsShapePropertiesOpen(false);
+      } catch {}
+      if (obj.isQRCode === true || obj?.data?.isQRCode === true) {
+        setIsBarCodeOpen(false);
+        setIsQrOpen(true);
+      } else if (obj.isBarCode === true || obj?.data?.isBarCode === true) {
+        setIsQrOpen(false);
+        setIsBarCodeOpen(true);
       }
-      setActiveObject(obj);
-    });
-    canvas.on('selection:cleared', () => {
-      setActiveObject(null);
-      // Коли нічого не вибрано, показуємо розміри canvas
+      requestAnimationFrame(() => ensureLockedCodeSelection());
+    };
+    const syncCanvasSizeValues = () => {
       const storedW = Number(canvas.get?.('designWidthMm'));
       const storedH = Number(canvas.get?.('designHeightMm'));
       const widthMm = Number.isFinite(storedW)
@@ -2884,25 +2934,68 @@ const Toolbar = ({ formData }) => {
         height: heightMm,
         cornerRadius: crMm,
       });
-    });
+    };
+    const onSelectionCreated = () => {
+      const obj = canvas.getActiveObject();
+      sanitizeObjectControls(obj);
+      if (obj && (obj.name === 'vertex' || obj.name === 'cornerHandle')) {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+        return;
+      }
+      if (isCodeObject(obj)) {
+        openCodeEditorForObject(obj);
+        return;
+      }
+      if (isCodeEditorOpen()) {
+        requestAnimationFrame(() => ensureLockedCodeSelection());
+        return;
+      }
+      setActiveObject(obj);
+    };
+    const onSelectionUpdated = () => {
+      const obj = canvas.getActiveObject();
+      sanitizeObjectControls(obj);
+      if (obj && (obj.name === 'vertex' || obj.name === 'cornerHandle')) {
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+        return;
+      }
+      if (isCodeObject(obj)) {
+        openCodeEditorForObject(obj);
+        return;
+      }
+      if (isCodeEditorOpen()) {
+        requestAnimationFrame(() => ensureLockedCodeSelection());
+        return;
+      }
+      setActiveObject(obj);
+    };
+    const onSelectionCleared = () => {
+      if (isCodeEditorOpen()) {
+        requestAnimationFrame(() => ensureLockedCodeSelection());
+        return;
+      }
+      setActiveObject(null);
+      syncCanvasSizeValues();
+    };
+    const onMouseUp = opt => {
+      const target = opt?.target;
+      if (!isCodeObject(target)) return;
+      requestAnimationFrame(() => openCodeEditorForObject(target));
+    };
+    // init canvas listeners
+    canvas.on('selection:created', onSelectionCreated);
+    canvas.on('selection:updated', onSelectionUpdated);
+    canvas.on('selection:cleared', onSelectionCleared);
+    canvas.on('mouse:up', onMouseUp);
     canvas.on('object:modified', () => {
       // Не підлаштовуємо поля розмірів під модифікації випадкових об'єктів
     });
 
     // Ініціалізуємо початкові значення розмірів canvas
     {
-      const storedW = Number(canvas.get?.('designWidthMm'));
-      const storedH = Number(canvas.get?.('designHeightMm'));
-      const sz = getLogicalCanvasSize();
-      setSizeValues({
-        width: Number.isFinite(storedW)
-          ? Math.round(storedW * 10) / 10
-          : Number(pxToMm(sz.width).toFixed(1)),
-        height: Number.isFinite(storedH)
-          ? Math.round(storedH * 10) / 10
-          : Number(pxToMm(sz.height).toFixed(1)),
-        cornerRadius: Number(canvas.get?.('cornerRadius')) || 0,
-      });
+      syncCanvasSizeValues();
     }
     // Блокуємо відкриття пропертей по dblclick на якорі
     const onDblClick = opt => {
@@ -2914,29 +3007,23 @@ const Toolbar = ({ formData }) => {
         return;
       }
       if (t && t.isQRCode) {
-        try {
-          canvas.setActiveObject(t);
-        } catch {}
-        try {
-          setActiveObject(t);
-        } catch {}
-        try {
-          if (isShapePropertiesOpen) setIsShapePropertiesOpen(false);
-        } catch {}
-        setIsQrOpen(true);
+        openCodeEditorForObject(t);
+      } else if (t && t.isBarCode) {
+        openCodeEditorForObject(t);
       }
     };
     canvas.on('mouse:dblclick', onDblClick);
     return () => {
       if (canvas) {
-        canvas.off('mouse:dblclick');
-        canvas.off('selection:created');
-        canvas.off('selection:updated');
-        canvas.off('selection:cleared');
+        canvas.off('mouse:dblclick', onDblClick);
+        canvas.off('mouse:up', onMouseUp);
+        canvas.off('selection:created', onSelectionCreated);
+        canvas.off('selection:updated', onSelectionUpdated);
+        canvas.off('selection:cleared', onSelectionCleared);
         canvas.off('object:modified');
       }
     };
-  }, [canvas]);
+  }, [canvas, isQrOpen, isBarCodeOpen, isShapePropertiesOpen]);
   useEffect(() => {
     try {
       window.dispatchEvent(new CustomEvent('toolbar:changed'));
@@ -3737,103 +3824,58 @@ const Toolbar = ({ formData }) => {
       }
     }
 
-    const isLegacyCircleServiceObject = obj =>
+    const isCircleTemplateDefaultTextObject = obj =>
       !!obj &&
       (
-        obj.isCircleWithLineCenterLine ||
         obj.isCircleWithLineTopText ||
         obj.isCircleWithLineBottomText ||
-        obj.isCircleWithCrossHorizontalLine ||
-        obj.isCircleWithCrossVerticalLine ||
         obj.isCircleWithCrossTopText ||
         obj.isCircleWithCrossBottomLeftText ||
         obj.isCircleWithCrossBottomRightText ||
-        obj.name === 'circleWithLineCenterLine' ||
         obj.name === 'circleWithLineTopText' ||
         obj.name === 'circleWithLineBottomText' ||
-        obj.name === 'circleWithCrossHorizontalLine' ||
-        obj.name === 'circleWithCrossVerticalLine' ||
         obj.name === 'circleWithCrossTopText' ||
         obj.name === 'circleWithCrossBottomLeftText' ||
         obj.name === 'circleWithCrossBottomRightText'
       );
 
+    const isLegacyCircleServiceObject = obj =>
+      !!obj &&
+      (
+        obj.isCircleWithLineCenterLine ||
+        obj.isCircleWithCrossHorizontalLine ||
+        obj.isCircleWithCrossVerticalLine ||
+        obj.name === 'circleWithLineCenterLine' ||
+        obj.name === 'circleWithCrossHorizontalLine' ||
+        obj.name === 'circleWithCrossVerticalLine'
+      );
+
     const fitOversizedTextObjectsAfterResize = () => {
-      if (!canvas || typeof canvas.getObjects !== 'function') return;
-      const canvasW = Number(canvas.getWidth?.() || canvas.width || 0);
-      const canvasH = Number(canvas.getHeight?.() || canvas.height || 0);
-      if (canvasW <= 0 || canvasH <= 0) return;
-
-      const objects = canvas.getObjects() || [];
-      objects.forEach(obj => {
-        if (!obj) return;
-        if (isLegacyCircleServiceObject(obj)) return;
-
-        const objType = String(obj.type || '').toLowerCase();
-        const isTextObject = objType === 'text' || objType === 'i-text' || objType === 'textbox';
-        if (!isTextObject) return;
-
-        const getRect = () => {
-          try {
-            return obj.getBoundingRect(true, true);
-          } catch {
-            return null;
-          }
-        };
-
-        const isOverflowing = rect => {
-          if (!rect) return false;
-          return (
-            rect.width > canvasW ||
-            rect.height > canvasH ||
-            rect.left < 0 ||
-            rect.top < 0 ||
-            rect.left + rect.width > canvasW ||
-            rect.top + rect.height > canvasH
-          );
-        };
-
-        const clampInsideCanvas = () => {
-          const rect = getRect();
-          if (!rect || typeof obj.left !== 'number' || typeof obj.top !== 'number') return;
-          let nextLeft = obj.left;
-          let nextTop = obj.top;
-
-          if (rect.left < 0) nextLeft += -rect.left;
-          if (rect.top < 0) nextTop += -rect.top;
-          if (rect.left + rect.width > canvasW) nextLeft -= rect.left + rect.width - canvasW;
-          if (rect.top + rect.height > canvasH) nextTop -= rect.top + rect.height - canvasH;
-
-          obj.set({ left: nextLeft, top: nextTop });
-          obj.setCoords?.();
-        };
-
-        let rect = getRect();
-        if (!isOverflowing(rect)) return;
-
-        const signX = (Number(obj.scaleX) || 1) >= 0 ? 1 : -1;
-        const signY = (Number(obj.scaleY) || 1) >= 0 ? 1 : -1;
-        let sxAbs = Math.max(1e-4, Math.abs(Number(obj.scaleX) || 1));
-        let syAbs = Math.max(1e-4, Math.abs(Number(obj.scaleY) || 1));
-
-        for (let i = 0; i < 40; i += 1) {
-          rect = getRect();
-          if (!isOverflowing(rect)) break;
-          sxAbs = Math.max(1e-4, sxAbs * 0.95);
-          syAbs = Math.max(1e-4, syAbs * 0.95);
-          obj.set({
-            scaleX: signX * sxAbs,
-            scaleY: signY * syAbs,
-          });
-          obj.setCoords?.();
-        }
-
-        clampInsideCanvas();
-      });
+      // Text auto-fit/auto-reposition is intentionally disabled.
+      // User-defined text size and position should never be changed automatically.
+      return;
     };
 
     // Пункт 2 (розмір) завжди змінює лише полотно/картку, ігноруючи активні об'єкти
     if (canvas && effectiveShapeType) {
+      const isTextCanvasObject = obj => {
+        const objType = String(obj?.type || '').toLowerCase();
+        return (
+          (objType === 'text' || objType === 'i-text' || objType === 'textbox') &&
+          !isCircleTemplateDefaultTextObject(obj)
+        );
+      };
+
+      const isQrOrBarcodeObject = obj => {
+        if (!obj) return false;
+        return (
+          obj.isQRCode === true ||
+          obj?.data?.isQRCode === true ||
+          obj.isBarCode === true ||
+          obj?.data?.isBarCode === true
+        );
+      };
+
       const shouldKeepObjectScaleOnCanvasResize = obj => {
         if (!obj) return false;
         const isShapeObject =
@@ -3842,7 +3884,7 @@ const Toolbar = ({ formData }) => {
           obj?.data?.fromShapeTab === true ||
           !!obj.shapeType;
         const isCutObject = obj.isCutElement === true;
-        return isShapeObject || isCutObject;
+        return isShapeObject || isCutObject || isQrOrBarcodeObject(obj) || isTextCanvasObject(obj);
       };
 
       const repositionObjectsForResize = (prevW, prevH, nextW, nextH) => {
@@ -3907,11 +3949,10 @@ const Toolbar = ({ formData }) => {
           if (obj.isCutElement && obj.cutType === 'hole') return;
           if (typeof obj.id === 'string' && obj.id.startsWith(`${HOLE_ID_PREFIX}-`)) return;
           if (shouldKeepObjectScaleOnCanvasResize(obj)) return;
+          if (isQrOrBarcodeObject(obj)) return;
 
           const isCandidate =
             !!obj.fromIconMenu ||
-            !!obj.isQRCode ||
-            !!obj.isBarCode ||
             !!obj.shapeSvgId ||
             !!obj.shapeType ||
             !!obj.isUploadedImage;
@@ -6556,49 +6597,31 @@ const Toolbar = ({ formData }) => {
   }, [forceApplySavedTheme]);
 
   // Додавання тексту
-  const addText = () => {
+  const addText = optionsOrEvent => {
     if (canvas) {
+      const isEventLike =
+        !!optionsOrEvent &&
+        typeof optionsOrEvent === 'object' &&
+        (typeof optionsOrEvent.preventDefault === 'function' || 'nativeEvent' in optionsOrEvent);
+      const options = isEventLike ? {} : optionsOrEvent || {};
+      const rawTextValue = typeof options.textValue === 'string' ? options.textValue : 'Text';
+      const textValue = rawTextValue.trim() || 'Text';
+      const startEditing = options.startEditing !== false;
+
       const BASE_CANVAS_WIDTH_MM = 120;
       const BASE_CANVAS_HEIGHT_MM = 80;
       const BASE_TEXT_SIZE_MM = 5;
       const MIN_FONT_MM = 3;
       const BASE_MIN_SIDE_MM = Math.min(BASE_CANVAS_WIDTH_MM, BASE_CANVAS_HEIGHT_MM);
-      const canvasWidthMm = pxToMm(canvas.getWidth?.() || canvas.width || 0);
-      const canvasHeightMm = pxToMm(canvas.getHeight?.() || canvas.height || 0);
+      const canvasWidthMm = Number(sizeValues?.width) || pxToMm(canvas.getWidth?.() || canvas.width || 0);
+      const canvasHeightMm = Number(sizeValues?.height) || pxToMm(canvas.getHeight?.() || canvas.height || 0);
       const minSideMm = Math.max(0, Math.min(canvasWidthMm, canvasHeightMm));
       let defaultFontSizeMm = Math.max(
         MIN_FONT_MM,
         Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)) * 1.8) || BASE_TEXT_SIZE_MM
       );
 
-      try {
-        const active = canvas.getActiveObject?.();
-        const isTextActive =
-          active && (active.type === 'i-text' || active.type === 'text' || active.type === 'textbox');
-
-        const readEffectiveMm = obj => {
-          const fontPx = Number(obj?.fontSize) || 0;
-          const sx = Math.abs(Number(obj?.scaleX) || 1);
-          const sy = Math.abs(Number(obj?.scaleY) || 1);
-          return pxToMm(fontPx * Math.max(sx, sy));
-        };
-
-        if (isTextActive) {
-          const eff = Math.round(readEffectiveMm(active));
-          if (Number.isFinite(eff) && eff > 0) defaultFontSizeMm = Math.max(MIN_FONT_MM, eff);
-        } else {
-          const existingTexts = (canvas.getObjects?.() || []).filter(
-            obj => obj && (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox')
-          );
-          if (existingTexts.length > 0) {
-            const ref = existingTexts[existingTexts.length - 1];
-            const eff = Math.round(readEffectiveMm(ref));
-            if (Number.isFinite(eff) && eff > 0) defaultFontSizeMm = Math.max(MIN_FONT_MM, eff);
-          }
-        }
-      } catch {}
-
-      const text = new fabric.IText('Text', {
+      const text = new fabric.IText(textValue, {
         left: canvas.width / 2,
         top: canvas.height / 2,
         originX: 'center',
@@ -6609,21 +6632,36 @@ const Toolbar = ({ formData }) => {
       });
       canvas.add(text);
       canvas.setActiveObject(text);
-      // Запускаем редактирование единообразно через copyHandler без дополнительных таймеров/дублирования
-      // Небольшая задержка кадра нужна, чтобы объект стал активным и имел корректные coords
-      requestAnimationFrame(() => {
-        try {
-          if (typeof copyHandler === 'function') {
-            copyHandler(null, { target: text });
-          } else if (typeof text.enterEditing === 'function') {
-            text.enterEditing();
-          }
-        } catch {}
-      });
+
+      if (startEditing) {
+        // Запускаем редактирование единообразно через copyHandler без дополнительных таймеров/дублирования
+        // Небольшая задержка кадра нужна, чтобы объект стал активным и имел корректные coords
+        requestAnimationFrame(() => {
+          try {
+            if (typeof copyHandler === 'function') {
+              copyHandler(null, { target: text });
+            } else if (typeof text.enterEditing === 'function') {
+              text.enterEditing();
+            }
+          } catch {}
+        });
+      }
+
       canvas.renderAll();
       trackElementAdded('Text');
+      return text;
     }
+    return null;
   };
+
+  useEffect(() => {
+    window.cardEditorAddText = addText;
+    return () => {
+      if (window.cardEditorAddText === addText) {
+        delete window.cardEditorAddText;
+      }
+    };
+  }, [addText]);
 
   // Додавання зображення через IconMenu
   const addImage = () => {
@@ -10493,8 +10531,8 @@ const Toolbar = ({ formData }) => {
       </div>
       {/* Undo/Redo */}
       {/* <UndoRedo /> */}
-      <QRCodeGenerator isOpen={isQrOpen} onClose={() => setIsQrOpen(false)} />
-      <BarCodeGenerator isOpen={isBarCodeOpen} onClose={() => setIsBarCodeOpen(false)} />
+      <QRCodeGenerator isOpen={isQrOpen} onClose={closeQrModal} />
+      <BarCodeGenerator isOpen={isBarCodeOpen} onClose={closeBarCodeModal} />
       <ShapeSelector isOpen={isShapeOpen} onClose={() => setIsShapeOpen(false)} />
       <CutSelector isOpen={isCutOpen} onClose={() => setIsCutOpen(false)} />
       <IconMenu isOpen={isIconMenuOpen} onClose={() => setIsIconMenuOpen(false)} />

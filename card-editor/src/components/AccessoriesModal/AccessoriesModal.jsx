@@ -83,6 +83,14 @@ const AccessoriesModal = ({
         .map(({ item }) => item)
     : [];
 
+  const parseNumber = (raw) => {
+    if (raw === "") return 0;
+    const n = parseFloat(String(raw).replace(",", "."));
+    return isNaN(n) || n < 0 ? 0 : Math.floor(n);
+  };
+
+  const formatPrice = (val) => `€ ${Number(val || 0).toFixed(2)}`;
+
   // Show only admin-provided & available items, or those already selected (checked).
   const visibleItems = orderedItems.filter((it) => {
     if (it?.checked) return true;
@@ -164,7 +172,7 @@ const AccessoriesModal = ({
                     </div>
                   </div>
                 </div>
-                <div className={styles.colPrice}>€ {it.price}</div>
+                <div className={styles.colPrice}>{formatPrice(it.price * parseNumber(it.qty))}</div>
                 <div className={styles.colDesc}>{it.desc}</div>
                 <div className={styles.colExtra}>
                   {it.hasExtra && it.extraImg ? (

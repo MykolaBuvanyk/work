@@ -12,6 +12,7 @@ import {
 } from "../../utils/projectStorage";
 import styles from "./Accessories.module.css";
 import AccessoriesModal from "../AccessoriesModal/AccessoriesModal";
+import TemplatesModal from "../TemplatesModal/TemplatesModal";
 // Modal images (used only inside modal, but state lives here for two-way sync)
 import imgCableTies from "/images/accessories/CableTies 1.png";
 import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 2.png";
@@ -115,6 +116,7 @@ const TopToolbar = ({ className, formData }) => {
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
   const [isAccessoriesOpen, setAccessoriesOpen] = useState(false);
+  const [isTemplatesOpen, setTemplatesOpen] = useState(false);
   const [hasCheckedCanvases, setHasCheckedCanvases] = useState(false);
   const [projectSignsCount, setProjectSignsCount] = useState(0);
   const [hasActiveProject, setHasActiveProject] = useState(false);
@@ -184,6 +186,8 @@ const TopToolbar = ({ className, formData }) => {
 
   const openAccessories = () => setAccessoriesOpen(true);
   const closeAccessories = () => setAccessoriesOpen(false);
+  const openTemplates = () => setTemplatesOpen(true);
+  const closeTemplates = () => setTemplatesOpen(false);
 
   const isProjectLimitReached =
     hasActiveProject && projectSignsCount >= MAX_SIGNS_PER_PROJECT;
@@ -950,7 +954,7 @@ const TopToolbar = ({ className, formData }) => {
             </svg>
             Import via Excel
           </li>
-          <li className={styles.toolbarItem}>
+          <li className={styles.toolbarItem} onClick={openTemplates} title="Templates">
             <svg
               width="21"
               height="24"
@@ -1096,6 +1100,9 @@ const TopToolbar = ({ className, formData }) => {
             </svg>
             More Accessories</>}
         </div>
+        {isTemplatesOpen && (
+          <TemplatesModal onClose={closeTemplates} />
+        )}
         <AccessoriesModal
           isOpen={isAccessoriesOpen}
           onClose={closeAccessories}

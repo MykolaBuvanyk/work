@@ -81,6 +81,14 @@ const CartAccessoriesModal = ({
         .map(({ item }) => item)
     : [];
 
+  const parseNumber = (raw) => {
+    if (raw === "") return 0;
+    const n = parseFloat(String(raw).replace(",", "."));
+    return isNaN(n) || n < 0 ? 0 : Math.floor(n);
+  };
+
+  const formatPrice = (val) => `€ ${Number(val || 0).toFixed(2)}`;
+
   return (
     <div className={baseStyles.modalRoot}>
       <div className={baseStyles.dropdown} ref={ref}>
@@ -148,7 +156,7 @@ const CartAccessoriesModal = ({
                     </div>
                   </div>
                 </div>
-                <div className={baseStyles.colPrice}>€ {it.price}</div>
+                <div className={baseStyles.colPrice}>{formatPrice(it.price * parseNumber(it.qty))}</div>
                 <div className={baseStyles.colDesc}>{it.desc}</div>
                 <div className={baseStyles.colExtra}>
                   {it.hasExtra && it.extraImg ? (

@@ -934,6 +934,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       // Image properties
       "originalSrc",
       "imageSource",
+      "isUploadedImage",
       "filters",
 
       // Text properties (already covered by Fabric, but ensuring custom text data)

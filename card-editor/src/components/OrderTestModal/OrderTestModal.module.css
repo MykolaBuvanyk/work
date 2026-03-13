@@ -77,16 +77,6 @@
   font-size: 14px;
 }
 
-.copiesBadge {
-  flex-shrink: 0;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(0, 108, 164, 0.1);
-  color: rgba(0, 108, 164, 1);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .textLine {
   margin: 0 0 12px;
   color: #1e293b;

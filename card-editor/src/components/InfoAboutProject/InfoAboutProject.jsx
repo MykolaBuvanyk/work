@@ -99,6 +99,8 @@ const resolveTapeLabel = (canvasSnap = {}) => {
   return canvasSnap?.toolbarState?.isAdhesiveTape ? "TAPE" : "NO TAPE";
 };
 
+const hasContent = (value) => String(value ?? "").trim().length > 0;
+
 const resolveCanvasObjects = (canvasSnap = {}) => {
   if (Array.isArray(canvasSnap?.json?.objects)) return canvasSnap.json.objects;
   if (Array.isArray(canvasSnap?.jsonTemplate?.objects)) return canvasSnap.jsonTemplate.objects;
@@ -137,9 +139,21 @@ const isTextObject = (obj) => {
   return ["text", "textbox", "i-text"].includes(type) || (typeof obj?.text === "string" && obj.text.trim());
 };
 
+const hasShapeMarker = (obj) =>
+  hasContent(obj?.shapeType) ||
+  hasContent(obj?.data?.shapeType) ||
+  hasContent(obj?.shapeSvgId) ||
+  hasContent(obj?.data?.shapeSvgId);
+
 const isImageObject = (obj) => {
   const type = String(obj?.type || "").toLowerCase();
-  return type === "image";
+  return (
+    type === "image" ||
+    hasObjectFlag(obj, "isUploadedImage") ||
+    hasObjectFlag(obj, "fromIconMenu") ||
+    hasContent(obj?.imageSource) ||
+    hasContent(obj?.data?.imageSource)
+  );
 };
 
 const isHelperObject = (obj) => {
@@ -159,8 +173,11 @@ const isHelperObject = (obj) => {
 };
 
 const isShapeObject = (obj) => {
-  const type = String(obj?.type || "").toLowerCase();
-  return ["path", "rect", "circle", "ellipse", "triangle", "polygon", "polyline", "line"].includes(type);
+  if (!obj || typeof obj !== "object") return false;
+  if (!hasShapeMarker(obj)) return false;
+  if (isImageObject(obj) || isCutFigureObject(obj) || isHoleObject(obj)) return false;
+  if (isQrObject(obj) || isBarcodeObject(obj) || isTextObject(obj)) return false;
+  return true;
 };
 
 const analyzeCanvasContent = (canvasSnap = {}) => {
@@ -243,6 +260,26 @@ const resolveTotalSignsFromCanvases = (canvases = []) => {
   return canvases.reduce((sum, canvasSnap) => sum + resolveCopiesCount(canvasSnap), 0);
 };
 
+const expandParsedSigns = (signs = []) => {
+  const expanded = [];
+  let displayIndex = 1;
+
+  signs.forEach((sign, signIndex) => {
+    const copiesCount = Math.max(1, Math.floor(Number(sign?.copiesCount) || 1));
+    for (let copyIndex = 0; copyIndex < copiesCount; copyIndex += 1) {
+      expanded.push({
+        ...sign,
+        id: `${String(sign?.id || signIndex)}::copy-${copyIndex + 1}`,
+        title: `Sign ${displayIndex}`,
+        copiesCount: 1,
+      });
+      displayIndex += 1;
+    }
+  });
+
+  return expanded;
+};
+
 const buildOrderTestSummary = ({ projectTitle, projectSnapshot, accessories }) => {
   const canvases = Array.isArray(projectSnapshot?.canvases) ? projectSnapshot.canvases : [];
   const normalizedAccessories = Array.isArray(accessories)
@@ -259,7 +296,7 @@ const buildOrderTestSummary = ({ projectTitle, projectSnapshot, accessories }) =
         .filter((item) => item.qty > 0)
     : [];
 
-  const signs = canvases.map((canvasSnap, index) => {
+  const parsedSigns = canvases.map((canvasSnap, index) => {
     const content = analyzeCanvasContent(canvasSnap);
     const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
     const metaParts = [
@@ -285,10 +322,11 @@ const buildOrderTestSummary = ({ projectTitle, projectSnapshot, accessories }) =
       copiesCount: resolveCopiesCount(canvasSnap),
     };
   });
+  const signs = expandParsedSigns(parsedSigns);
 
   return {
     projectTitle,
-    totalSigns: resolveTotalSignsFromCanvases(canvases),
+    totalSigns: signs.length || resolveTotalSignsFromCanvases(canvases),
     accessories: normalizedAccessories,
     signs,
   };

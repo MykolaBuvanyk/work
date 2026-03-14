@@ -5,8 +5,10 @@ import { Order, User } from '../models/models.js';
 import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
+import Stripe  from 'stripe';
 
-
+const secretKey = process.env.secretPayKey;
+const stripe=Stripe(secretKey);
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -2416,5 +2418,71 @@ CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => 
   }
 })
 
+CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ where: { id: parseInt(orderId) } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // ВАЖЛИВО: Stripe приймає суму в ЦЕНТАХ (ціле число)
+    // Якщо order.sum = 15.50 (float), ми перетворюємо його в 1550
+    const amountInCents = Math.round(order.sum * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents, 
+      currency: 'eur',
+      // Рекомендується додавати метадані для відстеження замовлення в Dashboard
+      metadata: { orderId: order.id.toString() },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    // Повертаємо clientSecret на фронтенд
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (err) {
+    console.error('Stripe Error:', err); // Логування помилки для розробки
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET; // Отримаєш у Dashboard
+
+  let event;
+
+  try {
+    // Перевірка, що запит дійсно від Stripe
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`❌ Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Обробка події успішної оплати
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object;
+    
+    // Отримуємо ID замовлення, який ми передавали в metadata при створенні Payment Intent
+    const orderId = paymentIntent.metadata.orderId;
+
+    if (orderId) {
+      // ОНОВЛЮЄМО СТАТУС У БАЗІ
+      await Order.update({ paid: true }, { where: { id: orderId } });
+      console.log(`✅ Замовлення №${orderId} успішно оплачено!`);
+      
+      // Тут можна додати логіку відправки email клієнту про успішну оплату
+    }
+  }
+
+  // Stripe чекає від нас 200 OK, щоб припинити надсилати це повідомлення
+  res.json({received: true});
+});
 
 export default CartRouter;

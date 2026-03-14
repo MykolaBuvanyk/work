@@ -3,6 +3,7 @@ import './Account.scss';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
+import { useNavigate } from 'react-router-dom';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -68,10 +69,11 @@ const Account = () => {
     };
 
     const openProjectFromOrder = async (order) => {
+        const newTab = window.open('about:blank', '_blank'); // відкриваємо одразу
+
         const orderId = order?.id;
         if (!orderId) return;
 
-        // Project snapshot is stored under order.orderMongo.project (CartProject.project)
         const project = order?.orderMongo?.project || order?.project || order?.order || null;
         if (!project || typeof project !== 'object') {
             alert('No project snapshot in this order');
@@ -83,13 +85,16 @@ const Account = () => {
         }
 
         setOpeningOrderId(orderId);
+
         try {
             try {
                 await clearAllUnsavedSigns();
             } catch {}
+
             try {
                 localStorage.removeItem('currentUnsavedSignId');
             } catch {}
+
             try {
                 window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
             } catch {}
@@ -102,55 +107,34 @@ const Account = () => {
             } catch {}
 
             const first = Array.isArray(project.canvases) ? project.canvases[0] : null;
+
             if (first?.id) {
-                try {
-                    localStorage.setItem('currentCanvasId', first.id);
-                    localStorage.setItem('currentProjectCanvasId', first.id);
-                    localStorage.setItem('currentProjectCanvasIndex', '0');
-                } catch {}
-                try {
-                    if (typeof window !== 'undefined') {
-                        window.__currentProjectCanvasId = first.id;
-                        window.__currentProjectCanvasIndex = 0;
-                    }
-                } catch {}
-            } else {
-                try {
-                    localStorage.removeItem('currentCanvasId');
-                    localStorage.removeItem('currentProjectCanvasId');
-                    localStorage.removeItem('currentProjectCanvasIndex');
-                } catch {}
-                try {
-                    if (typeof window !== 'undefined') {
-                        window.__currentProjectCanvasId = null;
-                        window.__currentProjectCanvasIndex = null;
-                    }
-                } catch {}
+                localStorage.setItem('currentCanvasId', first.id);
+                localStorage.setItem('currentProjectCanvasId', first.id);
+                localStorage.setItem('currentProjectCanvasIndex', '0');
+
+                window.__currentProjectCanvasId = first.id;
+                window.__currentProjectCanvasIndex = 0;
             }
 
-            try {
-                window.dispatchEvent(
-                    new CustomEvent('project:opened', {
-                        detail: { projectId: project.id },
-                    })
-                );
-            } catch {}
+            const pathname = String(window?.location?.pathname || '');
+            const m = pathname.match(/^\/([a-z]{2})(\/|$)/i);
+            const prefix = m ? `/${m[1]}` : '/';
 
-            // Navigate to editor root (keep optional language prefix, if present)
-            try {
-                const pathname = String(window?.location?.pathname || '');
-                const m = pathname.match(/^\/([a-z]{2})(\/|$)/i);
-                const prefix = m ? `/${m[1]}` : '';
-                window.location.href = prefix || '/';
-            } catch {}
+            if (newTab) {
+                newTab.location.href = prefix;
+            }
+
         } catch (e) {
             console.error('Failed to open ordered project', e);
             alert(e?.message || 'Failed to open ordered project');
+            if (newTab) newTab.close();
         } finally {
             setOpeningOrderId(null);
         }
     };
 
+    const navigate=useNavigate();
 
     return (
         <div id='account-container'>
@@ -196,7 +180,7 @@ const Account = () => {
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
                                     {order.isPaid ? 'Paid' : 'Unpaid'}
                                 </td>
-                                <td onClick={() => downloadPdf(order.id, '1')} className="clickable">{!order.paid && <span className="to-pay-icon">💳</span>}</td>
+                                <td>{!order.paid && <span onClick={()=>window.open('/account/pay/' + order.id, '_blank')} className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}

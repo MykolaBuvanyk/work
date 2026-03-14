@@ -15,8 +15,9 @@ import QuickGuide from './components/QuickGuide/QuickGuide';
 import FAQPage from './components/FAQ/FAQPage';
 import UpdateBaner from './components/UpdateBaner/UpdateBaner';
 import Account from './components/Account/Account';
-import AccountSetting from './components/Account/AccountSetting';
 import AccoutDetail from './components/Account/AccoutDetail';
+import AccountSetting from './components/Account/AccountSetting';
+import CheckoutForm from './components/Account/CheckoutPage';
 import Enter from './components/Enter/Enter';
 import Checkout from './components/checkout/checkout';
 import ThankYou from './components/order-success/order-success';
@@ -43,6 +44,7 @@ function App() {
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />
+      <Route path="account/pay/:orderId" element={<CheckoutForm />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
       <Route

@@ -18,8 +18,8 @@ import { Order, User } from './models/models.js';
 import { Op } from 'sequelize';
 import SendEmailForStatus from './Controller/SendEmailForStatus.js';
 import cron from 'node-cron';
-
-
+import Stripe from 'stripe'; // або const Stripe = require('stripe');
+const stripe = new Stripe(process.env.secretPayKey);
 dotenv.config();
 
 const MM_TO_PT = 72 / 25.4;
@@ -1941,6 +1941,64 @@ const applyPlacementBoundaryClip = (
 };
 
 const app = express();
+
+app.post('/api/cart/webhook', express.raw({type: 'application/json'}), async(req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+    console.log('--- 🔔 New Webhook Received ---');
+    console.log('Headers Signature:', sig ? '✅ Present' : '❌ Missing');
+    console.log('Webhook Secret Key:', endpointSecret ? '✅ Loaded' : '❌ NOT FOUND IN ENV');
+  
+    let event;
+  
+    try {
+      // Перевірка, що запит дійсно від Stripe
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      console.log('✅ Event successfully constructed:', event.type);
+    } catch (err) {
+      console.log(`❌ Webhook Error (Signature Verification Failed): ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  
+    // Обробка події успішної оплати
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      
+      console.log('💰 PaymentIntent Succeeded for:', paymentIntent.id);
+      console.log('📦 Metadata received:', paymentIntent.metadata);
+  
+      const orderId = paymentIntent.metadata?.orderId;
+  
+      if (orderId) {
+        try {
+          console.log(`🔄 Attempting to update database for Order ID: ${orderId}...`);
+          
+          // ОНОВЛЮЄМО СТАТУС У БАЗІ
+          const [updated] = await Order.update(
+            { isPaid: true }, 
+            { where: { id: parseInt(orderId) } }
+          );
+  
+          if (updated) {
+            console.log(`✅ Success: Order №${orderId} marked as PAID in DB.`);
+          } else {
+            console.log(`⚠️ Warning: Order №${orderId} found, but status NOT updated (maybe already paid?).`);
+          }
+        } catch (dbErr) {
+          console.log(`❌ Database Update Error: ${dbErr.message}`);
+        }
+      } else {
+        console.log('⚠️ Warning: No orderId found in metadata.');
+      }
+    } else {
+      // Логуємо інші типи подій, які нам приходять, щоб знати, що Stripe "стукає"
+      console.log(`ℹ️ Received other event type: ${event.type}`);
+    }
+  
+    // Stripe чекає від нас 200 OK
+    res.json({ received: true });
+});
 
 app.use(cors());
 

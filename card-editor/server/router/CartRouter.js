@@ -1,3 +1,4 @@
+import 'dotenv/config'; // для ES модулів
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
@@ -2451,17 +2452,23 @@ CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res,
   }
 });
 
-CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+//Виніс в layout
+/*CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET; // Отримаєш у Dashboard
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  console.log('--- 🔔 New Webhook Received ---');
+  console.log('Headers Signature:', sig ? '✅ Present' : '❌ Missing');
+  console.log('Webhook Secret Key:', endpointSecret ? '✅ Loaded' : '❌ NOT FOUND IN ENV');
 
   let event;
 
   try {
     // Перевірка, що запит дійсно від Stripe
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    console.log('✅ Event successfully constructed:', event.type);
   } catch (err) {
-    console.log(`❌ Webhook Error: ${err.message}`);
+    console.log(`❌ Webhook Error (Signature Verification Failed): ${err.message}`);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -2469,20 +2476,39 @@ CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req,
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object;
     
-    // Отримуємо ID замовлення, який ми передавали в metadata при створенні Payment Intent
-    const orderId = paymentIntent.metadata.orderId;
+    console.log('💰 PaymentIntent Succeeded for:', paymentIntent.id);
+    console.log('📦 Metadata received:', paymentIntent.metadata);
+
+    const orderId = paymentIntent.metadata?.orderId;
 
     if (orderId) {
-      // ОНОВЛЮЄМО СТАТУС У БАЗІ
-      await Order.update({ paid: true }, { where: { id: orderId } });
-      console.log(`✅ Замовлення №${orderId} успішно оплачено!`);
-      
-      // Тут можна додати логіку відправки email клієнту про успішну оплату
+      try {
+        console.log(`🔄 Attempting to update database for Order ID: ${orderId}...`);
+        
+        // ОНОВЛЮЄМО СТАТУС У БАЗІ
+        const [updated] = await Order.update(
+          { paid: true }, 
+          { where: { id: parseInt(orderId) } }
+        );
+
+        if (updated) {
+          console.log(`✅ Success: Order №${orderId} marked as PAID in DB.`);
+        } else {
+          console.log(`⚠️ Warning: Order №${orderId} found, but status NOT updated (maybe already paid?).`);
+        }
+      } catch (dbErr) {
+        console.log(`❌ Database Update Error: ${dbErr.message}`);
+      }
+    } else {
+      console.log('⚠️ Warning: No orderId found in metadata.');
     }
+  } else {
+    // Логуємо інші типи подій, які нам приходять, щоб знати, що Stripe "стукає"
+    console.log(`ℹ️ Received other event type: ${event.type}`);
   }
 
-  // Stripe чекає від нас 200 OK, щоб припинити надсилати це повідомлення
-  res.json({received: true});
-});
+  // Stripe чекає від нас 200 OK
+  res.json({ received: true });
+});*/
 
 export default CartRouter;

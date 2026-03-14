@@ -5,8 +5,10 @@ import { Order, User } from '../models/models.js';
 import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
+import Stripe  from 'stripe';
 
-
+const secretKey = process.env.secretPayKey;
+const stripe=Stripe(secretKey);
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -2257,6 +2259,39 @@ CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => 
     return res.status(500).json({ message: 'Failed to load orders' });
   }
 })
+
+CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const order = await Order.findOne({ where: { id: parseInt(orderId) } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // ВАЖЛИВО: Stripe приймає суму в ЦЕНТАХ (ціле число)
+    // Якщо order.sum = 15.50 (float), ми перетворюємо його в 1550
+    const amountInCents = Math.round(order.sum * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents, 
+      currency: 'eur',
+      // Рекомендується додавати метадані для відстеження замовлення в Dashboard
+      metadata: { orderId: order.id.toString() },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    // Повертаємо clientSecret на фронтенд
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (err) {
+    console.error('Stripe Error:', err); // Логування помилки для розробки
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 
 export default CartRouter;

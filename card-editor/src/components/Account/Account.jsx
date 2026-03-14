@@ -3,6 +3,7 @@ import './Account.scss';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
+import { useNavigate } from 'react-router-dom';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -140,6 +141,7 @@ const Account = () => {
         }
     };
 
+    const navigate=useNavigate();
 
     return (
         <div id='account-container'>
@@ -185,7 +187,7 @@ const Account = () => {
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
                                     {order.isPaid ? 'Paid' : 'Unpaid'}
                                 </td>
-                                <td>{!order.paid && <span className="to-pay-icon">💳</span>}</td>
+                                <td>{!order.paid && <span onClick={()=>navigate('/account/pay/'+order.id)} className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}

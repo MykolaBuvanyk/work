@@ -1,0 +1,397 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --products-bg: #ffffff;
+  --products-text: #1f1f1f;
+  --products-muted: #555555;
+  --products-container: 1160px;
+}
+
+.page {
+  margin: 0;
+  color: var(--products-text);
+  background: var(--products-bg);
+  line-height: 1.6;
+  font-family: Inter, Arial, sans-serif;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: #2146d0;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+p,
+ul {
+  margin: 0;
+}
+
+.container {
+  width: min(var(--products-container), calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.section {
+  padding: 34px 0;
+}
+
+.sectionHeading {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.sectionHeadingHero {
+  margin-bottom: 34px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 2.8vw, 2.55rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-decoration: none;
+}
+
+.sectionTitle {
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  line-height: 1.18;
+}
+
+.sectionTitleRegular {
+  font-weight: 400;
+}
+
+.sectionTitleUnderlined {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.sectionHeadingLead,
+.sectionHeadingDescription {
+  max-width: 980px;
+  margin: 18px auto 0;
+  font-size: 1.05rem;
+  color: var(--products-text);
+}
+
+.sectionHeadingLeadUnderlined {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.sectionHeadingLeftText {
+  text-align: left;
+}
+
+.sectionHeadingDescriptionLeft {
+  text-align: left;
+  margin-left: 0;
+  margin-right: auto;
+  max-width: 100%;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.95fr);
+  gap: 38px;
+  align-items: center;
+}
+
+.heroVisual {
+  padding: 10px 0;
+}
+
+.heroVisual img {
+  width: 100%;
+  height: auto;
+}
+
+.heroContent {
+  font-size: 1.02rem;
+  color: var(--products-muted);
+}
+
+.heroContent p + p {
+  margin-top: 18px;
+}
+
+.heroIntro {
+  font-size: 1.16rem;
+  color: var(--products-text);
+  font-weight: 700;
+}
+
+.usesGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+
+.iconCard,
+.featureCard {
+  text-align: center;
+}
+
+.iconCardImage,
+.featureCardImage {
+  width: 166px;
+  height: 140px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconCardImage {
+  width: 179px;
+  height: 188px;
+}
+
+.iconCardImage img,
+.featureCardImage img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.iconCardImage img {
+  width: 179px;
+  height: 188px;
+}
+
+.featureCardImage img {
+  width: 166px;
+  height: 140px;
+}
+
+.iconCard h3 {
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 26px 28px;
+  margin-top: 30px;
+}
+
+.featureCard h3 {
+  font-size: 0.98rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.infoBlockGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px;
+  gap: 28px;
+  align-items: center;
+}
+
+.infoBlockContent {
+  font-size: 1rem;
+  color: var(--products-muted);
+}
+
+.infoBlockContent p + p,
+.infoBlockContent ul + p,
+.infoBlockContent p + ul {
+  margin-top: 10px;
+}
+
+.infoBlockContent strong {
+  color: var(--products-text);
+}
+
+.bulletList {
+  padding-left: 20px;
+}
+
+.bulletList li {
+  margin: 6px 0;
+  font-weight: 700;
+  color: var(--products-text);
+}
+
+.infoBlockBadge {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.infoBlockBadge img {
+  width: 196px;
+  height: 196px;
+  max-width: 196px;
+  object-fit: contain;
+}
+
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.plateCard {
+  position: relative;
+  padding: 18px 22px 20px;
+  min-height: 184px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0, 0, 0, 0.42);
+}
+
+.plateCardHole {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.plateCardHoleTl {
+  top: 8px;
+  left: 8px;
+}
+
+.plateCardHoleTr {
+  top: 8px;
+  right: 8px;
+}
+
+.plateCardHoleBl {
+  bottom: 8px;
+  left: 8px;
+}
+
+.plateCardHoleBr {
+  bottom: 8px;
+  right: 8px;
+}
+
+.plateCard h3 {
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.plateCard ul {
+  padding-left: 18px;
+}
+
+.plateCard li {
+  margin: 6px 0;
+  font-weight: 700;
+}
+
+.plateCardRed {
+  background: #ff1c12;
+  color: #fff;
+}
+
+.plateCardSilver {
+  background: linear-gradient(180deg, #e7e7e7 0%, #d2d2d2 100%);
+  color: #1d1d1d;
+}
+
+.plateCardYellow {
+  background: #fff200;
+  color: #121212;
+}
+
+.plateCardGreen {
+  background: #2ab400;
+  color: #0b0b0b;
+}
+
+.plateCardBlack {
+  background: #050505;
+  color: #fff;
+}
+
+.plateCardOrange {
+  background: #ffa400;
+  color: #121212;
+}
+
+@media (max-width: 1100px) {
+  .usesGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .featuresGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .categoriesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .section {
+    padding: 28px 0;
+  }
+
+  .heroGrid,
+  .infoBlockGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .infoBlockBadge {
+    justify-content: center;
+  }
+
+  .usesGrid,
+  .featuresGrid,
+  .categoriesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    width: min(100% - 24px, var(--products-container));
+  }
+
+  .sectionHeadingLead,
+  .sectionHeadingDescription,
+  .heroContent,
+  .infoBlockContent {
+    font-size: 0.96rem;
+  }
+
+  .usesGrid,
+  .featuresGrid,
+  .categoriesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .plateCard {
+    min-height: auto;
+  }
+}

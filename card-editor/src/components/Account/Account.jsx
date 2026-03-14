@@ -44,11 +44,22 @@ const Account = () => {
 
     const downloadPdf = async (id, type) => {
         try {
-            const res = await $authHost.get(`cart/getPdfs${type}/${id}`, { responseType: 'blob' });
+            const endpointSuffixByType = {
+                '1': '',
+                '2': '2',
+                '3': '3',
+            };
+            const fileNameByType = {
+                '1': 'Order',
+                '2': 'DeliveryNote',
+                '3': 'Invoice',
+            };
+            const endpointSuffix = endpointSuffixByType[type] ?? type;
+            const res = await $authHost.get(`cart/getPdfs${endpointSuffix}/${id}`, { responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([res.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `${type}-${id}.pdf`);
+            link.setAttribute('download', `${fileNameByType[type] || type}-${id}.pdf`);
             document.body.appendChild(link);
             link.click();
         } catch (err) {
@@ -185,7 +196,7 @@ const Account = () => {
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
                                     {order.isPaid ? 'Paid' : 'Unpaid'}
                                 </td>
-                                <td>{!order.paid && <span className="to-pay-icon">💳</span>}</td>
+                                <td onClick={() => downloadPdf(order.id, '1')} className="clickable">{!order.paid && <span className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}

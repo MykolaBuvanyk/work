@@ -59,6 +59,10 @@ const Header = () => {
       url: '/products',
     },
     {
+      name: 'Industries',
+      url: '/industries',
+    },
+    {
       name: 'Quick Guide',
       url: '/quick-guide',
     },
@@ -76,16 +80,19 @@ const Header = () => {
         url: '/home',
       },
     ];
-    if (!isAuth)
+
+    if (!isAuth) {
       newUrls.push({
         name: 'Registration',
         url: '/login',
       });
-    else
+    } else {
       newUrls.push({
-        name:'My Account',
-        url:'/account'
-      })
+        name: 'My Account',
+        url: '/account',
+      });
+    }
+
     newUrls.push(
       ...[
         {
@@ -95,6 +102,10 @@ const Header = () => {
         {
           name: 'Products',
           url: '/products',
+        },
+        {
+          name: 'Industries',
+          url: '/industries',
         },
         {
           name: 'FAQ',
@@ -110,11 +121,14 @@ const Header = () => {
         },
       ]
     );
-    if (isAdmin)
+
+    if (isAdmin) {
       newUrls.push({
         name: 'Admin',
         url: '/admin',
       });
+    }
+
     setUrls(newUrls);
   }, [isAuth, isAdmin]);
 

@@ -204,6 +204,73 @@ const getMaterialIconSvg = (theme) => {
   return MATERIAL_ICON_SVGS[normalizedTheme] || '';
 };
 
+const buildPdfFooterTemplate = (fontSize = 12, sidePadding = 20, bottomPadding = 4) => `
+  <div style="width:100%;box-sizing:border-box;padding:0 ${sidePadding}px ${bottomPadding}px ${sidePadding}px;font-family:Arial,sans-serif;font-size:${fontSize}px;color:#000;text-align:right;">
+    Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+  </div>`;
+
+const paginatePdfBlocks = (blocks, firstPageCapacity, nextPageCapacity = firstPageCapacity) => {
+  const safeBlocks = Array.isArray(blocks) ? blocks.filter(Boolean) : [];
+  if (!safeBlocks.length) return [[]];
+
+  const pages = [];
+  let currentPage = [];
+  let usedCapacity = 0;
+  let currentCapacity = firstPageCapacity;
+
+  safeBlocks.forEach((block) => {
+    const blockUnits = Math.max(1, Number(block.units) || 1);
+    if (currentPage.length > 0 && usedCapacity + blockUnits > currentCapacity) {
+      pages.push(currentPage);
+      currentPage = [];
+      usedCapacity = 0;
+      currentCapacity = nextPageCapacity;
+    }
+
+    currentPage.push(block);
+    usedCapacity += blockUnits;
+  });
+
+  if (currentPage.length > 0) {
+    pages.push(currentPage);
+  }
+
+  return pages;
+};
+
+const getPdfBlockUnits = (blocks = []) =>
+  (Array.isArray(blocks) ? blocks : []).reduce(
+    (sum, block) => sum + Math.max(1, Number(block?.units) || 1),
+    0
+  );
+
+const ensureLastPdfPageCapacity = (pages, lastPageCapacity, overflowPageCapacity = lastPageCapacity) => {
+  if (!Array.isArray(pages) || pages.length === 0) return [[]];
+  if (!Number.isFinite(lastPageCapacity) || lastPageCapacity <= 0) return pages;
+
+  const normalizedPages = pages.map((page) => (Array.isArray(page) ? [...page] : []));
+  let lastPage = normalizedPages[normalizedPages.length - 1];
+
+  if (getPdfBlockUnits(lastPage) <= lastPageCapacity) {
+    return normalizedPages;
+  }
+
+  const overflowBlocks = [];
+  while (lastPage.length > 1 && getPdfBlockUnits(lastPage) > lastPageCapacity) {
+    overflowBlocks.unshift(lastPage.pop());
+  }
+
+  if (!overflowBlocks.length) {
+    return normalizedPages;
+  }
+
+  return [
+    ...normalizedPages.slice(0, -1),
+    lastPage,
+    ...paginatePdfBlocks(overflowBlocks, overflowPageCapacity, overflowPageCapacity),
+  ];
+};
+
 const normalizeThickness = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n) || n <= 0) return null;
@@ -1062,18 +1129,15 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const orderNumber = escapeHtml(order.id);
     const totalSigns = escapeHtml(order.signs || countProjectSigns(project) || 0);
     const orderTitle = escapeHtml(`${order.id} - ${order.orderName || orderMongo?.projectName || 'Untitled'}`);
-    const noticeText = escapeHtml(project?.manufacturerNote || '');
-
-    const leftAddressLines = [
-      invoiceAddress?.companyName || order.user?.company || '',
-      invoiceAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(hasContent).join(' '),
-      [invoiceAddress?.address1, invoiceAddress?.address2, invoiceAddress?.address3].filter(hasContent).join(', ') || [order.user?.address, order.user?.house].filter(hasContent).join(' '),
-      [invoiceAddress?.postalCode, invoiceAddress?.town].filter(hasContent).join(' ') || [order.user?.postcode, order.user?.city].filter(hasContent).join(' '),
-      invoiceAddress?.country || order.user?.country || order.country || '',
-      '',
-      invoiceAddress?.mobile || order.user?.phone ? `Phone: ${invoiceAddress?.mobile || order.user?.phone || ''}` : '',
-      checkout?.invoiceAddressEmail || order.user?.email || '',
-    ].filter((line, index, array) => index < 5 ? hasContent(line) : line !== '');
+    const noticeText = escapeHtml(
+      [
+        String(order?.user?.additional || '').trim(),
+        String(orderMongo?.checkout?.deliveryComment || '').trim(),
+        String(orderMongo?.manufacturerNote || project?.manufacturerNote || '').trim(),
+      ]
+        .filter(hasContent)
+        .join('; ')
+    );
 
     const rightAddressLines = [
       deliveryAddress?.companyName || invoiceAddress?.companyName || order.user?.company || '',
@@ -1084,28 +1148,51 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       deliveryAddress?.mobile || order.user?.phone ? `Phone: ${deliveryAddress?.mobile || order.user?.phone || ''}` : '',
     ].filter(hasContent);
 
+    const leftAddressLines = [
+      ...rightAddressLines,
+      checkout?.invoiceAddressEmail || order.user?.email || '',
+    ].filter(hasContent);
+
     const leftAddressHtml = leftAddressLines.map((line) => `${escapeHtml(line)}<br>`).join('');
     const rightAddressHtml = rightAddressLines.map((line) => `${escapeHtml(line)}<br>`).join('');
 
-    const materialRowsHtml = materialGroups.map((group) => {
+    const materialRowBlocks = materialGroups.map((group) => {
       const thicknessSuffix = formatThicknessSuffix(group.thickness);
       const tapeSuffix = group.tape === 'TAPE' ? '' : ' NO TAPE';
       const label = `${order.userId} ${group.colorTheme}${thicknessSuffix}${tapeSuffix} (${order.id}) (${group.count} signs)`;
       const iconSvg = getMaterialIconSvg(group.colorTheme);
 
-      return `
+      return {
+        section: 'material',
+        units: 1,
+        html: `
         <div class="item-row">
             <div class="checkbox"></div>
             <div class="label-box">${iconSvg || '<span class="label-box__fallback">A</span>'}</div>
             <div class="item-text">${escapeHtml(label)}</div>
-        </div>`;
-    }).join('');
+        </div>`
+      };
+    });
 
-    const accessoriesHtml = normalizeAccessories(orderMongo?.accessories).map((item) => `
+    const accessoryBlocks = normalizeAccessories(orderMongo?.accessories).map((item) => ({
+        section: 'accessory',
+        units: 1,
+        html: `
         <div class="extra-row">
             <div class="checkbox"></div>
             <span>${escapeHtml(item.qty)}&nbsp; <u>${escapeHtml(item.name)}</u></span>
-        </div>`).join('');
+        </div>`
+      }));
+
+    const pagedOrderBlocks = ensureLastPdfPageCapacity(
+      paginatePdfBlocks(
+        [...materialRowBlocks, ...accessoryBlocks],
+        10,
+        18
+      ),
+      16,
+      18
+    );
 
     const deliveryLabel = escapeHtml(order.deliveryType || checkout?.deliveryLabel || '');
     const orderSum = escapeHtml(formatMoney(order.sum));
@@ -1136,16 +1223,29 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       .sheet {
         width: 210mm;
         min-height: 297mm;
-        padding: 20mm;
+        padding: 16mm 20mm 20mm;
         margin: 10mm auto;
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
         box-sizing: border-box;
         position: relative;
       }
+      .sheet.page-break {
+        break-after: page;
+        page-break-after: always;
+      }
+      .sheet.sheet--continued {
+        padding-top: 24mm;
+      }
+      .sheet.sheet--with-footer {
+        padding-bottom: 42mm;
+      }
       .header {
         text-align: center;
         margin-bottom: 30px;
+      }
+      .header--continued {
+        margin-bottom: 18px;
       }
       .header h1 {
         margin: 0;
@@ -1161,7 +1261,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         display: flex;
         justify-content: space-between;
         gap: 24px;
-        margin-bottom: 40px;
+        margin-bottom: 22px;
       }
       .order-details {
         line-height: 1.5;
@@ -1175,6 +1275,12 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         margin-top: 30px;
         text-align: right;
       }
+      .order-title--continued {
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: left;
+        font-size: 18px;
+      }
       .notice {
         margin-bottom: 30px;
       }
@@ -1187,6 +1293,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       }
       .address-left {
         width: 50%;
+        font-size: 14px;
       }
       .address-right {
         width: 40%;
@@ -1278,14 +1385,24 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       }
       .footer {
         position: absolute;
-        bottom: 40mm;
+        bottom: 18mm;
         left: 20mm;
+        right: 20mm;
       }
-      .page-number {
-        position: absolute;
-        bottom: 10mm;
-        right: 10mm;
-        font-size: 14px;
+      .footer-row {
+        display: flex;
+        align-items: flex-start;
+      }
+      .footer-checkbox {
+        width: 35px;
+        height: 20px;
+        border: 1px solid #000;
+        margin-right: 20px;
+        box-sizing: border-box;
+        flex: 0 0 auto;
+      }
+      .footer-details {
+        line-height: 1.45;
       }
       .bg-white-black { background: #fff; border: 1px solid #000; color: #000; }
       .bg-white-blue { background: #fff; border: 1px solid #1d4ed8; color: #1d4ed8; }
@@ -1309,7 +1426,15 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     </style>
   </head>
   <body>
-  <div class="sheet">
+  ${pagedOrderBlocks.map((pageBlocks, pageIndex) => {
+    const isFirstPage = pageIndex === 0;
+    const isLastPage = pageIndex === pagedOrderBlocks.length - 1;
+    const pageMaterialRowsHtml = pageBlocks.filter((block) => block.section === 'material').map((block) => block.html).join('');
+    const pageAccessoriesHtml = pageBlocks.filter((block) => block.section === 'accessory').map((block) => block.html).join('');
+
+    return `
+  <div class="sheet${isFirstPage ? '' : ' sheet--continued'}${isLastPage ? ' sheet--with-footer' : ''}${isLastPage ? '' : ' page-break'}">
+    ${isFirstPage ? `
     <div class="header">
       <h1>CSA</h1>
       <p>Germany</p>
@@ -1325,33 +1450,33 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       <div class="order-title">${orderTitle}</div>
     </div>
 
-    <div class="notice">Our Notice:${noticeText ? ` ${noticeText}` : ''}</div>
+    <div class="notice">Our Notice: ${noticeText}</div>
 
     <div class="address-section">
       <div class="address-left">${leftAddressHtml}</div>
       <div class="address-right">${rightAddressHtml}</div>
+    </div>` : `
+    <div class="header header--continued">
+      <h1>CSA</h1>
+      <p>Germany</p>
     </div>
+    <div class="order-title order-title--continued">${orderTitle}</div>`}
 
-    <div class="items-list">
-      ${materialRowsHtml}
-    </div>
+    ${pageMaterialRowsHtml ? `<div class="items-list">${pageMaterialRowsHtml}</div>` : ''}
+    ${pageAccessoriesHtml ? `<div class="extra-items">${pageAccessoriesHtml}</div>` : ''}
 
-    <div class="extra-items">
-      ${accessoriesHtml}
-    </div>
-
+    ${isLastPage ? `
     <div class="footer">
-      <div class="item-row">
-        <div class="checkbox" style="margin-bottom: 10px;"></div>
-        <div>
+      <div class="footer-row">
+        <div class="footer-checkbox"></div>
+        <div class="footer-details">
           Delivery: ${deliveryLabel}<br>
           Order Sum: ${orderSum}
         </div>
       </div>
-    </div>
-
-    <div class="page-number">Page 1 of 1</div>
-  </div>
+    </div>` : ''}
+  </div>`;
+  }).join('')}
   </body>
   </html>`;
 
@@ -1359,7 +1484,10 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      displayHeaderFooter: true,
+      headerTemplate: '<div></div>',
+      footerTemplate: buildPdfFooterTemplate(12, 20, 2),
+      margin: { top: '10px', right: '20px', bottom: '28px', left: '20px' }
     });
 
     res.writeHead(200, {
@@ -1415,6 +1543,11 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const accessoriesSummary = summary.accessories.length
       ? summary.accessories.map((item) => `${escapeHtml(item.qty)} ${escapeHtml(item.name)}`).join('; ')
       : 'No accessories selected';
+    const accessoriesBlockHtml = `
+    <div class="item-block">
+      <div class="col-left">Accessories: ${escapeHtml(summary.accessories.length)} Types:</div>
+      <div class="col-right">${accessoriesSummary}</div>
+    </div>`;
     const shippingCompany = deliveryAddress?.companyName || '';
     const shippingName = deliveryAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(hasContent).join(' ');
     const shippingAddressLine1 = [deliveryAddress?.address1, deliveryAddress?.address2, deliveryAddress?.address3]
@@ -1434,7 +1567,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       .filter(hasContent)
       .map(escapeHtml)
       .join('<br>');
-    const signBlocksHtml = summary.signs.length > 0
+    const signBlocks = summary.signs.length > 0
       ? summary.signs
         .map((sign, index) => {
           const counts = sign?.counts || {};
@@ -1450,21 +1583,34 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
           const signTitle = `${String(sign?.title || `Sign ${index + 1}`)}${copiesCount > 1 ? ` (${copiesCount} pcs)` : ''}`;
           const signMetaLine = [String(sign?.metaLine || '').trim(), ...countsSummary].filter(hasContent).join(', ');
 
-          return `
+          return {
+            section: 'sign',
+            units: 1,
+            html: `
     <div class="item-block">
       <div class="col-left">${escapeHtml(signTitle)}:</div>
       <div class="col-right">
         ${escapeHtml(signMetaLine || 'No sign details available')}<br>
         <span class="item-details">Text: ${escapeHtml(sign?.textLine || '—')}</span>
       </div>
-    </div>`;
+    </div>`
+          };
         })
-        .join('')
-      : `
+      : [{
+        section: 'sign',
+        units: 1,
+        html: `
     <div class="item-block">
       <div class="col-left">Signs:</div>
       <div class="col-right">No sign details available for this order.</div>
-    </div>`;
+    </div>`
+      }];
+
+    const pagedDeliveryBlocks = paginatePdfBlocks(
+      [{ section: 'accessory', units: 1, html: accessoriesBlockHtml }, ...signBlocks],
+        15,
+        18
+    );
 
     const htmlContent = `
   <!DOCTYPE html>
@@ -1494,11 +1640,18 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
         box-sizing: border-box;
         position: relative;
       }
+      .sheet.page-break {
+        break-after: page;
+        page-break-after: always;
+      }
       .header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         margin-bottom: 40px;
+      }
+      .header.header--continued {
+        margin-bottom: 24px;
       }
       .logo-section {
         display: flex;
@@ -1525,6 +1678,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
         font-weight: 700;
         text-decoration: underline;
         margin-top: -5px;
+      }
+      .delivery-title--continued {
+        font-size: 22px;
+        margin-top: 0;
       }
       .info-grid {
         display: flex;
@@ -1566,37 +1723,42 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       }
       .col-left {
         width: 25%;
-        padding: 8px 10px;
+        padding: 4px 10px;
         border-right: 1px solid #999;
         background-color: #fff;
         box-sizing: border-box;
       }
       .col-right {
         width: 75%;
-        padding: 8px 10px;
+        padding: 4px 10px;
         background-color: #fff;
         box-sizing: border-box;
       }
       .item-details {
         display: block;
-        margin-top: 4px;
+        margin-top: 2px;
       }
       .footer-note {
-        margin-top: 28px;
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: 14mm;
         text-align: center;
         font-size: 11px;
         line-height: 1.6;
       }
-      .page-counter {
-        margin-top: 16px;
-        text-align: right;
-        font-size: 12px;
-      }
     </style>
   </head>
   <body>
-  <div class="sheet">
-    <div class="header">
+  ${pagedDeliveryBlocks.map((pageBlocks, pageIndex) => {
+    const isFirstPage = pageIndex === 0;
+    const isLastPage = pageIndex === pagedDeliveryBlocks.length - 1;
+    const pageAccessoryBlocksHtml = pageBlocks.filter((block) => block.section === 'accessory').map((block) => block.html).join('');
+    const pageSignBlocksHtml = pageBlocks.filter((block) => block.section === 'sign').map((block) => block.html).join('');
+
+    return `
+  <div class="sheet${isLastPage ? ' sheet--with-footer' : ''}${isLastPage ? '' : ' page-break'}">
+    <div class="header${isFirstPage ? '' : ' header--continued'}">
       <div class="logo-section">
         <div>
             <div class="svg-logo">
@@ -1646,9 +1808,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
           +49 157 766 25 125
         </div>
       </div>
-      <div class="delivery-title">Delivery Note</div>
+        <div class="delivery-title${isFirstPage ? '' : ' delivery-title--continued'}">Delivery Note</div>
     </div>
 
+    ${isFirstPage ? `
     <div class="info-grid">
       <div class="order-meta">
         <table>
@@ -1666,23 +1829,20 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
 
     <div class="count-section">
       Count Sings: &nbsp;&nbsp; ${totalSigns}
-    </div>
+    </div>` : ''}
 
-    <div class="item-block">
-      <div class="col-left">Accessories: ${escapeHtml(summary.accessories.length)} Types:</div>
-      <div class="col-right">${accessoriesSummary}</div>
-    </div>
+    ${pageAccessoryBlocksHtml}
 
-    ${signBlocksHtml}
+    ${pageSignBlocksHtml}
 
+    ${isLastPage ? `
     <div class="footer-note">
       Please check the delivery upon receipt.<br>
       If any items are missing, damaged, or incorrect, please notify us by email at the address stated above.<br><br>
       <span style="font-weight: 700;">Thank you for choosing SignXpert!</span>
-    </div>
-
-    <div class="page-counter">Page 1 of 1</div>
-  </div>
+    </div>` : ''}
+  </div>`;
+  }).join('')}
   </body>
   </html>`;
 
@@ -1690,7 +1850,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' }
+      displayHeaderFooter: true,
+      headerTemplate: '<div></div>',
+      footerTemplate: buildPdfFooterTemplate(11, 20, 2),
+      margin: { top: '0', right: '0', bottom: '26px', left: '0' }
     });
     res.removeHeader('Content-Type');
 
@@ -1999,12 +2162,6 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         width: 100%;
       }
 
-      .page-num {
-        width: 100%;
-        text-align: right;
-        font-size: 8pt;
-        margin-top: 4px;
-        }
       .footer-wrapper {
         margin-top: auto;
         margin-bottom: 6mm;
@@ -2172,8 +2329,6 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         </div>
         </div>
     </div>
-
-    <div class="page-num">Page 1 of 1</div>
   </div>
 
 </body>
@@ -2183,7 +2338,10 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
-      margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+      displayHeaderFooter: true,
+      headerTemplate: '<div></div>',
+      footerTemplate: buildPdfFooterTemplate(10, 20, 2),
+      margin: { top: '20px', right: '20px', bottom: '28px', left: '20px' }
     });
     res.removeHeader('Content-Type');
 

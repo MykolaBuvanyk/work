@@ -22,6 +22,8 @@ import Checkout from './components/checkout/checkout';
 import ThankYou from './components/order-success/order-success';
 import RequireSavedProject from './components/guards/RequireSavedProject';
 import ShareProjectPage from './components/ShareProject/ShareProjectPage';
+import Industries from './components/Industries/Industries';
+import Products from './components/Products/Products';
 
 
 
@@ -36,6 +38,8 @@ function App() {
       <Route path="terms-of-purchasing" element={<TermsOfPurchasing />} />
       <Route path="privacy-policy" element={<PrivacyPolicy />} />
       <Route path="contacts" element={<Contacts />} />
+      <Route path="products" element={<Products />} />
+      <Route path="industries" element={<Industries />} />
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />

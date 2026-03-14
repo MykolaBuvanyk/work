@@ -2293,5 +2293,38 @@ CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res,
   }
 });
 
+CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET; // Отримаєш у Dashboard
+
+  let event;
+
+  try {
+    // Перевірка, що запит дійсно від Stripe
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`❌ Webhook Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Обробка події успішної оплати
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object;
+    
+    // Отримуємо ID замовлення, який ми передавали в metadata при створенні Payment Intent
+    const orderId = paymentIntent.metadata.orderId;
+
+    if (orderId) {
+      // ОНОВЛЮЄМО СТАТУС У БАЗІ
+      await Order.update({ paid: true }, { where: { id: orderId } });
+      console.log(`✅ Замовлення №${orderId} успішно оплачено!`);
+      
+      // Тут можна додати логіку відправки email клієнту про успішну оплату
+    }
+  }
+
+  // Stripe чекає від нас 200 OK, щоб припинити надсилати це повідомлення
+  res.json({received: true});
+});
 
 export default CartRouter;

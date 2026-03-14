@@ -19,7 +19,7 @@ const CheckoutForm = () => {
       elements,
       confirmParams: {
         // Сторінка, на яку Stripe редиректне після успіху
-        return_url: `${window.location.origin}/account`,
+        return_url: `/account`,
       },
     });
 

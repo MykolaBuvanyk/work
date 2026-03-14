@@ -40,9 +40,9 @@ const CheckoutForm = () => {
       <button 
         disabled={isProcessing || !stripe || !elements} 
         id="submit"
-        style={{ marginTop: '20px', width: '100%', padding: '10px' }}
+        style={{ marginTop: '20px', width: '100%', padding: '10px', color:'#fff' }}
       >
-        <span>{isProcessing ? "Обробка..." : "Оплатити зараз"}</span>
+        <span>{isProcessing ? "Обробка..." : "Pay now"}</span>
       </button>
       
       {message && <div id="payment-message" style={{ color: 'red', marginTop: '10px' }}>{message}</div>}

@@ -33,7 +33,7 @@ const CheckoutPage = () => {
 
   return (
     <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-      <h2>Оплата замовлення #{orderId}</h2>
+      <h2>Pay order #{orderId}</h2>
       
       {clientSecret ? (
         <Elements stripe={stripePromise} options={options}>

@@ -25,6 +25,7 @@ import RequireSavedProject from './components/guards/RequireSavedProject';
 import ShareProjectPage from './components/ShareProject/ShareProjectPage';
 import Industries from './components/Industries/Industries';
 import Products from './components/Products/Products';
+import HomePlaceholder from './components/HomePlaceholder/HomePlaceholder';
 
 
 
@@ -33,6 +34,7 @@ function App() {
   const mainRoutes = (
     <>
       <Route index element={<Home />} />
+      <Route path="home" element={<HomePlaceholder />} />
       <Route path="faq" element={<FAQPage />} />
       <Route path="login" element={<Login />} />
       <Route path="login/enter/:id" element={<Enter />} />

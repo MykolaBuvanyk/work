@@ -11,23 +11,6 @@
   padding: 0 10px;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  margin-bottom: 18px;
-}
-
-.breadcrumb a {
-  color: #0a4cc5;
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  text-decoration: underline;
-}
-
 .pageTitle {
   margin: 0 0 26px;
   text-align: center;
@@ -105,10 +88,5 @@
 
   .industryContent li {
     font-size: 14px;
-  }
-
-  .breadcrumb {
-    flex-wrap: wrap;
-    font-size: 12px;
   }
 }

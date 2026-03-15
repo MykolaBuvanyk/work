@@ -1,0 +1,14 @@
+.page {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0 80px;
+}
+
+.title {
+  color: #1f2937;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+}

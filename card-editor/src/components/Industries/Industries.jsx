@@ -118,14 +118,6 @@ const Industries = () => {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          <Link to={prefix || '/'}>Home</Link>
-          <span>-</span>
-          <Link to={`${prefix}/products`}>Products</Link>
-          <span>-</span>
-          <span>Industries</span>
-        </nav>
-
         <h1 className={styles.pageTitle}>Industries</h1>
 
         {INDUSTRY_SECTIONS.map((section, index) => (

@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import styles from "./PreviewModal.module.css";
+import {
+  collectFontFamiliesFromCanvas,
+  embedFontsIntoSvgMarkup,
+  ensureFontsLoaded,
+} from "../../utils/projectStorage";
 
 const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 6;
@@ -21,12 +26,25 @@ const PreviewModal = ({ canvas, onClose }) => {
     []
   );
 
-  const makeSnapshot = useCallback(() => {
+  const makeSnapshot = useCallback(async () => {
     if (!canvas) return;
     try {
       setLoading(true);
+      const fontFamilies = collectFontFamiliesFromCanvas(canvas);
+      await ensureFontsLoaded(fontFamilies);
+      if (typeof document !== "undefined" && document.fonts?.ready) {
+        try {
+          await document.fonts.ready;
+        } catch {}
+      }
       try { canvas.requestRenderAll(); } catch {}
       let svg = typeof canvas.toSVG === "function" ? canvas.toSVG() : "";
+
+      const sanitizedSvg = svg
+        .replace(/[\x00-\x1F\x7F]/g, "")
+        .replace(/[\uFFFE\uFFFF]/g, "");
+
+      svg = await embedFontsIntoSvgMarkup(sanitizedSvg, fontFamilies);
 
       // Force real-world units in the exported SVG so LightBurn measures correctly.
       // We prefer the stored design dimensions (mm) if present.

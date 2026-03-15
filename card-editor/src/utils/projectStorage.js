@@ -278,7 +278,7 @@ const loadFontDataUri = async (fontName) => {
   }
 };
 
-const collectFontFamiliesFromCanvas = (canvas) => {
+export const collectFontFamiliesFromCanvas = (canvas) => {
   if (!canvas || typeof canvas.getObjects !== "function") return [];
   const fonts = new Set();
   try {
@@ -315,7 +315,7 @@ export const collectFontFamiliesFromJson = (json) => {
   return Array.from(fonts);
 };
 
-const embedFontsIntoSvgMarkup = async (svgMarkup, fontFamilies) => {
+export const embedFontsIntoSvgMarkup = async (svgMarkup, fontFamilies) => {
   if (!svgMarkup || !fontFamilies?.length) {
     return svgMarkup;
   }

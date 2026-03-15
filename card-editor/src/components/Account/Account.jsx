@@ -180,7 +180,7 @@ const Account = () => {
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
                                     {order.isPaid ? 'Paid' : 'Unpaid'}
                                 </td>
-                                <td>{!order.paid && <span onClick={()=>window.open('/account/pay/' + order.id, '_blank')} className="to-pay-icon">💳</span>}</td>
+                                <td>{!order.isPaid && <span onClick={()=>window.open('/account/pay/' + order.id, '_blank')} className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}

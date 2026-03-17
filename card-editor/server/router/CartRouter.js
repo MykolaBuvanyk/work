@@ -1147,10 +1147,23 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         .join('; ')
     );
 
+    const deliveryStreetLines = [
+      deliveryAddress?.address1,
+      deliveryAddress?.address2,
+      deliveryAddress?.address3,
+    ].filter(hasContent);
+
+    const fallbackStreetLines = [
+      order.user?.address,
+      order.user?.house,
+      order.user?.address2,
+      order.user?.address3,
+    ].filter(hasContent);
+
     const rightAddressLines = [
       deliveryAddress?.companyName || invoiceAddress?.companyName || order.user?.company || '',
       deliveryAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(hasContent).join(' '),
-      [deliveryAddress?.address1, deliveryAddress?.address2, deliveryAddress?.address3].filter(hasContent).join(', ') || [order.user?.address, order.user?.house].filter(hasContent).join(' '),
+      ...(deliveryStreetLines.length > 0 ? deliveryStreetLines : ""),
       [deliveryAddress?.postalCode, deliveryAddress?.town].filter(hasContent).join(' ') || [order.user?.postcode, order.user?.city].filter(hasContent).join(' '),
       deliveryAddress?.country || order.user?.country || order.country || '',
       deliveryAddress?.mobile || order.user?.phone ? `Phone: ${deliveryAddress?.mobile || order.user?.phone || ''}` : '',

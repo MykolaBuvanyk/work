@@ -1127,9 +1127,14 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       return normalized === '1.6' ? '' : ` ${normalized}`;
     };
 
+    const userOrdersCountRaw = await Order.count({
+      where: { userId: order.userId }
+    });
+
     const orderDate = escapeHtml(formatOrderDateTime(order.createdAt));
     const customerNumber = escapeHtml(order.userId);
     const orderNumber = escapeHtml(order.id);
+    const userOrdersCount = escapeHtml(userOrdersCountRaw || 0);
     const totalSigns = escapeHtml(order.signs || countProjectSigns(project) || 0);
     const orderTitle = escapeHtml(`${order.id} - ${order.orderName || orderMongo?.projectName || 'Untitled'}`);
     const noticeText = escapeHtml(
@@ -1240,9 +1245,6 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       .sheet.sheet--continued {
         padding-top: 24mm;
       }
-      .sheet.sheet--with-footer {
-        padding-bottom: 42mm;
-      }
       .header {
         text-align: center;
         margin-bottom: 30px;
@@ -1287,6 +1289,16 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       .notice {
         margin-bottom: 30px;
       }
+      .notice--after-email {
+        display: block;
+        width: 100%;
+        max-width: 80%;
+        margin-top: 12px;
+        margin-bottom: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
       .address-section {
         display: flex;
         justify-content: space-between;
@@ -1295,11 +1307,15 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         line-height: 1.4;
       }
       .address-left {
-        width: 50%;
+        width: 40%;
+        flex: 0 0 40%;
+        max-width: 40%;
         font-size: 14px;
       }
       .address-right {
         width: 40%;
+        flex: 0 0 40%;
+        max-width: 40%;
         font-size: 14px;
       }
       .items-list {
@@ -1387,10 +1403,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         font-weight: normal;
       }
       .footer {
-        position: absolute;
-        bottom: 18mm;
-        left: 20mm;
-        right: 20mm;
+        margin-top: 28px;
       }
       .footer-row {
         display: flex;
@@ -1406,6 +1419,9 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       }
       .footer-details {
         line-height: 1.45;
+      }
+      .footer-order-sum {
+        margin-top: 16px;
       }
       .bg-white-black { background: #fff; border: 1px solid #000; color: #000; }
       .bg-white-blue { background: #fff; border: 1px solid #1d4ed8; color: #1d4ed8; }
@@ -1436,7 +1452,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const pageAccessoriesHtml = pageBlocks.filter((block) => block.section === 'accessory').map((block) => block.html).join('');
 
     return `
-  <div class="sheet${isFirstPage ? '' : ' sheet--continued'}${isLastPage ? ' sheet--with-footer' : ''}${isLastPage ? '' : ' page-break'}">
+  <div class="sheet${isFirstPage ? '' : ' sheet--continued'}${isLastPage ? '' : ' page-break'}">
     ${isFirstPage ? `
     <div class="header">
       <h1>CSA</h1>
@@ -1448,15 +1464,14 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         <div class="order-date">${orderDate}</div>
         <div>Customer No: ${customerNumber}</div>
         <div>Order No: ${orderNumber}</div>
-        <div>Count orders: ${totalSigns}</div>
+        <div>Count orders: ${userOrdersCount}</div>
+        <div>Count sign: ${totalSigns}</div>
       </div>
       <div class="order-title">${orderTitle}</div>
     </div>
 
-    <div class="notice">Our Notice: ${noticeText}</div>
-
     <div class="address-section">
-      <div class="address-left">${leftAddressHtml}</div>
+      <div class="address-left">${leftAddressHtml}${noticeText ? `<div class="notice notice--after-email">Our Notice: ${noticeText}</div>` : ''}</div>
       <div class="address-right">${rightAddressHtml}</div>
     </div>` : `
     <div class="header header--continued">
@@ -1473,8 +1488,8 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       <div class="footer-row">
         <div class="footer-checkbox"></div>
         <div class="footer-details">
-          Delivery: ${deliveryLabel}<br>
-          Order Sum: ${orderSum}
+          <div>Delivery: ${deliveryLabel}</div>
+          <div class="footer-order-sum">Order Sum: ${orderSum}</div>
         </div>
       </div>
     </div>` : ''}

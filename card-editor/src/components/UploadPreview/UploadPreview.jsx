@@ -1,6 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./UploadPreview.module.css";
 import { vectorizeDataURLToSVG } from "../../utils/vectorizeImage";
+import {
+  applyStrokeOnlyToSVG,
+  convertSvgToThemeMonochrome,
+} from "../../utils/svgThemeTransform";
+
+const svgMarkupToDataURL = (svgMarkup) => {
+  const text = String(svgMarkup || "").trim();
+  if (!text) return "";
+  if (text.startsWith("data:image/svg+xml")) return text;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`;
+};
 
 // Map precision slider (0..100) to vectorization options
 const mapVectorOpts = (detail) => {
@@ -20,20 +31,6 @@ const mapVectorOpts = (detail) => {
     roundDecimals,
     maxSize,
   };
-};
-
-const applyStrokeOnlyToSVG = (svgString, theme = "#000") => {
-  try {
-    const doc = new DOMParser().parseFromString(svgString, "image/svg+xml");
-    doc.querySelectorAll("path,polygon,polyline,rect,circle,ellipse").forEach((el) => {
-      el.setAttribute("fill", "transparent");
-      el.setAttribute("stroke", theme);
-      el.setAttribute("stroke-width", "1");
-    });
-    return new XMLSerializer().serializeToString(doc);
-  } catch {
-    return svgString;
-  }
 };
 
 // Ensure SVG scales to fit the preview box (preview-only; do not use for final add)
@@ -91,7 +88,7 @@ const UploadPreview = ({
   svgText, // for svg
   themeColor = "#000",
   onClose,
-  onConfirm, // ({ svg: string, strokeOnly: boolean }) => void
+  onConfirm, // ({ svg: string, strokeOnly: boolean, mode: 'raster' | 'svg' }) => void
 }) => {
   const [detail, setDetail] = useState(60);
   const [strokeOnly, setStrokeOnly] = useState(false);
@@ -101,7 +98,7 @@ const UploadPreview = ({
   const [svgOut, setSvgOut] = useState("");
   const debounceRef = useRef();
 
-  const canAdjustPrecision = mode === "raster";
+  const canAdjustPrecision = mode === "raster" || mode === "svg";
 
   // Recompute preview when inputs change
   useEffect(() => {
@@ -130,7 +127,26 @@ const UploadPreview = ({
             fillColor: "black",
           });
         } else if (mode === "svg" && svgText) {
-          resultSVG = svgText;
+          const tuned = mapVectorOpts(detail);
+          const svgDataURL = svgMarkupToDataURL(svgText);
+          resultSVG = await vectorizeDataURLToSVG(svgDataURL, {
+            threshold: 120,
+            autoThreshold: true,
+            autoInvert: false,
+            invert: !!invert,
+            brightness: Math.round((brightness || 0) * 2.55),
+            pathomit: tuned.pathomit,
+            maxSize: tuned.maxSize,
+            simplifyTolerance: tuned.simplifyTolerance,
+            pointStep: tuned.pointStep,
+            quantize: tuned.quantize,
+            roundDecimals: tuned.roundDecimals,
+            fillRule: "evenodd",
+            combineToSinglePath: true,
+            scale: 2,
+            fillColor: "black",
+          });
+          resultSVG = convertSvgToThemeMonochrome(resultSVG, themeColor);
         }
         if (strokeOnly && resultSVG) {
           resultSVG = applyStrokeOnlyToSVG(resultSVG, themeColor);
@@ -285,7 +301,7 @@ const UploadPreview = ({
           <button
             className={styles.primary}
             disabled={processing || !svgOut}
-            onClick={() => svgOut && onConfirm && onConfirm({ svg: svgOut, strokeOnly })}
+            onClick={() => svgOut && onConfirm && onConfirm({ svg: svgOut, strokeOnly, mode })}
           >
             Add to canvas
           </button>

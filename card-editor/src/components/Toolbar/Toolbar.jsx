@@ -19,6 +19,7 @@ import UploadPreview from '../UploadPreview/UploadPreview';
 import ShapeProperties from '../ShapeProperties/ShapeProperties';
 import { ensureShapeSvgId } from '../../utils/shapeSvgId';
 import { fitObjectToCanvas } from '../../utils/canvasFit';
+import { applyStrokeOnlyToSVG, convertSvgToThemeMonochrome } from '../../utils/svgThemeTransform';
 import styles from './Toolbar.module.css';
 import {
   exportCanvas,
@@ -6685,8 +6686,10 @@ const Toolbar = ({ formData }) => {
   const handleUpload = e => {
     const file = e.target.files[0];
     if (file && canvas) {
+      const isSvgFile = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+
       // Перевіряємо тип файлу
-      if (!file.type.startsWith('image/')) {
+      if (!isSvgFile && !file.type.startsWith('image/')) {
         alert('Будь ласка, виберіть файл зображення');
         return;
       }
@@ -6697,38 +6700,41 @@ const Toolbar = ({ formData }) => {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = async event => {
-        let addedOk = false; // track if we successfully added any object
-        try {
-          // Перевіряємо чи це SVG файл
-          if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
-            // For preview flow: open modal with original SVG (no immediate add)
-            const raw = String(event.target.result || '');
+      if (isSvgFile) {
+        const svgReader = new FileReader();
+        svgReader.onload = event => {
+          try {
+            const rawSvg = String(event.target?.result || '');
             setUploadMode('svg');
-            setUploadSvgText(raw);
+            setUploadSvgText(rawSvg);
             setUploadDataURL('');
             setIsUploadOpen(true);
-            return; // defer adding until confirm
-          } else {
-            // Raster: open modal with dataURL, preview will vectorize live
-            const raw = String(event.target.result || '');
+          } catch (error) {
+            console.error('Помилка завантаження SVG:', error);
+          }
+        };
+        svgReader.onerror = () => {
+          console.error('Помилка читання SVG файлу');
+        };
+        svgReader.readAsText(file);
+      } else {
+        const rasterReader = new FileReader();
+        rasterReader.onload = event => {
+          try {
+            const rawDataUrl = String(event.target?.result || '');
             setUploadMode('raster');
-            setUploadDataURL(raw);
+            setUploadDataURL(rawDataUrl);
             setUploadSvgText('');
             setIsUploadOpen(true);
-            return; // defer adding until confirm
+          } catch (error) {
+            console.error('Помилка завантаження зображення:', error);
           }
-        } catch (error) {
-          console.error('Помилка завантаження зображення:', error);
-          // Прибираємо сповіщення про помилку за новою логікою
-        }
-      };
-      reader.onerror = () => {
-        // Без сповіщень — просто лог
-        console.error('Помилка завантаження файлу');
-      };
-      reader.readAsDataURL(file);
+        };
+        rasterReader.onerror = () => {
+          console.error('Помилка читання файлу зображення');
+        };
+        rasterReader.readAsDataURL(file);
+      }
     }
 
     // Очищаємо input після завантаження
@@ -10244,27 +10250,19 @@ const Toolbar = ({ formData }) => {
           svgText={uploadSvgText}
           themeColor={(globalColors && globalColors.textColor) || '#000'}
           onClose={() => setIsUploadOpen(false)}
-          onConfirm={async ({ svg: finalSVG, strokeOnly }) => {
+          onConfirm={async ({ svg: finalSVG, strokeOnly, mode }) => {
             if (!canvas || !finalSVG) return;
             try {
               let themedSVG = String(finalSVG);
-              // Ensure theme color is applied
               const theme = (globalColors && globalColors.textColor) || '#000';
-              try {
-                const doc = new DOMParser().parseFromString(themedSVG, 'image/svg+xml');
-                // Apply theme color to all relevant elements; keep strokeOnly where indicated
-                doc.querySelectorAll('path,polygon,polyline,rect,circle,ellipse').forEach(el => {
-                  if (strokeOnly) {
-                    el.setAttribute('fill', 'transparent');
-                    el.setAttribute('stroke', theme);
-                    if (!el.getAttribute('stroke-width')) el.setAttribute('stroke-width', '1');
-                  } else {
-                    el.setAttribute('fill', theme);
-                    el.setAttribute('stroke', theme);
-                  }
-                });
-                themedSVG = new XMLSerializer().serializeToString(doc);
-              } catch {}
+              if (mode === 'svg') {
+                themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+              } else if (!strokeOnly) {
+                themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+              }
+              if (strokeOnly) {
+                themedSVG = applyStrokeOnlyToSVG(themedSVG, theme);
+              }
 
               const result = await fabric.loadSVGFromString(themedSVG);
               const obj =

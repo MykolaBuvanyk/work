@@ -131,8 +131,8 @@
 
 .sheetInfoCheckbox::after {
   position: relative;
-  top: 0px !important;
-  left: 5px !important;
+  top: 1.5px !important;
+  left: 6px !important;
 }
 
 .hint {

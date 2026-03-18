@@ -188,6 +188,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #000;
+}
+
+.formatButton.active {
+  color: rgba(0, 108, 164, 1);
+}
+
+.formatButton.disabled,
+.formatButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .alignButtons {

@@ -427,6 +427,203 @@ const TextList = () => {
     return null;
   };
 
+  // Apply style both at object level and for all existing characters in i-text/textbox.
+  const applyTextStyleToWholeObject = (textObj, stylePatch) => {
+    if (!textObj || !stylePatch || typeof stylePatch !== "object") return;
+
+    textObj.set(stylePatch);
+
+    const canApplyPerChar =
+      typeof textObj.setSelectionStyles === "function" &&
+      (textObj.type === "i-text" || textObj.type === "textbox");
+
+    if (canApplyPerChar) {
+      const textValue = typeof textObj.text === "string" ? textObj.text : "";
+      if (textValue.length > 0) {
+        try {
+          textObj.setSelectionStyles(stylePatch, 0, textValue.length);
+        } catch {
+          // Ignore per-character style errors; object-level style is already set.
+        }
+      }
+    }
+  };
+
+  const normalizeFamily = (family) =>
+    String(family || "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
+  const findAvailableFamily = (requestedFamily) => {
+    const requestedNorm = normalizeFamily(requestedFamily);
+    if (!requestedNorm) return null;
+
+    const exact = availableFonts.find((font) => {
+      const candidate = font?.value || font?.name || "";
+      return normalizeFamily(candidate) === requestedNorm;
+    });
+
+    return exact ? exact.value || exact.name : null;
+  };
+
+  const getFamilyBaseName = (family) =>
+    String(family || "Arial")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(
+        /\s+(Extra Bold Italic|Bold Italic|BoldIt|Black Italic|Medium Italic|Semi\s*Bold|Bold|Italic|Black|Medium)$/i,
+        ""
+      )
+      .trim() || "Arial";
+
+  const findFamilyByTraits = (currentFamily, wantBold, wantItalic) => {
+    const current = String(currentFamily || "Arial").trim() || "Arial";
+    const base = getFamilyBaseName(current);
+    const candidates = [];
+
+    if (wantBold && wantItalic) {
+      candidates.push(
+        `${base} Bold Italic`,
+        `${base} BoldIt`,
+        `${base} Extra Bold Italic`,
+        `${base} Black Italic`
+      );
+    }
+
+    if (wantBold && !wantItalic) {
+      candidates.push(
+        `${base} Bold`,
+        `${base} SemiBold`,
+        `${base} Semi Bold`,
+        `${base} Black`
+      );
+    }
+
+    if (!wantBold && wantItalic) {
+      candidates.push(`${base} Italic`, `${base} Medium Italic`);
+    }
+
+    if (!wantBold && !wantItalic) {
+      candidates.push(base);
+    }
+
+    for (const candidate of candidates) {
+      const matched = findAvailableFamily(candidate);
+      if (matched) return matched;
+    }
+
+    return null;
+  };
+
+  const pickFamilyByTraits = (currentFamily, wantBold, wantItalic) => {
+    const current = String(currentFamily || "Arial").trim() || "Arial";
+    return findFamilyByTraits(current, wantBold, wantItalic) || current;
+  };
+
+  const resolveClosestFamilyTraits = (baseFamily, wantBold, wantItalic) => {
+    const base = String(baseFamily || "Arial").trim() || "Arial";
+
+    if (wantBold && wantItalic) {
+      const bi = findFamilyByTraits(base, true, true);
+      if (bi) return { family: bi, bold: true, italic: true };
+      const b = findFamilyByTraits(base, true, false);
+      if (b) return { family: b, bold: true, italic: false };
+      const i = findFamilyByTraits(base, false, true);
+      if (i) return { family: i, bold: false, italic: true };
+      const r = findFamilyByTraits(base, false, false);
+      if (r) return { family: r, bold: false, italic: false };
+      return null;
+    }
+
+    if (wantBold && !wantItalic) {
+      const b = findFamilyByTraits(base, true, false);
+      if (b) return { family: b, bold: true, italic: false };
+      const r = findFamilyByTraits(base, false, false);
+      if (r) return { family: r, bold: false, italic: false };
+      return null;
+    }
+
+    if (!wantBold && wantItalic) {
+      const i = findFamilyByTraits(base, false, true);
+      if (i) return { family: i, bold: false, italic: true };
+      const r = findFamilyByTraits(base, false, false);
+      if (r) return { family: r, bold: false, italic: false };
+      return null;
+    }
+
+    const r = findFamilyByTraits(base, false, false);
+    if (r) return { family: r, bold: false, italic: false };
+    return null;
+  };
+
+  const getTraitsFromFamilyName = (family) => {
+    const familyLower = String(family || "").toLowerCase();
+    return {
+      bold: /\bbold\b|semibold|semi bold|\bblack\b/.test(familyLower),
+      italic: /\bitalic\b|boldit/.test(familyLower),
+    };
+  };
+
+  const getEffectiveFontTraits = (textObj) => {
+    const familyTraits = getTraitsFromFamilyName(textObj?.fontFamily || "");
+
+    const propBold = String(textObj?.fontWeight || "").toLowerCase() === "bold";
+    const propItalic = String(textObj?.fontStyle || "").toLowerCase() === "italic";
+
+    return {
+      bold: propBold || familyTraits.bold,
+      italic: propItalic || familyTraits.italic,
+    };
+  };
+
+  const applyTextFormatting = async (textObj, { bold, italic }) => {
+    if (!textObj) return;
+
+    const nextFamily = findFamilyByTraits(textObj.fontFamily, !!bold, !!italic);
+    if (!nextFamily) return false;
+
+    applyTextStyleToWholeObject(textObj, {
+      fontWeight: bold ? "bold" : "normal",
+      fontStyle: italic ? "italic" : "normal",
+      fontFamily: nextFamily,
+    });
+
+    await refreshTextObjectLayout(textObj, { waitForFont: true });
+    return true;
+  };
+
+  const applyFontFamilyChange = async (textObj, nextFamily) => {
+    if (!textObj) return false;
+    const selectedFamily =
+      findAvailableFamily(nextFamily) || String(nextFamily || "").trim();
+    if (!selectedFamily) return false;
+    const selectedTraits = getTraitsFromFamilyName(selectedFamily);
+
+    applyTextStyleToWholeObject(textObj, {
+      fontFamily: selectedFamily,
+      fontWeight: selectedTraits.bold ? "bold" : "normal",
+      fontStyle: selectedTraits.italic ? "italic" : "normal",
+    });
+
+    await refreshTextObjectLayout(textObj, { waitForFont: true });
+    return true;
+  };
+
+  const canToggleBoldForText = (textObj) => {
+    if (!textObj) return false;
+    const currentTraits = getEffectiveFontTraits(textObj);
+    const targetBold = !currentTraits.bold;
+    return !!findFamilyByTraits(textObj.fontFamily, targetBold, currentTraits.italic);
+  };
+
+  const canToggleItalicForText = (textObj) => {
+    if (!textObj) return false;
+    const currentTraits = getEffectiveFontTraits(textObj);
+    const targetItalic = !currentTraits.italic;
+    return !!findFamilyByTraits(textObj.fontFamily, currentTraits.bold, targetItalic);
+  };
+
   // Зміна розміру шрифту
   // Size in mm
   const changeFontSize = (sizeMm) => {
@@ -442,32 +639,40 @@ const TextList = () => {
   const changeFontFamily = async (family) => {
     const activeText = getActiveText();
     if (activeText) {
-      activeText.set("fontFamily", family);
-      await refreshTextObjectLayout(activeText, { waitForFont: true });
+      const applied = await applyFontFamilyChange(activeText, family);
+      if (!applied) return;
       canvas.renderAll();
       forceUpdate();
     }
   };
 
   // Перемикання жирного тексту
-  const toggleBold = () => {
+  const toggleBold = async () => {
     const activeText = getActiveText();
     if (activeText) {
-      const currentWeight = activeText.fontWeight;
-      const newWeight = currentWeight === "bold" ? "normal" : "bold";
-      activeText.set("fontWeight", newWeight);
+      const currentTraits = getEffectiveFontTraits(activeText);
+      const applied = await applyTextFormatting(activeText, {
+        bold: !currentTraits.bold,
+        italic: currentTraits.italic,
+      });
+      if (!applied) return;
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
   // Перемикання курсиву
-  const toggleItalic = () => {
+  const toggleItalic = async () => {
     const activeText = getActiveText();
     if (activeText) {
-      const currentStyle = activeText.fontStyle;
-      const newStyle = currentStyle === "italic" ? "normal" : "italic";
-      activeText.set("fontStyle", newStyle);
+      const currentTraits = getEffectiveFontTraits(activeText);
+      const applied = await applyTextFormatting(activeText, {
+        bold: currentTraits.bold,
+        italic: !currentTraits.italic,
+      });
+      if (!applied) return;
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
@@ -476,8 +681,11 @@ const TextList = () => {
     const activeText = getActiveText();
     if (activeText) {
       const currentUnderline = activeText.underline;
-      activeText.set("underline", !currentUnderline);
+      applyTextStyleToWholeObject(activeText, {
+        underline: !currentUnderline,
+      });
       canvas.renderAll();
+      forceUpdate();
     }
   };
 
@@ -622,8 +830,9 @@ const TextList = () => {
     ? getFontSizeMmInt(activeText)
     : pxToMm(20);
   const currentFontFamily = activeText?.fontFamily || "Arial";
-  const currentFontWeight = activeText?.fontWeight || "normal";
-  const currentFontStyle = activeText?.fontStyle || "normal";
+  const activeTraits = getEffectiveFontTraits(activeText);
+  const currentFontWeight = activeTraits.bold ? "bold" : "normal";
+  const currentFontStyle = activeTraits.italic ? "italic" : "normal";
   const currentUnderline = activeText?.underline || false;
   const currentTextAlign = activeText?.textAlign || "left";
   const currentColor = activeText?.fill || "#000000";
@@ -753,8 +962,11 @@ const TextList = () => {
                   value={text.object?.fontFamily || "Arial"}
                   onChange={async (e) => {
                     if (text.object) {
-                      text.object.set("fontFamily", e.target.value);
-                      await refreshTextObjectLayout(text.object, { waitForFont: true });
+                      const applied = await applyFontFamilyChange(
+                        text.object,
+                        e.target.value
+                      );
+                      if (!applied) return;
                       canvas.renderAll();
                       forceUpdate();
                     }
@@ -772,20 +984,34 @@ const TextList = () => {
                   ))}
                 </select>
                 <div className={styles.formatButtons}>
+                  {(() => {
+                    const canToggleBold = canToggleBoldForText(text.object);
+                    const canToggleItalic = canToggleItalicForText(text.object);
+                    const isBoldActive = getEffectiveFontTraits(text.object).bold;
+                    const isItalicActive = getEffectiveFontTraits(text.object).italic;
+
+                    return (
+                      <>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      if (!canToggleBold) return;
                       if (text.object) {
-                        const currentWeight = text.object.fontWeight;
-                        const newWeight =
-                          currentWeight === "bold" ? "normal" : "bold";
-                        text.object.set("fontWeight", newWeight);
+                        const currentTraits = getEffectiveFontTraits(text.object);
+                        const applied = await applyTextFormatting(text.object, {
+                          bold: !currentTraits.bold,
+                          italic: currentTraits.italic,
+                        });
+                        if (!applied) return;
                         canvas.renderAll();
                         forceUpdate();
                       }
                     }}
                     className={`${styles.formatButton} ${
-                      text.object?.fontWeight === "bold" ? styles.active : ""
+                      isBoldActive ? styles.active : ""
+                    } ${
+                      !canToggleBold ? styles.disabled : ""
                     }`}
+                    disabled={!canToggleBold}
                   >
                     <svg
                       width="14"
@@ -796,24 +1022,30 @@ const TextList = () => {
                     >
                       <path
                         d="M0.839355 16V-4.76837e-07H7.24561C8.42269 -4.76837e-07 9.40446 0.174479 10.1909 0.523437C10.9774 0.872396 11.5685 1.35677 11.9644 1.97656C12.3602 2.59115 12.5581 3.29948 12.5581 4.10156C12.5581 4.72656 12.4331 5.27604 12.1831 5.75C11.9331 6.21875 11.5894 6.60417 11.1519 6.90625C10.7196 7.20312 10.2248 7.41406 9.66748 7.53906V7.69531C10.2769 7.72135 10.8472 7.89323 11.3784 8.21094C11.9149 8.52865 12.3498 8.97396 12.6831 9.54687C13.0164 10.1146 13.1831 10.7917 13.1831 11.5781C13.1831 12.4271 12.9722 13.1849 12.5503 13.8516C12.1336 14.513 11.5164 15.0365 10.6987 15.4219C9.88102 15.8073 8.87321 16 7.67529 16H0.839355ZM4.22217 13.2344H6.97998C7.92269 13.2344 8.61019 13.0547 9.04248 12.6953C9.47477 12.3307 9.69092 11.8464 9.69092 11.2422C9.69092 10.7995 9.58415 10.4089 9.37061 10.0703C9.15706 9.73177 8.85238 9.46615 8.45654 9.27344C8.06592 9.08073 7.59977 8.98437 7.05811 8.98437H4.22217V13.2344ZM4.22217 6.69531H6.72998C7.19352 6.69531 7.60498 6.61458 7.96436 6.45312C8.32894 6.28646 8.6154 6.05208 8.82373 5.75C9.03727 5.44792 9.14404 5.08594 9.14404 4.66406C9.14404 4.08594 8.93831 3.61979 8.52686 3.26562C8.12061 2.91146 7.54248 2.73437 6.79248 2.73437H4.22217V6.69531Z"
-                        fill="black"
+                        fill="currentColor"
                       />
                     </svg>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
+                      if (!canToggleItalic) return;
                       if (text.object) {
-                        const currentStyle = text.object.fontStyle;
-                        const newStyle =
-                          currentStyle === "italic" ? "normal" : "italic";
-                        text.object.set("fontStyle", newStyle);
+                        const currentTraits = getEffectiveFontTraits(text.object);
+                        const applied = await applyTextFormatting(text.object, {
+                          bold: currentTraits.bold,
+                          italic: !currentTraits.italic,
+                        });
+                        if (!applied) return;
                         canvas.renderAll();
                         forceUpdate();
                       }
                     }}
                     className={`${styles.formatButton} ${
-                      text.object?.fontStyle === "italic" ? styles.active : ""
+                      isItalicActive ? styles.active : ""
+                    } ${
+                      !canToggleItalic ? styles.disabled : ""
                     }`}
+                    disabled={!canToggleItalic}
                   >
                     <svg
                       width="16"
@@ -824,15 +1056,20 @@ const TextList = () => {
                     >
                       <path
                         d="M3.42843 1.3332C3.42843 0.780915 3.85787 0.3332 4.38761 0.3332H9.48348C9.49595 0.332944 9.50846 0.332943 9.521 0.3332H14.6189C15.1486 0.3332 15.5781 0.780915 15.5781 1.3332C15.5781 1.88549 15.1486 2.3332 14.6189 2.3332H10.2896L8.11545 13.6665H12.0611C12.5908 13.6665 13.0203 14.1142 13.0203 14.6665C13.0203 15.2188 12.5908 15.6665 12.0611 15.6665H6.96524C6.95275 15.6668 6.94023 15.6668 6.92767 15.6665H1.82979C1.30005 15.6665 0.870605 15.2188 0.870605 14.6665C0.870605 14.1142 1.30005 13.6665 1.82979 13.6665H6.15909L8.33324 2.3332H4.38761C3.85787 2.3332 3.42843 1.88549 3.42843 1.3332Z"
-                        fill="black"
+                        fill="currentColor"
                       />
                     </svg>
                   </button>
+                      </>
+                    );
+                  })()}
                   <button
                     onClick={() => {
                       if (text.object) {
                         const currentUnderline = text.object.underline;
-                        text.object.set("underline", !currentUnderline);
+                        applyTextStyleToWholeObject(text.object, {
+                          underline: !currentUnderline,
+                        });
                         canvas.renderAll();
                         forceUpdate();
                       }
@@ -850,14 +1087,14 @@ const TextList = () => {
                     >
                       <path
                         d="M5.16846 2.375V7.91667C5.16846 9.17645 5.64848 10.3846 6.50291 11.2754C7.35735 12.1662 8.51622 12.6667 9.72458 12.6667C10.9329 12.6667 12.0918 12.1662 12.9462 11.2754C13.8007 10.3846 14.2807 9.17645 14.2807 7.91667V2.375"
-                        stroke="black"
+                        stroke="currentColor"
                         stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
                       />
                       <path
                         d="M3.6499 16.625H15.7996"
-                        stroke="black"
+                        stroke="currentColor"
                         stroke-width="2"
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -874,9 +1111,7 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "left" ? styles.active : ""
-                    }`}
+                    className={styles.alignButton}
                   >
                     <svg
                       width="16"
@@ -911,9 +1146,7 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "center" ? styles.active : ""
-                    }`}
+                    className={styles.alignButton}
                   >
                     <svg
                       width="16"
@@ -948,9 +1181,7 @@ const TextList = () => {
                         forceUpdate();
                       }
                     }}
-                    className={`${styles.alignButton} ${
-                      text.object?.textAlign === "right" ? styles.active : ""
-                    }`}
+                    className={styles.alignButton}
                   >
                     <svg
                       width="16"
@@ -1099,40 +1330,18 @@ const TextList = () => {
         ))}
         <div className={styles.addTextSection}>
           <button onClick={addText} className={styles.addTextButton}>
-            <svg
-              width="34"
-              height="34"
-              viewBox="0 0 34 34"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g clip-path="url(#clip0_4_570)">
-                <path
-                  d="M16.6244 17.3167L20.5427 17.3984M16.706 21.2351L16.6244 17.3167L16.706 21.2351ZM16.5428 13.3984L16.6244 17.3167L16.5428 13.3984ZM16.6244 17.3167L12.7061 17.2351L16.6244 17.3167Z"
-                  stroke="#017F01"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M23.6951 24.388C27.4409 20.6422 27.3117 14.4397 23.4065 10.5345C19.5012 6.62924 13.2988 6.50005 9.55296 10.2459C5.80711 13.9917 5.93633 20.1941 9.84158 24.0994C13.7468 28.0046 19.9492 28.1338 23.6951 24.388Z"
-                  stroke="#009951"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_4_570">
-                  <rect
-                    width="23.0204"
-                    height="24"
-                    fill="white"
-                    transform="translate(0 16.9707) rotate(-45)"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
+            <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_4006_346)">
+<path d="M16.9544 16.9535L20.9504 16.9574M16.9583 20.9496L16.9544 16.9535L16.9583 20.9496ZM16.9504 12.9575L16.9544 16.9535L16.9504 12.9575ZM16.9544 16.9535L12.9583 16.9496L16.9544 16.9535Z" stroke="#017F01" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M24.025 24.025C27.9226 20.1274 27.9164 13.8019 24.0112 9.8967C20.1059 5.99145 13.7804 5.98529 9.88287 9.88285C5.98528 13.7804 5.99148 20.1059 9.89672 24.0111C13.8019 27.9163 20.1274 27.9226 24.025 24.025Z" stroke="#009951" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_4006_346">
+<rect width="23.953" height="24" fill="white" transform="translate(0 16.9373) rotate(-45)"/>
+</clipPath>
+</defs>
+</svg>
+
           </button>
           <input
             type="text"

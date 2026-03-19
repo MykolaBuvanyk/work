@@ -307,7 +307,27 @@ const ShapeProperties = ({
 
   const shouldIgnoreStrokeInDimensions = (obj) => {
     if (!obj) return false;
+    const isStaticCutShape =
+      obj.isCutElement === true &&
+      obj.cutType === "shape" &&
+      (
+        obj.isStaticCutShape === true ||
+        obj.cutSource === "cut-tab" ||
+        (obj.data && (obj.data.isStaticCutShape === true || obj.data.cutSource === "cut-tab")) ||
+        !(
+          obj.fromShapeTab === true ||
+          (obj.data && obj.data.fromShapeTab === true)
+        )
+      );
+    if (isStaticCutShape) return true;
+
     const isManualCut = !!obj.isCutElement || obj.cutType === "manual";
+    const frameMeta =
+      typeof obj.hasFrameEnabled === "boolean"
+        ? obj.hasFrameEnabled
+        : typeof obj?.data?.hasFrameEnabled === "boolean"
+          ? obj.data.hasFrameEnabled
+          : null;
     const fillMeta =
       typeof obj.hasFillEnabled === "boolean"
         ? obj.hasFillEnabled
@@ -321,7 +341,9 @@ const ShapeProperties = ({
       fillVal !== "transparent" &&
       fillVal !== "none";
 
-    return isManualCut || fillMeta === true || hasVisibleFill;
+    const hasFrameEnabled = frameMeta === null ? !isManualCut && !hasVisibleFill : frameMeta;
+
+    return isManualCut || hasFrameEnabled === true || fillMeta === true || hasVisibleFill;
   };
 
   const getOuterSizePx = (obj, options = {}) => {

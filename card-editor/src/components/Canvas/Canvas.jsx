@@ -207,6 +207,54 @@ const Canvas = ({ className }) => {
       return !!cutOwner;
     };
 
+    const shouldIgnoreStrokeInObjectDimensions = object => {
+      if (!object) return false;
+
+      if (isStaticCutShape(object)) return true;
+
+      const isManualCut = !!object.isCutElement || object.cutType === 'manual';
+      const frameMeta =
+        typeof object.hasFrameEnabled === 'boolean'
+          ? object.hasFrameEnabled
+          : typeof object?.data?.hasFrameEnabled === 'boolean'
+            ? object.data.hasFrameEnabled
+            : null;
+      const fillMeta =
+        typeof object.hasFillEnabled === 'boolean'
+          ? object.hasFillEnabled
+          : typeof object?.data?.hasFillEnabled === 'boolean'
+            ? object.data.hasFillEnabled
+            : null;
+      const fillVal = object.fill;
+      const hasVisibleFill =
+        typeof fillVal === 'string' &&
+        fillVal !== '' &&
+        fillVal !== 'transparent' &&
+        fillVal !== 'none';
+      const hasFrameEnabled = frameMeta === null ? !isManualCut && !hasVisibleFill : frameMeta;
+
+      return isManualCut || hasFrameEnabled === true || fillMeta === true || hasVisibleFill;
+    };
+
+    const getObjectOuterSizePx = object => {
+      if (!object) return { width: 0, height: 0 };
+
+      const baseW = Number(object.width) || 0;
+      const baseH = Number(object.height) || 0;
+      const scaleX = Math.abs(Number(object.scaleX) || 1);
+      const scaleY = Math.abs(Number(object.scaleY) || 1);
+      const ignoreStroke = shouldIgnoreStrokeInObjectDimensions(object);
+      const strokeWidth = ignoreStroke ? 0 : Math.max(0, Number(object.strokeWidth) || 0);
+      const strokeUniform = object.strokeUniform === true;
+      const strokeW = strokeUniform ? strokeWidth : strokeWidth * scaleX;
+      const strokeH = strokeUniform ? strokeWidth : strokeWidth * scaleY;
+
+      return {
+        width: Math.max(0, baseW * scaleX + strokeW),
+        height: Math.max(0, baseH * scaleY + strokeH),
+      };
+    };
+
     const ensureCutStrokeVisual = object => {
       if (!object) return;
 
@@ -3157,14 +3205,9 @@ const Canvas = ({ className }) => {
         active.__isScaling ||
         (typeof active.__scaleLabelExpireAt === 'number' && nowTs < active.__scaleLabelExpireAt);
       if (showSizeHint) {
-        const wPx = Math.max(
-          0,
-          typeof active.getScaledWidth === 'function' ? active.getScaledWidth() : maxX - minX
-        );
-        const hPx = Math.max(
-          0,
-          typeof active.getScaledHeight === 'function' ? active.getScaledHeight() : maxY - minY
-        );
+        const outerSize = getObjectOuterSizePx(active);
+        const wPx = Math.max(0, outerSize.width || maxX - minX);
+        const hPx = Math.max(0, outerSize.height || maxY - minY);
         const wMm = pxToMm(wPx).toFixed(1);
         const hMm = pxToMm(hPx).toFixed(1);
         const label = `${wMm} × ${hMm} mm`;

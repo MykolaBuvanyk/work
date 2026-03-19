@@ -123,6 +123,7 @@ export class CanvasHistoryManager {
     const extraProps = [
       "shapeType", "baseCornerRadius", "displayCornerRadiusMm",
       "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
+      "fillRule", "clipRule",
       "strokeLineJoin", "strokeMiterLimit", "isCircle", "selectable",
       "evented", "hasControls", "hasBorders", "customProperties",
       "id", "name", "originalSrc", "filters", "isUploadedImage", "useThemeColor",

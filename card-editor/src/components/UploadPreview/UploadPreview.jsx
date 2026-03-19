@@ -6,13 +6,6 @@ import {
   convertSvgToThemeMonochrome,
 } from "../../utils/svgThemeTransform";
 
-const svgMarkupToDataURL = (svgMarkup) => {
-  const text = String(svgMarkup || "").trim();
-  if (!text) return "";
-  if (text.startsWith("data:image/svg+xml")) return text;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`;
-};
-
 // Map precision slider (0..100) to vectorization options
 const mapVectorOpts = (detail) => {
   const d = Math.max(0, Math.min(100, Number(detail) || 0));
@@ -98,7 +91,7 @@ const UploadPreview = ({
   const [svgOut, setSvgOut] = useState("");
   const debounceRef = useRef();
 
-  const canAdjustPrecision = mode === "raster" || mode === "svg";
+  const canAdjustPrecision = mode === "raster";
 
   // Recompute preview when inputs change
   useEffect(() => {
@@ -127,26 +120,8 @@ const UploadPreview = ({
             fillColor: "black",
           });
         } else if (mode === "svg" && svgText) {
-          const tuned = mapVectorOpts(detail);
-          const svgDataURL = svgMarkupToDataURL(svgText);
-          resultSVG = await vectorizeDataURLToSVG(svgDataURL, {
-            threshold: 120,
-            autoThreshold: true,
-            autoInvert: false,
-            invert: !!invert,
-            brightness: Math.round((brightness || 0) * 2.55),
-            pathomit: tuned.pathomit,
-            maxSize: tuned.maxSize,
-            simplifyTolerance: tuned.simplifyTolerance,
-            pointStep: tuned.pointStep,
-            quantize: tuned.quantize,
-            roundDecimals: tuned.roundDecimals,
-            fillRule: "evenodd",
-            combineToSinglePath: true,
-            scale: 2,
-            fillColor: "black",
-          });
-          resultSVG = convertSvgToThemeMonochrome(resultSVG, themeColor);
+          // Keep native SVG geometry for precision; no rasterization for SVG uploads.
+          resultSVG = convertSvgToThemeMonochrome(svgText, themeColor);
         }
         if (strokeOnly && resultSVG) {
           resultSVG = applyStrokeOnlyToSVG(resultSVG, themeColor);

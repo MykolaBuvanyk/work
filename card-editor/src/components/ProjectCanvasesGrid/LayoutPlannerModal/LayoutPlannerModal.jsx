@@ -6139,9 +6139,23 @@ const LayoutPlannerModal = ({
         });
       });
 
+      // IMPORTANT: restore theme-follow flag only for PDF payload markup.
+      // This does not mutate Fabric objects or saved canvas JSON, so switch-canvas bug won't return.
+      const restorePdfOnlyUseThemeColor = (svgMarkup) => {
+        if (typeof svgMarkup !== "string" || !svgMarkup.trim()) return null;
+
+        return svgMarkup
+          .replace(/\buseThemeColor="false"/gi, 'useThemeColor="true"')
+          .replace(/\bdata-use-theme-color="false"/gi, 'data-use-theme-color="true"')
+          .replace(/\bdata-useThemeColor="false"/gi, 'data-useThemeColor="true"');
+      };
+
       const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
           const previewData = buildPlacementPreview(placement, { enableGaps });
+          const rawSvgMarkup =
+            previewData?.type === "svg" ? previewData.exportMarkup : null;
+          const pdfSvgMarkup = restorePdfOnlyUseThemeColor(rawSvgMarkup);
 
           return {
             id: placement.id,
@@ -6153,7 +6167,17 @@ const LayoutPlannerModal = ({
             height: placement.height,
             copyIndex: placement.copyIndex ?? 1,
             copies: placement.copies ?? 1,
-            svgMarkup: previewData?.type === "svg" ? previewData.exportMarkup : null,
+            svgMarkup: pdfSvgMarkup,
+            previewType: previewData?.type || null,
+            parsedSvgForPdf:
+              previewData?.type === "svg" &&
+              typeof rawSvgMarkup === "string" &&
+              /\bid="parsed-svg-/i.test(rawSvgMarkup),
+            previewImageUrl: previewData?.type === "png" ? previewData.url : null,
+            hasUploadedSvg:
+              previewData?.type === "svg" &&
+              typeof rawSvgMarkup === "string" &&
+              /(?:isUploadedImage|data-uploaded-svg)="true"/i.test(rawSvgMarkup),
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,

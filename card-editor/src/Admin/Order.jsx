@@ -751,10 +751,6 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       alert('Немає аркушів для експорту');
       return;
     }
-    if (visibleSheets.length > 10) {
-      alert(`Максимальна кількість аркушів для PDF — 10. Зараз: ${visibleSheets.length}.`);
-      return;
-    }
 
     setIsExporting(true);
     try {
@@ -1085,10 +1081,6 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     const visible = (plannedGroup?.sheets || []).map((s, idx) => ({ ...s, globalSheetIndex: idx + 1, globalSheetCount: plannedGroup.sheets.length }));
     if (!visible.length) {
       alert('No sheets generated for this material');
-      return;
-    }
-    if (visible.length > 10) {
-      alert(`Максимальна кількість аркушів для PDF — 10. Зараз: ${visible.length}.`);
       return;
     }
 

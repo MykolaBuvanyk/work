@@ -7011,12 +7011,14 @@ const Toolbar = ({ formData }) => {
     return shape;
   };
 
-  const createLockHoleCircle = () => {
+  const createLockHoleCircle = overrideDiameterMm => {
     if (!canvas) return null;
     const canvasWidth = canvas.getWidth?.() || canvas.width || 0;
     const semicircleRadiusPx = mmToPx(LOCK_ARCH_HEIGHT_MM);
     const chordY = semicircleRadiusPx;
-    const holeRadiusPx = holeRadiusPxFromDiameterMm(holesDiameter || 2.5);
+    const diameterMm =
+      typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 2.5;
+    const holeRadiusPx = holeRadiusPxFromDiameterMm(diameterMm);
     const minTopGapPx = mmToPx(MIN_LOCK_HOLE_TOP_GAP_MM);
     const extraAllowancePx = mmToPx(LOCK_HOLE_EXTRA_DOWN_MM);
     const baseCenterY = semicircleRadiusPx / 2;
@@ -7089,20 +7091,35 @@ const Toolbar = ({ formData }) => {
     setActiveHolesType(1);
   };
 
+  const selectSingleRoundHoleType = createHole => {
+    const defaultDiameterMm = 5;
+    setHolesDiameter(defaultDiameterMm);
+    createHole(defaultDiameterMm);
+  };
+
+  const selectMultiRoundHoleType = createHole => {
+    const defaultDiameterMm = 2.5;
+    setHolesDiameter(defaultDiameterMm);
+    createHole(defaultDiameterMm);
+  };
+
   // Тип 2 - отвір по центру ширини і зверху по висоті (відступ ~4мм)
-  const addHoleType2 = () => {
+  const addHoleType2 = overrideDiameterMm => {
     if (!canvas) return;
     clearExistingHoles();
     setIsHolesSelected(true);
     setActiveHolesType(2);
 
+    const diameterMm =
+      typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 2.5;
+
     if (currentShapeType === 'lock') {
-      const hole = createLockHoleCircle();
+      const hole = createLockHoleCircle(diameterMm);
       if (hole) {
         try {
           const topGapMm = pxToMm((hole.top || 0) - (hole.radius || 0));
           console.log(
-            `Відступ отвору зверху: ${topGapMm.toFixed(2)} мм (lock, Ø ${holesDiameter} мм)`
+            `Відступ отвору зверху: ${topGapMm.toFixed(2)} мм (lock, Ø ${diameterMm} мм)`
           );
         } catch {}
         canvas.add(hole);
@@ -7112,17 +7129,17 @@ const Toolbar = ({ formData }) => {
     }
 
     const canvasWidth = canvas.getWidth();
-    const offsetPx = getHoleOffsetPx();
+    const offsetPx = getHoleOffsetPx(diameterMm);
     try {
       console.log(
-        `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 2, Ø ${holesDiameter} мм)`
+        `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 2, Ø ${diameterMm} мм)`
       );
     } catch {}
     const hole = registerHoleShape(
       new fabric.Circle({
         left: canvasWidth / 2,
         top: offsetPx,
-        radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+        radius: holeRadiusPxFromDiameterMm(diameterMm),
         fill: HOLE_FILL_COLOR, // Білий фон дирки
         stroke: CUT_STROKE_COLOR, // Оранжевий бордер
         strokeWidth: 1, // 1px
@@ -7148,17 +7165,19 @@ const Toolbar = ({ formData }) => {
   };
 
   // Тип 3 - два отвори по середині висоти, по бокам ширини (відступ 15px)
-  const addHoleType3 = () => {
+  const addHoleType3 = overrideDiameterMm => {
     if (canvas) {
       clearExistingHoles();
       setIsHolesSelected(true);
       setActiveHolesType(3);
+      const diameterMm =
+        typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 2.5;
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      const offsetPx = getHoleOffsetPx();
+      const offsetPx = getHoleOffsetPx(diameterMm);
       try {
         console.log(
-          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 3, Ø ${holesDiameter} мм)`
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 3, Ø ${diameterMm} мм)`
         );
       } catch {}
 
@@ -7167,7 +7186,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight / 2,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7193,7 +7212,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7221,17 +7240,19 @@ const Toolbar = ({ formData }) => {
   };
 
   // Тип 4 - 4 отвори по кутам (відступ 15px)
-  const addHoleType4 = () => {
+  const addHoleType4 = overrideDiameterMm => {
     if (canvas) {
       clearExistingHoles();
       setIsHolesSelected(true);
       setActiveHolesType(4);
+      const diameterMm =
+        typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 2.5;
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      const offsetPx = getHoleOffsetPx();
+      const offsetPx = getHoleOffsetPx(diameterMm);
       try {
         console.log(
-          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 4, Ø ${holesDiameter} мм)`
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 4, Ø ${diameterMm} мм)`
         );
       } catch {}
 
@@ -7240,7 +7261,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: offsetPx,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7266,7 +7287,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: offsetPx,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7292,7 +7313,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: offsetPx,
           top: canvasHeight - offsetPx,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7318,7 +7339,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight - offsetPx,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 2.5),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -7408,18 +7429,18 @@ const Toolbar = ({ formData }) => {
 
   // Тип 6 - 4 прямокутні отвори: фіксовано ширина 5мм, висота 2мм
   // Відступи: зліва/справа 3мм (по центру прямокутника), зверху/знизу 2мм
-  const addHoleType6 = () => {
+  const addHoleType6 = overrideDiameterMm => {
     if (!canvas) return;
     clearExistingHoles();
     setIsHolesSelected(true);
     setActiveHolesType(6);
     const wCanvasPx = canvas.getWidth();
     const hCanvasPx = canvas.getHeight();
-    // Діаметр дирки в мм
-    const diameterMm = holesDiameter || 3;
+    const diameterMm =
+      typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 3;
     const diameterPx = mmToPx(diameterMm);
     // Динамічний відступ як у 7-ї дирки
-    const offsetPx = getHoleOffsetPx();
+    const offsetPx = getHoleOffsetPx(diameterMm);
     const centerY = hCanvasPx / 2;
     const hole = registerHoleShape(
       new fabric.Circle({
@@ -7458,17 +7479,19 @@ const Toolbar = ({ formData }) => {
   };
 
   // Тип 7 - отвір по середині висоти і правого краю ширини
-  const addHoleType7 = () => {
+  const addHoleType7 = overrideDiameterMm => {
     if (canvas) {
       clearExistingHoles();
       setIsHolesSelected(true);
       setActiveHolesType(7);
+      const diameterMm =
+        typeof overrideDiameterMm === 'number' ? overrideDiameterMm : holesDiameter || 3;
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
-      const offsetPx = getHoleOffsetPx();
+      const offsetPx = getHoleOffsetPx(diameterMm);
       try {
         console.log(
-          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 7, Ø ${holesDiameter} мм)`
+          `Відступ отворів: ${pxToMm(offsetPx).toFixed(2)} мм (тип 7, Ø ${diameterMm} мм)`
         );
       } catch {}
 
@@ -7476,7 +7499,7 @@ const Toolbar = ({ formData }) => {
         new fabric.Circle({
           left: canvasWidth - offsetPx,
           top: canvasHeight / 2,
-          radius: holeRadiusPxFromDiameterMm(holesDiameter || 3),
+          radius: holeRadiusPxFromDiameterMm(diameterMm),
           fill: HOLE_FILL_COLOR,
           stroke: CUT_STROKE_COLOR,
           strokeWidth: 1,
@@ -10505,21 +10528,21 @@ const Toolbar = ({ formData }) => {
             {Hole1}
           </span>
           <span
-            onClick={addHoleType2}
+            onClick={() => selectSingleRoundHoleType(addHoleType2)}
             title="One hole at the top center"
             className={activeHolesType === 2 ? styles.holeActive : ''}
           >
             {Hole2}
           </span>
           <span
-            onClick={addHoleType3}
+            onClick={() => selectMultiRoundHoleType(addHoleType3)}
             title="Two holes on the sides"
             className={activeHolesType === 3 ? styles.holeActive : ''}
           >
             {Hole3}
           </span>
           <span
-            onClick={addHoleType4}
+            onClick={() => selectMultiRoundHoleType(addHoleType4)}
             title="Four holes in the corners"
             className={activeHolesType === 4 ? styles.holeActive : ''}
           >
@@ -10533,14 +10556,14 @@ const Toolbar = ({ formData }) => {
             {Hole5}
           </span>
           <span
-            onClick={addHoleType6}
+            onClick={() => selectSingleRoundHoleType(addHoleType6)}
             title="Left-centered hole"
             className={activeHolesType === 6 ? styles.holeActive : ''}
           >
             {Hole6}
           </span>
           <span
-            onClick={addHoleType7}
+            onClick={() => selectSingleRoundHoleType(addHoleType7)}
             title="Right-centered hole"
             className={activeHolesType === 7 ? styles.holeActive : ''}
           >

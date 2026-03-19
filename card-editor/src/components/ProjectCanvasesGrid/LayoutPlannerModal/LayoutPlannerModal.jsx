@@ -5977,16 +5977,6 @@ const LayoutPlannerModal = ({
   const handleExportPdf = useCallback(async () => {
     if (!visibleSheets.length || isExporting) return;
 
-    const totalSheets = visibleSheets.length;
-    if (totalSheets > 10) {
-      if (typeof window !== "undefined" && typeof window.alert === "function") {
-        window.alert(
-          `Максимальна кількість аркушів для PDF — 10. Зараз: ${totalSheets}. Зменш кількість аркушів або оптимізуй розкладку.`
-        );
-      }
-      return;
-    }
-
     if (typeof fetch !== "function") {
       console.error("Експорт PDF потребує підтримки fetch у браузері.");
       return;

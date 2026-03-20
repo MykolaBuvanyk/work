@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
 import sendEmail from './utils/sendEmail.js';
+import SendEmailForStatus from './SendEmailForStatus.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,7 +125,6 @@ class AuthController {
         newUser.company||''
       );
 
-      console.log(233284234);
 
       const subject = `Welcome to SignXpert. Your account is ready!`;
       const messageHtml = `
@@ -171,10 +171,10 @@ class AuthController {
 </div>
 `;
 
-      console.log(534234);
       sendEmail(email, messageHtml, subject)
 
-      console.log(78234234);
+      SendEmailForStatus.SendUserRegister(newUser);
+
       return res.json({ newUser, token });
     } catch (err) {
       console.log(32434,err);
@@ -367,7 +367,7 @@ class AuthController {
       await user.save();
 
       // 5) сформувати email
-      const htmlMessage = `
+      /*const htmlMessage = `
         <h2>Password Reset</h2>
         <p>Hello ${user.firstName},</p>
         <p>Your new password is:</p>
@@ -376,7 +376,9 @@ class AuthController {
       `;
 
       // 6) відправити
-      await sendEmail(email, htmlMessage, "Your new password");
+      await sendEmail(email, htmlMessage, "Your new password");*/
+
+      SendEmailForStatus.SendUserNewPassword(user, newPassword);
 
       return res.json({ message: "New password sent successfully" });
 

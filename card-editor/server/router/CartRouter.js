@@ -719,9 +719,9 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
         }
       ]
     })
-
+    let commentOrder='';
     SendEmailForStatus.CreateOrder(orderWithUser);
-
+    SendEmailForStatus.SendToAdminNewOrder(orderWithUser,commentOrder)
     return res.json({
       id: String(created._id),
       status: created.status,
@@ -2437,9 +2437,16 @@ CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
 CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => {
   try {
     const { orderId } = req.body;
-    const order = await Order.findOne({ where: { id: Number(orderId) } });
+    const order = await Order.findOne({ 
+      where: { id: Number(orderId) },
+      include:[{
+        model:User
+      }]
+    });
     order.isPaid = !order.isPaid;
     await order.save();
+    SendEmailForStatus.SendAdminStatusPaid(order);
+    SendEmailForStatus.SendStatusPaid(order);
     return res.json({ message: 'is pay updated' });
   } catch (err) {
     console.error('ERROR GET PAY:', err);

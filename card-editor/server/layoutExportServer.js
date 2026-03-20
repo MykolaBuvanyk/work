@@ -1980,12 +1980,25 @@ app.post('/api/cart/webhook', express.raw({type: 'application/json'}), async(req
             { isPaid: true }, 
             { where: { id: parseInt(orderId) } }
           );
+          const order=await Order.findOne({
+             where: { 
+              id: parseInt(orderId) 
+            },
+            include:[
+              {
+                model:User
+              }
+            ]
+          })
   
           if (updated) {
             console.log(`✅ Success: Order №${orderId} marked as PAID in DB.`);
+            SendEmailForStatus.SendAdminStatusPaid(order);
+            SendEmailForStatus.SendStatusPaid(order);
           } else {
             console.log(`⚠️ Warning: Order №${orderId} found, but status NOT updated (maybe already paid?).`);
           }
+
         } catch (dbErr) {
           console.log(`❌ Database Update Error: ${dbErr.message}`);
         }

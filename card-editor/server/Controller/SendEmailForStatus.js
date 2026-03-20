@@ -11,6 +11,411 @@ const formatDate = (date) => {
 };
 
 class SendEmailForStatus {
+    
+    static SendAdminStatusPaid=async(order)=>{
+        const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
+      
+        const subject=`SignXpert Order Paid – #[${order.id}] ${nameOrCompany}`;
+        const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
+      
+        const messageHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Paid Notification - SignXpert</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 4px; overflow: hidden;">
+                    
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 10px 40px;">
+                            <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 20px 40px;">
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: bold;">Order Paid – #[${order.id}]</h2>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 10px 60px; color: #000000; font-size: 15px; line-height: 1.6;">
+                            
+                            <p style="margin: 0 0 20px 0;">Hello,</p>
+                            
+                            <p style="margin: 0 0 30px 0;">Payment has been received for the following order on SignXpert.</p>
+                            
+                            <div style="margin: 0 0 30px 0;">
+                                <p style="margin: 0 0 5px 0;">Order Number: #[${order.id}]</p>
+                                <p style="margin: 0 0 5px 0;">Customer Name: [${order.user.firstName}]</p>
+                                <p style="margin: 0 0 5px 0;">Customer Email: [${order.user.email}]</p>
+                                ${//<p style="margin: 0 0 5px 0;">Payment Method: [${paymentMethod}]</p>
+                                ''}
+                                <p style="margin: 0 0 5px 0;">Order Total: [${order.sum}]</p>
+                            </div>
+
+                            <p style="margin: 0 0 30px 0;">The customer completed the payment through their My Orders page.</p>
+                            
+                            <p style="margin: 0 0 30px 0;">Please proceed with order processing.</p>
+                            
+                            <p style="margin: 0 0 40px 0; font-style: italic; color: #888; font-size: 14px;">SignXpert System Notification</p>
+                            
+                            <p style="margin: 0 0 5px 0;">Best regards,</p>
+                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="padding: 0 60px 40px 60px;">
+                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
+                            <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+        sendEmail(order.user.email, messageHtml, subject)
+    }
+
+    static SendStatusPaid=async(order)=>{
+        const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
+      
+        const subject=`SignXpert - Payment Received  #[${order.id}] (${nameOrCompany})`;
+        const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
+      
+        const messageHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Received - SignXpert</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 4px; overflow: hidden;">
+                    
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 10px 40px;">
+                            <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 20px 40px;">
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #[${order.id}]</h2>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 10px 60px; color: #000000; font-size: 15px; line-height: 1.5;">
+                            
+                            <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
+                            
+                            <p style="margin: 0 0 10px 0;">Thank you for your payment.</p>
+                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #[${order.id}].</p>
+                            
+                            <p style="margin: 0 0 5px 0;">Total amount: <strong>€${order.sum}</strong></p>
+                        
+                            <p style="margin: 0 0 25px 0;">
+                                You can check the detailed status of your order anytime in your account.<br>
+                                Simply log in to <a href="${urlFrontend+'account'}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlFrontend+'account/detail'}" style="color: #0073bc; text-decoration: underline;">My Orders</a>
+                            </p>
+                            
+                            <p style="margin: 40px 0 5px 0;">Best regards,</p>
+                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="padding: 0 60px 40px 60px;">
+                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
+                            <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+        sendEmail(order.user.email, messageHtml, subject)
+    }
+
+    static SendUserNewPassword=async(user,newPassword)=>{
+        const nameOrCompany=user.company?user.company:user.firstName;
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
+        const subjectAdmin=`SignXpert - Password Recovery for ${nameOrCompany}`;
+        const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
+        const messageHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Recovery for SignXpert</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 4px; overflow: hidden;">
+                    
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 10px 40px;">
+                            <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
+                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 20px 40px;">
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Password Recovery for SignXpert</h2>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 10px 60px; color: #000000; font-size: 15px; line-height: 1.5;">
+                            
+                            <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
+                            
+                            <p style="margin: 0 0 25px 0;">Customer number: ${user.id}</p>
+                            
+                            <p style="margin: 0 0 25px 0;">We received a request to reset your password on SignXpert.</p>
+                            
+                            <p style="margin: 0 0 25px 0;">
+                                Your temporary password is:<br>
+                                ${newPassword}
+                            </p>
+
+                            <p style="margin: 0 0 25px 0;">
+                                For security, we recommend changing it to a new password immediately after logging in.<br>
+                                Simply log in to <a href="${urlFrontend+'account'}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlFrontend+'account/detail'}" style="color: #0073bc; text-decoration: underline;">My Details</a> in your account to update your password.
+                            </p>
+                            
+                            <p style="margin: 0 0 25px 0;">If you didn't request a password reset, please ignore this email.</p>
+                            
+                            <p style="margin: 0 0 35px 0;">Thank you for using SignXpert!</p>
+                            
+                            <p style="margin: 0 0 5px 0;">Best regards,</p>
+                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="padding: 0 60px 40px 60px;">
+                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
+                            <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+        sendEmail(user.email,messageHtml,subjectAdmin)
+    }
+    static SendUserRegister=async(user)=>{
+        const nameOrCompany=user.company?user.company:user.firstName;
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
+        const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
+        const subjectAdmin=`SignXpert | Cust. ID #${user.id} | New Cust. Reg. ${nameOrCompany}`;
+        const currentDate = new Date().toLocaleDateString('en-GB', {
+  day: '2d-digit',
+  month: 'long',
+  year: 'numeric'
+});
+        const messageHtmlToAdmin=`<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нова реєстрація клієнта</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 10px 40px;">
+                            <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
+                            <p style="margin: 5px 0 0 0; font-size: 12px; color: #777; text-transform: uppercase; letter-spacing: 1px;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 2px 5px;">Sign & Label</span> Solution</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 20px 40px;">
+                            <h2 style="margin: 0; color: #333333; font-size: 22px;">A new customer has registered</h2>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 10px 40px; color: #444444; font-size: 15px; line-height: 1.6;">
+                            <p>Hello,</p>
+                            <p>A new customer has registered on the SignXpert website.</p>
+                            
+                            <div style="margin: 25px 0; border-top: 1px solid #eeeeee; padding-top: 20px;">
+                                <strong style="display: block; margin-bottom: 10px; color: #000;">Customer details:</strong>
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
+                                    <tr><td width="150" style="padding: 3px 0;">Customer number:</td><td><strong>${user.id}</strong></td></tr>
+                                    <tr><td style="padding: 3px 0;">Name:</td><td><strong>${user.firstName}</strong></td></tr>
+                                    <tr><td style="padding: 3px 0;">Company:</td><td><strong>${user.company}</strong></td></tr>
+                                    <tr><td style="padding: 3px 0;">Email:</td><td><a href="mailto:${user.email}" style="color: #0073bc; text-decoration: none;">${user.email}</a></td></tr>
+                                    <tr><td style="padding: 3px 0;">Phone:</td><td>${user.phone}</td></tr>
+                                    <tr><td style="padding: 3px 0;">Country:</td><td>${user.country}</td></tr>
+                                </table>
+                            </div>
+
+                            <p style="margin: 20px 0;">Registration date: ${currentDate}</p>
+                            
+                            <p>You can view the full customer profile in the admin panel.</p>
+                            
+                            <p style="margin-top: 30px; font-style: italic; color: #888;">SignXpert System Notification</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 40px 40px 40px; color: #444444; font-size: 15px;">
+                            <p style="margin: 0;">Best regards,<br><strong>SignXpert Team</strong></p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="padding: 20px 40px; background-color: #fafafa; border-top: 1px solid #eeeeee;">
+                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: none; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: none; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
+                            <p style="margin: 0; font-size: 14px; color: #666;">+49 157 766 25 125</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+        sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin)
+    }
+
+    static SendToAdminNewOrder=async(newOrder,comment)=>{
+        const nameOrCompany=user.company?user.company:user.firstName;
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
+        const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
+        const subjectAdmin=`SignXpert | New Order #${newOrder.id} | Cust. ID #${newOrder.user.id} ${nameOrCompany}`;
+        const currentDate = new Date().toLocaleDateString('en-GB', {
+  day: '2d-digit',
+  month: 'long',
+  year: 'numeric'
+});
+        const messageHtmlToAdmin=`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Order Received #${newOrder.id}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
+                    
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 10px 40px;">
+                            <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding: 10px 40px 20px 40px;">
+                            <h2 style="margin: 0; color: #000000; font-size: 22px;">New Order Received #${newOrder.id}</h2>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 0 40px; color: #444444; font-size: 15px; line-height: 1.6;">
+                            <p>Hello,</p>
+                            <p>A new order has been placed on the SignXpert website.</p>
+                            
+                            <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eeeeee;">
+                                <p style="margin: 0;">Order number: <strong>${newOrder.id}</strong></p>
+                                <p style="margin: 5px 0 0 0;">Order date: <strong>${currentDate}</strong></p>
+                            </div>
+
+                            <div style="margin: 20px 0;">
+                                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
+                                    <tr><td style="padding-bottom: 5px;">Customer number: ${newOrder.user.id}</td></tr>
+                                    <tr><td style="padding-bottom: 5px;">Name: ${newOrder.user.firstName}</td></tr>
+                                    <tr><td style="padding-bottom: 5px;">Company: ${newOrder.user.company}</td></tr>
+                                    <tr><td style="padding-bottom: 5px;">Email: <a href="mailto:${newOrder.user.email}" style="color: #0073bc; text-decoration: none;">${newOrder.user.email}</a></td></tr>
+                                    <tr><td style="padding-bottom: 5px;">Phone: ${newOrder.user.phone}</td></tr>
+                                    <tr><td style="padding-bottom: 20px;">Country: ${newOrder.user.country}</td></tr>
+                                </table>
+                            </div>
+
+                            <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eeeeee; border-bottom: 1px solid #eeeeee;">
+                                <p style="margin: 0;">Total amount: <strong>€${newOrder.sum}</strong></p>
+${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
+                                <p style="margin: 5px 0 0 0;">Shipping method: <strong>UPS Next Day Package</strong></p>*/''}
+                            </div>
+
+                            <div style="margin: 25px 0;">
+                                <p style="margin: 0 0 10px 0;">How was your experience with SignXpert?</p>
+                                <div style="color: #FFD700; font-size: 24px; letter-spacing: 5px;">
+                                    ★ ★ ★ ★ ★
+                                </div>
+                                <p style="margin: 10px 0 0 0; color: #888;">Comment: <span style="color: #333;">${comment}</span></p>
+                            </div>
+
+                            <p style="margin: 30px 0 10px 0;">You can view the full customer profile in the admin panel.</p>
+                            <p style="margin: 0; font-style: italic; color: #888; font-size: 13px;">SignXpert System Notification</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding: 30px 40px 40px 40px; color: #444444; font-size: 15px;">
+                            <p style="margin: 0;">Best regards,<br><strong>SignXpert Team</strong></p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="right" style="padding: 20px 40px; background-color: #fafafa; border-top: 1px solid #eeeeee;">
+                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: none; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: none; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
+                            <p style="margin: 0; font-size: 14px; color: #666;">+49 157 766 25 125</p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+        sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin)
+    }
+
     static CreateOrder=async(order)=>{
         try{
             const orderNumber=String(order.id).padStart(3, '0')

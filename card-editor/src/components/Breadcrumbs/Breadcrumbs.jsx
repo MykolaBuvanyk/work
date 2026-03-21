@@ -94,6 +94,11 @@ const Breadcrumbs = () => {
     return null;
   }
 
+  // Home page should not show breadcrumbs.
+  if (contentSegments.length === 1 && contentSegments[0] === 'home') {
+    return null;
+  }
+
   if (contentSegments.length === 0 || HIDDEN_ROOT_SEGMENTS.has(contentSegments[0])) {
     return null;
   }

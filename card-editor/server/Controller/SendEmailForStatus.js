@@ -240,7 +240,7 @@ class SendEmailForStatus {
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
         const subjectAdmin=`SignXpert | Cust. ID #${user.id} | New Cust. Reg. ${nameOrCompany}`;
         const currentDate = new Date().toLocaleDateString('en-GB', {
-  day: '2d-digit',
+  day: '2-digit',
   month: 'long',
   year: 'numeric'
 });
@@ -280,7 +280,7 @@ class SendEmailForStatus {
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
                                     <tr><td width="150" style="padding: 3px 0;">Customer number:</td><td><strong>${user.id}</strong></td></tr>
                                     <tr><td style="padding: 3px 0;">Name:</td><td><strong>${user.firstName}</strong></td></tr>
-                                    <tr><td style="padding: 3px 0;">Company:</td><td><strong>${user.company}</strong></td></tr>
+                                    <tr><td style="padding: 3px 0;">Company:</td><td><strong>${user.company?user.company:'-'}</strong></td></tr>
                                     <tr><td style="padding: 3px 0;">Email:</td><td><a href="mailto:${user.email}" style="color: #0073bc; text-decoration: none;">${user.email}</a></td></tr>
                                     <tr><td style="padding: 3px 0;">Phone:</td><td>${user.phone}</td></tr>
                                     <tr><td style="padding: 3px 0;">Country:</td><td>${user.country}</td></tr>
@@ -318,13 +318,13 @@ class SendEmailForStatus {
         sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin)
     }
 
-    static SendToAdminNewOrder=async(newOrder,comment)=>{
-        const nameOrCompany=user.company?user.company:user.firstName;
+    static SendToAdminNewOrder=async(newOrder,comment,countStar)=>{
+        const nameOrCompany=newOrder.user.company?newOrder.user.company:newOrder.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
         const subjectAdmin=`SignXpert | New Order #${newOrder.id} | Cust. ID #${newOrder.user.id} ${nameOrCompany}`;
         const currentDate = new Date().toLocaleDateString('en-GB', {
-  day: '2d-digit',
+  day: '2-digit',
   month: 'long',
   year: 'numeric'
 });
@@ -367,7 +367,7 @@ class SendEmailForStatus {
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
                                     <tr><td style="padding-bottom: 5px;">Customer number: ${newOrder.user.id}</td></tr>
                                     <tr><td style="padding-bottom: 5px;">Name: ${newOrder.user.firstName}</td></tr>
-                                    <tr><td style="padding-bottom: 5px;">Company: ${newOrder.user.company}</td></tr>
+                                    ${newOrder.company?`<tr><td style="padding-bottom: 5px;">Company: ${newOrder.user.company}</td></tr>`:''}
                                     <tr><td style="padding-bottom: 5px;">Email: <a href="mailto:${newOrder.user.email}" style="color: #0073bc; text-decoration: none;">${newOrder.user.email}</a></td></tr>
                                     <tr><td style="padding-bottom: 5px;">Phone: ${newOrder.user.phone}</td></tr>
                                     <tr><td style="padding-bottom: 20px;">Country: ${newOrder.user.country}</td></tr>
@@ -383,7 +383,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
                             <div style="margin: 25px 0;">
                                 <p style="margin: 0 0 10px 0;">How was your experience with SignXpert?</p>
                                 <div style="color: #FFD700; font-size: 24px; letter-spacing: 5px;">
-                                    ★ ★ ★ ★ ★
+                                    ${'★'.repeat(countStar)}
                                 </div>
                                 <p style="margin: 10px 0 0 0; color: #888;">Comment: <span style="color: #333;">${comment}</span></p>
                             </div>

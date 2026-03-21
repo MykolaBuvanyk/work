@@ -7,6 +7,7 @@ import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
 import Stripe  from 'stripe';
+import ErrorApi from '../error/ErrorApi.js';
 
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
@@ -721,7 +722,6 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     })
     let commentOrder='';
     SendEmailForStatus.CreateOrder(orderWithUser);
-    SendEmailForStatus.SendToAdminNewOrder(orderWithUser,commentOrder)
     return res.json({
       id: String(created._id),
       status: created.status,
@@ -2486,6 +2486,27 @@ CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res,
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
+  try{
+    const { id, comment, rating } = req.body;
+    const order=await Order.findOne({
+      where:{
+        id:parseInt(id)
+      },
+      include:[
+        {
+          model:User
+        }
+      ]
+  });
+  SendEmailForStatus.SendToAdminNewOrder(order,comment,rating)
+
+    
+  }catch(err){
+    return next(ErrorApi.badRequest(err));
+  }
+})
 
 //Виніс в layout
 /*CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {

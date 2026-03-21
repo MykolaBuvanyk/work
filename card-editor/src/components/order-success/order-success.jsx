@@ -1,6 +1,6 @@
 import './order-success.sass'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import ActionButton from '../ui/buttons/action-button/action-button'
 import CloseIcon from '/images/icon/close.svg'
@@ -53,8 +53,12 @@ const SelectedStar = ({ className = '', onClick, gradientId }) => (
 	</svg>
 )
 
-export default function ThankYou({ onClose }) {
+export default function ThankYou({ onClose, setData }) {
 	const [rating, setRating] = useState(0)
+	const [comment,setComment]=useState('')
+	useEffect(()=>{
+		setData({rating,comment});
+	},[rating, comment]);
 	return (
 		<div className='success-modal'>
 			<div className='container'>
@@ -114,7 +118,7 @@ export default function ThankYou({ onClose }) {
 							Please leave us a comment — we’d love to hear from you!
 						</label>
 
-						<textarea className='success__textarea' id='feedback' />
+						<textarea value={comment} onChange={(e)=>setComment(e.target.value)} className='success__textarea' id='feedback' />
 					</div>
 
 					<ActionButton text='send' onClick={() => {}} />

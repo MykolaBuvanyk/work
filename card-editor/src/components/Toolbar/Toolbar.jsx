@@ -1211,7 +1211,7 @@ const Toolbar = ({ formData }) => {
       const existing =
         resolvedMode === 'custom' ? findBorderObject('custom') : findBorderObject('default');
 
-      const desiredCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
+      const desiredCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(4);
       const desiredDefaultPx =
         borderStateRef.current.defaultThicknessPx ?? DEFAULT_BORDER_THICKNESS_PX;
 
@@ -1586,7 +1586,7 @@ const Toolbar = ({ formData }) => {
     const recreateBorder = (incoming = {}) => {
       const enableCustom = !!incoming.hasBorder;
       const restoredThicknessMm = Number(incoming.thickness);
-      const customThicknessPx = enableCustom ? mmToPxLocal(2) : DEFAULT_BORDER_THICKNESS_PX;
+      const customThicknessPx = enableCustom ? mmToPxLocal(4) : DEFAULT_BORDER_THICKNESS_PX;
 
       if (enableCustom) {
         // Restore thickness only for internal elements; border thickness is fixed.
@@ -1812,7 +1812,7 @@ const Toolbar = ({ formData }) => {
     if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
       ensureBorderPresence({
         mode: 'custom',
-        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
       });
     }
   }, [ensureBorderPresence, findBorderObject, mmToPx]);
@@ -1946,7 +1946,7 @@ const Toolbar = ({ formData }) => {
       if (shouldHaveCustom) {
         ensureBorderPresence?.({
           mode: 'custom',
-          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
           color: getBorderColor?.('custom'),
           forceRebuild: true,
         });
@@ -4099,7 +4099,7 @@ const Toolbar = ({ formData }) => {
         if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
           ensureBorderPresence({
             mode: 'custom',
-            thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+            thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
             forceRebuild: true,
           });
         }
@@ -4890,7 +4890,7 @@ const Toolbar = ({ formData }) => {
       if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
         ensureBorderPresence({
           mode: 'custom',
-          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
           forceRebuild: true,
         });
       }
@@ -5329,7 +5329,7 @@ const Toolbar = ({ formData }) => {
     if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
       ensureBorderPresence({
         mode: 'custom',
-        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
         forceRebuild: true,
       });
     }
@@ -6788,7 +6788,7 @@ const Toolbar = ({ formData }) => {
       color: getBorderColor('default'),
     });
 
-    const storedCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
+    const storedCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(4);
 
     const border = ensureBorderPresence({
       mode: 'custom',

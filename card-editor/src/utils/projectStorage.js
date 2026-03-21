@@ -63,6 +63,7 @@ const getSelectedAccessoriesSnapshot = () => {
 
 const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_EXPORT_FILL = "none";
+const CUSTOM_BORDER_RESTORE_THICKNESS_PX = (4 * 72) / 25.4;
 
 const FONT_PUBLIC_PATH = "/fonts";
 const FONT_EXT_FORMAT_MAP = {
@@ -1827,7 +1828,9 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
           cardBorderThicknessPx:
             obj.cardBorderThicknessPx !== undefined
               ? obj.cardBorderThicknessPx
-              : 2,
+              : obj.cardBorderMode === "custom"
+                ? CUSTOM_BORDER_RESTORE_THICKNESS_PX
+                : 2,
           cardBorderDisplayStrokeColor: displayStrokeColor,
           cardBorderExportStrokeColor: exportStrokeColor,
           cardBorderExportFill: exportFillValue,

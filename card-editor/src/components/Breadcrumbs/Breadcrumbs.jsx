@@ -48,19 +48,9 @@ const Breadcrumbs = () => {
   const contentSegments = hasLanguagePrefix ? rawSegments.slice(1) : rawSegments;
   const pathPrefix = hasLanguagePrefix ? `/${rawSegments[0]}` : '';
 
+  // New Project page (root route) should not show breadcrumbs.
   if (contentSegments.length === 0) {
-    const homeHref = `${pathPrefix}/home`;
-    return (
-      <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
-        <div className={styles.inner}>
-          <Link className={styles.link} to={homeHref}>
-            Home
-          </Link>
-          <span className={styles.separator}> - </span>
-          <span className={styles.current}>New Project</span>
-        </div>
-      </nav>
-    );
+    return null;
   }
 
   if (contentSegments.length === 0 || HIDDEN_ROOT_SEGMENTS.has(contentSegments[0])) {

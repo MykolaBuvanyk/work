@@ -203,6 +203,18 @@ const resolvePublicPath = (path = '') => {
   return `${normalizedBase}${normalizedPath}`;
 };
 
+const buildArticleCandidates = (articleSrc) => {
+  const normalizedSrc = String(articleSrc || '');
+  const withoutIndex = normalizedSrc.replace(/\/index\.html$/i, '/');
+
+  return Array.from(
+    new Set([
+      resolvePublicPath(normalizedSrc),
+      resolvePublicPath(withoutIndex),
+    ])
+  );
+};
+
 const IndustryArticlePage = () => {
   const { sectionSlug, articleSlug } = useParams();
   const { pathname } = useLocation();
@@ -225,15 +237,29 @@ const IndustryArticlePage = () => {
       setHasError(false);
 
       try {
-        const response = await fetch(resolvePublicPath(article.src));
-        if (!response.ok) {
-          throw new Error('Failed to load article page');
-        }
-
-        const htmlText = await response.text();
+        let contentRoot = null;
         const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlText, 'text/html');
-        const contentRoot = doc.querySelector('main.container .content') || doc.querySelector('.content');
+        const candidates = buildArticleCandidates(article.src);
+
+        for (const candidateUrl of candidates) {
+          const response = await fetch(candidateUrl, { cache: 'no-store' });
+          if (!response.ok) {
+            continue;
+          }
+
+          const htmlText = await response.text();
+          const doc = parser.parseFromString(htmlText, 'text/html');
+
+          // If server returns SPA shell for this path, skip this candidate.
+          if (doc.querySelector('#root')) {
+            continue;
+          }
+
+          contentRoot = doc.querySelector('main.container .content') || doc.querySelector('.content');
+          if (contentRoot) {
+            break;
+          }
+        }
 
         if (!contentRoot) {
           throw new Error('Article content not found');

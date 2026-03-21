@@ -1,6 +1,6 @@
 .page {
   padding: 28px 0 60px;
-  background: #ececec;
+  background: #ffffff;
   color: #111;
 }
 
@@ -60,6 +60,75 @@
   line-height: 1.9;
 }
 
+.itemLink {
+  color: #111;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.itemLink:hover {
+  color: #006ca4;
+}
+
+.articleState {
+  margin: 10px 0 16px;
+  font-size: 16px;
+  color: #111;
+}
+
+.articleContent {
+  width: 100%;
+}
+
+.articleContent::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.articleContent .float-img {
+  float: right;
+  width: 600px;
+  height: 360px;
+  object-fit: cover;
+  display: block;
+  margin: 8px 0 18px 34px;
+}
+
+.articleContent p {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.articleContent h2 {
+  margin: 24px 0 10px;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.articleContent strong {
+  font-weight: 800;
+}
+
+.articleContent a {
+  color: #111;
+  text-decoration: underline;
+  font-weight: 800;
+}
+
+.articleContent ul {
+  margin: 0 0 18px 18px;
+  padding: 0;
+}
+
+.articleContent li {
+  margin: 0 0 8px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
 .separator {
   border: none;
   border-top: 1px solid #9f9f9f;
@@ -75,6 +144,14 @@
   .industryContent li {
     line-height: 1.7;
   }
+
+  .articleContent .float-img {
+    float: none;
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin: 0 0 20px 0;
+  }
 }
 
 @media (max-width: 600px) {
@@ -88,5 +165,10 @@
 
   .industryContent li {
     font-size: 14px;
+  }
+
+  .articleContent p,
+  .articleContent li {
+    font-size: 15px;
   }
 }

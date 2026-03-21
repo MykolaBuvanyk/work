@@ -24,6 +24,7 @@ import ThankYou from './components/order-success/order-success';
 import RequireSavedProject from './components/guards/RequireSavedProject';
 import ShareProjectPage from './components/ShareProject/ShareProjectPage';
 import Industries from './components/Industries/Industries';
+import IndustryArticlePage from './components/Industries/IndustryArticlePage';
 import Products from './components/Products/Products';
 import HomePlaceholder from './components/HomePlaceholder/HomePlaceholder';
 
@@ -43,6 +44,10 @@ function App() {
       <Route path="contacts" element={<Contacts />} />
       <Route path="products" element={<Products />} />
       <Route path="industries" element={<Industries />} />
+      <Route
+        path="industries/:sectionSlug/:articleSlug"
+        element={<IndustryArticlePage />}
+      />
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />

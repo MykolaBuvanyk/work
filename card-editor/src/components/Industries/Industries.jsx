@@ -5,61 +5,158 @@ import styles from './Industries.module.css';
 const INDUSTRY_SECTIONS = [
   {
     title: 'MEP & Building Services',
+    slug: 'mep-building-services',
     image: '/images/industries/mep-building-services.jpg',
     reverse: false,
     items: [
-      'Electrical Installation',
-      'Sprinkler Installations',
-      'Fire Installation',
-      'Refrigeration Installations',
-      'Ventilation Installations',
-      'Elevators and Lift Systems: Durable Identification and Passenger Safety',
-      'Electrical and Control Cabinets: Clear and Durable Labeling',
-      'Electrical in Control and Building Automation',
-      'Plumbing Installations',
+      {
+        label: 'Electrical Installation',
+        slug: 'electrical-installation',
+      },
+      {
+        label: 'Sprinkler Installations',
+        slug: 'sprinkler-installations',
+      },
+      {
+        label: 'Fire Installation',
+        slug: 'fire-installation',
+      },
+      {
+        label: 'Refrigeration Installations',
+        slug: 'refrigeration-installations',
+      },
+      {
+        label: 'Ventilation Installations',
+        slug: 'ventilation-installations',
+      },
+      {
+        label: 'Elevators and Lift Systems: Durable Identification and Passenger Safety',
+        slug: 'elevators-and-lift-systems',
+      },
+      {
+        label: 'Electrical and Control Cabinets: Clear and Durable Labeling',
+        slug: 'electrical-and-control-cabinets',
+      },
+      {
+        label: 'Electrical in Control and Building Automation',
+        slug: 'electrical-in-control-and-building-automation',
+      },
+      {
+        label: 'Plumbing Installations',
+        slug: 'plumbing-installations-across',
+      },
     ],
   },
   {
     title: 'Security & Automation',
+    slug: 'security-automation',
     image: '/images/industries/security-automation.jpg',
     reverse: true,
     items: [
-      'Alarm and Security Installations',
-      'Robotics Industry: Clear Labeling for Safe and Efficient Automation',
-      'Production Lines: Optimized Safety and Efficiency',
-      'Industrial Maintenance: Safety, Efficiency, and Structured Operations',
-      'Hydraulic Systems and Fluid Technology',
+      {
+        label: 'Alarm and Security Installations',
+        slug: 'alarm-and-security-installations',
+      },
+      {
+        label: 'Robotics Industry: Clear Labeling for Safe and Efficient Automation',
+        slug: 'robotics-industry',
+      },
+      {
+        label: 'Production Lines: Optimized Safety and Efficiency',
+        slug: 'production-lines',
+      },
+      {
+        label: 'Industrial Maintenance: Safety, Efficiency, and Structured Operations',
+        slug: 'industrial-maintenance',
+      },
+      {
+        label: 'Hydraulic Systems and Fluid Technology',
+        slug: 'hydraulic-systems-and-fluid-technology',
+      },
     ],
   },
   {
     title: 'Energy & Environment',
+    slug: 'energy-environment',
     image: '/images/industries/energy-environment.jpg',
     reverse: false,
     items: [
-      'Solar Energy and Photovoltaics: Durable UV-Resistant Labeling for Sustainable Power',
-      'Nuclear Power: Safe, Reliable, and Carbon-Free Energy',
-      'Hydropower: Reliable and Renewable Energy',
-      'Combined Heat and Power Plants',
-      'Biogas: Sustainable Energy Production',
-      'Waste Stations: Safe and Efficient Waste Management',
-      'Wastewater Treatment Plants: Safe, Organized, and Durable Signage',
-      'Power Grids: Safe, Efficient, and Durable Signage',
+      {
+        label: 'Solar Energy and Photovoltaics: Durable UV-Resistant Labeling for Sustainable Power',
+        slug: 'solar-energy-and-photovoltaics',
+      },
+      {
+        label: 'Nuclear Power: Safe, Reliable, and Carbon-Free Energy',
+        slug: 'nuclear-power',
+      },
+      {
+        label: 'Hydropower: Reliable and Renewable Energy',
+        slug: 'hydropower',
+      },
+      {
+        label: 'Combined Heat and Power Plants',
+        slug: 'combined-heat-and-power-plants',
+      },
+      {
+        label: 'Biogas: Sustainable Energy Production',
+        slug: 'biogas',
+      },
+      {
+        label: 'Waste Stations: Safe and Efficient Waste Management',
+        slug: 'waste-stations',
+      },
+      {
+        label: 'Wastewater Treatment Plants: Safe, Organized, and Durable Signage',
+        slug: 'wastewater-treatment-plants',
+      },
+      {
+        label: 'Power Grids: Safe, Efficient, and Durable Signage',
+        slug: 'power-grids',
+      },
     ],
   },
   {
     title: 'Infrastructure & Mobility',
+    slug: 'infrastructure-mobility',
     image: '/images/industries/infrastructure-mobility.jpg',
     reverse: true,
     items: [
-      'Rail Industry: Ensuring Safety and Efficiency',
-      'Railway Infrastructure: Durable Signage and Safe Operations',
-      'Airports: Safety, Navigation, and Durable Signage',
-      'Ports: Safe, Organized, and Durable Signage for Maritime Operations',
-      'Tunnels & Bridges: Durable Signage and Labeling',
-      'Ships & Offshore Industry: Durable Safety and Clear Labeling',
-      'Charging Infrastructure for Electric Vehicles',
-      'Construction Projects',
-      'Architecture and Construction',
+      {
+        label: 'Rail Industry: Ensuring Safety and Efficiency',
+        slug: 'rail-industry',
+      },
+      {
+        label: 'Railway Infrastructure: Durable Signage and Safe Operations',
+        slug: 'railway-infrastructure',
+      },
+      {
+        label: 'Airports: Safety, Navigation, and Durable Signage',
+        slug: 'airports',
+      },
+      {
+        label: 'Ports: Safe, Organized, and Durable Signage for Maritime Operations',
+        slug: 'ports',
+      },
+      {
+        label: 'Tunnels & Bridges: Durable Signage and Labeling',
+        slug: 'tunnels-and-bridges',
+      },
+      {
+        label: 'Ships & Offshore Industry: Durable Safety and Clear Labeling',
+        slug: 'ships-and-offshore-industry',
+      },
+      {
+        label: 'Charging Infrastructure for Electric Vehicles',
+        slug: 'charging-infrastructure-for-electric-vehicles',
+      },
+      {
+        label: 'Construction Projects',
+        slug: 'construction-projects',
+      },
+      {
+        label: 'Architecture and Construction',
+        slug: 'architecture-and-construction',
+      },
     ],
   },
   {
@@ -80,12 +177,22 @@ const INDUSTRY_SECTIONS = [
   },
   {
     title: 'IT & Telecom',
+    slug: 'it-telecom',
     image: '/images/industries/it-telecom.jpg',
     reverse: true,
     items: [
-      'Tele- and Data Installations',
-      'Telecom: Reliable Signage and Labeling',
-      'IT Infrastructure and Data Centers: Precision Labeling and High-Tech Identification',
+      {
+        label: 'Tele- and Data Installations',
+        slug: 'tele-and-data-installations',
+      },
+      {
+        label: 'Telecom: Reliable Signage and Labeling',
+        slug: 'telecom',
+      },
+      {
+        label: 'IT Infrastructure and Data Centers: Precision Labeling and High-Tech Identification',
+        slug: 'it-infrastructure-and-data-centers',
+      },
     ],
   },
   {
@@ -135,7 +242,18 @@ const Industries = () => {
               <div className={styles.industryContent}>
                 <ul>
                   {section.items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={typeof item === 'string' ? item : item.label}>
+                      {typeof item === 'string' ? (
+                        item
+                      ) : (
+                        <Link
+                          className={styles.itemLink}
+                          to={`${prefix}/industries/${section.slug}/${item.slug}`}
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>

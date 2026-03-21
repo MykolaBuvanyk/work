@@ -28,9 +28,50 @@ const LABELS = {
   'update-avaible': 'Update Available',
   icon: 'Icons',
   'update-baner': 'Update Banner',
+  'rail-industry': 'Rail Industry',
+  'railway-infrastructure': 'Railway Infrastructure',
+  airports: 'Airports',
+  ports: 'Ports',
+  'tunnels-and-bridges': 'Tunnels & Bridges',
+  'ships-and-offshore-industry': 'Ships & Offshore Industry',
+  'charging-infrastructure-for-electric-vehicles': 'Charging Infrastructure for Electric Vehicles',
+  'construction-projects': 'Construction Projects',
+  'architecture-and-construction': 'Architecture and Construction',
+  'solar-energy-and-photovoltaics': 'Solar Energy and Photovoltaics',
+  'nuclear-power': 'Nuclear Power',
+  hydropower: 'Hydropower',
+  'combined-heat-and-power-plants': 'Combined Heat and Power Plants',
+  biogas: 'Biogas',
+  'waste-stations': 'Waste Stations',
+  'wastewater-treatment-plants': 'Wastewater Treatment Plants',
+  'power-grids': 'Power Grids',
+  'electrical-installation': 'Electrical Installation',
+  'sprinkler-installations': 'Sprinkler Installations',
+  'fire-installation': 'Fire Installation',
+  'refrigeration-installations': 'Refrigeration Installations',
+  'ventilation-installations': 'Ventilation Installations',
+  'elevators-and-lift-systems': 'Elevators and Lift Systems',
+  'electrical-and-control-cabinets': 'Electrical and Control Cabinets',
+  'electrical-in-control-and-building-automation': 'Electrical in Control and Building Automation',
+  'plumbing-installations-across': 'Plumbing Installations',
+  'alarm-and-security-installations': 'Alarm and Security Installations',
+  'robotics-industry': 'Robotics Industry',
+  'production-lines': 'Production Lines',
+  'industrial-maintenance': 'Industrial Maintenance',
+  'hydraulic-systems-and-fluid-technology': 'Hydraulic Systems and Fluid Technology',
+  'tele-and-data-installations': 'Tele- and Data Installations',
+  telecom: 'Telecom',
+  'it-infrastructure-and-data-centers': 'IT Infrastructure and Data Centers',
 };
 
 const HIDDEN_ROOT_SEGMENTS = new Set(['', 'share']);
+const HIDDEN_MIDDLE_SEGMENTS = new Set([
+  'infrastructure-mobility',
+  'energy-environment',
+  'mep-building-services',
+  'security-automation',
+  'it-telecom',
+]);
 
 const formatSegmentLabel = (segment) => {
   if (!segment) return '';
@@ -73,8 +114,16 @@ const Breadcrumbs = () => {
     crumbs.push({ label: 'Home', href: '/home' });
   }
 
-  contentSegments.forEach((segment, index) => {
-    const href = `${pathPrefix}/${contentSegments.slice(0, index + 1).join('/')}`;
+  const pathAccumulator = [];
+
+  contentSegments.forEach((segment) => {
+    pathAccumulator.push(segment);
+
+    if (HIDDEN_MIDDLE_SEGMENTS.has(segment)) {
+      return;
+    }
+
+    const href = `${pathPrefix}/${pathAccumulator.join('/')}`;
     crumbs.push({
       label: formatSegmentLabel(segment),
       href,

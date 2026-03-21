@@ -86,7 +86,8 @@
   clear: both;
 }
 
-.articleContent .float-img {
+.articleContent .float-img,
+.articleContent .float-image {
   float: right;
   width: 600px;
   height: 360px;
@@ -145,7 +146,8 @@
     line-height: 1.7;
   }
 
-  .articleContent .float-img {
+  .articleContent .float-img,
+  .articleContent .float-image {
     float: none;
     width: 100%;
     max-width: 600px;

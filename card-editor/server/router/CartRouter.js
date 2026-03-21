@@ -9,6 +9,7 @@ import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
 import Stripe  from 'stripe';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
+import ErrorApi from '../error/ErrorApi.js';
 
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
@@ -1002,9 +1003,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
         }
       ]
     })
-
+    let commentOrder='';
     SendEmailForStatus.CreateOrder(orderWithUser);
-
     return res.json({
       id: String(created._id),
       status: created.status,
@@ -2796,9 +2796,16 @@ CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
 CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => {
   try {
     const { orderId } = req.body;
-    const order = await Order.findOne({ where: { id: Number(orderId) } });
+    const order = await Order.findOne({ 
+      where: { id: Number(orderId) },
+      include:[{
+        model:User
+      }]
+    });
     order.isPaid = !order.isPaid;
     await order.save();
+    SendEmailForStatus.SendAdminStatusPaid(order);
+    SendEmailForStatus.SendStatusPaid(order);
     return res.json({ message: 'is pay updated' });
   } catch (err) {
     console.error('ERROR GET PAY:', err);
@@ -2838,6 +2845,27 @@ CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res,
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
+  try{
+    const { id, comment, rating } = req.body;
+    const order=await Order.findOne({
+      where:{
+        id:parseInt(id)
+      },
+      include:[
+        {
+          model:User
+        }
+      ]
+  });
+  SendEmailForStatus.SendToAdminNewOrder(order,comment,rating)
+
+    
+  }catch(err){
+    return next(ErrorApi.badRequest(err));
+  }
+})
 
 //Виніс в layout
 /*CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {

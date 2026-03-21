@@ -2,6 +2,7 @@ import { $authHost } from "./index";
 
 export async function addProjectToCart(payload) {
   const { data } = await $authHost.post("cart", payload);
+  localStorage.setItem('MySqlOrderId',data.order.id);
   return data;
 }
 

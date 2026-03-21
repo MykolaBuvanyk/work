@@ -7,6 +7,9 @@ import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
 import Stripe  from 'stripe';
+import { zugferd } from 'node-zugferd';
+import { EN16931 } from 'node-zugferd/profile/en16931';
+import ErrorApi from '../error/ErrorApi.js';
 
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
@@ -94,12 +97,293 @@ function formatMoney(value) {
 
 const CartRouter = express.Router();
 
+const basicZugferdInvoicer = zugferd({
+  profile: EN16931,
+  // xsd-schema-validator may be unavailable on some deployments.
+  strict: false,
+  logger: false,
+});
+
 const toNumber = (value, fallback = 0) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
 };
 
 const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
+
+const normalizeCountryCode = (value) => {
+  const raw = String(value || '').trim().toUpperCase();
+  if (!raw) return 'DE';
+  if (raw.length === 2) return raw;
+  if (raw.includes('GERMANY') || raw.includes('DEUTSCH')) return 'DE';
+  if (raw.includes('UKRAINE') || raw.includes('UKRAIN')) return 'UA';
+  if (raw.includes('AUSTRIA')) return 'AT';
+  if (raw.includes('FRANCE')) return 'FR';
+  if (raw.includes('ITALY')) return 'IT';
+  if (raw.includes('SPAIN')) return 'ES';
+  if (raw.includes('NETHERLANDS')) return 'NL';
+  if (raw.includes('POLAND')) return 'PL';
+  return 'DE';
+};
+
+const buildZugferdInvoiceData = ({
+  order,
+  invoiceNumber,
+  customerIdentifier,
+  customerCompany,
+  customerName,
+  customerEmail,
+  customerPhone,
+  customerStreetLine1,
+  customerStreetLine2,
+  customerStreetLine3,
+  customerPostalCode,
+  customerCity,
+  customerCountryCode,
+  customerCountrySubdivision,
+  customerVatNumber,
+  buyerReference,
+  remittanceInformation,
+  paymentDueDate,
+  signsCount,
+  projectName,
+  subtotal,
+  vatAmount,
+  vatPercent,
+  totalAmount,
+}) => {
+  const hasVat = toNumber(vatPercent, 0) > 0;
+  const quantity = Math.max(1, Math.floor(toNumber(signsCount, 1)));
+  const lineUnitPrice = quantity > 0 ? round2(toNumber(subtotal, 0) / quantity) : toNumber(subtotal, 0);
+  const safeProjectName = String(projectName || order?.orderName || 'Signs order');
+  const sellerIdentifier = String(process.env.ZUGFERD_SELLER_IDENTIFIER || 'SIGNXPERT-DE').trim();
+  const sellerRegistrationId = String(process.env.ZUGFERD_SELLER_REGISTRATION_ID || '').trim();
+  const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || '').trim();
+  const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || 'xx/xxx/xxxxx').trim();
+  const sellerName = String(process.env.ZUGFERD_SELLER_NAME || 'SignXpert').trim();
+  const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || '').trim();
+  const sellerStreetLine1 = String(process.env.ZUGFERD_SELLER_STREET1 || 'Baumwiesen 2').trim();
+  const sellerStreetLine2 = String(process.env.ZUGFERD_SELLER_STREET2 || '').trim();
+  const sellerStreetLine3 = String(process.env.ZUGFERD_SELLER_STREET3 || '').trim();
+  const sellerPostalCode = String(process.env.ZUGFERD_SELLER_POSTAL_CODE || '72401').trim();
+  const sellerCity = String(process.env.ZUGFERD_SELLER_CITY || 'Haigerloch').trim();
+  const sellerCountryCode = normalizeCountryCode(process.env.ZUGFERD_SELLER_COUNTRY_CODE || 'DE');
+  const sellerCountrySubdivision = String(process.env.ZUGFERD_SELLER_COUNTRY_SUBDIVISION || '').trim();
+  const sellerEmail = String(process.env.ZUGFERD_SELLER_EMAIL || 'info@sign-xpert.com').trim();
+  const sellerPhone = String(process.env.ZUGFERD_SELLER_PHONE || '').trim();
+  const sellerContactName = String(process.env.ZUGFERD_SELLER_CONTACT_NAME || '').trim();
+  const sellerContactDepartment = String(process.env.ZUGFERD_SELLER_CONTACT_DEPARTMENT || '').trim();
+  const sellerIban = String(process.env.ZUGFERD_SELLER_IBAN || 'DE25 0101 0101 0101 0101 01').replace(/\s+/g, ' ').trim();
+  const sellerBankAccountNumber = String(process.env.ZUGFERD_SELLER_BANK_ACCOUNT_NUMBER || '').trim();
+  const sellerBic = String(process.env.ZUGFERD_SELLER_BIC || '').trim();
+  const sellerCreditorIdentifier = String(process.env.ZUGFERD_SELLER_CREDITOR_ID || '').trim();
+  const sellerAccountHolderName = String(process.env.ZUGFERD_SELLER_ACCOUNT_HOLDER || '').trim();
+  const sellerGlobalIdentifier = String(process.env.ZUGFERD_SELLER_GLOBAL_ID || '').trim();
+  const sellerGlobalIdentifierScheme = String(process.env.ZUGFERD_SELLER_GLOBAL_ID_SCHEME || '').trim();
+  const sellerRegistrationScheme = String(process.env.ZUGFERD_SELLER_REGISTRATION_SCHEME || '').trim();
+  const lineGlobalIdentifierScheme = String(process.env.ZUGFERD_LINE_GLOBAL_ID_SCHEME || '').trim();
+  const vatExemptionReasonText = 'No VAT is charged according to § 19 UStG.';
+  const buyerIdentifier = String(customerIdentifier || '').trim();
+  const lineGlobalIdentifierValue = String(order?.id || invoiceNumber || '').trim();
+
+  const sellerRegistrationIdentifier = sellerRegistrationId
+    ? {
+        value: sellerRegistrationId,
+        ...(sellerRegistrationScheme ? { schemeIdentifier: sellerRegistrationScheme } : {}),
+      }
+    : undefined;
+
+  const sellerGlobalIdentifierNode = sellerGlobalIdentifier && sellerGlobalIdentifierScheme
+    ? {
+        value: sellerGlobalIdentifier,
+        schemeIdentifier: sellerGlobalIdentifierScheme,
+      }
+    : undefined;
+
+  return {
+    number: String(invoiceNumber || order?.id || ''),
+    typeCode: '380',
+    issueDate: new Date(order?.createdAt || Date.now()),
+    transaction: {
+      line: [
+        {
+          identifier: '1',
+          note: `Order No: ${String(invoiceNumber || order?.id || '')}`,
+          tradeProduct: {
+            name: safeProjectName,
+            globalIdentifier: lineGlobalIdentifierValue && lineGlobalIdentifierScheme
+              ? {
+                  value: lineGlobalIdentifierValue,
+                  schemeIdentifier: lineGlobalIdentifierScheme,
+                }
+              : undefined,
+          },
+          tradeAgreement: {
+            netTradePrice: {
+              chargeAmount: formatMoney(lineUnitPrice),
+            },
+          },
+          tradeDelivery: {
+            billedQuantity: {
+              amount: quantity,
+              unitMeasureCode: 'H87',
+            },
+          },
+          tradeSettlement: {
+            tradeTax: {
+              typeCode: 'VAT',
+              categoryCode: hasVat ? 'S' : 'E',
+              rateApplicablePercent: hasVat ? formatMoney(vatPercent) : '0.00',
+            },
+            monetarySummation: {
+              lineTotalAmount: formatMoney(subtotal),
+            },
+          },
+        },
+      ],
+      tradeAgreement: {
+        buyerReference: String(buyerReference || order?.userId || invoiceNumber || ''),
+        associatedContract: String(order?.idMongo || '').trim()
+          ? {
+              reference: String(order.idMongo).trim(),
+            }
+          : undefined,
+        seller: {
+          identifier: sellerIdentifier,
+          globalIdentifier: sellerGlobalIdentifierNode,
+          name: sellerName,
+          organization: sellerRegistrationIdentifier || sellerTradingName
+            ? {
+                tradingName: sellerTradingName || sellerName || undefined,
+                registrationIdentifier: sellerRegistrationIdentifier,
+              }
+            : undefined,
+          tradeContact: {
+            name: sellerContactName || sellerName || undefined,
+            departmentName: sellerContactDepartment || undefined,
+            phoneNumber: sellerPhone || undefined,
+            emailAddress: sellerEmail || undefined,
+          },
+          postalAddress: {
+            line1: sellerStreetLine1,
+            line2: sellerStreetLine2 || undefined,
+            line3: sellerStreetLine3 || undefined,
+            postCode: sellerPostalCode,
+            city: sellerCity,
+            countryCode: sellerCountryCode,
+            countrySubdivision: sellerCountrySubdivision || undefined,
+          },
+          electronicAddress: sellerEmail
+            ? {
+                value: sellerEmail,
+                schemeIdentifier: 'EM',
+              }
+            : undefined,
+          taxRegistration: sellerVatId || sellerTaxId
+            ? {
+                vatIdentifier: sellerVatId || undefined,
+                localIdentifier: sellerTaxId || undefined,
+              }
+            : undefined,
+        },
+        buyer: {
+          identifier: buyerIdentifier || undefined,
+          name: String(customerCompany || customerName || 'Customer'),
+          organization: {
+            tradingName: String(customerCompany || '').trim() || undefined,
+          },
+          tradeContact: {
+            name: String(customerName || customerCompany || '').trim() || undefined,
+            phoneNumber: String(customerPhone || '').trim() || undefined,
+            emailAddress: String(customerEmail || '').trim() || undefined,
+          },
+          postalAddress: {
+            line1: String(customerStreetLine1 || '').trim() || undefined,
+            line2: String(customerStreetLine2 || '').trim() || undefined,
+            line3: String(customerStreetLine3 || '').trim() || undefined,
+            postCode: String(customerPostalCode || '').trim() || undefined,
+            city: String(customerCity || '').trim() || undefined,
+            countryCode: normalizeCountryCode(customerCountryCode),
+            countrySubdivision: String(customerCountrySubdivision || '').trim() || undefined,
+          },
+          electronicAddress: customerEmail
+            ? {
+                value: String(customerEmail).trim(),
+                schemeIdentifier: 'EM',
+              }
+            : undefined,
+          taxRegistration: customerVatNumber
+            ? {
+                vatIdentifier: String(customerVatNumber).trim(),
+              }
+            : undefined,
+        },
+        associatedOrder: {
+          purchaseOrderReference: String(order?.id || invoiceNumber || ''),
+        },
+      },
+      tradeSettlement: {
+        currencyCode: 'EUR',
+        creditorIdentifier: sellerCreditorIdentifier || undefined,
+        remittanceInformation: String(remittanceInformation || `Order No: ${invoiceNumber || order?.id || ''}`),
+        payee: sellerAccountHolderName
+          ? {
+              identifier: sellerIdentifier || undefined,
+              name: sellerAccountHolderName,
+            }
+          : undefined,
+        paymentInstruction: {
+          typeCode: '58',
+          transfers: sellerIban
+            ? [
+                {
+                  accountName: sellerAccountHolderName || undefined,
+                  paymentAccountIdentifier: sellerIban,
+                  nationalAccountNumber: sellerBankAccountNumber || undefined,
+                },
+              ]
+            : undefined,
+          sellerBankInformation: sellerBic
+            ? {
+                serviceProviderIdentifier: sellerBic,
+              }
+            : undefined,
+        },
+        paymentTerms: {
+          description: '30 days net',
+          dueDate: paymentDueDate || new Date(order?.createdAt || Date.now()),
+        },
+        vatBreakdown: hasVat
+          ? [
+              {
+                calculatedAmount: formatMoney(vatAmount),
+                basisAmount: formatMoney(subtotal),
+                categoryCode: 'S',
+                rateApplicablePercent: formatMoney(vatPercent),
+                typeCode: 'VAT',
+              },
+            ]
+          : [
+              {
+                calculatedAmount: '0.00',
+                basisAmount: formatMoney(subtotal),
+                categoryCode: 'E',
+                rateApplicablePercent: '0.00',
+                typeCode: 'VAT',
+                exemptionReasonText: vatExemptionReasonText,
+              },
+            ],
+        monetarySummation: {
+          lineTotalAmount: formatMoney(subtotal),
+          taxBasisTotalAmount: formatMoney(subtotal),
+          taxTotal: formatMoney(vatAmount),
+          grandTotalAmount: formatMoney(totalAmount),
+          duePayableAmount: formatMoney(totalAmount),
+        },
+      },
+    },
+  };
+};
 
 const isMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || '').trim());
 
@@ -719,9 +1003,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
         }
       ]
     })
-
+    let commentOrder='';
     SendEmailForStatus.CreateOrder(orderWithUser);
-
     return res.json({
       id: String(created._id),
       status: created.status,
@@ -1944,27 +2227,62 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const customerCompany = escapeHtml(
       customerAddress?.companyName || order.user?.company || 'Water Design Solution GmbH'
     );
+    const customerIdentifierRaw = String(order.user?.reference || order.userId || '').trim();
+    const customerStreetLine1Raw = String(
+      customerAddress?.address1
+      || [order.user?.address, order.user?.house].filter(hasContent).join(' ')
+      || ''
+    ).trim();
+    const customerStreetLine2Raw = String(customerAddress?.address2 || order.user?.address2 || '').trim();
+    const customerStreetLine3Raw = String(customerAddress?.address3 || order.user?.address3 || '').trim();
+    const customerPostalCodeRaw = String(customerAddress?.postalCode || order.user?.postcode || '').trim();
+    const customerCityRaw = String(customerAddress?.town || order.user?.city || '').trim();
+    const customerCountryRaw = String(customerAddress?.country || order.user?.country || order.country || '').trim();
+    const customerCountrySubdivisionRaw = String(customerAddress?.state || order.user?.state || '').trim();
+    const customerEmailRaw = String(
+      checkout?.invoiceAddressEmail
+      || checkout?.invoiceEmail
+      || invoiceAddress?.email
+      || deliveryAddress?.email
+      || customerAddress?.email
+      || order.user?.eMailInvoice
+      || order.user?.email
+      || ''
+    ).trim();
+    const customerPhoneRaw = String(
+      invoiceAddress?.mobile
+      || deliveryAddress?.mobile
+      || customerAddress?.mobile
+      || order.user?.phone2
+      || order.user?.phone
+      || ''
+    ).trim();
+    const customerVatNumberRaw = String(checkout?.vatNumber || order.user?.vatNumber || '').trim();
     const customerName = escapeHtml(
       customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' ')
     );
     const addressLine1 = escapeHtml(
-      [customerAddress?.address1, customerAddress?.address2, customerAddress?.address3]
+      [customerStreetLine1Raw, customerStreetLine2Raw, customerStreetLine3Raw]
         .filter(hasContent)
         .join(', ')
     );
     const addressLine2 = escapeHtml(
-      [customerAddress?.postalCode, customerAddress?.town].filter(hasContent).join(' ')
+      [customerPostalCodeRaw, customerCityRaw].filter(hasContent).join(' ')
     );
-    const countryLine = escapeHtml(customerAddress?.country || order.country || '');
-    const phoneLine = escapeHtml(customerAddress?.mobile || order.user?.phone || '');
-    const vatNumber = escapeHtml(checkout?.vatNumber || order.user?.vatNumber || '');
+    const countryLine = escapeHtml(customerCountryRaw);
+    const phoneLine = escapeHtml(customerPhoneRaw);
+    const vatNumber = escapeHtml(customerVatNumberRaw);
 
-    const invoiceNumber = escapeHtml(order.id);
+    const invoiceNumberRaw = String(order.id || '');
+    const invoiceNumber = escapeHtml(invoiceNumberRaw);
     const customerNumber = escapeHtml(order.userId);
     const invoiceDate = escapeHtml(formatInvoiceDate(order.createdAt));
-    const invoiceDueDate = escapeHtml(formatInvoiceDate(new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1))));
-    const projectName = escapeHtml(order.orderName || orderMongo?.projectName || 'Water Sings 23');
-    const signsCount = escapeHtml(order.signs || 0);
+    const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
+    const invoiceDueDate = escapeHtml(formatInvoiceDate(invoiceDueDateDate));
+    const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
+    const projectName = escapeHtml(projectNameRaw);
+    const signsCountRaw = Math.max(0, Number(order.signs || 0));
+    const signsCount = escapeHtml(signsCountRaw);
     const deliveryLabel = escapeHtml(order?.deliveryType || checkout?.deliveryLabel || '');
 
     const netAmount = Number.isFinite(Number(order?.netAfterDiscount))
@@ -2374,15 +2692,56 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       footerTemplate: buildPdfFooterTemplate(10, 20, 2),
       margin: { top: '20px', right: '20px', bottom: '28px', left: '20px' }
     });
+
+    const zugferdData = buildZugferdInvoiceData({
+      order,
+      invoiceNumber: invoiceNumberRaw,
+      customerIdentifier: customerIdentifierRaw,
+      customerCompany: customerAddress?.companyName || order.user?.company || '',
+      customerName: customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' '),
+      customerEmail: customerEmailRaw,
+      customerPhone: customerPhoneRaw,
+      customerStreetLine1: customerStreetLine1Raw,
+      customerStreetLine2: customerStreetLine2Raw,
+      customerStreetLine3: customerStreetLine3Raw,
+      customerPostalCode: customerPostalCodeRaw,
+      customerCity: customerCityRaw,
+      customerCountryCode: customerCountryRaw,
+      customerCountrySubdivision: customerCountrySubdivisionRaw,
+      customerVatNumber: customerVatNumberRaw,
+      buyerReference: String(order.user?.reference || order.userId || order.id || ''),
+      remittanceInformation: `Order No: ${invoiceNumberRaw}`,
+      paymentDueDate: invoiceDueDateDate,
+      signsCount: signsCountRaw,
+      projectName: projectNameRaw,
+      subtotal,
+      vatAmount,
+      vatPercent,
+      totalAmount,
+    });
+
+    const invoice = basicZugferdInvoicer.create(zugferdData);
+    const zugferdPdf = await invoice.embedInPdf(pdfBuffer, {
+      metadata: {
+        title: `Invoice ${invoiceNumber}`,
+        subject: `Invoice ${invoiceNumber}`,
+        author: 'SignXpert',
+        creator: 'SignXpert backend',
+        producer: 'SignXpert backend',
+        keywords: ['ZUGFeRD', 'Factur-X', 'Invoice'],
+        language: 'en',
+      },
+    });
+    const outputPdfBuffer = Buffer.from(zugferdPdf);
     res.removeHeader('Content-Type');
 
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="order-${idOrder}.pdf"`,
-      'Content-Length': pdfBuffer.length
+      'Content-Length': outputPdfBuffer.length
     });
 
-    return res.end(pdfBuffer, 'binary'); // Використовуємо .end з вказанням бінарного формату
+    return res.end(outputPdfBuffer, 'binary'); // Factur-X/ZUGFeRD XML embedded in PDF/A-3
 
   } catch (err) {
     console.error('error get pdfs', err);
@@ -2437,9 +2796,16 @@ CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
 CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => {
   try {
     const { orderId } = req.body;
-    const order = await Order.findOne({ where: { id: Number(orderId) } });
+    const order = await Order.findOne({ 
+      where: { id: Number(orderId) },
+      include:[{
+        model:User
+      }]
+    });
     order.isPaid = !order.isPaid;
     await order.save();
+    SendEmailForStatus.SendAdminStatusPaid(order);
+    SendEmailForStatus.SendStatusPaid(order);
     return res.json({ message: 'is pay updated' });
   } catch (err) {
     console.error('ERROR GET PAY:', err);
@@ -2479,6 +2845,27 @@ CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res,
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
+  try{
+    const { id, comment, rating } = req.body;
+    const order=await Order.findOne({
+      where:{
+        id:parseInt(id)
+      },
+      include:[
+        {
+          model:User
+        }
+      ]
+  });
+  SendEmailForStatus.SendToAdminNewOrder(order,comment,rating)
+
+    
+  }catch(err){
+    return next(ErrorApi.badRequest(err));
+  }
+})
 
 //Виніс в layout
 /*CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {

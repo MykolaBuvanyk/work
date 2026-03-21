@@ -19,7 +19,10 @@ import UploadPreview from '../UploadPreview/UploadPreview';
 import ShapeProperties from '../ShapeProperties/ShapeProperties';
 import { ensureShapeSvgId } from '../../utils/shapeSvgId';
 import { fitObjectToCanvas } from '../../utils/canvasFit';
-import { applyStrokeOnlyToSVG, convertSvgToThemeMonochrome } from '../../utils/svgThemeTransform';
+import {
+  applyStrokeOnlyToSVG,
+  convertSvgToThemeMonochrome,
+} from '../../utils/svgThemeTransform';
 import styles from './Toolbar.module.css';
 import {
   exportCanvas,
@@ -1208,7 +1211,7 @@ const Toolbar = ({ formData }) => {
       const existing =
         resolvedMode === 'custom' ? findBorderObject('custom') : findBorderObject('default');
 
-      const desiredCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
+      const desiredCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(4);
       const desiredDefaultPx =
         borderStateRef.current.defaultThicknessPx ?? DEFAULT_BORDER_THICKNESS_PX;
 
@@ -1583,7 +1586,7 @@ const Toolbar = ({ formData }) => {
     const recreateBorder = (incoming = {}) => {
       const enableCustom = !!incoming.hasBorder;
       const restoredThicknessMm = Number(incoming.thickness);
-      const customThicknessPx = enableCustom ? mmToPxLocal(2) : DEFAULT_BORDER_THICKNESS_PX;
+      const customThicknessPx = enableCustom ? mmToPxLocal(4) : DEFAULT_BORDER_THICKNESS_PX;
 
       if (enableCustom) {
         // Restore thickness only for internal elements; border thickness is fixed.
@@ -1809,7 +1812,7 @@ const Toolbar = ({ formData }) => {
     if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
       ensureBorderPresence({
         mode: 'custom',
-        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
       });
     }
   }, [ensureBorderPresence, findBorderObject, mmToPx]);
@@ -1943,7 +1946,7 @@ const Toolbar = ({ formData }) => {
       if (shouldHaveCustom) {
         ensureBorderPresence?.({
           mode: 'custom',
-          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
           color: getBorderColor?.('custom'),
           forceRebuild: true,
         });
@@ -4096,7 +4099,7 @@ const Toolbar = ({ formData }) => {
         if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
           ensureBorderPresence({
             mode: 'custom',
-            thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+            thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
             forceRebuild: true,
           });
         }
@@ -4887,7 +4890,7 @@ const Toolbar = ({ formData }) => {
       if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
         ensureBorderPresence({
           mode: 'custom',
-          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+          thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
           forceRebuild: true,
         });
       }
@@ -5326,7 +5329,7 @@ const Toolbar = ({ formData }) => {
     if (borderStateRef.current.mode === 'custom' || findBorderObject('custom')) {
       ensureBorderPresence({
         mode: 'custom',
-        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(2),
+        thicknessPx: borderStateRef.current.customThicknessPx ?? mmToPx(4),
         forceRebuild: true,
       });
     }
@@ -6373,6 +6376,7 @@ const Toolbar = ({ formData }) => {
           typeof obj.fill === 'undefined';
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
+        const applyThemeStroke = followThemeStroke && obj.isUploadedImage !== true;
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6387,10 +6391,12 @@ const Toolbar = ({ formData }) => {
           obj.set({ fill: obj.initialFillColor });
         }
 
-        if (usesThemeColor || followThemeStroke) {
+        if (applyThemeStroke) {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
+        } else if (obj.isUploadedImage === true) {
+          obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'circle-with-cut') {
         const isTransparent =
@@ -6400,6 +6406,7 @@ const Toolbar = ({ formData }) => {
           typeof obj.fill === 'undefined';
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
+        const applyThemeStroke = followThemeStroke && obj.isUploadedImage !== true;
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6414,10 +6421,12 @@ const Toolbar = ({ formData }) => {
           obj.set({ fill: obj.initialFillColor });
         }
 
-        if (usesThemeColor || followThemeStroke) {
+        if (applyThemeStroke) {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
+        } else if (obj.isUploadedImage === true) {
+          obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'line') {
         obj.set({ stroke: textColor });
@@ -6779,7 +6788,7 @@ const Toolbar = ({ formData }) => {
       color: getBorderColor('default'),
     });
 
-    const storedCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(2);
+    const storedCustomPx = borderStateRef.current.customThicknessPx ?? mmToPx(4);
 
     const border = ensureBorderPresence({
       mode: 'custom',
@@ -10276,10 +10285,61 @@ const Toolbar = ({ formData }) => {
           onConfirm={async ({ svg: finalSVG, strokeOnly, mode }) => {
             if (!canvas || !finalSVG) return;
             try {
+              const svgDebugEnabled =
+                typeof window !== 'undefined' &&
+                (window.__SVG_DEBUG__ === true || localStorage.getItem('svgDebug') === '1');
+              const svgDebug = (...args) => {
+                if (!svgDebugEnabled) return;
+                console.log('[SVG_DEBUG]', ...args);
+              };
+
               let themedSVG = String(finalSVG);
               const theme = (globalColors && globalColors.textColor) || '#000';
               if (mode === 'svg') {
-                themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+                // Always process the original uploaded SVG source for deterministic restore behavior.
+                const sourceSvg = String(uploadSvgText || themedSVG || '').trim();
+                themedSVG = sourceSvg || themedSVG;
+                svgDebug('source prepared', {
+                  sourceLength: sourceSvg.length,
+                  previewLength: String(finalSVG || '').length,
+                  theme,
+                });
+                try {
+                  const apiBase = String(import.meta.env.VITE_LAYOUT_API_SERVER || '/api/').trim();
+                  const baseWithSlash = apiBase.replace(/\/?$/, '/');
+                  const endpoint = /\/api\/$/i.test(baseWithSlash)
+                    ? `${baseWithSlash}svg/clean`
+                    : `${baseWithSlash}api/svg/clean`;
+                  svgDebug('clean request', { endpoint });
+                  const cleanResponse = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      svg: themedSVG,
+                      fillColor: theme,
+                      debug: svgDebugEnabled,
+                    }),
+                  });
+                  svgDebug('clean response status', cleanResponse.status);
+                  if (cleanResponse.ok) {
+                    const payload = await cleanResponse.json();
+                    svgDebug('clean response payload', payload?.debug || null);
+                    if (payload?.svg && typeof payload.svg === 'string') {
+                      themedSVG = payload.svg;
+                      svgDebug('clean svg accepted', { cleanedLength: themedSVG.length });
+                    } else {
+                      themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+                      svgDebug('clean payload missing svg, fallback monochrome');
+                    }
+                  } else {
+                    themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+                    svgDebug('clean endpoint non-200, fallback monochrome');
+                  }
+                } catch (cleanError) {
+                  console.warn('Server SVG clean failed, using monochrome fallback', cleanError);
+                  themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
+                  svgDebug('clean exception fallback', cleanError?.message || cleanError);
+                }
               } else if (!strokeOnly) {
                 themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
               }
@@ -10288,22 +10348,74 @@ const Toolbar = ({ formData }) => {
               }
 
               const result = await fabric.loadSVGFromString(themedSVG);
+              svgDebug('fabric.loadSVGFromString result', {
+                objects: result?.objects?.length || 0,
+                options: result?.options || null,
+              });
               const obj =
                 result.objects.length === 1
                   ? result.objects[0]
                   : fabric.util.groupSVGElements(result.objects, result.options);
 
-              // Tag to theme if needed
+              // Uploaded SVG from server clean endpoint relies on evenodd holes.
               try {
-                obj.set && obj.set({ useThemeColor: true });
+                if (obj?.type === 'path' && typeof obj.set === 'function') {
+                  obj.set({ fillRule: 'evenodd' });
+                }
+                if (obj?.type === 'group' && typeof obj.forEachObject === 'function') {
+                  obj.forEachObject(child => {
+                    if (child?.type === 'path' && typeof child.set === 'function') {
+                      child.set({ fillRule: 'evenodd' });
+                    }
+                  });
+                }
+              } catch {}
+              svgDebug('fabric object prepared', {
+                type: obj?.type,
+                isUploadedImage: obj?.isUploadedImage,
+                fill: obj?.fill,
+                stroke: obj?.stroke,
+                fillRule: obj?.fillRule,
+              });
+
+              // Uploaded SVG must keep exact visual state after canvas reload/switch.
+              try {
+                obj.set &&
+                  obj.set({
+                    useThemeColor: false,
+                    followThemeStroke: false,
+                    followThemeFill: false,
+                    initialFillColor: typeof obj.fill === 'string' ? obj.fill : null,
+                    initialStrokeColor:
+                      typeof obj.stroke === 'string' ? obj.stroke : 'transparent',
+                  });
                 if (obj.type === 'group' && typeof obj.forEachObject === 'function') {
-                  obj.forEachObject(child => child.set && child.set({ useThemeColor: true }));
+                  obj.forEachObject(
+                    child =>
+                      child.set &&
+                      child.set({
+                        useThemeColor: false,
+                        followThemeStroke: false,
+                        followThemeFill: false,
+                        initialFillColor: typeof child.fill === 'string' ? child.fill : null,
+                        initialStrokeColor:
+                          typeof child.stroke === 'string' ? child.stroke : 'transparent',
+                      })
+                  );
                 }
               } catch {}
 
               // Tag as uploaded element so resize auto-fit can pick it up.
               try {
                 obj.set && obj.set({ isUploadedImage: true });
+                ensureShapeSvgId(obj, canvas, { prefix: 'parsed-svg' });
+                if (obj?.type === 'group' && typeof obj.forEachObject === 'function') {
+                  obj.forEachObject(child => {
+                    try {
+                      ensureShapeSvgId(child, canvas, { prefix: 'parsed-svg' });
+                    } catch {}
+                  });
+                }
               } catch {}
 
               // Center and scale

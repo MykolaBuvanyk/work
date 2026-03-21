@@ -14,6 +14,11 @@ const PX_PER_MM = 72 / 25.4;
 // Requirement: gap between the outer and inner custom border contours must be exactly 2mm.
 const CUSTOM_BORDER_CONTOUR_GAP_MM = 2;
 const CUSTOM_BORDER_CONTOUR_GAP_PX = CUSTOM_BORDER_CONTOUR_GAP_MM * PX_PER_MM;
+const CUSTOM_BORDER_REAPPLY_STROKE_MM = 4;
+const CUSTOM_BORDER_REAPPLY_STROKE_PX =
+  CUSTOM_BORDER_REAPPLY_STROKE_MM * PX_PER_MM;
+const CUSTOM_BORDER_OUTER_OFFSET_MM = 0.3;
+const CUSTOM_BORDER_OUTER_OFFSET_PX = CUSTOM_BORDER_OUTER_OFFSET_MM * PX_PER_MM;
 const OUTLINE_CENTER_GAP_MM = 0.33;
 const OUTLINE_CENTER_GAP_PX = OUTLINE_CENTER_GAP_MM * PX_PER_MM;
 
@@ -21,8 +26,66 @@ const CUSTOM_BORDER_DEFAULT_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_DEFAULT_FILL = "none";
 
 const extractCustomBorderMetadata = (design = {}) => {
+  const resolveThicknessPx = (source = {}) => {
+    const directPxCandidates = [
+      source?.thicknessPx,
+      source?.cardBorderThicknessPx,
+      source?.thickness,
+      source?.strokeWidth,
+    ];
+    for (const candidate of directPxCandidates) {
+      const numeric = Number(candidate);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        return numeric;
+      }
+    }
+
+    const mmCandidates = [
+      source?.thicknessMm,
+      source?.cardBorderThicknessMm,
+    ];
+    for (const candidate of mmCandidates) {
+      const numeric = Number(candidate);
+      if (Number.isFinite(numeric) && numeric > 0) {
+        return numeric * PX_PER_MM;
+      }
+    }
+
+    return null;
+  };
+
   if (design?.customBorder && typeof design.customBorder === "object") {
-    return design.customBorder;
+    const customBorder = design.customBorder;
+    const resolvedMode =
+      typeof customBorder.mode === "string" && customBorder.mode.trim() !== ""
+        ? customBorder.mode
+        : "custom";
+
+    return {
+      ...customBorder,
+      mode: resolvedMode,
+      exportStrokeColor:
+        customBorder.exportStrokeColor ||
+        customBorder.cardBorderExportStrokeColor ||
+        customBorder.displayStrokeColor ||
+        customBorder.cardBorderDisplayStrokeColor ||
+        CUSTOM_BORDER_DEFAULT_EXPORT_COLOR,
+      displayStrokeColor:
+        customBorder.displayStrokeColor ||
+        customBorder.cardBorderDisplayStrokeColor ||
+        customBorder.exportStrokeColor ||
+        customBorder.cardBorderExportStrokeColor ||
+        CUSTOM_BORDER_DEFAULT_EXPORT_COLOR,
+      exportFill:
+        customBorder.exportFill !== undefined && customBorder.exportFill !== null
+          ? customBorder.exportFill
+          : CUSTOM_BORDER_DEFAULT_FILL,
+      elementId:
+        (typeof customBorder.elementId === "string" && customBorder.elementId) ||
+        (typeof customBorder.id === "string" && customBorder.id) ||
+        "canvaShapeCustom",
+      thicknessPx: resolveThicknessPx(customBorder),
+    };
   }
 
   const jsonTemplate =
@@ -69,7 +132,7 @@ const extractCustomBorderMetadata = (design = {}) => {
       ? CUSTOM_BORDER_DEFAULT_FILL
       : exportFillRaw;
 
-  const thicknessPx = Number(borderObject.cardBorderThicknessPx);
+  const thicknessPx = resolveThicknessPx(borderObject);
 
   return {
     mode: borderObject.cardBorderMode || "default",
@@ -2511,12 +2574,41 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     if (!node || processed.has(node)) return;
     processed.add(node);
 
+    // Export/PDF requires contour geometry, not visual thick stroke.
+    const resolvedBorderStrokeWidth = String(CONTOUR_STROKE_WIDTH_PX);
+
+    let workingNode = node;
+
+    if (Number.isFinite(CUSTOM_BORDER_OUTER_OFFSET_PX) && CUSTOM_BORDER_OUTER_OFFSET_PX > 0) {
+      try {
+        const scope = ensurePaperScope();
+        const outwardPathData = scope
+          ? buildInnerContourPathData(scope, workingNode, -CUSTOM_BORDER_OUTER_OFFSET_PX)
+          : null;
+        if (outwardPathData) {
+          const shiftedNode = createOffsetContourElement(workingNode, outwardPathData, {
+            id: workingNode.getAttribute("id") || null,
+            isInner: false,
+          });
+          if (shiftedNode && workingNode.parentNode) {
+            if (resolvedBorderStrokeWidth) {
+              shiftedNode.setAttribute("stroke-width", resolvedBorderStrokeWidth);
+            }
+            workingNode.parentNode.replaceChild(shiftedNode, workingNode);
+            workingNode = shiftedNode;
+          }
+        }
+      } catch {
+        // Keep original geometry if offset generation fails.
+      }
+    }
+
     // Keep a visible blue contour for custom border export preview.
     // Insert the blue copy AFTER the green node so it is not visually hidden.
-    const baseId = node.getAttribute("id") || "";
+    const baseId = workingNode.getAttribute("id") || "";
     if (baseId !== "canvaShape" && !hasAnyBlueOutline()) {
       try {
-        const blueCopy = node.cloneNode(true);
+        const blueCopy = workingNode.cloneNode(true);
         if (blueCopy && typeof blueCopy.setAttribute === "function") {
           if (baseId) {
             blueCopy.setAttribute("id", `${baseId}-blue`);
@@ -2535,17 +2627,20 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
             blueCopy.getAttribute("stroke-linecap") || "round"
           );
           blueCopy.setAttribute("vector-effect", "non-scaling-stroke");
-          node.parentNode?.insertBefore(blueCopy, node.nextSibling);
+          workingNode.parentNode?.insertBefore(blueCopy, workingNode.nextSibling);
         }
       } catch {
         // ignore
       }
     }
 
-    // Requirement: keep exactly ONE green contour that sits on the same geometry as the blue contour.
-    // So we recolor the custom border node itself and DO NOT create/keep any extra inner contour.
-    applyStrokeFillRecursive(node, stroke, fill);
-    node.setAttribute("data-export-border", metadata.mode || "custom");
+    // Requirement: keep exactly ONE outer green contour, shifted 0.3mm outward from the blue contour.
+    // Then recolor that shifted custom border node and keep the generated inner contour as green too.
+    applyStrokeFillRecursive(workingNode, stroke, fill);
+    if (resolvedBorderStrokeWidth) {
+      workingNode.setAttribute("stroke-width", resolvedBorderStrokeWidth);
+    }
+    workingNode.setAttribute("data-export-border", metadata.mode || "custom");
 
     // Ensure the inward offset contour (generated as `-inner`) is also green.
     if (baseId && rootElement?.querySelector) {
@@ -2570,6 +2665,27 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
 
   const directMatches = collectBorderCandidateNodes(rootElement, metadata);
   directMatches.forEach(processNode);
+
+  if (!processed.size && rootElement?.querySelector) {
+    const blueOutline =
+      rootElement.querySelector('#canvaShape') ||
+      rootElement.querySelector('[data-canvas-outline="true"]') ||
+      rootElement.querySelector('[data-export-border-blue="true"]');
+
+    if (blueOutline && typeof blueOutline.cloneNode === "function") {
+      try {
+        const customClone = blueOutline.cloneNode(true);
+        if (customClone && typeof customClone.setAttribute === "function") {
+          customClone.setAttribute("id", "canvaShapeCustom");
+          customClone.removeAttribute("data-export-border-blue");
+          blueOutline.parentNode?.insertBefore(customClone, blueOutline.nextSibling);
+          processNode(customClone);
+        }
+      } catch {
+        // ignore and continue with generic matching fallback
+      }
+    }
+  }
 
   if (processed.size) {
     return;
@@ -5249,7 +5365,6 @@ const buildPlacementPreview = (placement, options = {}) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
       });
 
-      applyCustomBorderOverrides(exportElement, customBorder);
       styleLineFromCircleElements(exportElement);
 
       applyRotationIfNeeded(exportElement, viewBoxWidth, viewBoxHeight);
@@ -5267,6 +5382,9 @@ const buildPlacementPreview = (placement, options = {}) => {
       if (clippedExportElement) {
         exportElement = clippedExportElement;
       }
+
+      // Re-apply custom border geometry after clipping so outward offset is preserved.
+      applyCustomBorderOverrides(exportElement, customBorder);
 
       if (enableGaps) {
         applyCenteredGapsToCanvasOutline(exportElement, OUTLINE_CENTER_GAP_PX);
@@ -5328,7 +5446,6 @@ const buildPlacementPreview = (placement, options = {}) => {
         applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
       });
 
-      applyCustomBorderOverrides(previewElement, customBorder);
       styleLineFromCircleElements(previewElement);
 
       applyRotationIfNeeded(previewElement, viewBoxWidth, viewBoxHeight);
@@ -5346,6 +5463,9 @@ const buildPlacementPreview = (placement, options = {}) => {
       if (clippedPreviewElement) {
         previewElement = clippedPreviewElement;
       }
+
+      // Keep preview contour behavior consistent with export after clipping.
+      applyCustomBorderOverrides(previewElement, customBorder);
 
       if (hideFrames) {
         stripPreviewFrames(previewElement);
@@ -6129,9 +6249,23 @@ const LayoutPlannerModal = ({
         });
       });
 
+      // IMPORTANT: restore theme-follow flag only for PDF payload markup.
+      // This does not mutate Fabric objects or saved canvas JSON, so switch-canvas bug won't return.
+      const restorePdfOnlyUseThemeColor = (svgMarkup) => {
+        if (typeof svgMarkup !== "string" || !svgMarkup.trim()) return null;
+
+        return svgMarkup
+          .replace(/\buseThemeColor="false"/gi, 'useThemeColor="true"')
+          .replace(/\bdata-use-theme-color="false"/gi, 'data-use-theme-color="true"')
+          .replace(/\bdata-useThemeColor="false"/gi, 'data-useThemeColor="true"');
+      };
+
       const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
         const placements = sheet.placements.map((placement) => {
           const previewData = buildPlacementPreview(placement, { enableGaps });
+          const rawSvgMarkup =
+            previewData?.type === "svg" ? previewData.exportMarkup : null;
+          const pdfSvgMarkup = restorePdfOnlyUseThemeColor(rawSvgMarkup);
 
           return {
             id: placement.id,
@@ -6143,7 +6277,17 @@ const LayoutPlannerModal = ({
             height: placement.height,
             copyIndex: placement.copyIndex ?? 1,
             copies: placement.copies ?? 1,
-            svgMarkup: previewData?.type === "svg" ? previewData.exportMarkup : null,
+            svgMarkup: pdfSvgMarkup,
+            previewType: previewData?.type || null,
+            parsedSvgForPdf:
+              previewData?.type === "svg" &&
+              typeof rawSvgMarkup === "string" &&
+              /\bid="parsed-svg-/i.test(rawSvgMarkup),
+            previewImageUrl: previewData?.type === "png" ? previewData.url : null,
+            hasUploadedSvg:
+              previewData?.type === "svg" &&
+              typeof rawSvgMarkup === "string" &&
+              /(?:isUploadedImage|data-uploaded-svg)="true"/i.test(rawSvgMarkup),
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,

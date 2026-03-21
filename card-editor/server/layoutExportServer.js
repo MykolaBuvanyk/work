@@ -19,6 +19,7 @@ import { Op } from 'sequelize';
 import SendEmailForStatus from './Controller/SendEmailForStatus.js';
 import cron from 'node-cron';
 import Stripe from 'stripe'; // або const Stripe = require('stripe');
+import { Resvg } from '@resvg/resvg-js';
 const stripe = new Stripe(process.env.secretPayKey);
 dotenv.config();
 
@@ -1979,12 +1980,25 @@ app.post('/api/cart/webhook', express.raw({type: 'application/json'}), async(req
             { isPaid: true }, 
             { where: { id: parseInt(orderId) } }
           );
+          const order=await Order.findOne({
+             where: { 
+              id: parseInt(orderId) 
+            },
+            include:[
+              {
+                model:User
+              }
+            ]
+          })
   
           if (updated) {
             console.log(`✅ Success: Order №${orderId} marked as PAID in DB.`);
+            SendEmailForStatus.SendAdminStatusPaid(order);
+            SendEmailForStatus.SendStatusPaid(order);
           } else {
             console.log(`⚠️ Warning: Order №${orderId} found, but status NOT updated (maybe already paid?).`);
           }
+
         } catch (dbErr) {
           console.log(`❌ Database Update Error: ${dbErr.message}`);
         }
@@ -2046,6 +2060,187 @@ app.post('/api/client-log', (req, res) => {
   }
 });
 
+const SVG_WHITE_VALUES = new Set(['white', '#ffffff', '#fff', 'rgb(255,255,255)', 'rgba(255,255,255,1)']);
+const SVG_NONE_VALUES = new Set(['none', 'transparent', 'rgba(0,0,0,0)', 'rgba(255,255,255,0)']);
+
+const normalizeSvgColor = value =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
+
+const parseInlineStyle = styleText => {
+  const map = {};
+  String(styleText || '')
+    .split(';')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .forEach(part => {
+      const idx = part.indexOf(':');
+      if (idx === -1) return;
+      const key = part.slice(0, idx).trim().toLowerCase();
+      const value = part.slice(idx + 1).trim();
+      if (!key) return;
+      map[key] = value;
+    });
+  return map;
+};
+
+const toOpacity = value => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0, Math.min(1, n));
+};
+
+const resolvePathPaint = pathNode => {
+  const style = parseInlineStyle(pathNode?.getAttribute?.('style'));
+  const fill =
+    pathNode?.getAttribute?.('fill') ??
+    style.fill ??
+    '#000';
+
+  const fillOpacity =
+    pathNode?.getAttribute?.('fill-opacity') ??
+    style['fill-opacity'] ??
+    1;
+  const opacity =
+    pathNode?.getAttribute?.('opacity') ??
+    style.opacity ??
+    1;
+
+  return {
+    fill: normalizeSvgColor(fill),
+    effectiveOpacity: toOpacity(fillOpacity) * toOpacity(opacity),
+  };
+};
+
+const isWhitePathFill = fill => SVG_WHITE_VALUES.has(fill);
+const isNonePathFill = fill => SVG_NONE_VALUES.has(fill);
+
+const buildEvenoddCompoundSvg = (svgString, fillColor = '#000') => {
+  const doc = new DOMParser().parseFromString(String(svgString || ''), 'image/svg+xml');
+  const svg = doc?.documentElement;
+  if (!svg || String(svg.nodeName || '').toLowerCase() !== 'svg') {
+    return { svg: null, debug: { invalidSvg: true } };
+  }
+
+  const allPathNodes = Array.from(svg.getElementsByTagName('path'));
+  if (!allPathNodes.length) {
+    return { svg: null, debug: { totalPaths: 0, darkPaths: 0, holePaths: 0 } };
+  }
+
+  const darkPathData = [];
+  const holePathData = [];
+
+  allPathNodes.forEach(pathNode => {
+    const d = String(pathNode?.getAttribute?.('d') || '').trim();
+    if (!d) return;
+
+    const { fill, effectiveOpacity } = resolvePathPaint(pathNode);
+    if (effectiveOpacity <= 0.001 || isNonePathFill(fill)) return;
+
+    if (isWhitePathFill(fill)) {
+      holePathData.push(d);
+      return;
+    }
+
+    darkPathData.push(d);
+  });
+
+  if (!darkPathData.length && !holePathData.length) {
+    return {
+      svg: null,
+      debug: {
+        totalPaths: allPathNodes.length,
+        darkPaths: 0,
+        holePaths: 0,
+      },
+    };
+  }
+
+  const compoundData = [...darkPathData, ...holePathData].join(' ');
+  if (!compoundData) {
+    return {
+      svg: null,
+      debug: {
+        totalPaths: allPathNodes.length,
+        darkPaths: darkPathData.length,
+        holePaths: holePathData.length,
+      },
+    };
+  }
+
+  const viewBox = String(svg.getAttribute('viewBox') || '').trim();
+  const width = String(svg.getAttribute('width') || '').trim();
+  const height = String(svg.getAttribute('height') || '').trim();
+
+  const attrs = [`xmlns="http://www.w3.org/2000/svg"`];
+  if (viewBox) attrs.push(`viewBox="${escapeForSvg(viewBox)}"`);
+  if (width) attrs.push(`width="${escapeForSvg(width)}"`);
+  if (height) attrs.push(`height="${escapeForSvg(height)}"`);
+
+  return {
+    svg: `<svg ${attrs.join(' ')}><path d="${escapeForSvg(compoundData)}" fill="${escapeForSvg(
+      fillColor
+    )}" fill-rule="evenodd" clip-rule="evenodd"/></svg>`,
+    debug: {
+      totalPaths: allPathNodes.length,
+      darkPaths: darkPathData.length,
+      holePaths: holePathData.length,
+      viewBox,
+      width,
+      height,
+    },
+  };
+};
+
+app.post('/api/svg/clean', (req, res) => {
+  try {
+    const rawSvg = String(req.body?.svg || '').trim();
+    const requestedFill = String(req.body?.fillColor || '#000').trim() || '#000';
+    const debug = req.body?.debug === true;
+    if (!rawSvg) {
+      return res.status(400).json({ error: 'SVG payload is required.' });
+    }
+
+    const resvg = new Resvg(rawSvg, {
+      fitTo: { mode: 'original' },
+    });
+    const normalizedSvg = String(resvg.toString() || '').trim();
+
+    const evenodd = buildEvenoddCompoundSvg(normalizedSvg, requestedFill);
+    const cleanedSvg = String(evenodd?.svg || normalizedSvg).trim();
+
+    if (!cleanedSvg) {
+      return res.status(422).json({ error: 'Unable to clean SVG.' });
+    }
+
+    if (debug) {
+      console.log('[SVG_DEBUG][server][svg-clean]', {
+        inputLength: rawSvg.length,
+        normalizedLength: normalizedSvg.length,
+        cleanedLength: cleanedSvg.length,
+        evenodd: evenodd?.debug || null,
+      });
+    }
+
+    return res.json({
+      svg: cleanedSvg,
+      debug: debug
+        ? {
+            inputLength: rawSvg.length,
+            normalizedLength: normalizedSvg.length,
+            cleanedLength: cleanedSvg.length,
+            evenodd: evenodd?.debug || null,
+          }
+        : undefined,
+    });
+  } catch (error) {
+    console.error('SVG clean error:', error);
+    return res.status(500).json({ error: 'SVG clean failed.' });
+  }
+});
+
 app.use('/api', router);
 
 // API error handler (must be after routes)
@@ -2089,10 +2284,287 @@ const buildFallbackSvgMarkup = (placement, message) => {
 </svg>`;
 };
 
+const stripUnsupportedSvgStyleForPdf = (styleValue = '') => {
+  const input = String(styleValue || '').trim();
+  if (!input) return '';
+
+  const blockedProps = new Set([
+    'vector-effect',
+    'mix-blend-mode',
+    'isolation',
+    'paint-order',
+  ]);
+
+  return input
+    .split(';')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .filter(part => {
+      const [prop] = part.split(':');
+      return !blockedProps.has(String(prop || '').trim().toLowerCase());
+    })
+    .join('; ');
+};
+
+const makeSvgMarkupPdfCompatible = (svgMarkup = '') => {
+  const source = String(svgMarkup || '').trim();
+  if (!source) return source;
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(source, 'image/svg+xml');
+    const root = doc?.documentElement;
+    if (!root || String(root.nodeName || '').toLowerCase() !== 'svg') {
+      return source;
+    }
+
+    const allNodes = root.getElementsByTagName('*');
+    const blockedNodeNames = new Set(['mask', 'filter', 'foreignobject']);
+    const nodesToRemove = [];
+
+    for (let i = 0; i < allNodes.length; i += 1) {
+      const node = allNodes[i];
+      const tag = String(node?.nodeName || '').toLowerCase();
+      if (!tag) continue;
+
+      if (blockedNodeNames.has(tag)) {
+        nodesToRemove.push(node);
+        continue;
+      }
+
+      const mask = node.getAttribute('mask');
+      if (mask) node.removeAttribute('mask');
+
+      const filter = node.getAttribute('filter');
+      if (filter) node.removeAttribute('filter');
+
+      const vectorEffect = node.getAttribute('vector-effect');
+      if (vectorEffect) node.removeAttribute('vector-effect');
+
+      const style = node.getAttribute('style');
+      if (style) {
+        const cleanedStyle = stripUnsupportedSvgStyleForPdf(style);
+        if (cleanedStyle) node.setAttribute('style', cleanedStyle);
+        else node.removeAttribute('style');
+      }
+
+      const fillRule = String(node.getAttribute('fill-rule') || '').toLowerCase();
+      if (fillRule && fillRule !== 'nonzero' && fillRule !== 'evenodd') {
+        node.setAttribute('fill-rule', 'nonzero');
+      }
+
+      const clipRule = String(node.getAttribute('clip-rule') || '').toLowerCase();
+      if (clipRule && clipRule !== 'nonzero' && clipRule !== 'evenodd') {
+        node.setAttribute('clip-rule', 'nonzero');
+      }
+    }
+
+    nodesToRemove.forEach(node => {
+      try {
+        node.parentNode?.removeChild(node);
+      } catch {}
+    });
+
+    const serializer = new XMLSerializer();
+    const compatible = serializer.serializeToString(root);
+    return compatible || source;
+  } catch {
+    return source;
+  }
+};
+
+const ensureSvgShapesHaveStrokeForPdf = (
+  svgMarkup = '',
+  defaultStroke = '#000000',
+  targetIdPrefix = 'parsed-svg-'
+) => {
+  const source = String(svgMarkup || '').trim();
+  if (!source) return source;
+
+  const geometryTags = new Set(['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon']);
+
+  const parseStyleMap = (styleValue = '') => {
+    const map = new Map();
+    String(styleValue || '')
+      .split(';')
+      .map(part => part.trim())
+      .filter(Boolean)
+      .forEach(part => {
+        const idx = part.indexOf(':');
+        if (idx <= 0) return;
+        const key = part.slice(0, idx).trim().toLowerCase();
+        const val = part.slice(idx + 1).trim();
+        if (key) map.set(key, val);
+      });
+    return map;
+  };
+
+  const styleMapToString = (styleMap) =>
+    Array.from(styleMap.entries())
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('; ');
+
+  const isUsablePaint = (value) => {
+    const v = String(value || '').trim().toLowerCase();
+    if (!v) return false;
+    if (v === 'none' || v === 'transparent') return false;
+    if (v.startsWith('url(')) return false;
+    return true;
+  };
+
+  const belongsToTargetSubtree = (node) => {
+    let current = node;
+    while (current && current.nodeType === 1) {
+      const nodeId = String(current.getAttribute?.('id') || '').trim();
+      if (nodeId && nodeId.toLowerCase().startsWith(String(targetIdPrefix || '').toLowerCase())) {
+        return true;
+      }
+      current = current.parentNode;
+    }
+    return false;
+  };
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(source, 'image/svg+xml');
+    const root = doc?.documentElement;
+    if (!root || String(root.nodeName || '').toLowerCase() !== 'svg') {
+      return source;
+    }
+
+    const allNodes = root.getElementsByTagName('*');
+    for (let i = 0; i < allNodes.length; i += 1) {
+      const node = allNodes[i];
+      const tag = String(node?.nodeName || '').toLowerCase();
+      if (!geometryTags.has(tag)) continue;
+      if (!belongsToTargetSubtree(node)) continue;
+
+      const styleMap = parseStyleMap(node.getAttribute('style') || '');
+
+      const attrStroke = node.getAttribute('stroke');
+      const styleStroke = styleMap.get('stroke');
+      const attrFill = node.getAttribute('fill');
+      const styleFill = styleMap.get('fill');
+
+      const currentStroke = isUsablePaint(attrStroke) ? attrStroke : isUsablePaint(styleStroke) ? styleStroke : null;
+      const fallbackStroke = isUsablePaint(attrFill)
+        ? attrFill
+        : isUsablePaint(styleFill)
+        ? styleFill
+        : defaultStroke;
+
+      if (!currentStroke) {
+        node.setAttribute('stroke', fallbackStroke);
+        styleMap.set('stroke', fallbackStroke);
+      }
+
+      const attrStrokeWidth = node.getAttribute('stroke-width');
+      const styleStrokeWidth = styleMap.get('stroke-width');
+      if (!String(attrStrokeWidth || '').trim() && !String(styleStrokeWidth || '').trim()) {
+        node.setAttribute('stroke-width', '1');
+        styleMap.set('stroke-width', '1');
+      }
+
+      if (!String(node.getAttribute('stroke-linejoin') || '').trim() && !styleMap.get('stroke-linejoin')) {
+        node.setAttribute('stroke-linejoin', 'round');
+        styleMap.set('stroke-linejoin', 'round');
+      }
+      if (!String(node.getAttribute('stroke-linecap') || '').trim() && !styleMap.get('stroke-linecap')) {
+        node.setAttribute('stroke-linecap', 'round');
+        styleMap.set('stroke-linecap', 'round');
+      }
+
+      const styleOut = styleMapToString(styleMap);
+      if (styleOut) node.setAttribute('style', styleOut);
+    }
+
+    return new XMLSerializer().serializeToString(root) || source;
+  } catch {
+    return source;
+  }
+};
+
+const drawSvgAsPngFallback = (doc, svgMarkup, xPt, yTopPt, widthPt, heightPt) => {
+  const safeSvg = String(svgMarkup || '').trim();
+  if (!safeSvg) return false;
+
+  try {
+    const renderWidth = Math.max(1, Math.round(Number(widthPt) || 1));
+    const renderHeight = Math.max(1, Math.round(Number(heightPt) || 1));
+
+    const resvg = new Resvg(safeSvg, {
+      fitTo: {
+        mode: 'width',
+        value: renderWidth,
+      },
+      background: 'rgba(0,0,0,0)',
+    });
+
+    const pngData = resvg.render();
+    const pngBuffer = pngData.asPng();
+    if (!pngBuffer || !pngBuffer.length) return false;
+
+    doc.image(pngBuffer, xPt, yTopPt, {
+      width: widthPt,
+      height: heightPt,
+      align: 'center',
+      valign: 'center',
+    });
+    return true;
+  } catch (pngError) {
+    console.warn('[layoutExportServer] PNG fallback failed:', pngError?.message || pngError);
+    return false;
+  }
+};
+
+const decodeImageDataUriToBuffer = (dataUri = '') => {
+  const src = String(dataUri || '').trim();
+  if (!src.startsWith('data:image/')) return null;
+
+  const commaIndex = src.indexOf(',');
+  if (commaIndex < 0) return null;
+
+  const meta = src.slice(5, commaIndex);
+  const data = src.slice(commaIndex + 1);
+  const isBase64 = /;base64/i.test(meta);
+
+  try {
+    if (isBase64) {
+      return Buffer.from(data, 'base64');
+    }
+    return Buffer.from(decodeURIComponent(data), 'utf8');
+  } catch {
+    return null;
+  }
+};
+
+const drawImageDataUriFallback = (doc, imageDataUri, xPt, yTopPt, widthPt, heightPt) => {
+  const buffer = decodeImageDataUriToBuffer(imageDataUri);
+  if (!buffer) return false;
+
+  try {
+    doc.image(buffer, xPt, yTopPt, {
+      width: widthPt,
+      height: heightPt,
+      align: 'center',
+      valign: 'center',
+    });
+    return true;
+  } catch (imgError) {
+    console.warn('[layoutExportServer] image data-uri fallback failed:', imgError?.message || imgError);
+    return false;
+  }
+};
+
 app.post('/api/layout-pdf', async (req, res) => {
   try {
     const { sheets, sheetLabel = 'sheet', timestamp, exportMode, svgAssets } = req.body || {};
     const svgAssetMap = svgAssets && typeof svgAssets === 'object' ? svgAssets : {};
+
+    console.log('[layoutExportServer] /api/layout-pdf request', {
+      exportMode,
+      sheetsCount: Array.isArray(sheets) ? sheets.length : 0,
+    });
 
     if (!Array.isArray(sheets) || sheets.length === 0) {
       return res.status(400).json({ error: 'Очікуємо принаймні один аркуш для експорту.' });
@@ -2116,6 +2588,7 @@ app.post('/api/layout-pdf', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('X-Layout-Exporter', 'layoutExportServer-debug-v3');
 
     doc.pipe(res);
 
@@ -2330,6 +2803,20 @@ app.post('/api/layout-pdf', async (req, res) => {
           typeof placement?.svgAssetKey === 'string' && placement.svgAssetKey
             ? placement.svgAssetKey
             : null;
+        const sheetExportMode = String(sheet?.exportMode || exportMode || '').trim();
+        const applyParsedSvgContourStroke = placement?.parsedSvgForPdf === true;
+
+        console.log('[layoutExportServer] placement incoming', {
+          sheetIndex,
+          placementIndex,
+          id: placement?.id || null,
+          previewType: placement?.previewType || null,
+          hasSvgMarkup: !!placementSvgMarkup,
+          hasPreviewImageUrl:
+            typeof placement?.previewImageUrl === 'string' &&
+            String(placement.previewImageUrl).startsWith('data:image/'),
+          hasUploadedSvg: placement?.hasUploadedSvg === true,
+        });
 
         if (placementSvgMarkup) {
           let placementClipApplied = false;
@@ -2425,14 +2912,33 @@ app.post('/api/layout-pdf', async (req, res) => {
 
             const serializer = new XMLSerializer();
             const backgroundMarkup = serializer.serializeToString(backgroundSvg);
+            const compatibleBackgroundMarkup = makeSvgMarkupPdfCompatible(backgroundMarkup);
+            const hasParsedSvgTargetInMarkup = /\bid="parsed-svg-/i.test(
+              String(compatibleBackgroundMarkup || backgroundMarkup || '')
+            );
+            const vectorStrokeMarkup = applyParsedSvgContourStroke
+              ? ensureSvgShapesHaveStrokeForPdf(
+                  compatibleBackgroundMarkup || backgroundMarkup,
+                  '#008181',
+                  'parsed-svg-'
+                )
+              : (compatibleBackgroundMarkup || backgroundMarkup);
 
             if (backgroundMarkup) {
               try {
-                svgToPdf(doc, backgroundMarkup, xPt, yTopPt, {
+                svgToPdf(doc, vectorStrokeMarkup || compatibleBackgroundMarkup || backgroundMarkup, xPt, yTopPt, {
                   assumePt: false,
                   width: widthPt,
                   height: heightPt,
                   preserveAspectRatio: 'none',
+                });
+                console.log('[layoutExportServer] placement rendered via vector stroke path', {
+                  sheetIndex,
+                  placementIndex,
+                  sheetExportMode,
+                  applyParsedSvgContourStroke,
+                  hasParsedSvgTargetInMarkup,
+                  markupLength: String(vectorStrokeMarkup || '').length,
                 });
               } catch (backgroundError) {
                 console.warn('Не вдалося відрендерити фон SVG:', backgroundError.message);

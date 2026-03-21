@@ -24,6 +24,7 @@ export const useSimpleUndoRedo = () => {
       const extraProps = [
         "shapeType", "baseCornerRadius", "displayCornerRadiusMm",
         "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
+        "fillRule", "clipRule",
         "strokeLineJoin", "strokeMiterLimit", "isCircle", "isUploadedImage", "useThemeColor",
         "followThemeFill", "followThemeStroke", "initialFillColor", "initialStrokeColor"
       ];

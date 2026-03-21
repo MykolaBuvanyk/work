@@ -63,6 +63,7 @@ const getSelectedAccessoriesSnapshot = () => {
 
 const CUSTOM_BORDER_EXPORT_COLOR = "#008181";
 const CUSTOM_BORDER_EXPORT_FILL = "none";
+const CUSTOM_BORDER_RESTORE_THICKNESS_PX = (4 * 72) / 25.4;
 
 const FONT_PUBLIC_PATH = "/fonts";
 const FONT_EXT_FORMAT_MAP = {
@@ -908,6 +909,8 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
 
       // Stroke and visual properties
       "strokeUniform",
+      "fillRule",
+      "clipRule",
       "borderColor",
       "borderScaleFactor",
       "innerStrokeWidth",
@@ -1644,6 +1647,14 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
 
 // Helper function to restore element-specific properties after canvas load
 export async function restoreElementProperties(canvas, toolbarState = null) {
+  const svgDebugEnabled =
+    typeof window !== "undefined" &&
+    (window.__SVG_DEBUG__ === true || localStorage.getItem("svgDebug") === "1");
+  const svgDebug = (...args) => {
+    if (!svgDebugEnabled) return;
+    console.log("[SVG_DEBUG][restore]", ...args);
+  };
+
   console.log('========== [restoreElementProperties] ФУНКЦІЯ ВИКЛИКАНА ==========');
   console.log('[restoreElementProperties] canvas:', canvas);
   console.log('[restoreElementProperties] canvas.getObjects:', typeof canvas?.getObjects);
@@ -1717,6 +1728,22 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
         childrenCount: childrenInfo ? childrenInfo.length : 0,
         children: childrenInfo
       });
+
+      if (obj?.isUploadedImage === true) {
+        svgDebug('uploaded object before theme apply', {
+          index,
+          type: obj?.type,
+          fill: obj?.fill,
+          stroke: obj?.stroke,
+          fillRule: obj?.fillRule,
+          useThemeColor: obj?.useThemeColor,
+          followThemeStroke: obj?.followThemeStroke,
+          childCount:
+            obj?.type === 'group' && typeof obj.getObjects === 'function'
+              ? (obj.getObjects() || []).length
+              : 0,
+        });
+      }
 
       // Збираємо QR коди для перегенерації (видалимо старі та додамо нові)
       try {
@@ -1801,7 +1828,9 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
           cardBorderThicknessPx:
             obj.cardBorderThicknessPx !== undefined
               ? obj.cardBorderThicknessPx
-              : 2,
+              : obj.cardBorderMode === "custom"
+                ? CUSTOM_BORDER_RESTORE_THICKNESS_PX
+                : 2,
           cardBorderDisplayStrokeColor: displayStrokeColor,
           cardBorderExportStrokeColor: exportStrokeColor,
           cardBorderExportFill: exportFillValue,
@@ -1815,12 +1844,61 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
         }
       }
 
-      // Ensure themed icons/shapes continue to follow theme after reload
-      try {
-        // If object originated from icon menu or previously marked to follow theme,
-        // persist/propagate the flag (children of groups too)
-        let shouldFollowTheme =
-          obj.useThemeColor === true || obj.fromIconMenu === true;
+      const isUploadedSvgObject =
+        obj?.isUploadedImage === true &&
+        (obj?.type === "path" || obj?.type === "group");
+
+      // Ensure uploaded SVG keeps exact saved look and is not theme-mutated during restore.
+      if (isUploadedSvgObject) {
+        try {
+          if (typeof obj.set === "function") {
+            obj.set({
+              useThemeColor: false,
+              followThemeFill: false,
+              followThemeStroke: false,
+            });
+            if (obj.type === "path" && !obj.fillRule) {
+              obj.set({ fillRule: "evenodd", clipRule: "evenodd" });
+            }
+          }
+
+          if (obj.type === "group" && typeof obj.forEachObject === "function") {
+            obj.forEachObject((child) => {
+              try {
+                if (!child || typeof child.set !== "function") return;
+                child.set({
+                  useThemeColor: false,
+                  followThemeFill: false,
+                  followThemeStroke: false,
+                });
+                if (child.type === "path" && !child.fillRule) {
+                  child.set({ fillRule: "evenodd", clipRule: "evenodd" });
+                }
+              } catch {}
+            });
+          }
+
+          svgDebug("uploaded object theme lock applied", {
+            index,
+            type: obj?.type,
+            fill: obj?.fill,
+            stroke: obj?.stroke,
+            fillRule: obj?.fillRule,
+            useThemeColor: obj?.useThemeColor,
+            followThemeFill: obj?.followThemeFill,
+            followThemeStroke: obj?.followThemeStroke,
+          });
+        } catch {}
+      }
+
+      // Ensure themed icons/shapes continue to follow theme after reload.
+      // Uploaded SVG is explicitly excluded above.
+      if (!isUploadedSvgObject) {
+        try {
+          // If object originated from icon menu or previously marked to follow theme,
+          // persist/propagate the flag (children of groups too)
+          let shouldFollowTheme =
+            obj.useThemeColor === true || obj.fromIconMenu === true;
 
         // Heuristic: for legacy saved objects without flag — if stroke already matches theme
         // but fill is plain white, treat it as theme-following icon
@@ -1837,35 +1915,70 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
             shouldFollowTheme = true;
           }
         }
-        if (shouldFollowTheme) {
-          obj.useThemeColor = true;
-          if (typeof obj.set === "function") {
-            // Do not override explicit transparent fills, but ensure default white artifacts are recolored
-            const isTransparent =
-              obj.fill === "transparent" || obj.fill === "" || obj.fill == null;
-            if (!isTransparent) {
-              // Align fill to current theme color so next theme switch also works predictably
-              obj.set({ fill: themeTextColor });
+          if (shouldFollowTheme) {
+            obj.useThemeColor = true;
+            if (obj.isUploadedImage === true && obj.followThemeStroke !== false) {
+              obj.followThemeStroke = false;
             }
-            obj.set({ stroke: themeTextColor });
+            const shouldApplyThemeStroke =
+              obj.followThemeStroke !== false && obj.isUploadedImage !== true;
+            if (typeof obj.set === "function") {
+              // Do not override explicit transparent fills, but ensure default white artifacts are recolored
+              const isTransparent =
+                obj.fill === "transparent" || obj.fill === "" || obj.fill == null;
+              if (!isTransparent) {
+                // Align fill to current theme color so next theme switch also works predictably
+                obj.set({ fill: themeTextColor });
+              }
+              if (shouldApplyThemeStroke) {
+                obj.set({ stroke: themeTextColor });
+              } else if (typeof obj.initialStrokeColor === "string") {
+                obj.set({ stroke: obj.initialStrokeColor });
+              } else if (obj.isUploadedImage === true) {
+                obj.set({ stroke: "transparent" });
+              }
+            }
+            if (obj.type === "group" && typeof obj.forEachObject === "function") {
+              obj.forEachObject((child) => {
+                try {
+                  if (child && typeof child.set === "function") {
+                    child.set({ useThemeColor: true });
+                    if (obj.isUploadedImage === true && child.followThemeStroke !== false) {
+                      child.set({ followThemeStroke: false });
+                    }
+                    const childApplyThemeStroke =
+                      child.followThemeStroke !== false && child.isUploadedImage !== true;
+                    const childTransparent =
+                      child.fill === "transparent" ||
+                      child.fill === "" ||
+                      child.fill == null;
+                    if (!childTransparent) child.set({ fill: themeTextColor });
+                    if (childApplyThemeStroke) {
+                      child.set({ stroke: themeTextColor });
+                    } else if (typeof child.initialStrokeColor === "string") {
+                      child.set({ stroke: child.initialStrokeColor });
+                    } else if (obj.isUploadedImage === true) {
+                      child.set({ stroke: "transparent" });
+                    }
+                  }
+                } catch {}
+              });
+            }
+
+            if (obj?.isUploadedImage === true) {
+              svgDebug('uploaded object after theme apply', {
+                index,
+                type: obj?.type,
+                fill: obj?.fill,
+                stroke: obj?.stroke,
+                fillRule: obj?.fillRule,
+                useThemeColor: obj?.useThemeColor,
+                followThemeStroke: obj?.followThemeStroke,
+              });
+            }
           }
-          if (obj.type === "group" && typeof obj.forEachObject === "function") {
-            obj.forEachObject((child) => {
-              try {
-                if (child && typeof child.set === "function") {
-                  child.set({ useThemeColor: true });
-                  const childTransparent =
-                    child.fill === "transparent" ||
-                    child.fill === "" ||
-                    child.fill == null;
-                  if (!childTransparent) child.set({ fill: themeTextColor });
-                  child.set({ stroke: themeTextColor });
-                }
-              } catch {}
-            });
-          }
-        }
-      } catch {}
+        } catch {}
+      }
 
       // Restore image properties
       if (obj.type === "image" && obj.originalSrc) {

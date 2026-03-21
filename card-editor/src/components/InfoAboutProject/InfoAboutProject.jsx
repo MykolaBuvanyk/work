@@ -15,6 +15,7 @@ import Checkout from "../checkout/checkout";
 import ThankYou from "../order-success/order-success";
 import CartAccessoriesModal from "../CartAccessoriesModal/CartAccessoriesModal";
 import OrderTestModal from "../OrderTestModal/OrderTestModal";
+import { $authHost } from "../../http";
 
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: "WHITE / BLACK",
@@ -680,9 +681,18 @@ const InfoAboutProject = () => {
     setIsOrderSuccessOpen(true);
   };
 
-  const handleOrderSuccessClose = () => {
+  const handleOrderSuccessClose = async() => {
     setIsOrderSuccessOpen(false);
+    try{
+      const res=await $authHost.post('cart/sendReviewAndComent',{id:localStorage.getItem('MySqlOrderId'),rating:reviews.rating,comment:reviews.comment});
+    }catch(err){
+      console.log("Помилка надсилання відгуку "+err);
+    }
   };
+
+  const [reviews,setReviews]=useState({rating:0,comment:''});
+
+  console.log(434,reviews);
 
   return (
     <div className={styles.infoAboutProject}>
@@ -815,7 +825,7 @@ const InfoAboutProject = () => {
         />
       )}
 
-      {isOrderSuccessOpen && <ThankYou onClose={handleOrderSuccessClose} />}
+      {isOrderSuccessOpen && <ThankYou setData={setReviews} onClose={handleOrderSuccessClose} />}
     </div>
   );
 };

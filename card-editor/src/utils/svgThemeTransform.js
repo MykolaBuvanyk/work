@@ -5,6 +5,26 @@ const NAMED_COLORS = {
   white: [255, 255, 255],
 };
 
+const WHITE_VALS = new Set(["white", "#ffffff", "#fff", "rgb(255,255,255)", "rgba(255,255,255,1)"]);
+const NONE_VALS = new Set(["none", "transparent", "rgba(0,0,0,0)"]);
+
+const normalizeColor = color => {
+  if (!color) return "";
+  return String(color).toLowerCase().replace(/\s+/g, "");
+};
+
+const isWhite = color => {
+  const normalized = normalizeColor(color);
+  return Boolean(normalized) && WHITE_VALS.has(normalized);
+};
+
+const isTransparent = color => {
+  const normalized = normalizeColor(color);
+  return Boolean(normalized) && NONE_VALS.has(normalized);
+};
+
+const isInherit = color => String(color || "").trim().toLowerCase() === "inherit";
+
 const isTransparentValue = (value = "") => {
   const v = String(value).trim().toLowerCase();
   return v === "none" || v === "transparent";
@@ -98,6 +118,58 @@ const rewriteStyleAttribute = (el, themeColor) => {
   el.setAttribute("style", pieces.join("; "));
 };
 
+const parseSvgStyles = svgEl => {
+  const styleMap = {};
+  const styleEls = svgEl.querySelectorAll("style");
+  styleEls.forEach(styleEl => {
+    const text = String(styleEl.textContent || "");
+    const ruleRe = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+    let rule;
+    while ((rule = ruleRe.exec(text)) !== null) {
+      const cls = rule[1];
+      const props = {};
+      const propRe = /([\w-]+)\s*:\s*([^;]+)/g;
+      let prop;
+      while ((prop = propRe.exec(rule[2])) !== null) {
+        props[String(prop[1] || "").trim()] = String(prop[2] || "").trim();
+      }
+      styleMap[cls] = props;
+    }
+  });
+  return styleMap;
+};
+
+const getEffectiveProp = (el, prop, styleMap) => {
+  if (el.style && el.style[prop] && el.style[prop] !== "") return el.style[prop];
+
+  const styleAttr = el.getAttribute("style");
+  if (styleAttr) {
+    const re = new RegExp(`${prop}\\s*:\\s*([^;]+)`, "i");
+    const match = re.exec(styleAttr);
+    if (match) return String(match[1] || "").trim();
+  }
+
+  const classes = String(el.getAttribute("class") || "")
+    .split(/\s+/)
+    .filter(Boolean);
+  for (const cls of classes) {
+    if (styleMap[cls] && styleMap[cls][prop] !== undefined) {
+      return styleMap[cls][prop];
+    }
+  }
+
+  const attrVal = el.getAttribute(prop);
+  return attrVal || null;
+};
+
+const removeStylePropFromStyleAttr = (node, prop) => {
+  const styleAttr = node.getAttribute("style");
+  if (!styleAttr) return;
+  const cleaned = styleAttr.replace(new RegExp(`${prop}\\s*:[^;]+;?`, "gi"), "").trim();
+  if (cleaned) node.setAttribute("style", cleaned);
+  else node.removeAttribute("style");
+};
+
 export const convertSvgToThemeMonochrome = (svgString, themeColor = "#000") => {
   try {
     const doc = new DOMParser().parseFromString(String(svgString || ""), "image/svg+xml");
@@ -120,6 +192,96 @@ export const convertSvgToThemeMonochrome = (svgString, themeColor = "#000") => {
   }
 };
 
+export const convertSvgToBlackAlphaMask = (svgString, themeColor = "#000") => {
+  try {
+    const raw = String(svgString || "").trim();
+    if (!raw) return svgString;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(raw, "image/svg+xml");
+    const parseError = doc.querySelector("parsererror");
+    if (parseError) return svgString;
+
+    const svg = doc.documentElement;
+    if (!svg || String(svg.nodeName || "").toLowerCase() !== "svg") return svgString;
+
+    const styleMap = parseSvgStyles(svg);
+
+    svg.querySelectorAll("rect").forEach(rect => {
+      const fill = getEffectiveProp(rect, "fill", styleMap);
+      const width = parseFloat(rect.getAttribute("width"));
+      const vbw = svg.viewBox?.baseVal?.width || 0;
+      if (isWhite(fill) && (Number.isNaN(width) || vbw === 0 || width >= vbw * 0.9)) {
+        rect.setAttribute("fill", "none");
+        rect.removeAttribute("class");
+        if (rect.style) rect.style.fill = "";
+      }
+    });
+
+    const maskId = `m_${Math.random().toString(36).slice(2, 8)}`;
+    const ns = "http://www.w3.org/2000/svg";
+
+    const defs = doc.createElementNS(ns, "defs");
+    const mask = doc.createElementNS(ns, "mask");
+    mask.setAttribute("id", maskId);
+
+    const maskBg = doc.createElementNS(ns, "rect");
+    maskBg.setAttribute("width", "100%");
+    maskBg.setAttribute("height", "100%");
+    maskBg.setAttribute("fill", "white");
+    mask.appendChild(maskBg);
+
+    const ignoredTags = new Set(["defs", "style", "sodipodi:namedview", "metadata", "title", "desc"]);
+    const toMove = Array.from(svg.childNodes).filter(node => {
+      return node.nodeType === 1 && !ignoredTags.has(String(node.nodeName || "").toLowerCase());
+    });
+
+    const contentGroup = doc.createElementNS(ns, "g");
+    contentGroup.setAttribute("mask", `url(#${maskId})`);
+    toMove.forEach(node => contentGroup.appendChild(node));
+
+    const maskGroup = contentGroup.cloneNode(true);
+    maskGroup.removeAttribute("mask");
+
+    const traverse = (node, inMask) => {
+      if (!node || node.nodeType !== 1) return;
+
+      ["fill", "stroke"].forEach(prop => {
+        const val = getEffectiveProp(node, prop, styleMap);
+        if (!val || isInherit(val)) return;
+
+        let newVal = null;
+        if (isWhite(val)) {
+          newVal = inMask ? "#000000" : "none";
+        } else if (!isTransparent(val)) {
+          newVal = inMask ? "none" : themeColor;
+        }
+
+        if (newVal !== null) {
+          node.removeAttribute("class");
+          node.setAttribute(prop, newVal);
+          if (node.style) node.style[prop] = "";
+          removeStylePropFromStyleAttr(node, prop);
+        }
+      });
+
+      Array.from(node.childNodes).forEach(child => traverse(child, inMask));
+    };
+
+    traverse(contentGroup, false);
+    traverse(maskGroup, true);
+
+    mask.appendChild(maskGroup);
+    defs.appendChild(mask);
+    svg.appendChild(defs);
+    svg.appendChild(contentGroup);
+
+    return new XMLSerializer().serializeToString(svg);
+  } catch {
+    return svgString;
+  }
+};
+
 export const applyStrokeOnlyToSVG = (svgString, themeColor = "#000") => {
   try {
     const doc = new DOMParser().parseFromString(String(svgString || ""), "image/svg+xml");
@@ -132,4 +294,10 @@ export const applyStrokeOnlyToSVG = (svgString, themeColor = "#000") => {
   } catch {
     return svgString;
   }
+};
+
+export const cleanSvgWithResvg = async svgString => {
+  // Browser-side fallback: return as-is.
+  // Server-side resvg-js cleanup is applied before fabric.loadSVGFromString.
+  return svgString;
 };

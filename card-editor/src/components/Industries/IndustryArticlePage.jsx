@@ -190,6 +190,19 @@ const getLangPrefix = (pathname = '') => {
   return match ? `/${match[1]}` : '';
 };
 
+const resolvePublicPath = (path = '') => {
+  if (!path) return path;
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedPath = path.replace(/^\/+/, '');
+
+  return `${normalizedBase}${normalizedPath}`;
+};
+
 const IndustryArticlePage = () => {
   const { sectionSlug, articleSlug } = useParams();
   const { pathname } = useLocation();
@@ -212,7 +225,7 @@ const IndustryArticlePage = () => {
       setHasError(false);
 
       try {
-        const response = await fetch(article.src);
+        const response = await fetch(resolvePublicPath(article.src));
         if (!response.ok) {
           throw new Error('Failed to load article page');
         }
@@ -229,7 +242,10 @@ const IndustryArticlePage = () => {
         contentRoot.querySelectorAll('img').forEach((img) => {
           const src = img.getAttribute('src') || '';
           if (src && !src.startsWith('/') && !src.startsWith('http://') && !src.startsWith('https://')) {
-            img.setAttribute('src', `${article.assetsBase}/${src.replace(/^\.\//, '')}`);
+            img.setAttribute(
+              'src',
+              resolvePublicPath(`${article.assetsBase}/${src.replace(/^\.\//, '')}`)
+            );
           }
         });
 

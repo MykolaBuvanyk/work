@@ -58,6 +58,44 @@
     }
   }
 
+  .order-phone-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .order-phone-indicator {
+    position: relative;
+    display: inline-flex;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    flex: 0 0 14px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    border: 2px solid #007aff;
+
+    &::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #007aff;
+    }
+  }
+
+  .row .order-phone-indicator {
+    width: 14px;
+    min-width: 14px;
+    max-width: 14px;
+    flex: 0 0 14px;
+  }
+
   .invoice-section {
     width: 100%;
     min-width: 0;

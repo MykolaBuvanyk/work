@@ -139,6 +139,16 @@ const resolveDeliveryComment = (order) =>
 const resolveVatId = (order) =>
   String(order?.orderMongo?.checkout?.vatNumber || order?.user?.vatNumber || '').trim();
 
+const resolvePhoneConsent = (order) => {
+  const checkout = order?.orderMongo?.checkout || {};
+  return Boolean(
+    checkout?.phoneOk ||
+      checkout?.isPhoneOk ||
+      checkout?.phoneConsent ||
+      checkout?.phoneAllowed
+  );
+};
+
 const resolveCountryLabel = (rawValue) => {
   const value = String(rawValue || '').trim();
   if (!value) return '';
@@ -255,6 +265,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const invoiceAddressEmail = useMemo(() => resolveInvoiceAddressEmail(order), [order]);
   const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
   const vatId = useMemo(() => resolveVatId(order), [order]);
+  const isPhoneConsentChecked = useMemo(() => resolvePhoneConsent(order), [order]);
 
   const invoiceSectionData = useMemo(() => {
     const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
@@ -1518,7 +1529,16 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         <div />
       </div>
       <div className="row">
-        <p>Phone:</p>
+        <p className="order-phone-label">
+          Phone:
+          {isPhoneConsentChecked && (
+            <span
+              className="order-phone-indicator"
+              aria-label="Phone can be used for questions"
+              title="Phone can be used for questions"
+            />
+          )}
+        </p>
         <span>{order.user.phone}</span>
         <div />
       </div>

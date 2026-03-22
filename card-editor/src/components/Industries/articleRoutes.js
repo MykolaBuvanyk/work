@@ -1,6 +1,17 @@
 const articleModules = import.meta.glob('./articles/**/*.jsx', { eager: true });
 
 export const ARTICLE_ROUTE_MAP = {
+  'branding-industrial-labeling': {
+    'branding-and-event-identity': articleModules['./articles/branding-industrial-labeling/branding-and-event-identity.jsx']?.default,
+    'food-industry-safety-hygiene-and-efficiency': articleModules['./articles/branding-industrial-labeling/food-industry-safety-hygiene-and-efficiency.jsx']?.default,
+    'furniture-and-kitchen-manufacturing': articleModules['./articles/branding-industrial-labeling/furniture-and-kitchen-manufacturing.jsx']?.default,
+    'medical-and-healthcare': articleModules['./articles/branding-industrial-labeling/medical-and-healthcare.jsx']?.default,
+    'oils-lubricants-and-industrial-fluids': articleModules['./articles/branding-industrial-labeling/oils-lubricants-and-industrial-fluids.jsx']?.default,
+    'our-technologies-and-materials': articleModules['./articles/branding-industrial-labeling/our-technologies-and-materials.jsx']?.default,
+    'packaging-industry': articleModules['./articles/branding-industrial-labeling/packaging-industry.jsx']?.default,
+    'packaging-systems-and-food-engineering': articleModules['./articles/branding-industrial-labeling/packaging-systems-and-food-engineering.jsx']?.default,
+    'warehouse-logistics-and-industrial-facilities': articleModules['./articles/branding-industrial-labeling/warehouse-logistics-and-industrial-facilities.jsx']?.default,
+  },
   'energy-environment': {
     'biogas': articleModules['./articles/energy-environment/biogas.jsx']?.default,
     'combined-heat-and-power-plants': articleModules['./articles/energy-environment/combined-heat-and-power-plants.jsx']?.default,
@@ -37,6 +48,17 @@ export const ARTICLE_ROUTE_MAP = {
     'refrigeration-installations': articleModules['./articles/mep-building-services/refrigeration-installations.jsx']?.default,
     'sprinkler-installations': articleModules['./articles/mep-building-services/sprinkler-installations.jsx']?.default,
     'ventilation-installations': articleModules['./articles/mep-building-services/ventilation-installations.jsx']?.default,
+  },
+  'manufacturing-heavy-industry': {
+    'automotive-industry-signage-and-labeling': articleModules['./articles/manufacturing-heavy-industry/automotive-industry-signage-and-labeling.jsx']?.default,
+    'aviation-industry': articleModules['./articles/manufacturing-heavy-industry/aviation-industry.jsx']?.default,
+    'battery-factories': articleModules['./articles/manufacturing-heavy-industry/battery-factories.jsx']?.default,
+    'electronics-industry-signage-and-labeling': articleModules['./articles/manufacturing-heavy-industry/electronics-industry-signage-and-labeling.jsx']?.default,
+    'machinery-industry': articleModules['./articles/manufacturing-heavy-industry/machinery-industry.jsx']?.default,
+    'mining-industry': articleModules['./articles/manufacturing-heavy-industry/mining-industry.jsx']?.default,
+    'pulp-and-paper-industry': articleModules['./articles/manufacturing-heavy-industry/pulp-and-paper-industry.jsx']?.default,
+    'steel-and-metal-industry': articleModules['./articles/manufacturing-heavy-industry/steel-and-metal-industry.jsx']?.default,
+    'tool-manufacturing-and-fitness-equipment': articleModules['./articles/manufacturing-heavy-industry/tool-manufacturing-and-fitness-equipment.jsx']?.default,
   },
   'security-automation': {
     'alarm-and-security-installations': articleModules['./articles/security-automation/alarm-and-security-installations.jsx']?.default,

@@ -1,7 +1,27 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './HomePlaceholder.module.css';
 
+const heroImages = [
+  '/images/home/hero-bg.jpg',
+  '/images/home/hero-bg1.jpg',
+  '/images/home/hero-bg2.jpg',
+  '/images/home/hero-bg3.jpg',
+  '/images/home/hero-bg4.jpg',
+];
+
 const HomePlaceholder = () => {
+  const [activeHeroImage, setActiveHeroImage] = useState(0);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setActiveHeroImage((currentImage) => (currentImage + 1) % heroImages.length);
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <main className={styles.page}>
       <section className={styles.topTitleSection}>
@@ -13,6 +33,18 @@ const HomePlaceholder = () => {
       </section>
 
       <section className={styles.heroSection}>
+        <div className={styles.heroBackgrounds} aria-hidden="true">
+          {heroImages.map((image, index) => (
+            <div
+              key={image}
+              className={`${styles.heroBackground} ${
+                index === activeHeroImage ? styles.heroBackgroundActive : ''
+              }`}
+              style={{ backgroundImage: `url(${image})` }}
+            />
+          ))}
+        </div>
+
         <div className={styles.heroOverlay} />
 
         <div className={`${styles.container} ${styles.heroContainer}`}>
@@ -126,9 +158,8 @@ const HomePlaceholder = () => {
                 <li>Electrical panels</li>
                 <li>Technical installations</li>
                 <li>Offices</li>
-                <li>- exactly the way you need them.</li>
               </ul>
-
+              <p style={{ color: '#006ca4' }}>— exactly the way you need them.</p>
               <p>
                 Whether you need one sign or a large batch, SignXpert delivers
                 reliable quality and fast production.

@@ -31,10 +31,10 @@ const MAX_SIGNS_REACHED_MESSAGE =
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
 const COLOR_THEME_PRESETS = [
   { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
-  { index: 1, textColor: '#0000FF', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 1, textColor: '#00558b', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
   { index: 2, textColor: '#FF0000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
   { index: 3, textColor: '#FFFFFF', backgroundColor: '#000000', backgroundType: 'solid' },
-  { index: 4, textColor: '#FFFFFF', backgroundColor: '#0000FF', backgroundType: 'solid' },
+  { index: 4, textColor: '#FFFFFF', backgroundColor: '#00558b', backgroundType: 'solid' },
   { index: 5, textColor: '#FFFFFF', backgroundColor: '#FF0000', backgroundType: 'solid' },
   { index: 6, textColor: '#FFFFFF', backgroundColor: '#018001', backgroundType: 'solid' },
   { index: 7, textColor: '#000000', backgroundColor: '#FFFF00', backgroundType: 'solid' },

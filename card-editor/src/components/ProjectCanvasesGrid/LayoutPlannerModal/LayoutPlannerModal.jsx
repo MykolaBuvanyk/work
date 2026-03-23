@@ -2536,7 +2536,11 @@ const collectBorderCandidateNodes = (rootElement, metadata) => {
   return nodes;
 };
 
-const applyCustomBorderOverrides = (rootElement, metadata) => {
+const applyCustomBorderOverrides = (
+  rootElement,
+  metadata,
+  { strokeMode = "contour" } = {}
+) => {
   if (!rootElement || !metadata) return;
   if (metadata.mode && metadata.mode !== "custom") return;
 
@@ -2570,12 +2574,51 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     );
   };
 
+  const applyStrokeWidthRecursive = (node, strokeWidth) => {
+    if (!node || !strokeWidth) return;
+    if (node.nodeType !== 1) return;
+
+    const tag = node.nodeName?.toLowerCase?.() || "";
+    if (GEOMETRY_TAG_SET.has(tag)) {
+      node.setAttribute("stroke-width", strokeWidth);
+      node.setAttribute("vector-effect", "non-scaling-stroke");
+
+      const styleAttr = node.getAttribute("style");
+      if (styleAttr) {
+        const filtered = styleAttr
+          .split(";")
+          .map((part) => part.trim())
+          .filter((part) => part && !/^stroke-width\s*:/i.test(part));
+        if (filtered.length) {
+          node.setAttribute("style", filtered.join("; "));
+        } else {
+          node.removeAttribute("style");
+        }
+      }
+    }
+
+    Array.from(node.children || []).forEach((child) =>
+      applyStrokeWidthRecursive(child, strokeWidth)
+    );
+  };
+
   const processNode = (node) => {
     if (!node || processed.has(node)) return;
     processed.add(node);
 
-    // Export/PDF requires contour geometry, not visual thick stroke.
-    const resolvedBorderStrokeWidth = String(CONTOUR_STROKE_WIDTH_PX);
+    const thicknessPxRaw = Number(metadata?.thicknessPx);
+    let resolvedBorderStrokeWidth = null;
+    if (strokeMode === "visual") {
+      if (Number.isFinite(thicknessPxRaw) && thicknessPxRaw > 0) {
+        resolvedBorderStrokeWidth = String(thicknessPxRaw);
+      } else {
+        // Preview should match canvas visual thickness (2mm), which is rendered from 4mm stroke source.
+        resolvedBorderStrokeWidth = String(CUSTOM_BORDER_REAPPLY_STROKE_PX);
+      }
+    } else {
+      // Export/PDF requires contour geometry, not visual thick stroke.
+      resolvedBorderStrokeWidth = String(CONTOUR_STROKE_WIDTH_PX);
+    }
 
     let workingNode = node;
 
@@ -2638,7 +2681,7 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
     // Then recolor that shifted custom border node and keep the generated inner contour as green too.
     applyStrokeFillRecursive(workingNode, stroke, fill);
     if (resolvedBorderStrokeWidth) {
-      workingNode.setAttribute("stroke-width", resolvedBorderStrokeWidth);
+      applyStrokeWidthRecursive(workingNode, resolvedBorderStrokeWidth);
     }
     workingNode.setAttribute("data-export-border", metadata.mode || "custom");
 
@@ -2654,7 +2697,9 @@ const applyCustomBorderOverrides = (rootElement, metadata) => {
         inner.setAttribute("fill", fill);
         inner.setAttribute("stroke-opacity", "1");
         inner.setAttribute("fill-opacity", "1");
-        if (!inner.getAttribute("stroke-width")) {
+        if (resolvedBorderStrokeWidth) {
+          applyStrokeWidthRecursive(inner, resolvedBorderStrokeWidth);
+        } else if (!inner.getAttribute("stroke-width")) {
           inner.setAttribute("stroke-width", "1");
         }
         inner.setAttribute("vector-effect", "non-scaling-stroke");
@@ -5384,7 +5429,9 @@ const buildPlacementPreview = (placement, options = {}) => {
       }
 
       // Re-apply custom border geometry after clipping so outward offset is preserved.
-      applyCustomBorderOverrides(exportElement, customBorder);
+      applyCustomBorderOverrides(exportElement, customBorder, {
+        strokeMode: "contour",
+      });
 
       if (enableGaps) {
         applyCenteredGapsToCanvasOutline(exportElement, OUTLINE_CENTER_GAP_PX);
@@ -5465,7 +5512,9 @@ const buildPlacementPreview = (placement, options = {}) => {
       }
 
       // Keep preview contour behavior consistent with export after clipping.
-      applyCustomBorderOverrides(previewElement, customBorder);
+      applyCustomBorderOverrides(previewElement, customBorder, {
+        strokeMode: "visual",
+      });
 
       if (hideFrames) {
         stripPreviewFrames(previewElement);

@@ -13,7 +13,8 @@ const ZOOM_IN_FACTOR = 1.15;
 
 // Modal to show current Fabric canvas snapshot
 const PreviewModal = ({ canvas, onClose }) => {
-  const [dataUrl, setDataUrl] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [downloadUrl, setDownloadUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -46,40 +47,29 @@ const PreviewModal = ({ canvas, onClose }) => {
 
       svg = await embedFontsIntoSvgMarkup(sanitizedSvg, fontFamilies);
 
-      // Force real-world units in the exported SVG so LightBurn measures correctly.
-      // We prefer the stored design dimensions (mm) if present.
+      let previewDataUri = null;
       try {
-        const PX_PER_MM = 72 / 25.4;
-        const wPx = Number(canvas.getWidth?.() ?? canvas.width ?? 0);
-        const hPx = Number(canvas.getHeight?.() ?? canvas.height ?? 0);
-        const storedW = Number(canvas.get?.("designWidthMm"));
-        const storedH = Number(canvas.get?.("designHeightMm"));
-        const wMm = Number.isFinite(storedW) && storedW > 0 ? storedW : (wPx / PX_PER_MM);
-        const hMm = Number.isFinite(storedH) && storedH > 0 ? storedH : (hPx / PX_PER_MM);
-
-        const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
-        const svgEl = doc.querySelector("svg");
-        if (svgEl && wPx > 0 && hPx > 0 && wMm > 0 && hMm > 0) {
-          // Keep some decimals to avoid quantization for small holes.
-          const wMmStr = String(Math.round(wMm * 1000) / 1000);
-          const hMmStr = String(Math.round(hMm * 1000) / 1000);
-          svgEl.setAttribute("width", `${wMmStr}mm`);
-          svgEl.setAttribute("height", `${hMmStr}mm`);
-          // Always enforce canonical viewBox to avoid inheriting stale scaled bounds.
-          svgEl.setAttribute("viewBox", `0 0 ${wPx} ${hPx}`);
-          // Avoid stretching when opening in different viewers.
-          if (!svgEl.getAttribute("preserveAspectRatio")) {
-            svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
-          }
-          svg = new XMLSerializer().serializeToString(svgEl);
-        }
+        previewDataUri = canvas.toDataURL?.({
+          format: "png",
+          multiplier: 2,
+          enableRetinaScaling: true,
+        });
       } catch {
-        // ignore unit normalization errors
+        previewDataUri = null;
       }
-      const url =
+
+      if (!previewDataUri) {
+        previewDataUri =
+          "data:image/svg+xml;charset=utf-8," +
+          encodeURIComponent(svg || "<svg xmlns='http://www.w3.org/2000/svg'/>");
+      }
+
+      const downloadDataUri =
         "data:image/svg+xml;charset=utf-8," +
         encodeURIComponent(svg || "<svg xmlns='http://www.w3.org/2000/svg'/>");
-      setDataUrl(url);
+
+      setPreviewUrl(previewDataUri);
+      setDownloadUrl(downloadDataUri);
     } finally {
       setLoading(false);
     }
@@ -100,7 +90,7 @@ const PreviewModal = ({ canvas, onClose }) => {
   useEffect(() => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
-  }, [dataUrl]);
+  }, [previewUrl]);
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -120,7 +110,7 @@ const PreviewModal = ({ canvas, onClose }) => {
   }, []);
 
   const handlePointerDown = useCallback((event) => {
-    if (!dataUrl) return;
+    if (!previewUrl) return;
     if (event.button !== undefined && event.button !== 0 && event.pointerType !== "touch") return;
 
     event.preventDefault();
@@ -134,7 +124,7 @@ const PreviewModal = ({ canvas, onClose }) => {
       originY: offset.y
     };
     setIsDragging(true);
-  }, [dataUrl, offset.x, offset.y]);
+  }, [previewUrl, offset.x, offset.y]);
 
   const handlePointerMove = useCallback((event) => {
     const state = dragStateRef.current;
@@ -163,22 +153,22 @@ const PreviewModal = ({ canvas, onClose }) => {
   }, []);
 
   const handleWheel = useCallback((event) => {
-    if (!dataUrl) return;
+    if (!previewUrl) return;
     event.preventDefault();
     event.stopPropagation();
     const factor = event.deltaY > 0 ? 0.9 : 1.1;
     setZoom((prev) => clampZoom(prev * factor));
-  }, [clampZoom, dataUrl]);
+  }, [clampZoom, previewUrl]);
 
   useEffect(() => {
     const node = viewportRef.current;
-    if (!node || !dataUrl) return;
+    if (!node || !previewUrl) return;
 
     node.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
       node.removeEventListener("wheel", handleWheel);
     };
-  }, [handleWheel, dataUrl]);
+  }, [handleWheel, previewUrl]);
 
   const zoomPercent = `${Math.round(zoom * 100)}%`;
   const canZoomOut = zoom > MIN_ZOOM + 0.01;
@@ -222,9 +212,9 @@ const PreviewModal = ({ canvas, onClose }) => {
             <button onClick={makeSnapshot} disabled={loading}>
               {loading ? "Updating..." : "Refresh"}
             </button>
-            {dataUrl && (
+            {downloadUrl && (
               <a
-                href={dataUrl}
+                href={downloadUrl}
                 download={`canvas-export-${Date.now()}.svg`}
                 className={styles.downloadBtn}
               >
@@ -232,7 +222,7 @@ const PreviewModal = ({ canvas, onClose }) => {
               </a>
             )}
           </div>
-          {dataUrl && (
+          {previewUrl && (
             <div className={styles.zoomControls}>
               <button onClick={() => handleZoomChange(ZOOM_OUT_FACTOR)} disabled={!canZoomOut}>
                 −
@@ -248,7 +238,7 @@ const PreviewModal = ({ canvas, onClose }) => {
           )}
         </div>
         <div className={styles.previewArea}>
-          {dataUrl ? (
+          {previewUrl ? (
             <div
               ref={viewportRef}
               className={`${styles.previewViewport} ${isDragging ? styles.previewViewportDragging : ""}`}
@@ -260,7 +250,7 @@ const PreviewModal = ({ canvas, onClose }) => {
               onDoubleClick={handleZoomReset}
             >
               <img
-                src={dataUrl}
+                src={previewUrl}
                 alt="Canvas preview"
                 style={{
                   transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,

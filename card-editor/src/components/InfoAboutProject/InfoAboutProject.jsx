@@ -349,6 +349,8 @@ const InfoAboutProject = () => {
   const { canvas } = useCanvasContext();
 
   const user=useSelector((state)=>state.user);
+  const normalizedUserType = String(user?.user?.type || "").trim().toLowerCase();
+  const isAdminUser = normalizedUserType === "admin";
 
   const { price, netAfterDiscount, discountPercent, discountAmount, orderSubtotal, accessoriesPrice, totalPrice, isLoading } =
     useCurrentSignPrice();
@@ -542,6 +544,7 @@ const InfoAboutProject = () => {
         checkout: {
           deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
+          phoneOk: Boolean(checkoutTotals?.phoneOk),
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),
           vatNumber: String(checkoutTotals?.vatNumber || ""),
@@ -629,6 +632,12 @@ const InfoAboutProject = () => {
     setIsPreparingOrderSummary(true);
     syncAccessoriesToProject(snapshot);
     setCartAccessories(snapshot);
+
+    if (!isAdminUser) {
+      setIsCartAccessoriesOpen(true);
+      setIsPreparingOrderSummary(false);
+      return;
+    }
 
     try {
       const projectSnapshot = await saveCurrentProject(canvas);
@@ -786,16 +795,18 @@ const InfoAboutProject = () => {
         />
       )}
 
-      <OrderTestModal
-        isOpen={isOrderTestOpen}
-        onClose={handleOrderTestClose}
-        onProceed={handleProceedToAccessories}
-        proceedDisabled={isPreparingOrderSummary}
-        projectTitle={orderTestSummary?.projectTitle || projectTitle}
-        totalSigns={orderTestSummary?.totalSigns || 0}
-        accessories={orderTestSummary?.accessories || []}
-        signs={orderTestSummary?.signs || []}
-      />
+      {isAdminUser && (
+        <OrderTestModal
+          isOpen={isOrderTestOpen}
+          onClose={handleOrderTestClose}
+          onProceed={handleProceedToAccessories}
+          proceedDisabled={isPreparingOrderSummary}
+          projectTitle={orderTestSummary?.projectTitle || projectTitle}
+          totalSigns={orderTestSummary?.totalSigns || 0}
+          accessories={orderTestSummary?.accessories || []}
+          signs={orderTestSummary?.signs || []}
+        />
+      )}
 
       <CartAccessoriesModal
         isOpen={isCartAccessoriesOpen}

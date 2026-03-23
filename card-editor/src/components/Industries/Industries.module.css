@@ -19,6 +19,11 @@
   text-decoration: underline;
 }
 
+.articleTitle {
+  text-align: left;
+  text-decoration: none;
+}
+
 .industryRow {
   display: grid;
   grid-template-columns: 1fr 0.95fr;
@@ -87,7 +92,8 @@
 }
 
 .articleContent .float-img,
-.articleContent .float-image {
+.articleContent .float-image,
+.articleContent > img {
   float: right;
   width: 600px;
   height: 360px;

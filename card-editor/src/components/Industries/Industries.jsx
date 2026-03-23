@@ -161,18 +161,46 @@ const INDUSTRY_SECTIONS = [
   },
   {
     title: 'Manufacturing & Heavy Industry',
+    slug: 'manufacturing-heavy-industry',
     image: '/images/industries/manufacturing-heavy-industry.jpg',
     reverse: false,
     items: [
-      'Automotive Industry Signage and Labeling',
-      'Aviation Industry: Precision, Safety, and High-Performance Infrastructure',
-      'Electronics Industry: High-Tech Manufacturing',
-      'Steel & Metal Industry: Organized and Safe Labeling',
-      'Mining Industry: Safety, Durability, and Operational Control',
-      'Pulp and Paper Industry: Safe and Efficient Labeling',
-      'Machinery Industry: Precision Engineering and Industrial Performance',
-      'Tool Manufacturing and Fitness Equipment: High-Performance Branding and Serial Identification',
-      'Battery Factories: Safety, Efficiency, and Durable Signage',
+      {
+        label: 'Automotive Industry Signage and Labeling',
+        slug: 'automotive-industry-signage-and-labeling',
+      },
+      {
+        label: 'Aviation Industry: Precision, Safety, and High-Performance Infrastructure',
+        slug: 'aviation-industry',
+      },
+      {
+        label: 'Electronics Industry: High-Tech Manufacturing',
+        slug: 'electronics-industry-signage-and-labeling',
+      },
+      {
+        label: 'Steel & Metal Industry: Organized and Safe Labeling',
+        slug: 'steel-and-metal-industry',
+      },
+      {
+        label: 'Mining Industry: Safety, Durability, and Operational Control',
+        slug: 'mining-industry',
+      },
+      {
+        label: 'Pulp and Paper Industry: Safe and Efficient Labeling',
+        slug: 'pulp-and-paper-industry',
+      },
+      {
+        label: 'Machinery Industry: Precision Engineering and Industrial Performance',
+        slug: 'machinery-industry',
+      },
+      {
+        label: 'Tool Manufacturing and Fitness Equipment: High-Performance Branding and Serial Identification',
+        slug: 'tool-manufacturing-and-fitness-equipment',
+      },
+      {
+        label: 'Battery Factories: Safety, Efficiency, and Durable Signage',
+        slug: 'battery-factories',
+      },
     ],
   },
   {
@@ -197,18 +225,46 @@ const INDUSTRY_SECTIONS = [
   },
   {
     title: 'Branding & Industrial Labeling',
+    slug: 'branding-industrial-labeling',
     image: '/images/industries/branding-industrial-labeling.jpg',
     reverse: false,
     items: [
-      'Food Industry: Safety, Hygiene, and Efficiency',
-      'Furniture and Kitchen Manufacturing: Premium Branding and Functional Labeling',
-      'Warehouse Logistics and Industrial Facilities: Precision Identification and Asset Tracking',
-      'Medical and Healthcare: Hygienic Labeling and Patient Identification',
-      'Oils, Lubricants, and Industrial Fluids: Chemically Resistant Identification',
-      'Branding and Event Identity: Premium Signage and Decorative Labeling',
-      'Packaging Industry: Innovation, Protection, and Efficiency',
-      'Our Technologies and Materials',
-      'Packaging Systems and Food Engineering',
+      {
+        label: 'Food Industry: Safety, Hygiene, and Efficiency',
+        slug: 'food-industry-safety-hygiene-and-efficiency',
+      },
+      {
+        label: 'Furniture and Kitchen Manufacturing: Premium Branding and Functional Labeling',
+        slug: 'furniture-and-kitchen-manufacturing',
+      },
+      {
+        label: 'Warehouse Logistics and Industrial Facilities: Precision Identification and Asset Tracking',
+        slug: 'warehouse-logistics-and-industrial-facilities',
+      },
+      {
+        label: 'Medical and Healthcare: Hygienic Labeling and Patient Identification',
+        slug: 'medical-and-healthcare',
+      },
+      {
+        label: 'Oils, Lubricants, and Industrial Fluids: Chemically Resistant Identification',
+        slug: 'oils-lubricants-and-industrial-fluids',
+      },
+      {
+        label: 'Branding and Event Identity: Premium Signage and Decorative Labeling',
+        slug: 'branding-and-event-identity',
+      },
+      {
+        label: 'Packaging Industry: Innovation, Protection, and Efficiency',
+        slug: 'packaging-industry',
+      },
+      {
+        label: 'Our Technologies and Materials',
+        slug: 'our-technologies-and-materials',
+      },
+      {
+        label: 'Packaging Systems and Food Engineering',
+        slug: 'packaging-systems-and-food-engineering',
+      },
     ],
   },
 ];

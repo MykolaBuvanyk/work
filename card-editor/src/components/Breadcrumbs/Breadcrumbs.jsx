@@ -62,6 +62,24 @@ const LABELS = {
   'tele-and-data-installations': 'Tele- and Data Installations',
   telecom: 'Telecom',
   'it-infrastructure-and-data-centers': 'IT Infrastructure and Data Centers',
+  'automotive-industry-signage-and-labeling': 'Automotive Industry Signage and Labeling',
+  'aviation-industry': 'Aviation Industry',
+  'battery-factories': 'Battery Factories',
+  'electronics-industry-signage-and-labeling': 'Electronics Industry Signage and Labeling',
+  'machinery-industry': 'Machinery Industry',
+  'mining-industry': 'Mining Industry',
+  'pulp-and-paper-industry': 'Pulp and Paper Industry',
+  'steel-and-metal-industry': 'Steel and Metal Industry',
+  'tool-manufacturing-and-fitness-equipment': 'Tool Manufacturing and Fitness Equipment',
+  'food-industry-safety-hygiene-and-efficiency': 'Food Industry',
+  'furniture-and-kitchen-manufacturing': 'Furniture and Kitchen Manufacturing',
+  'warehouse-logistics-and-industrial-facilities': 'Warehouse Logistics and Industrial Facilities',
+  'medical-and-healthcare': 'Medical and Healthcare',
+  'oils-lubricants-and-industrial-fluids': 'Oils, Lubricants, and Industrial Fluids',
+  'branding-and-event-identity': 'Branding and Event Identity',
+  'packaging-industry': 'Packaging Industry',
+  'our-technologies-and-materials': 'Our Technologies and Materials',
+  'packaging-systems-and-food-engineering': 'Packaging Systems and Food Engineering',
 };
 
 const HIDDEN_ROOT_SEGMENTS = new Set(['', 'share']);
@@ -69,6 +87,8 @@ const HIDDEN_MIDDLE_SEGMENTS = new Set([
   'infrastructure-mobility',
   'energy-environment',
   'mep-building-services',
+  'branding-industrial-labeling',
+  'manufacturing-heavy-industry',
   'security-automation',
   'it-telecom',
 ]);

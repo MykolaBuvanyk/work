@@ -5,7 +5,7 @@ const IndustryArticleLayout = ({ title, html }) => {
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.pageTitle}>{title}</h1>
+        <h1 className={`${styles.pageTitle} ${styles.articleTitle}`}>{title}</h1>
         <section className={styles.articleContent} dangerouslySetInnerHTML={{ __html: html }} />
       </div>
     </main>

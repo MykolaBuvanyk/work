@@ -96,7 +96,7 @@ const CartAccessoriesModal = ({
           <h3>{title}</h3>
           <div className={styles.headerActions}>
             <SimpleButton
-              text={proceedDisabled ? "Processing..." : "Proceed to checkout"}
+              text={proceedDisabled ? "Processing..." : "Continue to checkout"}
               onClick={proceedDisabled ? undefined : onProceed}
               withIcon={true}
             />

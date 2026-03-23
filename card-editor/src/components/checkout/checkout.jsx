@@ -460,6 +460,7 @@ export default function Checkout({
 				totalSum: Number(totalAmount || 0),
 				deliveryPrice: Number(deliveryPrice || 0),
 				deliveryLabel: String(delivery || ''),
+				phoneOk: Boolean(isPhoneOk),
 				vatPercent: Number(vatPercentForCheckout || 0),
 				vatAmount: Number(vatAmountForCheckout || 0),
 				vatNumber: String(reduxUser?.vatNumber || '').trim(),
@@ -597,7 +598,12 @@ export default function Checkout({
 					<header className='checkout__header'>
 						<SimpleButton text={'Back to accessories'} onClick={onBackToAccessories || onClose} />
 
-						<SimpleButton text={'Place order'} onClick={handlePlaceOrder} withIcon />
+						<SimpleButton
+							text={'Proceed to Payment'}
+							onClick={handlePlaceOrder}
+							withIcon
+							className='checkout__proceed-btn'
+						/>
 
 						<button className='checkout__close' onClick={onClose}>
 							<img src={CloseIcon} alt='close' />

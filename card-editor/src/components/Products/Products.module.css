@@ -48,8 +48,7 @@ ul {
 }
 
 .container {
-  width: min(var(--products-container), calc(100% - 40px));
-  margin: 0 auto;
+  width: 100%;
 }
 
 .section {
@@ -63,13 +62,13 @@ ul {
 
 .sectionHeadingHero {
   margin-bottom: 55px;
-  font-size: 40px;
+  font-size: 36px;
   font-weight: bold;
   font-family: Inter, Arial, sans-serif;
 }
 
 .sectionTitle {
-  font-size: 40px;
+  font-size: 36px;
   line-height: 1.18;
 }
 
@@ -110,36 +109,36 @@ ul {
 
 .heroGrid {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.95fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0;
-  align-items: center;
-}
-
-/* Break out of the centered container so hero grid spans full viewport width */
-.heroGrid {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
+  align-items: stretch;
+  width: 100%;
 }
 
 .heroVisual {
-  padding: 10px 0;
+  width: auto;
+  height: auto;
 }
 
 .heroVisual img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
+
 }
 
 .heroContent {
-  font-size: 1.02rem;
   color: var(--products-muted);
-  padding: 46px 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  margin: 0 auto;
+  width: 80%;
 }
-
 .heroAddTitle{
   font-weight: bold;
-  font-size: 36px;
+  font-size: 32px;
   line-height: 120%;
   color: black;
   margin-bottom: 24px;
@@ -225,9 +224,6 @@ ul {
 .features {
   background: #e7f2f8;
   padding: 60px 80px;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
 }
 
 .features .container {
@@ -306,12 +302,6 @@ ul {
   align-items: center;
 }
 
-.infoBlockWide {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-}
-
 .infoBlockContainerWide {
   width: 100%;
   max-width: none;
@@ -330,9 +320,13 @@ ul {
 }
 
 .infoBlockWide .infoBlockContent {
-  padding: 30px 60px;
   color: #111;
-  font-size: 18px;
+  font-size: 16px;
+  width: 85%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
 }
 .infoBlockWide .infoBlockContent *{
   margin-top: 0;
@@ -350,10 +344,10 @@ ul {
 }
 
 .infoBlockWide .infoBlockBadge img {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  object-fit: cover;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
 }
 
 .infoBlockCtaWrap {
@@ -376,6 +370,12 @@ ul {
   color: #000;
   font-weight: 700;
   text-decoration: none;
+  transition: background-color 200ms ease-in-out, color 200ms ease-in-out;
+}
+
+.infoBlockCta:hover{
+  background: #006ca4;
+  color: #ffd000;
 }
 
 .infoBlockGridReversed {
@@ -439,9 +439,6 @@ ul {
 }
 
 .categories {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
   background: #e7f2f8;
   margin-bottom: 100px;
 }
@@ -460,7 +457,7 @@ ul {
   margin-top: 26px;
 }
 .infoBlockContentTitle{
-  font-size: 36px;
+  font-size: 28px;
   max-width: 75%;
 }
 .plateCard {

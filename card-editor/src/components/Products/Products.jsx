@@ -269,27 +269,27 @@ const Products = () => {
       <section className={`${styles.section} ${styles.infoBlock} ${styles.infoBlockWide} ${styles.infoBlockSecondary}`}>
         <div className={`${styles.container} ${styles.infoBlockContainerWide}`}>
           <div className={`${styles.infoBlockGrid} ${styles.infoBlockGridReversed}`}>
-            <div className={styles.infoBlockContent}>
-              <h2 className={`${styles.sectionTitle} ${styles.infoBlockSecondaryTitle}`}>
-                Custom Production
-                <br />
-                with <span style={{ color: '#006CA4' }}>SignXpert</span>
-              </h2>
-              <p style={{ fontWeight: 'bold', marginBottom: '20px' }}>
-                At SignXpert, every engraved sign can be customized to your needs.
-              </p>
-              <p>
-                Whether you need a single sign or large production batches, we provide reliable quality and precise
-                engraving.
-              </p>
-              <p>
-                You can design your sign directly in our online sign editor, upload your own files or contact us with your
-                requirements.
-              </p>
-              <p>
-                Our goal is to provide durable, professional and easy-to-order engraved plastic signs for industry and
-                businesses.
-              </p>
+            <div className={`${styles.infoBlockContent}`}>
+                <h2 className={`${styles.sectionTitle} ${styles.infoBlockSecondaryTitle}`}>
+                  Custom Production
+                  <br />
+                  with <span style={{ color: '#006CA4' }}>SignXpert</span>
+                </h2>
+                <p style={{ fontWeight: 'bold', marginBottom: '20px' }}>
+                  At SignXpert, every engraved sign can be customized to your needs.
+                </p>
+                <p>
+                  Whether you need a single sign or large production batches, we provide reliable quality and precise
+                  engraving.
+                </p>
+                <p>
+                  You can design your sign directly in our online sign editor, upload your own files or contact us with your
+                  requirements.
+                </p>
+                <p>
+                  Our goal is to provide durable, professional and easy-to-order engraved plastic signs for industry and
+                  businesses.
+                </p>
             </div>
 
             <aside className={styles.infoBlockBadge}>

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Products.module.css';
 
 const usesItems = [
@@ -125,33 +126,41 @@ const HoleDots = () => (
 );
 
 const Products = () => {
+  useEffect(() => {
+    const id = 'inter-font-products';
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap';
+      document.head.appendChild(link);
+    }
+    return () => {
+      const el = document.getElementById(id);
+      if (el) el.parentNode.removeChild(el);
+    };
+  }, []);
+
   return (
-    <main className={styles.page}>
+    <main className={styles.page} style={{ fontFamily: 'Inter, sans-serif' }}>
       <section className={`${styles.hero} ${styles.section}`}>
         <div className={styles.container}>
           <header className={`${styles.sectionHeading} ${styles.sectionHeadingHero}`}>
-            <h1>Custom Engraved Plastic Signs and Nameplates</h1>
-            <p className={`${styles.sectionHeadingLead} ${styles.sectionHeadingLeadUnderlined}`}>
-              At SignXpert, we produce high-quality engraved plastic signs, nameplates and industrial labels using durable
-              two-layer engraving plastic.
-            </p>
+            <h1><span style={{ color: '#006CA4' }}>Custom </span>Engraved Plastic Signs and Nameplates</h1>
           </header>
 
           <div className={styles.heroGrid}>
             <div className={styles.heroVisual}>
-              <img src="/images/products/hero-signs-main.png" alt="Engraved plastic signs and labels" />
+              <img src="/images/products/hero-bg.png" alt="Engraved plastic signs and labels" />
             </div>
 
             <div className={styles.heroContent}>
-              <p className={styles.heroIntro}>
-                Our engraved signs provide clear, permanent and professional identification for machines, electrical
-                installations, offices, buildings and workplaces.
-              </p>
-
-              <p>
-                Using precision laser engraving, the top layer of the plastic is engraved to reveal the contrasting color
-                layer underneath. This creates high-contrast markings that remain readable for years, even in demanding
-                industrial environments.
+              <h2 className={styles.heroAddTitle}>
+                At <span style={{ color: '#006CA4' }}>SignXpert </span>, we produce high-quality engraved plastic signs, nameplates and industrial labels using durable two-layer engraving plastic.
+              </h2>
+              <p className={styles.heroPara}>Our engraved signs provide clear, permanent and professional identification for machines, electrical installations, offices, buildings and workplaces.</p>
+              <p className={styles.heroAddPara}>
+                Using precision laser engraving, the top layer of the plastic is engraved to reveal the contrasting color layer underneath. This creates high-contrast markings that remain readable for years, even in demanding industrial environments.
               </p>
             </div>
           </div>
@@ -161,7 +170,7 @@ const Products = () => {
       <section className={`${styles.section} ${styles.uses}`}>
         <div className={styles.container}>
           <div className={styles.sectionHeading}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
+            <h2 className={`${styles.sectionTitle}`}>
               Our engraved plastic signs are widely used in:
             </h2>
           </div>
@@ -182,8 +191,10 @@ const Products = () => {
       <section className={`${styles.section} ${styles.features}`}>
         <div className={styles.container}>
           <div className={`${styles.sectionHeading} ${styles.sectionHeadingLeftText}`}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
-              Product Features
+            <h2 className={`${styles.sectionTitle} `}>
+              <span className={styles.featuresTitleAccent}>Product</span>
+              <br />
+              Features
             </h2>
             <p className={`${styles.sectionHeadingDescription} ${styles.sectionHeadingDescriptionLeft}`}>
               <strong>
@@ -208,22 +219,22 @@ const Products = () => {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.infoBlock}`}>
-        <div className={styles.container}>
+      <section className={`${styles.section} ${styles.infoBlock} ${styles.infoBlockWide} ${styles.infoBlockPrimary}`}>
+        <div className={`${styles.container} ${styles.infoBlockContainerWide}`}>
           <div className={styles.sectionHeading}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
-              Design Your Engraved Sign Online
+            <h2 className={`${styles.sectionTitle} `}>
+              Design Your Engraved <span style={{ color: '#006CA4' }}>Sign Online </span>
             </h2>
           </div>
 
           <div className={styles.infoBlockGrid}>
             <div className={styles.infoBlockContent}>
-              <p>
+              <h3 className={styles.infoBlockContentTitle}>
                 <strong>
-                  With the SignXpert <a href="#">Online Editor</a>, creating a custom engraved sign is simple and fast.
+                  With the SignXpert <a href="#" className={styles.onlineEditorLink}>Online Editor</a>, creating a custom engraved sign is simple and fast.
                 </strong>
-              </p>
-              <p>You can design your sign directly in your browser and see every change instantly.</p>
+              </h3>
+              <p style={{ color: '#006CA4', fontSize: '18px', fontWeight: 'bold' }}>You can design your sign directly in your browser and see every change instantly.</p>
               <p>Features of our online editor:</p>
 
               <ul className={styles.bulletList}>
@@ -243,24 +254,29 @@ const Products = () => {
             </div>
 
             <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/badge-online-editor.png" alt="Design your sign by SignXpert" />
+              <img src="/images/products/design.jpg" alt="Design your sign by SignXpert" />
             </aside>
+          </div>
+
+          <div className={styles.infoBlockCtaWrap}>
+            <Link to=".." relative="path" className={styles.infoBlockCta}>
+              Design Your Sign
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.infoBlock}`}>
-        <div className={styles.container}>
-          <div className={styles.sectionHeading}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
-              Custom Production with SignXpert
-            </h2>
-          </div>
-
-          <div className={styles.infoBlockGrid}>
+      <section className={`${styles.section} ${styles.infoBlock} ${styles.infoBlockWide} ${styles.infoBlockSecondary}`}>
+        <div className={`${styles.container} ${styles.infoBlockContainerWide}`}>
+          <div className={`${styles.infoBlockGrid} ${styles.infoBlockGridReversed}`}>
             <div className={styles.infoBlockContent}>
-              <p>
-                <strong>At SignXpert, every engraved sign can be customized to your needs.</strong>
+              <h2 className={`${styles.sectionTitle} ${styles.infoBlockSecondaryTitle}`}>
+                Custom Production
+                <br />
+                with <span style={{ color: '#006CA4' }}>SignXpert</span>
+              </h2>
+              <p style={{ fontWeight: 'bold', marginBottom: '20px' }}>
+                At SignXpert, every engraved sign can be customized to your needs.
               </p>
               <p>
                 Whether you need a single sign or large production batches, we provide reliable quality and precise
@@ -277,42 +293,7 @@ const Products = () => {
             </div>
 
             <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/badge-custom-production.png" alt="Custom production by SignXpert" />
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className={`${styles.section} ${styles.infoBlock}`}>
-        <div className={styles.container}>
-          <div className={styles.sectionHeading}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
-              Fast Production and Delivery
-            </h2>
-          </div>
-
-          <div className={styles.infoBlockGrid}>
-            <div className={styles.infoBlockContent}>
-              <p>
-                <strong>At SignXpert, we focus on fast and efficient production.</strong>
-              </p>
-              <p>
-                Because our ordering system is fully online, we can process orders quickly and ensure reliable delivery.
-              </p>
-
-              <ul className={styles.bulletList}>
-                <li>Order before 16:00 for next-day dispatch</li>
-                <li>fast production with modern laser engraving technology</li>
-                <li>reliable delivery across Germany and Europe</li>
-              </ul>
-
-              <p>
-                This makes SignXpert an ideal partner when you need engraved signs quickly and professionally produced.
-              </p>
-            </div>
-
-            <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/badge-fast-delivery.png" alt="Fast production and fast delivery by SignXpert" />
+              <img src="/images/products/design1.jpg" alt="Custom production by SignXpert" />
             </aside>
           </div>
         </div>
@@ -321,8 +302,8 @@ const Products = () => {
       <section className={`${styles.section} ${styles.categories}`}>
         <div className={styles.container}>
           <div className={styles.sectionHeading}>
-            <h2 className={`${styles.sectionTitle} ${styles.sectionTitleRegular} ${styles.sectionTitleUnderlined}`}>
-              Our Product Categories and Typical Applications
+            <h2 className={`${styles.sectionTitle} `}>
+              Our <span style={{ color: '#006CA4' }}>Product Categories</span> and Typical Applications
             </h2>
           </div>
 

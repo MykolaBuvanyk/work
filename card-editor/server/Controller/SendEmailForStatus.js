@@ -1,3 +1,4 @@
+import ErrorApi from "../error/ErrorApi.js";
 import sendEmail from "./utils/sendEmail.js";
 
 const formatDate = (date) => {
@@ -1211,7 +1212,41 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
             return false
         }
     }
+    static Contact = async (req, res, next) => {
+        try {
+            const { name, email, question } = req.body;
 
+            if (!name || !email || !question) {
+            throw ErrorApi.badRequest('Missing required fields');
+            }
+
+            const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+
+            if (!ADMIN_EMAIL) {
+            throw ErrorApi.badRequest('Admin email is not configured');
+            }
+
+            const subject = `Request from the contact page from the user ${name} (${email})`;
+
+            const messageHTML = `
+  <p><b>Name:</b> ${name}</p>
+  <p><b>Email:</b> <a href="mailto:${email}">${email}</a></p>
+  <p><b>Question:</b> ${question}</p>
+
+  <p>
+    <a href="mailto:${email}?subject=Re: Your question">
+      Reply to user
+    </a>
+  </p>
+`;
+
+            await sendEmail(ADMIN_EMAIL, messageHTML, subject);
+
+            res.status(200).json({ success: true });
+        } catch (err) {
+            next(ErrorApi.badRequest(err));
+        }
+    };
 }
 
 export default SendEmailForStatus;

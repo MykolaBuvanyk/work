@@ -3,6 +3,10 @@ import './Contacts.scss';
 import { Link } from 'react-router-dom';
 
 const Contacts = () => {
+  const sendWithContact=async(e)=>{
+    e.preventDefault();
+
+  }
   return (
     <div className='contacts-container'>
       <h1>Contacts</h1>
@@ -41,7 +45,7 @@ const Contacts = () => {
 
         <div className="form-column">
           <div className="form-title2">Or use this form to contact us</div>
-          <form onSubmit={(e) => e.preventDefault()}>
+          <form onSubmit={sendWithContact}>
             <div className="input-group">
               <label htmlFor="name">Name</label>
               <input type="text" id="name" />

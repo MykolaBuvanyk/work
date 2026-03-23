@@ -2624,8 +2624,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       <div class="payment-grid">
         <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
         <div>Account holder:</div><div>SignXpert (Kostyantyn Utvenko)</div>
-        <div>IBAN:</div><div>DE25 0101 0101 0101 0101 01</div>
-        <div>BIC / SWIFT:</div><div>COBADEFFXXX</div>
+        <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
+        <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
         <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>
       </div>
     </div>
@@ -2655,11 +2655,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
             </tr>
             <tr>
               <td>IBAN:</td>
-              <td class="footer-value-cell">DE25 0101 0101 0101 0101 01</td>
+              <td class="footer-value-cell">DE78 6535 1260 0134 0819 40</td>
             </tr>
             <tr>
               <td>BIC / SWIFT:</td>
-              <td class="footer-value-cell">COBADEFFXXX</td>
+              <td class="footer-value-cell">SOLADES1BAL</td>
             </tr>
             <tr>
               <td>St.-Nr.:</td>

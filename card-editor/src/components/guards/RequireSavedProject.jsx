@@ -2,7 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const resolveRootPath = (pathname) => {
   const m = String(pathname || '').match(/^\/([a-z]{2})(\/|$)/i);
-  return m ? `/${m[1]}` : '/';
+  return m ? `/${m[1]}/online-sign-editor` : '/online-sign-editor';
 };
 
 export default function RequireSavedProject({ children }) {

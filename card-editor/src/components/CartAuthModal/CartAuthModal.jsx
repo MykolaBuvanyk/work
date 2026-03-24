@@ -48,7 +48,7 @@ const CartAuthModal = ({ isOpen, onClose }) => {
       const res = await $host.post('auth/login', { email, password });
       dispatch(setUser({ token: res.data.token }));
       onClose?.();
-      navigate('/');
+      navigate('/online-sign-editor');
     } catch (err) {
       alert('error');
     } finally {

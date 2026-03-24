@@ -39,7 +39,7 @@ const Header = () => {
   const [urls, setUrls] = useState([
     {
       name: 'Home',
-      url: '/home',
+      url: '/',
     },
     {
       name: 'Registration',
@@ -47,7 +47,7 @@ const Header = () => {
     },
     {
       name: 'New Project',
-      url: '/',
+      url: '/online-sign-editor',
     },
     {
       name: 'Templates',
@@ -77,7 +77,7 @@ const Header = () => {
     const newUrls = [
       {
         name: 'Home',
-        url: '/home',
+        url: '/',
       },
     ];
 
@@ -97,7 +97,7 @@ const Header = () => {
       ...[
         {
           name: 'New Project',
-          url: '/',
+          url: '/online-sign-editor',
         },
         {
           name: 'Products',

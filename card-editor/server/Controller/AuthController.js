@@ -155,7 +155,7 @@ class AuthController {
             <p style="margin: 0 0 30px 0;">Our online editor is available right in your browser — the fastest way to bring your ideas to life.</p>
 
             <div style="text-align: center; margin-bottom: 40px;">
-                <a href="https://sign-xpert.com/editor" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
+                <a href="https://sign-xpert.com/online-sign-editor" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
             </div>
 
             <p style="margin: 0;">Best regards,</p>

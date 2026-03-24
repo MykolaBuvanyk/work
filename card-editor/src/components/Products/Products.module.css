@@ -143,6 +143,18 @@ ul {
   color: black;
   margin-bottom: 24px;
 }
+
+.brandHomeLink,
+.brandHomeLink:visited {
+  color: #006ca4;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.brandHomeLink:hover {
+  text-decoration: underline;
+}
+
 .heroPara{
   color: black;
   font-weight: bold;

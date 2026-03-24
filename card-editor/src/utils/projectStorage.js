@@ -405,7 +405,23 @@ export async function generateCanvasPreviews(canvas, options = {}) {
   const effectivePngMultiplier =
     capMultiplier != null ? Math.max(0.1, Math.min(pngMultiplier, capMultiplier)) : pngMultiplier;
 
+  const hasCorruptedObjects = () => {
+    try {
+      const objs = typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
+      return (objs || []).some(
+        (obj) => !obj || typeof obj.render !== "function" || typeof obj.toObject !== "function"
+      );
+    } catch {
+      return false;
+    }
+  };
+
   try {
+    if (hasCorruptedObjects()) {
+      console.warn("Skipping preview generation due to non-renderable canvas objects");
+      return { previewSvg: "", previewPng: "" };
+    }
+
     if (canvas.toSVG) {
       const rawSvg = canvas.toSVG({
         viewBox: {
@@ -938,6 +954,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "originalSrc",
       "imageSource",
       "isUploadedImage",
+      "isUploadedSvg",
       "filters",
       "isUploadedImage",
 
@@ -1010,12 +1027,16 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "useThemeColor",
       "followThemeFill",
       "followThemeStroke",
+      "svgThemeFillEnabled",
+      "svgThemeStrokeEnabled",
+      "svgEvenOddHoles",
       "initialFillColor",
       "initialStrokeColor",
 
       // Source flags (helpful for restore heuristics)
       "fromIconMenu",
       "fromShapeTab",
+      "isUploadedSvg",
     ];
 
     let json;
@@ -1036,6 +1057,33 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         "Failed to sanitize canvas JSON before export",
         serializationError
       );
+    }
+
+    // Preserve heavy uploaded SVG source safely without passing it through
+    // Fabric's propertiesToInclude pipeline (can throw on some object graphs).
+    try {
+      const canvasObjects =
+        typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
+      if (
+        Array.isArray(json?.objects) &&
+        Array.isArray(canvasObjects) &&
+        json.objects.length === canvasObjects.length
+      ) {
+        json.objects.forEach((serializedObj, idx) => {
+          const liveObj = canvasObjects[idx];
+          if (!serializedObj || !liveObj || liveObj.isUploadedSvg !== true) return;
+
+          const source = String(liveObj.originalSvgSource || "").trim();
+          if (source) {
+            serializedObj.originalSvgSource = source;
+          }
+          if (liveObj.uploadedSvgStrokeOnly === true) {
+            serializedObj.uploadedSvgStrokeOnly = true;
+          }
+        });
+      }
+    } catch (sourceInjectError) {
+      console.warn("Failed to inject uploaded SVG source into export JSON", sourceInjectError);
     }
 
     // ВИПРАВЛЕННЯ: Додаткова очистка від HTMLCanvasElement та інших non-serializable об'єктів
@@ -1846,6 +1894,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
 
       const isUploadedSvgObject =
         obj?.isUploadedImage === true &&
+        obj?.isUploadedSvg !== true &&
         (obj?.type === "path" || obj?.type === "group");
 
       // Ensure uploaded SVG keeps exact saved look and is not theme-mutated during restore.
@@ -1895,10 +1944,45 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
       // Uploaded SVG is explicitly excluded above.
       if (!isUploadedSvgObject) {
         try {
+          const hasVisiblePaint = (value) => {
+            if (typeof value !== "string") return false;
+            const normalized = value.trim().toLowerCase().replace(/\s+/g, "");
+            if (!normalized) return false;
+            return (
+              normalized !== "transparent" &&
+              normalized !== "none" &&
+              normalized !== "rgba(0,0,0,0)"
+            );
+          };
+
+          if (obj.isUploadedSvg === true) {
+            try {
+              if (obj.type === "path" && obj.svgEvenOddHoles === true && typeof obj.set === "function") {
+                obj.set({ fillRule: "evenodd", clipRule: "evenodd" });
+              }
+              if (obj.type === "group" && typeof obj.forEachObject === "function") {
+                obj.forEachObject((child) => {
+                  try {
+                    if (
+                      child &&
+                      child.type === "path" &&
+                      child.svgEvenOddHoles === true &&
+                      typeof child.set === "function"
+                    ) {
+                      child.set({ fillRule: "evenodd", clipRule: "evenodd" });
+                    }
+                  } catch {}
+                });
+              }
+            } catch {}
+          }
+
           // If object originated from icon menu or previously marked to follow theme,
           // persist/propagate the flag (children of groups too)
           let shouldFollowTheme =
-            obj.useThemeColor === true || obj.fromIconMenu === true;
+            obj.useThemeColor === true ||
+            obj.fromIconMenu === true ||
+            (obj.isUploadedSvg === true && obj.followThemeStroke === true);
 
         // Heuristic: for legacy saved objects without flag — if stroke already matches theme
         // but fill is plain white, treat it as theme-following icon
@@ -1916,12 +2000,19 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
           }
         }
           if (shouldFollowTheme) {
-            obj.useThemeColor = true;
-            if (obj.isUploadedImage === true && obj.followThemeStroke !== false) {
+            if (obj.isUploadedSvg !== true) {
+              obj.useThemeColor = true;
+            }
+            if (
+              obj.isUploadedImage === true &&
+              obj.isUploadedSvg !== true &&
+              obj.followThemeStroke !== false
+            ) {
               obj.followThemeStroke = false;
             }
             const shouldApplyThemeStroke =
-              obj.followThemeStroke !== false && obj.isUploadedImage !== true;
+              obj.followThemeStroke !== false &&
+              (obj.isUploadedImage !== true || obj.isUploadedSvg === true);
             if (typeof obj.set === "function") {
               // Do not override explicit transparent fills, but ensure default white artifacts are recolored
               const isTransparent =
@@ -1934,7 +2025,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
                 obj.set({ stroke: themeTextColor });
               } else if (typeof obj.initialStrokeColor === "string") {
                 obj.set({ stroke: obj.initialStrokeColor });
-              } else if (obj.isUploadedImage === true) {
+              } else if (obj.isUploadedImage === true && obj.isUploadedSvg !== true) {
                 obj.set({ stroke: "transparent" });
               }
             }
@@ -1942,22 +2033,42 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
               obj.forEachObject((child) => {
                 try {
                   if (child && typeof child.set === "function") {
-                    child.set({ useThemeColor: true });
-                    if (obj.isUploadedImage === true && child.followThemeStroke !== false) {
+                    if (obj.isUploadedSvg !== true) {
+                      child.set({ useThemeColor: true });
+                    }
+                    if (
+                      obj.isUploadedImage === true &&
+                      obj.isUploadedSvg !== true &&
+                      child.followThemeStroke !== false
+                    ) {
                       child.set({ followThemeStroke: false });
                     }
+                    const childUsesThemeFill =
+                      obj.isUploadedSvg === true
+                        ? child.svgThemeFillEnabled === true ||
+                          (child.svgThemeFillEnabled === undefined &&
+                            (child.useThemeColor === true ||
+                              hasVisiblePaint(child.initialFillColor || child.fill)))
+                        : true;
                     const childApplyThemeStroke =
-                      child.followThemeStroke !== false && child.isUploadedImage !== true;
+                      ((obj.isUploadedSvg === true &&
+                        (child.svgThemeStrokeEnabled === true ||
+                          (child.svgThemeStrokeEnabled === undefined &&
+                            hasVisiblePaint(child.initialStrokeColor || child.stroke)))) ||
+                        (obj.isUploadedSvg !== true && child.followThemeStroke !== false)) &&
+                      (child.isUploadedImage !== true || child.isUploadedSvg === true);
                     const childTransparent =
                       child.fill === "transparent" ||
                       child.fill === "" ||
                       child.fill == null;
-                    if (!childTransparent) child.set({ fill: themeTextColor });
+                    if (!childTransparent && childUsesThemeFill) {
+                      child.set({ fill: themeTextColor });
+                    }
                     if (childApplyThemeStroke) {
                       child.set({ stroke: themeTextColor });
                     } else if (typeof child.initialStrokeColor === "string") {
                       child.set({ stroke: child.initialStrokeColor });
-                    } else if (obj.isUploadedImage === true) {
+                    } else if (obj.isUploadedImage === true && obj.isUploadedSvg !== true) {
                       child.set({ stroke: "transparent" });
                     }
                   }

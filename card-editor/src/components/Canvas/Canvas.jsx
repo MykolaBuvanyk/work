@@ -305,7 +305,18 @@ const Canvas = ({ className }) => {
       }
     };
     const isShapeWithProps = o =>
-      !!o && ['path', 'rect', 'circle', 'ellipse'].includes(o.type) && !isHole(o);
+      !!o &&
+      ['path', 'rect', 'circle', 'ellipse'].includes(o.type) &&
+      !isHole(o) &&
+      o.isUploadedImage !== true &&
+      o.isUploadedSvg !== true &&
+      !(o.data && (o.data.isUploadedImage === true || o.data.isUploadedSvg === true));
+
+    const isUploadedAsset = o =>
+      !!o &&
+      (o.isUploadedImage === true ||
+        o.isUploadedSvg === true ||
+        (o.data && (o.data.isUploadedImage === true || o.data.isUploadedSvg === true)));
 
     const isTextObj = o => !!o && ['i-text', 'text', 'textbox'].includes(o.type);
 
@@ -866,6 +877,11 @@ const Canvas = ({ className }) => {
       }
       // Тримати тексти поверх при кожному виборі
       bringAllTextsToFront();
+      if (obj && isUploadedAsset(obj)) {
+        setActiveObject(obj);
+        setShapePropertiesOpen(false);
+        return;
+      }
       // Cut elements: лише CUT-tab фігури (static) не відкривають Shape Properties.
       if (obj && isCut(obj)) {
         setActiveObject(obj);
@@ -1104,6 +1120,11 @@ const Canvas = ({ className }) => {
         }
       } catch { }
       if (isHole(t)) return; // ігноруємо кліки по отворах
+      if (t && isUploadedAsset(t)) {
+        setActiveObject(t);
+        setShapePropertiesOpen(false);
+        return;
+      }
       // Якщо фігура має fromShapeTab=true, завжди відкриваємо Shape Properties
       if (t && (t.fromShapeTab === true || (t.data && t.data.fromShapeTab === true))) {
         setActiveObject(t);
@@ -3398,6 +3419,13 @@ const Canvas = ({ className }) => {
       } catch { }
       // Якщо додано з IconMenu — одразу робимо активним та показуємо панель
       try {
+        if (isUploadedAsset(target)) {
+          fCanvas.setActiveObject(target);
+          ensureActionControls(target);
+          setShapePropertiesOpen(false);
+          fCanvas.requestRenderAll();
+          return;
+        }
         if (target.fromIconMenu === true || (target.data && target.data.fromIconMenu === true)) {
           fCanvas.setActiveObject(target);
           ensureActionControls(target);

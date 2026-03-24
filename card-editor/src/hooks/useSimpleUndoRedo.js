@@ -25,8 +25,8 @@ export const useSimpleUndoRedo = () => {
         "shapeType", "baseCornerRadius", "displayCornerRadiusMm",
         "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
         "fillRule", "clipRule",
-        "strokeLineJoin", "strokeMiterLimit", "isCircle", "isUploadedImage", "useThemeColor",
-        "followThemeFill", "followThemeStroke", "initialFillColor", "initialStrokeColor"
+        "strokeLineJoin", "strokeMiterLimit", "isCircle", "isUploadedImage", "isUploadedSvg", "useThemeColor",
+        "followThemeFill", "followThemeStroke", "svgThemeFillEnabled", "svgThemeStrokeEnabled", "svgEvenOddHoles", "initialFillColor", "initialStrokeColor"
       ];
 
       const currentState = canvas.toJSON(extraProps);

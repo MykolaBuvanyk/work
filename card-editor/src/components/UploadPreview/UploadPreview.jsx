@@ -3,7 +3,7 @@ import styles from "./UploadPreview.module.css";
 import { vectorizeDataURLToSVG } from "../../utils/vectorizeImage";
 import {
   applyStrokeOnlyToSVG,
-  convertSvgToThemeMonochrome,
+  convertSvgToThemeColorPreserveAlpha,
 } from "../../utils/svgThemeTransform";
 
 // Map precision slider (0..100) to vectorization options
@@ -121,7 +121,7 @@ const UploadPreview = ({
           });
         } else if (mode === "svg" && svgText) {
           // Keep native SVG geometry for precision; no rasterization for SVG uploads.
-          resultSVG = convertSvgToThemeMonochrome(svgText, themeColor);
+          resultSVG = convertSvgToThemeColorPreserveAlpha(svgText, themeColor);
         }
         if (strokeOnly && resultSVG) {
           resultSVG = applyStrokeOnlyToSVG(resultSVG, themeColor);

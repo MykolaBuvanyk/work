@@ -19,6 +19,7 @@ export function requireAuth(req, res, next) {
     req.user = decoded;
     return next();
   } catch (e) {
+    console.error("Помилка авторизації",e);
     return next(ErrorApi.unauthorized(e?.message || 'Invalid token'));
   }
 }
@@ -48,11 +49,15 @@ export function optionalAuth(req, res, next) {
 }
 
 export function requireAdmin(req, res, next) {
-  if (!req.user) {
-    return next(ErrorApi.noAuth('Authentication Required'));
+  try{
+    if (!req.user) {
+      return next(ErrorApi.noAuth('Authentication Required'));
+    }
+    if (req.user.type !== 'Admin') {
+      return next(ErrorApi.forbidden('Admin only'));
+    }
+    return next();
+  }catch(err){
+    console.error('Помилка перевірки на адміна',err);
   }
-  if (req.user.type !== 'Admin') {
-    return next(ErrorApi.forbidden('Admin only'));
-  }
-  return next();
 }

@@ -92,7 +92,7 @@ class SendEmailForStatus {
     static SendStatusPaid=async(order)=>{
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
-      
+        const user=order.user;
         const subject=`SignXpert - Payment Received  #[${String(order.id).padStart(3, '0')}] (${nameOrCompany})`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
       

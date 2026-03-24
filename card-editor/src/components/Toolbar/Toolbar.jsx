@@ -85,10 +85,10 @@ const DEFAULT_RECT_CANVAS_CORNER_RADIUS_MM = 2;
 const SIZE_INPUT_DEBOUNCE_MS = 500;
 const COLOR_THEME_PRESETS = [
   { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
-  { index: 1, textColor: '#0000FF', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
+  { index: 1, textColor: '#00558b', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
   { index: 2, textColor: '#FF0000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
   { index: 3, textColor: '#FFFFFF', backgroundColor: '#000000', backgroundType: 'solid' },
-  { index: 4, textColor: '#FFFFFF', backgroundColor: '#0000FF', backgroundType: 'solid' },
+  { index: 4, textColor: '#FFFFFF', backgroundColor: '#00558b', backgroundType: 'solid' },
   { index: 5, textColor: '#FFFFFF', backgroundColor: '#FF0000', backgroundType: 'solid' },
   { index: 6, textColor: '#FFFFFF', backgroundColor: '#018001', backgroundType: 'solid' },
   { index: 7, textColor: '#000000', backgroundColor: '#FFFF00', backgroundType: 'solid' },
@@ -10025,7 +10025,7 @@ const Toolbar = ({ formData }) => {
 
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][1].isSelect && (
             <span
-              onClick={() => handleColorPick(1, '#0000FF', '#FFFFFF', 'solid')}
+              onClick={() => handleColorPick(1, '#00558b', '#FFFFFF', 'solid')}
               title="White / Blue"
             >
               <A2
@@ -10063,7 +10063,7 @@ const Toolbar = ({ formData }) => {
           )}
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][4].isSelect && (
             <span
-              onClick={() => handleColorPick(4, '#FFFFFF', '#0000FF', 'solid')}
+              onClick={() => handleColorPick(4, '#FFFFFF', '#00558b', 'solid')}
               title="Blue / White"
             >
               <A5

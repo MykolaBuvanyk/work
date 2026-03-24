@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 
-const CheckoutForm = () => {
+const CheckoutForm = ({isModal=false,payTrue}) => {
   const stripe = useStripe();
   const elements = useElements();
   
@@ -15,20 +15,33 @@ const CheckoutForm = () => {
 
     setIsProcessing(true);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        // Сторінка, на яку Stripe редиректне після успіху
-        return_url: `/account`,
-      },
-    });
+    const { error } = await stripe.confirmPayment(
+      isModal
+        ? {
+            elements,
+            redirect: 'if_required',
+          }
+        : {
+            elements,
+            confirmParams: {
+              return_url: `/account`,
+            },
+          }
+    );
 
-    // Якщо ми тут — значить сталася помилка (наприклад, карта відхилена)
-    // Якщо все ок, Stripe сам зробить редирект на return_url
-    if (error.type === "card_error" || error.type === "validation_error") {
-      setMessage(error.message);
+    if (error) {
+      if (!isModal) {
+        if (error.type === "card_error" || error.type === "validation_error") {
+          setMessage(error.message);
+        } else {
+          setMessage("Сталася неочікувана помилка.");
+        }
+      }
     } else {
-      setMessage("Сталася неочікувана помилка.");
+      // ✔ тільки тут вважаємо оплату успішною (для modal)
+      if (isModal) {
+        payTrue();
+      }
     }
 
     setIsProcessing(false);

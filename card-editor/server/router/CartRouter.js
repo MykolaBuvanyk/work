@@ -442,10 +442,10 @@ const normalizeMaterialThemeKey = (value) => normalizeMaterialColorLabel(value).
 
 const MATERIAL_ICON_SVGS = {
   'white / black': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 26.3628H9.59659L15.8778 8.90825H18.9205L25.2017 26.3628H22.4062L17.4716 12.0787H17.3352L12.392 26.3628ZM12.8608 19.5276H21.929V21.7435H12.8608V19.5276Z" fill="black"/></svg>`,
-  'white / blue': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="#0179D0"/></svg>`,
+  'white / blue': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="#00558b"/></svg>`,
   'white / red': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="#FE0000"/></svg>`,
   'black / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="black"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
-  'blue / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#2928FF"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
+  'blue / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#00558b"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
   'red / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#FD0100"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
   'green / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#017F01"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
   'yellow / black': `<svg width="36" height="37" viewBox="0 0 36 37" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.880615" width="35.1323" height="35.1323" rx="4" fill="#FFFF01"/><rect x="0.5" y="1.38062" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.8806H9.59659L15.8778 8.42607H18.9205L25.2017 25.8806H22.4062L17.4716 11.5965H17.3352L12.392 25.8806ZM12.8608 19.0454H21.929V21.2613H12.8608V19.0454Z" fill="black"/></svg>`,
@@ -2624,8 +2624,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       <div class="payment-grid">
         <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
         <div>Account holder:</div><div>SignXpert (Kostyantyn Utvenko)</div>
-        <div>IBAN:</div><div>DE25 0101 0101 0101 0101 01</div>
-        <div>BIC / SWIFT:</div><div>COBADEFFXXX</div>
+        <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
+        <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
         <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>
       </div>
     </div>
@@ -2655,11 +2655,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
             </tr>
             <tr>
               <td>IBAN:</td>
-              <td class="footer-value-cell">DE25 0101 0101 0101 0101 01</td>
+              <td class="footer-value-cell">DE78 6535 1260 0134 0819 40</td>
             </tr>
             <tr>
               <td>BIC / SWIFT:</td>
-              <td class="footer-value-cell">COBADEFFXXX</td>
+              <td class="footer-value-cell">SOLADES1BAL</td>
             </tr>
             <tr>
               <td>St.-Nr.:</td>

@@ -16,6 +16,7 @@ import ThankYou from "../order-success/order-success";
 import CartAccessoriesModal from "../CartAccessoriesModal/CartAccessoriesModal";
 import OrderTestModal from "../OrderTestModal/OrderTestModal";
 import { $authHost } from "../../http";
+import PayModal from "../PayModal/PayModal";
 
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: "WHITE / BLACK",
@@ -346,6 +347,7 @@ const InfoAboutProject = () => {
   const [cartAccessories, setCartAccessories] = useState([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
+  const [isPayOpen,setIsPayOpen]=useState(false);
   const { canvas } = useCanvasContext();
 
   const user=useSelector((state)=>state.user);
@@ -675,8 +677,20 @@ const InfoAboutProject = () => {
   };
 
   const handleCheckoutClose = () => {
-    setIsCheckoutOpen(false);
+    setIsPayOpen(true)
+    //setIsCheckoutOpen(false);36345
   };
+
+  const PayClose=()=>{
+    setIsPayOpen(false);
+    setIsOrderSuccessOpen(true);
+  }
+
+  const backToPayment=()=>{
+    setIsPayOpen(false)
+    //setIs98
+    setIsCheckoutOpen(true)
+  }
 
   const handleBackToAccessories = () => {
     setIsCheckoutOpen(false);
@@ -687,7 +701,8 @@ const InfoAboutProject = () => {
     const added = await addCurrentProjectToCart(checkoutTotals);
     if (!added) return;
     setIsCheckoutOpen(false);
-    setIsOrderSuccessOpen(true);
+    //setIsOrderSuccessOpen(true);
+    setIsPayOpen(true)
   };
 
   const handleOrderSuccessClose = async() => {
@@ -793,6 +808,9 @@ const InfoAboutProject = () => {
             }
           }}
         />
+      )}
+      {isPayOpen&&(
+        <PayModal onClose={PayClose} isPayOpen={isPayOpen} backToPayment={backToPayment} orderId={Number(localStorage.getItem('MySqlOrderId'))}/>
       )}
 
       {/*isAdminUser && (

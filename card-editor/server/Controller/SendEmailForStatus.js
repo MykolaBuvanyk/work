@@ -17,7 +17,7 @@ class SendEmailForStatus {
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
       
-        const subject=`SignXpert Order Paid – #[${order.id}] ${nameOrCompany}`;
+        const subject=`SignXpert Order Paid – #[${String(order.id).padStart(3, '0')}] ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
       
         const messageHtml=`<!DOCTYPE html>
@@ -36,13 +36,12 @@ class SendEmailForStatus {
                     <tr>
                         <td align="center" style="padding: 30px 40px 10px 40px;">
                             <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
                         </td>
                     </tr>
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: bold;">Order Paid – #[${order.id}]</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: bold;">Order Paid – #[${String(order.id).padStart(3, '0')}]</h2>
                         </td>
                     </tr>
 
@@ -54,7 +53,7 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 30px 0;">Payment has been received for the following order on SignXpert.</p>
                             
                             <div style="margin: 0 0 30px 0;">
-                                <p style="margin: 0 0 5px 0;">Order Number: #[${order.id}]</p>
+                                <p style="margin: 0 0 5px 0;">Order Number: #[${String(order.id).padStart(3, '0')}]</p>
                                 <p style="margin: 0 0 5px 0;">Customer Name: [${order.user.firstName}]</p>
                                 <p style="margin: 0 0 5px 0;">Customer Email: [${order.user.email}]</p>
                                 ${//<p style="margin: 0 0 5px 0;">Payment Method: [${paymentMethod}]</p>
@@ -94,7 +93,7 @@ class SendEmailForStatus {
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
       
-        const subject=`SignXpert - Payment Received  #[${order.id}] (${nameOrCompany})`;
+        const subject=`SignXpert - Payment Received  #[${String(order.id).padStart(3, '0')}] (${nameOrCompany})`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
       
         const messageHtml=`<!DOCTYPE html>
@@ -113,13 +112,12 @@ class SendEmailForStatus {
                     <tr>
                         <td align="center" style="padding: 30px 40px 10px 40px;">
                             <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
                         </td>
                     </tr>
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #[${order.id}]</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #[${String(order.id).padStart(3, '0')}]</h2>
                         </td>
                     </tr>
 
@@ -129,7 +127,7 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
                             
                             <p style="margin: 0 0 10px 0;">Thank you for your payment.</p>
-                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #[${order.id}].</p>
+                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #[${String(order.id).padStart(3, '0')}].</p>
                             
                             <p style="margin: 0 0 5px 0;">Total amount: <strong>€${order.sum}</strong></p>
                         
@@ -181,7 +179,6 @@ class SendEmailForStatus {
                     <tr>
                         <td align="center" style="padding: 30px 40px 10px 40px;">
                             <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution</p>
                         </td>
                     </tr>
 
@@ -196,7 +193,7 @@ class SendEmailForStatus {
                             
                             <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
                             
-                            <p style="margin: 0 0 25px 0;">Customer number: ${user.id}</p>
+                            <p style="margin: 0 0 25px 0;">Customer number: ${String(user.id).padStart(3, '0')}</p>
                             
                             <p style="margin: 0 0 25px 0;">We received a request to reset your password on SignXpert.</p>
                             
@@ -239,7 +236,7 @@ class SendEmailForStatus {
         const nameOrCompany=user.company?user.company:user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
-        const subjectAdmin=`SignXpert | Cust. ID #${user.id} | New Cust. Reg. ${nameOrCompany}`;
+        const subjectAdmin=`SignXpert | Cust. ID #${String(user.id).padStart(3, '0')} | New Cust. Reg. ${nameOrCompany}`;
         const currentDate = new Date().toLocaleDateString('en-GB', {
   day: '2-digit',
   month: 'long',
@@ -279,7 +276,7 @@ class SendEmailForStatus {
                             <div style="margin: 25px 0; border-top: 1px solid #eeeeee; padding-top: 20px;">
                                 <strong style="display: block; margin-bottom: 10px; color: #000;">Customer details:</strong>
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
-                                    <tr><td width="150" style="padding: 3px 0;">Customer number:</td><td><strong>${user.id}</strong></td></tr>
+                                    <tr><td width="150" style="padding: 3px 0;">Customer number:</td><td><strong>${String(user.id).padStart(3, '0')}</strong></td></tr>
                                     <tr><td style="padding: 3px 0;">Name:</td><td><strong>${user.firstName}</strong></td></tr>
                                     <tr><td style="padding: 3px 0;">Company:</td><td><strong>${user.company?user.company:'-'}</strong></td></tr>
                                     <tr><td style="padding: 3px 0;">Email:</td><td><a href="mailto:${user.email}" style="color: #0073bc; text-decoration: none;">${user.email}</a></td></tr>
@@ -323,7 +320,7 @@ class SendEmailForStatus {
         const nameOrCompany=newOrder.user.company?newOrder.user.company:newOrder.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
-        const subjectAdmin=`SignXpert | New Order #${newOrder.id} | Cust. ID #${newOrder.user.id} ${nameOrCompany}`;
+        const subjectAdmin=`SignXpert | New Order #${String(newOrder.id).padStart(3, '0')} | Cust. ID #${String(newOrder.user.id).padStart(3, '0')} ${nameOrCompany}`;
         const currentDate = new Date().toLocaleDateString('en-GB', {
   day: '2-digit',
   month: 'long',
@@ -334,7 +331,7 @@ class SendEmailForStatus {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Order Received #${newOrder.id}</title>
+    <title>New Order Received #${String(newOrder.id).padStart(3, '0')}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -350,7 +347,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 10px 40px 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 22px;">New Order Received #${newOrder.id}</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 22px;">New Order Received #${String(newOrder.id).padStart(3, '0')}</h2>
                         </td>
                     </tr>
 
@@ -360,13 +357,13 @@ class SendEmailForStatus {
                             <p>A new order has been placed on the SignXpert website.</p>
                             
                             <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eeeeee;">
-                                <p style="margin: 0;">Order number: <strong>${newOrder.id}</strong></p>
+                                <p style="margin: 0;">Order number: <strong>${String(newOrder.id).padStart(3, '0')}</strong></p>
                                 <p style="margin: 5px 0 0 0;">Order date: <strong>${currentDate}</strong></p>
                             </div>
 
                             <div style="margin: 20px 0;">
                                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size: 15px; color: #444444;">
-                                    <tr><td style="padding-bottom: 5px;">Customer number: ${newOrder.user.id}</td></tr>
+                                    <tr><td style="padding-bottom: 5px;">Customer number: ${String(newOrder.id).padStart(3, '0')}</td></tr>
                                     <tr><td style="padding-bottom: 5px;">Name: ${newOrder.user.firstName}</td></tr>
                                     ${newOrder.company?`<tr><td style="padding-bottom: 5px;">Company: ${newOrder.user.company}</td></tr>`:''}
                                     <tr><td style="padding-bottom: 5px;">Email: <a href="mailto:${newOrder.user.email}" style="color: #0073bc; text-decoration: none;">${newOrder.user.email}</a></td></tr>
@@ -476,7 +473,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
                     <tr>
                         <td style="font-size: 16px; line-height: 1.8; padding-bottom: 25px;">
                             <strong>Order number:</strong> ${orderNumber}<br>
-                            <strong>Customer number:</strong> ${order.user.id}<br>
+                            <strong>Customer number:</strong> ${String(order.user.id).padStart(3, '0')}<br>
                             <strong>Order date:</strong> ${create}
                         </td>
                     </tr>
@@ -590,7 +587,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
 
                             <p style="margin: 20px 0;">
                                 <strong>Order number:</strong> ${orderNumber}<br>
-                                <strong>Customer number:</strong> ${order.user.id}<br>
+                                <strong>Customer number:</strong> ${String(order.user.id).padStart(3, '0')}<br>
                                 <strong>Order date:</strong> ${create}
                             </p>
 
@@ -774,7 +771,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const urlAccount=urlFrontend+'account/detail';
             const urlOrders=urlFrontend+'account';
-            
+            const payment_url=urlFrontend+`account/pay/${String(order.id).padStart(3, '0')}`
             const html=`
 <!DOCTYPE html>
 <html lang="en">
@@ -831,7 +828,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
                             <table border="0" cellspacing="0" cellpadding="0" style="margin: 25px auto;">
                                 <tr>
                                     <td align="center" bgcolor="#006DA5" style="border-radius: 8px;">
-                                        <a href="{payment_url}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 10px 60px; border-radius: 8px; border: 1px solid #006DA5; display: inline-block; font-weight: bold; text-transform: uppercase;">
+                                        <a href="${payment_url}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 10px 60px; border-radius: 8px; border: 1px solid #006DA5; display: inline-block; font-weight: bold; text-transform: uppercase;">
                                             PAY
                                         </a>
                                     </td>
@@ -845,7 +842,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
                             <p style="margin: 15px 0;">
                                 <strong>Order number: ${orderNumber}</strong><br>
                                 or<br>
-                                <strong>Customer number: ${order.user.id}</strong>
+                                <strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong>
                             </p>
 
                             <p>This helps us allocate your payment correctly.</p>
@@ -1168,7 +1165,7 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
 
                 <p style="margin: 0;"><strong>Order number: ${orderNumber}</strong></p>
                 <p style="margin: 5px 0;">or</p>
-                <p style="margin: 0;"><strong>Customer number: ${order.user.id}</strong></p>
+                <p style="margin: 0;"><strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong></p>
 
                 <p>This helps us allocate your payment correctly.</p>
 
@@ -1217,13 +1214,13 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
             const { name, email, question } = req.body;
 
             if (!name || !email || !question) {
-            throw ErrorApi.badRequest('Missing required fields');
+                throw ErrorApi.badRequest('Missing required fields');
             }
 
             const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
             if (!ADMIN_EMAIL) {
-            throw ErrorApi.badRequest('Admin email is not configured');
+                throw ErrorApi.badRequest('Admin email is not configured');
             }
 
             const subject = `Request from the contact page from the user ${name} (${email})`;

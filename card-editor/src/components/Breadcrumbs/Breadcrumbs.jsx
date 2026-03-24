@@ -5,6 +5,7 @@ import styles from './Breadcrumbs.module.css';
 
 const LABELS = {
   home: 'Home',
+  'online-sign-editor': 'New Project',
   'new-project': 'New Project',
   faq: 'FAQ',
   login: 'Registration',
@@ -109,13 +110,13 @@ const Breadcrumbs = () => {
   const contentSegments = hasLanguagePrefix ? rawSegments.slice(1) : rawSegments;
   const pathPrefix = hasLanguagePrefix ? `/${rawSegments[0]}` : '';
 
-  // New Project page (root route) should not show breadcrumbs.
+  // Home page (root route) should not show breadcrumbs.
   if (contentSegments.length === 0) {
     return null;
   }
 
-  // Home page should not show breadcrumbs.
-  if (contentSegments.length === 1 && contentSegments[0] === 'home') {
+  // New Project page should not show breadcrumbs.
+  if (contentSegments.length === 1 && contentSegments[0] === 'online-sign-editor') {
     return null;
   }
 
@@ -126,7 +127,7 @@ const Breadcrumbs = () => {
   const crumbs = [];
 
   if (contentSegments[0] !== 'home') {
-    crumbs.push({ label: 'Home', href: '/home' });
+    crumbs.push({ label: 'Home', href: pathPrefix || '/' });
   }
 
   const pathAccumulator = [];

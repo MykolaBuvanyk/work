@@ -47,7 +47,7 @@ const QuickGuide = () => {
             <img src='/images/quick2.avif'/>
         </div>
         <div className="butons-url">
-            <Link to='/'>New Project</Link>
+            <Link to='/online-sign-editor'>New Project</Link>
             <Link to='/templates'>Templates</Link>
             <Link to='/contacts'>Contact us</Link>
         </div>

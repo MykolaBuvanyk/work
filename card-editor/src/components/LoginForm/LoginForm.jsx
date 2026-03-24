@@ -21,7 +21,7 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
       const res = await $host.post('auth/login', { email, password });
       dispatch(setUser({ token: res.data.token }));
       onSuccess?.();
-      navigate('/');
+      navigate('/online-sign-editor');
     } catch (err) {
       alert('error');
     }

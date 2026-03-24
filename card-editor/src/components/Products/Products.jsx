@@ -156,7 +156,7 @@ const Products = () => {
 
             <div className={styles.heroContent}>
               <h2 className={styles.heroAddTitle}>
-                At <span style={{ color: '#006CA4' }}>SignXpert </span>, we produce high-quality engraved plastic signs, nameplates and industrial labels using durable two-layer engraving plastic.
+                At <Link to="/" className={styles.brandHomeLink}>SignXpert </Link>, we produce high-quality engraved plastic signs, nameplates and industrial labels using durable two-layer engraving plastic.
               </h2>
               <p className={styles.heroPara}>Our engraved signs provide clear, permanent and professional identification for machines, electrical installations, offices, buildings and workplaces.</p>
               <p className={styles.heroAddPara}>
@@ -259,7 +259,7 @@ const Products = () => {
           </div>
 
           <div className={styles.infoBlockCtaWrap}>
-            <Link to=".." relative="path" className={styles.infoBlockCta}>
+            <Link to="/online-sign-editor" className={styles.infoBlockCta}>
               Design Your Sign
             </Link>
           </div>

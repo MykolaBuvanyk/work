@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './layout';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
@@ -34,8 +34,9 @@ function App() {
   // Виносимо спільні маршрути в змінну, щоб не дублювати код
   const mainRoutes = (
     <>
-      <Route index element={<Home />} />
-      <Route path="home" element={<HomePlaceholder />} />
+      <Route index element={<HomePlaceholder />} />
+      <Route path="home" element={<Navigate to=".." relative="path" replace />} />
+      <Route path="online-sign-editor" element={<Home />} />
       <Route path="faq" element={<FAQPage />} />
       <Route path="login" element={<Login />} />
       <Route path="login/enter/:id" element={<Enter />} />

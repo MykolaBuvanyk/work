@@ -7,8 +7,8 @@ import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 
 const urls = [
-  { title: 'Home', url: '/home' },
-  { title: 'New Project', url: '/' },
+  { title: 'Home', url: '/' },
+  { title: 'New Project', url: '/online-sign-editor' },
   { title: 'Templates', url: '/templates' },
   { title: 'Products', url: '/products' },
   { title: 'Quick Guide', url: '/quick-guide' },
@@ -240,7 +240,7 @@ const Footer = () => {
             <Link key={x.url} to={`${x.url}`}>{x.title}</Link>
           ))}
         </div>
-        <div className="info">© 2026, Signomatic. All rights reserved.</div>
+        <div className="info">© 2026, SignXpert. All rights reserved.</div>
       </div>
     </div>
   );

@@ -1,42 +1,44 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+import React, { useEffect, useState } from 'react'
 import { $authHost } from '../../http';
-import CheckoutForm from './CheckoutForm'; // Імпортуємо форму нижче
-import './CheckoutPage.scss'
+import { Link } from 'react-router-dom';
+import CheckoutForm from '../Account/CheckoutForm';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import './PayModal.scss'
 
-// Ініціалізуємо Stripe за межами компонента, щоб не створювати дублікати при рендері
+
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);
 
-const CheckoutPage = () => {
-  const { orderId } = useParams();
-  const [clientSecret, setClientSecret] = useState('');
+const PayModal = ({isPayOpen,onClose,backToPayment,orderId}) => {
+  console.log(23434,orderId);
+    const [clientSecret, setClientSecret] = useState('');
+    useEffect(() => {
+        const getClientSecret = async () => {
+        try {
+            const res = await $authHost.post('cart/create-payment-intent/' + orderId);
+            setClientSecret(res.data.clientSecret);
+        } catch (err) {
+            console.error(err);
+            alert('Помилка при отриманні даних для оплати');
+        }
+        };
+        if (orderId) getClientSecret();
+    }, [orderId]);
 
-  useEffect(() => {
-    const getClientSecret = async () => {
-      try {
-        const res = await $authHost.post('cart/create-payment-intent/' + orderId);
-        setClientSecret(res.data.clientSecret);
-      } catch (err) {
-        console.error(err);
-        alert('Помилка при отриманні даних для оплати');
-      }
+    // Налаштування зовнішнього вигляду (опціонально)
+    const options = {
+        clientSecret,
+        appearance: { theme: 'stripe' },
     };
-    if (orderId) getClientSecret();
-  }, [orderId]);
-
-  // Налаштування зовнішнього вигляду (опціонально)
-  const options = {
-    clientSecret,
-    appearance: { theme: 'stripe' },
-  };
-
+    const payTrue=()=>{
+        onClose();
+    }
+    if(!isPayOpen)return null;
   return (
-    <div class="overlay">
-      <div class="modal">
+    <div className='pay-modal'>
+        <div class="modal">
 
-        <Link to="/account/detail" class="back-btn">Back to Proceed to Payment</Link>
+        <button onClick={backToPayment} class="back-btn">Back to Proceed to Payment</button>
 
         <div class="modal-header">
           <h2>Choose your payment option</h2>
@@ -51,7 +53,8 @@ const CheckoutPage = () => {
 
             <label class="radio">
               <input type="radio" name="pay" value="invoice" checked/>
-              <span class="circle"></span>
+              {//<span class="circle"></span>
+}
               <span class="title">Pay by Invoice</span>
             </label>
 
@@ -74,7 +77,7 @@ const CheckoutPage = () => {
     <p><strong><em>(Preferred by many of our business customers.)</em></strong></p>        </div>
     
 
-            <button class="place-btn active">PLACE ORDER</button>
+            <button onClick={onClose} class="place-btn active">PLACE ORDER</button>
 
           </div>
 
@@ -82,12 +85,12 @@ const CheckoutPage = () => {
 
             <label class="radio">
               <input type="radio" name="pay" value="online"/>
-              <span class="circle"></span>
-              <span class="title">Pay Online</span>
+              {//<span class="circle"></span>
+              }<span class="title">Pay Online</span>
             </label>
             {clientSecret ? (
               <Elements stripe={stripePromise} options={options}>
-                <CheckoutForm />
+                <CheckoutForm payTrue={payTrue} isModal={true} />
               </Elements>
             ) : (
               <p>Завантаження платіжного шлюзу...</p>
@@ -99,21 +102,7 @@ const CheckoutPage = () => {
 
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CheckoutPage;
-
-/*
- <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px' }}>
-      <h2>Pay order #{orderId}</h2>
-      
-      {clientSecret ? (
-        <Elements stripe={stripePromise} options={options}>
-          <CheckoutForm />
-        </Elements>
-      ) : (
-        <p>Завантаження платіжного шлюзу...</p>
-      )}
-    </div>
-*/
+export default PayModal

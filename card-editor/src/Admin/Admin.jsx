@@ -137,7 +137,7 @@ const Admin = () => {
         setPage(nextCountPages);
       }
 
-      if (reopenOrderId != null) {
+      if (reopenOrderId != null&&reopenOrderId != undefined&&reopenOrderId) {
         setOrderId(reopenOrderId);
       }
      

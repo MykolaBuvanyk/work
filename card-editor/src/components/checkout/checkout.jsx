@@ -1141,7 +1141,7 @@ export default function Checkout({
 										</div>
 
 										<div className='summary-actions'>
-											<SimpleButton text='Place order' onClick={handlePlaceOrder} withIcon />
+											<SimpleButton text='Proceed to Payment' onClick={handlePlaceOrder} withIcon className='checkout__proceed-btn'/>
 										</div>
 									</div>
 								</aside>

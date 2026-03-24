@@ -30,25 +30,27 @@ const LoginRegister = () => {
         {/* 1. Consumer Option */}
         <label className="custom-radio">
           <input
+            className="custom-radio-input"
             type="radio"
             name="customerType"
             value="Consumer"
             checked={selectedType === 'Consumer'}
             onChange={handleChange}
           />
-          Consumer {/* Текст іде одразу після input */}
+          <span className="custom-radio-text">Consumer</span>
         </label>
 
         {/* 2. Business Option */}
         <label className="custom-radio">
           <input
+            className="custom-radio-input"
             type="radio"
             name="customerType"
             value="Business"
             checked={selectedType === 'Business'}
             onChange={handleChange}
           />
-          Company {/* Текст іде одразу після input */}
+          <span className="custom-radio-text">Company</span>
         </label>
       </div>
 

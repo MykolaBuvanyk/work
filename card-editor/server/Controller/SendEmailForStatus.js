@@ -27,7 +27,7 @@ class SendEmailForStatus {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Paid Notification - SignXpert</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+<body style="margin: 0; padding: п0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
         <tr>
             <td align="center" style="padding: 20px 0;">

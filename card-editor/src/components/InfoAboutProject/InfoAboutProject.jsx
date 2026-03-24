@@ -633,11 +633,11 @@ const InfoAboutProject = () => {
     syncAccessoriesToProject(snapshot);
     setCartAccessories(snapshot);
 
-    if (!isAdminUser) {
-      setIsCartAccessoriesOpen(true);
-      setIsPreparingOrderSummary(false);
-      return;
-    }
+    //if (!isAdminUser) {
+    setIsCartAccessoriesOpen(true);
+    setIsPreparingOrderSummary(false);
+    //return;
+    //}
 
     try {
       const projectSnapshot = await saveCurrentProject(canvas);
@@ -795,7 +795,7 @@ const InfoAboutProject = () => {
         />
       )}
 
-      {isAdminUser && (
+      {/*isAdminUser && (
         <OrderTestModal
           isOpen={isOrderTestOpen}
           onClose={handleOrderTestClose}
@@ -806,7 +806,7 @@ const InfoAboutProject = () => {
           accessories={orderTestSummary?.accessories || []}
           signs={orderTestSummary?.signs || []}
         />
-      )}
+      )*/}
 
       <CartAccessoriesModal
         isOpen={isCartAccessoriesOpen}

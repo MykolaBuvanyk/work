@@ -45,7 +45,7 @@ function formatDatePlusMonth(dateStr) {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
-function formatInvoiceDate(dateStr) {
+export function formatInvoiceDate(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return '';
 
@@ -57,7 +57,7 @@ function formatInvoiceDate(dateStr) {
   return `${day}.${month}.${year}`;
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -67,11 +67,11 @@ function escapeHtml(value) {
   }[char] || char));
 }
 
-function hasContent(value) {
+export function hasContent(value) {
   return String(value ?? '').trim().length > 0;
 }
 
-function hasAddressContent(address) {
+export function hasAddressContent(address) {
   if (!address || typeof address !== 'object') return false;
 
   return [
@@ -88,7 +88,7 @@ function hasAddressContent(address) {
   ].some(hasContent);
 }
 
-function formatMoney(value) {
+export function formatMoney(value) {
   return toNumber(value, 0).toFixed(2);
 }
 
@@ -104,12 +104,12 @@ const basicZugferdInvoicer = zugferd({
   logger: false,
 });
 
-const toNumber = (value, fallback = 0) => {
+export const toNumber = (value, fallback = 0) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
 };
 
-const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
+export const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
 
 const normalizeCountryCode = (value) => {
   const raw = String(value || '').trim().toUpperCase();
@@ -126,7 +126,7 @@ const normalizeCountryCode = (value) => {
   return 'DE';
 };
 
-const buildZugferdInvoiceData = ({
+export const buildZugferdInvoiceData = ({
   order,
   invoiceNumber,
   customerIdentifier,
@@ -387,7 +387,7 @@ const buildZugferdInvoiceData = ({
 
 const isMongoObjectId = (value) => /^[a-f\d]{24}$/i.test(String(value || '').trim());
 
-const findCartProjectForOrder = async (order) => {
+export const findCartProjectForOrder = async (order) => {
   const key = String(order?.idMongo || '').trim();
   if (!key) return null;
 

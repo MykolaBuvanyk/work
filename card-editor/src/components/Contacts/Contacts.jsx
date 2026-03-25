@@ -19,7 +19,7 @@ const Contacts = () => {
     try {
       await $host.post('email/contact', data);
 
-      alert('Message sent successfully');
+      alert('Thank you for contacting SignXpert. We have received your message and will get back to you as soon as possible.');
 
       form.reset(); // очищення форми
     } catch (err) {

@@ -2278,7 +2278,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const customerNumber = escapeHtml(order.userId);
     const invoiceDate = escapeHtml(formatInvoiceDate(order.createdAt));
     const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
-    const invoiceDueDate = escapeHtml(formatInvoiceDate(invoiceDueDateDate));
+    const selectedPaymentMethod = String(checkout?.paymentMethod || 'invoice').trim().toLowerCase();
+    const isPayOnline = selectedPaymentMethod === 'online';
+    const paymentStatus = escapeHtml(
+      order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid'
+    );
     const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
     const projectName = escapeHtml(projectNameRaw);
     const signsCountRaw = Math.max(0, Number(order.signs || 0));
@@ -2583,8 +2587,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
           <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
           <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
           <tr><td>Date:</td><td>${invoiceDate}</td></tr>
-          <tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
-                <tr><td>Payment Terms:</td><td>30 days net</td></tr>
+          <tr><td>Payment status:</td><td>${paymentStatus}</td></tr>
           <tr><td>Reference:</td><td>Order No: ${invoiceNumber}</td></tr>
             </table>
         </div>
@@ -2619,6 +2622,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         </table>
     </div>
 
+    ${!isPayOnline ? `
     <div class="payment-info">
       <h3><u>Payment information:</u></h3>
       <div class="payment-grid">
@@ -2635,6 +2639,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       Log in to your account and go to: <span class="nowrap">My Account → My Orders</span><br>
       Select the relevant invoice and click “Pay” to complete your payment securely.
     </div>
+    ` : ''}
 
     <div class="footer-wrapper">
       <div class="footer-thanks" style="text-align:center;margin-bottom:10px;font-weight:700;"><strong>Thank you for choosing SignXpert!</strong></div>
@@ -2812,6 +2817,58 @@ CartRouter.post('/setPay', requireAuth, requireAdmin, async (req, res, next) => 
     return res.status(500).json({ message: 'Failed to load orders' });
   }
 })
+
+CartRouter.post('/set-payment-method/:orderId', requireAuth, async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const paymentMethodRaw = String(req.body?.paymentMethod || '').trim().toLowerCase();
+    const allowedMethods = ['invoice', 'online'];
+
+    if (!allowedMethods.includes(paymentMethodRaw)) {
+      return res.status(400).json({ message: 'Invalid payment method' });
+    }
+
+    const order = await Order.findOne({ where: { id: Number(orderId) } });
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (!canAccessOrderDocuments(req.user, order)) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const cartKey = String(order.idMongo || '').trim();
+    if (!cartKey) {
+      return res.status(404).json({ message: 'Order snapshot not found' });
+    }
+
+    let updatedCartProject = null;
+    if (isMongoObjectId(cartKey)) {
+      updatedCartProject = await CartProject.findByIdAndUpdate(
+        cartKey,
+        { $set: { 'checkout.paymentMethod': paymentMethodRaw } },
+        { new: true }
+      );
+    }
+
+    if (!updatedCartProject) {
+      updatedCartProject = await CartProject.findOneAndUpdate(
+        { projectId: cartKey },
+        { $set: { 'checkout.paymentMethod': paymentMethodRaw } },
+        { new: true, sort: { createdAt: -1 } }
+      );
+    }
+
+    if (!updatedCartProject) {
+      return res.status(404).json({ message: 'Order snapshot not found' });
+    }
+
+    return res.json({ message: 'Payment method updated', paymentMethod: paymentMethodRaw });
+  } catch (err) {
+    console.error('ERROR SET PAYMENT METHOD:', err);
+    return res.status(500).json({ message: 'Failed to update payment method' });
+  }
+});
 
 CartRouter.post('/create-payment-intent/:orderId', requireAuth, async (req, res, next) => {
   try {

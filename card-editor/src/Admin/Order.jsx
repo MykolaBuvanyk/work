@@ -1328,10 +1328,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   };
   
   const emailOpen = () => {
-    window.open(
-      `mailto:${order.user.email}?subject=Order no №${order.id}`,
-      "_blank"
-    );
+    const subject = encodeURIComponent(`Order no №${order.id}`);
+
+    window.location.href = `mailto:${order.user.email}?subject=${subject}`;
   };
 
 

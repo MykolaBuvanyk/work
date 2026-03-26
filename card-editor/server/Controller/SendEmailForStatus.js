@@ -41,7 +41,8 @@ class SendEmailForStatus {
       
         const subject=`SignXpert Order Paid – #[${String(order.id).padStart(3, '0')}] ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-      
+        const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
+
         const messageHtml=`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,7 +109,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        sendEmail(order.user.email, messageHtml, subject)
+        sendEmail(ADMIN_EMAIL, messageHtml, subject)
     }
 
     static SendStatusPaid=async(order)=>{
@@ -280,9 +281,6 @@ class SendEmailForStatus {
                     <tr>
                         <td align="center" style="padding: 30px 40px 10px 40px;">
                             <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
-                                Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution
-                            </p>
                         </td>
                     </tr>
 
@@ -340,7 +338,60 @@ class SendEmailForStatus {
         await sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin)
     }
 
-    static SendToAdminNewOrder = async (newOrder, comment, countStar) => {
+    static SendToAdminNewOrder = async (newOrder, comment, countStar, typeDelivery) => {
+        try {
+            const order=newOrder;
+            const nameOrCompany = order.user?.company || order.user?.firstName || 'Customer';
+            const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+            const subjectAdmin = `SignXpert | New Order #${orderNumber} | Cust. ID #${String(order.user?.id || '').padStart(3, '0')} ${nameOrCompany}`;
+            const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
+            const currentDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+            const messageHtmlToAdmin = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>New Order Received</title></head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr><td align="center" style="padding: 20px 0;">
+            <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
+                <tr><td align="center" style="padding: 30px 40px 10px 40px;"><img src="${logoPng}" width="200"></td></tr>
+                <tr><td align="center" style="padding: 10px 40px 20px 40px;"><h2 style="margin: 0; color: #000;">New Order Received #${orderNumber}</h2></td></tr>
+                <tr><td style="padding: 0 40px; color: #444; font-size: 15px; line-height: 1.6;">
+                    <p>Hello,</p><p>A new order has been placed on the SignXpert website.</p>
+                    <div style="margin: 20px 0; border-top: 1px solid #eee; padding-top: 15px;">
+                        <p>Order number: <strong>${orderNumber}</strong><br>Order date: <strong>${currentDateStr}</strong></p>
+                    </div>
+                    <div>
+                        <p>Customer details:<br>Name: ${order.user.firstName}<br>Email: ${order.user.email}<br>Phone: ${order.user.phone}</p>
+                    </div>
+                    <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+                        <p>Total amount: <strong>€${order.sum}</strong></p>
+                        <p>Payment status: <strong>€${order.isPaid?'pay':'un paid'}</strong></p>
+                        <p>Delivery type: <strong>€${order.deliveryType}</strong></p>
+                    </div>
+                    <div style="margin: 25px 0;">
+                        <p>Rating: <span style="color: #FFD700; font-size: 20px;">${'★'.repeat(countStar || 0)}</span></p>
+                        <p>Comment: <span>${comment || '-'}</span></p>
+                    </div>
+                    <p style="font-style: italic; color: #888;">SignXpert System Notification</p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>`;
+
+            
+            await sendEmail(ADMIN_EMAIL, messageHtmlToAdmin, subjectAdmin);
+            return true;
+        }
+        catch(err){
+            console.error('Error in SendToAdminNewOrder Final Step:', err);
+            return false;
+        }
+    }
+
+    static SendEmailWithFile = async (newOrder, textHTML, subject, to) => {
         let browser;
         let outputPdfBuffer = null;
         const order = newOrder; // Для сумісності з логікою з getPdfs3
@@ -593,61 +644,22 @@ class SendEmailForStatus {
             });
             outputPdfBuffer = Buffer.from(zugferdPdf);
 
+            //await sendEmail(to, textHTML, subject, outputPdfBuffer)
+
         } catch (err) {
             console.error("PDF Generation Error in SendToAdminNewOrder:", err);
         } finally {
             if (browser) await browser.close();
         }
-
-        // 5. Блок відправки листа адміністратору
-        try {
-            const nameOrCompany = order.user?.company || order.user?.firstName || 'Customer';
-            const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-            const subjectAdmin = `SignXpert | New Order #${orderNumber} | Cust. ID #${String(order.user?.id || '').padStart(3, '0')} ${nameOrCompany}`;
-            const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
-            const currentDateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-
-            const messageHtmlToAdmin = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head><meta charset="UTF-8"><title>New Order Received</title></head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-        <table border="0" cellpadding="0" cellspacing="0" width="100%">
-            <tr><td align="center" style="padding: 20px 0;">
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
-                    <tr><td align="center" style="padding: 30px 40px 10px 40px;"><img src="${logoPng}" width="200"></td></tr>
-                    <tr><td align="center" style="padding: 10px 40px 20px 40px;"><h2 style="margin: 0; color: #000;">New Order Received #${orderNumber}</h2></td></tr>
-                    <tr><td style="padding: 0 40px; color: #444; font-size: 15px; line-height: 1.6;">
-                        <p>Hello,</p><p>A new order has been placed on the SignXpert website.</p>
-                        <div style="margin: 20px 0; border-top: 1px solid #eee; padding-top: 15px;">
-                            <p>Order number: <strong>${orderNumber}</strong><br>Order date: <strong>${currentDateStr}</strong></p>
-                        </div>
-                        <div>
-                            <p>Customer details:<br>Name: ${order.user.firstName}<br>Email: ${order.user.email}<br>Phone: ${order.user.phone}</p>
-                        </div>
-                        <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
-                            <p>Total amount: <strong>€${order.sum}</strong></p>
-                        </div>
-                        <div style="margin: 25px 0;">
-                            <p>Rating: <span style="color: #FFD700; font-size: 20px;">${'★'.repeat(countStar || 0)}</span></p>
-                            <p>Comment: <span>${comment || '-'}</span></p>
-                        </div>
-                        <p style="font-style: italic; color: #888;">SignXpert System Notification</p>
-                    </td></tr>
-                </table>
-            </td></tr>
-        </table>
-    </body>
-    </html>`;
-
+        try{
             const fileAttachment = outputPdfBuffer ? {
                 filename: `Invoice-${orderNumber}.pdf`,
                 content: outputPdfBuffer,
                 contentType: 'application/pdf'
             } : null;
 
-            await sendEmail(ADMIN_EMAIL, messageHtmlToAdmin, subjectAdmin, fileAttachment);
-            return true;
+            sendEmail(to, textHTML, subject, fileAttachment)
+
         } catch (err) {
             console.error('Error in SendToAdminNewOrder Final Step:', err);
             return false;
@@ -883,121 +895,85 @@ class SendEmailForStatus {
         }
     }
 
-    static StatusShipped=async(order)=>{
-        try{
-            const orderNumber=String(order.id).padStart(3, '0')
-            const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert - Order Shipped #${orderNumber} ${nameOrCompany}`;
-            const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
-            const create=formatDate(order.createdAt);
-            const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
+    static StatusShipped = async (order) => {
+        try {
+            const orderNumber = String(order.id).padStart(3, '0');
+            const nameOrCompany = order.user.company ? order.user.company : order.user.firstName;
+            const subject = `SignXpert - Order Shipped #${orderNumber} ${nameOrCompany}`;
+            const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
+            const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
+            const urlAccount = urlFrontend + 'account/detail';
+            const urlOrders = urlFrontend + 'account';
             
-            const html=`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your order has been shipped - SignXpert</title>
-    <style>
-        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        table { border-collapse: collapse; }
-        img { display: block; border: 0; }
-        a { color: #0056b3; text-decoration: underline; }
+            // Отримуємо трекінг номер з об'єкта замовлення (якщо він там є)
+            //const trackingNumber = order.trackingNumber || 'XXXXXXXX';
+            const trackingNumber='XXXXXXXX';
+            const trackingUrl = `https://www.ups.com/track?tracknum=${trackingNumber}`;
 
-        @media screen and (max-width: 600px) {
-            .container { width: 100% !important; border-radius: 0 !important; }
-            .content { padding: 20px !important; }
-            .button-wrapper { width: 100% !important; }
-        }
-    </style>
-</head>
-<body style="background-color: #f4f4f4; padding: 20px 0;">
+            const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your order has been shipped - SignXpert</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td align="center" style="padding: 20px 0;">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
+                        <tr>
+                            <td align="center" style="padding: 30px 40px 10px 40px;">
+                                <img src="${logoPng}" alt="SignXpert" width="200" style="max-width: 200px; height: auto;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center" style="padding: 10px 40px 20px 40px;">
+                                <h1 style="font-size: 22px; color: #000000; margin: 0; font-weight: bold;">Your order has been shipped</h1>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="left" style="padding: 0 40px 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
+                                <p>Hello, <strong>${nameOrCompany}</strong>!</p>
+                                <p>Good news!<br>Your order has now been shipped via UPS and is on its way to you.</p>
+                                <p><strong>Tracking number:</strong> ${trackingNumber}</p>
+                                
+                                <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px auto;">
+                                    <tr>
+                                        <td align="center" bgcolor="#006DA5" style="border-radius: 8px;">
+                                            <a href="${trackingUrl}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 8px; display: inline-block; font-weight: bold;">
+                                                Track Your Shipment
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
 
-    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-            <td align="center">
-                <table class="container" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
+                                <p>You can also check the status in your account: <a href="${urlAccount}" style="color: #0056b3;">My Account</a>.</p>
+                                <p style="margin-top: 30px;">Best regards,<br><strong>SignXpert Team</strong></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right" style="padding: 20px 40px; border-top: 1px solid #f0f0f0; font-size: 14px;">
+                                <a href="https://sign-xpert.com" style="color: #0056b3; text-decoration: none;">sign-xpert.com</a><br>
+                                <span style="color: #333333;">+49 157 766 25 125</span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>`;
 
-                    <tr>
-                        <td align="center" style="padding: 30px 40px 10px 40px;">
-                            <img src="${logoPng}" alt="SignXpert" width="200" style="max-width: 200px; height: auto;">
-                        </td>
-                    </tr>
+            const to = order.user.email;
 
-                    <tr>
-                        <td align="center" style="padding: 10px 40px 20px 40px;">
-                            <h1 style="font-size: 22px; color: #000000; margin: 0; font-weight: bold;">Your order has been shipped – Tracking available</h1>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td class="content" align="left" style="padding: 0 40px 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
-                            <p>Hello, <strong>${nameOrCompany}</strong>
-
-                            <p>Good news!<br>
-                            Your order has now been shipped via UPS and is on its way to you.</p>
-
-                            <p><strong>Tracking number:</strong> XXXXXXXX</p>
-
-                            <p>You can track your order directly on the UPS website by clicking the link below:</p>
-
-                            <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px auto;">
-                                <tr>
-                                    <td align="center" bgcolor="#006DA5" style="border-radius: 8px;">
-                                        <a href="{tracking_url}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 8px; border: 1px solid #006DA5; display: inline-block; font-weight: bold;">
-                                            Track Your Shipment
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <p>Please note that it may take some time for the tracking number to become active in the UPS system. Once active, you can follow the journey of your package and see its current status.</p>
-
-                            <p>You can also always check the detailed status of your order in your account.<br>
-                            Simply log in to <a href="${urlAccount}" style="color: #0056b3;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0056b3;">My Orders</a>.</p>
-
-                            <p style="margin-top: 25px;"><strong>Thank you for choosing SignXpert — we hope you enjoy your custom signs!</strong></p>
-
-                            <p>If you have any questions or need assistance, don’t hesitate to contact us.</p>
-
-                            <p style="margin-top: 30px;">
-                                Best regards,<br>
-                                <strong>SignXpert Team</strong>
-                            </p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td align="right" style="padding: 0 40px 40px 40px; border-top: 1px solid #f0f0f0;">
-                            <p style="margin: 20px 0 5px 0; font-size: 14px;">
-                                <a href="https://sign-xpert.com" style="color: #0056b3; text-decoration: none;">sign-xpert.com</a>
-                            </p>
-                            <p style="margin: 0 0 5px 0; font-size: 14px;">
-                                <a href="mailto:info@sign-xpert.com" style="color: #0056b3; text-decoration: none;">info@sign-xpert.com</a>
-                            </p>
-                            <p style="margin: 0; font-size: 14px; color: #333333;">
-                                +49 157 766 25 125
-                            </p>
-                        </td>
-                    </tr>
-
-                </table>
-            </td>
-        </tr>
-    </table>
-
-</body>
-</html>
-
-`       
-            const to=order.user.email;
-            await sendEmail(to,html,subject);
-        }catch(err){
-            console.error('error send email where status printed.'+err);
-            return false
+            await sendEmail(to, html, subject, null);
+            
+            return true;
+        } catch (err) {
+            console.error('error send email where status shipped1.' + err);
+            return false;
         }
     }
     
@@ -1011,7 +987,7 @@ class SendEmailForStatus {
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const urlAccount=urlFrontend+'account/detail';
             const urlOrders=urlFrontend+'account';
-            const payment_url=urlFrontend+`account/pay/${String(order.id).padStart(3, '0')}`
+            const payment_url=urlFrontend+`account/pay/${order.id}`
             const html=`
 <!DOCTYPE html>
 <html lang="en">
@@ -1125,9 +1101,10 @@ class SendEmailForStatus {
 </html>
 `       
             const to=order.user.email;
-            await sendEmail(to,html,subject);
+            //await sendEmail(to,html,subject);
+            SendEmailForStatus.SendEmailWithFile(order,html,subject,to);
         }catch(err){
-            console.error('error send email where status printed.'+err);
+            console.error('error send email where status shipped2.'+err);
             return false
         }
     }
@@ -1344,6 +1321,7 @@ class SendEmailForStatus {
             const urlAccount=urlFrontend+'account/detail';
             const urlOrders=urlFrontend+'account';
             const contact=urlFrontend+'contacts'
+            const payURL=urlFrontend+'account/pay/'+order.id;
             
             const html=`
 <!DOCTYPE html>
@@ -1392,7 +1370,7 @@ class SendEmailForStatus {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                     <tr>
                         <td bgcolor="#006eb3" style="border-radius: 6px; text-align: center;">
-                            <a href="${urlAccount}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none; text-transform: uppercase;">Pay</a>
+                            <a href="${payURL}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none; text-transform: uppercase;">Pay</a>
                         </td>
                     </tr>
                 </table>
@@ -1440,7 +1418,8 @@ class SendEmailForStatus {
 </body>
 </html>`       
             const to=order.user.email;
-            await sendEmail(to,html,subject);
+            //await sendEmail(to,html,subject);
+            await SendEmailForStatus.SendEmailWithFile(order,html, subject, to);
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);

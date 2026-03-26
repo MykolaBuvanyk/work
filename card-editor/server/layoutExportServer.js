@@ -3561,7 +3561,7 @@ const start = async () => {
 };
 
 
-const CheckIsPay=async()=>{
+/*const CheckIsPay=async()=>{
   try{
     const date21DaysAgo = new Date();
     date21DaysAgo.setDate(date21DaysAgo.getDate() - 21);
@@ -3587,6 +3587,36 @@ const CheckIsPay=async()=>{
 
 cron.schedule('0 3 * * *', async () => {
   console.log('Running CheckIsPay job...');
+  await CheckIsPay();
+});*/
+
+const CheckIsPay = async () => {
+  try {
+    // Коментуємо стару логіку дати
+    // const date21DaysAgo = new Date();
+    // date21DaysAgo.setDate(date21DaysAgo.getDate() - 21);
+
+    const orders = await Order.findAll({
+      where: {
+        isPaid: false, // шукаємо будь-яке неоплачене
+        // createdAt: { [Op.lte]: date21DaysAgo } // це теж коментуємо для тесту
+      },
+      include: [{ model: User }]
+    });
+
+    console.log(`Знайдено ${orders.length} неоплачених замовлень для тесту`);
+
+    for (let i = 0; i < orders.length; i++) {
+      await SendEmailForStatus.ReminderPay(orders[i]);
+    }
+  } catch (err) {
+    console.error('Помилка в тестовому CheckIsPay:', err);
+  }
+}
+
+// Формат: 'хвилини години день місяць день_тижня'
+cron.schedule('45 15 * * *', async () => {
+  console.log('Running TEST CheckIsPay job...');
   await CheckIsPay();
 });
 

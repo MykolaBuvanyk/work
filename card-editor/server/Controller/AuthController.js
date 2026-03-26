@@ -54,6 +54,7 @@ class AuthController {
         country2,
         state2,
         password,
+        tellAbout
       } = req.body;
 
       // Перевіряємо всі NOT NULL поля
@@ -113,6 +114,7 @@ class AuthController {
         state2: state2 || null,
         weWill: weWill || null,
         password: hashedPassword,
+        tellAbout: tellAbout||null
       });
       console.log(94234324);
       const token = await generateJwt(

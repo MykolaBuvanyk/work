@@ -491,7 +491,7 @@ const getMaterialIconSvg = (theme) => {
   return MATERIAL_ICON_SVGS[normalizedTheme] || '';
 };
 
-const buildPdfFooterTemplate = (fontSize = 12, sidePadding = 20, bottomPadding = 4) => `
+export const buildPdfFooterTemplate = (fontSize = 12, sidePadding = 20, bottomPadding = 4) => `
   <div style="width:100%;box-sizing:border-box;padding:0 ${sidePadding}px ${bottomPadding}px ${sidePadding}px;font-family:Arial,sans-serif;font-size:${fontSize}px;color:#000;text-align:right;">
     Page <span class="pageNumber"></span> of <span class="totalPages"></span>
   </div>`;

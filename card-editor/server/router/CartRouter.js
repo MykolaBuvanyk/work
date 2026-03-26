@@ -2280,9 +2280,9 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
     const selectedPaymentMethod = String(checkout?.paymentMethod || 'invoice').trim().toLowerCase();
     const isPayOnline = selectedPaymentMethod === 'online';
-    const paymentStatus = escapeHtml(
-      order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid'
-    );
+    const paymentStatusRaw = order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid';
+    const shouldRenderPaymentInformation = !isPayOnline && paymentStatusRaw === 'Unpaid';
+    const paymentStatus = escapeHtml(paymentStatusRaw);
     const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
     const projectName = escapeHtml(projectNameRaw);
     const signsCountRaw = Math.max(0, Number(order.signs || 0));
@@ -2622,7 +2622,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         </table>
     </div>
 
-    ${!isPayOnline ? `
+    ${shouldRenderPaymentInformation ? `
     <div class="payment-info">
       <h3><u>Payment information:</u></h3>
       <div class="payment-grid">

@@ -1775,7 +1775,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         </button>
       </div>
       <div className="but-message">
-        <button onClick={emailOpen}>Message to customer</button>
+        <a href={`mailto:${order.user.email}`}>
+          <button>Message to customer</button>
+        </a>
       </div>
     </div>
     <br/>

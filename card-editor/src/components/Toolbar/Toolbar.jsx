@@ -438,7 +438,7 @@ const Toolbar = ({ formData }) => {
         } catch {}
 
         if (!currentProjectId) {
-          await saveCurrentProject(canvas);
+          await saveCurrentProject(canvas, { syncRemote: false });
           try {
             currentProjectId = localStorage.getItem('currentProjectId');
           } catch {}

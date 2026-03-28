@@ -2278,9 +2278,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const customerNumber = escapeHtml(order.userId);
     const invoiceDate = escapeHtml(formatInvoiceDate(order.createdAt));
     const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
+    const invoiceDueDate = escapeHtml(formatInvoiceDate(invoiceDueDateDate));
     const selectedPaymentMethod = String(checkout?.paymentMethod || 'invoice').trim().toLowerCase();
     const isPayOnline = selectedPaymentMethod === 'online';
     const paymentStatusRaw = order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid';
+    const isInvoiceUnpaidCase = selectedPaymentMethod === 'invoice' && paymentStatusRaw === 'Unpaid';
     const shouldRenderPaymentInformation = !isPayOnline && paymentStatusRaw === 'Unpaid';
     const paymentStatus = escapeHtml(paymentStatusRaw);
     const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
@@ -2587,7 +2589,10 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
           <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
           <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
           <tr><td>Date:</td><td>${invoiceDate}</td></tr>
-          <tr><td>Payment status:</td><td>${paymentStatus}</td></tr>
+          ${isInvoiceUnpaidCase
+            ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
+          <tr><td>Payment Terms:</td><td>30 days net</td></tr>`
+            : `<tr><td>Payment status:</td><td>${paymentStatus}</td></tr>`}
           <tr><td>Reference:</td><td>Order No: ${invoiceNumber}</td></tr>
             </table>
         </div>

@@ -10,6 +10,13 @@ import {
 // import { decorateQrGroup } from "./qrFabricUtils";
 import { CUSTOM_FONT_FILES } from "../constants/fonts";
 import qrGenerator from "qrcode-generator";
+import {
+  fetchMyProjects,
+  fetchMyProjectById,
+  saveProjectAsMongo,
+  updateMyProject,
+  deleteMyProject,
+} from "../http/projects";
 
 // Lightweight IndexedDB storage for projects and their canvases (JSON + preview)
 // Store: projects (keyPath: id)
@@ -492,7 +499,36 @@ function txUnsaved(db, mode = "readonly") {
   return db.transaction(UNSAVED_STORE, mode).objectStore(UNSAVED_STORE);
 }
 
-export async function getAllProjects() {
+async function clearAllProjectsLocal() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const store = tx(db, "readwrite");
+    const req = store.clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+const MONGO_ID_RE = /^[a-f\d]{24}$/i;
+
+const hasAuthToken = () => {
+  try {
+    return Boolean(localStorage.getItem("token"));
+  } catch {
+    return false;
+  }
+};
+
+const isMongoProjectId = (id) =>
+  typeof id === "string" && MONGO_ID_RE.test(String(id).trim());
+
+const shouldUseRemoteProjects = () => hasAuthToken();
+
+const REMOTE_PROJECTS_PULL_TTL_MS = 30_000;
+let lastRemoteProjectsPullAt = 0;
+let remoteProjectsPullPromise = null;
+
+const listLocalProjects = async () => {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db);
@@ -500,6 +536,243 @@ export async function getAllProjects() {
     req.onsuccess = () => resolve(req.result || []);
     req.onerror = () => reject(req.error);
   });
+};
+
+const mapRemoteToLocalProject = (remote, existingLocal = null) => {
+  if (!remote || typeof remote !== "object") return null;
+
+  const nextLocalId =
+    existingLocal?.id ||
+    (typeof remote.clientProjectId === "string" && remote.clientProjectId.trim()) ||
+    uuid();
+
+  return {
+    ...(existingLocal || {}),
+    id: nextLocalId,
+    clientProjectId:
+      (typeof remote.clientProjectId === "string" && remote.clientProjectId.trim()) ||
+      existingLocal?.clientProjectId ||
+      nextLocalId,
+    mongoId: String(remote.id || existingLocal?.mongoId || "").trim() || null,
+    name: String(remote.name || existingLocal?.name || "Untitled"),
+    createdAt: Number(remote.createdAt) || existingLocal?.createdAt || Date.now(),
+    updatedAt: Number(remote.updatedAt) || existingLocal?.updatedAt || Date.now(),
+    lastOrderedAt: Number.isFinite(Number(remote.lastOrderedAt))
+      ? Number(remote.lastOrderedAt)
+      : existingLocal?.lastOrderedAt,
+    canvases: Array.isArray(remote.canvases)
+      ? remote.canvases
+      : Array.isArray(existingLocal?.canvases)
+        ? existingLocal.canvases
+        : [],
+    accessories: Array.isArray(remote.accessories)
+      ? remote.accessories
+      : Array.isArray(existingLocal?.accessories)
+        ? existingLocal.accessories
+        : [],
+    checkout:
+      remote.checkout && typeof remote.checkout === "object"
+        ? remote.checkout
+        : existingLocal?.checkout || null,
+  };
+};
+
+const pullProjectsFromMongoToIndexedDb = async ({ force = false } = {}) => {
+  if (!shouldUseRemoteProjects()) return;
+
+  const now = Date.now();
+  if (!force && now - lastRemoteProjectsPullAt < REMOTE_PROJECTS_PULL_TTL_MS) {
+    return;
+  }
+
+  if (remoteProjectsPullPromise) {
+    await remoteProjectsPullPromise;
+    return;
+  }
+
+  remoteProjectsPullPromise = (async () => {
+    try {
+      const remoteProjects = await fetchMyProjects();
+      const localProjects = await listLocalProjects();
+
+      const byMongoId = new Map();
+      const byClientId = new Map();
+      for (const local of localProjects) {
+        const mongoId = String(local?.mongoId || "").trim();
+        const clientId = String(local?.clientProjectId || local?.id || "").trim();
+        if (mongoId) byMongoId.set(mongoId, local);
+        if (clientId) byClientId.set(clientId, local);
+      }
+
+      for (const remote of remoteProjects || []) {
+        const remoteMongoId = String(remote?.id || "").trim();
+        const remoteClientId = String(remote?.clientProjectId || "").trim();
+        const existingLocal =
+          (remoteMongoId && byMongoId.get(remoteMongoId)) ||
+          (remoteClientId && byClientId.get(remoteClientId)) ||
+          null;
+
+        const mapped = mapRemoteToLocalProject(remote, existingLocal);
+        if (!mapped) continue;
+
+        const saved = await putProject(mapped);
+        const savedMongoId = String(saved?.mongoId || "").trim();
+        const savedClientId = String(saved?.clientProjectId || saved?.id || "").trim();
+        if (savedMongoId) byMongoId.set(savedMongoId, saved);
+        if (savedClientId) byClientId.set(savedClientId, saved);
+      }
+
+      lastRemoteProjectsPullAt = Date.now();
+    } catch (error) {
+      console.warn("Failed to pull projects from Mongo to IndexedDB", error);
+    } finally {
+      remoteProjectsPullPromise = null;
+    }
+  })();
+
+  await remoteProjectsPullPromise;
+};
+
+const syncProjectToMongoOnSave = async (project, { isSaveAs = false } = {}) => {
+  if (!project || !shouldUseRemoteProjects()) return project;
+
+  try {
+    const payload = {
+      name: project?.name || "Untitled",
+      project,
+      accessories: project?.accessories || [],
+      clientProjectId: project?.clientProjectId || project?.id || null,
+      lastOrderedAt: project?.lastOrderedAt,
+    };
+
+    const knownMongoId = String(project?.mongoId || "").trim();
+    const canUpdateDirectly = !isSaveAs && isMongoProjectId(knownMongoId);
+
+    const remote = canUpdateDirectly
+      ? await updateMyProject(knownMongoId, payload)
+      : await saveProjectAsMongo(payload);
+
+    if (!remote?.id) return project;
+
+    return {
+      ...project,
+      mongoId: String(remote.id),
+      updatedAt: Number(remote.updatedAt) || project.updatedAt || Date.now(),
+      createdAt: Number(remote.createdAt) || project.createdAt || Date.now(),
+    };
+  } catch (error) {
+    console.warn("Mongo sync on save failed, keeping IndexedDB version", error);
+    return project;
+  }
+};
+
+const persistLocallyAndSyncOnSave = async (
+  project,
+  { isSaveAs = false } = {}
+) => {
+  const localProject = await putProject(project);
+  const syncedProject = await syncProjectToMongoOnSave(localProject, {
+    isSaveAs,
+  });
+  if (syncedProject?.mongoId !== localProject?.mongoId) {
+    return putProject(syncedProject);
+  }
+  return localProject;
+};
+
+export async function resetEditorStateForUserSwitch() {
+  try {
+    await clearAllUnsavedSigns();
+  } catch (error) {
+    console.warn("Failed to clear unsaved signs on user switch", error);
+  }
+
+  try {
+    await clearAllProjectsLocal();
+  } catch (error) {
+    console.warn("Failed to clear local projects on user switch", error);
+  }
+
+  try {
+    localStorage.removeItem("currentProjectId");
+    localStorage.removeItem("currentProjectName");
+    localStorage.removeItem("currentCanvasId");
+    localStorage.removeItem("currentProjectCanvasId");
+    localStorage.removeItem("currentProjectCanvasIndex");
+    localStorage.removeItem("currentUnsavedSignId");
+    localStorage.removeItem("pendingOpenedProjectAccessories");
+  } catch {}
+
+  try {
+    sessionStorage.removeItem("pendingOpenedProjectAccessories");
+  } catch {}
+
+  try {
+    if (typeof window !== "undefined") {
+      window.__currentProjectCanvasId = null;
+      window.__currentProjectCanvasIndex = null;
+      window.__pendingUnsavedCleanupId = null;
+    }
+  } catch {}
+
+  const PX_PER_MM = 72 / 25.4;
+  const width = Math.round(DEFAULT_SIGN_SIZE_MM.width * PX_PER_MM);
+  const height = Math.round(DEFAULT_SIGN_SIZE_MM.height * PX_PER_MM);
+
+  let blankSign = null;
+  try {
+    blankSign = await addBlankUnsavedSign(width, height);
+    if (blankSign?.id) {
+      try {
+        localStorage.setItem("currentUnsavedSignId", blankSign.id);
+      } catch {}
+    }
+  } catch (error) {
+    console.warn("Failed to create blank sign on user switch", error);
+  }
+
+  try {
+    window.dispatchEvent(new CustomEvent("project:reset"));
+    window.dispatchEvent(new CustomEvent("accessories:reset"));
+    window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+    if (blankSign?.id) {
+      window.dispatchEvent(
+        new CustomEvent("canvas:autoOpen", {
+          detail: { canvasId: blankSign.id, isUnsaved: true },
+        })
+      );
+    }
+  } catch {}
+
+  return blankSign;
+}
+
+export async function getAllProjects() {
+  if (shouldUseRemoteProjects()) {
+    try {
+      const remoteProjects = await fetchMyProjects();
+      if (Array.isArray(remoteProjects)) {
+        return remoteProjects
+          .map((item) => {
+            const mapped = mapRemoteToLocalProject(item, null);
+            if (!mapped) return null;
+            const mongoId = String(item?.id || "").trim();
+            if (!mongoId) return mapped;
+            return {
+              ...mapped,
+              // UI actions (Edit/Delete) must use Mongo id for authenticated users.
+              id: mongoId,
+              mongoId,
+            };
+          })
+          .filter(Boolean);
+      }
+    } catch (error) {
+      console.warn("Failed to fetch remote project list, fallback to IndexedDB", error);
+    }
+  }
+
+  return listLocalProjects();
 }
 
 // ---------------- Unsaved Signs (temporary) -----------------
@@ -815,6 +1088,32 @@ export async function updateUnsavedSignFromCanvas(id, canvas) {
 
 export async function getProject(id) {
   if (!id) return null;
+
+  if (shouldUseRemoteProjects() && isMongoProjectId(id)) {
+    try {
+      const allLocal = await listLocalProjects();
+      const localByMongo = allLocal.find(
+        (item) => String(item?.mongoId || "").trim() === String(id).trim()
+      );
+      if (localByMongo) return localByMongo;
+
+      await pullProjectsFromMongoToIndexedDb({ force: true });
+      const refreshedLocal = await listLocalProjects();
+      const refreshedByMongo = refreshedLocal.find(
+        (item) => String(item?.mongoId || "").trim() === String(id).trim()
+      );
+      if (refreshedByMongo) return refreshedByMongo;
+
+      const remoteOne = await fetchMyProjectById(id);
+      const mapped = mapRemoteToLocalProject(remoteOne, null);
+      if (mapped) {
+        return putProject(mapped);
+      }
+    } catch (error) {
+      console.warn("Failed to resolve Mongo project by id", error);
+    }
+  }
+
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db);
@@ -837,6 +1136,7 @@ function normalizeProjectCanvasLimit(project) {
 
 export async function putProject(project) {
   const normalizedProject = normalizeProjectCanvasLimit(project);
+
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db, "readwrite");
@@ -847,10 +1147,24 @@ export async function putProject(project) {
 }
 
 export async function deleteProject(id) {
+  let localProject = null;
+  if (shouldUseRemoteProjects()) {
+    try {
+      localProject = await getProject(id);
+      const mongoId = String(localProject?.mongoId || "").trim();
+      if (isMongoProjectId(mongoId)) {
+        await deleteMyProject(mongoId);
+      }
+    } catch (error) {
+      console.warn("Failed to delete project from MongoDB, fallback to IndexedDB", error);
+    }
+  }
+
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db, "readwrite");
-    const req = store.delete(id);
+    const localId = String(localProject?.id || id || "").trim();
+    const req = store.delete(localId);
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
@@ -2171,7 +2485,8 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
   }
 }
 
-export async function saveNewProject(name, canvas) {
+export async function saveNewProject(name, canvas, options = {}) {
+  const syncRemote = options?.syncRemote !== false;
   const toolbarState = window.getCurrentToolbarState?.() || {};
   const snap = await exportCanvas(canvas, toolbarState);
   const now = Date.now();
@@ -2335,10 +2650,14 @@ export async function saveNewProject(name, canvas) {
     canvases,
     accessories: getSelectedAccessoriesSnapshot(),
   };
-  await putProject(project);
+  const persistedProject = syncRemote
+    ? await persistLocallyAndSyncOnSave(project, {
+        isSaveAs: true,
+      })
+    : (await putProject(project)) || project;
   try {
-    localStorage.setItem("currentProjectId", project.id);
-    localStorage.setItem("currentProjectName", project.name);
+    localStorage.setItem("currentProjectId", persistedProject.id);
+    localStorage.setItem("currentProjectName", persistedProject.name);
     if (activeCanvas) {
       localStorage.setItem("currentCanvasId", activeCanvas.id);
       localStorage.setItem("currentProjectCanvasId", activeCanvas.id);
@@ -2378,12 +2697,13 @@ export async function saveNewProject(name, canvas) {
       ...(currentUnsavedId ? [currentUnsavedId] : []),
       ...includedUnsavedIds,
     ]);
-    await transferUnsavedSignsToProject(project.id, excludeSet);
+    await transferUnsavedSignsToProject(persistedProject.id, excludeSet);
   } catch {}
-  return project;
+  return persistedProject;
 }
 
-export async function saveCurrentProject(canvas) {
+export async function saveCurrentProject(canvas, options = {}) {
+  const syncRemote = options?.syncRemote !== false;
   let currentId = null;
   try {
     currentId = localStorage.getItem("currentProjectId");
@@ -2391,12 +2711,12 @@ export async function saveCurrentProject(canvas) {
   if (!currentId) {
     // No current project — fallback to save-as with default name
     const fallbackName = `Untitled ${new Date().toLocaleString()}`;
-    return saveNewProject(fallbackName, canvas);
+    return saveNewProject(fallbackName, canvas, { syncRemote });
   }
   const existing = await getProject(currentId);
   if (!existing) {
     const fallbackName = `Untitled ${new Date().toLocaleString()}`;
-    return saveNewProject(fallbackName, canvas);
+    return saveNewProject(fallbackName, canvas, { syncRemote });
   }
 
   // Отримуємо поточний ID незбереженого знаку
@@ -2576,10 +2896,14 @@ export async function saveCurrentProject(canvas) {
             updatedAt: now,
             accessories: getSelectedAccessoriesSnapshot(),
           };
-          await putProject(updated);
+          const persistedUpdated = syncRemote
+            ? await persistLocallyAndSyncOnSave(updated, {
+                isSaveAs: false,
+              })
+            : (await putProject(updated)) || updated;
           try {
             const detail = {
-              projectId: updated.id,
+              projectId: persistedUpdated.id,
               activeCanvasId: (() => {
                 try {
                   return typeof window !== "undefined"
@@ -2609,7 +2933,10 @@ export async function saveCurrentProject(canvas) {
             );
           } catch {}
           try {
-            await transferUnsavedSignsToProject(updated.id, currentUnsavedId);
+            await transferUnsavedSignsToProject(
+              persistedUpdated.id,
+              currentUnsavedId
+            );
           } catch {}
 
           const unsavedToRemove = new Set();
@@ -2644,7 +2971,7 @@ export async function saveCurrentProject(canvas) {
               }
             } catch {}
           }
-          return updated;
+          return persistedUpdated;
         }
 
         const newCanvasId = uuid();
@@ -2685,10 +3012,14 @@ export async function saveCurrentProject(canvas) {
     updatedAt: now,
     accessories: getSelectedAccessoriesSnapshot(),
   };
-  await putProject(updated);
+  const persistedUpdated = syncRemote
+    ? await persistLocallyAndSyncOnSave(updated, {
+        isSaveAs: false,
+      })
+    : (await putProject(updated)) || updated;
   try {
     const detail = {
-      projectId: updated.id,
+      projectId: persistedUpdated.id,
       activeCanvasId: (() => {
         try {
           return typeof window !== "undefined"
@@ -2718,7 +3049,7 @@ export async function saveCurrentProject(canvas) {
     );
   } catch {}
   try {
-    await transferUnsavedSignsToProject(updated.id, currentUnsavedId);
+    await transferUnsavedSignsToProject(persistedUpdated.id, currentUnsavedId);
   } catch {}
 
   const unsavedToRemove = new Set();
@@ -2753,7 +3084,7 @@ export async function saveCurrentProject(canvas) {
       }
     } catch {}
   }
-  return updated;
+  return persistedUpdated;
 }
 
 export function formatDate(ts) {
@@ -2849,10 +3180,11 @@ export async function transferUnsavedSignsToProject(
   if (transferredIds.length) {
     project.canvases = existing;
     project.updatedAt = Date.now();
-    await putProject(project);
+    const persistedProject = (await putProject(project)) || project;
     await Promise.all(transferredIds.map((id) => deleteUnsavedSign(id)));
-    broadcastProjectUpdate(project.id);
+    broadcastProjectUpdate(persistedProject.id);
     broadcastUnsavedUpdate();
+    return persistedProject;
   } else {
     // Якщо нічого не перенесено, все одно повідомляємо про оновлення списку незбережених знаків
     broadcastUnsavedUpdate();
@@ -2915,10 +3247,11 @@ export async function transferUnsavedSignsToProjectByIds(
   if (transferredIds.length) {
     project.canvases = existing;
     project.updatedAt = Date.now();
-    await putProject(project);
+    const persistedProject = (await putProject(project)) || project;
     await Promise.all(transferredIds.map((id) => deleteUnsavedSign(id)));
-    broadcastProjectUpdate(project.id);
+    broadcastProjectUpdate(persistedProject.id);
     broadcastUnsavedUpdate();
+    return persistedProject;
   } else {
     broadcastUnsavedUpdate();
   }
@@ -2978,11 +3311,11 @@ export async function updateCanvasInCurrentProject(canvasId, canvas) {
     project.canvases[idx] = { ...project.canvases[idx], ...snap };
     project.updatedAt = Date.now();
 
-    await putProject(project);
+    const persistedProject = (await putProject(project)) || project;
     console.log("Successfully updated project canvas:", canvasId);
 
-    broadcastProjectUpdate(project.id);
-    return project;
+    broadcastProjectUpdate(persistedProject.id);
+    return persistedProject;
   } catch (error) {
     console.error("Error updating project canvas:", error);
     return null;
@@ -3009,25 +3342,25 @@ export async function addCanvasSnapshotToCurrentProject(
       updatedAt: now,
       canvases: [{ id: uuid(), ...snapshot }],
     };
-    await putProject(project);
-    broadcastProjectUpdate(project.id);
+    const persistedProject = (await putProject(project)) || project;
+    broadcastProjectUpdate(persistedProject.id);
     try {
-      localStorage.setItem("currentProjectId", project.id);
-      localStorage.setItem("currentProjectName", project.name);
-      if (setAsCurrent && project.canvases[0]) {
-        localStorage.setItem("currentCanvasId", project.canvases[0].id);
-        localStorage.setItem("currentProjectCanvasId", project.canvases[0].id);
+      localStorage.setItem("currentProjectId", persistedProject.id);
+      localStorage.setItem("currentProjectName", persistedProject.name);
+      if (setAsCurrent && persistedProject.canvases[0]) {
+        localStorage.setItem("currentCanvasId", persistedProject.canvases[0].id);
+        localStorage.setItem("currentProjectCanvasId", persistedProject.canvases[0].id);
         localStorage.setItem("currentProjectCanvasIndex", "0");
         localStorage.removeItem("currentUnsavedSignId");
         try {
           if (typeof window !== "undefined") {
-            window.__currentProjectCanvasId = project.canvases[0].id;
+            window.__currentProjectCanvasId = persistedProject.canvases[0].id;
             window.__currentProjectCanvasIndex = 0;
           }
         } catch {}
       }
     } catch {}
-    return project;
+    return persistedProject;
   }
   const project = await getProject(currentId);
   if (!project) return null;
@@ -3038,8 +3371,8 @@ export async function addCanvasSnapshotToCurrentProject(
   const canvasEntry = { id: uuid(), ...snapshot };
   project.canvases.push(canvasEntry);
   project.updatedAt = Date.now();
-  await putProject(project);
-  broadcastProjectUpdate(project.id);
+  const persistedProject = (await putProject(project)) || project;
+  broadcastProjectUpdate(persistedProject.id);
   if (setAsCurrent) {
     try {
       localStorage.setItem("currentCanvasId", canvasEntry.id);
@@ -3052,12 +3385,12 @@ export async function addCanvasSnapshotToCurrentProject(
       try {
         if (typeof window !== "undefined") {
           window.__currentProjectCanvasId = canvasEntry.id;
-          window.__currentProjectCanvasIndex = project.canvases.length - 1;
+          window.__currentProjectCanvasIndex = persistedProject.canvases.length - 1;
         }
       } catch {}
     } catch {}
   }
-  return project;
+  return persistedProject;
 }
 
 // Delete a canvas by id from current project. If deleted was current, caller should decide what to load next.

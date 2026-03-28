@@ -5,6 +5,7 @@ import { logout } from '../../store/reducers/user';
 import { useDispatch, useSelector } from 'react-redux';
 import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
+import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
 
 const urls = [
   { title: 'Home', url: '/' },
@@ -49,7 +50,15 @@ const Footer = () => {
 
   const dispatch = useDispatch();
 
-  const exit = () => dispatch(logout());
+  const exit = async () => {
+    try {
+      await resetEditorStateForUserSwitch();
+    } catch {}
+    try {
+      localStorage.removeItem('editorAuthUserId');
+    } catch {}
+    dispatch(logout());
+  };
 
   const [isLangOpen, setIsLangOpen] = useState(false);
 

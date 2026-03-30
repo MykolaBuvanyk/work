@@ -100,7 +100,7 @@ const ShareProjectPage = () => {
         const nextProject = {
           ...sourceProject,
           id: nextProjectId,
-          name: `${baseName} (copy)`,
+          name: `${baseName}`,
           createdAt: now,
           updatedAt: now,
           lastOrderedAt: 0,

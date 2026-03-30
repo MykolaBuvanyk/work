@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import styles from './HomePlaceholder.module.css';
 
 const heroImages = [
@@ -60,14 +61,12 @@ const HomePlaceholder = () => {
               plastic for Industry, energy, and business sectors.
             </p>
 
-            <a
-              href="https://sign-xpert.com/"
+            <Link
+              to="/online-sign-editor"
               className={styles.heroButton}
-              target="_blank"
-              rel="noopener noreferrer"
             >
               Design Your Sign
-            </a>
+            </Link>
 
             <p className={styles.heroNote}>Order before 16:00 for same-day dispatch</p>
           </div>
@@ -143,13 +142,9 @@ const HomePlaceholder = () => {
 
               <p>
                 Using our easy{' '}
-                <a
-                  href="https://sign-xpert.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link to="/online-sign-editor">
                   online sign editor
-                </a>
+                </Link>
                 , you can create fully customized signs for:
               </p>
 

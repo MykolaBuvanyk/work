@@ -1289,7 +1289,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       try {
         const prefix = (location && location.pathname && String(location.pathname).match(/^\/([a-z]{2})(\/|$)/i)) ? `/${String(location.pathname).slice(1,3)}` : '';
         // Use window.location to navigate, as Admin may not have router here
-        window.location.href = prefix || '/';
+        const targetUrl = prefix ? `${prefix}/online-sign-editor` : '/online-sign-editor';
+        window.location.href = targetUrl;
       } catch {}
     } catch (e) {
       console.error('Failed to open ordered project', e);

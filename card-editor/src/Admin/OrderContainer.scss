@@ -37,6 +37,10 @@
       align-items: flex-end;
       justify-content: right;
 
+      &.druk {
+        cursor: pointer;
+      }
+
       &.box {
         background-color: #f2f0f0;
         padding: 7.5px;

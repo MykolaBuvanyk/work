@@ -11,6 +11,28 @@ const formatDate = (date) => {
   return `${day}.${month}.${year}`;
 };
 
+const parseEmailList = (value) =>
+    String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const getInvoiceRecipients = (user) => {
+    const seen = new Set();
+    const result = [];
+
+    parseEmailList(user?.weWill).forEach((email) => {
+        const key = normalizeEmail(email);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        result.push(email);
+    });
+
+    return result;
+};
+
 class SendEmailForStatus {
     
     static SendAdminStatusPaid=async(order)=>{
@@ -753,8 +775,13 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
 </html>
 
 `       
-            const to=order.user.email;
-            await sendEmail(to,html,subject);
+            const recipients = getInvoiceRecipients(order.user);
+            if (recipients.length === 0) {
+                console.warn(`Skip invoice email for order ${order?.id}: user.weWill has no recipients`);
+                return true;
+            }
+
+            await Promise.all(recipients.map((to) => sendEmail(to, html, subject)));
         }catch(err){
             console.error('error send email where status printed.'+err);
             return false
@@ -999,8 +1026,13 @@ ${/*z<p style="margin: 5px 0 0 0;">Payment method: <strong>PayPal</strong></p>
 </body>
 </html>
 `       
-            const to=order.user.email;
-            await sendEmail(to,html,subject);
+            const recipients = getInvoiceRecipients(order.user);
+            if (recipients.length === 0) {
+                console.warn(`Skip invoice reminder for order ${order?.id}: user.weWill has no recipients`);
+                return true;
+            }
+
+            await Promise.all(recipients.map((to) => sendEmail(to, html, subject)));
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);

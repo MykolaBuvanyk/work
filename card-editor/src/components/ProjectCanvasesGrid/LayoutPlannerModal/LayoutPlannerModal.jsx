@@ -4832,21 +4832,16 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
   try {
     scope.project.clear();
 
-    // --- Preserve <text> elements: Paper.js loses tspan coordinates on import ---
-    const svgClone = svgElement.cloneNode(true);
-    const textEls = Array.from(svgClone.querySelectorAll("text"));
-    const savedTextTrees = [];
-    textEls.forEach((textEl) => {
-      // Build chain of ancestor <g> transforms from textEl up to the <svg> root
+    const buildSavedNodeTreeWithTransformAncestors = (rootSvg, sourceNode) => {
       const ancestors = [];
-      let cur = textEl.parentElement;
-      while (cur && cur !== svgClone && cur.nodeName?.toLowerCase() !== "svg") {
+      let cur = sourceNode?.parentElement || null;
+      while (cur && cur !== rootSvg && cur.nodeName?.toLowerCase() !== "svg") {
         if (cur.nodeName?.toLowerCase() === "g" && cur.hasAttribute("transform")) {
-          ancestors.unshift(cur); // prepend — outermost first
+          ancestors.unshift(cur);
         }
         cur = cur.parentElement;
       }
-      // Rebuild the minimal <g> nesting that wraps this text element
+
       let outermost = null;
       let innermost = null;
       ancestors.forEach((gNode) => {
@@ -4861,15 +4856,33 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
           innermost = gShell;
         }
       });
-      const textClone = textEl.cloneNode(true);
+
+      const nodeClone = sourceNode.cloneNode(true);
       if (innermost) {
-        innermost.appendChild(textClone);
-        savedTextTrees.push(outermost);
-      } else {
-        savedTextTrees.push(textClone);
+        innermost.appendChild(nodeClone);
+        return outermost;
       }
+      return nodeClone;
+    };
+
+    // --- Preserve <text> elements: Paper.js loses tspan coordinates on import ---
+    const svgClone = svgElement.cloneNode(true);
+    const textEls = Array.from(svgClone.querySelectorAll("text"));
+    const savedTextTrees = [];
+    textEls.forEach((textEl) => {
+      const savedTree = buildSavedNodeTreeWithTransformAncestors(svgClone, textEl);
+      savedTextTrees.push(savedTree);
       // Remove text from clone so Paper.js does not mangle it
       textEl.remove();
+    });
+
+    // --- Preserve <image> elements: Paper.js clipping pipeline drops raster image nodes ---
+    const imageEls = Array.from(svgClone.querySelectorAll("image"));
+    const savedImageTrees = [];
+    imageEls.forEach((imageEl) => {
+      const savedTree = buildSavedNodeTreeWithTransformAncestors(svgClone, imageEl);
+      savedImageTrees.push(savedTree);
+      imageEl.remove();
     });
 
     const imported = scope.project.importSVG(svgClone, {
@@ -5072,6 +5085,12 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
     // Re-insert original <text> elements that were removed before Paper.js import
     if (savedTextTrees.length > 0) {
       savedTextTrees.forEach((tree) => exportedSvg.appendChild(tree));
+    }
+
+    // Re-insert original <image> elements so uploaded raster/SVG image nodes
+    // survive Paper.js clipping and remain available for PDF export rendering.
+    if (savedImageTrees.length > 0) {
+      savedImageTrees.forEach((tree) => exportedSvg.appendChild(tree));
     }
 
     scope.project.clear();

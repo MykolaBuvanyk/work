@@ -219,7 +219,7 @@ const RegisterConsumer = () => {
         {/* E-mail & Phone */}
         <div className="table-row">
           <div className="label-cell">*E-Mail address</div>
-          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handleInput('email')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handlePrimaryEmailInput} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Mobile Phone</div>

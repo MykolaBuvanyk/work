@@ -78,7 +78,7 @@ const RegisterBussines = () => {
     isDifferent: false, isSubscribe: false,firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
     country2: '', state2: '', type: 'Business', company2:'',address4:'',
-    address5:'',address6:'', city:'',eMailInvoice:'',tellAbout:''
+    address5:'',address6:'', city:'',eMailInvoice:'',weWill:'',tellAbout:''
   });
 
   const handleInput = fieldName => value => {
@@ -219,7 +219,7 @@ const RegisterBussines = () => {
         {/* E-mail & Phone */}
         <div className="table-row">
           <div className="label-cell">*E-Mail address</div>
-          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handleInput('email')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handlePrimaryEmailInput} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Mobile Phone</div>

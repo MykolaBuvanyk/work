@@ -5,6 +5,7 @@ import IconsRouter from './IconsRouter.js';
 import CartRouter from './CartRouter.js';
 import ShareRouter from './ShareRouter.js';
 import SendEmail from './SendEmail.js';
+import ProjectsRouter from './ProjectsRouter.js';
 const router = express();
 
 router.use('/auth', AuthRouter);
@@ -13,5 +14,6 @@ router.use('/icons', IconsRouter);
 router.use('/cart', CartRouter);
 router.use('/share', ShareRouter);
 router.use('/email', SendEmail);
+router.use('/projects', ProjectsRouter);
 
 export default router;

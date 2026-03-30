@@ -7,6 +7,7 @@ import { logout, mergeUser } from '../../store/reducers/user';
 import combinedCountries from '../Countries';
 import Flag from 'react-flagkit';
 import { $authHost } from '../../http';
+import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
  
 const languageCountries = [
   // { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
@@ -33,6 +34,7 @@ const languageCountries = [
 
 
 const Header = () => {
+  const EDITOR_AUTH_USER_KEY = 'editorAuthUserId';
   const { pathname } = useLocation(); // <-- тут шлях
   const [isLangOpen, setIsLangOpen] = useState(false);
 
@@ -134,7 +136,44 @@ const Header = () => {
 
   const dispatch = useDispatch();
 
-  const exit = () => dispatch(logout());
+  const exit = async () => {
+    try {
+      await resetEditorStateForUserSwitch();
+    } catch {}
+    try {
+      localStorage.removeItem(EDITOR_AUTH_USER_KEY);
+    } catch {}
+    dispatch(logout());
+  };
+
+  useEffect(() => {
+    if (!isAuth || !user?.id) return;
+
+    let cancelled = false;
+
+    const ensureIsolatedEditorState = async () => {
+      try {
+        const nextUserId = String(user.id || '').trim();
+        if (!nextUserId) return;
+
+        const prevUserId = String(localStorage.getItem(EDITOR_AUTH_USER_KEY) || '').trim();
+        if (prevUserId && prevUserId !== nextUserId) {
+          await resetEditorStateForUserSwitch();
+          if (cancelled) return;
+        }
+
+        localStorage.setItem(EDITOR_AUTH_USER_KEY, nextUserId);
+      } catch (error) {
+        console.warn('Failed to isolate editor state on auth switch', error);
+      }
+    };
+
+    ensureIsolatedEditorState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuth, user?.id]);
 
   useEffect(() => {
     if (!isAuth) return;

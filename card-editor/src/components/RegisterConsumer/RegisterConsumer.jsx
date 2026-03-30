@@ -86,7 +86,13 @@ const RegisterConsumer = () => {
   });
 
   const sumbit = async e => {
-    console.log(523434);
+    if(formData.password!=formData.confirmPassword){
+      e.preventDefault()
+      alert("password must match");
+      formData.password='';
+      formData.confirmPassword='';
+      return;
+    }
     try {
       e.preventDefault();
       const res = await $host.post('auth/register', formData);
@@ -175,17 +181,17 @@ const RegisterConsumer = () => {
       <div className="registration-table">
         <div className="table-row">
           <div className="label-cell">*First name and Surname</div>
-          <div className="input-cell"><MyTextInput value={formData.firstName} setValue={handleInput('firstName')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.firstName} setValue={handleInput('firstName')} /></div>
         </div>
         {/* Row: Address 1 */}
         <div className="table-row">
           <div className="label-cell">*Address 1</div>
-          <div className="input-cell"><MyTextInput value={formData.address} setValue={handleInput('address')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.address} setValue={handleInput('address')} /></div>
         </div>
         {/* Rows: Address 2 & 3 */}
         <div className="table-row">
           <div className="label-cell">Address 2</div>
-          <div className="input-cell"><MyTextInput value={formData.address2} setValue={handleInput('address2')} /></div>
+          <div className="input-cell"><MyTextInput trq value={formData.address2} setValue={handleInput('address2')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">Address 3</div>
@@ -194,11 +200,11 @@ const RegisterConsumer = () => {
         {/* Town & Postal */}
         <div className="table-row">
           <div className="label-cell">*Town</div>
-          <div className="input-cell"><MyTextInput value={formData.city} setValue={handleInput('city')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.city} setValue={handleInput('city')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Postal code</div>
-          <div className="input-cell"><MyTextInput value={formData.postcode} setValue={handleInput('postcode')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.postcode} setValue={handleInput('postcode')} /></div>
         </div>
         {/* Country Select */}
         <div className="table-row">
@@ -213,20 +219,20 @@ const RegisterConsumer = () => {
         {/* E-mail & Phone */}
         <div className="table-row">
           <div className="label-cell">*E-Mail address</div>
-          <div className="input-cell"><MyTextInput value={formData.email} setValue={handlePrimaryEmailInput} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handleInput('email')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Mobile Phone</div>
-          <div className="input-cell"><MyTextInput value={formData.phone} setValue={handleInput('phone')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.phone} setValue={handleInput('phone')} /></div>
         </div>
         {/* Password Fields */}
         <div className="table-row">
           <div className="label-cell">*Password</div>
-          <div className="input-cell"><MyTextPassword value={formData.password} setValue={handleInput('password')} /></div>
+          <div className="input-cell"><MyTextPassword required value={formData.password} setValue={handleInput('password')} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Confirm Password</div>
-          <div className="input-cell"><MyTextPassword value={formData.confirmPassword} setValue={handleInput('confirmPassword')} /></div>
+          <div className="input-cell"><MyTextPassword required value={formData.confirmPassword} setValue={handleInput('confirmPassword')} /></div>
         </div>
         {/* Additional Info */}
         <div className="table-row">

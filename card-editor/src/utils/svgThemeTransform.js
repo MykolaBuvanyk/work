@@ -98,6 +98,17 @@ const toMonochromeValue = (rawValue, themeColor) => {
   return luminance(color) >= LIGHT_TO_TRANSPARENT_LUMA ? "transparent" : themeColor;
 };
 
+const toThemeColorPreserveAlphaValue = (rawValue, themeColor) => {
+  if (!rawValue) return rawValue;
+  if (isTransparentValue(rawValue)) return "transparent";
+
+  const color = parseSvgColor(rawValue);
+  if (!color) return rawValue;
+  if (color.a <= 0.001) return "transparent";
+
+  return themeColor;
+};
+
 const rewriteStyleAttribute = (el, themeColor) => {
   const styleValue = el.getAttribute("style");
   if (!styleValue) return;
@@ -182,6 +193,55 @@ export const convertSvgToThemeMonochrome = (svgString, themeColor = "#000") => {
       ["fill", "stroke", "stop-color", "color"].forEach(attr => {
         if (!el.hasAttribute(attr)) return;
         const next = toMonochromeValue(el.getAttribute(attr), themeColor);
+        if (next != null) el.setAttribute(attr, next);
+      });
+    });
+
+    return new XMLSerializer().serializeToString(doc);
+  } catch {
+    return svgString;
+  }
+};
+
+export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#000") => {
+  try {
+    const doc = new DOMParser().parseFromString(String(svgString || ""), "image/svg+xml");
+    const svg = doc.querySelector("svg");
+    if (!svg) return svgString;
+
+    // Rewrite class-based style declarations used by Illustrator exports (.st0, .st1, ...).
+    doc.querySelectorAll("style").forEach(styleEl => {
+      const cssText = String(styleEl.textContent || "");
+      if (!cssText) return;
+      const rewritten = cssText.replace(
+        /(fill|stroke|stop-color|color)\s*:\s*([^;}{]+)/gi,
+        (_match, prop, rawVal) => `${prop}: ${toThemeColorPreserveAlphaValue(String(rawVal || "").trim(), themeColor)}`
+      );
+      styleEl.textContent = rewritten;
+    });
+
+    doc.querySelectorAll("*").forEach(el => {
+      const styleValue = el.getAttribute("style");
+      if (styleValue) {
+        const pieces = styleValue
+          .split(";")
+          .map(x => x.trim())
+          .filter(Boolean)
+          .map(chunk => {
+            const idx = chunk.indexOf(":");
+            if (idx === -1) return chunk;
+            const key = chunk.slice(0, idx).trim().toLowerCase();
+            const value = chunk.slice(idx + 1).trim();
+            if (!["fill", "stroke", "stop-color", "color"].includes(key)) return chunk;
+            return `${key}: ${toThemeColorPreserveAlphaValue(value, themeColor)}`;
+          });
+
+        el.setAttribute("style", pieces.join("; "));
+      }
+
+      ["fill", "stroke", "stop-color", "color"].forEach(attr => {
+        if (!el.hasAttribute(attr)) return;
+        const next = toThemeColorPreserveAlphaValue(el.getAttribute(attr), themeColor);
         if (next != null) el.setAttribute(attr, next);
       });
     });

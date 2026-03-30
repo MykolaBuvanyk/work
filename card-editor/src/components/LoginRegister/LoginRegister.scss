@@ -20,71 +20,75 @@
   .type-register {
     display: flex;
     flex-direction: row;
+    align-items: center;
     gap: 17.5px;
     margin-top: 12.5px;
 
     .custom-radio {
+      --radio-size: 20px;
+      --radio-dot-size: 10px;
+      --radio-idle: #aebac7;
+      --radio-active: #007bff;
+
       display: inline-flex;
       align-items: center;
+      gap: 10px;
       cursor: pointer;
       font-size: 16px;
+      line-height: 20px;
       color: #14213d;
       user-select: none;
-      position: relative; // Для позиціонування ::before та ::after
-      padding-left: 30px; // Забезпечуємо місце для візуального елемента
+      white-space: nowrap;
 
-      input[type='radio'] {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-
-      // 1. Зовнішнє коло (::before)
-      &::before {
-        content: '';
-        position: absolute;
-        left: -1px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 20px;
-        height: 20px;
-        min-width: 20px;
-        min-height: 20px;
-        max-width: 20px;
-        max-height: 20px;
-        border: 2px solid #aebac7; // Сірий контур
-        border-radius: 50%;
-        transition: border-color 0.2s;
-      }
-
-      // 2. Внутрішня синя крапка (::after)
+      &::before,
       &::after {
-        content: '';
-        position: absolute;
-        left: 9px;
-        top: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        width: 14px;
-        height: 14px;
-        min-width: 14px;
-        min-height: 14px;
-        max-width: 14px;
-        max-height: 14px;
-        border-radius: 50%;
-        background-color: #007bff; // Синій
-        transition: transform 0.2s ease-in-out;
+        content: none !important;
       }
 
-      // Стан: коли інпут обрано (:checked)
-      // ВИКОРИСТОВУЄМО :has() для стилізації батьківського елемента
-      &:has(input[type='radio']:checked) {
-        &::before {
-          border-color: #007bff; // Синій контур
-        }
-        &::after {
-          transform: translate(-50%, -50%) scale(0.7);
-        }
+      .custom-radio-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: var(--radio-size);
+        height: var(--radio-size);
+        min-width: var(--radio-size);
+        min-height: var(--radio-size);
+        margin: 0;
+        border: 2px solid var(--radio-idle);
+        border-radius: 50%;
+        background: #fff;
+        box-sizing: border-box;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .custom-radio-input::before {
+        content: '';
+        width: var(--radio-dot-size);
+        height: var(--radio-dot-size);
+        border-radius: 50%;
+        background: var(--radio-active);
+        transform: scale(0);
+        transition: transform 0.12s ease-out;
+      }
+
+      .custom-radio-input:checked {
+        border-color: var(--radio-active);
+      }
+
+      .custom-radio-input:checked::before {
+        transform: scale(1);
+      }
+
+      .custom-radio-input:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+      }
+
+      .custom-radio-text {
+        line-height: 20px;
       }
     }
   }

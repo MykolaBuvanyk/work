@@ -123,6 +123,14 @@ const normalizeMaterialColorLabel = (value) =>
 const resolveDeliveryType = (order) =>
   String(order?.deliveryType || order?.orderMongo?.checkout?.deliveryLabel || '').trim();
 
+const resolveDeliveryPrice = (order) => {
+  const rawPrice = Number(order?.orderMongo?.checkout?.deliveryPrice);
+  if (Number.isFinite(rawPrice)) {
+    return rawPrice.toFixed(2);
+  }
+  return '---';
+};
+
 const resolveInvoiceEmails = (order) =>
   String(order?.orderMongo?.checkout?.invoiceEmail || '').trim();
 
@@ -1329,10 +1337,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   };
   
   const emailOpen = () => {
-    window.open(
-      `mailto:${order.user.email}?subject=Order no №${order.id}`,
-      "_blank"
-    );
+    const subject = encodeURIComponent(`Order no №${order.id}`);
+
+    window.location.href = `mailto:${order.user.email}?subject=${subject}`;
   };
 
 
@@ -1340,6 +1347,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const manufacturerNote =
     String(order?.orderMongo?.manufacturerNote || order?.orderMongo?.project?.manufacturerNote || '').trim() || null;
   const deliveryTypeLabel = resolveDeliveryType(order);
+  const deliveryPriceLabel = resolveDeliveryPrice(order);
   return (
     <>
     <div className="order-container">
@@ -1424,12 +1432,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       </div>
       <div className="row">
         <p>Order Sum</p>
-        <span>{order.sum}</span>
+        <span>{order.netAfterDiscount}</span>
         <div />
       </div>
       <div className="row">
         <p>Freight</p>
-        <span>5.95</span>
+        <span>{deliveryPriceLabel}</span>
         <div />
       </div>
       <div className="row">
@@ -1777,7 +1785,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         </button>
       </div>
       <div className="but-message">
-        <button onClick={emailOpen}>Message to customer</button>
+        <a href={`mailto:${order.user.email}`}>
+          <button>Message to customer</button>
+        </a>
       </div>
     </div>
     <br/>

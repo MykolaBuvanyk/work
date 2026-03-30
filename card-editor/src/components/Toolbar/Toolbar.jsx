@@ -22,6 +22,7 @@ import { fitObjectToCanvas } from '../../utils/canvasFit';
 import {
   applyStrokeOnlyToSVG,
   convertSvgToThemeMonochrome,
+  convertSvgToThemeColorPreserveAlpha,
 } from '../../utils/svgThemeTransform';
 import styles from './Toolbar.module.css';
 import {
@@ -437,7 +438,7 @@ const Toolbar = ({ formData }) => {
         } catch {}
 
         if (!currentProjectId) {
-          await saveCurrentProject(canvas);
+          await saveCurrentProject(canvas, { syncRemote: false });
           try {
             currentProjectId = localStorage.getItem('currentProjectId');
           } catch {}
@@ -6284,6 +6285,213 @@ const Toolbar = ({ formData }) => {
     }
   };
 
+  const processUploadedSvgWithPreviewPipeline = async ({
+    sourceSvg,
+    theme,
+    strokeOnly,
+    svgDebug,
+    svgDebugEnabled,
+  }) => {
+    const log = typeof svgDebug === 'function' ? svgDebug : () => {};
+    const inputSvg = String(sourceSvg || '').trim();
+    if (!inputSvg) return '';
+
+    let processed = inputSvg;
+    try {
+      const apiBase = String(import.meta.env.VITE_LAYOUT_API_SERVER || '/api/').trim();
+      const baseWithSlash = apiBase.replace(/\/?$/, '/');
+      const endpoint = /\/api\/$/i.test(baseWithSlash)
+        ? `${baseWithSlash}svg/clean`
+        : `${baseWithSlash}api/svg/clean`;
+
+      log('clean request', { endpoint, sourceLength: inputSvg.length, theme });
+      const cleanResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          svg: inputSvg,
+          fillColor: theme,
+          debug: !!svgDebugEnabled,
+        }),
+      });
+
+      log('clean response status', cleanResponse.status);
+      if (cleanResponse.ok) {
+        const payload = await cleanResponse.json();
+        if (payload?.svg && typeof payload.svg === 'string') {
+          processed = payload.svg;
+          log('clean svg accepted', { cleanedLength: processed.length });
+        }
+      }
+    } catch (cleanError) {
+      console.warn('Server SVG clean failed, using fallback transform', cleanError);
+      log('clean exception fallback', cleanError?.message || cleanError);
+    }
+
+    if (strokeOnly) {
+      return applyStrokeOnlyToSVG(processed, theme);
+    }
+
+    return convertSvgToThemeColorPreserveAlpha(processed, theme);
+  };
+
+  const rebuildUploadedSvgFromSource = async (targetObj, themeColor) => {
+    if (!canvas || !targetObj || targetObj.isUploadedSvg !== true) return null;
+
+    const source = String(targetObj.originalSvgSource || '').trim();
+    if (!source) return null;
+
+    const hasVisiblePaint = value => {
+      if (typeof value !== 'string') return false;
+      const normalized = value.trim().toLowerCase().replace(/\s+/g, '');
+      if (!normalized) return false;
+      return (
+        normalized !== 'transparent' &&
+        normalized !== 'none' &&
+        normalized !== 'rgba(0,0,0,0)'
+      );
+    };
+
+    const isRenderableFabricObject = obj => {
+      return (
+        !!obj &&
+        typeof obj === 'object' &&
+        typeof obj.set === 'function' &&
+        typeof obj.render === 'function' &&
+        typeof obj.toObject === 'function'
+      );
+    };
+
+    const applyPropsSafe = (obj, props) => {
+      if (!obj || !props || typeof props !== 'object') return;
+      try {
+        if (typeof obj.set === 'function') {
+          obj.set(props);
+          return;
+        }
+      } catch {}
+
+      Object.keys(props).forEach(key => {
+        try {
+          obj[key] = props[key];
+        } catch {}
+      });
+    };
+
+    try {
+      const themed = await processUploadedSvgWithPreviewPipeline({
+        sourceSvg: source,
+        theme: themeColor || '#000000',
+        strokeOnly: targetObj.uploadedSvgStrokeOnly === true,
+        svgDebug: () => {},
+        svgDebugEnabled: false,
+      });
+      if (!themed) return null;
+
+      const result = await fabric.loadSVGFromString(themed);
+      if (!result?.objects?.length) return null;
+
+      const rebuilt =
+        result.objects.length === 1
+          ? result.objects[0]
+          : fabric.util.groupSVGElements(result.objects, result.options);
+      if (!isRenderableFabricObject(rebuilt)) {
+        return null;
+      }
+
+      const rootHasFill = hasVisiblePaint(rebuilt.fill);
+      const rootHasStroke = hasVisiblePaint(rebuilt.stroke);
+
+      applyPropsSafe(rebuilt, {
+        left: targetObj.left,
+        top: targetObj.top,
+        scaleX: targetObj.scaleX,
+        scaleY: targetObj.scaleY,
+        angle: targetObj.angle,
+        originX: targetObj.originX || 'center',
+        originY: targetObj.originY || 'center',
+        selectable: targetObj.selectable !== false,
+        evented: targetObj.evented !== false,
+        hasControls: targetObj.hasControls !== false,
+        hasBorders: targetObj.hasBorders !== false,
+        lockMovementX: targetObj.lockMovementX === true,
+        lockMovementY: targetObj.lockMovementY === true,
+        lockScalingX: targetObj.lockScalingX === true,
+        lockScalingY: targetObj.lockScalingY === true,
+        lockRotation: targetObj.lockRotation === true,
+        useThemeColor: rootHasFill,
+        followThemeStroke: rootHasStroke,
+        svgThemeFillEnabled: rootHasFill,
+        svgThemeStrokeEnabled: rootHasStroke,
+        followThemeFill: false,
+        isUploadedImage: true,
+        isUploadedSvg: true,
+        svgEvenOddHoles: targetObj.svgEvenOddHoles === true,
+        originalSvgSource: source,
+        uploadedSvgStrokeOnly: targetObj.uploadedSvgStrokeOnly === true,
+        initialFillColor: typeof rebuilt.fill === 'string' ? rebuilt.fill : null,
+        initialStrokeColor: typeof rebuilt.stroke === 'string' ? rebuilt.stroke : 'transparent',
+      });
+
+      if (rebuilt.type === 'group' && typeof rebuilt.forEachObject === 'function') {
+        rebuilt.forEachObject(child => {
+          if (!isRenderableFabricObject(child)) return;
+          const childHasFill = hasVisiblePaint(child.fill);
+          const childHasStroke = hasVisiblePaint(child.stroke);
+          applyPropsSafe(child, {
+            useThemeColor: childHasFill,
+            followThemeStroke: childHasStroke,
+            svgThemeFillEnabled: childHasFill,
+            svgThemeStrokeEnabled: childHasStroke,
+            followThemeFill: false,
+            isUploadedImage: true,
+            isUploadedSvg: true,
+            svgEvenOddHoles: targetObj.svgEvenOddHoles === true,
+            initialFillColor: typeof child.fill === 'string' ? child.fill : null,
+            initialStrokeColor: typeof child.stroke === 'string' ? child.stroke : 'transparent',
+          });
+          if (child.type === 'path' && targetObj.svgEvenOddHoles === true) {
+            applyPropsSafe(child, { fillRule: 'evenodd', clipRule: 'evenodd' });
+          }
+        });
+      }
+
+      if (rebuilt.type === 'path' && targetObj.svgEvenOddHoles === true) {
+        applyPropsSafe(rebuilt, { fillRule: 'evenodd', clipRule: 'evenodd' });
+      }
+
+      ensureShapeSvgId(rebuilt, canvas, { prefix: 'parsed-svg' });
+
+      const objects = canvas.getObjects() || [];
+      const index = objects.indexOf(targetObj);
+      const wasActive = canvas.getActiveObject?.() === targetObj;
+      if (index >= 0) {
+        canvas.remove(targetObj);
+        // Fabric insertAt signature differs across versions; use add+move to avoid
+        // corrupting canvas object list with non-renderable entries.
+        canvas.add(rebuilt);
+        try {
+          if (typeof canvas.moveTo === 'function') {
+            canvas.moveTo(rebuilt, index);
+          } else if (typeof canvas.moveObjectTo === 'function') {
+            canvas.moveObjectTo(rebuilt, index);
+          }
+        } catch {}
+        if (wasActive) {
+          try {
+            canvas.setActiveObject(rebuilt);
+          } catch {}
+        }
+      }
+
+      rebuilt.setCoords && rebuilt.setCoords();
+      return rebuilt;
+    } catch (error) {
+      console.warn('Failed to rebuild uploaded SVG from source', error);
+      return null;
+    }
+  };
+
   // Оновлена функція для зміни кольору всіх текстів та фону canvas
   const updateColorScheme = (
     textColor,
@@ -6307,8 +6515,70 @@ const Toolbar = ({ formData }) => {
 
     // Змінюємо колір всіх об'єктів на canvas, з урахуванням manual Cut
     const objects = canvas.getObjects();
+    const svgRebuildTargets = [];
+    const hasVisiblePaint = value => {
+      if (typeof value !== 'string') return false;
+      const normalized = value.trim().toLowerCase().replace(/\s+/g, '');
+      if (!normalized) return false;
+      return (
+        normalized !== 'transparent' &&
+        normalized !== 'none' &&
+        normalized !== 'rgba(0,0,0,0)'
+      );
+    };
 
     objects.forEach(obj => {
+      if (
+        obj?.isUploadedSvg === true &&
+        typeof obj.originalSvgSource === 'string' &&
+        obj.originalSvgSource.trim() !== ''
+      ) {
+        svgRebuildTargets.push(obj);
+        return;
+      }
+
+      // Uploaded vectorized assets are usually groups; recolor children directly
+      // to preserve transparent parts and avoid flattening the whole group.
+      if (obj?.type === 'group' && obj?.isUploadedImage === true && typeof obj.forEachObject === 'function') {
+        obj.forEachObject(child => {
+          if (!child || typeof child.set !== 'function') return;
+
+          if (child.type === 'path' && child.svgEvenOddHoles === true) {
+            child.set({ fillRule: 'evenodd', clipRule: 'evenodd' });
+          }
+
+          const isTransparentFill =
+            child.fill === 'transparent' ||
+            child.fill === '' ||
+            child.fill === null ||
+            typeof child.fill === 'undefined';
+          const inferredFillEnabled = hasVisiblePaint(child.initialFillColor || child.fill);
+          const inferredStrokeEnabled = hasVisiblePaint(child.initialStrokeColor || child.stroke);
+          const childUsesThemeColor =
+            obj.isUploadedSvg === true
+              ? child.svgThemeFillEnabled === true ||
+                (child.svgThemeFillEnabled === undefined &&
+                  (child.useThemeColor === true || inferredFillEnabled))
+              : child.useThemeColor === true || inferredFillEnabled;
+          const childFollowThemeStroke =
+            obj.isUploadedSvg === true
+              ? child.svgThemeStrokeEnabled === true ||
+                (child.svgThemeStrokeEnabled === undefined && inferredStrokeEnabled)
+              : child.followThemeStroke === true || inferredStrokeEnabled;
+
+          if (!isTransparentFill && childUsesThemeColor) {
+            child.set({ fill: textColor });
+          }
+
+          if (childFollowThemeStroke) {
+            child.set({ stroke: textColor });
+          } else if (typeof child.initialStrokeColor === 'string') {
+            child.set({ stroke: child.initialStrokeColor });
+          }
+        });
+        return;
+      }
+
       // Оновлення кольору ліній для фігур "Коло з лінією" та "Коло з хрестом"
       if (
         obj.isCircleWithLineCenterLine ||
@@ -6376,7 +6646,11 @@ const Toolbar = ({ formData }) => {
           typeof obj.fill === 'undefined';
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
-        const applyThemeStroke = followThemeStroke && obj.isUploadedImage !== true;
+        const allowUploadedVectorTheme =
+          obj.isUploadedSvg === true ||
+          (obj.isUploadedImage === true && (obj.useThemeColor === true || obj.followThemeStroke === true));
+        const applyThemeStroke =
+          followThemeStroke && (obj.isUploadedImage !== true || allowUploadedVectorTheme);
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6395,7 +6669,7 @@ const Toolbar = ({ formData }) => {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
-        } else if (obj.isUploadedImage === true) {
+        } else if (obj.isUploadedImage === true && !allowUploadedVectorTheme) {
           obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'circle-with-cut') {
@@ -6406,7 +6680,11 @@ const Toolbar = ({ formData }) => {
           typeof obj.fill === 'undefined';
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
-        const applyThemeStroke = followThemeStroke && obj.isUploadedImage !== true;
+        const allowUploadedVectorTheme =
+          obj.isUploadedSvg === true ||
+          (obj.isUploadedImage === true && (obj.useThemeColor === true || obj.followThemeStroke === true));
+        const applyThemeStroke =
+          followThemeStroke && (obj.isUploadedImage !== true || allowUploadedVectorTheme);
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6425,7 +6703,7 @@ const Toolbar = ({ formData }) => {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
-        } else if (obj.isUploadedImage === true) {
+        } else if (obj.isUploadedImage === true && !allowUploadedVectorTheme) {
           obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'line') {
@@ -6433,6 +6711,16 @@ const Toolbar = ({ formData }) => {
       }
       // QR та Bar коди залишаємо без змін - вони будуть використовувати нові кольори при створенні
     });
+
+    if (svgRebuildTargets.length) {
+      Promise.allSettled(
+        svgRebuildTargets.map(obj => rebuildUploadedSvgFromSource(obj, textColor))
+      ).finally(() => {
+        try {
+          canvas.requestRenderAll?.();
+        } catch {}
+      });
+    }
 
     // Тимчасово відключено автоперегенерацію BarCode при зміні схеми щоб уникнути помилок Fabric
     // Якщо потрібно оновити кольори смуг — можна зробити окрему кнопку чи відкладену регенерацію
@@ -10280,11 +10568,13 @@ const Toolbar = ({ formData }) => {
           mode={uploadMode}
           dataURL={uploadDataURL}
           svgText={uploadSvgText}
-          themeColor={(globalColors && globalColors.textColor) || '#000'}
+          themeColor={(globalColors && (globalColors.strokeColor || globalColors.textColor)) || '#000'}
           onClose={() => setIsUploadOpen(false)}
           onConfirm={async ({ svg: finalSVG, strokeOnly, mode }) => {
             if (!canvas || !finalSVG) return;
             try {
+              const isSvgUpload = mode === 'svg';
+              const isThemeFollowUpload = mode === 'svg' || mode === 'raster';
               const svgDebugEnabled =
                 typeof window !== 'undefined' &&
                 (window.__SVG_DEBUG__ === true || localStorage.getItem('svgDebug') === '1');
@@ -10294,9 +10584,9 @@ const Toolbar = ({ formData }) => {
               };
 
               let themedSVG = String(finalSVG);
-              const theme = (globalColors && globalColors.textColor) || '#000';
+              const theme =
+                (globalColors && (globalColors.strokeColor || globalColors.textColor)) || '#000';
               if (mode === 'svg') {
-                // Always process the original uploaded SVG source for deterministic restore behavior.
                 const sourceSvg = String(uploadSvgText || themedSVG || '').trim();
                 themedSVG = sourceSvg || themedSVG;
                 svgDebug('source prepared', {
@@ -10304,42 +10594,13 @@ const Toolbar = ({ formData }) => {
                   previewLength: String(finalSVG || '').length,
                   theme,
                 });
-                try {
-                  const apiBase = String(import.meta.env.VITE_LAYOUT_API_SERVER || '/api/').trim();
-                  const baseWithSlash = apiBase.replace(/\/?$/, '/');
-                  const endpoint = /\/api\/$/i.test(baseWithSlash)
-                    ? `${baseWithSlash}svg/clean`
-                    : `${baseWithSlash}api/svg/clean`;
-                  svgDebug('clean request', { endpoint });
-                  const cleanResponse = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      svg: themedSVG,
-                      fillColor: theme,
-                      debug: svgDebugEnabled,
-                    }),
-                  });
-                  svgDebug('clean response status', cleanResponse.status);
-                  if (cleanResponse.ok) {
-                    const payload = await cleanResponse.json();
-                    svgDebug('clean response payload', payload?.debug || null);
-                    if (payload?.svg && typeof payload.svg === 'string') {
-                      themedSVG = payload.svg;
-                      svgDebug('clean svg accepted', { cleanedLength: themedSVG.length });
-                    } else {
-                      themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
-                      svgDebug('clean payload missing svg, fallback monochrome');
-                    }
-                  } else {
-                    themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
-                    svgDebug('clean endpoint non-200, fallback monochrome');
-                  }
-                } catch (cleanError) {
-                  console.warn('Server SVG clean failed, using monochrome fallback', cleanError);
-                  themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
-                  svgDebug('clean exception fallback', cleanError?.message || cleanError);
-                }
+                themedSVG = await processUploadedSvgWithPreviewPipeline({
+                  sourceSvg: themedSVG,
+                  theme,
+                  strokeOnly,
+                  svgDebug,
+                  svgDebugEnabled,
+                });
               } else if (!strokeOnly) {
                 themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
               }
@@ -10380,11 +10641,31 @@ const Toolbar = ({ formData }) => {
 
               // Uploaded SVG must keep exact visual state after canvas reload/switch.
               try {
+                const hasVisiblePaint = (value) => {
+                  if (typeof value !== 'string') return false;
+                  const normalized = value.trim().toLowerCase().replace(/\s+/g, '');
+                  if (!normalized) return false;
+                  return (
+                    normalized !== 'transparent' &&
+                    normalized !== 'none' &&
+                    normalized !== 'rgba(0,0,0,0)'
+                  );
+                };
+
+                const rootHasFill = hasVisiblePaint(obj?.fill);
+                const rootHasStroke = hasVisiblePaint(obj?.stroke);
+
                 obj.set &&
                   obj.set({
-                    useThemeColor: false,
-                    followThemeStroke: false,
+                    useThemeColor: isThemeFollowUpload && rootHasFill,
+                    followThemeStroke: isThemeFollowUpload && rootHasStroke,
+                    svgThemeFillEnabled: isSvgUpload && rootHasFill,
+                    svgThemeStrokeEnabled: isSvgUpload && rootHasStroke,
+                    svgEvenOddHoles: isSvgUpload,
                     followThemeFill: false,
+                    isUploadedSvg: isSvgUpload,
+                    originalSvgSource: isSvgUpload ? String(uploadSvgText || '') : null,
+                    uploadedSvgStrokeOnly: isSvgUpload && strokeOnly === true,
                     initialFillColor: typeof obj.fill === 'string' ? obj.fill : null,
                     initialStrokeColor:
                       typeof obj.stroke === 'string' ? obj.stroke : 'transparent',
@@ -10394,9 +10675,13 @@ const Toolbar = ({ formData }) => {
                     child =>
                       child.set &&
                       child.set({
-                        useThemeColor: false,
-                        followThemeStroke: false,
+                        useThemeColor: isThemeFollowUpload && hasVisiblePaint(child.fill),
+                        followThemeStroke: isThemeFollowUpload && hasVisiblePaint(child.stroke),
+                        svgThemeFillEnabled: isSvgUpload && hasVisiblePaint(child.fill),
+                        svgThemeStrokeEnabled: isSvgUpload && hasVisiblePaint(child.stroke),
+                        svgEvenOddHoles: isSvgUpload,
                         followThemeFill: false,
+                        isUploadedSvg: isSvgUpload,
                         initialFillColor: typeof child.fill === 'string' ? child.fill : null,
                         initialStrokeColor:
                           typeof child.stroke === 'string' ? child.stroke : 'transparent',
@@ -10685,4 +10970,5 @@ const Toolbar = ({ formData }) => {
   );
 };
 
+export { Toolbar };
 export default Toolbar;

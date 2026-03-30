@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 
 // Функція для надсилання повідомлення на пошту
-const sendEmail = async (to, messageHtml, subject) => {
+const sendEmail = async (to, messageHtml, subject, file = null) => {
   try {
     // Налаштування транспорту (використовуємо Gmail)
     const transporter = nodemailer.createTransport({
@@ -14,11 +14,28 @@ const sendEmail = async (to, messageHtml, subject) => {
 
     // Параметри електронного листа
     const mailOptions = {
-      from: `SignXpert - <${process.env.GMAIL_USER_SEND}>`, // Від кого
+      from: `SignXpert <${process.env.GMAIL_USER_SEND}>`, // Від кого
       to, // Кому надсилаємо
       subject, // Тема листа
       html: messageHtml, // HTML-контент листа
+      attachments: [] // Ініціалізуємо порожній масив для вкладень
     };
+
+    // Перевіряємо, чи передано файл, і чи він не порожній
+    if (file) {
+      // Якщо file — це вже готовий об'єкт для nodemailer {filename, content...}
+      if (file.content) {
+          mailOptions.attachments.push(file);
+      } 
+      // Якщо передано просто Buffer (на випадок спрощеного виклику)
+      else if (Buffer.isBuffer(file)) {
+          mailOptions.attachments.push({
+              filename: 'document.pdf',
+              content: file,
+              contentType: 'application/pdf'
+          });
+      }
+    }
 
     // Відправка листа
     await transporter.sendMail(mailOptions);
@@ -29,7 +46,8 @@ const sendEmail = async (to, messageHtml, subject) => {
       message: 'Лист успішно надіслано',
     };
   } catch (error) {
-    console.log('Помилка відправки на пошту', error);
+    console.error('Помилка відправки на пошту:', error);
+    
     // Визначаємо, який тип помилки стався
     if (error.response && error.response.code === 550) {
       return {

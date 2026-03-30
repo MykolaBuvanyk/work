@@ -180,6 +180,16 @@ class AuthController {
       return res.json({ newUser, token });
     } catch (err) {
       console.log(32434,err);
+      const isDuplicateEmailError =
+        err?.name === 'SequelizeUniqueConstraintError' ||
+        err?.parent?.code === '23505' ||
+        err?.parent?.errno === 1062 ||
+        String(err?.message || '').toLowerCase().includes('unique') ||
+        String(err?.message || '').toLowerCase().includes('email');
+
+      if (isDuplicateEmailError) {
+        return next(ErrorApi.badRequest('Email already in use'));
+      }
       return next(ErrorApi.internalServerError(err));
     }
   };

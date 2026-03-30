@@ -677,8 +677,7 @@ const InfoAboutProject = () => {
   };
 
   const handleCheckoutClose = () => {
-    setIsPayOpen(true)
-    //setIsCheckoutOpen(false);36345
+    setIsCheckoutOpen(false);
   };
 
   const PayClose=()=>{

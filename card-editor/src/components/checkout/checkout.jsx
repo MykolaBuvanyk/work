@@ -142,6 +142,7 @@ const INITIAL_INVOICE_ADDRESS = {
 }
 
 const CHECKOUT_COUNTRY_STORAGE_KEY = 'checkout:selected-country'
+const CHECKOUT_EMAILS_DRAFT_STORAGE_KEY = 'checkout:emails-draft'
 
 const readStoredCountrySelection = () => {
 	try {
@@ -156,6 +157,39 @@ const readStoredCountrySelection = () => {
 		}
 	} catch {
 		return { country: '', region: '' }
+	}
+}
+
+const readCheckoutEmailsDraft = () => {
+	try {
+		const raw = localStorage.getItem(CHECKOUT_EMAILS_DRAFT_STORAGE_KEY)
+		if (!raw) return { invoiceEmail: '', invoiceAddressEmail: '', isInvoiceDifferent: false }
+		const parsed = JSON.parse(raw)
+		if (!parsed || typeof parsed !== 'object') {
+			return { invoiceEmail: '', invoiceAddressEmail: '', isInvoiceDifferent: false }
+		}
+		return {
+			invoiceEmail: String(parsed.invoiceEmail || ''),
+			invoiceAddressEmail: String(parsed.invoiceAddressEmail || ''),
+			isInvoiceDifferent: Boolean(parsed.isInvoiceDifferent),
+		}
+	} catch {
+		return { invoiceEmail: '', invoiceAddressEmail: '', isInvoiceDifferent: false }
+	}
+}
+
+const persistCheckoutEmailsDraft = ({ invoiceEmail, invoiceAddressEmail, isInvoiceDifferent }) => {
+	try {
+		localStorage.setItem(
+			CHECKOUT_EMAILS_DRAFT_STORAGE_KEY,
+			JSON.stringify({
+				invoiceEmail: String(invoiceEmail || ''),
+				invoiceAddressEmail: String(invoiceAddressEmail || ''),
+				isInvoiceDifferent: Boolean(isInvoiceDifferent),
+			})
+		)
+	} catch {
+		// no-op
 	}
 }
 
@@ -211,6 +245,7 @@ export default function Checkout({
 	accessoriesPrice = 0,
 	selectedAccessories = [],
 }) {
+	const emailDraft = readCheckoutEmailsDraft()
 	const [delivery, setDelivery] = useState(DELIVERY_LABELS[0])
 	const [deliveryAddress, setDeliveryAddress] = useState(() => ({
 		...INITIAL_DELIVERY_ADDRESS,
@@ -218,12 +253,13 @@ export default function Checkout({
 	}))
 	const [invoiceAddress, setInvoiceAddress] = useState(() => ({
 		...INITIAL_INVOICE_ADDRESS,
+		email: emailDraft.invoiceAddressEmail || '',
 	}))
 	const [deliveryConfig, setDeliveryConfig] = useState({ deliveryDE: [], deliveryOther: [] })
 	const [vatConfig, setVatConfig] = useState({})
 	const [isPhoneOk, setIsPhoneOk] = useState(false)
-	const [isInvoiceDifferent, setIsInvoiceDifferent] = useState(false)
-	const [invoiceEmail, setInvoiceEmail] = useState('')
+	const [isInvoiceDifferent, setIsInvoiceDifferent] = useState(Boolean(emailDraft.isInvoiceDifferent))
+	const [invoiceEmail, setInvoiceEmail] = useState(String(emailDraft.invoiceEmail || ''))
 	const [deliveryComment, setDeliveryComment] = useState('')
 	const [productionComment, setProductionComment] = useState('')
 	const [profileUserType, setProfileUserType] = useState('')
@@ -242,6 +278,9 @@ export default function Checkout({
 
 	useEffect(() => {
 		let active = true
+
+		const keepIfFilled = (current, fallback) =>
+			String(current || '').trim() ? String(current || '') : String(fallback || '')
 
 		const setFromProfile = user => {
 			if (!active || !user) return
@@ -274,19 +313,19 @@ export default function Checkout({
 				...(String(prev.country || '').trim() || String(prev.region || '').trim()
 					? {}
 					: invoiceCountry),
-				fullName: String(user.firstName2 || ''),
-				companyName: String(user.company2 || ''),
-				address1: String(user.address4 || ''),
-				address2: String(user.address5 || ''),
-				address3: String(user.address6 || ''),
-				town: String(user.city2 || ''),
-				postalCode: String(user.postcode2 || ''),
-				email: String(user.eMailInvoice || ''),
-				mobile: String(user.phone2 || ''),
+				fullName: keepIfFilled(prev.fullName, user.firstName2),
+				companyName: keepIfFilled(prev.companyName, user.company2),
+				address1: keepIfFilled(prev.address1, user.address4),
+				address2: keepIfFilled(prev.address2, user.address5),
+				address3: keepIfFilled(prev.address3, user.address6),
+				town: keepIfFilled(prev.town, user.city2),
+				postalCode: keepIfFilled(prev.postalCode, user.postcode2),
+				email: keepIfFilled(prev.email, user.eMailInvoice),
+				mobile: keepIfFilled(prev.mobile, user.phone2),
 			}))
 
-			setInvoiceEmail(String(user.weWill || ''))
-			setIsInvoiceDifferent(hasInvoiceProfileData(user))
+			setInvoiceEmail(prev => keepIfFilled(prev, user.weWill))
+			setIsInvoiceDifferent(prev => prev || hasInvoiceProfileData(user))
 		}
 
 		const loadProfile = async () => {
@@ -304,6 +343,14 @@ export default function Checkout({
 			active = false
 		}
 	}, [reduxUser])
+
+	useEffect(() => {
+		persistCheckoutEmailsDraft({
+			invoiceEmail,
+			invoiceAddressEmail: invoiceAddress?.email,
+			isInvoiceDifferent,
+		})
+	}, [invoiceEmail, invoiceAddress?.email, isInvoiceDifferent])
 
 	useEffect(() => {
 		try {
@@ -804,7 +851,7 @@ export default function Checkout({
 
 											<input
 												className='address-extra__invoice-input'
-												type='email'
+												type='text'
 												name='invoiceEmail'
 												id='invoiceEmail'
 												value={invoiceEmail}
@@ -940,10 +987,9 @@ export default function Checkout({
 														<input
 															id='invoiceEmailAddress'
 															name='invoiceEmailAddress'
-															type='email'
+															type='text'
 															value={invoiceAddress.email}
 															onChange={e => {
-																setInvoiceEmail(e.target.value)
 																updateInvoiceField('email', e.target.value)
 															}}
 														/>
@@ -1130,7 +1176,7 @@ export default function Checkout({
 
 										<div className='summary-notes' aria-label='Shipping notes'>
 											<p>
-												Orders placed before 3:00 PM are usually shipped the
+												Orders placed before 4:00 PM are usually shipped the
 												same day.
 											</p>
 											<p>

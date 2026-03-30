@@ -19,6 +19,48 @@ const tellAboutList=[
   'Other'
 ]
 
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const parseEmailList = (value) =>
+  String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const dedupeEmails = (emails) => {
+  const seen = new Set();
+  const result = [];
+
+  emails.forEach((email) => {
+    const key = normalizeEmail(email);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    result.push(String(email).trim());
+  });
+
+  return result;
+};
+
+const replaceEmailInList = (emails, previousEmail, nextEmail) => {
+  const normalizedPrevious = normalizeEmail(previousEmail);
+  if (!normalizedPrevious) return { emails: [...emails], replaced: false };
+
+  const nextEmails = [...emails];
+  const index = nextEmails.findIndex((item) => normalizeEmail(item) === normalizedPrevious);
+
+  if (index === -1) {
+    return { emails: nextEmails, replaced: false };
+  }
+
+  if (String(nextEmail || '').trim()) {
+    nextEmails[index] = String(nextEmail).trim();
+  } else {
+    nextEmails.splice(index, 1);
+  }
+
+  return { emails: nextEmails, replaced: true };
+};
+
 const RegisterConsumer = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -38,6 +80,10 @@ const RegisterConsumer = () => {
   console.log(4324,formData);
 
   const [isInvoice,setIsInvoice]=useState(false);
+  const [invoiceEmailSync, setInvoiceEmailSync] = useState({
+    linked: true,
+    sourceValue: '',
+  });
 
   const sumbit = async e => {
     if(formData.password!=formData.confirmPassword){
@@ -55,12 +101,68 @@ const RegisterConsumer = () => {
       navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
       console.log(4324,err);
-      alert('2error');
+      const message = err?.response?.data?.message || 'Registration failed';
+      alert(message);
     }
   };
 
   const handleInput = fieldName => value => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handlePrimaryEmailInput = (value) => {
+    const nextPrimaryEmail = String(value || '').trim();
+
+    setFormData((prev) => {
+      let nextInvoiceList = parseEmailList(prev.weWill);
+      let nextLinked = invoiceEmailSync.linked;
+
+      if (invoiceEmailSync.linked) {
+        const previousPrimaryEmail = String(invoiceEmailSync.sourceValue || '').trim();
+        if (previousPrimaryEmail) {
+          const replacement = replaceEmailInList(
+            nextInvoiceList,
+            previousPrimaryEmail,
+            nextPrimaryEmail
+          );
+          nextInvoiceList = replacement.emails;
+
+          if (!replacement.replaced) {
+            nextLinked = false;
+          }
+        } else if (nextPrimaryEmail) {
+          nextInvoiceList = [nextPrimaryEmail, ...nextInvoiceList];
+        }
+
+        if (!nextPrimaryEmail) {
+          nextLinked = false;
+        }
+      }
+
+      const nextWeWill = dedupeEmails(nextInvoiceList).join(', ');
+
+      setInvoiceEmailSync({
+        linked: nextLinked,
+        sourceValue: nextPrimaryEmail,
+      });
+
+      return {
+        ...prev,
+        email: value,
+        weWill: nextWeWill,
+      };
+    });
+  };
+
+  const handleInvoiceEmailsInput = (value) => {
+    const currentPrimaryEmail = String(formData.email || '').trim();
+    const normalizedEmails = new Set(parseEmailList(value).map(normalizeEmail));
+
+    setFormData((prev) => ({ ...prev, weWill: value }));
+    setInvoiceEmailSync((prev) => ({
+      linked: !!currentPrimaryEmail && normalizedEmails.has(normalizeEmail(currentPrimaryEmail)),
+      sourceValue: currentPrimaryEmail,
+    }));
   };
 
   const handleTellAboutSelect = value => {
@@ -117,7 +219,7 @@ const RegisterConsumer = () => {
         {/* E-mail & Phone */}
         <div className="table-row">
           <div className="label-cell">*E-Mail address</div>
-          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handleInput('email')} /></div>
+          <div className="input-cell"><MyTextInput required value={formData.email} setValue={handlePrimaryEmailInput} /></div>
         </div>
         <div className="table-row">
           <div className="label-cell">*Mobile Phone</div>
@@ -227,7 +329,7 @@ const RegisterConsumer = () => {
           </div>
           
           <div className="input-group">
-              <MyTextInput value={formData.weWill} setValue={handleInput('weWill')} required />
+              <MyTextInput value={formData.weWill} setValue={handleInvoiceEmailsInput} />
           </div>
         </div>
         <div style={{marginTop:'7.5px'}} className="we-will-container we-will-container2">

@@ -111,6 +111,28 @@ export const toNumber = (value, fallback = 0) => {
 
 export const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
 
+const parseEmailList = (value) =>
+  String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const mergeInvoiceRecipients = (...values) => {
+  const seen = new Set();
+  const result = [];
+
+  values.forEach((value) => {
+    parseEmailList(value).forEach((email) => {
+      const key = String(email || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      result.push(String(email).trim());
+    });
+  });
+
+  return result.join(', ');
+};
+
 const normalizeCountryCode = (value) => {
   const raw = String(value || '').trim().toUpperCase();
   if (!raw) return 'DE';
@@ -974,6 +996,33 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
 
 
     const user = await User.findOne({ where: { id: req.user.id } });
+    const checkoutInvoiceEmailRaw = String(body?.checkout?.invoiceEmail || '').trim();
+    const checkoutInvoiceAddressEmailRaw = String(
+      body?.checkout?.invoiceAddressEmail || body?.checkout?.invoiceAddress?.email || ''
+    ).trim();
+
+    const mergedInvoiceRecipients = mergeInvoiceRecipients(
+      user?.weWill,
+      checkoutInvoiceEmailRaw,
+      checkoutInvoiceAddressEmailRaw
+    );
+
+    if (user) {
+      const updates = {};
+      if (mergedInvoiceRecipients && mergedInvoiceRecipients !== String(user.weWill || '').trim()) {
+        updates.weWill = mergedInvoiceRecipients;
+      }
+      if (
+        checkoutInvoiceAddressEmailRaw &&
+        checkoutInvoiceAddressEmailRaw !== String(user.eMailInvoice || '').trim()
+      ) {
+        updates.eMailInvoice = checkoutInvoiceAddressEmailRaw;
+      }
+      if (Object.keys(updates).length > 0) {
+        await user.update(updates);
+      }
+    }
+
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
     const order = await Order.create({
       sum: user.type == 'Admin' ? 0 : totalPriceInclVat,
@@ -2261,12 +2310,10 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const customerName = escapeHtml(
       customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' ')
     );
-    const addressLine1 = escapeHtml(
-      [customerStreetLine1Raw, customerStreetLine2Raw, customerStreetLine3Raw]
-        .filter(hasContent)
-        .join(', ')
-    );
-    const addressLine2 = escapeHtml(
+    const addressLine1 = escapeHtml(customerStreetLine1Raw);
+    const addressLine2 = escapeHtml(customerStreetLine2Raw);
+    const addressLine3 = escapeHtml(customerStreetLine3Raw);
+    const cityLine = escapeHtml(
       [customerPostalCodeRaw, customerCityRaw].filter(hasContent).join(' ')
     );
     const countryLine = escapeHtml(customerCountryRaw);
@@ -2580,6 +2627,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         ${customerName ? `${customerName}<br>` : ''}
         ${addressLine1 ? `${addressLine1}<br>` : ''}
         ${addressLine2 ? `${addressLine2}<br>` : ''}
+        ${addressLine3 ? `${addressLine3}<br>` : ''}
+        ${cityLine ? `${cityLine}<br>` : ''}
         ${countryLine ? `${countryLine}<br>` : ''}
         ${phoneLine ? `Phone: ${phoneLine}` : ''}
         ${vatIdMarkup}

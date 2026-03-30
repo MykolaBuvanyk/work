@@ -34,6 +34,28 @@ const formatDate = (date) => {
   return `${day}.${month}.${year}`;
 };
 
+const parseEmailList = (value) =>
+    String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+const getInvoiceRecipients = (user) => {
+    const seen = new Set();
+    const result = [];
+
+    parseEmailList(user?.weWill).forEach((email) => {
+        const key = normalizeEmail(email);
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        result.push(email);
+    });
+
+    return result;
+};
+
 class SendEmailForStatus {
     
     static SendAdminStatusPaid=async(order)=>{
@@ -408,7 +430,7 @@ class SendEmailForStatus {
                 args: ['--no-sandbox', '--disable-setuid-sandbox']
             });
             const page = await browser.newPage();
-            
+        
             const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object'
                 ? orderMongo.checkout
                 : {};
@@ -474,9 +496,11 @@ class SendEmailForStatus {
             const customerNumber = escapeHtml(order.userId);
             const invoiceDate = escapeHtml(formatInvoiceDate(order.createdAt));
             const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
+            const invoiceDueDate = escapeHtml(formatInvoiceDate(invoiceDueDateDate));
             const selectedPaymentMethod = String(checkout?.paymentMethod || 'invoice').trim().toLowerCase();
             const isPayOnline = selectedPaymentMethod === 'online';
             const paymentStatusRaw = order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid';
+            const isInvoiceUnpaidCase = selectedPaymentMethod === 'invoice' && paymentStatusRaw === 'Unpaid';
             const shouldRenderPaymentInformation = !isPayOnline && paymentStatusRaw === 'Unpaid';
             const paymentStatus = escapeHtml(paymentStatusRaw);
             const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
@@ -783,7 +807,10 @@ class SendEmailForStatus {
                     <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
                     <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
                     <tr><td>Date:</td><td>${invoiceDate}</td></tr>
-                    <tr><td>Payment status:</td><td>${paymentStatus}</td></tr>
+                    ${isInvoiceUnpaidCase
+                    ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
+                    <tr><td>Payment Terms:</td><td>30 days net</td></tr>`
+                    : `<tr><td>Payment status:</td><td>${paymentStatus}</td></tr>`}
                     <tr><td>Reference:</td><td>Order No: ${invoiceNumber}</td></tr>
                     </table>
                 </div>
@@ -922,6 +949,7 @@ class SendEmailForStatus {
             });
         
             const invoice = basicZugferdInvoicer.create(zugferdData);
+                
             const zugferdPdf = await invoice.embedInPdf(pdfBuffer, {
                 metadata: {
                 title: `Invoice ${invoiceNumber}`,
@@ -1531,8 +1559,13 @@ class SendEmailForStatus {
 </body>
 </html>
 `       
-            const to=order.user.email;
-            await sendEmail(to,html,subject);
+            const recipients = getInvoiceRecipients(order.user);
+            if (recipients.length === 0) {
+                console.warn(`Skip invoice reminder for order ${order?.id}: user.weWill has no recipients`);
+                return true;
+            }
+
+            await Promise.all(recipients.map((to) => sendEmail(to, html, subject)));
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);

@@ -120,9 +120,10 @@ const Account = () => {
             const pathname = String(window?.location?.pathname || '');
             const m = pathname.match(/^\/([a-z]{2})(\/|$)/i);
             const prefix = m ? `/${m[1]}` : '/';
+            const targetUrl = prefix === '/' ? '/online-sign-editor' : `${prefix}/online-sign-editor`;
 
             if (newTab) {
-                newTab.location.href = prefix;
+                newTab.location.href = targetUrl;
             }
 
         } catch (e) {

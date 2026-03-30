@@ -266,13 +266,24 @@ const AccoutDetail = () => {
   useEffect(() => {
     if (!autoEmailSyncState.initialized) return;
 
+    const nextSourceValues = {
+      address: String(address.email || '').trim(),
+      invoice: String(invoice.eMailInvoice || '').trim(),
+    };
+
+    const sourcesChanged =
+      normalizeEmail(nextSourceValues.address) !==
+        normalizeEmail(autoEmailSyncState?.sourceValues?.address || '') ||
+      normalizeEmail(nextSourceValues.invoice) !==
+        normalizeEmail(autoEmailSyncState?.sourceValues?.invoice || '');
+
+    // Do not touch manual input in "weWill" unless source address/invoice emails changed.
+    if (!sourcesChanged) return;
+
     const syncResult = syncManagedInvoiceEmails({
       currentValue: address.weWill || '',
       syncState: autoEmailSyncState,
-      nextSourceValues: {
-        address: String(address.email || '').trim(),
-        invoice: String(invoice.eMailInvoice || '').trim(),
-      },
+      nextSourceValues,
     });
 
     setAddress((prev) => {
@@ -285,7 +296,7 @@ const AccoutDetail = () => {
       const nextSerialized = JSON.stringify(syncResult.syncState);
       return prevSerialized === nextSerialized ? prev : syncResult.syncState;
     });
-  }, [address.email, invoice.eMailInvoice, autoEmailSyncState, address.weWill]);
+  }, [address.email, invoice.eMailInvoice, autoEmailSyncState]);
 
   useEffect(() => {
     saveAutoEmailSyncState(currentUserId, autoEmailSyncState);

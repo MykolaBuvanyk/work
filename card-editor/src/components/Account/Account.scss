@@ -72,4 +72,25 @@
             }
         }
     }
+    .pagination {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        margin-top: 30px;
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+            &.active {
+                background: #fe680a;
+                color: #fff;
+                font-weight: bold;
+            }
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
 }

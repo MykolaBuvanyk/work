@@ -404,7 +404,7 @@ const Header = () => {
           </ul>
         </div>
         <div className={styles.headerBaner}>
-          <img className={styles.headerBanerImg} src={IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'de' : location.pathname.slice(1, 3)}.jpeg`}/>
+          <img className={styles.headerBanerImg} src={IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'DE' : location.pathname.slice(1, 3).toUpperCase()}.jpeg`}/>
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>

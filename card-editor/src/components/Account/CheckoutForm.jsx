@@ -24,7 +24,7 @@ const CheckoutForm = ({isModal=false,payTrue}) => {
         : {
             elements,
             confirmParams: {
-              return_url: `/account`,
+              return_url: `https://sign-xpert.com/account`,
             },
           }
     );

@@ -1222,7 +1222,7 @@ class SendEmailForStatus {
         const companyDisplay = order.user.company ? `, (${order.user.company})` : '';
         
         const subject = `SignXpert - Order Shipped #${orderNumber} ${nameOrCompany}`;
-        const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
         const urlAccount = urlFrontend + 'account/detail';
         const urlOrders = urlFrontend + 'account';

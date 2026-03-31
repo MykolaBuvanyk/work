@@ -54,7 +54,7 @@ function App() {
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />
       <Route path="account/pay/:orderId" element={<CheckoutForm />} />
-      <Route path="account/pay-success" element={<PaymentSuccess />} />
+      <Route path="pay-success" element={<PaymentSuccess />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
       <Route

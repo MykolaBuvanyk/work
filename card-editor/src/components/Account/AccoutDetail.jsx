@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { mergeUser } from '../../store/reducers/user';
 
 const AUTO_EMAIL_PREFS_KEY = 'account-detail-invoice-email-sync';
+const CHECKOUT_EMAILS_DRAFT_STORAGE_KEY = 'checkout:emails-draft';
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
@@ -338,6 +339,12 @@ const AccoutDetail = () => {
       const updateData = { ...address, ...invoice };
       
       await $authHost.put('auth/updateProfile', updateData); // Замініть на ваш ендпоінт
+
+      // Reset checkout email draft so checkout modal uses fresh profile values.
+      try {
+        localStorage.removeItem(CHECKOUT_EMAILS_DRAFT_STORAGE_KEY);
+      } catch {}
+
       // Refresh server-side user and update redux store + local state
       try {
         const res = await $authHost.get('auth/getMy');

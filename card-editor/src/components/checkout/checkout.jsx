@@ -286,6 +286,9 @@ export default function Checkout({
 			if (!active || !user) return
 			setProfileUserType(String(user.type || '').trim())
 			setProfileBusinessHint(hasBusinessProfileHint(user))
+			const profileDeliveryEmail = String(user.email || '')
+			const profileInvoiceAddressEmail = String(user.eMailInvoice || '')
+			const profileInvoiceEmails = String(user.weWill || '')
 			const firstName = String(user.firstName || '').trim()
 			const surname = String(user.surname || '').trim()
 			const fullName = [firstName, surname].filter(Boolean).join(' ')
@@ -304,7 +307,7 @@ export default function Checkout({
 				address3: String(user.address3 || ''),
 				town: String(user.city || ''),
 				postalCode: String(user.postcode || ''),
-				email: String(user.email || ''),
+				email: profileDeliveryEmail,
 				mobile: String(user.phone || ''),
 			}))
 
@@ -320,11 +323,11 @@ export default function Checkout({
 				address3: keepIfFilled(prev.address3, user.address6),
 				town: keepIfFilled(prev.town, user.city2),
 				postalCode: keepIfFilled(prev.postalCode, user.postcode2),
-				email: keepIfFilled(prev.email, user.eMailInvoice),
+				email: profileInvoiceAddressEmail,
 				mobile: keepIfFilled(prev.mobile, user.phone2),
 			}))
 
-			setInvoiceEmail(prev => keepIfFilled(prev, user.weWill))
+			setInvoiceEmail(profileInvoiceEmails)
 			setIsInvoiceDifferent(prev => prev || hasInvoiceProfileData(user))
 		}
 

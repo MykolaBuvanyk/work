@@ -175,6 +175,24 @@ const resolveCountryLabel = (rawValue) => {
   return value;
 };
 
+const parseLegacyAdditionalInformation = (rawValue) => {
+  const raw = String(rawValue || '').trim();
+  if (!raw) return '';
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      return String(
+        parsed.additionalInformation || parsed.additional || parsed.settings || ''
+      ).trim();
+    }
+  } catch {
+    // Legacy plain-string value.
+  }
+
+  return '';
+};
+
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
   const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
@@ -274,6 +292,16 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const deliveryComment = useMemo(() => resolveDeliveryComment(order), [order]);
   const vatId = useMemo(() => resolveVatId(order), [order]);
   const isPhoneConsentChecked = useMemo(() => resolvePhoneConsent(order), [order]);
+  const instructionMessage = useMemo(
+    () => String(order?.user?.additional || '').trim(),
+    [order?.user?.additional]
+  );
+  const additionalInformationMessage = useMemo(
+    () =>
+      String(order?.user?.tellAbout || '').trim() ||
+      parseLegacyAdditionalInformation(order?.user?.additional || ''),
+    [order?.user?.additional, order?.user?.tellAbout]
+  );
 
   const invoiceSectionData = useMemo(() => {
     const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
@@ -1558,7 +1586,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       </div>
       <div className="row">
         <p>Instruction:</p>
-        <span>{order?.user?.additional || '---'}</span>
+        <span>{instructionMessage || '---'}</span>
         <div />
       </div>
       <div className="row">
@@ -1569,6 +1597,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>Massage to Production:</p>
         <span>{manufacturerNote || '---'}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Additional information:</p>
+        <span>{additionalInformationMessage || '---'}</span>
+        <div />
       </div>
       <div className="urls">
         {(materialGroups && materialGroups.length > 0) ? (

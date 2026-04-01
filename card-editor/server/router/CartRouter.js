@@ -133,6 +133,31 @@ const mergeInvoiceRecipients = (...values) => {
   return result.join(', ');
 };
 
+const parseAdditionalPayload = (rawValue) => {
+  const raw = String(rawValue || '').trim();
+  if (!raw) {
+    return { instruction: '', additionalInformation: '' };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      const instruction = String(parsed.instruction || parsed.message || '').trim();
+      const additionalInformation = String(
+        parsed.additionalInformation || parsed.additional || parsed.settings || ''
+      ).trim();
+      return {
+        instruction: instruction || additionalInformation,
+        additionalInformation: additionalInformation || instruction,
+      };
+    }
+  } catch {
+    // Legacy plain-string value.
+  }
+
+  return { instruction: raw, additionalInformation: raw };
+};
+
 const normalizeCountryCode = (value) => {
   const raw = String(value || '').trim().toUpperCase();
   if (!raw) return 'DE';
@@ -1469,9 +1494,10 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const userOrdersCount = escapeHtml(userOrdersCountRaw || 0);
     const totalSigns = escapeHtml(order.signs || countProjectSigns(project) || 0);
     const orderTitle = escapeHtml(`${order.id} - ${order.orderName || orderMongo?.projectName || 'Untitled'}`);
+    const userAdditionalMessages = parseAdditionalPayload(order?.user?.additional || '');
     const noticeText = escapeHtml(
       [
-        String(order?.user?.additional || '').trim(),
+        String(userAdditionalMessages.instruction || '').trim(),
         String(orderMongo?.checkout?.deliveryComment || '').trim(),
         String(orderMongo?.manufacturerNote || project?.manufacturerNote || '').trim(),
       ]

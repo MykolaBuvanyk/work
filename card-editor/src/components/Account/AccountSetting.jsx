@@ -3,15 +3,39 @@ import './AccountSetting.scss'
 import AccountHeader from './AccountHeader'
 import { $authHost } from '../../http'
 
+const extractLegacyAdditionalInformation = (rawValue) => {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return '';
+
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+            return String(
+                parsed.additionalInformation || parsed.additional || parsed.settings || ''
+            ).trim();
+        }
+    } catch {
+        // Legacy plain-string value.
+    }
+
+    return '';
+};
+
 const AccountSetting = () => {
-    const [message, setMessage] = useState('');
+    const [instructionMessage, setInstructionMessage] = useState('');
+    const [additionalInformation, setAdditionalInformation] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     const getMy = async () => {
         try {
             const res = await $authHost.get('auth/getMy');
-            setMessage(res?.data?.user?.additional || '');
+            const user = res?.data?.user || {};
+            setInstructionMessage(String(user?.additional || '').trim());
+            setAdditionalInformation(
+                String(user?.tellAbout || '').trim() ||
+                extractLegacyAdditionalInformation(user?.additional || '')
+            );
         } catch (err) {
             console.error(err);
             alert('Error loading your message');
@@ -28,7 +52,10 @@ const AccountSetting = () => {
         if (isSaving) return;
         try {
             setIsSaving(true);
-            await $authHost.put('auth/updateProfile', { additional: message });
+            await $authHost.put('auth/updateProfile', {
+                additional: instructionMessage,
+                tellAbout: additionalInformation,
+            });
             alert('Message saved successfully!');
         } catch (err) {
             console.error(err);
@@ -52,6 +79,25 @@ const AccountSetting = () => {
         
         <div className="message-section">
             <h2 className="message-title">
+                Here you can write a additional information that will be included with each your order.
+            </h2>
+
+            <div className="message-box">
+                <div className="message-label">
+                    Additional Information
+                </div>
+                <div className="message-input-container">
+                    <textarea
+                        style={{fontFamily:'Inter'}}
+                        className="message-textarea"
+                        placeholder=""
+                        value={additionalInformation}
+                        onChange={(e) => setAdditionalInformation(e.target.value)}
+                    ></textarea>
+                </div>
+            </div>
+
+            <h2 className="message-title">
                 Here you can write a message that will be included with each your order.
             </h2>
             
@@ -64,8 +110,8 @@ const AccountSetting = () => {
                         style={{fontFamily:'Inter'}}
                         className="message-textarea"
                         placeholder=""
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        value={instructionMessage}
+                        onChange={(e) => setInstructionMessage(e.target.value)}
                     ></textarea>
                 </div>
             </div>

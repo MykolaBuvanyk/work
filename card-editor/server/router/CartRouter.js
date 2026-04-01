@@ -133,6 +133,31 @@ const mergeInvoiceRecipients = (...values) => {
   return result.join(', ');
 };
 
+const parseAdditionalPayload = (rawValue) => {
+  const raw = String(rawValue || '').trim();
+  if (!raw) {
+    return { instruction: '', additionalInformation: '' };
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      const instruction = String(parsed.instruction || parsed.message || '').trim();
+      const additionalInformation = String(
+        parsed.additionalInformation || parsed.additional || parsed.settings || ''
+      ).trim();
+      return {
+        instruction: instruction || additionalInformation,
+        additionalInformation: additionalInformation || instruction,
+      };
+    }
+  } catch {
+    // Legacy plain-string value.
+  }
+
+  return { instruction: raw, additionalInformation: raw };
+};
+
 const normalizeCountryCode = (value) => {
   const raw = String(value || '').trim().toUpperCase();
   if (!raw) return 'DE';
@@ -1053,7 +1078,6 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       ]
     })
     let commentOrder='';
-    SendEmailForStatus.CreateOrder(orderWithUser);
     return res.json({
       id: String(created._id),
       status: created.status,
@@ -1469,9 +1493,10 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const userOrdersCount = escapeHtml(userOrdersCountRaw || 0);
     const totalSigns = escapeHtml(order.signs || countProjectSigns(project) || 0);
     const orderTitle = escapeHtml(`${order.id} - ${order.orderName || orderMongo?.projectName || 'Untitled'}`);
+    const userAdditionalMessages = parseAdditionalPayload(order?.user?.additional || '');
     const noticeText = escapeHtml(
       [
-        String(order?.user?.additional || '').trim(),
+        String(userAdditionalMessages.instruction || '').trim(),
         String(orderMongo?.checkout?.deliveryComment || '').trim(),
         String(orderMongo?.manufacturerNote || project?.manufacturerNote || '').trim(),
       ]
@@ -2813,9 +2838,16 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
+    let {page=1,limit=15}=req.query;
+    page=parseInt(page);
+    limit=parseInt(limit);
+    const offset = limit * (page - 1);
 
-    const orders = await Order.findAll({
+
+    const ordersNoNumber = await Order.findAll({
       where: { userId: Number(userId) },
+      offset,
+      limit,
       include: [
         {
           model: User,
@@ -2825,8 +2857,21 @@ CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
             }
           ]
         }
-      ]
+      ],
+      order:[['id','DESC']]
     });
+    
+    const count=await Order.findAndCountAll({
+      where: { userId: Number(userId) },
+      offset,
+      limit,
+      attributes:['id']
+    });
+    
+    const orders = ordersNoNumber.map((x, index) => ({
+      ...x.toJSON(), // щоб отримати plain object, якщо x — це Sequelize instance
+      orderNo: count.count - offset - index
+    }));
 
     // IMPORTANT: Order is a Sequelize model instance. Adding a dynamic field (orders[i].orderMongo)
     // will NOT be serialized by res.json(). Convert to plain objects explicitly.
@@ -2843,8 +2888,11 @@ CartRouter.get('/getMyOrders', requireAuth, async (req, res, next) => {
       })
     );
 
+    const countPages=Math.ceil(count.count/limit);
+
     return res.json({
       orders: mapped,
+      countPages
     });
   } catch (err) {
     console.error('GET MY ORDERS ERROR:', err);
@@ -2971,6 +3019,8 @@ CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
       ]
   });
   SendEmailForStatus.SendToAdminNewOrder(order,comment,rating)
+  SendEmailForStatus.CreateOrder(order);
+
 
     
   }catch(err){

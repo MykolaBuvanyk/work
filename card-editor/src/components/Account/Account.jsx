@@ -14,11 +14,14 @@ const OpenProjectIcon = () => <span className="icon-folder">📂</span>;
 const Account = () => {
     const [myOrders, setMyOrders] = useState([]);
     const [openingOrderId, setOpeningOrderId] = useState(null);
+    const [page,setPage]=useState(1);
+    const [countPages,setCountPages]=useState(1)
 
     const getMyOrders = async () => {
         try {
-            const res = await $authHost.get('cart/getMyOrders');
+            const res = await $authHost.get('cart/getMyOrders?limit=15&page='+page);
             setMyOrders(res.data.orders);
+            setCountPages(res.data.countPages);
         } catch (err) {
             console.error('Помилка завантаження замовлень', err);
         }
@@ -26,7 +29,7 @@ const Account = () => {
 
     useEffect(() => {
         getMyOrders();
-    }, []);
+    }, [page]);
 
     useEffect(() => {
         if (!Array.isArray(myOrders) || myOrders.length === 0) {
@@ -163,7 +166,7 @@ const Account = () => {
                     <tbody>
                         {myOrders.sort((a,b)=>b.id-a.id).map((order, index) => (
                             <tr key={order.id}>
-                                <td className="row-number">{myOrders.length- index }</td>
+                                <td className="row-number">{order.orderNo }</td>
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>{order.id}</td>
                                 <td>{order.orderName || 'Water sifgns 23'}</td>
@@ -194,6 +197,36 @@ const Account = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+            <div className="pagination">
+                {/* Кнопка "Попередня" */}
+                <button
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                    className="pagination-btn"
+                >
+                    ←
+                </button>
+
+                {/* Сторінки */}
+                {Array.from({ length: countPages }, (_, i) => i + 1).map((p) => (
+                    <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`pagination-btn ${p === page ? 'active' : ''}`}
+                    >
+                    {p}
+                    </button>
+                ))}
+
+                {/* Кнопка "Наступна" */}
+                <button
+                    onClick={() => setPage(page + 1)}
+                    disabled={page === countPages}
+                    className="pagination-btn"
+                >
+                    →
+                </button>
             </div>
         </div>
     );

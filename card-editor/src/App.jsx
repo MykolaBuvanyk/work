@@ -27,6 +27,7 @@ import Industries from './components/Industries/Industries';
 import IndustryArticlePage from './components/Industries/IndustryArticlePage';
 import Products from './components/Products/Products';
 import HomePlaceholder from './components/HomePlaceholder/HomePlaceholder';
+import PaymentSuccess from './components/PaySuccess/PaySuccess';
 
 
 
@@ -53,6 +54,7 @@ function App() {
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />
       <Route path="account/pay/:orderId" element={<CheckoutForm />} />
+      <Route path="pay-success" element={<PaymentSuccess />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
       <Route

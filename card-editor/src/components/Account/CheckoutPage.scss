@@ -130,4 +130,12 @@
         color: #eee;
         cursor: not-allowed;
     }
+    .column{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-top: 30px;
+        width: 100%;
+        align-items: center;
+    }
 }

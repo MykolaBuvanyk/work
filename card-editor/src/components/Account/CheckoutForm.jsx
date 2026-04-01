@@ -24,7 +24,7 @@ const CheckoutForm = ({isModal=false,payTrue}) => {
         : {
             elements,
             confirmParams: {
-              return_url: `/account`,
+              return_url: `https://sign-xpert.com/pay-success`,
             },
           }
     );
@@ -34,6 +34,7 @@ const CheckoutForm = ({isModal=false,payTrue}) => {
         if (error.type === "card_error" || error.type === "validation_error") {
           setMessage(error.message);
         } else {
+          console.log(33,error);
           setMessage("Сталася неочікувана помилка.");
         }
       }

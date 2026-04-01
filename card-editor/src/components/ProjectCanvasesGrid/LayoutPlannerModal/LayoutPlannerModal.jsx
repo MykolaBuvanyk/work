@@ -4620,11 +4620,69 @@ const INTERSECT_CLIP_ITEM_NAMES = new Set([
   "canvashapecustom",
 ]);
 
+const INNER_CONTOUR_SUFFIX = "-inner";
+
 const isIntersectClipName = (value) => {
   const name = String(value || "").trim().toLowerCase();
   if (!name) return false;
   if (name.startsWith(HOLE_ID_PREFIX)) return false;
   return INTERSECT_CLIP_ITEM_NAMES.has(name);
+};
+
+const isPaperBorderOrOutlineName = (value) => {
+  const name = String(value || "").trim().toLowerCase();
+  if (!name) return false;
+  return (
+    name === "canvashape" ||
+    name === "canvashapecustom" ||
+    name.startsWith("border")
+  );
+};
+
+const buildCustomBorderInnerClipNameSet = (svgElement, customBorder) => {
+  const names = new Set();
+
+  const append = (id) => {
+    const normalized = String(id || "").trim().toLowerCase();
+    if (!normalized) return;
+    names.add(normalized);
+  };
+
+  const customElementId = String(customBorder?.elementId || "").trim().toLowerCase();
+  if (customElementId) {
+    append(`${customElementId}${INNER_CONTOUR_SUFFIX}`);
+  }
+
+  append(`canvaShapeCustom${INNER_CONTOUR_SUFFIX}`);
+
+  if (!svgElement?.querySelectorAll) {
+    return names;
+  }
+
+  const candidates = Array.from(
+    svgElement.querySelectorAll('[id$="-inner"], [data-inner-contour="true"]')
+  );
+
+  candidates.forEach((node) => {
+    const id = String(node.getAttribute?.("id") || "").trim();
+    if (!id) return;
+
+    const lowerId = id.toLowerCase();
+    const baseId = lowerId.endsWith(INNER_CONTOUR_SUFFIX)
+      ? lowerId.slice(0, -INNER_CONTOUR_SUFFIX.length)
+      : lowerId;
+
+    const isCustomBorderInner =
+      baseId === "canvashapecustom" ||
+      baseId.startsWith("border") ||
+      (customElementId && baseId === customElementId);
+
+    if (isCustomBorderInner) {
+      append(lowerId);
+    }
+  });
+
+  return names;
 };
 
 const hasDrawablePaperGeometry = (scope, item) => {
@@ -4823,7 +4881,10 @@ const copyPaperPathStyle = (fromPath, toPath) => {
   } catch {}
 };
 
-const clipSvgByCanvasShapeWithPaper = (svgElement) => {
+const clipSvgByCanvasShapeWithPaper = (
+  svgElement,
+  { customBorder = null, preferInnerContourClip = false } = {}
+) => {
   if (!svgElement?.cloneNode) return null;
 
   const scope = ensurePaperScope();
@@ -4885,6 +4946,12 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
       imageEl.remove();
     });
 
+    const shouldUseCustomInnerClip =
+      preferInnerContourClip || customBorder?.mode === "custom";
+    const customBorderInnerClipNames = shouldUseCustomInnerClip
+      ? buildCustomBorderInnerClipNameSet(svgClone, customBorder)
+      : null;
+
     const imported = scope.project.importSVG(svgClone, {
       applyMatrix: true,
       expandShapes: true,
@@ -4907,15 +4974,35 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
       return null;
     }
 
-    const clipSourceItems = scope.project.getItems({
+    const collectClipItemsFromSource = (sourceItems) => {
+      const output = [];
+      sourceItems.forEach((item) => {
+        gatherPathItems(scope, item, output);
+      });
+      return output;
+    };
+
+    let clipSourceItems = scope.project.getItems({
       recursive: true,
-      match: (item) => isIntersectClipName(item?.name),
+      match: (item) => {
+        const itemName = String(item?.name || "").trim().toLowerCase();
+        if (!itemName) return false;
+        if (customBorderInnerClipNames?.size) {
+          return customBorderInnerClipNames.has(itemName);
+        }
+        return isIntersectClipName(itemName);
+      },
     });
 
-    const rawClipItems = [];
-    clipSourceItems.forEach((item) => {
-      gatherPathItems(scope, item, rawClipItems);
-    });
+    let rawClipItems = collectClipItemsFromSource(clipSourceItems);
+
+    if (!rawClipItems.length && customBorderInnerClipNames?.size) {
+      clipSourceItems = scope.project.getItems({
+        recursive: true,
+        match: (item) => isIntersectClipName(item?.name),
+      });
+      rawClipItems = collectClipItemsFromSource(clipSourceItems);
+    }
 
     if (!rawClipItems.length) {
       scope.project.clear();
@@ -4960,12 +5047,26 @@ const clipSvgByCanvasShapeWithPaper = (svgElement) => {
     const clipItems = [bestClipItem];
     const clipBounds = bestClipItem?.bounds || null;
 
+    const borderSourceItems = shouldUseCustomInnerClip
+      ? scope.project.getItems({
+          recursive: true,
+          match: (item) => isPaperBorderOrOutlineName(item?.name),
+        })
+      : [];
+
     const clipSet = new Set(clipItems);
     const targetItems = pathItems.filter((item) => {
       if (!item || clipSet.has(item)) return false;
       if (isPaperItemDescendantOfAny(item, clipSourceItems)) return false;
       const name = String(item?.name || "").trim().toLowerCase();
       if (name.startsWith(HOLE_ID_PREFIX)) return false;
+      if (
+        shouldUseCustomInnerClip &&
+        (isPaperBorderOrOutlineName(name) ||
+          isPaperItemDescendantOfAny(item, borderSourceItems))
+      ) {
+        return false;
+      }
       return true;
     });
 
@@ -5442,7 +5543,10 @@ const buildPlacementPreview = (placement, options = {}) => {
         );
       }
 
-      const clippedExportElement = clipSvgByCanvasShapeWithPaper(exportElement);
+      const clippedExportElement = clipSvgByCanvasShapeWithPaper(exportElement, {
+        customBorder,
+        preferInnerContourClip: customBorder?.mode === "custom",
+      });
       if (clippedExportElement) {
         exportElement = clippedExportElement;
       }
@@ -5525,7 +5629,10 @@ const buildPlacementPreview = (placement, options = {}) => {
         );
       }
 
-      const clippedPreviewElement = clipSvgByCanvasShapeWithPaper(previewElement);
+      const clippedPreviewElement = clipSvgByCanvasShapeWithPaper(previewElement, {
+        customBorder,
+        preferInnerContourClip: customBorder?.mode === "custom",
+      });
       if (clippedPreviewElement) {
         previewElement = clippedPreviewElement;
       }

@@ -62,7 +62,7 @@ class SendEmailForStatus {
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
       
-        const subject=`SignXpert Order Paid – #[${String(order.id).padStart(3, '0')}] ${nameOrCompany}`;
+        const subject=`SignXpert Order Paid – #${String(order.id).padStart(3, '0')} ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
 
@@ -87,7 +87,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: bold;">Order Paid – #[${String(order.id).padStart(3, '0')}]</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: bold;">Order Paid – #${String(order.id).padStart(3, '0')}</h2>
                         </td>
                     </tr>
 
@@ -99,12 +99,12 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 30px 0;">Payment has been received for the following order on SignXpert.</p>
                             
                             <div style="margin: 0 0 30px 0;">
-                                <p style="margin: 0 0 5px 0;">Order Number: #[${String(order.id).padStart(3, '0')}]</p>
-                                <p style="margin: 0 0 5px 0;">Customer Name: [${order.user.firstName}]</p>
-                                <p style="margin: 0 0 5px 0;">Customer Email: [${order.user.email}]</p>
+                                <p style="margin: 0 0 5px 0;">Order Number: #${String(order.id).padStart(3, '0')}</p>
+                                <p style="margin: 0 0 5px 0;">Customer Name: ${order.user.firstName}</p>
+                                <p style="margin: 0 0 5px 0;">Customer Email: ${order.user.email}</p>
                                 ${//<p style="margin: 0 0 5px 0;">Payment Method: [${paymentMethod}]</p>
                                 ''}
-                                <p style="margin: 0 0 5px 0;">Order Total: [${order.sum}]</p>
+                                <p style="margin: 0 0 5px 0;">Order Total: ${order.sum}</p>
                             </div>
 
                             <p style="margin: 0 0 30px 0;">The customer completed the payment through their My Orders page.</p>
@@ -139,7 +139,7 @@ class SendEmailForStatus {
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const user=order.user;
-        const subject=`SignXpert - Payment Received  #[${String(order.id).padStart(3, '0')}] (${nameOrCompany})`;
+        const subject=`SignXpert - Payment Received  #${String(order.id).padStart(3, '0')} (${nameOrCompany})`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
       
         const messageHtml=`<!DOCTYPE html>
@@ -163,7 +163,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #[${String(order.id).padStart(3, '0')}]</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #${String(order.id).padStart(3, '0')}</h2>
                         </td>
                     </tr>
 
@@ -173,7 +173,7 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
                             
                             <p style="margin: 0 0 10px 0;">Thank you for your payment.</p>
-                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #[${String(order.id).padStart(3, '0')}].</p>
+                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #${String(order.id).padStart(3, '0')}.</p>
                             
                             <p style="margin: 0 0 5px 0;">Total amount: <strong>€${order.sum}</strong></p>
                         
@@ -1222,7 +1222,7 @@ class SendEmailForStatus {
         const companyDisplay = order.user.company ? `, (${order.user.company})` : '';
         
         const subject = `SignXpert - Order Shipped #${orderNumber} ${nameOrCompany}`;
-        const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
+        const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
         const urlAccount = urlFrontend + 'account/detail';
         const urlOrders = urlFrontend + 'account';
@@ -1248,9 +1248,6 @@ class SendEmailForStatus {
                     <tr>
                         <td align="center" style="padding: 30px 40px 10px 40px;">
                             <img src="${logoPng}" alt="SignXpert" width="200" style="display: block; border: 0;">
-                            <p style="margin: 5px 0 0 0; font-size: 11px; color: #777; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
-                                Smart <span style="background-color: #0073bc; color: #ffffff; padding: 1px 4px;">Sign & Label</span> Solution
-                            </p>
                         </td>
                     </tr>
 

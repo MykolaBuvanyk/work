@@ -10568,7 +10568,7 @@ const Toolbar = ({ formData }) => {
           mode={uploadMode}
           dataURL={uploadDataURL}
           svgText={uploadSvgText}
-          themeColor={(globalColors && (globalColors.strokeColor || globalColors.textColor)) || '#000'}
+          themeColor="#000"
           onClose={() => setIsUploadOpen(false)}
           onConfirm={async ({ svg: finalSVG, strokeOnly, mode }) => {
             if (!canvas || !finalSVG) return;

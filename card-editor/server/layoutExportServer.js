@@ -2923,22 +2923,42 @@ app.post('/api/layout-pdf', async (req, res) => {
                   'parsed-svg-'
                 )
               : (compatibleBackgroundMarkup || backgroundMarkup);
+            const renderMarkup = vectorStrokeMarkup || compatibleBackgroundMarkup || backgroundMarkup;
+            const hasSvgImageNodes = /<image\b/i.test(String(renderMarkup || ''));
 
             if (backgroundMarkup) {
               try {
-                svgToPdf(doc, vectorStrokeMarkup || compatibleBackgroundMarkup || backgroundMarkup, xPt, yTopPt, {
-                  assumePt: false,
-                  width: widthPt,
-                  height: heightPt,
-                  preserveAspectRatio: 'none',
-                });
+                let renderedByPngFallback = false;
+
+                if (hasSvgImageNodes) {
+                  renderedByPngFallback = drawSvgAsPngFallback(
+                    doc,
+                    renderMarkup,
+                    xPt,
+                    yTopPt,
+                    widthPt,
+                    heightPt
+                  );
+                }
+
+                if (!renderedByPngFallback) {
+                  svgToPdf(doc, renderMarkup, xPt, yTopPt, {
+                    assumePt: false,
+                    width: widthPt,
+                    height: heightPt,
+                    preserveAspectRatio: 'none',
+                  });
+                }
+
                 console.log('[layoutExportServer] placement rendered via vector stroke path', {
                   sheetIndex,
                   placementIndex,
                   sheetExportMode,
                   applyParsedSvgContourStroke,
                   hasParsedSvgTargetInMarkup,
-                  markupLength: String(vectorStrokeMarkup || '').length,
+                  markupLength: String(renderMarkup || '').length,
+                  hasSvgImageNodes,
+                  renderedByPngFallback,
                 });
               } catch (backgroundError) {
                 console.warn('Не вдалося відрендерити фон SVG:', backgroundError.message);

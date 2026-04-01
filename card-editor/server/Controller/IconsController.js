@@ -49,15 +49,28 @@ class IconsController {
       next(err);
     }
   };
-  // Додайте до класу IconsController
+
   static UploadBaner = (req, res, next) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'Фото банера не отримано' });
       }
-      // Повертаємо ім'я файлу, щоб фронтенд міг його використовувати
+
+      const uploadPath = path.join(__dirname, '../../public/static/banner');
+      const newFileName = req.file.originalname; // або req.file.filename, якщо хочеш
+
+      const filePath = path.join(uploadPath, newFileName);
+
+      // Якщо файл існує — видаляємо
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Переміщуємо новий файл з тим самим ім’ям
+      fs.renameSync(req.file.path, filePath);
+
       return res.status(200).json({
-        fileName: req.file.filename,
+        fileName: newFileName,
       });
     } catch (err) {
       console.error('BANER UPLOAD ERROR:', err);

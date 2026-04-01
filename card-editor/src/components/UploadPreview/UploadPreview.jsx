@@ -79,10 +79,10 @@ const UploadPreview = ({
   mode, // 'raster' | 'svg'
   dataURL, // for raster
   svgText, // for svg
-  themeColor = "#000",
   onClose,
   onConfirm, // ({ svg: string, strokeOnly: boolean, mode: 'raster' | 'svg' }) => void
 }) => {
+  const PREVIEW_RESULT_COLOR = "#000";
   const [detail, setDetail] = useState(60);
   const [strokeOnly, setStrokeOnly] = useState(false);
   const [brightness, setBrightness] = useState(0); // -100..100 (maps to -255..255)
@@ -121,10 +121,10 @@ const UploadPreview = ({
           });
         } else if (mode === "svg" && svgText) {
           // Keep native SVG geometry for precision; no rasterization for SVG uploads.
-          resultSVG = convertSvgToThemeColorPreserveAlpha(svgText, themeColor);
+          resultSVG = convertSvgToThemeColorPreserveAlpha(svgText, PREVIEW_RESULT_COLOR);
         }
         if (strokeOnly && resultSVG) {
-          resultSVG = applyStrokeOnlyToSVG(resultSVG, themeColor);
+          resultSVG = applyStrokeOnlyToSVG(resultSVG, PREVIEW_RESULT_COLOR);
         }
         setSvgOut(resultSVG);
       } catch (e) {
@@ -139,7 +139,7 @@ const UploadPreview = ({
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(run, 200);
     return () => clearTimeout(debounceRef.current);
-  }, [isOpen, mode, dataURL, svgText, detail, brightness, invert, strokeOnly, themeColor]);
+  }, [isOpen, mode, dataURL, svgText, detail, brightness, invert, strokeOnly]);
 
   if (!isOpen) return null;
 
@@ -244,10 +244,10 @@ const UploadPreview = ({
               {mode === "raster" && dataURL && (
                 <img src={dataURL} alt="original" />
               )}
-        {mode === "svg" && svgText && (
+              {mode === "svg" && svgText && (
                 <div
                   className={styles.svgBox}
-          dangerouslySetInnerHTML={{ __html: makeSVGContain(svgText) }}
+                  dangerouslySetInnerHTML={{ __html: svgText }}
                 />
               )}
             </div>

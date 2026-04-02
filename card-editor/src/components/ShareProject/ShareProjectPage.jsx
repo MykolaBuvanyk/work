@@ -19,7 +19,7 @@ const ShareProjectPage = () => {
   const startedRef = useRef(false);
   const [state, setState] = useState({ status: 'loading', message: 'Opening shared project...' });
 
-  const homePath = lng ? `/${lng}` : '/';
+  const editorPath = lng ? `/${lng}/online-sign-editor` : '/online-sign-editor';
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -61,7 +61,7 @@ const ShareProjectPage = () => {
               );
             } catch {}
 
-            navigate(homePath, { replace: true });
+            navigate(editorPath, { replace: true });
             return;
           }
         }
@@ -131,7 +131,7 @@ const ShareProjectPage = () => {
           );
         } catch {}
 
-        navigate(homePath, { replace: true });
+        navigate(editorPath, { replace: true });
       } catch (error) {
         console.error('Failed to open shared project', error);
         setState({ status: 'error', message: 'Failed to open shared project. The link may be expired.' });
@@ -139,7 +139,7 @@ const ShareProjectPage = () => {
     };
 
     openSharedProject();
-  }, [homePath, navigate, token]);
+  }, [editorPath, navigate, token]);
 
   if (state.status === 'loading') {
     return (
@@ -154,7 +154,7 @@ const ShareProjectPage = () => {
     <div style={{ padding: 24, textAlign: 'center' }}>
       <h2 style={{ marginBottom: 8 }}>Unable to open share link</h2>
       <p style={{ marginBottom: 16 }}>{state.message}</p>
-      <button type="button" onClick={() => navigate(homePath, { replace: true })}>
+      <button type="button" onClick={() => navigate(editorPath, { replace: true })}>
         Go to editor
       </button>
     </div>

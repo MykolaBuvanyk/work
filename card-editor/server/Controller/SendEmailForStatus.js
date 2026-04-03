@@ -943,6 +943,8 @@ class SendEmailForStatus {
                 signsCount: signsCountRaw,
                 projectName: projectNameRaw,
                 subtotal,
+                discountAmount,
+                shippingCost,
                 vatAmount,
                 vatPercent,
                 totalAmount,

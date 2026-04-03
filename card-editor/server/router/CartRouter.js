@@ -195,42 +195,53 @@ export const buildZugferdInvoiceData = ({
   signsCount,
   projectName,
   subtotal,
+  discountAmount,
+  shippingCost,
   vatAmount,
   vatPercent,
   totalAmount,
 }) => {
   const hasVat = toNumber(vatPercent, 0) > 0;
-  const quantity = Math.max(1, Math.floor(toNumber(signsCount, 1)));
-  const lineUnitPrice = quantity > 0 ? round2(toNumber(subtotal, 0) / quantity) : toNumber(subtotal, 0);
+  const quantity = 1;
+  const totalSignsCount = Math.max(0, Math.floor(toNumber(signsCount, 0)));
+  const lineUnitPrice = toNumber(subtotal, 0);
   const safeProjectName = String(projectName || order?.orderName || 'Signs order');
-  const sellerIdentifier = String(process.env.ZUGFERD_SELLER_IDENTIFIER || 'SIGNXPERT-DE').trim();
+  const sellerIdentifier = String(process.env.ZUGFERD_SELLER_IDENTIFIER || 'xxxx').trim();
   const sellerRegistrationId = String(process.env.ZUGFERD_SELLER_REGISTRATION_ID || '').trim();
   const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || '').trim();
-  const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || 'xx/xxx/xxxxx').trim();
-  const sellerName = String(process.env.ZUGFERD_SELLER_NAME || 'SignXpert').trim();
-  const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || '').trim();
+  const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || 'xxxx').trim();
+  const sellerName = String(process.env.ZUGFERD_SELLER_NAME || 'Kostyantyn Utvenko (SignXpert)').trim();
+  const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || 'SignXpert').trim();
   const sellerStreetLine1 = String(process.env.ZUGFERD_SELLER_STREET1 || 'Baumwiesen 2').trim();
   const sellerStreetLine2 = String(process.env.ZUGFERD_SELLER_STREET2 || '').trim();
   const sellerStreetLine3 = String(process.env.ZUGFERD_SELLER_STREET3 || '').trim();
   const sellerPostalCode = String(process.env.ZUGFERD_SELLER_POSTAL_CODE || '72401').trim();
   const sellerCity = String(process.env.ZUGFERD_SELLER_CITY || 'Haigerloch').trim();
   const sellerCountryCode = normalizeCountryCode(process.env.ZUGFERD_SELLER_COUNTRY_CODE || 'DE');
-  const sellerCountrySubdivision = String(process.env.ZUGFERD_SELLER_COUNTRY_SUBDIVISION || '').trim();
+  const sellerCountrySubdivision = String(process.env.ZUGFERD_SELLER_COUNTRY_SUBDIVISION || 'Baden-Württemberg').trim();
   const sellerEmail = String(process.env.ZUGFERD_SELLER_EMAIL || 'info@sign-xpert.com').trim();
-  const sellerPhone = String(process.env.ZUGFERD_SELLER_PHONE || '').trim();
-  const sellerContactName = String(process.env.ZUGFERD_SELLER_CONTACT_NAME || '').trim();
+  const sellerPhone = String(process.env.ZUGFERD_SELLER_PHONE || '+49 157 766 25 125').trim();
+  const sellerContactName = String(process.env.ZUGFERD_SELLER_CONTACT_NAME || 'Kostyantyn Utvenko').trim();
   const sellerContactDepartment = String(process.env.ZUGFERD_SELLER_CONTACT_DEPARTMENT || '').trim();
-  const sellerIban = String(process.env.ZUGFERD_SELLER_IBAN || 'DE25 0101 0101 0101 0101 01').replace(/\s+/g, ' ').trim();
+  const sellerIban = String(process.env.ZUGFERD_SELLER_IBAN || 'DE78 6535 1260 0134 0819 40').replace(/\s+/g, ' ').trim();
   const sellerBankAccountNumber = String(process.env.ZUGFERD_SELLER_BANK_ACCOUNT_NUMBER || '').trim();
-  const sellerBic = String(process.env.ZUGFERD_SELLER_BIC || '').trim();
+  const sellerBic = String(process.env.ZUGFERD_SELLER_BIC || 'SOLADES1BAL').trim();
   const sellerCreditorIdentifier = String(process.env.ZUGFERD_SELLER_CREDITOR_ID || '').trim();
-  const sellerAccountHolderName = String(process.env.ZUGFERD_SELLER_ACCOUNT_HOLDER || '').trim();
+  const sellerAccountHolderName = String(process.env.ZUGFERD_SELLER_ACCOUNT_HOLDER || 'Kostyantyn Utvenko').trim();
   const sellerGlobalIdentifier = String(process.env.ZUGFERD_SELLER_GLOBAL_ID || '').trim();
   const sellerGlobalIdentifierScheme = String(process.env.ZUGFERD_SELLER_GLOBAL_ID_SCHEME || '').trim();
   const sellerRegistrationScheme = String(process.env.ZUGFERD_SELLER_REGISTRATION_SCHEME || '').trim();
   const lineGlobalIdentifierScheme = String(process.env.ZUGFERD_LINE_GLOBAL_ID_SCHEME || '').trim();
-  const vatExemptionReasonText = 'No VAT is charged according to § 19 UStG.';
+  const vatExemptionReasonText = 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/ No VAT is charged under the small business exemption (§ 19 UStG).';
   const buyerIdentifier = String(customerIdentifier || '').trim();
+  const buyerVatIdentifier = String(customerVatNumber || '').trim();
+  const buyerVatSchema = String(process.env.ZUGFERD_BUYER_VAT_SCHEMA || '9917').trim();
+  const effectiveDiscountAmount = Math.max(0, toNumber(discountAmount, 0));
+  const effectiveShippingCost = Math.max(0, toNumber(shippingCost, 0));
+  const lineDescription = `Count Signs:${totalSignsCount} (${safeProjectName})`;
+  const legalInformationNote = 'Kleinunternehmer gemäß § 19 UStG';
+  const invoiceNumberRaw = String(invoiceNumber || order?.id || '').trim();
+  const taxBasisAmount = round2(Math.max(0, toNumber(subtotal, 0) - effectiveDiscountAmount + effectiveShippingCost));
   const lineGlobalIdentifierValue = String(order?.id || invoiceNumber || '').trim();
 
   const sellerRegistrationIdentifier = sellerRegistrationId
@@ -251,13 +262,26 @@ export const buildZugferdInvoiceData = ({
     number: String(invoiceNumber || order?.id || ''),
     typeCode: '380',
     issueDate: new Date(order?.createdAt || Date.now()),
+    includedNote: [
+      { content: `name:${String(customerCompany || customerName || 'Customer').trim()}` },
+      { content: `kennung:${buyerVatIdentifier}` },
+      { content: `schema:${buyerVatIdentifier ? buyerVatSchema : ''}` },
+      { content: `firmename:${sellerName}` },
+      { content: `kennung:${sellerIdentifier}` },
+      { content: `name:${sellerContactName || sellerName}` },
+      { content: `telefon:${sellerPhone}` },
+      { content: `von:${invoiceNumberRaw}` },
+      { content: `bis:${invoiceNumberRaw}` },
+      { content: `freitext:${lineDescription}` },
+      { content: `weitere rechtliche information:${legalInformationNote}` },
+    ],
     transaction: {
       line: [
         {
           identifier: '1',
-          note: `Order No: ${String(invoiceNumber || order?.id || '')}`,
+          note: lineDescription,
           tradeProduct: {
-            name: safeProjectName,
+            name: `Count Signs:${totalSignsCount}`,
             globalIdentifier: lineGlobalIdentifierValue && lineGlobalIdentifierScheme
               ? {
                   value: lineGlobalIdentifierValue,
@@ -266,14 +290,25 @@ export const buildZugferdInvoiceData = ({
               : undefined,
           },
           tradeAgreement: {
+            grossTradePrice: {
+              chargeAmount: formatMoney(lineUnitPrice),
+              basisQuantity: {
+                amount: 1,
+                unitMeasureCode: 'C62',
+              },
+            },
             netTradePrice: {
               chargeAmount: formatMoney(lineUnitPrice),
+              basisQuantity: {
+                amount: 1,
+                unitMeasureCode: 'C62',
+              },
             },
           },
           tradeDelivery: {
             billedQuantity: {
               amount: quantity,
-              unitMeasureCode: 'H87',
+              unitMeasureCode: 'C62',
             },
           },
           tradeSettlement: {
@@ -290,11 +325,6 @@ export const buildZugferdInvoiceData = ({
       ],
       tradeAgreement: {
         buyerReference: String(buyerReference || order?.userId || invoiceNumber || ''),
-        associatedContract: String(order?.idMongo || '').trim()
-          ? {
-              reference: String(order.idMongo).trim(),
-            }
-          : undefined,
         seller: {
           identifier: sellerIdentifier,
           globalIdentifier: sellerGlobalIdentifierNode,
@@ -334,11 +364,21 @@ export const buildZugferdInvoiceData = ({
             : undefined,
         },
         buyer: {
-          identifier: buyerIdentifier || undefined,
+          identifier: buyerVatIdentifier || buyerIdentifier || undefined,
           name: String(customerCompany || customerName || 'Customer'),
           organization: {
             tradingName: String(customerCompany || '').trim() || undefined,
+            registrationIdentifier: buyerVatIdentifier
+              ? {
+                  value: buyerVatIdentifier,
+                }
+              : undefined,
           },
+          globalIdentifier: buyerVatIdentifier
+            ? {
+                value: buyerVatIdentifier,
+              }
+            : undefined,
           tradeContact: {
             name: String(customerName || customerCompany || '').trim() || undefined,
             phoneNumber: String(customerPhone || '').trim() || undefined,
@@ -404,7 +444,7 @@ export const buildZugferdInvoiceData = ({
           ? [
               {
                 calculatedAmount: formatMoney(vatAmount),
-                basisAmount: formatMoney(subtotal),
+                basisAmount: formatMoney(taxBasisAmount),
                 categoryCode: 'S',
                 rateApplicablePercent: formatMoney(vatPercent),
                 typeCode: 'VAT',
@@ -413,16 +453,44 @@ export const buildZugferdInvoiceData = ({
           : [
               {
                 calculatedAmount: '0.00',
-                basisAmount: formatMoney(subtotal),
+                basisAmount: formatMoney(taxBasisAmount),
                 categoryCode: 'E',
                 rateApplicablePercent: '0.00',
                 typeCode: 'VAT',
                 exemptionReasonText: vatExemptionReasonText,
               },
             ],
+        allowances: effectiveDiscountAmount > 0
+          ? [
+              {
+                actualAmount: formatMoney(effectiveDiscountAmount),
+                reasonCode: '95',
+                reason: 'Discount',
+                categoryTradeTax: {
+                  categoryCode: hasVat ? 'S' : 'E',
+                  vatRate: hasVat ? formatMoney(vatPercent) : '0.00',
+                },
+              },
+            ]
+          : undefined,
+        charges: effectiveShippingCost > 0
+          ? [
+              {
+                actualAmount: formatMoney(effectiveShippingCost),
+                reasonCode: 'FC',
+                reason: 'Shipping',
+                categoryTradeTax: {
+                  categoryCode: hasVat ? 'S' : 'E',
+                  vatRate: hasVat ? formatMoney(vatPercent) : '0.00',
+                },
+              },
+            ]
+          : undefined,
         monetarySummation: {
           lineTotalAmount: formatMoney(subtotal),
-          taxBasisTotalAmount: formatMoney(subtotal),
+          chargeTotalAmount: effectiveShippingCost > 0 ? formatMoney(effectiveShippingCost) : undefined,
+          allowanceTotalAmount: effectiveDiscountAmount > 0 ? formatMoney(effectiveDiscountAmount) : undefined,
+          taxBasisTotalAmount: formatMoney(taxBasisAmount),
           taxTotal: formatMoney(vatAmount),
           grandTotalAmount: formatMoney(totalAmount),
           duePayableAmount: formatMoney(totalAmount),
@@ -3098,6 +3166,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       signsCount: signsCountRaw,
       projectName: projectNameRaw,
       subtotal,
+      discountAmount,
+      shippingCost,
       vatAmount,
       vatPercent,
       totalAmount,

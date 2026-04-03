@@ -1543,6 +1543,12 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       return {
         section: 'material',
         units: 1,
+        measureHtml: `
+        <div class="item-row">
+            <div class="checkbox"></div>
+            <div class="label-box"><span class="label-box__fallback">A</span></div>
+            <div class="item-text">${escapeHtml(label)}</div>
+        </div>`,
         html: `
         <div class="item-row">
             <div class="checkbox"></div>
@@ -1555,6 +1561,11 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const accessoryBlocks = normalizeAccessories(orderMongo?.accessories).map((item) => ({
         section: 'accessory',
         units: 1,
+      measureHtml: `
+      <div class="extra-row">
+        <div class="checkbox"></div>
+        <span>${escapeHtml(item.qty)}&nbsp; <u>${escapeHtml(item.name)}</u></span>
+      </div>`,
         html: `
         <div class="extra-row">
             <div class="checkbox"></div>
@@ -1562,32 +1573,59 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         </div>`
       }));
 
-    const pagedOrderBlocks = ensureLastPdfPageCapacity(
-      paginatePdfBlocks(
-        [...materialRowBlocks, ...accessoryBlocks],
-        10,
-        18
-      ),
-      16,
-      18
-    );
-
     const deliveryLabel = escapeHtml(order.deliveryType || checkout?.deliveryLabel || '');
     const orderSum = escapeHtml(formatMoney(order.sum));
 
-    browser = await puppeteer.launch({
-      headless: "new",
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    });
-    const page = await browser.newPage();
+    const firstPageHeaderHtml = `
+    <div class="header">
+      <h1>CSA</h1>
+      <p>Germany</p>
+    </div>
 
-    const htmlContent = `
-  <!DOCTYPE html>
-  <html lang="uk">
-  <head>
-    <meta charset="UTF-8">
-    <title>CSA Germany Order</title>
-    <style>
+    <div class="order-info">
+      <div class="order-details">
+        <div class="order-date">${orderDate}</div>
+        <div>Customer No: ${customerNumber}</div>
+        <div>Order No: ${orderNumber}</div>
+        <div>Count orders: ${userOrdersCount}</div>
+        <div>Count sign: ${totalSigns}</div>
+      </div>
+      <div class="order-title">${orderTitle}</div>
+    </div>
+
+    <div class="address-section">
+      <div class="address-left">${leftAddressHtml}${noticeText ? `<div class="notice notice--after-email">Our Notice: ${noticeText}</div>` : ''}</div>
+      <div class="address-right">${rightAddressHtml}</div>
+    </div>`;
+
+    const continuedPageHeaderHtml = `
+    <div class="header header--continued">
+      <h1>CSA</h1>
+      <p>Germany</p>
+    </div>
+    <div class="order-title order-title--continued">${orderTitle}</div>`;
+
+    const footerHtml = `
+    <div class="footer">
+      <div class="footer-row">
+        <div class="footer-checkbox"></div>
+        <div class="footer-details">
+          <div>Delivery: ${deliveryLabel}</div>
+          <div class="footer-order-sum">Order Sum: ${orderSum}</div>
+        </div>
+      </div>
+    </div>`;
+
+    const csaPdfMarginsPx = {
+      top: 10,
+      right: 20,
+      bottom: 28,
+      left: 20,
+    };
+    const csaPrintableWidthCss = `calc(210mm - ${csaPdfMarginsPx.left + csaPdfMarginsPx.right}px)`;
+    const csaPrintableHeightCss = `calc(297mm - ${csaPdfMarginsPx.top + csaPdfMarginsPx.bottom}px)`;
+
+    const csaPageStyles = `
       @page {
         size: A4;
         margin: 0;
@@ -1599,14 +1637,15 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         background-color: #f0f0f0;
       }
       .sheet {
-        width: 210mm;
-        min-height: 297mm;
+        width: ${csaPrintableWidthCss};
+        height: ${csaPrintableHeightCss};
         padding: 16mm 20mm 20mm;
         margin: 10mm auto;
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
         box-sizing: border-box;
         position: relative;
+        overflow: hidden;
       }
       .sheet.page-break {
         break-after: page;
@@ -1812,62 +1851,317 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         body { background: none; }
         .sheet { margin: 0; box-shadow: none; }
       }
-    </style>
+    `;
+
+    const allOrderBlocks = [...materialRowBlocks, ...accessoryBlocks];
+    const getPdfBlockHeight = (block) => Math.max(1, Number(block?.heightPx) || 1);
+    let pagedOrderBlocks = ensureLastPdfPageCapacity(
+      paginatePdfBlocks(allOrderBlocks, 10, 18),
+      16,
+      18
+    );
+
+    browser = await puppeteer.launch({
+      headless: "new",
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    });
+    const page = await browser.newPage();
+
+    try {
+      let measurementPage;
+      let measureResult;
+      try {
+        measurementPage = await browser.newPage();
+      const measureHtml = `
+      <!DOCTYPE html>
+      <html lang="uk">
+      <head>
+        <meta charset="UTF-8">
+        <style>${csaPageStyles}</style>
+      </head>
+      <body>
+        <div id="measure-first" class="sheet">
+          ${firstPageHeaderHtml}
+          <div id="measure-first-anchor"></div>
+        </div>
+
+        <div id="measure-next" class="sheet sheet--continued">
+          ${continuedPageHeaderHtml}
+          <div id="measure-next-anchor"></div>
+        </div>
+
+        <div class="sheet">
+          <div id="measure-blocks">
+            ${allOrderBlocks
+              .map(
+                (block, index) =>
+                  `<div data-measure-block="${index}">${block.measureHtml || block.html}</div>`
+              )
+              .join('')}
+          </div>
+          <div id="measure-footer">${footerHtml}</div>
+        </div>
+      </body>
+      </html>`;
+
+      await measurementPage.setContent(measureHtml, { waitUntil: 'domcontentloaded' });
+      measureResult = await measurementPage.evaluate(() => {
+        const toOuterHeight = (el) => {
+          if (!el) return 0;
+          const style = window.getComputedStyle(el);
+          const marginTop = Number.parseFloat(style.marginTop || '0') || 0;
+          const marginBottom = Number.parseFloat(style.marginBottom || '0') || 0;
+          return el.getBoundingClientRect().height + marginTop + marginBottom;
+        };
+
+        const firstSheet = document.getElementById('measure-first');
+        const firstAnchor = document.getElementById('measure-first-anchor');
+        const nextSheet = document.getElementById('measure-next');
+        const nextAnchor = document.getElementById('measure-next-anchor');
+        const footerNode = document.querySelector('#measure-footer .footer');
+
+        const firstCapacityPx =
+          firstSheet && firstAnchor
+            ? Math.max(
+                1,
+                firstSheet.getBoundingClientRect().bottom -
+                  firstAnchor.getBoundingClientRect().top
+              )
+            : 1;
+
+        const nextCapacityPx =
+          nextSheet && nextAnchor
+            ? Math.max(
+                1,
+                nextSheet.getBoundingClientRect().bottom -
+                  nextAnchor.getBoundingClientRect().top
+              )
+            : firstCapacityPx;
+
+        const blockHeights = Array.from(
+          document.querySelectorAll('[data-measure-block]')
+        ).map((wrapper) => toOuterHeight(wrapper.firstElementChild || wrapper));
+
+        return {
+          blockHeights,
+          firstCapacityPx,
+          nextCapacityPx,
+          footerReservePx: toOuterHeight(footerNode) + 8,
+          itemsListTopMarginPx: 20,
+          extraItemsTopMarginPx: 40,
+        };
+      });
+      } finally {
+        if (measurementPage && !measurementPage.isClosed()) {
+          await measurementPage.close();
+        }
+      }
+
+      const measuredBlocks = allOrderBlocks.map((block, index) => ({
+        ...block,
+        heightPx: Math.max(1, Number(measureResult?.blockHeights?.[index]) || 1),
+      }));
+
+      const itemsListTopMarginPx = Math.max(
+        0,
+        Number(measureResult?.itemsListTopMarginPx) || 0
+      );
+      const extraItemsTopMarginPx = Math.max(
+        0,
+        Number(measureResult?.extraItemsTopMarginPx) || 0
+      );
+
+      const getPageContentHeight = (blocks = []) => {
+        let totalHeight = 0;
+        let hasMaterialRows = false;
+        let hasAccessoryRows = false;
+
+        (Array.isArray(blocks) ? blocks : []).forEach((block) => {
+          if (block?.section === 'material' && !hasMaterialRows) {
+            totalHeight += itemsListTopMarginPx;
+            hasMaterialRows = true;
+          }
+          if (block?.section === 'accessory' && !hasAccessoryRows) {
+            totalHeight += extraItemsTopMarginPx;
+            hasAccessoryRows = true;
+          }
+          totalHeight += getPdfBlockHeight(block);
+        });
+
+        return totalHeight;
+      };
+
+      const firstCapacityPx = Math.max(
+        1,
+        Number(measureResult?.firstCapacityPx) || 1
+      );
+      const nextCapacityPx = Math.max(
+        1,
+        Number(measureResult?.nextCapacityPx) || firstCapacityPx
+      );
+
+      const measuredPages = [];
+      let currentPageBlocks = [];
+      let currentCapacity = firstCapacityPx;
+
+      measuredBlocks.forEach((block) => {
+        const candidatePageBlocks = [...currentPageBlocks, block];
+        const candidateHeight = getPageContentHeight(candidatePageBlocks);
+
+        if (
+          currentPageBlocks.length > 0 &&
+          candidateHeight > currentCapacity
+        ) {
+          measuredPages.push(currentPageBlocks);
+          currentPageBlocks = [block];
+          currentCapacity = nextCapacityPx;
+          return;
+        }
+
+        currentPageBlocks = candidatePageBlocks;
+      });
+
+      if (currentPageBlocks.length > 0) {
+        measuredPages.push(currentPageBlocks);
+      }
+
+      const getPageCapacityByIndex = (index) => (index === 0 ? firstCapacityPx : nextCapacityPx);
+      const footerReservePx = Math.max(
+        0,
+        Number(measureResult?.footerReservePx) || 0
+      );
+      const balancedPages = measuredPages.length > 0
+        ? measuredPages.map((pageBlocks) => [...pageBlocks])
+        : [[]];
+
+      const ensureLastPageFooterCapacity = () => {
+        let safety = 0;
+        while (balancedPages.length > 0 && safety < 10000) {
+          safety += 1;
+          const lastPageIndex = balancedPages.length - 1;
+          const lastPageBlocks = balancedPages[lastPageIndex] || [];
+          const pageCapacity = getPageCapacityByIndex(lastPageIndex);
+
+          if (getPageContentHeight(lastPageBlocks) + footerReservePx <= pageCapacity) {
+            break;
+          }
+
+          if (lastPageBlocks.length <= 1) {
+            break;
+          }
+
+          const movedBlock = lastPageBlocks.pop();
+          if (!balancedPages[lastPageIndex + 1]) {
+            balancedPages.push([]);
+          }
+          balancedPages[lastPageIndex + 1].unshift(movedBlock);
+        }
+      };
+
+      const rebalanceForward = () => {
+        let changed = true;
+        let safety = 0;
+
+        while (changed && safety < 10000) {
+          safety += 1;
+          changed = false;
+
+          for (let i = 0; i < balancedPages.length - 1; i += 1) {
+            const currentPage = balancedPages[i] || [];
+            const nextPage = balancedPages[i + 1] || [];
+            const currentCapacity = getPageCapacityByIndex(i);
+
+            while (nextPage.length > 0) {
+              const candidateBlock = nextPage[0];
+              const candidateHeight = getPageContentHeight([...currentPage, candidateBlock]);
+
+              if (candidateHeight <= currentCapacity) {
+                currentPage.push(nextPage.shift());
+                changed = true;
+              } else {
+                break;
+              }
+            }
+
+            if (nextPage.length === 0) {
+              balancedPages.splice(i + 1, 1);
+              changed = true;
+              i -= 1;
+            }
+          }
+        }
+      };
+
+      ensureLastPageFooterCapacity();
+      rebalanceForward();
+      ensureLastPageFooterCapacity();
+
+      pagedOrderBlocks = balancedPages.length > 0 ? balancedPages : [[]];
+    } catch (measureError) {
+      console.warn('CSA pagination measurement failed, fallback to unit pagination:', measureError?.message || measureError);
+    }
+
+    const buildCsaOrderHtml = (pages) => `
+  <!DOCTYPE html>
+  <html lang="uk">
+  <head>
+    <meta charset="UTF-8">
+    <title>CSA Germany Order</title>
+    <style>${csaPageStyles}</style>
   </head>
   <body>
-  ${pagedOrderBlocks.map((pageBlocks, pageIndex) => {
+  ${pages.map((pageBlocks, pageIndex) => {
     const isFirstPage = pageIndex === 0;
-    const isLastPage = pageIndex === pagedOrderBlocks.length - 1;
+    const isLastPage = pageIndex === pages.length - 1;
     const pageMaterialRowsHtml = pageBlocks.filter((block) => block.section === 'material').map((block) => block.html).join('');
     const pageAccessoriesHtml = pageBlocks.filter((block) => block.section === 'accessory').map((block) => block.html).join('');
 
     return `
   <div class="sheet${isFirstPage ? '' : ' sheet--continued'}${isLastPage ? '' : ' page-break'}">
-    ${isFirstPage ? `
-    <div class="header">
-      <h1>CSA</h1>
-      <p>Germany</p>
-    </div>
-
-    <div class="order-info">
-      <div class="order-details">
-        <div class="order-date">${orderDate}</div>
-        <div>Customer No: ${customerNumber}</div>
-        <div>Order No: ${orderNumber}</div>
-        <div>Count orders: ${userOrdersCount}</div>
-        <div>Count sign: ${totalSigns}</div>
-      </div>
-      <div class="order-title">${orderTitle}</div>
-    </div>
-
-    <div class="address-section">
-      <div class="address-left">${leftAddressHtml}${noticeText ? `<div class="notice notice--after-email">Our Notice: ${noticeText}</div>` : ''}</div>
-      <div class="address-right">${rightAddressHtml}</div>
-    </div>` : `
-    <div class="header header--continued">
-      <h1>CSA</h1>
-      <p>Germany</p>
-    </div>
-    <div class="order-title order-title--continued">${orderTitle}</div>`}
+    ${isFirstPage ? firstPageHeaderHtml : continuedPageHeaderHtml}
 
     ${pageMaterialRowsHtml ? `<div class="items-list">${pageMaterialRowsHtml}</div>` : ''}
     ${pageAccessoriesHtml ? `<div class="extra-items">${pageAccessoriesHtml}</div>` : ''}
 
-    ${isLastPage ? `
-    <div class="footer">
-      <div class="footer-row">
-        <div class="footer-checkbox"></div>
-        <div class="footer-details">
-          <div>Delivery: ${deliveryLabel}</div>
-          <div class="footer-order-sum">Order Sum: ${orderSum}</div>
-        </div>
-      </div>
-    </div>` : ''}
+    ${isLastPage ? footerHtml : ''}
   </div>`;
   }).join('')}
   </body>
   </html>`;
 
+    let overflowSafety = 0;
+    while (overflowSafety < 1000) {
+      overflowSafety += 1;
+
+      const htmlForCheck = buildCsaOrderHtml(pagedOrderBlocks);
+      await page.setContent(htmlForCheck, { waitUntil: 'domcontentloaded' });
+
+      const overflowIndex = await page.evaluate(() => {
+        const sheets = Array.from(document.querySelectorAll('.sheet'));
+        return sheets.findIndex((sheet) => sheet.scrollHeight - sheet.clientHeight > 1);
+      });
+
+      if (overflowIndex < 0) {
+        break;
+      }
+
+      const sourcePage = pagedOrderBlocks[overflowIndex] || [];
+      if (sourcePage.length <= 1) {
+        break;
+      }
+
+      const movedBlock = sourcePage.pop();
+      if (!pagedOrderBlocks[overflowIndex + 1]) {
+        pagedOrderBlocks[overflowIndex + 1] = [];
+      }
+      pagedOrderBlocks[overflowIndex + 1].unshift(movedBlock);
+
+      if ((pagedOrderBlocks[overflowIndex] || []).length === 0) {
+        pagedOrderBlocks.splice(overflowIndex, 1);
+      }
+    }
+
+    const htmlContent = buildCsaOrderHtml(pagedOrderBlocks);
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -1875,7 +2169,12 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       displayHeaderFooter: true,
       headerTemplate: '<div></div>',
       footerTemplate: buildPdfFooterTemplate(12, 20, 2),
-      margin: { top: '10px', right: '20px', bottom: '28px', left: '20px' }
+      margin: {
+        top: `${csaPdfMarginsPx.top}px`,
+        right: `${csaPdfMarginsPx.right}px`,
+        bottom: `${csaPdfMarginsPx.bottom}px`,
+        left: `${csaPdfMarginsPx.left}px`,
+      }
     });
 
     res.writeHead(200, {

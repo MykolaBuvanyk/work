@@ -411,7 +411,7 @@ const IconMenu = ({ isOpen, onClose }) => {
                         >
                           <div className={styles.iconPreview}>
                             <img
-                              src={`${import.meta.env.VITE_LAYOUT_SERVER}images/icon/${icon}`}
+                              src={`${import.meta.env.VITE_LAYOUT_FRONTEND_URL}images/icon/${icon}`}
                               alt={icon}
                               loading="lazy" // Оптимізація завантаження
                               onError={e => {

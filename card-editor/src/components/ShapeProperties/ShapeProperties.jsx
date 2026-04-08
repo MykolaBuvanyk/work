@@ -304,6 +304,8 @@ const ShapeProperties = ({
 
   const DEFAULT_THICKNESS_MM = 0.5;
   const DEFAULT_THICKNESS_PX = mmToPx(DEFAULT_THICKNESS_MM);
+  const getThemeShapeColor = () =>
+    globalColors?.textColor || globalColors?.strokeColor || "#000000";
 
   const shouldIgnoreStrokeInDimensions = (obj) => {
     if (!obj) return false;
@@ -1372,10 +1374,10 @@ const ShapeProperties = ({
     // Якщо фігура відмовилась від темної заливки — не примушуємо зміну кольору
     if (obj.useThemeColor !== true) return;
     // Якщо у об'єкта активний Fill — синхронізуємо із поточним stroke
-    const currentStroke = obj.stroke || globalColors?.strokeColor || globalColors?.textColor || "#000000";
+    const currentThemeColor = getThemeShapeColor();
     if (properties.fill) {
       try {
-        obj.set({ fill: currentStroke, useThemeColor: true });
+        obj.set({ fill: currentThemeColor, stroke: currentThemeColor, useThemeColor: true });
         storeFillMetadata(obj, true);
         if (typeof obj.setCoords === "function") obj.setCoords();
         canvas.requestRenderAll();
@@ -1626,8 +1628,7 @@ const ShapeProperties = ({
         break;
       }
       case "frame": {
-        const themeStrokeColor =
-          globalColors?.strokeColor || globalColors?.textColor || "#000000";
+        const themeStrokeColor = getThemeShapeColor();
 
         holdCenterIfArrow((o) => {
           const isCutShape = isStaticCutShapeObject(o);
@@ -1657,9 +1658,8 @@ const ShapeProperties = ({
       case "fill": {
         holdCenterIfArrow((o) => {
           if (value) {
-            // Використовуємо поточний колір stroke об'єкта для заливки
-            const currentStroke = o.stroke || globalColors?.strokeColor || globalColors?.textColor || "#000000";
-            o.set({ fill: currentStroke, useThemeColor: true });
+            const currentThemeColor = getThemeShapeColor();
+            o.set({ fill: currentThemeColor, stroke: currentThemeColor, useThemeColor: true });
             storeFillMetadata(o, true);
           } else {
             o.set({ fill: "transparent", useThemeColor: false });
@@ -1669,8 +1669,7 @@ const ShapeProperties = ({
         break;
       }
       case "cut": {
-        const themeTextColor = globalColors?.textColor || "#000000";
-        const themeStrokeColor = globalColors?.strokeColor || "#000000";
+        const themeStrokeColor = getThemeShapeColor();
         // Используем фирменный оранжевый, как в остальных элементах UI
         const ORANGE = "#FD7714";
         holdCenterIfArrow((o) => {
@@ -1723,8 +1722,7 @@ const ShapeProperties = ({
               });
               // При включённом Fill заливаем поточним кольором stroke, иначе прозрачная заливка
               if (properties.fill) {
-                const currentStroke = o.stroke || themeStrokeColor;
-                o.set({ fill: currentStroke, useThemeColor: true });
+                o.set({ fill: themeStrokeColor, stroke: themeStrokeColor, useThemeColor: true });
                 storeFillMetadata(o, true);
               } else {
                 o.set({ fill: "transparent", useThemeColor: false });

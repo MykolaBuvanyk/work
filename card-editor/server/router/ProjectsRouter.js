@@ -12,6 +12,15 @@ const normalizeName = (value) =>
 
 const normalizeAccessories = (value) => (Array.isArray(value) ? value : []);
 
+const toSaveResponse = (doc) => ({
+  id: String(doc?._id || ''),
+  clientProjectId: doc?.clientProjectId || null,
+  name: doc?.name || 'Untitled',
+  createdAt: doc?.createdAt ? new Date(doc.createdAt).getTime() : Date.now(),
+  updatedAt: doc?.updatedAt ? new Date(doc.updatedAt).getTime() : Date.now(),
+  lastOrderedAt: Number.isFinite(Number(doc?.lastOrderedAt)) ? Number(doc.lastOrderedAt) : null,
+});
+
 const toProjectPayload = (doc) => {
   const snapshot = doc?.project && typeof doc.project === 'object' ? doc.project : {};
   return {
@@ -83,61 +92,82 @@ ProjectsRouter.post('/save-as', requireAuth, async (req, res, next) => {
       accessories: normalizeAccessories(body.accessories ?? project?.accessories),
     };
 
-    let existing = null;
+    const accessories = normalizeAccessories(body.accessories ?? safeProject.accessories);
+    const hasLastOrderedAt = Number.isFinite(Number(body.lastOrderedAt));
+
+    const updateDoc = {
+      $set: {
+        name,
+        normalizedName,
+        project: safeProject,
+        accessories,
+      },
+      $setOnInsert: {
+        userId,
+        clientProjectId: clientProjectId || null,
+      },
+    };
+
     if (clientProjectId) {
-      existing = await UserProject.findOne({ userId, clientProjectId });
+      updateDoc.$set.clientProjectId = clientProjectId;
     }
-    if (!existing && normalizedName) {
-      existing = await UserProject.findOne({ userId, normalizedName });
+    if (hasLastOrderedAt) {
+      updateDoc.$set.lastOrderedAt = Number(body.lastOrderedAt);
     }
 
-    let saved;
-    if (existing) {
-      existing.name = name;
-      existing.normalizedName = normalizedName;
-      existing.clientProjectId = clientProjectId || existing.clientProjectId || null;
-      existing.project = safeProject;
-      existing.accessories = normalizeAccessories(body.accessories ?? safeProject.accessories);
-      if (Number.isFinite(Number(body.lastOrderedAt))) {
-        existing.lastOrderedAt = Number(body.lastOrderedAt);
-      }
-      saved = await existing.save();
-    } else {
-      try {
-        saved = await UserProject.create({
-          userId,
-          clientProjectId,
-          name,
-          normalizedName,
-          project: safeProject,
-          accessories: normalizeAccessories(body.accessories ?? safeProject.accessories),
-          lastOrderedAt: Number.isFinite(Number(body.lastOrderedAt))
-            ? Number(body.lastOrderedAt)
-            : null,
-        });
-      } catch (createError) {
-        // In rare race conditions, unique key may already be taken. Reuse the existing row.
-        if (createError?.code === 11000 && clientProjectId) {
-          const concurrent = await UserProject.findOne({ userId, clientProjectId });
-          if (concurrent) {
-            concurrent.name = name;
-            concurrent.normalizedName = normalizedName;
-            concurrent.project = safeProject;
-            concurrent.accessories = normalizeAccessories(body.accessories ?? safeProject.accessories);
-            if (Number.isFinite(Number(body.lastOrderedAt))) {
-              concurrent.lastOrderedAt = Number(body.lastOrderedAt);
-            }
-            saved = await concurrent.save();
-          } else {
-            throw createError;
-          }
-        } else {
-          throw createError;
+    const projection = {
+      _id: 1,
+      clientProjectId: 1,
+      name: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      lastOrderedAt: 1,
+    };
+
+    let saved = null;
+    if (clientProjectId) {
+      saved = await UserProject.findOneAndUpdate(
+        { userId, clientProjectId },
+        updateDoc,
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+          projection,
         }
-      }
+      ).lean();
+    } else if (normalizedName) {
+      saved = await UserProject.findOneAndUpdate(
+        { userId, normalizedName },
+        updateDoc,
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+          projection,
+        }
+      ).lean();
+    } else {
+      const created = await UserProject.create({
+        userId,
+        clientProjectId,
+        name,
+        normalizedName,
+        project: safeProject,
+        accessories,
+        lastOrderedAt: hasLastOrderedAt ? Number(body.lastOrderedAt) : null,
+      });
+      saved = {
+        _id: created._id,
+        clientProjectId: created.clientProjectId,
+        name: created.name,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+        lastOrderedAt: created.lastOrderedAt,
+      };
     }
 
-    return res.json(toProjectPayload(saved));
+    return res.json(toSaveResponse(saved));
   } catch (e) {
     return next(e);
   }
@@ -158,31 +188,45 @@ ProjectsRouter.put('/:id', requireAuth, async (req, res, next) => {
       return res.status(400).json({ status: 400, message: 'Project payload is required' });
     }
 
-    const existing = await UserProject.findOne({ _id: id, userId });
-    if (!existing) {
-      return res.status(404).json({ status: 404, message: 'Project not found' });
-    }
-
-    const nextName = name || existing.name || 'Untitled';
+    const nextName = name || 'Untitled';
     const safeProject = {
       ...project,
       name: nextName,
       accessories: normalizeAccessories(body.accessories ?? project?.accessories),
     };
 
-    existing.name = nextName;
-    existing.normalizedName = normalizeName(nextName);
-    existing.project = safeProject;
-    existing.accessories = normalizeAccessories(body.accessories ?? safeProject.accessories);
+    const updateDoc = {
+      $set: {
+        name: nextName,
+        normalizedName: normalizeName(nextName),
+        project: safeProject,
+        accessories: normalizeAccessories(body.accessories ?? safeProject.accessories),
+      },
+    };
     if (body.clientProjectId) {
-      existing.clientProjectId = String(body.clientProjectId).trim();
+      updateDoc.$set.clientProjectId = String(body.clientProjectId).trim();
     }
     if (Number.isFinite(Number(body.lastOrderedAt))) {
-      existing.lastOrderedAt = Number(body.lastOrderedAt);
+      updateDoc.$set.lastOrderedAt = Number(body.lastOrderedAt);
     }
 
-    const saved = await existing.save();
-    return res.json(toProjectPayload(saved));
+    const saved = await UserProject.findOneAndUpdate({ _id: id, userId }, updateDoc, {
+      new: true,
+      projection: {
+        _id: 1,
+        clientProjectId: 1,
+        name: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        lastOrderedAt: 1,
+      },
+    }).lean();
+
+    if (!saved) {
+      return res.status(404).json({ status: 404, message: 'Project not found' });
+    }
+
+    return res.json(toSaveResponse(saved));
   } catch (e) {
     return next(e);
   }

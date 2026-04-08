@@ -9576,27 +9576,20 @@ const Toolbar = ({ formData }) => {
 
   const handleInputChange = (key, max, rawValue) => {
     const baseSizeValues = latestSizeValuesRef.current || sizeValues;
-    const isHeightField = key === 'height';
-    const isLockShape = currentShapeType === 'lock';
-    const effectiveMax =
-      isLockShape && isHeightField ? Math.max(0, max - LOCK_ARCH_HEIGHT_MM) : max;
 
     // Поддерживаем запятую как разделитель, затем округляем до 1 знака
     const parsed = parseFloat(String(rawValue).replace(',', '.'));
-    const clamped = Math.max(0, Math.min(effectiveMax, isNaN(parsed) ? 0 : parsed));
+    const clamped = Math.max(0, Math.min(max, isNaN(parsed) ? 0 : parsed));
     let value = round1(clamped);
     // Keep corner radius editable for non-circle shapes.
     // For shapes where the UI disables corner radius, enforce 0.
     if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
       value = 0;
     }
-    const effectiveHeight =
-      isLockShape && isHeightField ? round1(value + LOCK_ARCH_HEIGHT_MM) : value;
-
     // Compute next mm values synchronously
     let next = {
       width: key === 'width' ? value : baseSizeValues.width,
-      height: key === 'height' ? (isLockShape ? effectiveHeight : value) : baseSizeValues.height,
+      height: key === 'height' ? value : baseSizeValues.height,
       cornerRadius: key === 'cornerRadius' ? value : baseSizeValues.cornerRadius,
     };
 
@@ -9643,22 +9636,21 @@ const Toolbar = ({ formData }) => {
       next = { ...next, width: side, height: side };
       setSizeValues(prev => ({ ...prev, width: side, height: side }));
     } else {
-      if (isLockShape && isHeightField) {
-        // effectiveHeight вже врахований в next.height після clampPair
-        setSizeValues(prev => ({
-          ...prev,
-          width: next.width,
-          height: next.height,
-        }));
-      } else {
-        setSizeValues(prev => ({
-          ...prev,
-          width: next.width,
-          height: next.height,
-          cornerRadius: next.cornerRadius,
-        }));
-      }
+      setSizeValues(prev => ({
+        ...prev,
+        width: next.width,
+        height: next.height,
+        cornerRadius: next.cornerRadius,
+      }));
     }
+
+    // Keep ref in sync immediately so sequential debounced applies don't read stale size values.
+    latestSizeValuesRef.current = {
+      ...baseSizeValues,
+      width: next.width,
+      height: next.height,
+      cornerRadius: next.cornerRadius,
+    };
 
     // Параметри розміру застосовуємо лише до canvas/clipPath
     if (canvas) {
@@ -9696,9 +9688,8 @@ const Toolbar = ({ formData }) => {
   const changeValue = (key, delta, max) => {
     setSizeValues(prev => {
       const isHeightField = key === 'height';
-      const isLockShape = currentShapeType === 'lock';
       const cur = parseFloat(String(prev[key]).replace(',', '.')) || 0;
-      const minVal = isLockShape && isHeightField ? LOCK_ARCH_HEIGHT_MM : 0;
+      const minVal = 0;
       const nextVal = Math.max(minVal, Math.min(max, cur + delta));
       let newValue = round1(nextVal);
       // For shapes where the UI disables corner radius, enforce 0.
@@ -9775,10 +9766,7 @@ const Toolbar = ({ formData }) => {
   };
 
   const actualHeightMm = Number(sizeValues?.height) || 0;
-  const displayHeightMm =
-    currentShapeType === 'lock'
-      ? round1(Math.max(0, actualHeightMm - LOCK_ARCH_HEIGHT_MM))
-      : actualHeightMm;
+  const displayHeightMm = actualHeightMm;
 
   // Section 2 (Size) width/height inputs: debounce apply + validation by 1s.
   // Other inputs must remain immediate.
@@ -9869,6 +9857,11 @@ const Toolbar = ({ formData }) => {
               : ['width', 'height'];
 
       orderedKeys.forEach(applyKey);
+
+      // Force input sync to clamped/applied values after debounced auto-resize.
+      const applied = latestSizeValuesRef.current || {};
+      setWidthInputValue(applied.width === 0 ? '' : String(applied.width ?? ''));
+      setHeightInputValue(applied.height === 0 ? '' : String(applied.height ?? ''));
     },
     [handleInputChange]
   );
@@ -9907,7 +9900,7 @@ const Toolbar = ({ formData }) => {
         ? parsed
         : key === 'width'
           ? Number(latestSizeValuesRef.current?.width) || 0
-          : displayHeightMm;
+          : Number(latestSizeValuesRef.current?.height) || 0;
 
       const nextRaw = String(round1(base + delta));
 
@@ -9917,7 +9910,7 @@ const Toolbar = ({ formData }) => {
       else setHeightInputValue(nextRaw);
       scheduleDebouncedSizeApply(max);
     },
-    [widthInputValue, heightInputValue, displayHeightMm, scheduleDebouncedSizeApply]
+    [widthInputValue, heightInputValue, scheduleDebouncedSizeApply]
   );
 
   // Corner radius input: по умолчанию показываем "0", но позволяем очищать поле

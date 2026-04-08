@@ -1680,11 +1680,6 @@ const ProjectCanvasesGrid = () => {
           return;
         }
 
-        const currentToolbarState =
-          typeof window !== 'undefined' && typeof window.getCurrentToolbarState === 'function'
-            ? window.getCurrentToolbarState() || {}
-            : {};
-
         const snapshot = {
           json: { objects: [], version: 'fabric' },
           preview: '',
@@ -1696,12 +1691,12 @@ const ProjectCanvasesGrid = () => {
           canvasType: 'rectangle',
           cornerRadius: 2,
           toolbarState: {
-            ...currentToolbarState,
             currentShapeType: 'rectangle',
             // IMPORTANT: new canvas must start without carried-over holes from previous canvas
             isHolesSelected: false,
             activeHolesType: 1,
             holesDiameter: 2.5,
+            hasBorder: false,
             sizeValues: {
               width: 120,
               height: 80,

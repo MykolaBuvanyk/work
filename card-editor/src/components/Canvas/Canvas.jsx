@@ -1495,8 +1495,11 @@ const Canvas = ({ className }) => {
       fCanvas.getDesignSize = () => ({ width: baseW, height: baseH });
       fCanvas.getCssSize = () => ({ width: cssW, height: cssH });
 
+      // Для lock віднімаємо висоту дужки (8mm) при відображенні
+      const heightMmToDisplay = canvasShapeType === 'lock' ? baseH - PX_PER_MM * 8 : baseH;
+
       setDisplayWidth(baseW);
-      setDisplayHeight(baseH);
+      setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
       setScale(scaleToFit);
       scaleRef.current = scaleToFit;
@@ -1575,10 +1578,13 @@ const Canvas = ({ className }) => {
       resizingRef.current = false;
       fCanvas.setZoom(1);
       fCanvas.setDimensions({ width: cssW, height: cssH }, { cssOnly: true });
+      
+      // Для lock віднімаємо висоту дужки (8mm) при відображенні
+      const heightMmToDisplay = canvasShapeType === 'lock' ? baseH - PX_PER_MM * 8 : baseH;
 
       // Update state + notify listeners
       setDisplayWidth(baseW);
-      setDisplayHeight(baseH);
+      setDisplayHeight(heightMmToDisplay);
       setCssHeight(cssH);
       setScale(factor);
       scaleRef.current = factor;
@@ -3973,11 +3979,12 @@ const Canvas = ({ className }) => {
   const scaleFactor = scaleRef.current || scale || 1;
   const lockArchDesignPx = isLockShape ? LOCK_ARCH_HEIGHT_MM * PX_PER_MM : 0;
   const lockArchCss = isLockShape ? lockArchDesignPx * scaleFactor : 0;
-  const heightLabelHeightPx = cssHeight;
-  const heightLabelMarginTopPx = 0;
+  const heightLabelHeightPx = isLockShape ? Math.max(0, cssHeight - lockArchCss) : cssHeight;
+  const heightLabelMarginTopPx = isLockShape ? lockArchCss : 0;
   const heightLabelMm = (() => {
     const rawMm = pxToMm(displayHeight);
-    return Math.max(0, rawMm);
+    const adjusted = isLockShape ? rawMm - LOCK_ARCH_HEIGHT_MM : rawMm;
+    return Math.max(0, adjusted);
   })();
 
   return (

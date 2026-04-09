@@ -7204,9 +7204,13 @@ const Toolbar = ({ formData }) => {
     const edgeFudgeMm = ORIGINAL_SIZE_MODE ? 0 : 0.04;
     // const edgeGapMm = desiredEdgeGapMm + halfStrokeMm + edgeFudgeMm;
 
-    // У Fabric отвір позиціонуємо по центру (origin='center'), тому переводимо edgeGap -> centerOffset.
+    // У Fabric отвір позиціонуємо по центру (origin='center'), тому застосовуємо відступ центра.
     let offsetMm = desiredCenterOffsetMm + halfStrokeMm + edgeFudgeMm;
     if (!isFinite(offsetMm)) offsetMm = 0;
+
+    // Діагностичні значення для DEV-логів (щоб не падати через ReferenceError).
+    const desiredEdgeGapMm = Math.max(0, desiredCenterOffsetMm - radiusMm);
+    const edgeGapMm = Math.max(0, offsetMm - radiusMm);
 
     // Геометричний запобіжник: дирка не повинна заходити далі центру (для дуже великих дирок)
     const maxOffsetMm = Math.max(0, (minMm || 0) - (d || 0.1) / 2);
@@ -9576,6 +9580,12 @@ const Toolbar = ({ formData }) => {
 
   const handleInputChange = (key, max, rawValue) => {
     const baseSizeValues = latestSizeValuesRef.current || sizeValues;
+    const effectiveShapeType = canvas?.get?.('shapeType') || currentShapeType;
+    const isLockShape = effectiveShapeType === 'lock';
+    const lockDisplayToActualHeight = valueMm =>
+      isLockShape ? round1((Number(valueMm) || 0) + LOCK_ARCH_HEIGHT_MM) : round1(Number(valueMm) || 0);
+    const lockActualToDisplayHeight = valueMm =>
+      isLockShape ? round1(Math.max(0, (Number(valueMm) || 0) - LOCK_ARCH_HEIGHT_MM)) : round1(Number(valueMm) || 0);
 
     // Поддерживаем запятую как разделитель, затем округляем до 1 знака
     const parsed = parseFloat(String(rawValue).replace(',', '.'));
@@ -9587,9 +9597,10 @@ const Toolbar = ({ formData }) => {
       value = 0;
     }
     // Compute next mm values synchronously
+    const normalizedHeightValue = key === 'height' ? lockDisplayToActualHeight(value) : value;
     let next = {
       width: key === 'width' ? value : baseSizeValues.width,
-      height: key === 'height' ? value : baseSizeValues.height,
+      height: key === 'height' ? normalizedHeightValue : baseSizeValues.height,
       cornerRadius: key === 'cornerRadius' ? value : baseSizeValues.cornerRadius,
     };
 
@@ -9607,18 +9618,21 @@ const Toolbar = ({ formData }) => {
     const LIMIT_OTHER_THRESHOLD = 295;
 
     const clampPair = (w, h) => {
-      let W = Math.min(LIMIT_SIDE_MAX, w || 0);
-      let H = Math.min(LIMIT_SIDE_MAX, h || 0);
+      let effectiveW = Math.min(LIMIT_SIDE_MAX, Number(w) || 0);
+      let effectiveH = Math.min(LIMIT_SIDE_MAX, lockActualToDisplayHeight(h));
       // Нове правило: не зменшуємо вже велику сторону >295 при зміні іншої.
       // Якщо після зміни обидві >295 — обрізаємо ТІЛЬКИ редаговану до 295.
-      if (W > LIMIT_OTHER_THRESHOLD && H > LIMIT_OTHER_THRESHOLD) {
+      if (effectiveW > LIMIT_OTHER_THRESHOLD && effectiveH > LIMIT_OTHER_THRESHOLD) {
         if (key === 'width') {
-          W = LIMIT_OTHER_THRESHOLD; // редагували width
+          effectiveW = LIMIT_OTHER_THRESHOLD; // редагували width
         } else if (key === 'height') {
-          H = LIMIT_OTHER_THRESHOLD; // редагували height
+          effectiveH = LIMIT_OTHER_THRESHOLD; // редагували height
         }
       }
-      return { W: round1(W), H: round1(H) };
+      return {
+        W: round1(effectiveW),
+        H: lockDisplayToActualHeight(effectiveH),
+      };
     };
 
     const pair = clampPair(next.width, next.height);
@@ -9687,16 +9701,32 @@ const Toolbar = ({ formData }) => {
 
   const changeValue = (key, delta, max) => {
     setSizeValues(prev => {
+      const effectiveShapeType = canvas?.get?.('shapeType') || currentShapeType;
+      const isLockShape = effectiveShapeType === 'lock';
+      const lockDisplayToActualHeight = valueMm =>
+        isLockShape
+          ? round1((Number(valueMm) || 0) + LOCK_ARCH_HEIGHT_MM)
+          : round1(Number(valueMm) || 0);
+      const lockActualToDisplayHeight = valueMm =>
+        isLockShape
+          ? round1(Math.max(0, (Number(valueMm) || 0) - LOCK_ARCH_HEIGHT_MM))
+          : round1(Number(valueMm) || 0);
       const isHeightField = key === 'height';
-      const cur = parseFloat(String(prev[key]).replace(',', '.')) || 0;
+      const prevValueForUi =
+        isHeightField && isLockShape ? lockActualToDisplayHeight(prev[key]) : prev[key];
+      const cur = parseFloat(String(prevValueForUi).replace(',', '.')) || 0;
       const minVal = 0;
       const nextVal = Math.max(minVal, Math.min(max, cur + delta));
       let newValue = round1(nextVal);
+      let newValueToStore = isHeightField ? lockDisplayToActualHeight(newValue) : newValue;
       // For shapes where the UI disables corner radius, enforce 0.
       if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
         newValue = 0;
       }
-      let updated = { ...prev, [key]: newValue };
+      if (key === 'cornerRadius') {
+        newValueToStore = 0;
+      }
+      let updated = { ...prev, [key]: newValueToStore };
 
       // Corner radius must never mutate canvas size.
       if (key === 'cornerRadius') {
@@ -9711,19 +9741,20 @@ const Toolbar = ({ formData }) => {
       // --- Глобальні обмеження для картки (аналогічно handleInputChange) ---
       const LIMIT_SIDE_MAX = 600;
       const LIMIT_OTHER_THRESHOLD = 295;
-      let w = key === 'width' ? newValue : updated.width;
-      let h = key === 'height' ? newValue : updated.height;
-      w = Math.min(LIMIT_SIDE_MAX, w || 0);
-      h = Math.min(LIMIT_SIDE_MAX, h || 0);
-      if (w > LIMIT_OTHER_THRESHOLD && h > LIMIT_OTHER_THRESHOLD) {
+      let w = Math.min(LIMIT_SIDE_MAX, Number(key === 'width' ? newValueToStore : updated.width) || 0);
+      let hDisplay = Math.min(
+        LIMIT_SIDE_MAX,
+        lockActualToDisplayHeight(key === 'height' ? newValueToStore : updated.height)
+      );
+      if (w > LIMIT_OTHER_THRESHOLD && hDisplay > LIMIT_OTHER_THRESHOLD) {
         if (key === 'width') {
           w = LIMIT_OTHER_THRESHOLD; // редагували width
         } else if (key === 'height') {
-          h = LIMIT_OTHER_THRESHOLD; // редагували height
+          hDisplay = LIMIT_OTHER_THRESHOLD; // редагували height
         }
       }
       updated.width = round1(w);
-      updated.height = round1(h);
+      updated.height = lockDisplayToActualHeight(hDisplay);
 
       // Enforce square for circle family shapes via arrows too
       const isCircleFamily =
@@ -9766,7 +9797,10 @@ const Toolbar = ({ formData }) => {
   };
 
   const actualHeightMm = Number(sizeValues?.height) || 0;
-  const displayHeightMm = actualHeightMm;
+  const displayHeightMm =
+    (canvas?.get?.('shapeType') || currentShapeType) === 'lock'
+      ? round1(Math.max(0, actualHeightMm - LOCK_ARCH_HEIGHT_MM))
+      : actualHeightMm;
 
   // Section 2 (Size) width/height inputs: debounce apply + validation by 1s.
   // Other inputs must remain immediate.
@@ -9861,9 +9895,14 @@ const Toolbar = ({ formData }) => {
       // Force input sync to clamped/applied values after debounced auto-resize.
       const applied = latestSizeValuesRef.current || {};
       setWidthInputValue(applied.width === 0 ? '' : String(applied.width ?? ''));
-      setHeightInputValue(applied.height === 0 ? '' : String(applied.height ?? ''));
+      const appliedShapeType = canvas?.get?.('shapeType') || shape;
+      const appliedHeightDisplay =
+        appliedShapeType === 'lock'
+          ? round1(Math.max(0, (Number(applied.height) || 0) - LOCK_ARCH_HEIGHT_MM))
+          : Number(applied.height) || 0;
+      setHeightInputValue(appliedHeightDisplay === 0 ? '' : String(appliedHeightDisplay));
     },
-    [handleInputChange]
+    [canvas, handleInputChange]
   );
 
   const scheduleDebouncedSizeApply = useCallback(

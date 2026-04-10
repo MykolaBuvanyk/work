@@ -7,7 +7,7 @@ const UserProjectSchema = new mongoose.Schema(
     name: { type: String, required: true },
     normalizedName: { type: String, default: '' },
 
-    // Full project snapshot from the editor (canvases, metadata, etc.)
+    // Project snapshot metadata from the editor (canvases stored separately).
     project: { type: mongoose.Schema.Types.Mixed, required: true },
 
     accessories: { type: mongoose.Schema.Types.Mixed, default: [] },

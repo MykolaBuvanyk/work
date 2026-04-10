@@ -525,8 +525,34 @@ const isMongoProjectId = (id) =>
 const shouldUseRemoteProjects = () => hasAuthToken();
 
 const REMOTE_PROJECTS_PULL_TTL_MS = 30_000;
+const PROJECT_LIST_CACHE_TTL_MS = 60_000;
 let lastRemoteProjectsPullAt = 0;
 let remoteProjectsPullPromise = null;
+let projectListCacheExpiresAt = 0;
+let projectListCacheData = null;
+let projectListCachePromise = null;
+
+const cloneProjectListForCache = (projects) => {
+  if (!Array.isArray(projects)) return [];
+  return projects.map((item) => (item && typeof item === "object" ? { ...item } : item));
+};
+
+const setProjectListCache = (projects) => {
+  projectListCacheData = cloneProjectListForCache(projects);
+  projectListCacheExpiresAt = Date.now() + PROJECT_LIST_CACHE_TTL_MS;
+};
+
+const readProjectListCache = () => {
+  if (!Array.isArray(projectListCacheData)) return null;
+  if (Date.now() > projectListCacheExpiresAt) return null;
+  return cloneProjectListForCache(projectListCacheData);
+};
+
+const invalidateProjectListCache = () => {
+  projectListCacheExpiresAt = 0;
+  projectListCacheData = null;
+  projectListCachePromise = null;
+};
 
 const listLocalProjects = async () => {
   const db = await openDB();
@@ -633,13 +659,59 @@ const pullProjectsFromMongoToIndexedDb = async ({ force = false } = {}) => {
   await remoteProjectsPullPromise;
 };
 
+const stripCanvasPreviewFieldsForMongo = (canvas) => {
+  if (!canvas || typeof canvas !== "object") return canvas;
+
+  const hasPreview = Object.prototype.hasOwnProperty.call(canvas, "preview");
+  const hasPreviewPng = Object.prototype.hasOwnProperty.call(canvas, "previewPng");
+  const hasPreviewSvgKey = Object.prototype.hasOwnProperty.call(canvas, "previewSvg");
+  const previewSvg = typeof canvas.previewSvg === "string" ? canvas.previewSvg : "";
+  const shouldDropPreviewSvg = hasPreviewSvgKey && !previewSvg;
+
+  if (!hasPreview && !hasPreviewPng && !shouldDropPreviewSvg) {
+    return canvas;
+  }
+
+  const next = { ...canvas };
+  delete next.preview;
+  delete next.previewPng;
+  if (shouldDropPreviewSvg) {
+    delete next.previewSvg;
+  }
+  return next;
+};
+
+const createMongoSafeProjectPayload = (project) => {
+  if (!project || typeof project !== "object") return project;
+
+  const canvases = Array.isArray(project.canvases) ? project.canvases : [];
+  let changed = false;
+
+  const safeCanvases = canvases.map((canvas) => {
+    const sanitized = stripCanvasPreviewFieldsForMongo(canvas);
+    if (sanitized !== canvas) changed = true;
+    return sanitized;
+  });
+
+  if (!changed) {
+    return project;
+  }
+
+  return {
+    ...project,
+    canvases: safeCanvases,
+  };
+};
+
 const syncProjectToMongoOnSave = async (project, { isSaveAs = false } = {}) => {
   if (!project || !shouldUseRemoteProjects()) return project;
 
   try {
+    const projectForMongo = createMongoSafeProjectPayload(project);
+
     const payload = {
       name: project?.name || "Untitled",
-      project,
+      project: projectForMongo,
       accessories: project?.accessories || [],
       clientProjectId: project?.clientProjectId || project?.id || null,
       lastOrderedAt: project?.lastOrderedAt,
@@ -689,6 +761,7 @@ export async function resetEditorStateForUserSwitch() {
 
   try {
     await clearAllProjectsLocal();
+    invalidateProjectListCache();
   } catch (error) {
     console.warn("Failed to clear local projects on user switch", error);
   }
@@ -747,32 +820,58 @@ export async function resetEditorStateForUserSwitch() {
   return blankSign;
 }
 
-export async function getAllProjects() {
-  if (shouldUseRemoteProjects()) {
-    try {
-      const remoteProjects = await fetchMyProjects();
-      if (Array.isArray(remoteProjects)) {
-        return remoteProjects
-          .map((item) => {
-            const mapped = mapRemoteToLocalProject(item, null);
-            if (!mapped) return null;
-            const mongoId = String(item?.id || "").trim();
-            if (!mongoId) return mapped;
-            return {
-              ...mapped,
-              // UI actions (Edit/Delete) must use Mongo id for authenticated users.
-              id: mongoId,
-              mongoId,
-            };
-          })
-          .filter(Boolean);
-      }
-    } catch (error) {
-      console.warn("Failed to fetch remote project list, fallback to IndexedDB", error);
+export async function getAllProjects(options = {}) {
+  const forceRefresh = options?.forceRefresh === true;
+
+  if (!forceRefresh) {
+    const cached = readProjectListCache();
+    if (cached) {
+      return cached;
+    }
+
+    if (projectListCachePromise) {
+      return projectListCachePromise;
     }
   }
 
-  return listLocalProjects();
+  projectListCachePromise = (async () => {
+    if (shouldUseRemoteProjects()) {
+      try {
+        const remoteProjects = await fetchMyProjects();
+        if (Array.isArray(remoteProjects)) {
+          const mapped = remoteProjects
+            .map((item) => {
+              const mappedProject = mapRemoteToLocalProject(item, null);
+              if (!mappedProject) return null;
+              const mongoId = String(item?.id || "").trim();
+              if (!mongoId) return mappedProject;
+              return {
+                ...mappedProject,
+                // UI actions (Edit/Delete) must use Mongo id for authenticated users.
+                id: mongoId,
+                mongoId,
+              };
+            })
+            .filter(Boolean);
+
+          setProjectListCache(mapped);
+          return cloneProjectListForCache(mapped);
+        }
+      } catch (error) {
+        console.warn("Failed to fetch remote project list, fallback to IndexedDB", error);
+      }
+    }
+
+    const local = await listLocalProjects();
+    setProjectListCache(local);
+    return cloneProjectListForCache(local);
+  })();
+
+  try {
+    return await projectListCachePromise;
+  } finally {
+    projectListCachePromise = null;
+  }
 }
 
 // ---------------- Unsaved Signs (temporary) -----------------
@@ -1141,7 +1240,10 @@ export async function putProject(project) {
   return new Promise((resolve, reject) => {
     const store = tx(db, "readwrite");
     const req = store.put(normalizedProject);
-    req.onsuccess = () => resolve(normalizedProject);
+    req.onsuccess = () => {
+      invalidateProjectListCache();
+      resolve(normalizedProject);
+    };
     req.onerror = () => reject(req.error);
   });
 }
@@ -1165,7 +1267,10 @@ export async function deleteProject(id) {
     const store = tx(db, "readwrite");
     const localId = String(localProject?.id || id || "").trim();
     const req = store.delete(localId);
-    req.onsuccess = () => resolve();
+    req.onsuccess = () => {
+      invalidateProjectListCache();
+      resolve();
+    };
     req.onerror = () => reject(req.error);
   });
 }

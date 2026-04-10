@@ -54,29 +54,130 @@ const YourProjectsModal = ({ onClose }) => {
     }
   };
 
+  const isSvgDataUrl = (value) =>
+    typeof value === "string" && /^data:image\/svg\+xml/i.test(value.trim());
+
+  const isHttpOrAbsolutePath = (value) =>
+    typeof value === "string" && (/^https?:\/\//i.test(value.trim()) || value.trim().startsWith("/"));
+
+  const isSvgMarkup = (value) =>
+    typeof value === "string" && value.trim().toLowerCase().startsWith("<svg");
+
+  const resolveSvgPreviewSource = (canvasEntry) => {
+    const rawSvg =
+      canvasEntry?.previewSvg && typeof canvasEntry.previewSvg === "string"
+        ? canvasEntry.previewSvg.trim()
+        : "";
+
+    if (!rawSvg) return "";
+    if (isSvgDataUrl(rawSvg)) return rawSvg;
+    if (isHttpOrAbsolutePath(rawSvg)) return rawSvg;
+    if (isSvgMarkup(rawSvg)) return buildSafePreviewSvgDataUrl(rawSvg);
+    return "";
+  };
+
   const resolveCanvasPreview = (canvasEntry) => {
-    const hasSvg =
-      canvasEntry?.previewSvg &&
-      typeof canvasEntry.previewSvg === "string" &&
-      canvasEntry.previewSvg.trim().length > 0;
-    const fallbackPng =
+    const svgSrc = resolveSvgPreviewSource(canvasEntry);
+    const fallbackPreview =
       canvasEntry?.preview &&
       typeof canvasEntry.preview === "string" &&
       canvasEntry.preview.trim().length > 0
-        ? canvasEntry.preview
+        ? canvasEntry.preview.trim()
         : "";
 
-    if (hasSvg) {
+    if (svgSrc) {
       return {
-        src: buildSafePreviewSvgDataUrl(canvasEntry.previewSvg),
-        fallback: fallbackPng,
+        src: svgSrc,
+        fallback: isSvgDataUrl(fallbackPreview) ? "" : fallbackPreview,
+      };
+    }
+
+    if (isSvgDataUrl(fallbackPreview)) {
+      return {
+        src: fallbackPreview,
+        fallback: "",
+      };
+    }
+
+    if (isSvgMarkup(fallbackPreview)) {
+      return {
+        src: buildSafePreviewSvgDataUrl(fallbackPreview),
+        fallback: "",
       };
     }
 
     return {
-      src: fallbackPng,
+      src: fallbackPreview,
       fallback: "",
     };
+  };
+
+  const generateSvgPreviewFromJson = async (canvasEntry) => {
+    if (!canvasEntry?.json || typeof document === "undefined") return "";
+
+    try {
+      const width = Math.max(1, Math.round(Number(canvasEntry?.width) || 300));
+      const height = Math.max(1, Math.round(Number(canvasEntry?.height) || 160));
+
+      const el = document.createElement("canvas");
+      el.width = width;
+      el.height = height;
+
+      const staticCanvas = new fabric.StaticCanvas(el, {
+        width,
+        height,
+        renderOnAddRemove: false,
+      });
+
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          resolve();
+        };
+
+        try {
+          const maybePromise = staticCanvas.loadFromJSON(canvasEntry.json, done);
+          if (maybePromise && typeof maybePromise.then === "function") {
+            maybePromise.then(done).catch((err) => {
+              if (settled) return;
+              settled = true;
+              reject(err);
+            });
+          }
+        } catch (e) {
+          if (!settled) {
+            settled = true;
+            reject(e);
+          }
+        }
+      });
+
+      try {
+        staticCanvas.renderAll();
+      } catch {}
+
+      const svgMarkup = staticCanvas.toSVG({
+        viewBox: {
+          x: 0,
+          y: 0,
+          width,
+          height,
+        },
+        width,
+        height,
+      });
+
+      try {
+        staticCanvas.dispose?.();
+      } catch {}
+
+      if (!svgMarkup || typeof svgMarkup !== "string") return "";
+      return buildSafePreviewSvgDataUrl(svgMarkup);
+    } catch {
+      return "";
+    }
   };
 
   const formatDateTimeParts = (ts) => {
@@ -102,33 +203,62 @@ const YourProjectsModal = ({ onClose }) => {
   };
 
   useEffect(() => {
-    getAllProjects()
-      .then((list) => {
-        const mapped = (list || []).map((p) => {
-          const ts =
-            typeof (p?.updatedAt ?? p?.createdAt) === "number"
-              ? p.updatedAt ?? p.createdAt
-              : 0;
+    let cancelled = false;
 
-          return {
-          id: p.id,
-          name: p.name,
-          lastDateSavedTs: ts,
-          lastOrderDateTs:
-            typeof p?.lastOrderedAt === "number" && p.lastOrderedAt > 0
-              ? p.lastOrderedAt
-              : 0,
-          sortTs: ts,
-          images: (p.canvases || []).map(resolveCanvasPreview).filter((entry) => !!entry?.src),
-          };
-        });
+    const loadProjects = async () => {
+      try {
+        const list = await getAllProjects();
+        const mapped = await Promise.all(
+          (list || []).map(async (p) => {
+            const ts =
+              typeof (p?.updatedAt ?? p?.createdAt) === "number"
+                ? p.updatedAt ?? p.createdAt
+                : 0;
 
-        // Newest first (uses exact timestamp, not the formatted string)
+            const imageEntries = await Promise.all(
+              (p.canvases || []).map(async (canvasEntry) => {
+                const resolved = resolveCanvasPreview(canvasEntry);
+                if (resolved?.src) return resolved;
+
+                const generatedSvg = await generateSvgPreviewFromJson(canvasEntry);
+                if (generatedSvg) {
+                  return {
+                    src: generatedSvg,
+                    fallback: "",
+                  };
+                }
+
+                return null;
+              })
+            );
+
+            return {
+              id: p.id,
+              name: p.name,
+              lastDateSavedTs: ts,
+              lastOrderDateTs:
+                typeof p?.lastOrderedAt === "number" && p.lastOrderedAt > 0
+                  ? p.lastOrderedAt
+                  : 0,
+              sortTs: ts,
+              images: imageEntries.filter((entry) => !!entry?.src),
+            };
+          })
+        );
+
         mapped.sort((a, b) => (b.sortTs || 0) - (a.sortTs || 0));
 
-        setProjects(mapped);
-      })
-      .catch(() => {});
+        if (!cancelled) {
+          setProjects(mapped);
+        }
+      } catch {}
+    };
+
+    loadProjects();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // 3. Ініціалізація слайдерів для кожного проекту

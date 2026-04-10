@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import UserProject from '../models/UserProject.js';
+import UserProjectCanvas from '../models/UserProjectCanvas.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const ProjectsRouter = express.Router();
@@ -14,7 +15,6 @@ const normalizeName = (value) =>
 const normalizeAccessories = (value) => (Array.isArray(value) ? value : []);
 
 const MAX_PROJECT_PAYLOAD_BYTES = 14 * 1024 * 1024;
-const MAX_CANVAS_PREVIEW_BYTES = 2_000_000;
 
 const buildProjectLookupFilter = ({ userId, id }) => {
   const raw = String(id || '').trim();
@@ -25,20 +25,21 @@ const buildProjectLookupFilter = ({ userId, id }) => {
 
 const sanitizeCanvasForMongo = (canvas) => {
   if (!canvas || typeof canvas !== 'object') return canvas;
-  const hasPreviewSvg = typeof canvas.previewSvg === 'string';
-  const hasLargePreview =
-    typeof canvas.preview === 'string' && canvas.preview.length > MAX_CANVAS_PREVIEW_BYTES;
+  const hasPreview = Object.prototype.hasOwnProperty.call(canvas, 'preview');
+  const hasPreviewPng = Object.prototype.hasOwnProperty.call(canvas, 'previewPng');
+  const hasPreviewSvgKey = Object.prototype.hasOwnProperty.call(canvas, 'previewSvg');
+  const previewSvg = typeof canvas.previewSvg === 'string' ? canvas.previewSvg : '';
+  const shouldDropPreviewSvg = hasPreviewSvgKey && !previewSvg;
 
-  if (!hasPreviewSvg && !hasLargePreview) {
+  if (!hasPreview && !hasPreviewPng && !shouldDropPreviewSvg) {
     return canvas;
   }
 
   const next = { ...canvas };
-  if (hasPreviewSvg) {
+  delete next.preview;
+  delete next.previewPng;
+  if (shouldDropPreviewSvg) {
     delete next.previewSvg;
-  }
-  if (hasLargePreview) {
-    next.preview = '';
   }
 
   return next;
@@ -56,13 +57,20 @@ const sanitizeCanvasesForMongo = (canvases) => {
   return changed ? nextCanvases : canvases;
 };
 
+const getCanvasesFromProject = (project) => {
+  const base = project && typeof project === 'object' ? project : {};
+  return sanitizeCanvasesForMongo(base.canvases);
+};
+
 const prepareProjectForMongo = ({ project, name, accessories }) => {
   const base = project && typeof project === 'object' ? project : {};
+  const projectWithoutCanvases = { ...base };
+  delete projectWithoutCanvases.canvases;
+
   return {
-    ...base,
+    ...projectWithoutCanvases,
     name,
-    accessories: normalizeAccessories(accessories ?? base?.accessories),
-    canvases: sanitizeCanvasesForMongo(base.canvases),
+    accessories: normalizeAccessories(accessories ?? base.accessories),
   };
 };
 
@@ -71,6 +79,79 @@ const estimateJsonSizeBytes = (value) => {
     return mongoose.mongo.BSON.calculateObjectSize(value || {});
   } catch {
     return Number.POSITIVE_INFINITY;
+  }
+};
+
+const validateCanvasSizes = (canvases) => {
+  const list = Array.isArray(canvases) ? canvases : [];
+
+  for (let index = 0; index < list.length; index += 1) {
+    const bytes = estimateJsonSizeBytes(list[index]);
+    if (!Number.isFinite(bytes) || bytes > MAX_PROJECT_PAYLOAD_BYTES) {
+      return { index, bytes };
+    }
+  }
+
+  return null;
+};
+
+const loadCanvasesByProjectIds = async ({ userId, projectIds }) => {
+  const ids = (Array.isArray(projectIds) ? projectIds : [])
+    .filter(Boolean)
+    .map((id) => (typeof id === 'string' ? id : String(id)));
+
+  if (!ids.length) return new Map();
+
+  const objectIds = ids
+    .filter((id) => mongoose.isValidObjectId(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
+
+  if (!objectIds.length) return new Map();
+
+  const docs = await UserProjectCanvas.find({
+    userId,
+    userProjectId: { $in: objectIds },
+  })
+    .sort({ order: 1 })
+    .lean();
+
+  const byProject = new Map();
+  for (const doc of docs || []) {
+    const key = String(doc?.userProjectId || '');
+    if (!key) continue;
+    if (!byProject.has(key)) {
+      byProject.set(key, []);
+    }
+    byProject.get(key).push(doc?.canvas && typeof doc.canvas === 'object' ? doc.canvas : {});
+  }
+
+  return byProject;
+};
+
+const persistProjectCanvases = async ({ userId, userProjectId, canvases }) => {
+  const normalizedProjectId = String(userProjectId || '').trim();
+  if (!normalizedProjectId || !mongoose.isValidObjectId(normalizedProjectId)) {
+    throw new Error('Cannot persist canvases: invalid project id');
+  }
+
+  const canvasDocs = (Array.isArray(canvases) ? canvases : []).map((canvas, index) => {
+    const canvasId = canvas && typeof canvas === 'object' && canvas.id != null ? String(canvas.id) : null;
+    return {
+      userId,
+      userProjectId: new mongoose.Types.ObjectId(normalizedProjectId),
+      canvasId,
+      order: index,
+      canvas,
+    };
+  });
+
+  await UserProjectCanvas.deleteMany({
+    userId,
+    userProjectId: new mongoose.Types.ObjectId(normalizedProjectId),
+  });
+
+  if (canvasDocs.length) {
+    await UserProjectCanvas.insertMany(canvasDocs, { ordered: true });
   }
 };
 
@@ -83,7 +164,13 @@ const SAVE_RESULT_PROJECTION = {
   lastOrderedAt: 1,
 };
 
-const toProjectPayload = (doc) => {
+const resolveProjectCanvases = ({ doc, canvases }) => {
+  if (Array.isArray(canvases)) return canvases;
+  const snapshot = doc?.project && typeof doc.project === 'object' ? doc.project : {};
+  return Array.isArray(snapshot?.canvases) ? snapshot.canvases : [];
+};
+
+const toProjectPayload = ({ doc, canvases }) => {
   const snapshot = doc?.project && typeof doc.project === 'object' ? doc.project : {};
   return {
     id: String(doc?._id || ''),
@@ -96,13 +183,13 @@ const toProjectPayload = (doc) => {
       : Number.isFinite(Number(snapshot?.lastOrderedAt))
         ? Number(snapshot.lastOrderedAt)
         : null,
-    canvases: Array.isArray(snapshot?.canvases) ? snapshot.canvases : [],
+    canvases: resolveProjectCanvases({ doc, canvases }),
     accessories: normalizeAccessories(doc?.accessories ?? snapshot?.accessories),
     checkout: snapshot?.checkout && typeof snapshot.checkout === 'object' ? snapshot.checkout : null,
   };
 };
 
-const toProjectPayloadFromSnapshot = ({ doc, snapshot }) => {
+const toProjectPayloadFromSnapshot = ({ doc, snapshot, canvases }) => {
   const base = snapshot && typeof snapshot === 'object' ? snapshot : {};
   return {
     id: String(doc?._id || ''),
@@ -115,7 +202,7 @@ const toProjectPayloadFromSnapshot = ({ doc, snapshot }) => {
       : Number.isFinite(Number(base?.lastOrderedAt))
         ? Number(base.lastOrderedAt)
         : null,
-    canvases: Array.isArray(base?.canvases) ? base.canvases : [],
+    canvases: Array.isArray(canvases) ? canvases : [],
     accessories: normalizeAccessories(base?.accessories),
     checkout: base?.checkout && typeof base.checkout === 'object' ? base.checkout : null,
   };
@@ -128,7 +215,18 @@ ProjectsRouter.get('/', requireAuth, async (req, res, next) => {
       return res.status(401).json({ status: 401, message: 'Unauthorized' });
     }
     const docs = await UserProject.find({ userId }).sort({ updatedAt: -1 }).lean();
-    return res.json((docs || []).map(toProjectPayload));
+
+    const projectIds = (docs || []).map((doc) => String(doc?._id || '')).filter(Boolean);
+    const canvasesByProjectId = await loadCanvasesByProjectIds({ userId, projectIds });
+
+    return res.json(
+      (docs || []).map((doc) =>
+        toProjectPayload({
+          doc,
+          canvases: canvasesByProjectId.get(String(doc?._id || '')),
+        })
+      )
+    );
   } catch (e) {
     console.error('[ProjectsRouter][GET /] failed:', e);
     return next(e);
@@ -152,7 +250,17 @@ ProjectsRouter.get('/:id', requireAuth, async (req, res, next) => {
       return res.status(404).json({ status: 404, message: 'Project not found' });
     }
 
-    return res.json(toProjectPayload(doc));
+    const canvasesByProjectId = await loadCanvasesByProjectIds({
+      userId,
+      projectIds: [String(doc?._id || '')],
+    });
+
+    return res.json(
+      toProjectPayload({
+        doc,
+        canvases: canvasesByProjectId.get(String(doc?._id || '')),
+      })
+    );
   } catch (e) {
     console.error('[ProjectsRouter][GET /:id] failed:', e);
     return next(e);
@@ -184,6 +292,7 @@ ProjectsRouter.post('/save-as', requireAuth, async (req, res, next) => {
       name,
       accessories: body.accessories,
     });
+    const safeCanvases = getCanvasesFromProject(project);
 
     const payloadSize = estimateJsonSizeBytes(safeProject);
     if (!Number.isFinite(payloadSize) || payloadSize > MAX_PROJECT_PAYLOAD_BYTES) {
@@ -191,6 +300,16 @@ ProjectsRouter.post('/save-as', requireAuth, async (req, res, next) => {
         status: 413,
         message: 'Project payload is too large for MongoDB. Please reduce project size and try again.',
         bytes: payloadSize,
+      });
+    }
+
+    const oversizedCanvas = validateCanvasSizes(safeCanvases);
+    if (oversizedCanvas) {
+      return res.status(413).json({
+        status: 413,
+        message: 'One of canvases is too large for MongoDB. Please reduce canvas size and try again.',
+        canvasIndex: oversizedCanvas.index,
+        bytes: oversizedCanvas.bytes,
       });
     }
 
@@ -262,7 +381,19 @@ ProjectsRouter.post('/save-as', requireAuth, async (req, res, next) => {
       }
     }
 
-    return res.json(toProjectPayloadFromSnapshot({ doc: saved, snapshot: safeProject }));
+    await persistProjectCanvases({
+      userId,
+      userProjectId: saved?._id,
+      canvases: safeCanvases,
+    });
+
+    return res.json(
+      toProjectPayloadFromSnapshot({
+        doc: saved,
+        snapshot: safeProject,
+        canvases: safeCanvases,
+      })
+    );
   } catch (e) {
     console.error('[ProjectsRouter][POST /save-as] failed:', e);
     return next(e);
@@ -305,6 +436,7 @@ ProjectsRouter.put('/:id', requireAuth, async (req, res, next) => {
       name: nextName,
       accessories: body.accessories,
     });
+    const safeCanvases = getCanvasesFromProject(project);
 
     const payloadSize = estimateJsonSizeBytes(safeProject);
     if (!Number.isFinite(payloadSize) || payloadSize > MAX_PROJECT_PAYLOAD_BYTES) {
@@ -312,6 +444,16 @@ ProjectsRouter.put('/:id', requireAuth, async (req, res, next) => {
         status: 413,
         message: 'Project payload is too large for MongoDB. Please reduce project size and try again.',
         bytes: payloadSize,
+      });
+    }
+
+    const oversizedCanvas = validateCanvasSizes(safeCanvases);
+    if (oversizedCanvas) {
+      return res.status(413).json({
+        status: 413,
+        message: 'One of canvases is too large for MongoDB. Please reduce canvas size and try again.',
+        canvasIndex: oversizedCanvas.index,
+        bytes: oversizedCanvas.bytes,
       });
     }
 
@@ -335,7 +477,19 @@ ProjectsRouter.put('/:id', requireAuth, async (req, res, next) => {
       { new: true, projection: SAVE_RESULT_PROJECTION }
     ).lean();
 
-    return res.json(toProjectPayloadFromSnapshot({ doc: saved, snapshot: safeProject }));
+    await persistProjectCanvases({
+      userId,
+      userProjectId: saved?._id,
+      canvases: safeCanvases,
+    });
+
+    return res.json(
+      toProjectPayloadFromSnapshot({
+        doc: saved,
+        snapshot: safeProject,
+        canvases: safeCanvases,
+      })
+    );
   } catch (e) {
     console.error('[ProjectsRouter][PUT /:id] failed:', e);
     return next(e);
@@ -358,6 +512,11 @@ ProjectsRouter.delete('/:id', requireAuth, async (req, res, next) => {
     if (!deleted) {
       return res.status(404).json({ status: 404, message: 'Project not found' });
     }
+
+    await UserProjectCanvas.deleteMany({
+      userId,
+      userProjectId: deleted._id,
+    });
 
     return res.json({ status: 'ok', id });
   } catch (e) {

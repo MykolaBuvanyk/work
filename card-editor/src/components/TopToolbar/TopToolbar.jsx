@@ -132,7 +132,7 @@ const TopToolbar = ({ className }) => {
             },
             selectedColorIndex: 0,
             thickness: 1.6,
-            isAdhesiveTape: false,
+            isAdhesiveTape: true,
             activeHolesType: 1,
             holesDiameter: 2.5,
             isHolesSelected: false,

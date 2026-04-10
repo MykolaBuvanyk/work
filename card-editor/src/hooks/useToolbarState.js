@@ -31,7 +31,7 @@ export const useToolbarState = () => {
       selectedColorIndex: componentState.selectedColorIndex || 0,
       // Material settings
       thickness: componentState.thickness || 1.6,
-      isAdhesiveTape: componentState.isAdhesiveTape || false,
+      isAdhesiveTape: componentState.isAdhesiveTape ?? true,
       // Holes settings
       activeHolesType: componentState.activeHolesType || 1,
       holesDiameter: componentState.holesDiameter || 2.5,

@@ -187,7 +187,7 @@ const Toolbar = ({ formData }) => {
   // Чи застосовано кастомне редагування (після натискання іконки кастом форми)
   const [isCustomShapeApplied, setIsCustomShapeApplied] = useState(false);
   // Застосовуємо дефолтну схему кольорів при завантаженні
-  const [isAdhesiveTape, setIsAdhesiveTape] = useState(false);
+  const [isAdhesiveTape, setIsAdhesiveTape] = useState(true);
   const fileInputRef = useRef(null);
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [isBarCodeOpen, setIsBarCodeOpen] = useState(false);

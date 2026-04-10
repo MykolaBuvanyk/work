@@ -390,27 +390,8 @@ export async function generateCanvasPreviews(canvas, options = {}) {
       : canvas.getHeight?.() || 0;
 
   let previewSvg = "";
-  let previewPng = "";
   const ORIGINAL_SIZE_MODE = true;
   const svgBleed = ORIGINAL_SIZE_MODE ? 0 : 1.5; // Original mode keeps strict 1:1 geometry.
-
-  const pngMultiplier =
-    typeof options.pngMultiplier === "number" && isFinite(options.pngMultiplier)
-      ? options.pngMultiplier
-      :4;
-
-  const maxPngDimension =
-    typeof options.maxPngDimension === "number" &&
-    isFinite(options.maxPngDimension) &&
-    options.maxPngDimension > 0
-      ? options.maxPngDimension
-      : null;
-
-  const baseMaxSide = Math.max(1, Number(width) || 1, Number(height) || 1);
-  const capMultiplier =
-    maxPngDimension != null ? Math.max(0.1, maxPngDimension / baseMaxSide) : null;
-  const effectivePngMultiplier =
-    capMultiplier != null ? Math.max(0.1, Math.min(pngMultiplier, capMultiplier)) : pngMultiplier;
 
   const hasCorruptedObjects = () => {
     try {
@@ -449,24 +430,11 @@ export async function generateCanvasPreviews(canvas, options = {}) {
       previewSvg = await embedFontsIntoSvgMarkup(sanitized, fontFamilies);
       console.log("Generated SVG preview, length:", previewSvg.length);
     }
-
-    if (canvas.toDataURL) {
-      previewPng = canvas.toDataURL({ format: "png", multiplier: effectivePngMultiplier });
-      console.log("Generated PNG preview as fallback");
-    }
   } catch (error) {
     console.error("Failed to generate preview:", error);
-    try {
-      if (canvas.toDataURL) {
-        previewPng = canvas.toDataURL({ format: "png", multiplier: effectivePngMultiplier });
-        console.log("Generated PNG preview as backup after SVG error");
-      }
-    } catch (pngError) {
-      console.error("Failed to generate PNG preview as backup:", pngError);
-    }
   }
 
-  return { previewSvg, previewPng };
+  return { previewSvg, previewPng: "" };
 }
 
 function openDB() {
@@ -1691,7 +1659,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       finalShapeType: canvasShapeType,
     });
 
-    // ВИПРАВЛЕННЯ: Генеруємо SVG preview з вбудованими шрифтами + PNG fallback
+    // ВИПРАВЛЕННЯ: Генеруємо лише SVG preview з вбудованими шрифтами
     let previewSvg = "";
     let previewPng = "";
     if (!options.skipPreview) {
@@ -1699,14 +1667,6 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         const previews = await generateCanvasPreviews(canvas, {
           width,
           height,
-          pngMultiplier:
-            typeof options.previewPngMultiplier === "number"
-              ? options.previewPngMultiplier
-              : undefined,
-          maxPngDimension:
-            typeof options.previewPngMaxDimension === "number"
-              ? options.previewPngMaxDimension
-              : undefined,
         });
         previewSvg = previews.previewSvg;
         previewPng = previews.previewPng;

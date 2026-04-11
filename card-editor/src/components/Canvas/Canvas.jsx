@@ -543,6 +543,13 @@ const Canvas = ({ className }) => {
       } catch { }
     };
 
+    const bringAllCutElementsToFront = () => {
+      try {
+        const cutObjects = (fCanvas.getObjects?.() || []).filter(isCut);
+        cutObjects.forEach(obj => bringCanvasObjectToFront(obj));
+      } catch { }
+    };
+
     const getActionPanelCenterY = (minY, maxY) => {
       const s = scaleRef.current || 1;
       const panelHalf = PANEL_BG_HEIGHT / 2 / s;
@@ -3381,6 +3388,7 @@ const Canvas = ({ className }) => {
       }
       if (isHole(target)) {
         hardenHole(target);
+        bringAllCutElementsToFront();
         return; // не робимо активним
       }
       try {
@@ -3395,9 +3403,10 @@ const Canvas = ({ className }) => {
         if (isTextObj(target)) {
           bringCanvasObjectToFront(target);
         } else {
-          const texts = (fCanvas.getObjects?.() || []).filter(isTextObj);
-          texts.forEach(t => bringCanvasObjectToFront(t));
+          bringAllTextsToFront();
         }
+        // Cut elements from CUT tab must stay above all canvas objects.
+        bringAllCutElementsToFront();
       } catch { }
       // Якщо додано статичну CUT-tab форму — фіксуємо розмір і не відкриваємо Shape Properties.
       try {

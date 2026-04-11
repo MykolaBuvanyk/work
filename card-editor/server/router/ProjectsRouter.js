@@ -23,24 +23,58 @@ const buildProjectLookupFilter = ({ userId, id }) => {
   return { userId, clientProjectId: raw };
 };
 
+const SVG_FIELDS_FOR_MONGO_STRIP = new Set([
+  'previewSvg',
+  'previewSVG',
+  'svg',
+  'originalSvgSource',
+]);
+
+const stripSvgFieldsDeepForMongo = (value) => {
+  if (Array.isArray(value)) {
+    let changed = false;
+    const nextArray = value.map((item) => {
+      const [nextItem, itemChanged] = stripSvgFieldsDeepForMongo(item);
+      if (itemChanged) changed = true;
+      return nextItem;
+    });
+    return [changed ? nextArray : value, changed];
+  }
+
+  if (!value || typeof value !== 'object') {
+    return [value, false];
+  }
+
+  let changed = false;
+  const nextObject = {};
+
+  Object.keys(value).forEach((key) => {
+    if (SVG_FIELDS_FOR_MONGO_STRIP.has(key)) {
+      changed = true;
+      return;
+    }
+
+    const [nextValue, valueChanged] = stripSvgFieldsDeepForMongo(value[key]);
+    if (valueChanged) changed = true;
+    nextObject[key] = nextValue;
+  });
+
+  return [changed ? nextObject : value, changed];
+};
+
 const sanitizeCanvasForMongo = (canvas) => {
   if (!canvas || typeof canvas !== 'object') return canvas;
-  const hasPreview = Object.prototype.hasOwnProperty.call(canvas, 'preview');
-  const hasPreviewPng = Object.prototype.hasOwnProperty.call(canvas, 'previewPng');
-  const hasPreviewSvgKey = Object.prototype.hasOwnProperty.call(canvas, 'previewSvg');
-  const previewSvg = typeof canvas.previewSvg === 'string' ? canvas.previewSvg : '';
-  const shouldDropPreviewSvg = hasPreviewSvgKey && !previewSvg;
 
-  if (!hasPreview && !hasPreviewPng && !shouldDropPreviewSvg) {
+  const hasPreviewPng = Object.prototype.hasOwnProperty.call(canvas, 'previewPng');
+  const [withoutSvg, svgChanged] = stripSvgFieldsDeepForMongo(canvas);
+
+  if (!hasPreviewPng && !svgChanged) {
     return canvas;
   }
 
-  const next = { ...canvas };
-  delete next.preview;
+  const next = svgChanged ? withoutSvg : { ...canvas };
+  // Keep WEBP preview (`preview`) and remove SVG-related fields only.
   delete next.previewPng;
-  if (shouldDropPreviewSvg) {
-    delete next.previewSvg;
-  }
 
   return next;
 };

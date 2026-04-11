@@ -11,6 +11,7 @@ import {
   FORMATS,
   buildPlacementPreview,
   formatMaterialLabel,
+  generateSvgMarkupFromJsonTemplate,
   getMaterialKey,
   normalizeDesigns,
   planSheets,
@@ -195,7 +196,7 @@ const parseLegacyAdditionalInformation = (rawValue) => {
 
 const mapCartCanvasToDesign = (canvas, index) => {
   const c = canvas && typeof canvas === 'object' ? canvas : {};
-  const jsonTemplate = c.jsonTemplate || c.json || c?.meta?.jsonTemplate || null;
+  const jsonTemplate = c.jsonTemplate || c.json || c.canvas || c?.meta?.jsonTemplate || null;
   const widthFromJson = jsonTemplate?.width;
   const heightFromJson = jsonTemplate?.height;
 
@@ -211,7 +212,7 @@ const mapCartCanvasToDesign = (canvas, index) => {
     return mm > 0 ? mm * PX_PER_MM : 0;
   })();
 
-  const toolbarState = { ...(c.toolbarState || {}) };
+  const toolbarState = { ...(c.toolbarState || c.toolbar || {}) };
   if (c.Thickness != null && toolbarState.thickness == null) {
     toolbarState.thickness = c.Thickness;
   }
@@ -910,9 +911,46 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         .replace(/\bdata-useThemeColor="false"/gi, 'data-useThemeColor="true"');
     };
 
-    const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
-      const placements = (sheet.placements || []).map((placement) => {
-        const previewData = buildPlacementPreview(placement, { enableGaps });
+    const svgByBaseId = new Map();
+
+    const resolvePlacementSvg = async (placement) => {
+      const cacheKey = String(placement?.baseId || placement?.id || '');
+      if (cacheKey && svgByBaseId.has(cacheKey)) {
+        return svgByBaseId.get(cacheKey);
+      }
+
+      const generatedSvg = await generateSvgMarkupFromJsonTemplate(
+        placement?.jsonTemplate,
+        {
+          fallbackWidthMm: placement?.sourceWidth || placement?.width || null,
+          fallbackHeightMm: placement?.sourceHeight || placement?.height || null,
+        }
+      );
+
+      const normalizedSvg =
+        typeof generatedSvg === 'string' && generatedSvg.trim()
+          ? generatedSvg
+          : null;
+
+      if (cacheKey) {
+        svgByBaseId.set(cacheKey, normalizedSvg);
+      }
+
+      return normalizedSvg;
+    };
+
+    const preparedSheets = await Promise.all(visibleSheets.map(async (sheet, sheetIndex) => {
+      const placements = await Promise.all((sheet.placements || []).map(async (placement) => {
+        const resolvedSvg = await resolvePlacementSvg(placement);
+        if (!resolvedSvg) {
+          throw new Error(`SVG generation failed for placement: ${placement?.name || placement?.id || 'unknown'}`);
+        }
+
+        const previewData = buildPlacementPreview({ ...placement, svg: resolvedSvg }, { enableGaps });
+        if (previewData?.type !== 'svg') {
+          throw new Error(`PDF export requires SVG placement source: ${placement?.name || placement?.id || 'unknown'}`);
+        }
+
         const rawSvgMarkup = previewData?.type === 'svg' ? previewData.exportMarkup : null;
         const pdfSvgMarkup = restorePdfOnlyUseThemeColor(rawSvgMarkup);
         return {
@@ -944,7 +982,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           isAdhesiveTape: isMjFrameMode ? false : (placement.isAdhesiveTape ?? false),
           themeStrokeColor: placement.themeStrokeColor ?? null,
         };
-      });
+      }));
 
       const frameRect = computeFrameRect(sheet);
       const frameRects = Array.isArray(sheet?.frameRects) ? sheet.frameRects : [];
@@ -1069,7 +1107,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         sheetInfo,
         placements,
       };
-    });
+    }));
 
       const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
 
@@ -1163,9 +1201,49 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         .replace(/\bdata-useThemeColor="false"/gi, 'data-useThemeColor="true"');
     };
 
-    const preparedSheets = visible.map((sheet, sheetIndex) => {
-      const placements = (sheet.placements || []).map((placement) => {
-        const previewData = buildPlacementPreview(placement, { enableGaps: localEnableGaps });
+    const svgByBaseId = new Map();
+
+    const resolvePlacementSvg = async (placement) => {
+      const cacheKey = String(placement?.baseId || placement?.id || '');
+      if (cacheKey && svgByBaseId.has(cacheKey)) {
+        return svgByBaseId.get(cacheKey);
+      }
+
+      const generatedSvg = await generateSvgMarkupFromJsonTemplate(
+        placement?.jsonTemplate,
+        {
+          fallbackWidthMm: placement?.sourceWidth || placement?.width || null,
+          fallbackHeightMm: placement?.sourceHeight || placement?.height || null,
+        }
+      );
+
+      const normalizedSvg =
+        typeof generatedSvg === 'string' && generatedSvg.trim()
+          ? generatedSvg
+          : null;
+
+      if (cacheKey) {
+        svgByBaseId.set(cacheKey, normalizedSvg);
+      }
+
+      return normalizedSvg;
+    };
+
+    const preparedSheets = await Promise.all(visible.map(async (sheet, sheetIndex) => {
+      const placements = await Promise.all((sheet.placements || []).map(async (placement) => {
+        const resolvedSvg = await resolvePlacementSvg(placement);
+        if (!resolvedSvg) {
+          throw new Error(`SVG generation failed for placement: ${placement?.name || placement?.id || 'unknown'}`);
+        }
+
+        const previewData = buildPlacementPreview(
+          { ...placement, svg: resolvedSvg },
+          { enableGaps: localEnableGaps }
+        );
+        if (previewData?.type !== 'svg') {
+          throw new Error(`PDF export requires SVG placement source: ${placement?.name || placement?.id || 'unknown'}`);
+        }
+
         const rawSvgMarkup = previewData?.type === 'svg' ? previewData.exportMarkup : null;
         const pdfSvgMarkup = restorePdfOnlyUseThemeColor(rawSvgMarkup);
         return {
@@ -1197,7 +1275,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           isAdhesiveTape: placement.isAdhesiveTape ?? false,
           themeStrokeColor: placement.themeStrokeColor ?? null,
         };
-      });
+      }));
 
       // reuse simple sheetInfo (non-MJ)
       const sheetInfo = {
@@ -1223,7 +1301,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         sheetInfo,
         placements,
       };
-    });
+    }));
 
     const exportEndpoint = import.meta.env.VITE_LAYOUT_EXPORT_URL || '/api/layout-pdf';
     setIsExporting(true);

@@ -78,12 +78,10 @@ const YourProjectsModal = ({ onClose }) => {
 
   const resolveCanvasPreview = (canvasEntry) => {
     const svgSrc = resolveSvgPreviewSource(canvasEntry);
-    const fallbackPreview =
-      canvasEntry?.preview &&
-      typeof canvasEntry.preview === "string" &&
-      canvasEntry.preview.trim().length > 0
-        ? canvasEntry.preview.trim()
-        : "";
+    const fallbackPreviewCandidates = [canvasEntry?.preview, canvasEntry?.previewPng];
+    const fallbackPreview = fallbackPreviewCandidates
+      .find((value) => typeof value === "string" && value.trim().length > 0)
+      ?.trim() || "";
 
     if (svgSrc) {
       return {
@@ -113,7 +111,8 @@ const YourProjectsModal = ({ onClose }) => {
   };
 
   const generateSvgPreviewFromJson = async (canvasEntry) => {
-    if (!canvasEntry?.json || typeof document === "undefined") return "";
+    const canvasJson = canvasEntry?.json || canvasEntry?.canvasJson || null;
+    if (!canvasJson || typeof document === "undefined") return "";
 
     try {
       const width = Math.max(1, Math.round(Number(canvasEntry?.width) || 300));
@@ -138,7 +137,7 @@ const YourProjectsModal = ({ onClose }) => {
         };
 
         try {
-          const maybePromise = staticCanvas.loadFromJSON(canvasEntry.json, done);
+          const maybePromise = staticCanvas.loadFromJSON(canvasJson, done);
           if (maybePromise && typeof maybePromise.then === "function") {
             maybePromise.then(done).catch((err) => {
               if (settled) return;

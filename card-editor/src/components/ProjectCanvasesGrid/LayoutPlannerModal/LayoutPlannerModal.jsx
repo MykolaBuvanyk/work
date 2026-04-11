@@ -3,6 +3,7 @@ import * as paperNamespace from "paper";
 import * as ClipperLibNamespace from "clipper-lib";
 import paper from "paper";
 import Shape from "clipper-js";
+import * as fabric from "fabric";
 import styles from "./LayoutPlannerModal.module.css";
 import {
   collectFontFamiliesFromJson,
@@ -989,6 +990,93 @@ const ensureDesignFontsLoaded = async (designs = []) => {
   }
 };
 
+const resolveDesignJsonTemplate = (design = {}) =>
+  design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
+
+export const generateSvgMarkupFromJsonTemplate = async (
+  jsonTemplate,
+  { fallbackWidthMm = null, fallbackHeightMm = null } = {}
+) => {
+  if (!jsonTemplate || typeof jsonTemplate !== "object") return null;
+
+  let staticCanvas = null;
+  try {
+    const widthFromJson = Number(jsonTemplate?.width);
+    const heightFromJson = Number(jsonTemplate?.height);
+    const fallbackWidthPx = Number(fallbackWidthMm) * PX_PER_MM;
+    const fallbackHeightPx = Number(fallbackHeightMm) * PX_PER_MM;
+
+    const width =
+      Number.isFinite(widthFromJson) && widthFromJson > 0
+        ? widthFromJson
+        : Number.isFinite(fallbackWidthPx) && fallbackWidthPx > 0
+          ? fallbackWidthPx
+          : 1200;
+
+    const height =
+      Number.isFinite(heightFromJson) && heightFromJson > 0
+        ? heightFromJson
+        : Number.isFinite(fallbackHeightPx) && fallbackHeightPx > 0
+          ? fallbackHeightPx
+          : 800;
+
+    const safeJsonTemplate = JSON.parse(JSON.stringify(jsonTemplate));
+
+    staticCanvas = new fabric.StaticCanvas(null, {
+      width,
+      height,
+      renderOnAddRemove: false,
+      enableRetinaScaling: false,
+    });
+
+    const expectedObjectCount = Array.isArray(safeJsonTemplate?.objects)
+      ? safeJsonTemplate.objects.length
+      : 0;
+
+    // Prefer promise completion: callback-based early resolve may produce blank SVG.
+    const maybePromise = staticCanvas.loadFromJSON(safeJsonTemplate);
+    if (maybePromise && typeof maybePromise.then === "function") {
+      await maybePromise;
+    } else {
+      await new Promise((resolve, reject) => {
+        try {
+          staticCanvas.loadFromJSON(safeJsonTemplate, () => resolve());
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    // Compatibility fallback for environments where promise resolves before objects are ready.
+    const currentObjectCount =
+      typeof staticCanvas.getObjects === "function"
+        ? staticCanvas.getObjects().length
+        : 0;
+
+    if (expectedObjectCount > 0 && currentObjectCount === 0) {
+      await new Promise((resolve, reject) => {
+        try {
+          staticCanvas.loadFromJSON(safeJsonTemplate, () => resolve());
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    staticCanvas.renderAll();
+    const markup =
+      typeof staticCanvas.toSVG === "function" ? staticCanvas.toSVG() : "";
+    return typeof markup === "string" && markup.trim() ? markup : null;
+  } catch (error) {
+    console.warn("Failed to generate SVG from canvas JSON template", error);
+    return null;
+  } finally {
+    try {
+      staticCanvas?.dispose?.();
+    } catch {}
+  }
+};
+
 const normalizeDesigns = (designs = []) =>
   designs
     .map((design, index) => {
@@ -998,7 +1086,9 @@ const normalizeDesigns = (designs = []) =>
       if (!widthMm || !heightMm) return null;
 
       const copies = extractCopies(design);
-      const svgContent = design?.previewSvg || null;
+      const jsonTemplate = resolveDesignJsonTemplate(design);
+      // For PDF flow we always generate SVG from JSON right before export.
+      const svgContent = null;
 
       const customBorder = extractCustomBorderMetadata(design);
 
@@ -1057,6 +1147,7 @@ const normalizeDesigns = (designs = []) =>
         area: widthMm * heightMm,
         meta: design.meta || {},
         copies,
+        jsonTemplate,
         svg: svgContent,
         preview: design?.preview || null,
         materialColor,
@@ -1259,6 +1350,7 @@ const planSheets = (
         label: totalCopies > 1 ? `${item.name} #${idx + 1}` : item.name,
         copyIndex: idx + 1,
         copies: totalCopies,
+        jsonTemplate: item.jsonTemplate || null,
         svg: item.svg || null,
         preview: item.preview || null,
         materialColor: item.materialColor ?? null,
@@ -1304,6 +1396,7 @@ const planSheets = (
             baseId: item.baseId ?? item.id,
             copyIndex: item.copyIndex ?? 1,
             copies: item.copies ?? 1,
+            jsonTemplate: item.jsonTemplate || null,
             svg: item.svg || null,
             preview: item.preview || null,
             materialColor: item.materialColor ?? null,
@@ -1354,6 +1447,7 @@ const planSheets = (
             baseId: item.baseId ?? item.id,
             copyIndex: item.copyIndex ?? 1,
             copies: item.copies ?? 1,
+            jsonTemplate: item.jsonTemplate || null,
             svg: item.svg || null,
             preview: item.preview || null,
             materialColor: item.materialColor ?? null,
@@ -6435,9 +6529,48 @@ const LayoutPlannerModal = ({
           .replace(/\bdata-useThemeColor="false"/gi, 'data-useThemeColor="true"');
       };
 
-      const preparedSheets = visibleSheets.map((sheet, sheetIndex) => {
-        const placements = sheet.placements.map((placement) => {
-          const previewData = buildPlacementPreview(placement, { enableGaps });
+      const svgByBaseId = new Map();
+
+      const resolvePlacementSvg = async (placement) => {
+        const cacheKey = String(placement?.baseId || placement?.id || "");
+        if (cacheKey && svgByBaseId.has(cacheKey)) {
+          return svgByBaseId.get(cacheKey);
+        }
+
+        const generatedSvg = await generateSvgMarkupFromJsonTemplate(
+          placement?.jsonTemplate,
+          {
+            fallbackWidthMm: placement?.sourceWidth || placement?.width || null,
+            fallbackHeightMm: placement?.sourceHeight || placement?.height || null,
+          }
+        );
+
+        const normalizedSvg =
+          typeof generatedSvg === "string" && generatedSvg.trim()
+            ? generatedSvg
+            : null;
+
+        if (cacheKey) {
+          svgByBaseId.set(cacheKey, normalizedSvg);
+        }
+
+        return normalizedSvg;
+      };
+
+      const preparedSheets = await Promise.all(visibleSheets.map(async (sheet, sheetIndex) => {
+        const placements = await Promise.all(sheet.placements.map(async (placement) => {
+          const resolvedSvg = await resolvePlacementSvg(placement);
+          if (!resolvedSvg) {
+            throw new Error(`SVG generation failed for placement: ${placement?.name || placement?.id || "unknown"}`);
+          }
+
+          const placementWithSvg = { ...placement, svg: resolvedSvg };
+
+          const previewData = buildPlacementPreview(placementWithSvg, { enableGaps });
+          if (previewData?.type !== "svg") {
+            throw new Error(`PDF export requires SVG placement source: ${placement?.name || placement?.id || "unknown"}`);
+          }
+
           const rawSvgMarkup =
             previewData?.type === "svg" ? previewData.exportMarkup : null;
           const pdfSvgMarkup = restorePdfOnlyUseThemeColor(rawSvgMarkup);
@@ -6471,7 +6604,7 @@ const LayoutPlannerModal = ({
             isAdhesiveTape: isMjFrameMode ? false : (placement.isAdhesiveTape ?? false),
             themeStrokeColor: placement.themeStrokeColor ?? null,
           };
-        });
+        }));
 
         const frameRect = computeFrameRect(sheet);
         const placementsBounds = computePlacementsBounds(sheet);
@@ -6615,7 +6748,7 @@ const LayoutPlannerModal = ({
           sheetInfo,
           placements,
         };
-      });
+      }));
 
       const exportEndpoint =
         import.meta.env.VITE_LAYOUT_EXPORT_URL || "/api/layout-pdf";

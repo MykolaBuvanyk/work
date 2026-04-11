@@ -378,20 +378,9 @@ export const embedFontsIntoSvgMarkup = async (svgMarkup, fontFamilies) => {
 
 export async function generateCanvasPreviews(canvas, options = {}) {
   if (!canvas) {
-    return { previewSvg: "", previewPng: "" };
+    return { preview: "", previewSvg: "", previewPng: "" };
   }
-  const width =
-    typeof options.width === "number"
-      ? options.width
-      : canvas.getWidth?.() || 0;
-  const height =
-    typeof options.height === "number"
-      ? options.height
-      : canvas.getHeight?.() || 0;
-
-  let previewSvg = "";
-  const ORIGINAL_SIZE_MODE = true;
-  const svgBleed = ORIGINAL_SIZE_MODE ? 0 : 1.5; // Original mode keeps strict 1:1 geometry.
+  let preview = "";
 
   const hasCorruptedObjects = () => {
     try {
@@ -407,34 +396,22 @@ export async function generateCanvasPreviews(canvas, options = {}) {
   try {
     if (hasCorruptedObjects()) {
       console.warn("Skipping preview generation due to non-renderable canvas objects");
-      return { previewSvg: "", previewPng: "" };
+      return { preview: "", previewSvg: "", previewPng: "" };
     }
 
-    if (canvas.toSVG) {
-      const rawSvg = canvas.toSVG({
-        viewBox: {
-          x: -svgBleed,
-          y: -svgBleed,
-          width: width + svgBleed * 2,
-          height: height + svgBleed * 2,
-        },
-        width,
-        height,
+    if (canvas.toDataURL) {
+      preview = canvas.toDataURL({
+        format: "webp",
+        quality: 0.6,
+        multiplier: 0.3,
       });
-
-      const sanitized = rawSvg
-        .replace(/[\x00-\x1F\x7F]/g, "")
-        .replace(/[\uFFFE\uFFFF]/g, "");
-
-      const fontFamilies = collectFontFamiliesFromCanvas(canvas);
-      previewSvg = await embedFontsIntoSvgMarkup(sanitized, fontFamilies);
-      console.log("Generated SVG preview, length:", previewSvg.length);
+      console.log("Generated WebP preview, length:", preview.length);
     }
   } catch (error) {
     console.error("Failed to generate preview:", error);
   }
 
-  return { previewSvg, previewPng: "" };
+  return { preview, previewSvg: "", previewPng: preview };
 }
 
 function openDB() {
@@ -532,6 +509,26 @@ const listLocalProjects = async () => {
   });
 };
 
+const normalizeCanvasEntryForUi = (canvasEntry) => {
+  if (!canvasEntry || typeof canvasEntry !== "object") return canvasEntry;
+
+  const preview =
+    typeof canvasEntry.preview === "string" ? canvasEntry.preview.trim() : "";
+  const previewPng =
+    typeof canvasEntry.previewPng === "string"
+      ? canvasEntry.previewPng.trim()
+      : "";
+
+  if (!preview && !previewPng) {
+    return canvasEntry;
+  }
+
+  return {
+    ...canvasEntry,
+    preview: preview || previewPng,
+  };
+};
+
 const mapRemoteToLocalProject = (remote, existingLocal = null) => {
   if (!remote || typeof remote !== "object") return null;
 
@@ -555,9 +552,9 @@ const mapRemoteToLocalProject = (remote, existingLocal = null) => {
       ? Number(remote.lastOrderedAt)
       : existingLocal?.lastOrderedAt,
     canvases: Array.isArray(remote.canvases)
-      ? remote.canvases
+      ? remote.canvases.map(normalizeCanvasEntryForUi)
       : Array.isArray(existingLocal?.canvases)
-        ? existingLocal.canvases
+        ? existingLocal.canvases.map(normalizeCanvasEntryForUi)
         : [],
     accessories: Array.isArray(remote.accessories)
       ? remote.accessories
@@ -627,25 +624,58 @@ const pullProjectsFromMongoToIndexedDb = async ({ force = false } = {}) => {
   await remoteProjectsPullPromise;
 };
 
+const SVG_FIELDS_FOR_MONGO_STRIP = new Set([
+  "previewSvg",
+  "previewSVG",
+  "svg",
+  "originalSvgSource",
+]);
+
+const stripSvgFieldsDeepForMongo = (value) => {
+  if (Array.isArray(value)) {
+    let changed = false;
+    const nextArray = value.map((item) => {
+      const [nextItem, itemChanged] = stripSvgFieldsDeepForMongo(item);
+      if (itemChanged) changed = true;
+      return nextItem;
+    });
+    return [changed ? nextArray : value, changed];
+  }
+
+  if (!value || typeof value !== "object") {
+    return [value, false];
+  }
+
+  let changed = false;
+  const nextObject = {};
+
+  Object.keys(value).forEach((key) => {
+    if (SVG_FIELDS_FOR_MONGO_STRIP.has(key)) {
+      changed = true;
+      return;
+    }
+
+    const [nextValue, valueChanged] = stripSvgFieldsDeepForMongo(value[key]);
+    if (valueChanged) changed = true;
+    nextObject[key] = nextValue;
+  });
+
+  return [changed ? nextObject : value, changed];
+};
+
 const stripCanvasPreviewFieldsForMongo = (canvas) => {
   if (!canvas || typeof canvas !== "object") return canvas;
 
-  const hasPreview = Object.prototype.hasOwnProperty.call(canvas, "preview");
   const hasPreviewPng = Object.prototype.hasOwnProperty.call(canvas, "previewPng");
-  const hasPreviewSvgKey = Object.prototype.hasOwnProperty.call(canvas, "previewSvg");
-  const previewSvg = typeof canvas.previewSvg === "string" ? canvas.previewSvg : "";
-  const shouldDropPreviewSvg = hasPreviewSvgKey && !previewSvg;
+  const [withoutSvg, svgChanged] = stripSvgFieldsDeepForMongo(canvas);
 
-  if (!hasPreview && !hasPreviewPng && !shouldDropPreviewSvg) {
+  if (!hasPreviewPng && !svgChanged) {
     return canvas;
   }
 
-  const next = { ...canvas };
-  delete next.preview;
+  const next = svgChanged ? withoutSvg : { ...canvas };
+  // Keep WEBP preview (`preview`) and strip SVG-related fields only.
   delete next.previewPng;
-  if (shouldDropPreviewSvg) {
-    delete next.previewSvg;
-  }
   return next;
 };
 
@@ -1446,33 +1476,6 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       );
     }
 
-    // Preserve heavy uploaded SVG source safely without passing it through
-    // Fabric's propertiesToInclude pipeline (can throw on some object graphs).
-    try {
-      const canvasObjects =
-        typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
-      if (
-        Array.isArray(json?.objects) &&
-        Array.isArray(canvasObjects) &&
-        json.objects.length === canvasObjects.length
-      ) {
-        json.objects.forEach((serializedObj, idx) => {
-          const liveObj = canvasObjects[idx];
-          if (!serializedObj || !liveObj || liveObj.isUploadedSvg !== true) return;
-
-          const source = String(liveObj.originalSvgSource || "").trim();
-          if (source) {
-            serializedObj.originalSvgSource = source;
-          }
-          if (liveObj.uploadedSvgStrokeOnly === true) {
-            serializedObj.uploadedSvgStrokeOnly = true;
-          }
-        });
-      }
-    } catch (sourceInjectError) {
-      console.warn("Failed to inject uploaded SVG source into export JSON", sourceInjectError);
-    }
-
     // ВИПРАВЛЕННЯ: Додаткова очистка від HTMLCanvasElement та інших non-serializable об'єктів
     const cleanObject = (obj) => {
       if (!obj || typeof obj !== "object") return obj;
@@ -1659,17 +1662,15 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       finalShapeType: canvasShapeType,
     });
 
-    // ВИПРАВЛЕННЯ: Генеруємо лише SVG preview з вбудованими шрифтами
-    let previewSvg = "";
-    let previewPng = "";
+    // Generate WEBP preview only.
+    let preview = "";
     if (!options.skipPreview) {
       try {
         const previews = await generateCanvasPreviews(canvas, {
           width,
           height,
         });
-        previewSvg = previews.previewSvg;
-        previewPng = previews.previewPng;
+        preview = previews.preview || previews.previewPng || "";
       } catch (previewError) {
         console.error("Failed to produce previews:", previewError);
       }
@@ -1735,8 +1736,8 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
 
     const canvasState = {
       json,
-      preview: previewPng, // Зберігаємо PNG як fallback
-      previewSvg: previewSvg, // НОВИЙ: SVG preview для UI
+      preview,
+      previewSvg: "",
       width,
       height,
       // ВИПРАВЛЕННЯ: Покращене збереження canvas properties

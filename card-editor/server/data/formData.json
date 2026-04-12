@@ -455,10 +455,10 @@
     },
     {
       "isAvaible": true,
-      "img": "/images/accessories/S-Hook.png",
-      "text": "S-Hooks",
+      "img": "/images/accessories/Carabiner-40mm.jpg",
+      "text": "Carabiner",
       "number": 0.25,
-      "info": "Nickel plated"
+      "info": "Metal spring clip 40mm"
     },
     {
       "isAvaible": true,
@@ -472,7 +472,7 @@
       "img": "/images/accessories/Ballchain 1.png",
       "text": "Ball chains",
       "number": 0.25,
-      "info": "Nickel plated, length 10 cm"
+      "info": "length 10cm"
     }
   ],
   "listThinkness": {

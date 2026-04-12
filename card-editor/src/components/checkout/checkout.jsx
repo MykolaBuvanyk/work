@@ -294,12 +294,13 @@ export default function Checkout({
 			const fullName = [firstName, surname].filter(Boolean).join(' ')
 			const profileCountry = normalizeCountrySelection(user.country)
 			const invoiceCountry = normalizeCountrySelection(user.country2)
+			const hasProfileCountry = String(profileCountry.country || profileCountry.region || '').trim().length > 0
+			const hasInvoiceCountry = String(invoiceCountry.country || invoiceCountry.region || '').trim().length > 0
+			const preferredInvoiceCountry = hasInvoiceCountry ? invoiceCountry : profileCountry
 
 			setDeliveryAddress(prev => ({
 				...prev,
-				...(String(prev.country || '').trim() || String(prev.region || '').trim()
-					? {}
-					: profileCountry),
+				...(hasProfileCountry ? profileCountry : {}),
 				fullName,
 				companyName: String(user.company || ''),
 				address1: String(user.address || ''),
@@ -313,9 +314,9 @@ export default function Checkout({
 
 			setInvoiceAddress(prev => ({
 				...prev,
-				...(String(prev.country || '').trim() || String(prev.region || '').trim()
-					? {}
-					: invoiceCountry),
+				...(String(preferredInvoiceCountry.country || preferredInvoiceCountry.region || '').trim()
+					? preferredInvoiceCountry
+					: {}),
 				fullName: keepIfFilled(prev.fullName, user.firstName2),
 				companyName: keepIfFilled(prev.companyName, user.company2),
 				address1: keepIfFilled(prev.address1, user.address4),

@@ -96,25 +96,6 @@ const AccountSetting = () => {
                     ></textarea>
                 </div>
             </div>
-
-            <h2 className="message-title">
-                Here you can write a message that will be included with each your order.
-            </h2>
-            
-            <div className="message-box">
-                <div className="message-label">
-                    Your Message to us
-                </div>
-                <div className="message-input-container">
-                    <textarea 
-                        style={{fontFamily:'Inter'}}
-                        className="message-textarea"
-                        placeholder=""
-                        value={instructionMessage}
-                        onChange={(e) => setInstructionMessage(e.target.value)}
-                    ></textarea>
-                </div>
-            </div>
             
             <div className="button-container">
                 <button className="send-button" onClick={handleSend} disabled={isSaving}>Send</button>

@@ -3,7 +3,7 @@ import './MyTextPassword.scss';
 import { FaEyeSlash } from 'react-icons/fa';
 import { FaEye } from 'react-icons/fa';
 
-const MyTextPassword = ({ value, setValue, name, required = false }) => {
+const MyTextPassword = ({ value, setValue, name, required = false, autoComplete = 'off' }) => {
   const [isPass, setIsPass] = useState(true);
   const EyeIcon = isPass ? FaEyeSlash : FaEye;
 
@@ -13,6 +13,7 @@ const MyTextPassword = ({ value, setValue, name, required = false }) => {
         type={isPass ? 'password' : 'text'}
         required={required}
         name={name}
+        autoComplete={autoComplete}
         value={value}
         onChange={e => setValue(e.target.value)}
       />

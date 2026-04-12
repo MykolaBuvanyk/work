@@ -283,7 +283,10 @@ class AuthController {
     try{
       const userId=req.user.id;
       const user=await User.findOne({where:{id:userId}});
-      return res.json({user});
+      if (!user) return next(ErrorApi.badRequest('User not found'));
+      const safeUser = user.toJSON();
+      delete safeUser.password;
+      return res.json({user: safeUser});
     }catch(err){
       return next(ErrorApi.badRequest(err));
     }
@@ -309,10 +312,14 @@ class AuthController {
 
       // Отримуємо оновлені дані користувача для відповіді
       const updatedUser = await User.findOne({ where: { id: userId } });
+      const safeUser = updatedUser ? updatedUser.toJSON() : null;
+      if (safeUser) {
+        delete safeUser.password;
+      }
 
       return res.json({ 
         message: "Profile updated successfully", 
-        user: updatedUser 
+        user: safeUser 
       });
       
     } catch (err) {

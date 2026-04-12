@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import MyTextPassword from '../MyInput/MyTextPassword';
 import { $authHost } from '../../http';
 
@@ -6,6 +6,13 @@ const ChangePassword = () => {
     const [oldPassowrd,setOldPassword]=useState('');
     const [newPassowrd,setNewPassowrd]=useState('');
     const [newPassowrd2,setNewPassowrd2]=useState('')
+
+    useEffect(() => {
+        setOldPassword('');
+        setNewPassowrd('');
+        setNewPassowrd2('');
+    }, []);
+
     const updatePassword=async()=>{
         if(newPassowrd!=newPassowrd2){
             alert('passwords do not match');
@@ -26,15 +33,15 @@ const ChangePassword = () => {
                 <div className="registration-table pass-table">
                     <div className="table-row">
                         <div className="label-cell">Existing Password</div>
-                        <div className="input-cell"><MyTextPassword value={oldPassowrd} setValue={setOldPassword} /></div>
+                        <div className="input-cell"><MyTextPassword name="existing-password" autoComplete="new-password" value={oldPassowrd} setValue={setOldPassword} /></div>
                     </div>
                     <div className="table-row">
                         <div className="label-cell">New Password</div>
-                        <div className="input-cell"><MyTextPassword value={newPassowrd} setValue={setNewPassowrd} /></div>
+                        <div className="input-cell"><MyTextPassword name="new-password" autoComplete="new-password" value={newPassowrd} setValue={setNewPassowrd} /></div>
                     </div>
                     <div className="table-row">
                         <div className="label-cell">Confirm New Password</div>
-                        <div className="input-cell"><MyTextPassword value={newPassowrd2} setValue={setNewPassowrd2}/></div>
+                        <div className="input-cell"><MyTextPassword name="confirm-new-password" autoComplete="new-password" value={newPassowrd2} setValue={setNewPassowrd2}/></div>
                     </div>
                 </div>
                 <div className="action-center">

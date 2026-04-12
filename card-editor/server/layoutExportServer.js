@@ -2373,6 +2373,76 @@ const makeSvgMarkupPdfCompatible = (svgMarkup = '') => {
   }
 };
 
+const buildCutOverlaySvgMarkup = (svgElement) => {
+  if (!svgElement || typeof svgElement.cloneNode !== 'function') return '';
+
+  try {
+    const overlaySvg = svgElement.cloneNode(true);
+
+    const textNodes = overlaySvg.getElementsByTagName('text');
+    while (textNodes.length > 0) {
+      const node = textNodes[0];
+      node.parentNode?.removeChild(node);
+    }
+
+    const isCutLikeNode = (node) => {
+      if (!node || typeof node.getAttribute !== 'function') return false;
+      const id = String(node.getAttribute('id') || '').trim().toLowerCase();
+      const dataCut = String(node.getAttribute('data-shape-cut') || '').trim().toLowerCase();
+      const dataCutType = String(node.getAttribute('data-shape-cut-type') || '').trim().toLowerCase();
+      const dataDoubleContour = String(node.getAttribute('data-shape-double-contour') || '').trim().toLowerCase();
+
+      if (dataCut === 'true') return true;
+      if (dataCutType) return true;
+      if (dataDoubleContour === 'true') return true;
+      if (id === 'canvashapecustom') return true;
+      if (id.startsWith('shape-')) return true;
+
+      return false;
+    };
+
+    const keepDefsNode = (tag) =>
+      tag === 'defs' ||
+      tag === 'clippath' ||
+      tag === 'mask' ||
+      tag === 'pattern' ||
+      tag === 'lineargradient' ||
+      tag === 'radialgradient';
+
+    const pruneNode = (node) => {
+      if (!node || node.nodeType !== 1) return false;
+
+      const tag = String(node.nodeName || '').toLowerCase();
+      let hasKeptChild = false;
+      const children = Array.from(node.childNodes || []);
+
+      children.forEach((child) => {
+        if (!child || child.nodeType !== 1) return;
+        const keepChild = pruneNode(child);
+        if (!keepChild) {
+          child.parentNode?.removeChild(child);
+        } else {
+          hasKeptChild = true;
+        }
+      });
+
+      if (tag === 'svg') return hasKeptChild;
+      if (keepDefsNode(tag)) return hasKeptChild;
+
+      if (isCutLikeNode(node)) return true;
+      return hasKeptChild;
+    };
+
+    const hasCutOverlay = pruneNode(overlaySvg);
+    if (!hasCutOverlay) return '';
+
+    const serializer = new XMLSerializer();
+    return serializer.serializeToString(overlaySvg);
+  } catch {
+    return '';
+  }
+};
+
 const ensureSvgShapesHaveStrokeForPdf = (
   svgMarkup = '',
   defaultStroke = '#000000',
@@ -3015,10 +3085,6 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                 const cumulativeMatrix = computeCumulativeMatrix(textNode);
                 const point = applyMatrixToPoint(cumulativeMatrix, baseX, baseY);
-                const { scaleX: matrixScaleX, scaleY: matrixScaleY } =
-                  extractScaleFromMatrix(cumulativeMatrix);
-                const matrixRotationDeg = extractRotationDegreesFromMatrix(cumulativeMatrix);
-                const hasMatrixRotation = Math.abs(matrixRotationDeg) > 0.01;
 
                 const fontId = resolveFontId(fontFamilyAttr, fontWeightAttr, fontStyleAttr);
 
@@ -3028,23 +3094,33 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                 const svgScaleX = widthPt / contentWidth;
                 const svgScaleY = heightPt / contentHeight;
-                const svgScale = Math.min(svgScaleX, svgScaleY) || 1;
-                const offsetXPt = xPt + (widthPt - contentWidth * svgScale) / 2;
-                const offsetYPt = yTopPt + (heightPt - contentHeight * svgScale) / 2;
-                const normalizedX = offsetXPt + point.x * svgScale;
-                const normalizedY = offsetYPt + point.y * svgScale;
+                const svgScaleForFontUnits = (svgScaleX + svgScaleY) / 2 || 1;
 
-                const combinedScaleX = svgScale * matrixScaleX;
-                const combinedScaleY = svgScale * matrixScaleY;
-                const fontScaleX = combinedScaleX || svgScale;
-                const fontScaleY = combinedScaleY || svgScale;
-                const averageScale = (fontScaleX + fontScaleY) / 2 || svgScale;
+                // Match svgToPdf(... preserveAspectRatio: 'none'): independent X/Y scaling.
+                const normalizedX = xPt + point.x * svgScaleX;
+                const normalizedY = yTopPt + point.y * svgScaleY;
+
+                // IMPORTANT: extract angle from original SVG transform matrix.
+                // Applying non-uniform page scale (svgScaleX/svgScaleY) before angle extraction
+                // distorts rotation (e.g. 90deg can appear closer to 45deg).
+                const { scaleX: matrixScaleX, scaleY: matrixScaleY } =
+                  extractScaleFromMatrix(cumulativeMatrix);
+                const matrixRotationDeg = extractRotationDegreesFromMatrix(cumulativeMatrix);
+                const hasMatrixRotation = Math.abs(matrixRotationDeg) > 0.01;
+
+                const fontScaleX = (matrixScaleX || 1) * svgScaleX;
+                const fontScaleY = (matrixScaleY || 1) * svgScaleY;
+                const averageScale = (fontScaleX + fontScaleY) / 2 || svgScaleForFontUnits;
                 const normalizedFontSize = normalizeFontSizeForSvgUnits(
                   fontSize,
-                  svgScale
+                  svgScaleForFontUnits
                 );
-                const scaledFontSize = normalizedFontSize * fontScaleY;
-                const strokeWidthPt = Math.max(TEXT_STROKE_WIDTH_PT * averageScale, 0.01);
+                const scaledFontSize = hasMatrixRotation
+                  ? normalizedFontSize
+                  : normalizedFontSize * fontScaleY;
+                const strokeWidthPt = hasMatrixRotation
+                  ? Math.max(TEXT_STROKE_WIDTH_PT / Math.max(averageScale, 0.01), 0.01)
+                  : Math.max(TEXT_STROKE_WIDTH_PT * averageScale, 0.01);
                 const anchorMode = (anchorAttr || '').trim().toLowerCase();
 
                 const fontRuns = splitTextIntoFontRuns(textContent, fontId);
@@ -3250,10 +3326,25 @@ app.post('/api/layout-pdf', async (req, res) => {
                 };
 
                 if (hasMatrixRotation) {
+                  // Use full affine transform from SVG space to PDF space for rotated text.
+                  // This avoids angle drift when X/Y scales differ.
+                  const aPdf = cumulativeMatrix[0] * svgScaleX;
+                  const bPdf = cumulativeMatrix[1] * svgScaleY;
+                  const cPdf = cumulativeMatrix[2] * svgScaleX;
+                  const dPdf = cumulativeMatrix[3] * svgScaleY;
+                  const ePdf =
+                    xPt +
+                    cumulativeMatrix[4] * svgScaleX +
+                    scaledFontSize * PDF_TEXT_X_NUDGE_EM;
+                  const fPdf =
+                    yTopPt +
+                    cumulativeMatrix[5] * svgScaleY +
+                    scaledFontSize * PDF_TEXT_Y_NUDGE_EM +
+                    PLACEMENT_TEXT_GLOBAL_Y_SHIFT_PT;
+
                   doc.save();
-                  doc.translate(normalizedX, normalizedY);
-                  doc.rotate(matrixRotationDeg);
-                  drawSegments(drawXLocal, 0);
+                  doc.transform(aPdf, bPdf, cPdf, dPdf, ePdf, fPdf);
+                  drawSegments(baseX + drawXLocal, baseY);
                   doc.restore();
                 } else {
                   drawSegments(drawX, drawY);
@@ -3263,6 +3354,22 @@ app.post('/api/layout-pdf', async (req, res) => {
               } catch (textError) {
                 console.error('Не вдалося намалювати текстовий елемент:', textError.message);
               }
+            }
+
+            // Final top layer: cut/contour geometry above text and all other artwork.
+            try {
+              const cutOverlayMarkup = buildCutOverlaySvgMarkup(svgElement);
+              const compatibleCutOverlayMarkup = makeSvgMarkupPdfCompatible(cutOverlayMarkup);
+              if (compatibleCutOverlayMarkup) {
+                svgToPdf(doc, compatibleCutOverlayMarkup, xPt, yTopPt, {
+                  assumePt: false,
+                  width: widthPt,
+                  height: heightPt,
+                  preserveAspectRatio: 'none',
+                });
+              }
+            } catch (cutOverlayError) {
+              console.warn('Не вдалося намалювати cut-оверлей поверх тексту:', cutOverlayError.message);
             }
 
             return;

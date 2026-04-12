@@ -882,8 +882,9 @@ const Canvas = ({ className }) => {
         setShapePropertiesOpen(false);
         return;
       }
-      // Тримати тексти поверх при кожному виборі
+      // Keep text above regular objects, but keep cut elements above text.
       bringAllTextsToFront();
+      bringAllCutElementsToFront();
       if (obj && isUploadedAsset(obj)) {
         setActiveObject(obj);
         setShapePropertiesOpen(false);

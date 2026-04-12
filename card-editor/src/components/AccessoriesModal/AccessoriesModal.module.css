@@ -9,7 +9,8 @@
   align-items: flex-start;
   background: rgba(0, 0, 0, 0.08);
   padding-top: 50px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   pointer-events: none;
 }
 
@@ -26,6 +27,7 @@
   /* Дозволяємо вікну рости по висоті до межі екрану і скролити ВСЕРЕДИНІ вікна */
   max-height: calc(100vh - 30px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain; /* не прокручувати сторінку при скролі модалки */
   -webkit-overflow-scrolling: touch;
   pointer-events: auto;
@@ -151,6 +153,7 @@
 
 /* Контейнер превʼю, що зʼявляється при ховері */
 .extraWrap:hover .extraPreviewOverlay {
+  display: block;
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, -8px) scale(1.02);
@@ -167,6 +170,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   padding: 8px;
   border-radius: 8px;
+  display: none;
   opacity: 0;
   visibility: hidden;
   transition: all 0.18s ease-in-out;
@@ -175,8 +179,8 @@
 
 .extraPreviewImage {
   display: block;
-  max-width: 720px;
-  max-height: 720px;
+  max-width: 420px;
+  max-height: 420px;
   height: auto;
   width: auto;
 }
@@ -194,9 +198,10 @@
 .extraThumb {
   width: auto;
   height: auto;
-  max-width: none; /* реальний розмір */
+  max-width: 150px;
+  max-height: 150px;
+  object-fit: contain;
   display: block;
-  max-height: none;
 }
 
 /* Аналогічно, без порожнього правила */

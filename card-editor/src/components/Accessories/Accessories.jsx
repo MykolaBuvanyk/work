@@ -17,15 +17,16 @@ import TemplatesModal from "../TemplatesModal/TemplatesModal";
 import imgCableTies from "/images/accessories/CableTies 1.png";
 import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 2.png";
 import imgPh13 from "/images/accessories/ph1 2.9 x 13 mm 2.png";
-import imgSHook from "/images/accessories/S-Hook 1.png";
+import imgCarabiner from "/images/accessories/Carabiner-40mm.jpg?v=20260412-2";
 import imgKeyring from "/images/accessories/Keyring 1.png";
 import imgBallchain from "/images/accessories/Ballchain 1.png";
-import imgSHookSign from "/images/accessories/S-hook+sign 1.png";
-import imgKeyringSign1 from "/images/accessories/Keyring+sign 1.png";
-import imgKeyringSign2 from "/images/accessories/Keyring+sign 2.png";
+import imgCarabinerUse from "/images/accessories/Carabiner-use.jpg?v=20260412-2";
+import imgKeyringUse from "/images/accessories/KeyRing-30mm.jpg?v=20260412-2";
+import imgBallchainUse from "/images/accessories/Ballchain-10cm.jpg?v=20260412-2";
 import iconCable from "/images/accessories/cable.svg";
 import iconScrews from "/images/accessories/screws.svg";
 import iconSHook from "/images/accessories/S-Hook.svg";
+import iconCarabiner40mm from "/images/accessories/Carabiner-40mmicon.svg";
 import iconKeyring from "/images/accessories/Keyring.svg";
 import iconBallchain from "/images/accessories/Ballchain.svg";
 
@@ -72,12 +73,12 @@ const BASE_ACCESSORIES = [
   },
   {
     id: 4,
-    name: "S-Hooks",
+    name: "Carabiner",
     price: 0.25,
-    desc: "Nickel plated",
-    iconKey: "s-hook.svg",
-    img: imgSHook,
-    extraImg: imgSHookSign,
+    desc: "Metal spring clip 40mm",
+    iconKey: "carabiner-40mmicon.svg",
+    img: imgCarabiner,
+    extraImg: imgCarabinerUse,
     hasExtra: true,
     checked: false,
     visible: false,
@@ -90,7 +91,7 @@ const BASE_ACCESSORIES = [
     desc: "30 mm",
     iconKey: "keyring.svg",
     img: imgKeyring,
-    extraImg: imgKeyringSign1,
+    extraImg: imgKeyringUse,
     hasExtra: true,
     checked: false,
     visible: false,
@@ -100,10 +101,10 @@ const BASE_ACCESSORIES = [
     id: 6,
     name: "Ball chains",
     price: 0.25,
-    desc: "Nickel plated, length 10 cm",
+    desc: "length 10cm",
     iconKey: "ballchain.svg",
     img: imgBallchain,
-    extraImg: imgKeyringSign2,
+    extraImg: imgBallchainUse,
     hasExtra: true,
     checked: false,
     visible: false,
@@ -135,6 +136,10 @@ const TopToolbar = ({ className, formData }) => {
       "s-hook.svg": iconSHook,
       "s-hook.png": iconSHook,
       "S-Hook.svg": iconSHook,
+      "carabiner.svg": iconCarabiner40mm,
+      "Carabiner.svg": iconCarabiner40mm,
+      "carabiner-40mmicon.svg": iconCarabiner40mm,
+      "Carabiner-40mmicon.svg": iconCarabiner40mm,
       "keyring.svg": iconKeyring,
       "Keyring.svg": iconKeyring,
       "ballchain.svg": iconBallchain,
@@ -146,6 +151,18 @@ const TopToolbar = ({ className, formData }) => {
     if (raw === "") return 0;
     const n = parseFloat(String(raw).replace(",", "."));
     return isNaN(n) || n < 0 ? 0 : Math.floor(n);
+  };
+
+  const normalizeAccessoryName = (val) => {
+    const normalized = String(val || "").trim().toLowerCase();
+    if (
+      normalized === "s-hooks" ||
+      normalized === "s-hook" ||
+      normalized === "s hooks"
+    ) {
+      return "carabiner";
+    }
+    return normalized;
   };
 
   const toggleAccessory = (id) =>
@@ -639,8 +656,7 @@ const TopToolbar = ({ className, formData }) => {
       const listAccessories = Array.isArray(formData?.listAccessories)
         ? formData.listAccessories
         : [];
-
-      const normalize = (val) => String(val || "").trim().toLowerCase();
+      const normalize = normalizeAccessoryName;
       const extractInfoSize = (val) => {
         const match = String(val || "").match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)/i);
         if (!match) return "";
@@ -740,11 +756,11 @@ const TopToolbar = ({ className, formData }) => {
         pending.forEach((item) => {
           if (!item || typeof item !== "object") return;
           if (item.id != null) byId.set(String(item.id), item);
-          if (item.name != null) byName.set(String(item.name).trim().toLowerCase(), item);
+          if (item.name != null) byName.set(normalizeAccessoryName(item.name), item);
         });
         filterAccessories = filterAccessories.map((item) => {
           const matchById = item?.id != null ? byId.get(String(item.id)) : null;
-          const matchByName = item?.name != null ? byName.get(String(item.name).trim().toLowerCase()) : null;
+          const matchByName = item?.name != null ? byName.get(normalizeAccessoryName(item.name)) : null;
           const incoming = matchById || matchByName;
           if (!incoming) {
             return {
@@ -820,14 +836,14 @@ const TopToolbar = ({ className, formData }) => {
               byId.set(String(item.id), item);
             }
             if (item.name != null) {
-              byName.set(String(item.name).trim().toLowerCase(), item);
+              byName.set(normalizeAccessoryName(item.name), item);
             }
           });
 
           return (Array.isArray(prev) ? prev : []).map((item) => {
             const incomingById = item?.id != null ? byId.get(String(item.id)) : null;
             const incomingByName = item?.name != null
-              ? byName.get(String(item.name).trim().toLowerCase())
+              ? byName.get(normalizeAccessoryName(item.name))
               : null;
             const incoming = incomingById || incomingByName;
 

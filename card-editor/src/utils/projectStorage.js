@@ -1476,39 +1476,45 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       );
     }
 
-    // ВИПРАВЛЕННЯ: Додаткова очистка від HTMLCanvasElement та інших non-serializable об'єктів
-    const cleanObject = (obj) => {
-      if (!obj || typeof obj !== "object") return obj;
+    // ВИПРАВЛЕННЯ: Додаткова очистка від HTMLCanvasElement та інших non-serializable об'єктів.
+    // Важливо: null значення Fabric-полів потрібно зберігати, бо вони впливають на SVG/PDF (наприклад fill=null).
+    const SKIP_VALUE = Symbol("skip_non_serializable");
+    const hasHTMLElement = typeof HTMLElement !== "undefined";
+    const hasHTMLCanvasElement = typeof HTMLCanvasElement !== "undefined";
 
-      // Якщо це HTMLCanvasElement або інший DOM елемент, повертаємо null
-      if (obj instanceof HTMLElement || obj instanceof HTMLCanvasElement) {
-        return null;
+    const isDomLike = (value) => {
+      if (!value) return false;
+      if (hasHTMLElement && value instanceof HTMLElement) return true;
+      if (hasHTMLCanvasElement && value instanceof HTMLCanvasElement) return true;
+      return false;
+    };
+
+    const cleanObject = (obj) => {
+      if (obj === null) return null;
+      if (typeof obj !== "object") return obj;
+
+      if (isDomLike(obj)) {
+        return SKIP_VALUE;
       }
 
-      // Якщо це Array
       if (Array.isArray(obj)) {
         return obj
           .map((item) => cleanObject(item))
-          .filter((item) => item !== null);
+          .filter((item) => item !== SKIP_VALUE);
       }
 
-      // Якщо це звичайний об'єкт
       const cleaned = {};
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           const value = obj[key];
 
           // Пропускаємо функції та non-serializable об'єкти
           if (typeof value === "function") continue;
-          if (
-            value instanceof HTMLElement ||
-            value instanceof HTMLCanvasElement
-          )
-            continue;
+          if (isDomLike(value)) continue;
 
           // Рекурсивно очищаємо вкладені об'єкти
           const cleanedValue = cleanObject(value);
-          if (cleanedValue !== null) {
+          if (cleanedValue !== SKIP_VALUE) {
             cleaned[key] = cleanedValue;
           }
         }
@@ -1601,10 +1607,10 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         canvas.get("shapeType") || toolbarState.currentShapeType || "rectangle";
     }
 
-    if (json && Array.isArray(json.objects)) {
+    if (json && Array.isArray(json.objects) && options.stripBorderClipPath === true) {
       json.objects = json.objects.map((obj) => {
-        if (obj?.isBorderShape && obj.clipPath && !options.keepClipPath) {
-          // ClipPath використовується лише для внутрішнього відмалювання рамки, не зберігаємо його в snapshot.
+        if (obj?.isBorderShape && obj.clipPath) {
+          // Використовуємо лише коли явно попросили зменшити payload.
           delete obj.clipPath;
         }
         return obj;

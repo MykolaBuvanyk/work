@@ -9,6 +9,10 @@ import {
   collectFontFamiliesFromJson,
   ensureFontsLoaded,
 } from "../../../utils/projectStorage";
+import {
+  ensureShapeSvgId,
+  resolveShapeIdPrefixFromObject,
+} from "../../../utils/shapeSvgId";
 
 const PX_PER_MM = 72 / 25.4;
 
@@ -1062,6 +1066,33 @@ export const generateSvgMarkupFromJsonTemplate = async (
         }
       });
     }
+
+    // Objects loaded into a fresh StaticCanvas do not retain runtime shape patching.
+    // Re-apply shape serialization patch so SVG export contains frame metadata
+    // and data-shape-double-contour markers.
+    const loadedObjects =
+      typeof staticCanvas.getObjects === "function"
+        ? staticCanvas.getObjects()
+        : [];
+
+    loadedObjects.forEach((object) => {
+      if (!object || typeof object !== "object") return;
+
+      const hasShapeIdentity =
+        object.fromShapeTab === true ||
+        object?.data?.fromShapeTab === true ||
+        (typeof object.shapeType === "string" && object.shapeType.trim() !== "") ||
+        (typeof object.id === "string" && /^shape(?:-|$)/i.test(object.id));
+
+      if (!hasShapeIdentity) return;
+
+      const prefix = resolveShapeIdPrefixFromObject(object);
+      ensureShapeSvgId(
+        object,
+        staticCanvas,
+        prefix ? { prefix } : undefined
+      );
+    });
 
     staticCanvas.renderAll();
     const markup =
@@ -2306,7 +2337,7 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
   shapeNodes.forEach((shapeNode) =>
     processNodeWithInnerContour(shapeNode, {
       doubleInnerContour: false,
-      applyStrokeCenterCompensation: true,
+      applyStrokeCenterCompensation: false,
     })
   );
   // For border: keep green overlay on the same geometry as blue,

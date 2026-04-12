@@ -1,4 +1,7 @@
 import 'dotenv/config'; // для ES модулів
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
@@ -110,6 +113,53 @@ export const toNumber = (value, fallback = 0) => {
 };
 
 export const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
+
+const resolvePdfFontPath = (fileName) =>
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/fonts', fileName);
+
+const readPdfFontDataUri = (fileName) => {
+  try {
+    const fontBuffer = fs.readFileSync(resolvePdfFontPath(fileName));
+    return `data:font/ttf;base64,${fontBuffer.toString('base64')}`;
+  } catch (error) {
+    console.warn(`PDF font \"${fileName}\" unavailable:`, error?.message || error);
+    return '';
+  }
+};
+
+const buildInterFontFaceCss = () => {
+  const regularFontSrc = readPdfFontDataUri('Inter-Regular.ttf');
+  const boldFontSrc = readPdfFontDataUri('Inter-Bold.ttf');
+  const italicFontSrc = readPdfFontDataUri('Inter-Italic.ttf');
+
+  if (!regularFontSrc) {
+    return '';
+  }
+
+  const fontFaces = [
+    `@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url('${regularFontSrc}') format('truetype'); font-display: swap; }`,
+  ];
+
+  if (boldFontSrc) {
+    fontFaces.push(`@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; src: url('${boldFontSrc}') format('truetype'); font-display: swap; }`);
+  }
+
+  if (italicFontSrc) {
+    fontFaces.push(`@font-face { font-family: 'Inter'; font-style: italic; font-weight: 400; src: url('${italicFontSrc}') format('truetype'); font-display: swap; }`);
+  }
+
+  return fontFaces.join('\n');
+};
+
+const INTER_FONT_FACE_CSS = buildInterFontFaceCss();
+
+const waitForPdfFonts = async (page) => {
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+  });
+};
 
 const parseEmailList = (value) =>
   String(value || '')
@@ -2374,6 +2424,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     <meta charset="UTF-8">
     <title>Delivery Note - SignXpert</title>
     <style>
+      ${INTER_FONT_FACE_CSS}
       @page {
         size: A4;
         margin: 0;
@@ -2602,6 +2653,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
   </html>`;
 
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -2768,8 +2820,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice - SignXpert</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
+      ${INTER_FONT_FACE_CSS}
       * {
         box-sizing: border-box;
         -webkit-print-color-adjust: exact;
@@ -3134,7 +3186,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 </body>
 </html>`
 
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+  await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,

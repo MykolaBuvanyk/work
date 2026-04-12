@@ -436,42 +436,42 @@
       "isAvaible": true,
       "img": "/images/accessories/CableTies 1.png",
       "text": "Cable ties",
-      "number": 0.05,
+      "number": "0.07",
       "info": "Сable ties, size 3.6 x 140 mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
       "text": "Screws 9,5 mm",
-      "number": "0.11",
+      "number": "0.07",
       "info": "Size 2.9 x 9.5 mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/ph1 2.9 x 9.5 mm 1.png",
       "text": "Screws 13 mm",
-      "number": 0.11,
+      "number": "0.07",
       "info": "Size 2.9 x 13 mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/Carabiner-40mm.jpg",
       "text": "Carabiner",
-      "number": 0.25,
+      "number": "0.3",
       "info": "Metal spring clip 40mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/Keyring 1.png",
       "text": "Keyrings",
-      "number": 0.7,
+      "number": "0.3",
       "info": "30 mm"
     },
     {
       "isAvaible": true,
       "img": "/images/accessories/Ballchain 1.png",
       "text": "Ball chains",
-      "number": 0.25,
+      "number": "0.3",
       "info": "length 10cm"
     }
   ],
@@ -479,46 +479,46 @@
     "thinkness16": {
       "isSelect": true,
       "materialArea": [
-        "1",
-        "1.1"
+        "0.9",
+        "0.91"
       ],
       "engravingArea": [
-        "1",
-        "1.1"
+        "0.25",
+        "0.25"
       ],
       "holesPerimeter": [
-        "1",
-        "1.1"
+        "0.1",
+        "0.1"
       ]
     },
     "thinkness08": {
       "isSelect": true,
       "materialArea": [
-        "1",
-        "1.1"
+        "0.85",
+        "0.86"
       ],
       "engravingArea": [
-        "1",
-        "1.1"
+        "0.25",
+        "0.25"
       ],
       "holesPerimeter": [
-        "1",
-        "1.1"
+        "0.1",
+        "0.1"
       ]
     },
     "thinkness32": {
       "isSelect": true,
       "materialArea": [
         "1",
-        "1.1"
+        "1.01"
       ],
       "engravingArea": [
-        "1",
-        "1.1"
+        "0.25",
+        "0.25"
       ],
       "holesPerimeter": [
-        "1",
-        "1.1"
+        "0.1",
+        "0.1"
       ]
     }
   },
@@ -563,37 +563,37 @@
   "deliveryDE": [
     {
       "name": "UPS Envelope",
-      "value": "4.95"
+      "value": "5"
     },
     {
       "name": "UPS Next Day Package",
-      "value": "6.95"
+      "value": "7"
     },
     {
       "name": "UPS Express before 12 PM",
-      "value": "9.95"
+      "value": "9"
     },
     {
       "name": "UPS Saturday Delivery",
-      "value": "9.95"
+      "value": "9"
     }
   ],
   "deliveryOther": [
     {
       "name": "UPS Envelope",
-      "value": "5.95"
+      "value": "7"
     },
     {
       "name": "UPS Next Day Package",
-      "value": "7.95"
+      "value": "9"
     },
     {
       "name": "UPS Express before 12 PM",
-      "value": "10.95"
+      "value": "12"
     },
     {
       "name": "UPS Saturday Delivery",
-      "value": "10.95"
+      "value": "12"
     }
   ],
   "DE": "0",

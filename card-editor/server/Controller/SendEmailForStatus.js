@@ -16,6 +16,7 @@ import {
     buildZugferdInvoiceData,
     buildPdfFooterTemplate
 } from '../router/CartRouter.js';
+import CartProject from "../models/CartProject.js";
 
 const basicZugferdInvoicer = zugferd({
   profile: EN16931,
@@ -1443,8 +1444,13 @@ class SendEmailForStatus {
 </html>
 `       
             const to=order.user.email;
+            const key = String(order?.idMongo || '').trim();
+            const mongoRes=await CartProject.findById(key,'checkout.deliveryAddress.email');
+            const emails=mongoRes.checkout.deliveryAddress.email;
+            console.log(4234,emails);
+            console.log(emails.split(','));
+            emails.split(',').forEach(x=>SendEmailForStatus.SendEmailWithFile(order,html,subject,x))
             //await sendEmail(to,html,subject);
-            SendEmailForStatus.SendEmailWithFile(order,html,subject,to);
         }catch(err){
             console.error('error send email where status shipped2.'+err);
             return false

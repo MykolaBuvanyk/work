@@ -3,6 +3,7 @@ import './UpdateBaner.scss';
 import { MdCloudUpload } from 'react-icons/md';
 import { $authHost } from '../../http';
 import combinedCountries from '../Countries';
+import { languageCountries } from '../Header/Header';
 
 
 const UpdateBaner = () => {
@@ -34,7 +35,7 @@ const UpdateBaner = () => {
       </header>
 
       <div className="banners-grid">
-        {combinedCountries.map((lang) => (
+        {languageCountries.map((lang) => (
           <div key={lang.code} className="banner-card">
             <div className="card-header">
               <div className="flag-wrapper">

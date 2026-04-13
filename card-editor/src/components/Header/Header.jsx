@@ -9,9 +9,8 @@ import Flag from 'react-flagkit';
 import { $authHost } from '../../http';
 import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
  
-const languageCountries = [
-  // { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
-
+export const languageCountries = [
+  { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
   { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
   { flag: "🇫🇷", code: "FR", codeFlag: "FR" },
   { flag: "🇮🇹", code: "IT", codeFlag: "IT" },
@@ -29,6 +28,7 @@ const languageCountries = [
   { flag: "🇸🇮", code: "SL", codeFlag: "SI" },
   { flag: "🇸🇪", code: "SV", codeFlag: "SE" },
   { flag: "🇺🇦", code: "UA", codeFlag: "UA" },
+  //{ flag: "🇩🇪", code: "DE", codeFlag: "DE" },
 ];
 
 
@@ -428,7 +428,7 @@ const Header = () => {
               </div>
             </div>
             <div className={isLangOpen ? styles.dropdown : styles.open}>
-              {languageCountries.map(lang => (
+              {languageCountries.slice(1).map(lang => (
                 <div
                   key={lang.code}
                   onClick={() => setIsLangOpen(false)}

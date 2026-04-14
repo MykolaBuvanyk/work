@@ -1445,8 +1445,8 @@ class SendEmailForStatus {
 `       
             const to=order.user.email;
             const key = String(order?.idMongo || '').trim();
-            const mongoRes=await CartProject.findById(key,'checkout.deliveryAddress.email');
-            const emails=mongoRes.checkout.deliveryAddress.email;
+            const mongoRes=await CartProject.findById(key,'checkout.invoiceEmail');
+            const emails=mongoRes.checkout.invoiceEmail;
             console.log(4234,emails);
             console.log(emails.split(','));
             emails.split(',').forEach(x=>SendEmailForStatus.SendEmailWithFile(order,html,subject,x))

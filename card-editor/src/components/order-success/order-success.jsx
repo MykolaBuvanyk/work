@@ -2,7 +2,6 @@ import './order-success.sass'
 
 import { useEffect, useState } from 'react'
 
-import ActionButton from '../ui/buttons/action-button/action-button'
 import CloseIcon from '/images/icon/close.svg'
 import Head from '/images/icon/head.svg'
 import Star from '/images/icon/star.svg'
@@ -53,12 +52,30 @@ const SelectedStar = ({ className = '', onClick, gradientId }) => (
 	</svg>
 )
 
-export default function ThankYou({ onClose, setData }) {
+export default function ThankYou({ onClose, onSend, setData }) {
 	const [rating, setRating] = useState(0)
 	const [comment,setComment]=useState('')
+	const [isSending, setIsSending] = useState(false)
 	useEffect(()=>{
 		setData({rating,comment});
 	},[rating, comment]);
+
+	const handleSend = async () => {
+		if (isSending) return
+		setIsSending(true)
+		try {
+			if (typeof onSend === 'function') {
+				await onSend({ rating, comment })
+				return
+			}
+			if (typeof onClose === 'function') {
+				onClose()
+			}
+		} finally {
+			setIsSending(false)
+		}
+	}
+
 	return (
 		<div className='success-modal'>
 			<div className='container'>
@@ -121,7 +138,9 @@ export default function ThankYou({ onClose, setData }) {
 						<textarea value={comment} onChange={(e)=>setComment(e.target.value)} className='success__textarea' id='feedback' />
 					</div>
 
-					<ActionButton text='send' onClick={() => {}} />
+					<button className='action-btn' type='button' onClick={handleSend} disabled={isSending}>
+						{isSending ? 'sending...' : 'send'}
+					</button>
 
 					<footer className='success__footer'>
 						<span>Kind regards,</span>

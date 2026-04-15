@@ -18,11 +18,10 @@ const extractLegacyAdditionalInformation = (rawValue) => {
         // Legacy plain-string value.
     }
 
-    return '';
+    return raw;
 };
 
 const AccountSetting = () => {
-    const [instructionMessage, setInstructionMessage] = useState('');
     const [additionalInformation, setAdditionalInformation] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -31,10 +30,10 @@ const AccountSetting = () => {
         try {
             const res = await $authHost.get('auth/getMy');
             const user = res?.data?.user || {};
-            setInstructionMessage(String(user?.additional || '').trim());
+            const parsedAdditional = extractLegacyAdditionalInformation(user?.additional || '');
             setAdditionalInformation(
                 String(user?.tellAbout || '').trim() ||
-                extractLegacyAdditionalInformation(user?.additional || '')
+                parsedAdditional
             );
         } catch (err) {
             console.error(err);
@@ -52,9 +51,10 @@ const AccountSetting = () => {
         if (isSaving) return;
         try {
             setIsSaving(true);
+            const nextValue = String(additionalInformation || '').trim();
             await $authHost.put('auth/updateProfile', {
-                additional: instructionMessage,
-                tellAbout: additionalInformation,
+                additional: nextValue,
+                tellAbout: nextValue,
             });
             alert('Message saved successfully!');
         } catch (err) {

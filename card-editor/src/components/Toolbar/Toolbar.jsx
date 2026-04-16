@@ -9722,8 +9722,6 @@ const Toolbar = ({ formData }) => {
       // For shapes where the UI disables corner radius, enforce 0.
       if (key === 'cornerRadius' && (isCircleSelected || isCustomShapeApplied)) {
         newValue = 0;
-      }
-      if (key === 'cornerRadius') {
         newValueToStore = 0;
       }
       let updated = { ...prev, [key]: newValueToStore };

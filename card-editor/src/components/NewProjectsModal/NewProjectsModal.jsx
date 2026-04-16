@@ -12,10 +12,25 @@ import styles from "./NewProjectsModal.module.css";
 const DEFAULT_SHAPE_WIDTH_MM = 120;
 const DEFAULT_SHAPE_HEIGHT_MM = 80;
 
-const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
+const NewProjectsModal = ({
+  onClose,
+  onRequestSaveAs,
+  onSave,
+  onDiscard,
+  message,
+}) => {
   const { canvas } = useCanvasContext();
 
   const handleSave = async () => {
+    if (typeof onSave === "function") {
+      try {
+        await onSave();
+      } finally {
+        onClose && onClose();
+      }
+      return;
+    }
+
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
@@ -137,6 +152,15 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
   };
 
   const handleDiscard = async () => {
+    if (typeof onDiscard === "function") {
+      try {
+        await onDiscard();
+      } finally {
+        onClose && onClose();
+      }
+      return;
+    }
+
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
@@ -276,8 +300,12 @@ const NewProjectsModal = ({ onClose, onRequestSaveAs }) => {
   return (
     <div className={styles.newProjectsModal}>
       <p>
-        Before creating a <strong>New Project</strong>, please{" "}
-        <strong>Save</strong> or <strong>Discard</strong> your current work.
+        {message || (
+          <>
+            Before creating a <strong>New Project</strong>, please <strong>Save</strong> or{' '}
+            <strong>Discard</strong> your current work.
+          </>
+        )}
       </p>
       <div className={styles.buttonContainer}>
         <button className={styles.active} onClick={handleSave}>

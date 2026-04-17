@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
@@ -14,6 +14,9 @@ import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
 import { useSelector } from "react-redux";
 import {
+  getProject,
+  putProject,
+  uuid,
   saveCurrentProject,
   saveNewProject,
   clearAllUnsavedSigns,
@@ -21,9 +24,11 @@ import {
   exportCanvas,
 } from "../../utils/projectStorage";
 import { createTemplate } from "../../http/templates";
+import { fetchSharedProjectByToken, markSharedProjectCopied } from "../../http/share";
 
 const DEFAULT_SHAPE_WIDTH_MM = 120;
 const DEFAULT_SHAPE_HEIGHT_MM = 80;
+const MAX_SHARED_CANVASES = 30;
 
 const TopToolbar = ({ className }) => {
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
@@ -38,8 +43,175 @@ const TopToolbar = ({ className }) => {
   const [isTemplatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [isProjectsModalOpen, setProjectsModalOpen] = useState(false);
   const [isNewProjectModalOpen, setNewProjectModalOpen] = useState(false);
+  const [newProjectModalMode, setNewProjectModalMode] = useState("new-project");
   const [isPreviewOpen, setPreviewOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingShareToken, setPendingShareToken] = useState(null);
+  const [shareImportNeedsSaveAs, setShareImportNeedsSaveAs] = useState(false);
+  const shareImportInProgressRef = useRef(false);
+  const preservePendingShareOnModalCloseRef = useRef(false);
+
+  const clearPendingSharedToken = useCallback(() => {
+    try {
+      sessionStorage.removeItem("pendingSharedProjectToken");
+    } catch {}
+    try {
+      localStorage.removeItem("pendingSharedProjectToken");
+    } catch {}
+  }, []);
+
+  const getPendingSharedToken = useCallback(() => {
+    let token = "";
+    try {
+      token = String(sessionStorage.getItem("pendingSharedProjectToken") || "").trim();
+    } catch {}
+    if (!token) {
+      try {
+        token = String(localStorage.getItem("pendingSharedProjectToken") || "").trim();
+      } catch {}
+    }
+    return token;
+  }, []);
+
+  const deepClone = useCallback((value) => {
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch {
+      return value;
+    }
+  }, []);
+
+  const normalizeAndStoreSharedProject = useCallback(
+    async (shareToken) => {
+      const importedKey = `shared:imported:${shareToken}`;
+      const existingImportedId = (() => {
+        try {
+          return localStorage.getItem(importedKey);
+        } catch {
+          return null;
+        }
+      })();
+
+      if (existingImportedId) {
+        const existingProject = await getProject(existingImportedId);
+        if (existingProject) return existingProject;
+      }
+
+      const shared = await fetchSharedProjectByToken(shareToken);
+      const sourceProject =
+        shared?.project && typeof shared.project === "object" ? deepClone(shared.project) : null;
+
+      if (!sourceProject) {
+        throw new Error("Shared project data is empty");
+      }
+
+      const sourceCanvases = Array.isArray(sourceProject.canvases)
+        ? sourceProject.canvases.slice(0, MAX_SHARED_CANVASES)
+        : [];
+
+      const clonedCanvases = sourceCanvases
+        .map((canvasEntry) => {
+          const safeCanvas = canvasEntry && typeof canvasEntry === "object" ? canvasEntry : {};
+          return {
+            ...safeCanvas,
+            id: uuid(),
+          };
+        })
+        .filter(Boolean);
+
+      if (clonedCanvases.length === 0) {
+        throw new Error("Shared project has no canvases to open");
+      }
+
+      const now = Date.now();
+      const nextProject = {
+        ...sourceProject,
+        id: uuid(),
+        name: String(shared?.projectName || sourceProject?.name || "Shared project").trim(),
+        createdAt: now,
+        updatedAt: now,
+        lastOrderedAt: 0,
+        canvases: clonedCanvases,
+      };
+
+      await putProject(nextProject);
+      try {
+        localStorage.setItem(importedKey, nextProject.id);
+      } catch {}
+
+      try {
+        await markSharedProjectCopied(shareToken);
+      } catch {}
+
+      return nextProject;
+    },
+    [deepClone]
+  );
+
+  const openSharedProjectAsCurrent = useCallback(
+    async (shareToken) => {
+      const normalizedToken = String(shareToken || "").trim();
+      if (!normalizedToken) return;
+
+      const nextProject = await normalizeAndStoreSharedProject(normalizedToken);
+      const firstCanvas = Array.isArray(nextProject?.canvases) ? nextProject.canvases[0] : null;
+
+      await clearAllUnsavedSigns().catch(() => {});
+
+      try {
+        localStorage.removeItem("currentUnsavedSignId");
+        localStorage.setItem("currentProjectId", nextProject.id);
+        localStorage.setItem("currentProjectName", nextProject.name || "");
+        localStorage.removeItem("pendingOpenedProjectAccessories");
+      } catch {}
+
+      try {
+        const openedAccessories = Array.isArray(nextProject?.accessories)
+          ? nextProject.accessories
+          : [];
+        localStorage.setItem(
+          "pendingOpenedProjectAccessories",
+          JSON.stringify(openedAccessories)
+        );
+        sessionStorage.setItem(
+          "pendingOpenedProjectAccessories",
+          JSON.stringify(openedAccessories)
+        );
+      } catch {}
+
+      if (firstCanvas?.id) {
+        try {
+          localStorage.setItem("currentCanvasId", firstCanvas.id);
+          localStorage.setItem("currentProjectCanvasId", firstCanvas.id);
+          localStorage.setItem("currentProjectCanvasIndex", "0");
+        } catch {}
+        try {
+          if (typeof window !== "undefined") {
+            window.__currentProjectCanvasId = firstCanvas.id;
+            window.__currentProjectCanvasIndex = 0;
+          }
+        } catch {}
+      } else {
+        try {
+          localStorage.removeItem("currentCanvasId");
+          localStorage.removeItem("currentProjectCanvasId");
+          localStorage.removeItem("currentProjectCanvasIndex");
+        } catch {}
+      }
+
+      try {
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+        window.dispatchEvent(new CustomEvent("project:reset"));
+        window.dispatchEvent(
+          new CustomEvent("project:switched", { detail: { projectId: nextProject.id } })
+        );
+        window.dispatchEvent(
+          new CustomEvent("project:opened", { detail: { projectId: nextProject.id } })
+        );
+      } catch {}
+    },
+    [normalizeAndStoreSharedProject]
+  );
 
   const handleSaveAsTemplate = () => {
     if (!canvas) return;
@@ -49,6 +221,87 @@ const TopToolbar = ({ className }) => {
   const handleOpenTemplates = () => {
     setTemplatesModalOpen(true);
   };
+
+  const finishSharedImport = useCallback(
+    async (token) => {
+      const normalized = String(token || "").trim();
+      if (!normalized) return;
+      await openSharedProjectAsCurrent(normalized);
+      clearPendingSharedToken();
+      setPendingShareToken(null);
+    },
+    [clearPendingSharedToken, openSharedProjectAsCurrent]
+  );
+
+  const handleShareImportSave = useCallback(async () => {
+    if (!canvas || !pendingShareToken) return;
+
+    preservePendingShareOnModalCloseRef.current = true;
+    setShareImportNeedsSaveAs(true);
+    setNewProjectModalOpen(false);
+    setSaveAsModalOpen(true);
+  }, [canvas, pendingShareToken]);
+
+  const handleShareImportDiscard = useCallback(async () => {
+    if (!pendingShareToken) return;
+
+    try {
+      await clearAllUnsavedSigns().catch(() => {});
+      try {
+        localStorage.removeItem("currentUnsavedSignId");
+      } catch {}
+      try {
+        if (typeof window !== "undefined") {
+          window.__currentProjectCanvasId = null;
+          window.__currentProjectCanvasIndex = null;
+        }
+      } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
+      } catch {}
+
+      await finishSharedImport(pendingShareToken);
+    } catch (error) {
+      console.error("Failed to discard current project before opening share", error);
+      alert("Failed to open shared project. Please try again.");
+    }
+  }, [finishSharedImport, pendingShareToken]);
+
+  useEffect(() => {
+    if (!canvas) return;
+    if (shareImportInProgressRef.current) return;
+
+    const token = getPendingSharedToken();
+    if (!token) return;
+
+    const run = async () => {
+      shareImportInProgressRef.current = true;
+      try {
+        let currentProjectId = null;
+        try {
+          currentProjectId = localStorage.getItem("currentProjectId");
+        } catch {}
+
+        if (currentProjectId) {
+          await finishSharedImport(token);
+          setNewProjectModalOpen(false);
+        } else {
+          setPendingShareToken(token);
+          setNewProjectModalMode("share-import");
+          setNewProjectModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Failed to process pending shared project", error);
+        alert("Failed to open shared project. The link may be expired.");
+        clearPendingSharedToken();
+        setPendingShareToken(null);
+      } finally {
+        shareImportInProgressRef.current = false;
+      }
+    };
+
+    run();
+  }, [canvas, clearPendingSharedToken, finishSharedImport, getPendingSharedToken]);
 
   const handleSave = async () => {
     if (!canvas || isSaving) return;
@@ -208,6 +461,7 @@ const TopToolbar = ({ className }) => {
       }
     } else {
       // Якщо проект не збережений - показуємо модалку
+      setNewProjectModalMode("new-project");
       setNewProjectModalOpen(true);
     }
   };
@@ -751,7 +1005,15 @@ const TopToolbar = ({ className }) => {
       {/* Додати модалку */}
       {isSaveAsModalOpen && (
         <SaveAsModal
-          onClose={() => setSaveAsModalOpen(false)}
+          onClose={() => {
+            setSaveAsModalOpen(false);
+            if (shareImportNeedsSaveAs) {
+              setShareImportNeedsSaveAs(false);
+              clearPendingSharedToken();
+              setPendingShareToken(null);
+              setNewProjectModalMode("new-project");
+            }
+          }}
           onSaveAs={async (name) => {
             if (!name || !name.trim()) {
               alert("Please enter a project name");
@@ -763,14 +1025,27 @@ const TopToolbar = ({ className }) => {
               // Оновлюємо currentProjectId після збереження
               if (savedProject && savedProject.id) {
                 localStorage.setItem("currentProjectId", savedProject.id);
-                // Відправляємо подію для автоматичного відкриття полотна
-                window.dispatchEvent(
-                  new CustomEvent("project:opened", {
-                    detail: { projectId: savedProject.id },
-                  })
-                );
+                // For normal Save As we auto-open the saved project canvas.
+                // During share-import flow this event is intentionally skipped,
+                // because the shared project will be opened right after save.
+                if (!shareImportNeedsSaveAs) {
+                  window.dispatchEvent(
+                    new CustomEvent("project:opened", {
+                      detail: { projectId: savedProject.id },
+                    })
+                  );
+                }
               }
-              // Не закриваємо модалку після збереження - користувач може захотіти зберегти ще проекти
+
+              if (shareImportNeedsSaveAs) {
+                const token = String(pendingShareToken || "").trim();
+                if (token) {
+                  await finishSharedImport(token);
+                }
+                setShareImportNeedsSaveAs(false);
+                setNewProjectModalMode("new-project");
+                setSaveAsModalOpen(false);
+              }
             } catch (e) {
               console.error("Save as failed:", e);
               alert("Failed to save project. Please try again.");
@@ -826,11 +1101,33 @@ const TopToolbar = ({ className }) => {
       )}
       {isNewProjectModalOpen && (
         <NewProjectsModal
-          onClose={() => setNewProjectModalOpen(false)}
+          onClose={() => {
+            const preservePending = preservePendingShareOnModalCloseRef.current;
+            preservePendingShareOnModalCloseRef.current = false;
+
+            if (newProjectModalMode === "share-import" && !preservePending) {
+              clearPendingSharedToken();
+              setPendingShareToken(null);
+            }
+            setNewProjectModalOpen(false);
+            setNewProjectModalMode("new-project");
+          }}
           onRequestSaveAs={() => {
             setNewProjectModalOpen(false);
             setSaveAsModalOpen(true);
           }}
+          message={
+            newProjectModalMode === "share-import" ? (
+              <>
+                Before opening a <strong>Shared Project</strong>, please <strong>Save</strong> or{' '}
+                <strong>Discard</strong> your current work.
+              </>
+            ) : undefined
+          }
+          onSave={newProjectModalMode === "share-import" ? handleShareImportSave : undefined}
+          onDiscard={
+            newProjectModalMode === "share-import" ? handleShareImportDiscard : undefined
+          }
         />
       )}
     </div>

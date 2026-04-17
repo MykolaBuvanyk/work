@@ -751,6 +751,9 @@ const YourProjectsModal = ({ onClose }) => {
         }
 
         setSelectedProjects([]);
+        try {
+          window.dispatchEvent(new CustomEvent("projects:open-preorder"));
+        } catch {}
         onClose && onClose();
         return;
       } catch (e) {
@@ -776,6 +779,9 @@ const YourProjectsModal = ({ onClose }) => {
       } catch {}
 
       setSelectedProjects([]);
+      try {
+        window.dispatchEvent(new CustomEvent("projects:open-preorder"));
+      } catch {}
       onClose && onClose();
     } catch (error) {
       console.error("Failed to add canvases to current project:", error);

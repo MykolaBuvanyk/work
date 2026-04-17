@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
 import { useSelector } from "react-redux";
@@ -349,6 +349,7 @@ const InfoAboutProject = () => {
   const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
   const [isPayOpen,setIsPayOpen]=useState(false);
   const { canvas } = useCanvasContext();
+  const onCartClickRef = useRef(null);
 
   const user=useSelector((state)=>state.user);
   const normalizedUserType = String(user?.user?.type || "").trim().toLowerCase();
@@ -658,6 +659,25 @@ const InfoAboutProject = () => {
     }
   };
 
+  useEffect(() => {
+    onCartClickRef.current = onCartClick;
+  }, [onCartClick]);
+
+  useEffect(() => {
+    const handleOpenPreorderFromProjects = () => {
+      const handler = onCartClickRef.current;
+      if (typeof handler === 'function') {
+        handler();
+      }
+    };
+
+    window.addEventListener('projects:open-preorder', handleOpenPreorderFromProjects);
+
+    return () => {
+      window.removeEventListener('projects:open-preorder', handleOpenPreorderFromProjects);
+    };
+  }, []);
+
   const handleOrderTestClose = () => {
     setIsOrderTestOpen(false);
   };
@@ -704,13 +724,20 @@ const InfoAboutProject = () => {
     setIsPayOpen(true)
   };
 
-  const handleOrderSuccessClose = async() => {
+  const handleOrderSuccessClose = () => {
     setIsOrderSuccessOpen(false);
-    try{
-      const res=await $authHost.post('cart/sendReviewAndComent',{id:localStorage.getItem('MySqlOrderId'),rating:reviews.rating,comment:reviews.comment});
-    }catch(err){
-      console.log("Помилка надсилання відгуку "+err);
-    }
+  };
+
+  const handleOrderSuccessSend = ({ rating, comment }) => {
+    setIsOrderSuccessOpen(false);
+
+    $authHost.post('cart/sendReviewAndComent', {
+      id: localStorage.getItem('MySqlOrderId'),
+      rating,
+      comment,
+    }).catch((err) => {
+      console.log('Помилка надсилання відгуку ' + err);
+    });
   };
 
   const [reviews,setReviews]=useState({rating:0,comment:''});
@@ -853,7 +880,13 @@ const InfoAboutProject = () => {
         />
       )}
 
-      {isOrderSuccessOpen && <ThankYou setData={setReviews} onClose={handleOrderSuccessClose} />}
+      {isOrderSuccessOpen && (
+        <ThankYou
+          setData={setReviews}
+          onClose={handleOrderSuccessClose}
+          onSend={handleOrderSuccessSend}
+        />
+      )}
     </div>
   );
 };

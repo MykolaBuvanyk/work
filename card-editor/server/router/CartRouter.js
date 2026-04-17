@@ -2339,6 +2339,13 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object' ? orderMongo.checkout : {};
     const deliveryAddress = hasAddressContent(checkout?.deliveryAddress) ? checkout.deliveryAddress : null;
     const summary = buildDeliveryNoteSummary(order, orderMongo);
+    const estimateDeliveryBlockUnits = (primaryText, secondaryText = '') => {
+      const combined = `${String(primaryText || '')} ${String(secondaryText || '')}`.trim();
+      const length = combined.length;
+      if (length > 340) return 3;
+      if (length > 190) return 2;
+      return 1;
+    };
     const orderDate = escapeHtml(formatInvoiceDate(order.createdAt));
     const customerNumber = escapeHtml(order.userId);
     const orderNumber = escapeHtml(order.id);
@@ -2348,6 +2355,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const accessoriesSummary = summary.accessories.length
       ? summary.accessories.map((item) => `${escapeHtml(item.qty)} ${escapeHtml(item.name)}`).join('; ')
       : 'No accessories selected';
+    const accessoriesUnits = estimateDeliveryBlockUnits(
+      `Accessories: ${summary.accessories.length} Types`,
+      accessoriesSummary
+    );
     const accessoriesBlockHtml = `
     <div class="item-block">
       <div class="col-left">Accessories: ${escapeHtml(summary.accessories.length)} Types:</div>
@@ -2355,10 +2366,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     </div>`;
     const shippingCompany = deliveryAddress?.companyName || '';
     const shippingName = deliveryAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(hasContent).join(' ');
-    const shippingAddressLine1 = [deliveryAddress?.address1, deliveryAddress?.address2, deliveryAddress?.address3]
-      .filter(hasContent)
-      .join(', ');
-    const shippingAddressLine2 = [deliveryAddress?.postalCode, deliveryAddress?.town].filter(hasContent).join(' ');
+    const shippingAddressLine1 = deliveryAddress?.address1 || order.user?.address || '';
+    const shippingAddressLine2 = deliveryAddress?.address2 || order.user?.address2 || '';
+    const shippingAddressLine3 = deliveryAddress?.address3 || order.user?.address3 || '';
+    const shippingAddressLine4 = [deliveryAddress?.postalCode, deliveryAddress?.town].filter(hasContent).join(' ') || [order.user?.postcode, order.user?.city].filter(hasContent).join(' ');
     const shippingCountry = deliveryAddress?.country || order.country || order.user?.country || '';
     const shippingPhone = deliveryAddress?.mobile || order.user?.phone || '';
     const shippingAddressHtml = [
@@ -2366,6 +2377,8 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       shippingName,
       shippingAddressLine1,
       shippingAddressLine2,
+      shippingAddressLine3,
+      shippingAddressLine4,
       shippingCountry,
       shippingPhone ? `Phone: ${shippingPhone}` : '',
     ]
@@ -2387,10 +2400,11 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
           const copiesCount = Math.max(1, Math.floor(toNumber(sign?.copiesCount, 1)));
           const signTitle = `${String(sign?.title || `Sign ${index + 1}`)}${copiesCount > 1 ? ` (${copiesCount} pcs)` : ''}`;
           const signMetaLine = [String(sign?.metaLine || '').trim(), ...countsSummary].filter(hasContent).join(', ');
+          const signUnits = estimateDeliveryBlockUnits(signTitle, `${signMetaLine} ${String(sign?.textLine || '—')}`);
 
           return {
             section: 'sign',
-            units: 1,
+            units: signUnits,
             html: `
     <div class="item-block">
       <div class="col-left">${escapeHtml(signTitle)}:</div>
@@ -2412,8 +2426,8 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       }];
 
     const pagedDeliveryBlocks = paginatePdfBlocks(
-      [{ section: 'accessory', units: 1, html: accessoriesBlockHtml }, ...signBlocks],
-        15,
+      [{ section: 'accessory', units: accessoriesUnits, html: accessoriesBlockHtml }, ...signBlocks],
+        14,
         18
     );
 
@@ -3440,8 +3454,21 @@ CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
         }
       ]
   });
-  SendEmailForStatus.SendToAdminNewOrder(order,comment,rating)
-  SendEmailForStatus.CreateOrder(order);
+  if (!order) {
+    return resp.status(404).json({ message: 'Order not found' });
+  }
+
+  // Respond immediately so UI can close modal; heavy email work continues in background.
+  resp.json({ ok: true });
+
+  Promise.all([
+    SendEmailForStatus.SendToAdminNewOrder(order,comment,rating),
+    SendEmailForStatus.CreateOrder(order),
+  ]).catch((emailErr) => {
+    console.error('sendReviewAndComent async processing error:', emailErr);
+  });
+
+  return;
 
 
     

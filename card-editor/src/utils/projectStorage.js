@@ -911,9 +911,32 @@ export async function getAllProjects(options = {}) {
       try {
         const remoteProjects = await fetchMyProjects();
         if (Array.isArray(remoteProjects)) {
+          const localProjects = await listLocalProjects();
+          const localByMongoId = new Map();
+          const localByClientId = new Map();
+
+          localProjects.forEach((project) => {
+            const mongoId = String(project?.mongoId || "").trim();
+            if (mongoId) {
+              localByMongoId.set(mongoId, project);
+            }
+
+            const clientId = String(project?.clientProjectId || project?.id || "").trim();
+            if (clientId) {
+              localByClientId.set(clientId, project);
+            }
+          });
+
           const mapped = remoteProjects
             .map((item) => {
-              const mappedProject = mapRemoteToLocalProject(item, null);
+              const remoteMongoId = String(item?.id || "").trim();
+              const remoteClientId = String(item?.clientProjectId || "").trim();
+              const existingLocal =
+                localByMongoId.get(remoteMongoId) ||
+                localByClientId.get(remoteClientId) ||
+                null;
+
+              const mappedProject = mapRemoteToLocalProject(item, existingLocal);
               if (!mappedProject) return null;
               const mongoId = String(item?.id || "").trim();
               if (!mongoId) return mappedProject;
@@ -1364,17 +1387,25 @@ export async function markProjectAsOrdered(projectId, orderedAt = Date.now()) {
       updatedAt: Math.max(Number(existing.updatedAt || 0), nextTimestamp),
     };
 
-    await putProject(updated);
+    let finalProject = updated;
+    await putProject(finalProject);
+
+    if (shouldUseRemoteProjects()) {
+      const synced = await syncProjectToMongoOnSave(finalProject, { isSaveAs: false });
+      if (synced && synced !== finalProject) {
+        finalProject = await putProject(synced);
+      }
+    }
 
     try {
       window.dispatchEvent(
         new CustomEvent("project:canvasesUpdated", {
-          detail: { projectId: updated.id },
+          detail: { projectId: finalProject.id },
         })
       );
     } catch {}
 
-    return updated;
+    return finalProject;
   } catch {
     return null;
   }

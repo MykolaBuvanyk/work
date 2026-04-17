@@ -180,13 +180,30 @@ const ProjectCanvasesGrid = () => {
       } catch {}
     };
     const switched = () => {
-      // Скидаємо флаг при переключенні проекту
+      // Скидаємо флаг і моментально очищаємо локальний список,
+      // щоб не мигали полотна попереднього проекту.
       initialCanvasLoadRef.current = false;
+      currentUnsavedIdRef.current = null;
+      currentProjectCanvasIdRef.current = null;
+      setSelectedId(null);
+      setProject({ id: null, canvases: [] });
+      setUnsavedSigns([]);
+      setIsProjectLoaded(false);
+      setIsUnsavedLoaded(false);
+      loadUnsaved();
       load();
     };
     const reset = () => {
-      // Скидаємо флаг при reset проекту
+      // Під час reset гарантовано очищаємо попередні дані перед завантаженням нових.
       initialCanvasLoadRef.current = false;
+      currentUnsavedIdRef.current = null;
+      currentProjectCanvasIdRef.current = null;
+      setSelectedId(null);
+      setProject({ id: null, canvases: [] });
+      setUnsavedSigns([]);
+      setIsProjectLoaded(false);
+      setIsUnsavedLoaded(false);
+      loadUnsaved();
       load();
     };
     const unsavedUpdated = () => loadUnsaved();
@@ -196,6 +213,22 @@ const ProjectCanvasesGrid = () => {
       console.log('Project opened event received, resetting canvas load flag');
       const projectIdFromEvent = e?.detail?.projectId;
       initialCanvasLoadRef.current = false;
+
+      // Ignore stale/open-race events that don't match the currently active project.
+      try {
+        const currentProjectId = localStorage.getItem('currentProjectId');
+        if (
+          projectIdFromEvent &&
+          currentProjectId &&
+          String(projectIdFromEvent) !== String(currentProjectId)
+        ) {
+          console.log('Ignoring stale project:opened event', {
+            eventProjectId: projectIdFromEvent,
+            currentProjectId,
+          });
+          return;
+        }
+      } catch {}
 
       // Відкриваємо перше полотно проекту
       setTimeout(async () => {
@@ -243,8 +276,12 @@ const ProjectCanvasesGrid = () => {
                 }
               })();
             const alreadyInProject = activeCanvasId && canvases.find(c => c.id === activeCanvasId);
+            const isActuallyLoadedNow =
+              !!currentProjectCanvasIdRef.current &&
+              currentProjectCanvasIdRef.current === activeCanvasId &&
+              !currentUnsavedIdRef.current;
 
-            if (alreadyInProject) {
+            if (alreadyInProject && isActuallyLoadedNow) {
               console.log(
                 'Active canvas already belongs to this project, staying on it:',
                 activeCanvasId

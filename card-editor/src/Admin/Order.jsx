@@ -1778,13 +1778,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         <div />
       </div>
       <div className="row">
-        <p>Massage to Production:</p>
+        <p>Message to Production:</p>
         <span>{manufacturerNote || '---'}</span>
-        <div />
-      </div>
-      <div className="row">
-        <p>Additional information:</p>
-        <span>{additionalInformationMessage || '---'}</span>
         <div />
       </div>
       <div className="urls">

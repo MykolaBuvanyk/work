@@ -53,6 +53,7 @@ class AuthController {
         city2,
         country2,
         state2,
+        additional,
         password,
         tellAbout
       } = req.body;
@@ -113,6 +114,7 @@ class AuthController {
         country2: country2 || null,
         state2: state2 || null,
         weWill: weWill || null,
+        additional: additional || null,
         password: hashedPassword,
         tellAbout: tellAbout||null
       });

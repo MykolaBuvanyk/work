@@ -919,6 +919,19 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         return svgByBaseId.get(cacheKey);
       }
 
+      const persistedSvg =
+        (typeof placement?.svg === 'string' && placement.svg.trim()) ||
+        (typeof placement?.previewSvg === 'string' && placement.previewSvg.trim()) ||
+        (typeof placement?.previewSVG === 'string' && placement.previewSVG.trim()) ||
+        null;
+
+      if (persistedSvg) {
+        if (cacheKey) {
+          svgByBaseId.set(cacheKey, persistedSvg);
+        }
+        return persistedSvg;
+      }
+
       const generatedSvg = await generateSvgMarkupFromJsonTemplate(
         placement?.jsonTemplate,
         {
@@ -968,12 +981,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           parsedSvgForPdf:
             previewData?.type === 'svg' &&
             typeof rawSvgMarkup === 'string' &&
-            /\bid="parsed-svg-/i.test(rawSvgMarkup),
+            /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
           previewImageUrl: previewData?.type === 'png' ? previewData.url : null,
           hasUploadedSvg:
             previewData?.type === 'svg' &&
             typeof rawSvgMarkup === 'string' &&
-            /(?:isUploadedImage|data-uploaded-svg)="true"/i.test(rawSvgMarkup),
+            /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
           sourceWidth: placement.sourceWidth || placement.width,
           sourceHeight: placement.sourceHeight || placement.height,
           customBorder: placement.customBorder || null,
@@ -1209,6 +1222,19 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         return svgByBaseId.get(cacheKey);
       }
 
+      const persistedSvg =
+        (typeof placement?.svg === 'string' && placement.svg.trim()) ||
+        (typeof placement?.previewSvg === 'string' && placement.previewSvg.trim()) ||
+        (typeof placement?.previewSVG === 'string' && placement.previewSVG.trim()) ||
+        null;
+
+      if (persistedSvg) {
+        if (cacheKey) {
+          svgByBaseId.set(cacheKey, persistedSvg);
+        }
+        return persistedSvg;
+      }
+
       const generatedSvg = await generateSvgMarkupFromJsonTemplate(
         placement?.jsonTemplate,
         {
@@ -1261,12 +1287,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           parsedSvgForPdf:
             previewData?.type === 'svg' &&
             typeof rawSvgMarkup === 'string' &&
-            /\bid="parsed-svg-/i.test(rawSvgMarkup),
+            /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
           previewImageUrl: previewData?.type === 'png' ? previewData.url : null,
           hasUploadedSvg:
             previewData?.type === 'svg' &&
             typeof rawSvgMarkup === 'string' &&
-            /(?:isUploadedImage|data-uploaded-svg)="true"/i.test(rawSvgMarkup),
+            /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
           sourceWidth: placement.sourceWidth || placement.width,
           sourceHeight: placement.sourceHeight || placement.height,
           customBorder: placement.customBorder || null,
@@ -1307,6 +1333,43 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     setIsExporting(true);
     try {
       await ensureOrderDesignFontsLoaded(designs);
+
+      console.log('[PDF_DEBUG][Order] export payload summary', {
+        exportEndpoint,
+        sheetLabel: sheet.label || 'sheet',
+        timestamp: new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19),
+        formatKey: localFormatKey,
+        exportMode: localExportMode,
+        spacingMm: localSignSpacing,
+        sheetsCount: preparedSheets.length,
+        sheets: preparedSheets.map((preparedSheet, sheetIndex) => ({
+          sheetIndex,
+          id: preparedSheet?.id || null,
+          name: preparedSheet?.name || null,
+          width: preparedSheet?.width ?? null,
+          height: preparedSheet?.height ?? null,
+          placementsCount: Array.isArray(preparedSheet?.placements) ? preparedSheet.placements.length : 0,
+          placements: Array.isArray(preparedSheet?.placements)
+            ? preparedSheet.placements.map((placement, placementIndex) => ({
+                placementIndex,
+                id: placement?.id || null,
+                baseId: placement?.baseId || null,
+                previewType: placement?.previewType || null,
+                svgMarkupLength: String(placement?.svgMarkup || '').length,
+                previewImageUrlLength: String(placement?.previewImageUrl || '').length,
+                hasUploadedSvg: placement?.hasUploadedSvg === true,
+                parsedSvgForPdf: placement?.parsedSvgForPdf === true,
+                sourceWidth: placement?.sourceWidth ?? null,
+                sourceHeight: placement?.sourceHeight ?? null,
+                customBorder: placement?.customBorder ? true : false,
+                materialColor: placement?.materialColor ?? null,
+                materialThicknessMm: placement?.materialThicknessMm ?? null,
+                isAdhesiveTape: placement?.isAdhesiveTape === true,
+                themeStrokeColor: placement?.themeStrokeColor ?? null,
+              }))
+            : [],
+        })),
+      });
 
       const response = await fetch(exportEndpoint, {
         method: 'POST',

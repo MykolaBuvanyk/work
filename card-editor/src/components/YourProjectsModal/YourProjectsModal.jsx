@@ -18,6 +18,7 @@ import {
   restoreElementProperties,
   extractToolbarState,
 } from "../../utils/projectStorage";
+import { sanitizeFabricJsonForLoad } from "../../utils/sanitizeFabricJsonForLoad";
 import { createShareLink } from "../../http/share";
 
 
@@ -128,6 +129,8 @@ const YourProjectsModal = ({ onClose }) => {
         renderOnAddRemove: false,
       });
 
+      const safeCanvasJson = sanitizeFabricJsonForLoad(canvasJson);
+
       await new Promise((resolve, reject) => {
         let settled = false;
         const done = () => {
@@ -137,7 +140,7 @@ const YourProjectsModal = ({ onClose }) => {
         };
 
         try {
-          const maybePromise = staticCanvas.loadFromJSON(canvasJson, done);
+          const maybePromise = staticCanvas.loadFromJSON(safeCanvasJson, done);
           if (maybePromise && typeof maybePromise.then === "function") {
             maybePromise.then(done).catch((err) => {
               if (settled) return;
@@ -325,6 +328,8 @@ const YourProjectsModal = ({ onClose }) => {
   const loadCanvasWithRestore = async (canvasEntry) => {
     if (!canvas || !canvasEntry?.json || typeof canvas.loadFromJSON !== "function") return;
 
+    const safeCanvasJson = sanitizeFabricJsonForLoad(canvasEntry.json);
+
     const toolbarState = canvasEntry?.toolbarState || extractToolbarState(canvasEntry);
     canvas.__suspendUndoRedo = true;
 
@@ -337,7 +342,7 @@ const YourProjectsModal = ({ onClose }) => {
           resolve();
         };
         try {
-          const maybePromise = canvas.loadFromJSON(canvasEntry.json, done);
+          const maybePromise = canvas.loadFromJSON(safeCanvasJson, done);
           if (maybePromise && typeof maybePromise.then === "function") {
             maybePromise.then(done).catch((err) => {
               if (settled) return;

@@ -6291,6 +6291,7 @@ const Toolbar = ({ formData }) => {
     strokeOnly,
     svgDebug,
     svgDebugEnabled,
+    useServerClean = true,
   }) => {
     const log = typeof svgDebug === 'function' ? svgDebug : () => {};
     const inputSvg = String(sourceSvg || '').trim();
@@ -6298,6 +6299,9 @@ const Toolbar = ({ formData }) => {
 
     let processed = inputSvg;
     try {
+      if (!useServerClean) {
+        log('clean skipped (client-approved svg source)', { sourceLength: inputSvg.length });
+      } else {
       const apiBase = String(import.meta.env.VITE_LAYOUT_API_SERVER || '/api/').trim();
       const baseWithSlash = apiBase.replace(/\/?$/, '/');
       const endpoint = /\/api\/$/i.test(baseWithSlash)
@@ -6323,6 +6327,7 @@ const Toolbar = ({ formData }) => {
           log('clean svg accepted', { cleanedLength: processed.length });
         }
       }
+      }
     } catch (cleanError) {
       console.warn('Server SVG clean failed, using fallback transform', cleanError);
       log('clean exception fallback', cleanError?.message || cleanError);
@@ -6333,6 +6338,35 @@ const Toolbar = ({ formData }) => {
     }
 
     return convertSvgToThemeColorPreserveAlpha(processed, theme);
+  };
+
+  const getUploadPreviewPrefix = (type) =>
+    type === 'raster' ? 'upload-preview-raster' : 'upload-preview-vector';
+
+  const isUploadPreviewAssetObject = (obj) => {
+    if (!obj || typeof obj !== 'object') return false;
+    if (obj.isUploadPreviewElement === true) return true;
+    return String(obj.uploadPreviewId || '').trim() !== '';
+  };
+
+  const buildSvgDebugInfo = ({ stage, sourceSvg = null, themedSvg = null, obj = null } = {}) => {
+    const lengthOf = (value) => (typeof value === 'string' ? value.trim().length : 0);
+    return {
+      stage,
+      sourceLength: lengthOf(sourceSvg),
+      themedLength: lengthOf(themedSvg),
+      objectType: obj?.type || null,
+      isUploadedImage: obj?.isUploadedImage === true,
+      isUploadedSvg: obj?.isUploadedSvg === true,
+      svgEvenOddHoles: obj?.svgEvenOddHoles === true,
+      uploadedSvgStrokeOnly: obj?.uploadedSvgStrokeOnly === true,
+      isUploadPreviewElement: obj?.isUploadPreviewElement === true,
+      uploadPreviewType: obj?.uploadPreviewType || null,
+      uploadPreviewId: obj?.uploadPreviewId || null,
+      useThemeColor: obj?.useThemeColor ?? null,
+      followThemeStroke: obj?.followThemeStroke ?? null,
+      originalSvgSourceLength: lengthOf(obj?.originalSvgSource),
+    };
   };
 
   const rebuildUploadedSvgFromSource = async (targetObj, themeColor) => {
@@ -6385,6 +6419,7 @@ const Toolbar = ({ formData }) => {
         strokeOnly: targetObj.uploadedSvgStrokeOnly === true,
         svgDebug: () => {},
         svgDebugEnabled: false,
+        useServerClean: false,
       });
       if (!themed) return null;
 
@@ -6426,9 +6461,18 @@ const Toolbar = ({ formData }) => {
         followThemeFill: false,
         isUploadedImage: true,
         isUploadedSvg: true,
+        isUploadPreviewElement: targetObj.isUploadPreviewElement === true,
+        uploadPreviewType: targetObj.uploadPreviewType || 'vector',
+        uploadPreviewId: targetObj.uploadPreviewId || null,
         svgEvenOddHoles: targetObj.svgEvenOddHoles === true,
         originalSvgSource: source,
         uploadedSvgStrokeOnly: targetObj.uploadedSvgStrokeOnly === true,
+        svgDebugInfo: buildSvgDebugInfo({
+          stage: 'rebuild-uploaded-svg',
+          sourceSvg: source,
+          themedSvg: themed,
+          obj: rebuilt,
+        }),
         initialFillColor: typeof rebuilt.fill === 'string' ? rebuilt.fill : null,
         initialStrokeColor: typeof rebuilt.stroke === 'string' ? rebuilt.stroke : 'transparent',
       });
@@ -6446,7 +6490,16 @@ const Toolbar = ({ formData }) => {
             followThemeFill: false,
             isUploadedImage: true,
             isUploadedSvg: true,
+            isUploadPreviewElement: targetObj.isUploadPreviewElement === true,
+            uploadPreviewType: targetObj.uploadPreviewType || 'vector',
+            uploadPreviewId: targetObj.uploadPreviewId || null,
             svgEvenOddHoles: targetObj.svgEvenOddHoles === true,
+            svgDebugInfo: buildSvgDebugInfo({
+              stage: 'rebuild-uploaded-svg-child',
+              sourceSvg: source,
+              themedSvg: themed,
+              obj: child,
+            }),
             initialFillColor: typeof child.fill === 'string' ? child.fill : null,
             initialStrokeColor: typeof child.stroke === 'string' ? child.stroke : 'transparent',
           });
@@ -6460,7 +6513,9 @@ const Toolbar = ({ formData }) => {
         applyPropsSafe(rebuilt, { fillRule: 'evenodd', clipRule: 'evenodd' });
       }
 
-      ensureShapeSvgId(rebuilt, canvas, { prefix: 'parsed-svg' });
+      ensureShapeSvgId(rebuilt, canvas, {
+        prefix: getUploadPreviewPrefix(targetObj.uploadPreviewType || 'vector'),
+      });
 
       const objects = canvas.getObjects() || [];
       const index = objects.indexOf(targetObj);
@@ -6528,7 +6583,10 @@ const Toolbar = ({ formData }) => {
     };
 
     objects.forEach(obj => {
+      const isUploadPreviewAsset = isUploadPreviewAssetObject(obj);
+
       if (
+        isUploadPreviewAsset &&
         obj?.isUploadedSvg === true &&
         typeof obj.originalSvgSource === 'string' &&
         obj.originalSvgSource.trim() !== ''
@@ -6539,7 +6597,12 @@ const Toolbar = ({ formData }) => {
 
       // Uploaded vectorized assets are usually groups; recolor children directly
       // to preserve transparent parts and avoid flattening the whole group.
-      if (obj?.type === 'group' && obj?.isUploadedImage === true && typeof obj.forEachObject === 'function') {
+      if (
+        isUploadPreviewAsset &&
+        obj?.type === 'group' &&
+        obj?.isUploadedImage === true &&
+        typeof obj.forEachObject === 'function'
+      ) {
         obj.forEachObject(child => {
           if (!child || typeof child.set !== 'function') return;
 
@@ -6647,10 +6710,12 @@ const Toolbar = ({ formData }) => {
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
         const allowUploadedVectorTheme =
-          obj.isUploadedSvg === true ||
-          (obj.isUploadedImage === true && (obj.useThemeColor === true || obj.followThemeStroke === true));
+          isUploadPreviewAsset &&
+          (obj.isUploadedSvg === true ||
+            (obj.isUploadedImage === true &&
+              (obj.useThemeColor === true || obj.followThemeStroke === true)));
         const applyThemeStroke =
-          followThemeStroke && (obj.isUploadedImage !== true || allowUploadedVectorTheme);
+          followThemeStroke && (!isUploadPreviewAsset || allowUploadedVectorTheme);
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6669,7 +6734,7 @@ const Toolbar = ({ formData }) => {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
-        } else if (obj.isUploadedImage === true && !allowUploadedVectorTheme) {
+        } else if (isUploadPreviewAsset && obj.isUploadedImage === true && !allowUploadedVectorTheme) {
           obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'circle-with-cut') {
@@ -6681,10 +6746,12 @@ const Toolbar = ({ formData }) => {
         const usesThemeColor = obj.useThemeColor === true;
         const followThemeStroke = obj.followThemeStroke !== false;
         const allowUploadedVectorTheme =
-          obj.isUploadedSvg === true ||
-          (obj.isUploadedImage === true && (obj.useThemeColor === true || obj.followThemeStroke === true));
+          isUploadPreviewAsset &&
+          (obj.isUploadedSvg === true ||
+            (obj.isUploadedImage === true &&
+              (obj.useThemeColor === true || obj.followThemeStroke === true)));
         const applyThemeStroke =
-          followThemeStroke && (obj.isUploadedImage !== true || allowUploadedVectorTheme);
+          followThemeStroke && (!isUploadPreviewAsset || allowUploadedVectorTheme);
 
         if (isTransparent) {
           obj.set({ fill: 'transparent' });
@@ -6703,7 +6770,7 @@ const Toolbar = ({ formData }) => {
           obj.set({ stroke: textColor });
         } else if (typeof obj.initialStrokeColor === 'string') {
           obj.set({ stroke: obj.initialStrokeColor });
-        } else if (obj.isUploadedImage === true && !allowUploadedVectorTheme) {
+        } else if (isUploadPreviewAsset && obj.isUploadedImage === true && !allowUploadedVectorTheme) {
           obj.set({ stroke: 'transparent' });
         }
       } else if (obj.type === 'line') {
@@ -10606,7 +10673,13 @@ const Toolbar = ({ formData }) => {
             if (!canvas || !finalSVG) return;
             try {
               const isSvgUpload = mode === 'svg';
+              const uploadPreviewType = isSvgUpload ? 'vector' : 'raster';
+              const uploadPreviewPrefix = getUploadPreviewPrefix(uploadPreviewType);
+              const uploadPreviewId = `upload-preview-${uuid()}`;
               const isThemeFollowUpload = mode === 'svg' || mode === 'raster';
+              const committedSvgSource = isSvgUpload
+                ? String(finalSVG || uploadSvgText || '').trim()
+                : null;
               const svgDebugEnabled =
                 typeof window !== 'undefined' &&
                 (window.__SVG_DEBUG__ === true || localStorage.getItem('svgDebug') === '1');
@@ -10619,7 +10692,7 @@ const Toolbar = ({ formData }) => {
               const theme =
                 (globalColors && (globalColors.strokeColor || globalColors.textColor)) || '#000';
               if (mode === 'svg') {
-                const sourceSvg = String(uploadSvgText || themedSVG || '').trim();
+                const sourceSvg = committedSvgSource || String(themedSVG || '').trim();
                 themedSVG = sourceSvg || themedSVG;
                 svgDebug('source prepared', {
                   sourceLength: sourceSvg.length,
@@ -10632,8 +10705,15 @@ const Toolbar = ({ formData }) => {
                   strokeOnly,
                   svgDebug,
                   svgDebugEnabled,
+                  useServerClean: false,
                 });
               } else if (!strokeOnly) {
+                console.log('[UPLOAD_DEBUG][raster] preparing raster upload', {
+                  mode,
+                  strokeOnly,
+                  inputLength: String(finalSVG || '').length,
+                  theme,
+                });
                 themedSVG = convertSvgToThemeMonochrome(themedSVG, theme);
               }
               if (strokeOnly) {
@@ -10696,8 +10776,17 @@ const Toolbar = ({ formData }) => {
                     svgEvenOddHoles: isSvgUpload,
                     followThemeFill: false,
                     isUploadedSvg: isSvgUpload,
-                    originalSvgSource: isSvgUpload ? String(uploadSvgText || '') : null,
+                    isUploadPreviewElement: true,
+                    uploadPreviewType,
+                    uploadPreviewId,
+                    originalSvgSource: committedSvgSource,
                     uploadedSvgStrokeOnly: isSvgUpload && strokeOnly === true,
+                    svgDebugInfo: buildSvgDebugInfo({
+                      stage: 'upload-confirm-root',
+                      sourceSvg: committedSvgSource || finalSVG,
+                      themedSvg: themedSVG,
+                      obj,
+                    }),
                     initialFillColor: typeof obj.fill === 'string' ? obj.fill : null,
                     initialStrokeColor:
                       typeof obj.stroke === 'string' ? obj.stroke : 'transparent',
@@ -10714,6 +10803,15 @@ const Toolbar = ({ formData }) => {
                         svgEvenOddHoles: isSvgUpload,
                         followThemeFill: false,
                         isUploadedSvg: isSvgUpload,
+                        isUploadPreviewElement: true,
+                        uploadPreviewType,
+                        uploadPreviewId,
+                        svgDebugInfo: buildSvgDebugInfo({
+                          stage: 'upload-confirm-child',
+                          sourceSvg: committedSvgSource || finalSVG,
+                          themedSvg: themedSVG,
+                          obj: child,
+                        }),
                         initialFillColor: typeof child.fill === 'string' ? child.fill : null,
                         initialStrokeColor:
                           typeof child.stroke === 'string' ? child.stroke : 'transparent',
@@ -10724,16 +10822,45 @@ const Toolbar = ({ formData }) => {
 
               // Tag as uploaded element so resize auto-fit can pick it up.
               try {
-                obj.set && obj.set({ isUploadedImage: true });
-                ensureShapeSvgId(obj, canvas, { prefix: 'parsed-svg' });
+                obj.set &&
+                  obj.set({
+                    isUploadedImage: true,
+                    isUploadPreviewElement: true,
+                    uploadPreviewType,
+                    uploadPreviewId,
+                  });
+                ensureShapeSvgId(obj, canvas, { prefix: uploadPreviewPrefix });
                 if (obj?.type === 'group' && typeof obj.forEachObject === 'function') {
                   obj.forEachObject(child => {
                     try {
-                      ensureShapeSvgId(child, canvas, { prefix: 'parsed-svg' });
+                      child.set &&
+                        child.set({
+                          isUploadPreviewElement: true,
+                          uploadPreviewType,
+                          uploadPreviewId,
+                        });
+                      ensureShapeSvgId(child, canvas, { prefix: uploadPreviewPrefix });
                     } catch {}
                   });
                 }
               } catch {}
+
+              console.log('[UPLOAD_DEBUG][raster] added upload to canvas', {
+                mode,
+                strokeOnly,
+                objectType: obj?.type || null,
+                isUploadedImage: obj?.isUploadedImage === true,
+                isUploadedSvg: obj?.isUploadedSvg === true,
+                fill: obj?.fill || null,
+                stroke: obj?.stroke || null,
+                fillRule: obj?.fillRule || null,
+                childCount:
+                  obj?.type === 'group' && typeof obj.getObjects === 'function'
+                    ? (obj.getObjects() || []).length
+                    : 0,
+                originalSvgSourceLength: String(obj?.originalSvgSource || '').trim().length,
+                svgDebugInfo: obj?.svgDebugInfo || null,
+              });
 
               // Center and scale
               obj.set({

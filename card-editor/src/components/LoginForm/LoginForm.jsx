@@ -29,10 +29,16 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
 
   const forgotPass=async()=>{
     try {
-      const res=await $host.post('auth/sendNewPassword',{email:forgotEmail});
+      const normalizedEmail = String(forgotEmail || '').trim().toLowerCase();
+      if (!normalizedEmail) {
+        alert('Please enter your e-mail address.');
+        return;
+      }
+      const res=await $host.post('auth/sendNewPassword',{email:normalizedEmail});
       alert('A new password has been sent to your email.');
     }catch(err){
-      alert('error');
+      const message = err?.response?.data?.message || 'Failed to send password email.';
+      alert(message);
     }
   }
 

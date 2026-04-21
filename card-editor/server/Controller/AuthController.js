@@ -23,6 +23,7 @@ const generateJwt = async (id, phone, firstName, surname, type, isRemember = tru
 class AuthController {
   static Register = async (req, res, next) => {
     try {
+      const payload = req.body || {};
       const {
         email,
         eMailInvoice,
@@ -49,6 +50,8 @@ class AuthController {
         phone2,
         address3,
         address4,
+        address5,
+        address6,
         postcode2,
         city2,
         country2,
@@ -56,7 +59,10 @@ class AuthController {
         additional,
         password,
         tellAbout
-      } = req.body;
+      } = payload;
+
+      const invoiceAddress2 = payload.address5 ?? payload.invoiceAddress2 ?? null;
+      const invoiceAddress3 = payload.address6 ?? payload.invoiceAddress3 ?? null;
 
       // Перевіряємо всі NOT NULL поля
       const requiredFields = {
@@ -109,6 +115,8 @@ class AuthController {
         phone2: phone2 || null,
         address3: address3 || null,
         address4: address4 || null,
+        address5: invoiceAddress2 || null,
+        address6: invoiceAddress3 || null,
         postcode2: postcode2 || null,
         city2: city2 || null,
         country2: country2 || null,
@@ -364,7 +372,7 @@ class AuthController {
   
   static NewPass = async (req, res, next) => {
     try {
-      const { email } = req.body;
+      const email = String(req?.body?.email || '').trim().toLowerCase();
 
       if (!email) {
         return next(ErrorApi.badRequest("Email is required"));
@@ -382,6 +390,7 @@ class AuthController {
 
       // 3) захешувати
       const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const previousHashedPassword = user.password;
 
       // 4) оновити пароль в базі
       user.password = hashedPassword;
@@ -399,7 +408,13 @@ class AuthController {
       // 6) відправити
       await sendEmail(email, htmlMessage, "Your new password");*/
 
-      SendEmailForStatus.SendUserNewPassword(user, newPassword);
+      try {
+        await SendEmailForStatus.SendUserNewPassword(user, newPassword);
+      } catch (emailErr) {
+        user.password = previousHashedPassword;
+        await user.save();
+        return next(ErrorApi.badRequest(`Password email was not sent: ${emailErr?.message || 'Unknown email error'}`));
+      }
 
       return res.json({ message: "New password sent successfully" });
 

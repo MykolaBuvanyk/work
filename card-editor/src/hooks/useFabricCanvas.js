@@ -3,6 +3,7 @@ import * as fabric from "fabric";
 import "../utils/CircleWithCut";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
+import { sanitizeFabricJsonForLoad } from "../utils/sanitizeFabricJsonForLoad";
 
 const scheduleFrame = (fn) => {
   if (typeof window === "undefined") {
@@ -49,6 +50,9 @@ const CUSTOM_PROPS = [
   "placeholder",
   "isUploadedImage",
   "isUploadedSvg",
+  "isUploadPreviewElement",
+  "uploadPreviewType",
+  "uploadPreviewId",
   "useThemeColor",
   "followThemeFill",
   "svgThemeFillEnabled",
@@ -110,6 +114,9 @@ export const useFabricCanvas = () => {
         canvas.setZoom?.(1);
 
         if (design.jsonTemplate) {
+          const safeJsonTemplate = sanitizeFabricJsonForLoad(
+            design.jsonTemplate
+          );
           await new Promise((resolve, reject) => {
             let settled = false;
             const finish = () => {
@@ -120,7 +127,7 @@ export const useFabricCanvas = () => {
 
             try {
               const maybePromise = canvas.loadFromJSON(
-                design.jsonTemplate,
+                safeJsonTemplate,
                 finish
               );
               if (maybePromise && typeof maybePromise.then === "function") {

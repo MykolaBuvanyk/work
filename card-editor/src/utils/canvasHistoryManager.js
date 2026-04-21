@@ -127,6 +127,7 @@ export class CanvasHistoryManager {
       "strokeLineJoin", "strokeMiterLimit", "isCircle", "selectable",
       "evented", "hasControls", "hasBorders", "customProperties",
       "id", "name", "originalSrc", "filters", "isUploadedImage", "isUploadedSvg", "useThemeColor",
+      "isUploadPreviewElement", "uploadPreviewType", "uploadPreviewId",
       "followThemeFill", "followThemeStroke", "svgThemeFillEnabled", "svgThemeStrokeEnabled", "svgEvenOddHoles", "initialFillColor", "initialStrokeColor",
       ...(options.extraProps || [])
     ];

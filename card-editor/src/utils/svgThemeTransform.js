@@ -1,4 +1,5 @@
 const LIGHT_TO_TRANSPARENT_LUMA = 160;
+const LIGHT_TO_WHITE_LUMA = 200;
 
 const NAMED_COLORS = {
   black: [0, 0, 0],
@@ -105,6 +106,12 @@ const toThemeColorPreserveAlphaValue = (rawValue, themeColor) => {
   const color = parseSvgColor(rawValue);
   if (!color) return rawValue;
   if (color.a <= 0.001) return "transparent";
+
+  // Keep light/white artwork white so uploaded SVGs preserve internal contrast
+  // after theme conversion, e.g. white text inside a dark filled shape.
+  if (luminance(color) >= LIGHT_TO_WHITE_LUMA) {
+    return "#ffffff";
+  }
 
   return themeColor;
 };

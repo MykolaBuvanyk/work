@@ -2882,9 +2882,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           id: placement?.id || null,
           previewType: placement?.previewType || null,
           hasSvgMarkup: !!placementSvgMarkup,
-          hasPreviewImageUrl:
-            typeof placement?.previewImageUrl === 'string' &&
-            String(placement.previewImageUrl).startsWith('data:image/'),
+          hasPreviewImageUrl: false,
           hasUploadedSvg: placement?.hasUploadedSvg === true,
         });
 
@@ -2962,19 +2960,6 @@ app.post('/api/layout-pdf', async (req, res) => {
               }
             }
             backgroundRects.forEach(rect => rect.parentNode?.removeChild(rect));
-
-            // Також видаляємо rect які посилаються на pattern (текстурні фони - дерево, карбон)
-            const rectsWithPattern = backgroundSvg.getElementsByTagName('rect');
-            const rectsToRemove = [];
-            for (let i = 0; i < rectsWithPattern.length; i++) {
-              const rect = rectsWithPattern[i];
-              const fill = rect.getAttribute('fill') || '';
-              // Якщо fill посилається на url(#...) - це може бути pattern
-              if (fill.startsWith('url(#') || fill.includes('url(')) {
-                rectsToRemove.push(rect);
-              }
-            }
-            rectsToRemove.forEach(rect => rect.parentNode?.removeChild(rect));
 
             // Barcode groups may still contain a solid background rect matching the canvas/theme.
             // Remove any non-bar rectangles inside marked barcode containers so PDF export keeps only the bars.

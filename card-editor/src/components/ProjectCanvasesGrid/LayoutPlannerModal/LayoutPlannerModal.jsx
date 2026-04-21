@@ -997,6 +997,60 @@ const ensureDesignFontsLoaded = async (designs = []) => {
 const resolveDesignJsonTemplate = (design = {}) =>
   design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
 
+const sanitizeFabricJsonForSvgExport = (jsonTemplate) => {
+  if (!jsonTemplate || typeof jsonTemplate !== "object") return jsonTemplate;
+
+  const visited = new WeakSet();
+
+  const isTextLikeNode = (node) => {
+    const type = typeof node?.type === "string" ? node.type.toLowerCase() : "";
+    if (type === "text" || type === "i-text" || type === "textbox") return true;
+    if (type.includes("text")) return true;
+
+    return (
+      Object.prototype.hasOwnProperty.call(node, "text") ||
+      Object.prototype.hasOwnProperty.call(node, "styles") ||
+      Object.prototype.hasOwnProperty.call(node, "fontFamily") ||
+      Object.prototype.hasOwnProperty.call(node, "fontSize")
+    );
+  };
+
+  const visitObject = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (visited.has(node)) return;
+    visited.add(node);
+
+    if (isTextLikeNode(node)) {
+      if (typeof node.text !== "string") {
+        node.text = node.text == null ? "" : String(node.text);
+      }
+      if (node.styles == null || typeof node.styles !== "object") {
+        node.styles = {};
+      }
+      if (node.fontFamily != null && typeof node.fontFamily !== "string") {
+        node.fontFamily = String(node.fontFamily);
+      }
+    }
+
+    Object.values(node).forEach((value) => {
+      if (!value || typeof value !== "object") return;
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          if (entry && typeof entry === "object") {
+            visitObject(entry);
+          }
+        });
+        return;
+      }
+      visitObject(value);
+    });
+  };
+
+  visitObject(jsonTemplate);
+
+  return jsonTemplate;
+};
+
 export const generateSvgMarkupFromJsonTemplate = async (
   jsonTemplate,
   { fallbackWidthMm = null, fallbackHeightMm = null } = {}
@@ -1024,7 +1078,9 @@ export const generateSvgMarkupFromJsonTemplate = async (
           ? fallbackHeightPx
           : 800;
 
-    const safeJsonTemplate = JSON.parse(JSON.stringify(jsonTemplate));
+    const safeJsonTemplate = sanitizeFabricJsonForSvgExport(
+      JSON.parse(JSON.stringify(jsonTemplate))
+    );
 
     staticCanvas = new fabric.StaticCanvas(null, {
       width,
@@ -2420,6 +2476,94 @@ const colorsMatch = (color1, color2) => {
   return norm1 === norm2;
 };
 
+const UPLOAD_PREVIEW_VECTOR_ID_PREFIX = "upload-preview-vector-";
+const UPLOAD_PREVIEW_RASTER_ID_PREFIX = "upload-preview-raster-";
+
+const hasUploadPreviewIdPrefix = (value = "") => {
+  const id = String(value).trim().toLowerCase();
+  return (
+    id.startsWith(UPLOAD_PREVIEW_VECTOR_ID_PREFIX) ||
+    id.startsWith(UPLOAD_PREVIEW_RASTER_ID_PREFIX)
+  );
+};
+
+const isUploadPreviewNodeById = (node) => {
+  let current = node;
+  while (current && current.nodeType === 1) {
+    if (hasUploadPreviewIdPrefix(current.getAttribute?.("id") || "")) {
+      return true;
+    }
+    current = current.parentNode;
+  }
+  return false;
+};
+
+const isUploadPreviewColorValue = (value = "") => {
+  const raw = String(value).trim();
+  if (!raw) return false;
+
+  const lowerRaw = raw.toLowerCase();
+  if (lowerRaw.startsWith("url(")) return false;
+
+  const normalized = normalizeColorValue(raw);
+  if (!normalized) return false;
+  if (
+    normalized === "none" ||
+    normalized === "transparent" ||
+    normalized === "rgba(0,0,0,0)"
+  ) {
+    return false;
+  }
+
+  return true;
+};
+
+const applyUploadPreviewIdOnlyOverrides = (
+  rootElement,
+  strokeColor = TEXT_STROKE_COLOR
+) => {
+  if (!rootElement?.querySelectorAll) return;
+
+  const elements = rootElement.querySelectorAll("*");
+  elements.forEach((node) => {
+    if (!isUploadPreviewNodeById(node)) return;
+    if (isNodeInsideCutShape(node)) return;
+    if (isBorderOrOutlineNode(node)) return;
+
+    const strokeAttr = node.getAttribute("stroke");
+    if (isUploadPreviewColorValue(strokeAttr)) {
+      node.setAttribute("stroke", strokeColor);
+    }
+
+    const fillAttr = node.getAttribute("fill");
+    if (isUploadPreviewColorValue(fillAttr)) {
+      node.setAttribute("fill", strokeColor);
+    }
+
+    const styleAttr = node.getAttribute("style");
+    if (!styleAttr) return;
+
+    let updated = styleAttr;
+    let changed = false;
+
+    updated = updated.replace(/stroke\s*:\s*([^;]+)/gi, (full, rawValue) => {
+      if (!isUploadPreviewColorValue(rawValue)) return full;
+      changed = true;
+      return `stroke: ${strokeColor}`;
+    });
+
+    updated = updated.replace(/fill\s*:\s*([^;]+)/gi, (full, rawValue) => {
+      if (!isUploadPreviewColorValue(rawValue)) return full;
+      changed = true;
+      return `fill: ${strokeColor}`;
+    });
+
+    if (changed) {
+      node.setAttribute("style", updated);
+    }
+  });
+};
+
 const isBorderOrOutlineNode = (node) => {
   let current = node;
   while (current && current.nodeType === 1) {
@@ -2455,6 +2599,9 @@ const convertThemeColorElementsToStroke = (rootElement, themeStrokeColor) => {
       return;
     }
     if (isBorderOrOutlineNode(node)) {
+      return;
+    }
+    if (isUploadPreviewNodeById(node)) {
       return;
     }
     const tagName = node?.tagName ? node.tagName.toLowerCase() : "";
@@ -5635,6 +5782,7 @@ const buildPlacementPreview = (placement, options = {}) => {
           placement.themeStrokeColor
         );
       }
+      applyUploadPreviewIdOnlyOverrides(exportElement, TEXT_STROKE_COLOR);
 
       normalizeHoleShapes(exportElement);
       recolorStrokeAttributes(exportElement, OUTLINE_STROKE_COLOR);
@@ -5703,6 +5851,7 @@ const buildPlacementPreview = (placement, options = {}) => {
           placement.themeStrokeColor
         );
       }
+      applyUploadPreviewIdOnlyOverrides(previewElement, TEXT_STROKE_COLOR);
 
       normalizeHoleShapes(previewElement);
 
@@ -6621,12 +6770,12 @@ const LayoutPlannerModal = ({
             parsedSvgForPdf:
               previewData?.type === "svg" &&
               typeof rawSvgMarkup === "string" &&
-              /\bid="parsed-svg-/i.test(rawSvgMarkup),
+              /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
             previewImageUrl: previewData?.type === "png" ? previewData.url : null,
             hasUploadedSvg:
               previewData?.type === "svg" &&
               typeof rawSvgMarkup === "string" &&
-              /(?:isUploadedImage|data-uploaded-svg)="true"/i.test(rawSvgMarkup),
+              /\bid="(?:upload-preview-vector-|upload-preview-raster-)/i.test(rawSvgMarkup),
             sourceWidth: placement.sourceWidth || placement.width,
             sourceHeight: placement.sourceHeight || placement.height,
             customBorder: placement.customBorder || null,

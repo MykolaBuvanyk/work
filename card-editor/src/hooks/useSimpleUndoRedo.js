@@ -26,6 +26,7 @@ export const useSimpleUndoRedo = () => {
         "cornerRadiusMm", "isCutElement", "cutType", "cutSource", "isStaticCutShape", "strokeUniform",
         "fillRule", "clipRule",
         "strokeLineJoin", "strokeMiterLimit", "isCircle", "isUploadedImage", "isUploadedSvg", "useThemeColor",
+        "isUploadPreviewElement", "uploadPreviewType", "uploadPreviewId",
         "followThemeFill", "followThemeStroke", "svgThemeFillEnabled", "svgThemeStrokeEnabled", "svgEvenOddHoles", "initialFillColor", "initialStrokeColor"
       ];
 

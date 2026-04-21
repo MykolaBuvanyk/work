@@ -631,6 +631,80 @@ const SVG_FIELDS_FOR_MONGO_STRIP = new Set([
   "originalSvgSource",
 ]);
 
+const getSvgDebugStringLength = (value) =>
+  typeof value === "string" ? value.trim().length : 0;
+
+const getSvgDebugSourceSummary = (value) => {
+  const length = getSvgDebugStringLength(value);
+  return {
+    present: length > 0,
+    length,
+  };
+};
+
+const buildSvgDebugInfo = ({ stage, index = null, liveObj = null, serializedObj = null } = {}) => {
+  const liveSvg = getSvgDebugSourceSummary(liveObj?.svg);
+  const livePreviewSvg = getSvgDebugSourceSummary(liveObj?.previewSvg ?? liveObj?.previewSVG);
+  const liveOriginalSvgSource = getSvgDebugSourceSummary(liveObj?.originalSvgSource);
+
+  const serializedSvg = getSvgDebugSourceSummary(serializedObj?.svg);
+  const serializedPreviewSvg = getSvgDebugSourceSummary(
+    serializedObj?.previewSvg ?? serializedObj?.previewSVG
+  );
+  const serializedOriginalSvgSource = getSvgDebugSourceSummary(serializedObj?.originalSvgSource);
+
+  const resolvedSource =
+    serializedSvg.present
+      ? "svg"
+      : serializedPreviewSvg.present
+        ? "previewSvg"
+        : serializedOriginalSvgSource.present
+          ? "originalSvgSource"
+          : liveSvg.present
+            ? "live.svg"
+            : livePreviewSvg.present
+              ? "live.previewSvg"
+              : liveOriginalSvgSource.present
+                ? "live.originalSvgSource"
+                : null;
+
+  return {
+    stage,
+    index,
+    type: serializedObj?.type || liveObj?.type || null,
+    isUploadedImage: serializedObj?.isUploadedImage === true || liveObj?.isUploadedImage === true,
+    isUploadedSvg: serializedObj?.isUploadedSvg === true || liveObj?.isUploadedSvg === true,
+    flags: {
+      useThemeColor: serializedObj?.useThemeColor ?? liveObj?.useThemeColor ?? null,
+      followThemeFill: serializedObj?.followThemeFill ?? liveObj?.followThemeFill ?? null,
+      followThemeStroke: serializedObj?.followThemeStroke ?? liveObj?.followThemeStroke ?? null,
+      svgThemeFillEnabled:
+        serializedObj?.svgThemeFillEnabled ?? liveObj?.svgThemeFillEnabled ?? null,
+      svgThemeStrokeEnabled:
+        serializedObj?.svgThemeStrokeEnabled ?? liveObj?.svgThemeStrokeEnabled ?? null,
+      svgEvenOddHoles: serializedObj?.svgEvenOddHoles ?? liveObj?.svgEvenOddHoles ?? null,
+      uploadedSvgStrokeOnly:
+        serializedObj?.uploadedSvgStrokeOnly ?? liveObj?.uploadedSvgStrokeOnly ?? null,
+    },
+    live: {
+      svg: liveSvg,
+      previewSvg: livePreviewSvg,
+      originalSvgSource: liveOriginalSvgSource,
+    },
+    serialized: {
+      svg: serializedSvg,
+      previewSvg: serializedPreviewSvg,
+      originalSvgSource: serializedOriginalSvgSource,
+    },
+    missingSerializedFromLive: {
+      svg: liveSvg.present && !serializedSvg.present,
+      previewSvg: livePreviewSvg.present && !serializedPreviewSvg.present,
+      originalSvgSource: liveOriginalSvgSource.present && !serializedOriginalSvgSource.present,
+    },
+    resolvedSource,
+  };
+};
+
 const stripSvgFieldsDeepForMongo = (value) => {
   if (Array.isArray(value)) {
     let changed = false;
@@ -1403,6 +1477,15 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "imageSource",
       "isUploadedImage",
       "isUploadedSvg",
+      "isUploadPreviewElement",
+      "uploadPreviewType",
+      "uploadPreviewId",
+      "svg",
+      "previewSvg",
+      "previewSVG",
+      "originalSvgSource",
+      "uploadedSvgStrokeOnly",
+      "svgDebugInfo",
       "filters",
       "isUploadedImage",
 
@@ -1554,6 +1637,23 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
     };
 
     json = cleanObject(json);
+
+    if (json && Array.isArray(json.objects)) {
+      const liveObjects = typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
+      json.objects = json.objects.map((obj, idx) => {
+        const liveObj = liveObjects[idx] || null;
+        const nextObj = obj && typeof obj === "object" ? { ...obj } : obj;
+        if (nextObj && typeof nextObj === "object") {
+          nextObj.svgDebugInfo = buildSvgDebugInfo({
+            stage: "exportCanvas",
+            index: idx,
+            liveObj,
+            serializedObj: nextObj,
+          });
+        }
+        return nextObj;
+      });
+    }
 
     // НОВЕ: Вбудовуємо надійні джерела для image-об'єктів, щоб виживали після перезавантаження
     try {
@@ -1790,6 +1890,25 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
     const resolvedHasUserEditedCanvasCornerRadius =
       !!canvas.get("hasUserEditedCanvasCornerRadius") ||
       !!toolbarState?.hasUserEditedCanvasCornerRadius;
+    if (json) {
+      json.svgDebugInfo = {
+        stage: "exportCanvas",
+        canvasType: canvasShapeType,
+        width,
+        height,
+        objectCount: canvas.getObjects().length,
+        uploadedSvgCount: Array.isArray(json.objects)
+          ? json.objects.filter((obj) => obj?.isUploadedSvg === true).length
+          : 0,
+        uploadedImageCount: Array.isArray(json.objects)
+          ? json.objects.filter((obj) => obj?.isUploadedImage === true).length
+          : 0,
+        previewLength: getSvgDebugStringLength(preview),
+        hasBackgroundImage: !!backgroundImage,
+        backgroundType: bgType,
+        backgroundColor: bgColor,
+      };
+    }
 
     const canvasState = {
       json,
@@ -2187,10 +2306,16 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
     };
     for (let index = 0; index < objects.length; index++) {
       const obj = objects[index];
+      const nextSvgDebugInfo = buildSvgDebugInfo({
+        stage: "restoreElementProperties",
+        index,
+        liveObj: obj,
+        serializedObj: obj,
+      });
       
       // Детальна діагностика - виводимо всі кастомні властивості
       const customProps = {};
-      const keysToCheck = ['isQRCode', 'qrText', 'qrSize', 'isBarCode', 'barCodeText', 'type', 'id'];
+      const keysToCheck = ['isQRCode', 'qrText', 'qrSize', 'isBarCode', 'barCodeText', 'type', 'id', 'svgDebugInfo'];
       keysToCheck.forEach(key => {
         if (obj[key] !== undefined) customProps[key] = obj[key];
       });
@@ -2213,6 +2338,16 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
         childrenCount: childrenInfo ? childrenInfo.length : 0,
         children: childrenInfo
       });
+
+      if (obj && typeof obj.set === "function") {
+        try {
+          obj.set({ svgDebugInfo: nextSvgDebugInfo });
+        } catch {}
+      } else if (obj && typeof obj === "object") {
+        obj.svgDebugInfo = nextSvgDebugInfo;
+      }
+
+      svgDebug('restore svg snapshot', nextSvgDebugInfo);
 
       if (obj?.isUploadedImage === true) {
         svgDebug('uploaded object before theme apply', {

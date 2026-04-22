@@ -256,11 +256,12 @@ export const buildZugferdInvoiceData = ({
   const totalSignsCount = Math.max(0, Math.floor(toNumber(signsCount, 0)));
   const lineUnitPrice = toNumber(subtotal, 0);
   const safeProjectName = String(projectName || order?.orderName || 'Signs order');
+  const invoiceIssueDate = new Date(order?.createdAt || Date.now());
   const sellerIdentifier = String(process.env.ZUGFERD_SELLER_IDENTIFIER || 'xxxx').trim();
   const sellerRegistrationId = String(process.env.ZUGFERD_SELLER_REGISTRATION_ID || '').trim();
   const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || '').trim();
   const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || 'xxxx').trim();
-  const sellerName = String(process.env.ZUGFERD_SELLER_NAME || 'Kostyantyn Utvenko (SignXpert)').trim();
+  const sellerName = 'Kostyantyn Utvenko, SignXpert';
   const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || 'SignXpert').trim();
   const sellerStreetLine1 = String(process.env.ZUGFERD_SELLER_STREET1 || 'Baumwiesen 2').trim();
   const sellerStreetLine2 = String(process.env.ZUGFERD_SELLER_STREET2 || '').trim();
@@ -277,21 +278,19 @@ export const buildZugferdInvoiceData = ({
   const sellerBankAccountNumber = String(process.env.ZUGFERD_SELLER_BANK_ACCOUNT_NUMBER || '').trim();
   const sellerBic = String(process.env.ZUGFERD_SELLER_BIC || 'SOLADES1BAL').trim();
   const sellerCreditorIdentifier = String(process.env.ZUGFERD_SELLER_CREDITOR_ID || '').trim();
-  const sellerAccountHolderName = String(process.env.ZUGFERD_SELLER_ACCOUNT_HOLDER || 'Kostyantyn Utvenko').trim();
+  const sellerAccountHolderName = 'Kostyantyn Utvenko';
   const sellerGlobalIdentifier = String(process.env.ZUGFERD_SELLER_GLOBAL_ID || '').trim();
   const sellerGlobalIdentifierScheme = String(process.env.ZUGFERD_SELLER_GLOBAL_ID_SCHEME || '').trim();
   const sellerRegistrationScheme = String(process.env.ZUGFERD_SELLER_REGISTRATION_SCHEME || '').trim();
   const lineGlobalIdentifierScheme = String(process.env.ZUGFERD_LINE_GLOBAL_ID_SCHEME || '').trim();
-  const vatExemptionReasonText = 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/ No VAT is charged under the small business exemption (§ 19 UStG).';
-  const buyerIdentifier = String(customerIdentifier || '').trim();
+  const vatExemptionReasonText = 'Kleinunternehmer gemäß § 19 UStG';
   const buyerVatIdentifier = String(customerVatNumber || '').trim();
-  const buyerVatSchema = String(process.env.ZUGFERD_BUYER_VAT_SCHEMA || '9917').trim();
+  const buyerVatSchema = '9917';
   const effectiveDiscountAmount = Math.max(0, toNumber(discountAmount, 0));
   const effectiveShippingCost = Math.max(0, toNumber(shippingCost, 0));
-  const lineDescription = `Count Signs:${totalSignsCount} (${safeProjectName})`;
-  const legalInformationNote = 'Kleinunternehmer gemäß § 19 UStG';
-  const invoiceNumberRaw = String(invoiceNumber || order?.id || '').trim();
   const taxBasisAmount = round2(Math.max(0, toNumber(subtotal, 0) - effectiveDiscountAmount + effectiveShippingCost));
+  const invoiceRemarks = 'Kleinunternehmer gemäß § 19 UStG. Keine Umsatzsteuer wird berechnet.\nNo VAT is charged under the small business exemption (§ 19 UStG).';
+  const lineItemName = `Count Signs:${totalSignsCount}`;
   const lineGlobalIdentifierValue = String(order?.id || invoiceNumber || '').trim();
 
   const sellerRegistrationIdentifier = sellerRegistrationId
@@ -311,27 +310,18 @@ export const buildZugferdInvoiceData = ({
   return {
     number: String(invoiceNumber || order?.id || ''),
     typeCode: '380',
-    issueDate: new Date(order?.createdAt || Date.now()),
+    issueDate: invoiceIssueDate,
     includedNote: [
-      { content: `name:${String(customerCompany || customerName || 'Customer').trim()}` },
-      { content: `kennung:${buyerVatIdentifier}` },
-      { content: `schema:${buyerVatIdentifier ? buyerVatSchema : ''}` },
-      { content: `firmename:${sellerName}` },
-      { content: `kennung:${sellerIdentifier}` },
-      { content: `name:${sellerContactName || sellerName}` },
-      { content: `telefon:${sellerPhone}` },
-      { content: `von:${invoiceNumberRaw}` },
-      { content: `bis:${invoiceNumberRaw}` },
-      { content: `freitext:${lineDescription}` },
-      { content: `weitere rechtliche information:${legalInformationNote}` },
+      { content: invoiceRemarks },
     ],
     transaction: {
       line: [
         {
           identifier: '1',
-          note: lineDescription,
+          note: safeProjectName,
           tradeProduct: {
-            name: `Count Signs:${totalSignsCount}`,
+            name: lineItemName,
+            description: safeProjectName,
             globalIdentifier: lineGlobalIdentifierValue && lineGlobalIdentifierScheme
               ? {
                   value: lineGlobalIdentifierValue,
@@ -340,19 +330,8 @@ export const buildZugferdInvoiceData = ({
               : undefined,
           },
           tradeAgreement: {
-            grossTradePrice: {
-              chargeAmount: formatMoney(lineUnitPrice),
-              basisQuantity: {
-                amount: 1,
-                unitMeasureCode: 'C62',
-              },
-            },
             netTradePrice: {
               chargeAmount: formatMoney(lineUnitPrice),
-              basisQuantity: {
-                amount: 1,
-                unitMeasureCode: 'C62',
-              },
             },
           },
           tradeDelivery: {
@@ -375,10 +354,14 @@ export const buildZugferdInvoiceData = ({
       ],
       tradeAgreement: {
         buyerReference: String(buyerReference || order?.userId || invoiceNumber || ''),
+        projectReference: {
+          name: safeProjectName,
+        },
         seller: {
           identifier: sellerIdentifier,
           globalIdentifier: sellerGlobalIdentifierNode,
           name: sellerName,
+          description: vatExemptionReasonText,
           organization: sellerRegistrationIdentifier || sellerTradingName
             ? {
                 tradingName: sellerTradingName || sellerName || undefined,
@@ -414,19 +397,21 @@ export const buildZugferdInvoiceData = ({
             : undefined,
         },
         buyer: {
-          identifier: buyerVatIdentifier || buyerIdentifier || undefined,
+          identifier: buyerVatIdentifier || undefined,
           name: String(customerCompany || customerName || 'Customer'),
           organization: {
             tradingName: String(customerCompany || '').trim() || undefined,
             registrationIdentifier: buyerVatIdentifier
               ? {
                   value: buyerVatIdentifier,
+                  schemeIdentifier: buyerVatSchema,
                 }
               : undefined,
           },
           globalIdentifier: buyerVatIdentifier
             ? {
                 value: buyerVatIdentifier,
+                schemeIdentifier: buyerVatSchema,
               }
             : undefined,
           tradeContact: {
@@ -461,6 +446,7 @@ export const buildZugferdInvoiceData = ({
       },
       tradeSettlement: {
         currencyCode: 'EUR',
+        vatAccountingCurrencyCode: 'EUR',
         creditorIdentifier: sellerCreditorIdentifier || undefined,
         remittanceInformation: String(remittanceInformation || `Order No: ${invoiceNumber || order?.id || ''}`),
         payee: sellerAccountHolderName
@@ -475,6 +461,7 @@ export const buildZugferdInvoiceData = ({
             ? [
                 {
                   accountName: sellerAccountHolderName || undefined,
+                  accountname: sellerAccountHolderName || undefined,
                   paymentAccountIdentifier: sellerIban,
                   nationalAccountNumber: sellerBankAccountNumber || undefined,
                 },
@@ -489,6 +476,10 @@ export const buildZugferdInvoiceData = ({
         paymentTerms: {
           description: '30 days net',
           dueDate: paymentDueDate || new Date(order?.createdAt || Date.now()),
+        },
+        invoicingPeriod: {
+          startDate: invoiceIssueDate,
+          endDate: invoiceIssueDate,
         },
         vatBreakdown: hasVat
           ? [
@@ -3139,7 +3130,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       <h3><u>Payment information:</u></h3>
       <div class="payment-grid">
         <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
-        <div>Account holder:</div><div>SignXpert (Kostyantyn Utvenko)</div>
+        <div>Account holder:</div><div>Kostyantyn Utvenko</div>
         <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
         <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
         <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>

@@ -2720,7 +2720,26 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const invoiceAddress = checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
       ? checkout.invoiceAddress
       : null;
-    const customerAddress = hasAddressContent(invoiceAddress) ? invoiceAddress : deliveryAddress;
+    const invoiceAddressFromUser = {
+      fullName: [order.user?.firstName2, order.user?.surname2].filter(hasContent).join(' '),
+      companyName: order.user?.company2,
+      address1: order.user?.address4,
+      address2: order.user?.address5,
+      address3: order.user?.address6,
+      town: order.user?.city2,
+      postalCode: order.user?.postcode2,
+      country: order.user?.country2,
+      state: order.user?.state2,
+      email: order.user?.eMailInvoice,
+      mobile: order.user?.phone2,
+    };
+    const hasCheckoutInvoiceAddress = hasAddressContent(invoiceAddress);
+    const hasUserInvoiceAddress = hasAddressContent(invoiceAddressFromUser);
+    const customerAddress = hasCheckoutInvoiceAddress
+      ? invoiceAddress
+      : hasUserInvoiceAddress
+        ? invoiceAddressFromUser
+        : deliveryAddress;
 
     const customerCompany = escapeHtml(
       customerAddress?.companyName || order.user?.company || 'Water Design Solution GmbH'
@@ -2741,7 +2760,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       checkout?.invoiceAddressEmail
       || checkout?.invoiceEmail
       || invoiceAddress?.email
-      || deliveryAddress?.email
+      || invoiceAddressFromUser?.email
+      || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.email : '')
       || customerAddress?.email
       || order.user?.eMailInvoice
       || order.user?.email
@@ -2749,7 +2769,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     ).trim();
     const customerPhoneRaw = String(
       invoiceAddress?.mobile
-      || deliveryAddress?.mobile
+      || invoiceAddressFromUser?.mobile
+      || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.mobile : '')
       || customerAddress?.mobile
       || order.user?.phone2
       || order.user?.phone

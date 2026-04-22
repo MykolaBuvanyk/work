@@ -16,14 +16,18 @@ const Account = () => {
     const [openingOrderId, setOpeningOrderId] = useState(null);
     const [page,setPage]=useState(1);
     const [countPages,setCountPages]=useState(1)
+    const [isOrdersLoading, setIsOrdersLoading] = useState(true);
 
     const getMyOrders = async () => {
+        setIsOrdersLoading(true);
         try {
             const res = await $authHost.get('cart/getMyOrders?limit=15&page='+page);
             setMyOrders(res.data.orders);
             setCountPages(res.data.countPages);
         } catch (err) {
             console.error('Помилка завантаження замовлень', err);
+        } finally {
+            setIsOrdersLoading(false);
         }
     };
 
@@ -143,6 +147,11 @@ const Account = () => {
     return (
         <div id='account-container'>
             <AccountHeader />
+            {isOrdersLoading && (
+                <p className="orders-loading-note">
+                    Loading your orders may take some time. Please wait until they appear here.
+                </p>
+            )}
             
             <div className="orders-table-wrapper">
                 <table className="orders-table">

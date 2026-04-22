@@ -1871,6 +1871,25 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       }
     } catch {}
 
+    const canvasCornerRadius = Number(canvas.get("cornerRadius"));
+    const toolbarCornerRadius = Number(toolbarState?.cornerRadius);
+    const toolbarSizeCornerRadius = Number(toolbarState?.sizeValues?.cornerRadius);
+    const resolvedCornerRadius = (() => {
+      // Prefer explicit non-zero toolbar values when canvas corner radius is not synced yet.
+      if (Number.isFinite(toolbarSizeCornerRadius) && toolbarSizeCornerRadius !== 0) {
+        return toolbarSizeCornerRadius;
+      }
+      if (Number.isFinite(toolbarCornerRadius) && toolbarCornerRadius !== 0) {
+        return toolbarCornerRadius;
+      }
+      if (Number.isFinite(canvasCornerRadius)) {
+        return canvasCornerRadius;
+      }
+      return 0;
+    })();
+    const resolvedHasUserEditedCanvasCornerRadius =
+      !!canvas.get("hasUserEditedCanvasCornerRadius") ||
+      !!toolbarState?.hasUserEditedCanvasCornerRadius;
     if (json) {
       json.svgDebugInfo = {
         stage: "exportCanvas",
@@ -1902,14 +1921,14 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       backgroundType: bgType,
       backgroundImage, // НОВЕ: фон як зображення, якщо було встановлено
       canvasType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
-      cornerRadius: canvas.get("cornerRadius") || 0,
-      hasUserEditedCanvasCornerRadius: !!canvas.get("hasUserEditedCanvasCornerRadius"),
+      cornerRadius: resolvedCornerRadius,
+      hasUserEditedCanvasCornerRadius: resolvedHasUserEditedCanvasCornerRadius,
 
       // ВИПРАВЛЕННЯ: Зберігаємо повний toolbar state з canvas properties
       toolbarState: {
         ...toolbarState,
-        cornerRadius: canvas.get("cornerRadius") || 0,
-        hasUserEditedCanvasCornerRadius: !!canvas.get("hasUserEditedCanvasCornerRadius"),
+        cornerRadius: resolvedCornerRadius,
+        hasUserEditedCanvasCornerRadius: resolvedHasUserEditedCanvasCornerRadius,
         // ВИПРАВЛЕННЯ: Зберігаємо актуальний тип фігури з canvas
         currentShapeType: canvasShapeType, // Використовуємо вже визначений canvasShapeType
         // Оновлюємо розміри в toolbar state
@@ -1922,7 +1941,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
             typeof height === "number"
               ? Math.round((height * 25.4) / 72)
               : DEFAULT_SIGN_SIZE_MM.height,
-          cornerRadius: canvas.get("cornerRadius") || 0,
+          cornerRadius: resolvedCornerRadius,
         },
         // Оновлюємо background color
         globalColors: {

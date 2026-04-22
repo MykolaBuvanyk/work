@@ -14,6 +14,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
   const perSlide = 4; // кількість прев'ю на слайд
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
+  const [isRefreshingProjects, setIsRefreshingProjects] = useState(false);
 
   const buildSafePreviewSvgDataUrl = (svgMarkup) => {
     if (!svgMarkup || typeof svgMarkup !== "string") return "";
@@ -64,8 +65,9 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
   };
 
   // Функція для завантаження проектів
-  const loadProjects = () => {
-    getAllProjects().then((list) => {
+  const loadProjects = async () => {
+    try {
+      const list = await getAllProjects();
       // Сортуємо проекти за датою оновлення (новіші спочатку)
       const sorted = (list || []).sort((a, b) => {
         const dateA = a.updatedAt || a.createdAt || 0;
@@ -81,7 +83,9 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
         updatedAt: p.updatedAt || p.createdAt, // Зберігаємо для сортування
       }));
       setProjects(mapped);
-    }).catch(() => {});
+    } catch {
+      // no-op
+    }
   };
 
   useEffect(() => {
@@ -184,14 +188,15 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
       <div className={styles.buttonsWrapper}>
         <button onMouseDown={(e)=>e.preventDefault()} onClick={async () => {
           if (onSaveAs) {
-            await onSaveAs(name);
-            // Невелика затримка щоб дати час IndexedDB оновити дані
-            setTimeout(() => {
-              // Оновлюємо список проектів після збереження
-              loadProjects();
-            }, 200);
-            // Очищаємо поле вводу
-            setName("");
+            try {
+              setIsRefreshingProjects(true);
+              await onSaveAs(name);
+              await loadProjects();
+              // Очищаємо поле вводу
+              setName("");
+            } finally {
+              setIsRefreshingProjects(false);
+            }
           }
         }}>
           <svg
@@ -245,6 +250,11 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
           Cancel
         </button>
       </div>
+      {isRefreshingProjects && (
+        <p className={styles.statusNotice}>
+          Saving your project may take some time. Please wait until it appears here.
+        </p>
+      )}
       <div className={styles.projectsTableWrapper}>
         <table className={styles.table}>
           <tbody>

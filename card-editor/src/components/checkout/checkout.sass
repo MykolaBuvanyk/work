@@ -25,13 +25,32 @@
   display: flex
   align-items: center
 
-  & button:first-child
+  & > button:first-child
     margin-right: 683px
 
 .checkout__proceed-btn
   width: fit-content !important
   white-space: nowrap
   padding: 0 14px
+
+.checkout__proceed-group
+  position: relative
+  display: flex
+  flex-direction: column
+  align-items: center
+  width: fit-content
+
+.checkout__loading-hint
+  position: absolute
+  top: calc(100% + 8px)
+  left: 0
+  color: #006ca4
+  font-size: 13px
+  line-height: 1.3
+  text-align: left
+  width: 100%
+  max-width: 100%
+  margin: 0
 
 .checkout__close
   position: absolute

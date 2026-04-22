@@ -28,6 +28,7 @@ const YourProjectsModal = ({ onClose }) => {
   const itemsPerPage = 6;
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
   const [projects, setProjects] = useState([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(true);
   const [selectedProjects, setSelectedProjects] = useState([]); // Для чекбоксів
   const [isCartConfirmOpen, setIsCartConfirmOpen] = useState(false);
   const [sharingProjectId, setSharingProjectId] = useState(null);
@@ -208,6 +209,9 @@ const YourProjectsModal = ({ onClose }) => {
     let cancelled = false;
 
     const loadProjects = async () => {
+      if (!cancelled) {
+        setIsProjectsLoading(true);
+      }
       try {
         const list = await getAllProjects();
         const mapped = await Promise.all(
@@ -253,7 +257,13 @@ const YourProjectsModal = ({ onClose }) => {
         if (!cancelled) {
           setProjects(mapped);
         }
-      } catch {}
+      } catch {
+        // no-op
+      } finally {
+        if (!cancelled) {
+          setIsProjectsLoading(false);
+        }
+      }
     };
 
     loadProjects();
@@ -910,6 +920,11 @@ const YourProjectsModal = ({ onClose }) => {
             </div>
           </div>
         </div>
+      )}
+      {isProjectsLoading && (
+        <p className={styles.statusNotice}>
+          Opening your projects may take some time. Please wait until they appear here.
+        </p>
       )}
       <div className={styles.projectsTableWrapper}>
         <table className={styles.table}>

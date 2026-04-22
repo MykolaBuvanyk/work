@@ -3,6 +3,14 @@
     background-color: #fff;
     min-height: 100vh;
 
+    .orders-loading-note {
+        margin: 14px 0 6px;
+        text-align: center;
+        color: #006ca4;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
     .orders-table-wrapper {
         //overflow-x: auto;
         margin-top: 20px;

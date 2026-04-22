@@ -1703,12 +1703,19 @@ const Toolbar = ({ formData }) => {
         return rectangleCornerRadiusMmRef.current;
       })();
 
+      const isCircleFamily =
+        shapeType === 'circle' ||
+        shapeType === 'circleWithLine' ||
+        shapeType === 'circleWithCross';
+
       const cornerRadiusMm =
         shapeType === 'rectangle'
           ? inferredEditedCorner
             ? resolvedCornerMm
             : DEFAULT_RECT_CANVAS_CORNER_RADIUS_MM
-          : 0;
+          : isCircleFamily
+            ? 0
+            : Math.max(0, Number(resolvedCornerMm) || 0);
 
       // Sync refs and canvas flags so subsequent shape switches preserve *per-canvas* rectangle value
       try {
@@ -1716,8 +1723,10 @@ const Toolbar = ({ formData }) => {
           rectangleCornerRadiusMmRef.current = Number(cornerRadiusMm);
           hasUserEditedCanvasCornerRadiusRef.current = !!inferredEditedCorner;
           canvas.set?.('hasUserEditedCanvasCornerRadius', !!inferredEditedCorner);
-          canvas.set?.('cornerRadius', Number(cornerRadiusMm) || 0);
         }
+        // Keep the resolved corner radius directly on canvas for all shape types
+        // so export/copy flows don't lose it for non-rectangle figures.
+        canvas.set?.('cornerRadius', Number(cornerRadiusMm) || 0);
       } catch {}
 
       console.log('Force restoring canvas shape:', {
@@ -1738,6 +1747,22 @@ const Toolbar = ({ formData }) => {
         cornerRadius: cornerRadiusMm,
       });
 
+      const targetWidthPx = mmToPx(widthMm);
+      const targetHeightPx = mmToPx(heightMm);
+      const currentWidthPx = Number(canvas.getWidth?.() || canvas.width || 0);
+      const currentHeightPx = Number(canvas.getHeight?.() || canvas.height || 0);
+      const dimensionsAlreadyApplied =
+        Math.abs(targetWidthPx - currentWidthPx) < 0.5 &&
+        Math.abs(targetHeightPx - currentHeightPx) < 0.5;
+
+      const shouldKeepLoadedClipPath =
+        !!canvas.clipPath &&
+        dimensionsAlreadyApplied &&
+        shapeType !== 'rectangle' &&
+        shapeType !== 'circle' &&
+        shapeType !== 'circleWithLine' &&
+        shapeType !== 'circleWithCross';
+
       // Викликаємо updateSize для перебудови clipPath
       setTimeout(() => {
         const hasApprovedCustomShape = !!toolbarState.isCustomShapeApplied;
@@ -1746,6 +1771,10 @@ const Toolbar = ({ formData }) => {
           try {
             setIsCustomShapeApplied(true);
           } catch {}
+          canvas.requestRenderAll();
+          return;
+        }
+        if (shouldKeepLoadedClipPath) {
           canvas.requestRenderAll();
           return;
         }
@@ -9623,6 +9652,15 @@ const Toolbar = ({ formData }) => {
     if (!canvas) return;
 
     const handleCanvasLoaded = e => {
+      const incomingToolbarState =
+        (e && e.detail && e.detail.toolbarState) || e?.toolbarState || null;
+
+      // If this load comes with saved toolbar state, shape restoration pipeline
+      // will set the correct shape/radius. Do not overwrite with default rectangle.
+      if (incomingToolbarState && typeof incomingToolbarState === 'object') {
+        return;
+      }
+
       // Перевіряємо чи полотно порожнє (немає об'єктів і немає clipPath)
       const objects = canvas.getObjects();
       const hasObjects = objects && objects.length > 0;
@@ -9633,6 +9671,9 @@ const Toolbar = ({ formData }) => {
         console.log('Canvas is empty, initializing default rectangle shape');
         // Невелика затримка щоб canvas встиг повністю завантажитися
         setTimeout(() => {
+          const latestObjects = canvas.getObjects();
+          const stillEmpty = (!latestObjects || latestObjects.length === 0) && !canvas.clipPath;
+          if (!stillEmpty) return;
           addRectangle();
         }, 100);
       }

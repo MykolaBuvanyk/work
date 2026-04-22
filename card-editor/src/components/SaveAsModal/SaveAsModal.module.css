@@ -72,6 +72,14 @@
   align-items: center;
   gap: 10px;
 }
+
+.statusNotice {
+  margin: -25px 0 22px;
+  text-align: center;
+  color: #006ca4;
+  font-size: 14px;
+  font-weight: 500;
+}
 /* Make the SaveAs input explicitly white with dark text */
 .inputName {
   background-color: #ffffff;

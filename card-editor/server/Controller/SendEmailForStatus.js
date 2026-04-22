@@ -277,7 +277,11 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        sendEmail(user.email,messageHtml,subjectAdmin)
+        const result = await sendEmail(user.email, messageHtml, subjectAdmin);
+        if (!result || result.status !== 200) {
+            throw new Error(result?.message || 'Failed to send password recovery email');
+        }
+        return result;
     }
     static SendUserRegister=async(user)=>{
         const nameOrCompany=user.company?user.company:user.firstName;

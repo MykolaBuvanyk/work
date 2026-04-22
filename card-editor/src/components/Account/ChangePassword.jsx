@@ -6,6 +6,7 @@ const ChangePassword = () => {
     const [oldPassowrd,setOldPassword]=useState('');
     const [newPassowrd,setNewPassowrd]=useState('');
     const [newPassowrd2,setNewPassowrd2]=useState('')
+    const [isSendingReset, setIsSendingReset] = useState(false);
 
     useEffect(() => {
         setOldPassword('');
@@ -23,6 +24,28 @@ const ChangePassword = () => {
             alert('password updated')
         }catch(err){
             alert("incorrect password");
+        }
+    }
+
+    const sendForgotPassword = async () => {
+        if (isSendingReset) return;
+        try {
+            setIsSendingReset(true);
+            const me = await $authHost.get('auth/getMy');
+            const email = String(me?.data?.user?.email || '').trim().toLowerCase();
+
+            if (!email) {
+                alert('Unable to find your email in profile.');
+                return;
+            }
+
+            await $authHost.post('auth/sendNewPassword', { email });
+            alert('A new password has been sent to your email.');
+        } catch (err) {
+            const message = err?.response?.data?.message || 'Failed to send password email.';
+            alert(message);
+        } finally {
+            setIsSendingReset(false);
         }
     }
   return (
@@ -49,8 +72,10 @@ const ChangePassword = () => {
                 </div>
             </div>
             <div className="pass-forgot-block">
-                <p>* Forgot Password? Click here and we'll email your current Password to you.</p>
-                <button className="btn-blue-oval">Send</button>
+                <p>* Forgot Password? Click send and we will email you a new temporary password.</p>
+                <button className="btn-blue-oval" onClick={sendForgotPassword} disabled={isSendingReset}>
+                    {isSendingReset ? 'Sending...' : 'Send'}
+                </button>
             </div>
         </div>
     </div>

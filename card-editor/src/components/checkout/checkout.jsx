@@ -262,6 +262,7 @@ export default function Checkout({
 	const [invoiceEmail, setInvoiceEmail] = useState(String(emailDraft.invoiceEmail || ''))
 	const [deliveryComment, setDeliveryComment] = useState('')
 	const [productionComment, setProductionComment] = useState('')
+	const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 	const [profileUserType, setProfileUserType] = useState('')
 	const [profileBusinessHint, setProfileBusinessHint] = useState(false)
 	const { designs } = useCanvasContext()
@@ -497,8 +498,9 @@ export default function Checkout({
 		})
 	}
 
-	const handlePlaceOrder = e => {
+	const handlePlaceOrder = async e => {
 		e?.preventDefault?.()
+		if (isPlacingOrder) return
 		if (!String(deliveryAddress?.country || '').trim()) {
 			alert('Please select a country')
 			return
@@ -506,21 +508,26 @@ export default function Checkout({
 		const shouldIncludeInvoiceAddress =
 			isInvoiceDifferent && hasInvoiceAddressContent(invoiceAddress)
 		if (typeof onPlaceOrder === 'function') {
-			onPlaceOrder({
-				sum: Number(sumForOrder || 0),
-				totalSum: Number(totalAmount || 0),
-				deliveryPrice: Number(deliveryPrice || 0),
-				deliveryLabel: String(delivery || ''),
-				phoneOk: Boolean(isPhoneOk),
-				vatPercent: Number(vatPercentForCheckout || 0),
-				vatAmount: Number(vatAmountForCheckout || 0),
-				vatNumber: String(reduxUser?.vatNumber || '').trim(),
-				deliveryAddress,
-				invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
-				invoiceEmail: String(invoiceEmail || ''),
-				invoiceAddressEmail: String(invoiceAddress?.email || '').trim(),
-				deliveryComment: String(deliveryComment || '').trim(),
-			})
+			setIsPlacingOrder(true)
+			try {
+				await Promise.resolve(onPlaceOrder({
+					sum: Number(sumForOrder || 0),
+					totalSum: Number(totalAmount || 0),
+					deliveryPrice: Number(deliveryPrice || 0),
+					deliveryLabel: String(delivery || ''),
+					phoneOk: Boolean(isPhoneOk),
+					vatPercent: Number(vatPercentForCheckout || 0),
+					vatAmount: Number(vatAmountForCheckout || 0),
+					vatNumber: String(reduxUser?.vatNumber || '').trim(),
+					deliveryAddress,
+					invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
+					invoiceEmail: String(invoiceEmail || ''),
+					invoiceAddressEmail: String(invoiceAddress?.email || '').trim(),
+					deliveryComment: String(deliveryComment || '').trim(),
+				}))
+			} finally {
+				setIsPlacingOrder(false)
+			}
 		}
 	}
 
@@ -649,12 +656,20 @@ export default function Checkout({
 					<header className='checkout__header'>
 						<SimpleButton text={'Back to accessories'} onClick={onBackToAccessories || onClose} />
 
-						<SimpleButton
-							text={'Proceed to Payment'}
-							onClick={handlePlaceOrder}
-							withIcon
-							className='checkout__proceed-btn'
-						/>
+						<div className='checkout__proceed-group'>
+							<SimpleButton
+								text={'Proceed to Payment'}
+								onClick={handlePlaceOrder}
+								withIcon
+								disabled={isPlacingOrder}
+								className='checkout__proceed-btn'
+							/>
+							{isPlacingOrder && (
+								<p className='checkout__loading-hint'>
+									Processing your request... Please wait, this may take some time.
+								</p>
+							)}
+						</div>
 
 						<button className='checkout__close' onClick={onClose}>
 							<img src={CloseIcon} alt='close' />
@@ -1191,7 +1206,14 @@ export default function Checkout({
 										</div>
 
 										<div className='summary-actions'>
-											<SimpleButton text='Proceed to Payment' onClick={handlePlaceOrder} withIcon className='checkout__proceed-btn'/>
+											<div className='checkout__proceed-group'>
+												<SimpleButton text='Proceed to Payment' onClick={handlePlaceOrder} withIcon disabled={isPlacingOrder} className='checkout__proceed-btn'/>
+												{isPlacingOrder && (
+													<p className='checkout__loading-hint'>
+														Processing your request... Please wait, this may take some time.
+													</p>
+												)}
+											</div>
 										</div>
 									</div>
 								</aside>

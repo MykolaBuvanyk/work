@@ -3672,21 +3672,24 @@ export async function deleteCanvasFromCurrentProject(canvasId) {
 }
 
 // Add canvases from selected projects to the current project
-export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
+export async function addCanvasesFromProjectsToCurrentProject(projectIds, options = {}) {
   if (!Array.isArray(projectIds) || projectIds.length === 0) return null;
 
-  let currentId = null;
-  try {
-    currentId = localStorage.getItem("currentProjectId");
-  } catch {}
-  if (!currentId) {
-    console.warn("No current project to add canvases to");
+  let targetProjectId = String(options?.targetProjectId || "").trim();
+  if (!targetProjectId) {
+    try {
+      targetProjectId = String(localStorage.getItem("currentProjectId") || "").trim();
+    } catch {}
+  }
+
+  if (!targetProjectId) {
+    console.warn("No target project to add canvases to");
     return null;
   }
 
-  const currentProject = await getProject(currentId);
+  const currentProject = await getProject(targetProjectId);
   if (!currentProject) {
-    console.warn("Current project not found:", currentId);
+    console.warn("Target project not found:", targetProjectId);
     return null;
   }
 
@@ -3699,7 +3702,7 @@ export async function addCanvasesFromProjectsToCurrentProject(projectIds) {
 
   // Iterate through selected projects
   for (const projectId of projectIds) {
-    if (projectId === currentId) {
+    if (projectId === targetProjectId) {
       console.log("Skipping current project itself");
       continue; // Skip current project
     }

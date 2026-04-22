@@ -139,6 +139,7 @@ const resolveInvoiceAddressEmail = (order) =>
   String(
     order?.orderMongo?.checkout?.invoiceAddressEmail ||
       order?.orderMongo?.checkout?.invoiceAddress?.email ||
+      order?.user?.eMailInvoice ||
       ''
   ).trim();
 
@@ -306,21 +307,40 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
   const invoiceSectionData = useMemo(() => {
     const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
+    const userInvoice = {
+      fullName: [order?.user?.firstName2, order?.user?.surname2].filter(Boolean).join(' '),
+      companyName: order?.user?.company2,
+      address1: order?.user?.address4,
+      address2: order?.user?.address5,
+      address3: order?.user?.address6,
+      town: order?.user?.city2,
+      postalCode: order?.user?.postcode2,
+      country: order?.user?.country2,
+      region: order?.user?.state2,
+      mobile: order?.user?.phone2,
+    };
+
+    const pick = (primary, fallback) => {
+      const primaryValue = String(primary || '').trim();
+      if (primaryValue) return primaryValue;
+      return String(fallback || '').trim();
+    };
+
     const countryRaw =
-      checkoutInvoice?.country ||
-      checkoutInvoice?.region ||
+      pick(checkoutInvoice?.country, userInvoice?.country) ||
+      pick(checkoutInvoice?.region, userInvoice?.region) ||
       '';
 
     return {
-      fullName: String(checkoutInvoice?.fullName || '').trim(),
-      companyName: String(checkoutInvoice?.companyName || '').trim(),
-      address1: String(checkoutInvoice?.address1 || '').trim(),
-      address2: String(checkoutInvoice?.address2 || '').trim(),
-      address3: String(checkoutInvoice?.address3 || '').trim(),
-      town: String(checkoutInvoice?.town || '').trim(),
-      postalCode: String(checkoutInvoice?.postalCode || '').trim(),
+      fullName: pick(checkoutInvoice?.fullName, userInvoice?.fullName),
+      companyName: pick(checkoutInvoice?.companyName, userInvoice?.companyName),
+      address1: pick(checkoutInvoice?.address1, userInvoice?.address1),
+      address2: pick(checkoutInvoice?.address2, userInvoice?.address2),
+      address3: pick(checkoutInvoice?.address3, userInvoice?.address3),
+      town: pick(checkoutInvoice?.town, userInvoice?.town),
+      postalCode: pick(checkoutInvoice?.postalCode, userInvoice?.postalCode),
       countryLabel: resolveCountryLabel(countryRaw),
-      mobile: String(checkoutInvoice?.mobile || '').trim(),
+      mobile: pick(checkoutInvoice?.mobile, userInvoice?.mobile),
     };
   }, [order]);
 

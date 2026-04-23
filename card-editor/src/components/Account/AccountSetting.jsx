@@ -11,7 +11,7 @@ const extractLegacyAdditionalInformation = (rawValue) => {
         const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === 'object') {
             return String(
-                parsed.additionalInformation || parsed.additional || parsed.settings || ''
+                parsed.additionalInformation || parsed.additional
             ).trim();
         }
     } catch {
@@ -31,10 +31,7 @@ const AccountSetting = () => {
             const res = await $authHost.get('auth/getMy');
             const user = res?.data?.user || {};
             const parsedAdditional = extractLegacyAdditionalInformation(user?.additional || '');
-            setAdditionalInformation(
-                String(user?.tellAbout || '').trim() ||
-                parsedAdditional
-            );
+            setAdditionalInformation(parsedAdditional);
         } catch (err) {
             console.error(err);
             alert('Error loading your message');
@@ -54,7 +51,6 @@ const AccountSetting = () => {
             const nextValue = String(additionalInformation || '').trim();
             await $authHost.put('auth/updateProfile', {
                 additional: nextValue,
-                tellAbout: nextValue,
             });
             alert('Message saved successfully!');
         } catch (err) {

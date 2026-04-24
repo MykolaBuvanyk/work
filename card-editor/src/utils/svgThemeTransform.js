@@ -31,6 +31,32 @@ const isTransparentValue = (value = "") => {
   return v === "none" || v === "transparent";
 };
 
+const DEFAULT_FILL_TAGS = new Set([
+  "path",
+  "rect",
+  "circle",
+  "ellipse",
+  "polygon",
+  "text",
+  "tspan",
+]);
+
+const DEFAULT_STROKE_TAGS = new Set(["line", "polyline"]);
+
+const PAINT_FALLBACK_SKIP_TAGS = new Set([
+  "defs",
+  "clippath",
+  "mask",
+  "pattern",
+  "marker",
+  "symbol",
+  "lineargradient",
+  "radialgradient",
+  "filter",
+]);
+
+const THEME_REWRITE_ATTRS = ["fill", "stroke", "stop-color", "color"];
+
 const parseHex = value => {
   const hex = value.trim().replace("#", "");
   if (![3, 4, 6, 8].includes(hex.length)) return null;
@@ -188,6 +214,114 @@ const removeStylePropFromStyleAttr = (node, prop) => {
   else node.removeAttribute("style");
 };
 
+const setStyleProp = (node, prop, value) => {
+  if (!node || !prop || value == null) return;
+
+  const styleAttr = String(node.getAttribute("style") || "").trim();
+  const cleaned = styleAttr
+    ? styleAttr.replace(new RegExp(`${prop}\\s*:[^;]+;?`, "gi"), "").trim()
+    : "";
+  const normalizedBase = cleaned.replace(/;+\s*$/, "").trim();
+  const next = normalizedBase ? `${normalizedBase}; ${prop}: ${value}` : `${prop}: ${value}`;
+  node.setAttribute("style", next);
+};
+
+const readStyleProp = (styleAttr, prop) => {
+  if (!styleAttr) return null;
+  const re = new RegExp(`${prop}\\s*:\\s*([^;]+)`, "i");
+  const match = re.exec(String(styleAttr));
+  return match ? String(match[1] || "").trim() : null;
+};
+
+const getPropFromClassStyles = (node, prop, styleMap) => {
+  const classNames = String(node?.getAttribute?.("class") || "")
+    .split(/\s+/)
+    .filter(Boolean);
+  for (const className of classNames) {
+    if (styleMap[className] && styleMap[className][prop] !== undefined) {
+      return String(styleMap[className][prop] || "").trim();
+    }
+  }
+  return null;
+};
+
+const getInheritedPaintValue = (node, prop, styleMap) => {
+  let current = node;
+  while (current && current.nodeType === 1) {
+    const attrVal = current.getAttribute?.(prop);
+    if (attrVal != null && String(attrVal).trim() !== "") {
+      return String(attrVal).trim();
+    }
+
+    const styleVal = readStyleProp(current.getAttribute?.("style"), prop);
+    if (styleVal != null && styleVal !== "") {
+      return styleVal;
+    }
+
+    const classStyleVal = getPropFromClassStyles(current, prop, styleMap);
+    if (classStyleVal != null && classStyleVal !== "") {
+      return classStyleVal;
+    }
+
+    const tag = String(current.tagName || "").toLowerCase();
+    if (tag === "svg") break;
+    current = current.parentElement;
+  }
+
+  return null;
+};
+
+const isInsidePaintFallbackSkipContainer = node => {
+  let current = node?.parentElement || null;
+  while (current) {
+    const tag = String(current.tagName || "").toLowerCase();
+    if (PAINT_FALLBACK_SKIP_TAGS.has(tag)) {
+      return true;
+    }
+    if (tag === "svg") return false;
+    current = current.parentElement;
+  }
+  return false;
+};
+
+const shouldSkipThemeRewriteForNode = node => {
+  if (!node || node.nodeType !== 1) return true;
+
+  const tag = String(node.tagName || "").toLowerCase();
+  if (tag === "style") return true;
+  if (PAINT_FALLBACK_SKIP_TAGS.has(tag)) return true;
+
+  return isInsidePaintFallbackSkipContainer(node);
+};
+
+const applyDefaultThemePaintForUnspecified = (svgEl, themeColor) => {
+  if (!svgEl) return;
+
+  const styleMap = parseSvgStyles(svgEl);
+  svgEl
+    .querySelectorAll("path,rect,circle,ellipse,polygon,polyline,line,text,tspan")
+    .forEach(node => {
+      if (!node || isInsidePaintFallbackSkipContainer(node)) return;
+
+      const tag = String(node.tagName || "").toLowerCase();
+      if (!DEFAULT_FILL_TAGS.has(tag) && !DEFAULT_STROKE_TAGS.has(tag)) {
+        return;
+      }
+
+      const inheritedFill = getInheritedPaintValue(node, "fill", styleMap);
+      const inheritedStroke = getInheritedPaintValue(node, "stroke", styleMap);
+      const hasFillDefined = inheritedFill != null && inheritedFill !== "";
+      const hasStrokeDefined = inheritedStroke != null && inheritedStroke !== "";
+      if (hasFillDefined || hasStrokeDefined) return;
+
+      if (DEFAULT_STROKE_TAGS.has(tag)) {
+        node.setAttribute("stroke", themeColor);
+      } else {
+        node.setAttribute("fill", themeColor);
+      }
+    });
+};
+
 export const convertSvgToThemeMonochrome = (svgString, themeColor = "#000") => {
   try {
     const doc = new DOMParser().parseFromString(String(svgString || ""), "image/svg+xml");
@@ -195,9 +329,11 @@ export const convertSvgToThemeMonochrome = (svgString, themeColor = "#000") => {
     if (!svg) return svgString;
 
     doc.querySelectorAll("*").forEach(el => {
+      if (shouldSkipThemeRewriteForNode(el)) return;
+
       rewriteStyleAttribute(el, themeColor);
 
-      ["fill", "stroke", "stop-color", "color"].forEach(attr => {
+      THEME_REWRITE_ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
         const next = toMonochromeValue(el.getAttribute(attr), themeColor);
         if (next != null) el.setAttribute(attr, next);
@@ -216,18 +352,11 @@ export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#00
     const svg = doc.querySelector("svg");
     if (!svg) return svgString;
 
-    // Rewrite class-based style declarations used by Illustrator exports (.st0, .st1, ...).
-    doc.querySelectorAll("style").forEach(styleEl => {
-      const cssText = String(styleEl.textContent || "");
-      if (!cssText) return;
-      const rewritten = cssText.replace(
-        /(fill|stroke|stop-color|color)\s*:\s*([^;}{]+)/gi,
-        (_match, prop, rawVal) => `${prop}: ${toThemeColorPreserveAlphaValue(String(rawVal || "").trim(), themeColor)}`
-      );
-      styleEl.textContent = rewritten;
-    });
+    const styleMap = parseSvgStyles(svg);
 
     doc.querySelectorAll("*").forEach(el => {
+      if (shouldSkipThemeRewriteForNode(el)) return;
+
       const styleValue = el.getAttribute("style");
       if (styleValue) {
         const pieces = styleValue
@@ -239,19 +368,36 @@ export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#00
             if (idx === -1) return chunk;
             const key = chunk.slice(0, idx).trim().toLowerCase();
             const value = chunk.slice(idx + 1).trim();
-            if (!["fill", "stroke", "stop-color", "color"].includes(key)) return chunk;
+            if (!THEME_REWRITE_ATTRS.includes(key)) return chunk;
             return `${key}: ${toThemeColorPreserveAlphaValue(value, themeColor)}`;
           });
 
         el.setAttribute("style", pieces.join("; "));
       }
 
-      ["fill", "stroke", "stop-color", "color"].forEach(attr => {
+      THEME_REWRITE_ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
         const next = toThemeColorPreserveAlphaValue(el.getAttribute(attr), themeColor);
         if (next != null) el.setAttribute(attr, next);
       });
+
+      THEME_REWRITE_ATTRS.forEach(attr => {
+        if (el.hasAttribute(attr)) return;
+
+        const styleDefined = readStyleProp(el.getAttribute("style"), attr);
+        if (styleDefined != null && styleDefined !== "") return;
+
+        const classValue = getPropFromClassStyles(el, attr, styleMap);
+        if (classValue == null || classValue === "") return;
+
+        const next = toThemeColorPreserveAlphaValue(classValue, themeColor);
+        if (next != null) setStyleProp(el, attr, next);
+      });
     });
+
+    // Fallback: if a drawable node has no explicit/inherited paint definition,
+    // assign theme color so default-black SVG shapes can follow canvas recolor.
+    applyDefaultThemePaintForUnspecified(svg, themeColor);
 
     return new XMLSerializer().serializeToString(doc);
   } catch {
@@ -353,6 +499,7 @@ export const applyStrokeOnlyToSVG = (svgString, themeColor = "#000") => {
   try {
     const doc = new DOMParser().parseFromString(String(svgString || ""), "image/svg+xml");
     doc.querySelectorAll("path,polygon,polyline,rect,circle,ellipse,line").forEach(el => {
+      if (shouldSkipThemeRewriteForNode(el)) return;
       el.setAttribute("fill", "transparent");
       el.setAttribute("stroke", themeColor);
       if (!el.getAttribute("stroke-width")) el.setAttribute("stroke-width", "1");

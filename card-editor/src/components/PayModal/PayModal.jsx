@@ -8,9 +8,10 @@ import './PayModal.scss'
 
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);
 
-const PayModal = ({isPayOpen,onClose,backToPayment,orderId}) => {
+const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
     const [clientSecret, setClientSecret] = useState('');
     const [paymentOption, setPaymentOption] = useState('invoice');
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
     useEffect(() => {
         const getClientSecret = async () => {
@@ -49,6 +50,21 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId}) => {
     const payTrue=()=>{
         onClose();
     }
+
+    const handlePlaceOrderClick = async () => {
+      if (isSubmittingOrder || paymentOption === 'online') return;
+      if (typeof onPlaceOrder === 'function') {
+        setIsSubmittingOrder(true);
+        try {
+          const placed = await Promise.resolve(onPlaceOrder());
+          if (!placed) return;
+        } finally {
+          setIsSubmittingOrder(false);
+        }
+      }
+      onClose();
+    };
+
     if(!isPayOpen)return null;
   return (
     <div className='pay-modal'>
@@ -99,9 +115,9 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId}) => {
     
 
             <button
-              onClick={onClose}
+              onClick={handlePlaceOrderClick}
               className={`place-btn ${paymentOption === 'online' ? 'disabled' : 'active'}`}
-              disabled={paymentOption === 'online'}
+              disabled={paymentOption === 'online' || isSubmittingOrder}
             >
               PLACE ORDER
             </button>

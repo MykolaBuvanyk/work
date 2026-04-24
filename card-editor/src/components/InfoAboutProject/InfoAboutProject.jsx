@@ -348,6 +348,7 @@ const InfoAboutProject = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
   const [isPayOpen,setIsPayOpen]=useState(false);
+  const [checkoutTotalsDraft, setCheckoutTotalsDraft] = useState(null);
   const { canvas } = useCanvasContext();
   const onCartClickRef = useRef(null);
 
@@ -702,6 +703,7 @@ const InfoAboutProject = () => {
 
   const PayClose=()=>{
     setIsPayOpen(false);
+    setCheckoutTotalsDraft(null);
     setIsOrderSuccessOpen(true);
   }
 
@@ -717,15 +719,25 @@ const InfoAboutProject = () => {
   };
 
   const handleCheckoutPlaceOrder = async (checkoutTotals) => {
-    const added = await addCurrentProjectToCart(checkoutTotals);
-    if (!added) return;
+    setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
-    //setIsOrderSuccessOpen(true);
     setIsPayOpen(true)
+  };
+
+  const handlePayModalPlaceOrder = async () => {
+    const added = await addCurrentProjectToCart(checkoutTotalsDraft || {});
+    if (!added) return false;
+    return true;
   };
 
   const handleOrderSuccessClose = () => {
     setIsOrderSuccessOpen(false);
+
+    $authHost.post('cart/sendOrderEmails', {
+      id: localStorage.getItem('MySqlOrderId'),
+    }).catch((err) => {
+      console.log('Помилка надсилання email по замовленню ' + err);
+    });
   };
 
   const handleOrderSuccessSend = ({ rating, comment }) => {
@@ -836,7 +848,13 @@ const InfoAboutProject = () => {
         />
       )}
       {isPayOpen&&(
-        <PayModal onClose={PayClose} isPayOpen={isPayOpen} backToPayment={backToPayment} orderId={Number(localStorage.getItem('MySqlOrderId'))}/>
+        <PayModal
+          onClose={PayClose}
+          isPayOpen={isPayOpen}
+          backToPayment={backToPayment}
+          orderId={Number(localStorage.getItem('MySqlOrderId'))}
+          onPlaceOrder={handlePayModalPlaceOrder}
+        />
       )}
 
       {/*isAdminUser && (

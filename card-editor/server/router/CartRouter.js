@@ -2416,13 +2416,13 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     </div>`
       }];
 
-    const pagedDeliveryBlocks = paginatePdfBlocks(
+    let pagedDeliveryBlocks = paginatePdfBlocks(
       [{ section: 'accessory', units: accessoriesUnits, html: accessoriesBlockHtml }, ...signBlocks],
         14,
         18
     );
 
-    const htmlContent = `
+    const buildDeliveryNoteHtml = (pages) => `
   <!DOCTYPE html>
   <html lang="uk">
   <head>
@@ -2444,12 +2444,16 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       }
       .sheet {
         width: 210mm;
-        min-height: 297mm;
+        height: 297mm;
         padding: 15mm 20mm;
         margin: 0 auto;
         background: white;
         box-sizing: border-box;
         position: relative;
+        overflow: hidden;
+      }
+      .sheet.sheet--with-footer {
+        padding-bottom: 48mm;
       }
       .sheet.page-break {
         break-after: page;
@@ -2561,9 +2565,9 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     </style>
   </head>
   <body>
-  ${pagedDeliveryBlocks.map((pageBlocks, pageIndex) => {
+  ${pages.map((pageBlocks, pageIndex) => {
     const isFirstPage = pageIndex === 0;
-    const isLastPage = pageIndex === pagedDeliveryBlocks.length - 1;
+    const isLastPage = pageIndex === pages.length - 1;
     const pageAccessoryBlocksHtml = pageBlocks.filter((block) => block.section === 'accessory').map((block) => block.html).join('');
     const pageSignBlocksHtml = pageBlocks.filter((block) => block.section === 'sign').map((block) => block.html).join('');
 
@@ -2657,6 +2661,40 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
   </body>
   </html>`;
 
+    let overflowSafety = 0;
+    while (overflowSafety < 1000) {
+      overflowSafety += 1;
+
+      const htmlForCheck = buildDeliveryNoteHtml(pagedDeliveryBlocks);
+      await page.setContent(htmlForCheck, { waitUntil: 'domcontentloaded' });
+
+      const overflowIndex = await page.evaluate(() => {
+        const sheets = Array.from(document.querySelectorAll('.sheet'));
+        return sheets.findIndex((sheet) => sheet.scrollHeight - sheet.clientHeight > 1);
+      });
+
+      if (overflowIndex < 0) {
+        break;
+      }
+
+      const sourcePage = pagedDeliveryBlocks[overflowIndex] || [];
+      if (sourcePage.length <= 1) {
+        break;
+      }
+
+      const movedBlock = sourcePage.pop();
+      if (!pagedDeliveryBlocks[overflowIndex + 1]) {
+        pagedDeliveryBlocks[overflowIndex + 1] = [];
+      }
+      pagedDeliveryBlocks[overflowIndex + 1].unshift(movedBlock);
+
+      if ((pagedDeliveryBlocks[overflowIndex] || []).length === 0) {
+        pagedDeliveryBlocks.splice(overflowIndex, 1);
+      }
+    }
+
+    const htmlContent = buildDeliveryNoteHtml(pagedDeliveryBlocks);
+
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
@@ -2714,10 +2752,14 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object'
       ? orderMongo.checkout
       : {};
+    const hasSeparateInvoiceAddress =
+      typeof checkout?.isInvoiceDifferent === 'boolean'
+        ? checkout.isInvoiceDifferent
+        : hasAddressContent(checkout?.invoiceAddress);
     const deliveryAddress = checkout?.deliveryAddress && typeof checkout.deliveryAddress === 'object'
       ? checkout.deliveryAddress
       : {};
-    const invoiceAddress = checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
+    const invoiceAddress = hasSeparateInvoiceAddress && checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
       ? checkout.invoiceAddress
       : null;
     const invoiceAddressFromUser = {
@@ -2733,8 +2775,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       email: order.user?.eMailInvoice,
       mobile: order.user?.phone2,
     };
-    const hasCheckoutInvoiceAddress = hasAddressContent(invoiceAddress);
-    const hasUserInvoiceAddress = hasAddressContent(invoiceAddressFromUser);
+    const hasCheckoutInvoiceAddress = hasSeparateInvoiceAddress && hasAddressContent(invoiceAddress);
+    const hasUserInvoiceAddress = hasSeparateInvoiceAddress && hasAddressContent(invoiceAddressFromUser);
     const customerAddress = hasCheckoutInvoiceAddress
       ? invoiceAddress
       : hasUserInvoiceAddress
@@ -3485,6 +3527,40 @@ CartRouter.post('/sendReviewAndComent',requireAuth,async(req,resp,next)=>{
 
     
   }catch(err){
+    return next(ErrorApi.badRequest(err));
+  }
+})
+
+CartRouter.post('/sendOrderEmails', requireAuth, async (req, resp, next) => {
+  try {
+    const { id } = req.body;
+    const order = await Order.findOne({
+      where: {
+        id: parseInt(id),
+      },
+      include: [
+        {
+          model: User,
+        },
+      ],
+    });
+
+    if (!order) {
+      return resp.status(404).json({ message: 'Order not found' });
+    }
+
+    // Respond immediately so UI can close modal; email work continues in background.
+    resp.json({ ok: true });
+
+    Promise.all([
+      SendEmailForStatus.SendToAdminNewOrder(order),
+      SendEmailForStatus.CreateOrder(order),
+    ]).catch((emailErr) => {
+      console.error('sendOrderEmails async processing error:', emailErr);
+    });
+
+    return;
+  } catch (err) {
     return next(ErrorApi.badRequest(err));
   }
 })

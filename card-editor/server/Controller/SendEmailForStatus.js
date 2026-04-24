@@ -371,6 +371,15 @@ class SendEmailForStatus {
             const order=newOrder;
             const orderNumber=String(order.id || '').padStart(3, '0');
             const nameOrCompany = order.user?.company || order.user?.firstName || 'Customer';
+            const hasRating = Number.isFinite(Number(countStar)) && Number(countStar) > 0;
+            const normalizedComment = String(comment || '').trim();
+            const hasComment = normalizedComment.length > 0;
+            const reviewSection = (hasRating || hasComment)
+              ? `<div style="margin: 25px 0;">
+                        <p>Rating: <span style="color: #FFD700; font-size: 20px;">${'★'.repeat(Math.max(0, Number(countStar) || 0))}</span></p>
+                        <p>Comment: <span>${normalizedComment || '-'}</span></p>
+                    </div>`
+              : '';
             const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
             const subjectAdmin = `SignXpert | New Order #${orderNumber} | Cust. ID #${String(order.user?.id || '').padStart(3, '0')} ${nameOrCompany}`;
             const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
@@ -398,10 +407,7 @@ class SendEmailForStatus {
                         <p>Payment status: <strong>€${order.isPaid?'pay':'un paid'}</strong></p>
                         <p>Delivery type: <strong>€${order.deliveryType}</strong></p>
                     </div>
-                    <div style="margin: 25px 0;">
-                        <p>Rating: <span style="color: #FFD700; font-size: 20px;">${'★'.repeat(countStar || 0)}</span></p>
-                        <p>Comment: <span>${comment || '-'}</span></p>
-                    </div>
+                    ${reviewSection}
                     <p style="font-style: italic; color: #888;">SignXpert System Notification</p>
                 </td></tr>
             </table>
@@ -439,10 +445,14 @@ class SendEmailForStatus {
             const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object'
                 ? orderMongo.checkout
                 : {};
+            const hasSeparateInvoiceAddress =
+                typeof checkout?.isInvoiceDifferent === 'boolean'
+                    ? checkout.isInvoiceDifferent
+                    : hasAddressContent(checkout?.invoiceAddress);
             const deliveryAddress = checkout?.deliveryAddress && typeof checkout.deliveryAddress === 'object'
                 ? checkout.deliveryAddress
                 : {};
-            const invoiceAddress = checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
+            const invoiceAddress = hasSeparateInvoiceAddress && checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
                 ? checkout.invoiceAddress
                 : null;
             const customerAddress = hasAddressContent(invoiceAddress) ? invoiceAddress : deliveryAddress;

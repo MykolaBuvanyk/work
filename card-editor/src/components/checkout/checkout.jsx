@@ -515,6 +515,7 @@ export default function Checkout({
 					totalSum: Number(totalAmount || 0),
 					deliveryPrice: Number(deliveryPrice || 0),
 					deliveryLabel: String(delivery || ''),
+					isInvoiceDifferent: Boolean(shouldIncludeInvoiceAddress),
 					phoneOk: Boolean(isPhoneOk),
 					vatPercent: Number(vatPercentForCheckout || 0),
 					vatAmount: Number(vatAmountForCheckout || 0),

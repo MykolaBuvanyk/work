@@ -124,6 +124,23 @@ const normalizeMaterialColorLabel = (value) =>
 const resolveDeliveryType = (order) =>
   String(order?.deliveryType || order?.orderMongo?.checkout?.deliveryLabel || '').trim();
 
+const hasAddressLines = (address) => {
+  if (!address || typeof address !== 'object') return false;
+  return [
+    address.fullName,
+    address.companyName,
+    address.address1,
+    address.address2,
+    address.address3,
+    address.town,
+    address.postalCode,
+    address.country,
+    address.region,
+    address.email,
+    address.mobile,
+  ].some((value) => String(value || '').trim() !== '');
+};
+
 const resolveDeliveryPrice = (order) => {
   const rawPrice = Number(order?.orderMongo?.checkout?.deliveryPrice);
   if (Number.isFinite(rawPrice)) {
@@ -304,8 +321,29 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       parseLegacyAdditionalInformation(order?.user?.additional || ''),
     [order?.user?.additional, order?.user?.tellAbout]
   );
+  const hasSeparateInvoiceAddress = useMemo(() => {
+    const checkout = order?.orderMongo?.checkout || {};
+    if (typeof checkout?.isInvoiceDifferent === 'boolean') {
+      return checkout.isInvoiceDifferent;
+    }
+    return hasAddressLines(checkout?.invoiceAddress);
+  }, [order]);
 
   const invoiceSectionData = useMemo(() => {
+    if (!hasSeparateInvoiceAddress) {
+      return {
+        fullName: '',
+        companyName: '',
+        address1: '',
+        address2: '',
+        address3: '',
+        town: '',
+        postalCode: '',
+        countryLabel: '',
+        mobile: '',
+      };
+    }
+
     const checkoutInvoice = order?.orderMongo?.checkout?.invoiceAddress || {};
     const userInvoice = {
       fullName: [order?.user?.firstName2, order?.user?.surname2].filter(Boolean).join(' '),
@@ -342,7 +380,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       countryLabel: resolveCountryLabel(countryRaw),
       mobile: pick(checkoutInvoice?.mobile, userInvoice?.mobile),
     };
-  }, [order]);
+  }, [hasSeparateInvoiceAddress, order]);
 
   const invoiceAddressLines = useMemo(() => {
     const lines = [
@@ -360,11 +398,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   }, [invoiceSectionData]);
 
   const hasInvoiceSectionData = useMemo(() => {
+    if (!hasSeparateInvoiceAddress) return false;
     if (String(invoiceEmails || '').trim() !== '') return true;
     if (String(invoiceAddressEmail || '').trim() !== '') return true;
     if (String(invoiceSectionData.mobile || '').trim() !== '') return true;
     return invoiceAddressLines.length > 0;
-  }, [invoiceAddressEmail, invoiceAddressLines.length, invoiceEmails, invoiceSectionData.mobile]);
+  }, [hasSeparateInvoiceAddress, invoiceAddressEmail, invoiceAddressLines.length, invoiceEmails, invoiceSectionData.mobile]);
   const [pdfAddSheetInfo, setPdfAddSheetInfo] = useState(true);
 
   const [appliedMinPageWidth, setAppliedMinPageWidth] = useState(0);
@@ -1704,6 +1743,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           <div>{(combinedCountries.find(x=>x.code===(order.country||order.user.country))||{}).label||order.country||order.user.country||''}</div>    
         </div>
       </div>
+      {hasSeparateInvoiceAddress && (
       <div className="row invoice-row">
         <div className="invoice-section">
           <button
@@ -1763,6 +1803,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           )}
         </div>
       </div>
+      )}
       <div className="row">
         <p>E-Mail:</p>
         <span>{order.user.email}</span>

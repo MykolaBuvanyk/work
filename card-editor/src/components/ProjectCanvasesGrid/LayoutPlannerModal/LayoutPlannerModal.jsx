@@ -2051,7 +2051,11 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
 
   const shapeNodes = Array.from(
     rootElement.querySelectorAll('[id^="shape-"]')
-  );
+  ).filter((node) => {
+    if (!node || node.nodeType !== 1) return false;
+    const parentShape = node.parentElement?.closest?.('[id^="shape-"]') || null;
+    return !parentShape;
+  });
   const borderNodes = [];
   if (enableBorderContours) {
     // NOTE: `#canvaShape` is the main blue outline and must NOT be duplicated.

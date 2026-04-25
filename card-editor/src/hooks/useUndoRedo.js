@@ -6,6 +6,7 @@ import * as fabric from "fabric";
 import LZString from "lz-string";
 import "../utils/CircleWithCut";
 import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
+import { sanitizeFabricJsonForLoad } from "../utils/sanitizeFabricJsonForLoad";
 import {
   buildQrSvgMarkup,
   computeQrVectorData,
@@ -49,6 +50,50 @@ const CONFIG = {
   
   // Використовувати стиснення
   USE_COMPRESSION: true,
+};
+
+const sharedUndoRedoStore = {
+  history: [],
+  historyIndex: -1,
+  subscribers: new Set(),
+  ownerId: null,
+};
+
+const notifyUndoRedoSubscribers = () => {
+  const snapshot = {
+    history: sharedUndoRedoStore.history,
+    historyIndex: sharedUndoRedoStore.historyIndex,
+  };
+  sharedUndoRedoStore.subscribers.forEach((subscriber) => {
+    try {
+      subscriber(snapshot);
+    } catch {
+      // Ignore stale subscribers from unmounted debug panels.
+    }
+  });
+};
+
+const updateSharedHistory = (updater) => {
+  const nextHistory =
+    typeof updater === "function"
+      ? updater(sharedUndoRedoStore.history)
+      : updater;
+
+  sharedUndoRedoStore.history = Array.isArray(nextHistory) ? nextHistory : [];
+  notifyUndoRedoSubscribers();
+  return sharedUndoRedoStore.history;
+};
+
+const updateSharedHistoryIndex = (updater) => {
+  const nextIndex =
+    typeof updater === "function"
+      ? updater(sharedUndoRedoStore.historyIndex)
+      : updater;
+
+  sharedUndoRedoStore.historyIndex =
+    Number.isFinite(nextIndex) ? nextIndex : -1;
+  notifyUndoRedoSubscribers();
+  return sharedUndoRedoStore.historyIndex;
 };
 
 // ============================================================================
@@ -141,7 +186,7 @@ const normalizeForComparison = (state) => {
     // Видаляємо поля які змінюються без реальних змін canvas
     const volatileFields = [
       'preview', 'previewSvg', 'previewPng',
-      'toolbarState', 'timestamp', 'lastSaved',
+      'timestamp', 'lastSaved',
       'updatedAt', 'createdAt', '_meta', '_compressed', 'data'
     ];
     
@@ -234,8 +279,16 @@ export const useUndoRedo = () => {
   const { canvas } = useCanvasContext();
   
   // Стани
-  const [history, setHistory] = useState([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [sharedSnapshot, setSharedSnapshot] = useState(() => ({
+    history: sharedUndoRedoStore.history,
+    historyIndex: sharedUndoRedoStore.historyIndex,
+  }));
+  const history = sharedSnapshot.history;
+  const historyIndex = sharedSnapshot.historyIndex;
+  const instanceIdRef = useRef(Symbol("undoRedoInstance"));
+  const isHistoryOwnerRef = useRef(false);
+  const setHistory = updateSharedHistory;
+  const setHistoryIndex = updateSharedHistoryIndex;
   
   // Refs для контролю стану
   const isSavingRef = useRef(false);
@@ -250,6 +303,19 @@ export const useUndoRedo = () => {
   const ignoreSavesUntilRef = useRef(0);
   const pendingChangesRef = useRef(false);
   const batchStartTimeRef = useRef(null);
+
+  useEffect(() => {
+    const subscriber = (snapshot) => setSharedSnapshot(snapshot);
+    sharedUndoRedoStore.subscribers.add(subscriber);
+    subscriber({
+      history: sharedUndoRedoStore.history,
+      historyIndex: sharedUndoRedoStore.historyIndex,
+    });
+
+    return () => {
+      sharedUndoRedoStore.subscribers.delete(subscriber);
+    };
+  }, []);
 
   // Синхронізуємо refs зі state
   useEffect(() => {
@@ -271,6 +337,86 @@ export const useUndoRedo = () => {
       canvas.getObjects().forEach((obj) => {
         if (!obj) return;
         try {
+          const isQrObject =
+            obj.isQRCode === true ||
+            obj?.data?.isQRCode === true ||
+            (typeof obj.getObjects === "function" &&
+              (obj.getObjects() || []).some(
+                (child) =>
+                  child &&
+                  (child.id === QR_DISPLAY_LAYER_ID || child.id === QR_EXPORT_LAYER_ID)
+              ));
+
+          if (isQrObject) {
+            const children =
+              typeof obj.getObjects === "function"
+                ? obj.getObjects() || []
+                : Array.isArray(obj.objects)
+                  ? obj.objects
+                  : [];
+            const displayLayer = children.find((child) => child?.id === QR_DISPLAY_LAYER_ID);
+            const exportLayer = children.find((child) => child?.id === QR_EXPORT_LAYER_ID);
+            const isVisibleColor = (value) => {
+              if (typeof value !== "string") return false;
+              const normalized = value.trim().toLowerCase().replace(/\s+/g, "");
+              return (
+                normalized &&
+                normalized !== "none" &&
+                normalized !== "transparent" &&
+                normalized !== "rgba(0,0,0,0)"
+              );
+            };
+            const qrColor =
+              (isVisibleColor(obj.qrColor) && obj.qrColor) ||
+              (isVisibleColor(obj?.data?.qrColor) && obj.data.qrColor) ||
+              (isVisibleColor(displayLayer?.fill) && displayLayer.fill) ||
+              (isVisibleColor(exportLayer?.stroke) && exportLayer.stroke) ||
+              "#000000";
+
+            obj.set?.({
+              isQRCode: true,
+              qrColor,
+              visible: true,
+              opacity: 1,
+              backgroundColor: "transparent",
+            });
+
+            if (!obj.data || typeof obj.data !== "object") obj.data = {};
+            obj.data.isQRCode = true;
+            obj.data.qrColor = qrColor;
+
+            if (displayLayer?.set) {
+              displayLayer.set({
+                fill: qrColor,
+                stroke: null,
+                visible: true,
+                opacity: 1,
+                excludeFromExport: true,
+                selectable: false,
+                evented: false,
+              });
+            }
+
+            if (exportLayer?.set) {
+              exportLayer.set({
+                stroke: isVisibleColor(exportLayer.stroke) ? exportLayer.stroke : qrColor,
+                fill: null,
+                visible: true,
+                opacity: 1,
+                selectable: false,
+                evented: false,
+              });
+              exportLayer.qrExportStrokeWidth =
+                exportLayer.qrExportStrokeWidth || exportLayer.strokeWidth || 1;
+              exportLayer.strokeWidth = Math.min(
+                exportLayer.strokeWidth || exportLayer.qrExportStrokeWidth || 1,
+                0.001
+              );
+            }
+
+            decorateQrGroup(obj);
+          }
+
           const fromShapeTab =
             obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
 
@@ -322,21 +468,28 @@ export const useUndoRedo = () => {
   /**
    * Основна функція збереження стану
    */
-  const saveState = useCallback(async (description = 'State saved') => {
+  const saveState = useCallback(async (description = 'State saved', options = {}) => {
+    const { force = false } = options || {};
     const now = Date.now();
     
     // Перевірка на період ігнорування saves
-    if (now < (ignoreSavesUntilRef.current || 0)) {
+    if (!force && now < (ignoreSavesUntilRef.current || 0)) {
       return null;
     }
     
     // Перевірка блокувань
-    if (!canvas || isSavingRef.current || isRestoringRef.current || canvas.__suspendUndoRedo) {
+    if (
+      !canvas ||
+      (sharedUndoRedoStore.ownerId && sharedUndoRedoStore.ownerId !== instanceIdRef.current) ||
+      isSavingRef.current ||
+      isRestoringRef.current ||
+      canvas.__suspendUndoRedo
+    ) {
       return null;
     }
     
     // Throttling - не зберігаємо занадто часто
-    if (now - lastSaveTimeRef.current < CONFIG.MIN_SAVE_INTERVAL) {
+    if (!force && now - lastSaveTimeRef.current < CONFIG.MIN_SAVE_INTERVAL) {
       pendingChangesRef.current = true;
       return null;
     }
@@ -389,10 +542,9 @@ export const useUndoRedo = () => {
         return newHistory;
       });
 
-      setHistoryIndex(prev => {
-        const currentHistory = historyRef.current;
-        const currentIndex = historyIndexRef.current;
-        let newHistoryLength = currentHistory.slice(0, currentIndex + 1).length + 1;
+      setHistoryIndex(() => {
+        const currentHistory = sharedUndoRedoStore.history;
+        let newHistoryLength = currentHistory.length;
         
         if (newHistoryLength > CONFIG.MAX_HISTORY_SIZE) {
           newHistoryLength = CONFIG.MAX_HISTORY_SIZE;
@@ -425,6 +577,22 @@ export const useUndoRedo = () => {
     }, CONFIG.SAVE_DELAY);
   }, [saveState]);
 
+  const saveStateWhenReady = useCallback(
+    async (description, options = {}, attempts = 8) => {
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (!isSavingRef.current && !isRestoringRef.current) {
+          const saved = await saveState(description, options);
+          if (saved) return saved;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 75));
+      }
+
+      return null;
+    },
+    [saveState]
+  );
+
   /**
    * Batch збереження - групує швидкі послідовні зміни в одну операцію
    * Оптимізовано для швидшого збереження кроків
@@ -443,7 +611,7 @@ export const useUndoRedo = () => {
       // Для нового batch - зберігаємо після короткої затримки
       batchTimeoutRef.current = setTimeout(() => {
         batchStartTimeRef.current = null;
-        saveState(description);
+        saveStateWhenReady(description);
       }, CONFIG.SAVE_DELAY);
       return;
     }
@@ -451,9 +619,9 @@ export const useUndoRedo = () => {
     // Всередині batch window - просто оновлюємо таймер
     batchTimeoutRef.current = setTimeout(() => {
       batchStartTimeRef.current = null;
-      saveState(description);
+      saveStateWhenReady(description);
     }, CONFIG.SAVE_DELAY);
-  }, [saveState]);
+  }, [saveStateWhenReady]);
 
   /**
    * Негайне збереження - для критичних операцій без затримки
@@ -471,8 +639,39 @@ export const useUndoRedo = () => {
     batchStartTimeRef.current = null;
     
     // Зберігаємо негайно
-    saveState(description);
-  }, [saveState]);
+    saveStateWhenReady(description, { force: true });
+  }, [saveStateWhenReady]);
+
+  const flushPendingHistoryState = useCallback(async (description = "Pending changes before history navigation") => {
+    const hasPendingTimers =
+      !!saveTimeoutRef.current ||
+      !!batchTimeoutRef.current ||
+      pendingChangesRef.current === true;
+
+    if (!hasPendingTimers || !canvas || isRestoringRef.current) {
+      return false;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
+    batchStartTimeRef.current = null;
+
+    const beforeLength = sharedUndoRedoStore.history.length;
+    const beforeIndex = sharedUndoRedoStore.historyIndex;
+    const savedState = await saveStateWhenReady(description, { force: true });
+
+    return (
+      !!savedState &&
+      (sharedUndoRedoStore.history.length !== beforeLength ||
+        sharedUndoRedoStore.historyIndex !== beforeIndex)
+    );
+  }, [canvas, saveStateWhenReady]);
 
   // ============================================================================
   // ВІДНОВЛЕННЯ СТАНУ
@@ -495,8 +694,11 @@ export const useUndoRedo = () => {
     const canvasProps = state.canvasProperties || state;
 
     // QR codes потребують спеціальної обробки
+    // Keep serialized QR objects intact so undo/redo restores the same object
+    // properties that exportCanvas writes to project storage/PDF data.
     let qrToRecreate = [];
     let jsonToLoad = jsonState;
+    const shouldRecreateQrObjects = true;
 
     try {
       if (jsonState && typeof jsonState === "object") {
@@ -511,7 +713,7 @@ export const useUndoRedo = () => {
 
         // Витягуємо QR об'єкти для перегенерації
         const objects = Array.isArray(jsonToLoad.objects) ? jsonToLoad.objects : null;
-        if (objects && objects.length) {
+        if (shouldRecreateQrObjects && objects && objects.length) {
           const isUsableColor = (c) => {
             if (typeof c !== "string") return false;
             const v = c.trim().toLowerCase();
@@ -542,13 +744,41 @@ export const useUndoRedo = () => {
               continue;
             }
 
-            const rawColor = obj.qrColor ?? obj.data?.qrColor;
+            const childColor =
+              Array.isArray(obj.objects)
+                ? obj.objects.reduce((found, child) => {
+                    if (found) return found;
+                    if (child?.id === QR_DISPLAY_LAYER_ID && isUsableColor(child.fill)) {
+                      return child.fill;
+                    }
+                    if (child?.id === QR_EXPORT_LAYER_ID && isUsableColor(child.stroke)) {
+                      return child.stroke;
+                    }
+                    return null;
+                  }, null)
+                : null;
+            const rawColor = obj.qrColor ?? obj.data?.qrColor ?? childColor;
             const qrColor = isUsableColor(rawColor) ? rawColor : null;
 
             qrToRecreate.push({
               zIndex: i,
               qrText,
               qrColor,
+              id: obj.id,
+              name: obj.name,
+              layerId: obj.layerId,
+              groupId: obj.groupId,
+              customData: obj.customData,
+              customProperties: obj.customProperties,
+              data: obj.data,
+              visible: obj.visible,
+              opacity: obj.opacity,
+              lockMovementX: obj.lockMovementX,
+              lockMovementY: obj.lockMovementY,
+              lockScalingX: obj.lockScalingX,
+              lockScalingY: obj.lockScalingY,
+              lockUniScaling: obj.lockUniScaling,
+              lockRotation: obj.lockRotation,
               left: obj.left,
               top: obj.top,
               scaleX: obj.scaleX,
@@ -585,7 +815,9 @@ export const useUndoRedo = () => {
       // Очищаємо та завантажуємо
       canvas.clear();
 
-      canvas.loadFromJSON(jsonToLoad, () => {
+      const safeJsonToLoad = sanitizeFabricJsonForLoad(jsonToLoad, { clone: true });
+
+      canvas.loadFromJSON(safeJsonToLoad, () => {
         try {
           postProcessLoadedObjects();
 
@@ -791,7 +1023,16 @@ export const useUndoRedo = () => {
 
           // Відновлюємо element properties
           const restoreElementsPromise = Promise.resolve()
-            .then(() => restoreElementProperties(canvas, state?.toolbarState || canvasProps?.toolbarState || null))
+            .then(() =>
+              restoreElementProperties(
+                canvas,
+                state?.toolbarState || canvasProps?.toolbarState || null,
+                {
+                  regenerateQrCodes: true,
+                  preserveSerializedProperties: true,
+                }
+              )
+            )
             .catch(() => {});
 
           // Перегенеровуємо QR коди
@@ -842,6 +1083,46 @@ export const useUndoRedo = () => {
                   qrColor: color,
                   backgroundColor: "transparent",
                 });
+
+                try {
+                  const preservedProps = [
+                    "id",
+                    "name",
+                    "layerId",
+                    "groupId",
+                    "customData",
+                    "customProperties",
+                    "visible",
+                    "opacity",
+                    "lockMovementX",
+                    "lockMovementY",
+                    "lockScalingX",
+                    "lockScalingY",
+                    "lockUniScaling",
+                    "lockRotation",
+                  ];
+                  preservedProps.forEach((key) => {
+                    if (q[key] === undefined) return;
+                    try {
+                      const value =
+                        q[key] && typeof q[key] === "object"
+                          ? JSON.parse(JSON.stringify(q[key]))
+                          : q[key];
+                      obj.set?.(key, value);
+                      obj[key] = value;
+                    } catch {
+                      obj[key] = q[key];
+                    }
+                  });
+                  obj.visible = q.visible !== false;
+                  obj.opacity = Number.isFinite(Number(q.opacity)) ? Number(q.opacity) : 1;
+                  obj.data = {
+                    ...(q.data && typeof q.data === "object" ? q.data : {}),
+                    isQRCode: true,
+                    qrText: q.qrText,
+                    qrColor: color,
+                  };
+                } catch {}
 
                 // Before adding, remove any existing QR object with same qrText
                 try {
@@ -905,6 +1186,21 @@ export const useUndoRedo = () => {
                 lastStateHashRef.current = null;
                 
                 console.log('✅ State restored successfully');
+                try {
+                  canvas.fire("object:modified", {
+                    target: canvas.getActiveObject?.() || canvas.getObjects?.()?.[0] || null,
+                    fromUndoRedo: true,
+                  });
+                  canvas.fire("canvas:changed", { fromUndoRedo: true });
+                  window.dispatchEvent?.(
+                    new CustomEvent("canvas:history-restored", {
+                      detail: { fromUndoRedo: true },
+                    })
+                  );
+                } catch {
+                  // The visual restore is already complete; notification is best-effort.
+                }
+
                 if (callback) callback();
               };
 
@@ -935,18 +1231,20 @@ export const useUndoRedo = () => {
   // UNDO / REDO ФУНКЦІЇ
   // ============================================================================
 
-  const undo = useCallback(() => {
+  const undo = useCallback(async () => {
     // Захист від виклику під час відновлення
     if (isRestoringRef.current) {
       console.log('⚠️ Undo blocked - restore in progress');
       return;
     }
     
+    const originalIndex = historyIndexRef.current;
+    const flushed = await flushPendingHistoryState("Current state before undo");
     const currentIndex = historyIndexRef.current;
     const currentHistory = historyRef.current;
 
     if (currentIndex > 0 && canvas && currentHistory.length > 0) {
-      const newIndex = currentIndex - 1;
+      const newIndex = flushed ? originalIndex : currentIndex - 1;
       const stateToRestore = currentHistory[newIndex];
 
       historyIndexRef.current = newIndex;
@@ -955,15 +1253,16 @@ export const useUndoRedo = () => {
       console.log(`⬅️ Undo: ${currentIndex} → ${newIndex} (${currentHistory.length} total)`);
       restoreState(stateToRestore);
     }
-  }, [canvas, restoreState]);
+  }, [canvas, flushPendingHistoryState, restoreState]);
 
-  const redo = useCallback(() => {
+  const redo = useCallback(async () => {
     // Захист від виклику під час відновлення
     if (isRestoringRef.current) {
       console.log('⚠️ Redo blocked - restore in progress');
       return;
     }
     
+    await flushPendingHistoryState("Current state before redo");
     const currentIndex = historyIndexRef.current;
     const currentHistory = historyRef.current;
 
@@ -977,7 +1276,7 @@ export const useUndoRedo = () => {
       console.log(`➡️ Redo: ${currentIndex} → ${newIndex} (${currentHistory.length} total)`);
       restoreState(stateToRestore);
     }
-  }, [canvas, restoreState]);
+  }, [canvas, flushPendingHistoryState, restoreState]);
 
   // ============================================================================
   // ДОПОМІЖНІ ФУНКЦІЇ
@@ -1078,6 +1377,60 @@ export const useUndoRedo = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!canvas) return;
+    const instanceId = instanceIdRef.current;
+    if (
+      sharedUndoRedoStore.ownerId &&
+      sharedUndoRedoStore.ownerId !== instanceId
+    ) {
+      return;
+    }
+    sharedUndoRedoStore.ownerId = instanceId;
+    isHistoryOwnerRef.current = true;
+
+    let initialSaveTimer = null;
+    const resetHistoryForLoadedCanvas = () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+        batchTimeoutRef.current = null;
+      }
+
+      batchStartTimeRef.current = null;
+      pendingChangesRef.current = false;
+      lastStateHashRef.current = null;
+      updateSharedHistory([]);
+      updateSharedHistoryIndex(-1);
+      historyRef.current = [];
+      historyIndexRef.current = -1;
+      ignoreSavesUntilRef.current = Date.now() + CONFIG.IGNORE_SAVES_AFTER_RESTORE;
+
+      if (initialSaveTimer) clearTimeout(initialSaveTimer);
+      initialSaveTimer = setTimeout(() => {
+        if (!canvas.__suspendUndoRedo && !canvas.__switching) {
+          saveState("Initial state after canvas load");
+        }
+      }, CONFIG.IGNORE_SAVES_AFTER_RESTORE + 50);
+    };
+
+    canvas.on?.("canvas:loaded", resetHistoryForLoadedCanvas);
+    window.addEventListener?.("canvas:loaded", resetHistoryForLoadedCanvas);
+    window.addEventListener?.("project:switched", resetHistoryForLoadedCanvas);
+    window.addEventListener?.("project:reset", resetHistoryForLoadedCanvas);
+
+    return () => {
+      if (initialSaveTimer) clearTimeout(initialSaveTimer);
+      canvas.off?.("canvas:loaded", resetHistoryForLoadedCanvas);
+      window.removeEventListener?.("canvas:loaded", resetHistoryForLoadedCanvas);
+      window.removeEventListener?.("project:switched", resetHistoryForLoadedCanvas);
+      window.removeEventListener?.("project:reset", resetHistoryForLoadedCanvas);
+    };
+  }, [canvas, saveState]);
+
   // ============================================================================
   // AUTO-UNLOCK TIMEOUT (захист від зависання)
   // ============================================================================
@@ -1108,6 +1461,18 @@ export const useUndoRedo = () => {
   // ============================================================================
 
   useEffect(() => {
+    if (!canvas) return;
+    const instanceId = instanceIdRef.current;
+    if (
+      sharedUndoRedoStore.ownerId &&
+      sharedUndoRedoStore.ownerId !== instanceId
+    ) {
+      return;
+    }
+
+    sharedUndoRedoStore.ownerId = instanceId;
+    isHistoryOwnerRef.current = true;
+
     if (!keyboardHandlerRef.current) {
       keyboardHandlerRef.current = new UndoRedoKeyboardHandler({
         undo,
@@ -1130,7 +1495,7 @@ export const useUndoRedo = () => {
         keyboardHandlerRef.current = null;
       }
     };
-  }, [undo, redo, saveCurrentState]);
+  }, [canvas, undo, redo, saveCurrentState]);
 
   // ============================================================================
   // CANVAS EVENT LISTENERS
@@ -1142,6 +1507,16 @@ export const useUndoRedo = () => {
 
   useEffect(() => {
     if (!canvas) return;
+    const instanceId = instanceIdRef.current;
+    if (
+      sharedUndoRedoStore.ownerId &&
+      sharedUndoRedoStore.ownerId !== instanceId
+    ) {
+      return;
+    }
+
+    sharedUndoRedoStore.ownerId = instanceId;
+    isHistoryOwnerRef.current = true;
     
     // Ініціалізуємо історію тільки один раз
     if (historyRef.current.length === 0) {
@@ -1203,9 +1578,12 @@ export const useUndoRedo = () => {
     const handleCanvasEvent = (event) => {
       // Fabric.js може передавати тип події різними способами
       const eventType = event?.type || event?.e?.type || event?.action || 'unknown';
+      if (event?.fromUndoRedo || event?.detail?.fromUndoRedo) {
+        return;
+      }
       
       // Строга перевірка блокувань
-      if (isRestoringRef.current || isSavingRef.current || canvas.__suspendUndoRedo) {
+      if (isRestoringRef.current || canvas.__suspendUndoRedo) {
         return;
       }
 
@@ -1217,6 +1595,7 @@ export const useUndoRedo = () => {
       // Ігноруємо проміжні події (moving, scaling, rotating) - 
       // чекаємо на object:modified
       if (inProgressEvents.has(eventType)) {
+        pendingChangesRef.current = true;
         return;
       }
 
@@ -1238,7 +1617,7 @@ export const useUndoRedo = () => {
         // Додаємо маленьку затримку для критичних подій щоб об'єкт повністю ініціалізувався
         setTimeout(() => {
           if (!isRestoringRef.current && !canvas.__suspendUndoRedo) {
-            saveState(`${eventType}: ${objectInfo || 'canvas'}`);
+            saveStateWhenReady(`${eventType}: ${objectInfo || 'canvas'}`, { force: true });
           }
         }, 50);
       } 
@@ -1269,8 +1648,12 @@ export const useUndoRedo = () => {
       
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
+      if (sharedUndoRedoStore.ownerId === instanceId) {
+        sharedUndoRedoStore.ownerId = null;
+      }
+      isHistoryOwnerRef.current = false;
     };
-  }, [canvas, saveState, debouncedSaveState, batchSaveState]);
+  }, [canvas, saveStateWhenReady, debouncedSaveState, batchSaveState]);
 
   // ============================================================================
   // TOOLBAR CHANGE LISTENER - відстеження змін розміру та кольорів
@@ -1280,9 +1663,13 @@ export const useUndoRedo = () => {
     if (!canvas) return;
 
     // Обробник зміни тулбара (розмір, колір тощо)
+    if (sharedUndoRedoStore.ownerId !== instanceIdRef.current) {
+      return;
+    }
+
     const handleToolbarChange = (event) => {
       // Перевіряємо блокування
-      if (isRestoringRef.current || isSavingRef.current || canvas.__suspendUndoRedo) {
+      if (isRestoringRef.current || canvas.__suspendUndoRedo) {
         return;
       }
 
@@ -1303,7 +1690,19 @@ export const useUndoRedo = () => {
       if (changeType.length > 0) {
         console.log(`🎨 Toolbar changed: ${changeType.join(', ')}`);
         // Використовуємо batch save щоб групувати швидкі зміни
-        batchSaveState(`Toolbar: ${changeType.join(', ')}`);
+        const isCanvasGeometryChange =
+          changeType.includes("size") || changeType.includes("shape");
+
+        if (isCanvasGeometryChange) {
+          if (batchTimeoutRef.current) {
+            clearTimeout(batchTimeoutRef.current);
+            batchTimeoutRef.current = null;
+          }
+          batchStartTimeRef.current = null;
+          saveStateWhenReady(`Toolbar: ${changeType.join(', ')}`, { force: true });
+        } else {
+          batchSaveState(`Toolbar: ${changeType.join(', ')}`);
+        }
       }
     };
 
@@ -1317,7 +1716,7 @@ export const useUndoRedo = () => {
       window.removeEventListener('toolbar:changed', handleToolbarChange);
       toolbarChangeHandlerRef.current = null;
     };
-  }, [canvas, batchSaveState]);
+  }, [canvas, batchSaveState, saveStateWhenReady]);
 
   // Cleanup при демонтажі
   useEffect(() => {

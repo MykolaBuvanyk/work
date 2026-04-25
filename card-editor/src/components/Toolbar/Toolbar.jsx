@@ -2049,8 +2049,8 @@ const Toolbar = ({ formData }) => {
 
   // Обгортка для кліків по фігурах: виклик функції та фіксація вибору користувача
   const withShapePick = fn => () => {
-    fn();
     setHasUserPickedShape(true);
+    fn();
     // При виборі нової фігури — виходимо з режиму кастомної фігури
     if (isCustomShapeMode) exitCustomShapeMode();
     // Нова фігура => скидаємо прапорець кастомного застосування
@@ -2727,6 +2727,21 @@ const Toolbar = ({ formData }) => {
   // Глобальний helper: логічний розмір canvas (без масштабу)
   const getLogicalCanvasSize = () => {
     if (!canvas) return { width: 0, height: 0 };
+    const designSize =
+      typeof canvas.getDesignSize === 'function' ? canvas.getDesignSize() : null;
+    const designWidth = Number(designSize?.width);
+    const designHeight = Number(designSize?.height);
+    if (
+      Number.isFinite(designWidth) &&
+      Number.isFinite(designHeight) &&
+      designWidth > 0 &&
+      designHeight > 0
+    ) {
+      return {
+        width: designWidth,
+        height: designHeight,
+      };
+    }
     const zoom = typeof canvas.getZoom === 'function' ? canvas.getZoom() : 1;
     return {
       width: Math.round(canvas.getWidth() / (zoom || 1)),
@@ -2743,12 +2758,9 @@ const Toolbar = ({ formData }) => {
     }
     const storedW = Number(canvas.get?.('designWidthMm'));
     const storedH = Number(canvas.get?.('designHeightMm'));
-    const actualWidthMm = Number(
-      pxToMm(typeof canvas.getWidth === 'function' ? canvas.getWidth() : canvas.width || 0).toFixed(1)
-    );
-    const actualHeightMm = Number(
-      pxToMm(typeof canvas.getHeight === 'function' ? canvas.getHeight() : canvas.height || 0).toFixed(1)
-    );
+    const sz = getLogicalCanvasSize();
+    const actualWidthMm = Number(pxToMm(sz.width).toFixed(1));
+    const actualHeightMm = Number(pxToMm(sz.height).toFixed(1));
     const widthMm =
       Number.isFinite(storedW) && Math.abs(storedW - actualWidthMm) <= 0.2
         ? Math.round(storedW * 10) / 10
@@ -2950,23 +2962,35 @@ const Toolbar = ({ formData }) => {
     const syncCanvasSizeValues = () => {
       const storedW = Number(canvas.get?.('designWidthMm'));
       const storedH = Number(canvas.get?.('designHeightMm'));
-      const widthMm = Number.isFinite(storedW)
-        ? Math.round(storedW * 10) / 10
-        : (() => {
-            const sz = getLogicalCanvasSize();
-            return Number(pxToMm(sz.width).toFixed(1));
-          })();
-      const heightMm = Number.isFinite(storedH)
-        ? Math.round(storedH * 10) / 10
-        : (() => {
-            const sz = getLogicalCanvasSize();
-            return Number(pxToMm(sz.height).toFixed(1));
-          })();
+      const sz = getLogicalCanvasSize();
+      const actualWidthMm = Number(pxToMm(sz.width).toFixed(1));
+      const actualHeightMm = Number(pxToMm(sz.height).toFixed(1));
+      const latest = latestSizeValuesRef.current || {};
+      const widthMm =
+        Number.isFinite(storedW) && Math.abs(storedW - actualWidthMm) <= 0.2
+          ? Math.round(storedW * 10) / 10
+          : actualWidthMm;
+      const heightMm =
+        Number.isFinite(storedH) && Math.abs(storedH - actualHeightMm) <= 0.2
+          ? Math.round(storedH * 10) / 10
+          : actualHeightMm;
       const crMm = Number(canvas.get?.('cornerRadius')) || 0;
+      const nextWidth =
+        Number.isFinite(widthMm) && widthMm > 0
+          ? widthMm
+          : Number(latest.width) || DEFAULT_SHAPE_WIDTH_MM;
+      const nextHeight =
+        Number.isFinite(heightMm) && heightMm > 0
+          ? heightMm
+          : Number(latest.height) || DEFAULT_SHAPE_HEIGHT_MM;
+      const nextCorner =
+        Number.isFinite(crMm)
+          ? crMm
+          : Number(latest.cornerRadius) || 0;
       setSizeValues({
-        width: widthMm,
-        height: heightMm,
-        cornerRadius: crMm,
+        width: nextWidth,
+        height: nextHeight,
+        cornerRadius: nextCorner,
       });
     };
     const onSelectionCreated = () => {
@@ -8408,6 +8432,10 @@ const Toolbar = ({ formData }) => {
   // Фігури (Shape Icons) - встановлюють форму canvas
   const resetCornerRadiusState = () => {
     setSizeValues(prev => ({ ...prev, cornerRadius: 0 }));
+    try {
+      canvas?.set?.('cornerRadius', 0);
+      canvas?.set?.('hasUserEditedCanvasCornerRadius', false);
+    } catch {}
   };
 
   // Helper: встановлення типу фігури (локально + на canvas для збереження в БД)
@@ -9334,7 +9362,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('hexagon');
+      setShapeType('hexagon');
 
       // Встановлюємо розміри canvas (127x114 мм для шестикутника)
       canvas.setDimensions({ width: mmToPx(127), height: mmToPx(114) });
@@ -9382,7 +9410,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('octagon');
+      setShapeType('octagon');
 
       // Встановлюємо розміри canvas (100x100 мм для восьмикутника)
       canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
@@ -9432,7 +9460,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('triangle');
+      setShapeType('triangle');
 
       // Встановлюємо розміри canvas (100x100 мм для трикутника)
       canvas.setDimensions({ width: mmToPx(100), height: mmToPx(100) });
@@ -9479,7 +9507,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('arrowLeft');
+      setShapeType('arrowLeft');
 
       const widthPx = mmToPx(120);
       const heightPx = mmToPx(80);
@@ -9526,7 +9554,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('arrowRight');
+      setShapeType('arrowRight');
 
       const widthPx = mmToPx(120);
       const heightPx = mmToPx(80);
@@ -9573,7 +9601,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('flag');
+      setShapeType('flag');
 
       // Встановлюємо розміри canvas (720x600 мм)
       canvas.setDimensions({ width: mmToPx(720), height: mmToPx(600) });
@@ -9614,7 +9642,7 @@ const Toolbar = ({ formData }) => {
       preserveElementsOnShapeChange();
 
       // Встановлюємо тип поточної фігури
-      setCurrentShapeType('diamond');
+      setShapeType('diamond');
 
       // Встановлюємо розміри canvas (600x600 мм)
       const wPxD = mmToPx(600);

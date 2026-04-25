@@ -1471,6 +1471,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "isBarCode",
       "barCodeText",
       "barCodeType",
+      "barCodeColor",
 
       // Image properties
       "originalSrc",
@@ -1502,6 +1503,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "layerId",
       "groupId",
       "customData",
+      "customProperties",
 
       // Interaction & lock flags (so constraints persist after reload)
       "selectable",
@@ -1512,6 +1514,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "lockMovementY",
       "lockScalingX",
       "lockScalingY",
+      "lockUniScaling",
       "lockRotation",
       "lockSkewingX",
       "lockSkewingY",
@@ -1603,7 +1606,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       return false;
     };
 
-    const cleanObject = (obj) => {
+    const cleanObject = (obj, seen = new WeakSet()) => {
       if (obj === null) return null;
       if (typeof obj !== "object") return obj;
 
@@ -1611,9 +1614,14 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         return SKIP_VALUE;
       }
 
+      if (seen.has(obj)) {
+        return SKIP_VALUE;
+      }
+      seen.add(obj);
+
       if (Array.isArray(obj)) {
         return obj
-          .map((item) => cleanObject(item))
+          .map((item) => cleanObject(item, seen))
           .filter((item) => item !== SKIP_VALUE);
       }
 
@@ -1627,7 +1635,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
           if (isDomLike(value)) continue;
 
           // Рекурсивно очищаємо вкладені об'єкти
-          const cleanedValue = cleanObject(value);
+          const cleanedValue = cleanObject(value, seen);
           if (cleanedValue !== SKIP_VALUE) {
             cleaned[key] = cleanedValue;
           }
@@ -1644,6 +1652,35 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         const liveObj = liveObjects[idx] || null;
         const nextObj = obj && typeof obj === "object" ? { ...obj } : obj;
         if (nextObj && typeof nextObj === "object") {
+          if (liveObj && typeof liveObj === "object") {
+            const blockedLiveKeys = new Set([
+              "canvas",
+              "group",
+              "_cacheCanvas",
+              "_cacheContext",
+              "_objects",
+              "_element",
+              "_originalElement",
+              "_filteredEl",
+              "_originalImage",
+              "controls",
+            ]);
+
+            for (const key of Object.keys(liveObj)) {
+              if (blockedLiveKeys.has(key)) continue;
+              if (key.startsWith("_")) continue;
+              if (key.startsWith("__")) continue;
+              if (Object.prototype.hasOwnProperty.call(nextObj, key)) continue;
+
+              const value = liveObj[key];
+              if (typeof value === "function") continue;
+              const cleanedValue = cleanObject(value, new WeakSet());
+              if (cleanedValue !== SKIP_VALUE) {
+                nextObj[key] = cleanedValue;
+              }
+            }
+          }
+
           nextObj.svgDebugInfo = buildSvgDebugInfo({
             stage: "exportCanvas",
             index: idx,
@@ -2231,6 +2268,53 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
       qrColor: originalColor,
       backgroundColor: "transparent",
     });
+
+    try {
+      const preservedProps = [
+        "id",
+        "name",
+        "layerId",
+        "groupId",
+        "customData",
+        "customProperties",
+        "data",
+        "visible",
+        "opacity",
+        "lockMovementX",
+        "lockMovementY",
+        "lockScalingX",
+        "lockScalingY",
+        "lockUniScaling",
+        "lockRotation",
+        "lockSkewingX",
+        "lockSkewingY",
+        "hoverCursor",
+        "moveCursor",
+        "cornerColor",
+        "cornerStrokeColor",
+        "cornerStyle",
+        "cornerSize",
+      ];
+
+      preservedProps.forEach((key) => {
+        if (oldObj[key] === undefined) return;
+        try {
+          const value =
+            oldObj[key] && typeof oldObj[key] === "object"
+              ? JSON.parse(JSON.stringify(oldObj[key]))
+              : oldObj[key];
+          newObj.set?.(key, value);
+          newObj[key] = value;
+        } catch {
+          newObj[key] = oldObj[key];
+        }
+      });
+
+      if (!newObj.data || typeof newObj.data !== "object") newObj.data = {};
+      newObj.data.isQRCode = true;
+      newObj.data.qrText = qrText;
+      newObj.data.qrColor = originalColor;
+    } catch {}
     
     // Додаємо новий об'єкт на позицію старого
     const currentObjects = canvas.getObjects();
@@ -2250,7 +2334,11 @@ async function regenerateQrCode(canvas, oldObj, qrText, themeTextColor) {
 }
 
 // Helper function to restore element-specific properties after canvas load
-export async function restoreElementProperties(canvas, toolbarState = null) {
+export async function restoreElementProperties(canvas, toolbarState = null, options = {}) {
+  const {
+    regenerateQrCodes = true,
+    preserveSerializedProperties = false,
+  } = options || {};
   const svgDebugEnabled =
     typeof window !== "undefined" &&
     (window.__SVG_DEBUG__ === true || localStorage.getItem("svgDebug") === "1");
@@ -2368,7 +2456,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
       // Збираємо QR коди для перегенерації (видалимо старі та додамо нові)
       try {
         const qrText = getQrTextFromObject(obj);
-        if (qrText && objectLooksLikeQrGroup(obj)) {
+        if (regenerateQrCodes && qrText && objectLooksLikeQrGroup(obj)) {
           console.log('[restoreElementProperties] Знайдено QR код для перегенерації:', qrText);
           qrCodesToRegenerate.push({
             oldObj: obj,
@@ -2384,6 +2472,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
           isBarCode: true,
           barCodeText: obj.barCodeText,
           barCodeType: obj.barCodeType,
+          barCodeColor: obj.barCodeColor || obj.fill || "#000000",
         });
       }
 
@@ -2470,7 +2559,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
         (obj?.type === "path" || obj?.type === "group");
 
       // Ensure uploaded SVG keeps exact saved look and is not theme-mutated during restore.
-      if (isUploadedSvgObject) {
+      if (!preserveSerializedProperties && isUploadedSvgObject) {
         try {
           if (typeof obj.set === "function") {
             obj.set({
@@ -2514,7 +2603,7 @@ export async function restoreElementProperties(canvas, toolbarState = null) {
 
       // Ensure themed icons/shapes continue to follow theme after reload.
       // Uploaded SVG is explicitly excluded above.
-      if (!isUploadedSvgObject) {
+      if (!preserveSerializedProperties && !isUploadedSvgObject) {
         try {
           const hasVisiblePaint = (value) => {
             if (typeof value !== "string") return false;

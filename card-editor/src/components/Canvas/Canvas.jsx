@@ -1623,6 +1623,10 @@ const Canvas = ({ className }) => {
         const prevH = designRef.current.height;
 
         designRef.current = { width: nextW, height: nextH };
+        try {
+          fCanvas.set('designWidthMm', Number(pxToMm(nextW).toFixed(1)));
+          fCanvas.set('designHeightMm', Number(pxToMm(nextH).toFixed(1)));
+        } catch {}
         resizingRef.current = true;
         try {
           // Run synchronously so labels (width/height) reflect new size immediately

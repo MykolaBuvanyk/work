@@ -548,6 +548,7 @@ const InfoAboutProject = () => {
         checkout: {
           deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
+          isInvoiceDifferent: Boolean(checkoutTotals?.isInvoiceDifferent),
           phoneOk: Boolean(checkoutTotals?.phoneOk),
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),

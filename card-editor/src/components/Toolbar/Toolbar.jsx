@@ -23,6 +23,7 @@ import {
   applyStrokeOnlyToSVG,
   convertSvgToThemeMonochrome,
   convertSvgToThemeColorPreserveAlpha,
+  SVG_KNOCKOUT_ID_PREFIX,
 } from '../../utils/svgThemeTransform';
 import styles from './Toolbar.module.css';
 import {
@@ -6396,6 +6397,46 @@ const Toolbar = ({ formData }) => {
   const getUploadPreviewPrefix = (type) =>
     type === 'raster' ? 'upload-preview-raster' : 'upload-preview-vector';
 
+  const isWhiteThemeColor = color => {
+    const normalized = String(color || '').trim().toLowerCase().replace(/\s+/g, '');
+    return (
+      normalized === '#fff' ||
+      normalized === '#ffffff' ||
+      normalized === 'white' ||
+      normalized === 'rgb(255,255,255)' ||
+      normalized === 'rgba(255,255,255,1)'
+    );
+  };
+
+  const isSvgKnockoutObject = obj => {
+    if (!obj || typeof obj !== 'object') return false;
+    if (obj.svgKnockout === true) return true;
+    const id = String(obj.id || '').trim();
+    return id.startsWith(SVG_KNOCKOUT_ID_PREFIX);
+  };
+
+  const applySvgKnockoutRendering = (obj, active) => {
+    if (!obj || typeof obj !== 'object') return;
+
+    const applyOne = target => {
+      if (!target || typeof target.set !== 'function') return;
+      const isKnockout = isSvgKnockoutObject(target);
+      if (!isKnockout) return;
+
+      target.set({
+        svgKnockout: true,
+        globalCompositeOperation: active ? 'destination-out' : 'source-over',
+        objectCaching: false,
+        dirty: true,
+      });
+    };
+
+    applyOne(obj);
+    if (obj.type === 'group' && typeof obj.forEachObject === 'function') {
+      obj.forEachObject(applyOne);
+    }
+  };
+
   const isUploadPreviewAssetObject = (obj) => {
     if (!obj || typeof obj !== 'object') return false;
     if (obj.isUploadPreviewElement === true) return true;
@@ -6565,6 +6606,8 @@ const Toolbar = ({ formData }) => {
       if (rebuilt.type === 'path' && targetObj.svgEvenOddHoles === true) {
         applyPropsSafe(rebuilt, { fillRule: 'evenodd', clipRule: 'evenodd' });
       }
+
+      applySvgKnockoutRendering(rebuilt, isWhiteThemeColor(themeColor || '#000000'));
 
       ensureShapeSvgId(rebuilt, canvas, {
         prefix: getUploadPreviewPrefix(targetObj.uploadPreviewType || 'vector'),
@@ -10886,6 +10929,8 @@ const Toolbar = ({ formData }) => {
                   );
                 }
               } catch {}
+
+              applySvgKnockoutRendering(obj, isSvgUpload && isWhiteThemeColor(theme));
 
               // Tag as uploaded element so resize auto-fit can pick it up.
               try {

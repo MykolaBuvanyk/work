@@ -329,6 +329,62 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     return hasAddressLines(checkout?.invoiceAddress);
   }, [order]);
 
+  const deliverySectionData = useMemo(() => {
+    const checkoutDelivery = order?.orderMongo?.checkout?.deliveryAddress || {};
+    const userDelivery = {
+      fullName: [order?.user?.firstName, order?.user?.surname].filter(Boolean).join(' '),
+      companyName: order?.user?.company,
+      address1: order?.user?.address,
+      address2: order?.user?.address2,
+      address3: order?.user?.address3,
+      town: order?.user?.city,
+      postalCode: order?.user?.postcode,
+      country: order?.country || order?.user?.country,
+      region: order?.user?.state,
+      email: order?.user?.email,
+      mobile: order?.user?.phone,
+    };
+
+    const pick = (primary, fallback) => {
+      const primaryValue = String(primary || '').trim();
+      if (primaryValue) return primaryValue;
+      return String(fallback || '').trim();
+    };
+
+    const countryRaw =
+      pick(checkoutDelivery?.country, userDelivery?.country) ||
+      pick(checkoutDelivery?.region, userDelivery?.region) ||
+      '';
+
+    return {
+      fullName: pick(checkoutDelivery?.fullName, userDelivery?.fullName),
+      companyName: pick(checkoutDelivery?.companyName, userDelivery?.companyName),
+      address1: pick(checkoutDelivery?.address1, userDelivery?.address1),
+      address2: pick(checkoutDelivery?.address2, userDelivery?.address2),
+      address3: pick(checkoutDelivery?.address3, userDelivery?.address3),
+      town: pick(checkoutDelivery?.town, userDelivery?.town),
+      postalCode: pick(checkoutDelivery?.postalCode, userDelivery?.postalCode),
+      countryLabel: resolveCountryLabel(countryRaw),
+      email: pick(checkoutDelivery?.email, userDelivery?.email),
+      mobile: pick(checkoutDelivery?.mobile, userDelivery?.mobile),
+    };
+  }, [order]);
+
+  const deliveryAddressLines = useMemo(() => {
+    const lines = [
+      deliverySectionData.fullName,
+      deliverySectionData.companyName,
+      deliverySectionData.address1,
+      deliverySectionData.address2,
+      deliverySectionData.address3,
+      deliverySectionData.town,
+      deliverySectionData.postalCode,
+      deliverySectionData.countryLabel,
+    ];
+
+    return lines.filter((line) => String(line || '').trim() !== '');
+  }, [deliverySectionData]);
+
   const invoiceSectionData = useMemo(() => {
     if (!hasSeparateInvoiceAddress) {
       return {
@@ -1733,14 +1789,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row box">
         <p>Delivery Address:</p>
         <div className="box">
-          <div>{order.user.firstName} {order.user.surname}</div>
-          <div>{order.user.company||''}</div>
-          <div>{order.user.address||''}</div>
-          <div>{order.user.address2||''}</div>
-          <div>{order.user.address3||''}</div>
-          <div>{order.user.city||''}</div>
-          <div>{order.user.postcode||''}</div>
-          <div>{(combinedCountries.find(x=>x.code===(order.country||order.user.country))||{}).label||order.country||order.user.country||''}</div>    
+          {deliveryAddressLines.length > 0
+            ? deliveryAddressLines.map((line, idx) => <div key={`${line}-${idx}`}>{line}</div>)
+            : <div>---</div>}
         </div>
       </div>
       {hasSeparateInvoiceAddress && (
@@ -1806,7 +1857,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       )}
       <div className="row">
         <p>E-Mail:</p>
-        <span>{order.user.email}</span>
+        <span>{deliverySectionData.email || order.user.email}</span>
         <div />
       </div>
       <div className="row">
@@ -1820,7 +1871,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
             />
           )}
         </p>
-        <span>{order.user.phone}</span>
+        <span>{deliverySectionData.mobile || order.user.phone}</span>
         <div />
       </div>
       <div className="row">

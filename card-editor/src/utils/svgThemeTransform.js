@@ -1,5 +1,7 @@
 const LIGHT_TO_TRANSPARENT_LUMA = 160;
 const LIGHT_TO_WHITE_LUMA = 200;
+export const SVG_KNOCKOUT_ID_PREFIX = "svg-knockout-";
+export const SVG_KNOCKOUT_ATTR = "data-svg-knockout";
 
 const NAMED_COLORS = {
   black: [0, 0, 0],
@@ -113,6 +115,31 @@ const parseSvgColor = rawValue => {
 };
 
 const luminance = ({ r, g, b }) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+const isLightOpaquePaint = rawValue => {
+  if (!rawValue || isTransparentValue(rawValue)) return false;
+
+  const color = parseSvgColor(rawValue);
+  if (!color || color.a <= 0.001) return false;
+
+  return luminance(color) >= LIGHT_TO_WHITE_LUMA;
+};
+
+const markSvgKnockoutElement = el => {
+  if (!el || typeof el.setAttribute !== "function") return;
+
+  el.setAttribute(SVG_KNOCKOUT_ATTR, "true");
+
+  const currentId = String(el.getAttribute("id") || "").trim();
+  if (!currentId.startsWith(SVG_KNOCKOUT_ID_PREFIX)) {
+    el.setAttribute(
+      "id",
+      `${SVG_KNOCKOUT_ID_PREFIX}${Math.random().toString(36).slice(2, 8)}${
+        currentId ? `-${currentId}` : ""
+      }`
+    );
+  }
+};
 
 const toMonochromeValue = (rawValue, themeColor) => {
   if (!rawValue) return rawValue;
@@ -369,6 +396,9 @@ export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#00
             const key = chunk.slice(0, idx).trim().toLowerCase();
             const value = chunk.slice(idx + 1).trim();
             if (!THEME_REWRITE_ATTRS.includes(key)) return chunk;
+            if ((key === "fill" || key === "stroke") && isLightOpaquePaint(value)) {
+              markSvgKnockoutElement(el);
+            }
             return `${key}: ${toThemeColorPreserveAlphaValue(value, themeColor)}`;
           });
 
@@ -377,7 +407,11 @@ export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#00
 
       THEME_REWRITE_ATTRS.forEach(attr => {
         if (!el.hasAttribute(attr)) return;
-        const next = toThemeColorPreserveAlphaValue(el.getAttribute(attr), themeColor);
+        const rawValue = el.getAttribute(attr);
+        if ((attr === "fill" || attr === "stroke") && isLightOpaquePaint(rawValue)) {
+          markSvgKnockoutElement(el);
+        }
+        const next = toThemeColorPreserveAlphaValue(rawValue, themeColor);
         if (next != null) el.setAttribute(attr, next);
       });
 
@@ -390,6 +424,9 @@ export const convertSvgToThemeColorPreserveAlpha = (svgString, themeColor = "#00
         const classValue = getPropFromClassStyles(el, attr, styleMap);
         if (classValue == null || classValue === "") return;
 
+        if ((attr === "fill" || attr === "stroke") && isLightOpaquePaint(classValue)) {
+          markSvgKnockoutElement(el);
+        }
         const next = toThemeColorPreserveAlphaValue(classValue, themeColor);
         if (next != null) setStyleProp(el, attr, next);
       });

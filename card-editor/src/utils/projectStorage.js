@@ -1486,6 +1486,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
       "previewSVG",
       "originalSvgSource",
       "uploadedSvgStrokeOnly",
+      "svgKnockout",
       "svgDebugInfo",
       "filters",
       "isUploadedImage",

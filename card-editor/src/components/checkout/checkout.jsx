@@ -1,6 +1,6 @@
 import './checkout.sass'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import SimpleButton from '../ui/buttons/simple-button/simple-button'
@@ -265,6 +265,9 @@ export default function Checkout({
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 	const [profileUserType, setProfileUserType] = useState('')
 	const [profileBusinessHint, setProfileBusinessHint] = useState(false)
+	const touchedDeliveryFieldsRef = useRef({})
+	const touchedInvoiceFieldsRef = useRef({})
+	const touchedInvoiceEmailRef = useRef(false)
 	const { designs } = useCanvasContext()
 	const userType = useSelector(state => state?.user?.user?.type)
 	const reduxUser = useSelector(state => state?.user?.user)
@@ -280,8 +283,8 @@ export default function Checkout({
 	useEffect(() => {
 		let active = true
 
-		const keepIfFilled = (current, fallback) =>
-			String(current || '').trim() ? String(current || '') : String(fallback || '')
+		const keepIfTouched = (touchedRef, field, current, fallback) =>
+			touchedRef.current?.[field] ? String(current || '') : String(fallback || '')
 
 		const setFromProfile = user => {
 			if (!active || !user) return
@@ -301,35 +304,40 @@ export default function Checkout({
 
 			setDeliveryAddress(prev => ({
 				...prev,
-				...(hasProfileCountry ? profileCountry : {}),
-				fullName,
-				companyName: String(user.company || ''),
-				address1: String(user.address || ''),
-				address2: String(user.address2 || ''),
-				address3: String(user.address3 || ''),
-				town: String(user.city || ''),
-				postalCode: String(user.postcode || ''),
-				email: profileDeliveryEmail,
-				mobile: String(user.phone || ''),
+				...(hasProfileCountry && !touchedDeliveryFieldsRef.current.country && !touchedDeliveryFieldsRef.current.region
+					? profileCountry
+					: {}),
+				fullName: keepIfTouched(touchedDeliveryFieldsRef, 'fullName', prev.fullName, fullName),
+				companyName: keepIfTouched(touchedDeliveryFieldsRef, 'companyName', prev.companyName, user.company),
+				address1: keepIfTouched(touchedDeliveryFieldsRef, 'address1', prev.address1, user.address),
+				address2: keepIfTouched(touchedDeliveryFieldsRef, 'address2', prev.address2, user.address2),
+				address3: keepIfTouched(touchedDeliveryFieldsRef, 'address3', prev.address3, user.address3),
+				town: keepIfTouched(touchedDeliveryFieldsRef, 'town', prev.town, user.city),
+				postalCode: keepIfTouched(touchedDeliveryFieldsRef, 'postalCode', prev.postalCode, user.postcode),
+				email: keepIfTouched(touchedDeliveryFieldsRef, 'email', prev.email, profileDeliveryEmail),
+				mobile: keepIfTouched(touchedDeliveryFieldsRef, 'mobile', prev.mobile, user.phone),
 			}))
 
 			setInvoiceAddress(prev => ({
 				...prev,
-				...(String(preferredInvoiceCountry.country || preferredInvoiceCountry.region || '').trim()
+				...(String(preferredInvoiceCountry.country || preferredInvoiceCountry.region || '').trim() &&
+					!touchedInvoiceFieldsRef.current.country && !touchedInvoiceFieldsRef.current.region
 					? preferredInvoiceCountry
 					: {}),
-				fullName: keepIfFilled(prev.fullName, user.firstName2),
-				companyName: keepIfFilled(prev.companyName, user.company2),
-				address1: keepIfFilled(prev.address1, user.address4),
-				address2: keepIfFilled(prev.address2, user.address5),
-				address3: keepIfFilled(prev.address3, user.address6),
-				town: keepIfFilled(prev.town, user.city2),
-				postalCode: keepIfFilled(prev.postalCode, user.postcode2),
-				email: profileInvoiceAddressEmail,
-				mobile: keepIfFilled(prev.mobile, user.phone2),
+				fullName: keepIfTouched(touchedInvoiceFieldsRef, 'fullName', prev.fullName, user.firstName2),
+				companyName: keepIfTouched(touchedInvoiceFieldsRef, 'companyName', prev.companyName, user.company2),
+				address1: keepIfTouched(touchedInvoiceFieldsRef, 'address1', prev.address1, user.address4),
+				address2: keepIfTouched(touchedInvoiceFieldsRef, 'address2', prev.address2, user.address5),
+				address3: keepIfTouched(touchedInvoiceFieldsRef, 'address3', prev.address3, user.address6),
+				town: keepIfTouched(touchedInvoiceFieldsRef, 'town', prev.town, user.city2),
+				postalCode: keepIfTouched(touchedInvoiceFieldsRef, 'postalCode', prev.postalCode, user.postcode2),
+				email: keepIfTouched(touchedInvoiceFieldsRef, 'email', prev.email, profileInvoiceAddressEmail),
+				mobile: keepIfTouched(touchedInvoiceFieldsRef, 'mobile', prev.mobile, user.phone2),
 			}))
 
-			setInvoiceEmail(profileInvoiceEmails)
+			if (!touchedInvoiceEmailRef.current) {
+				setInvoiceEmail(profileInvoiceEmails)
+			}
 			setIsInvoiceDifferent(prev => prev || hasInvoiceProfileData(user))
 		}
 
@@ -471,6 +479,11 @@ export default function Checkout({
 	}, [])
 
 	const updateDeliveryField = (field, value) => {
+		touchedDeliveryFieldsRef.current = {
+			...touchedDeliveryFieldsRef.current,
+			[field]: true,
+			...(field === 'country' ? { region: true } : {}),
+		}
 		setDeliveryAddress(prev => {
 			if (field === 'country') {
 				const selected = COUNTRY_OPTIONS.find(item => item.name === value)
@@ -485,6 +498,11 @@ export default function Checkout({
 	}
 
 	const updateInvoiceField = (field, value) => {
+		touchedInvoiceFieldsRef.current = {
+			...touchedInvoiceFieldsRef.current,
+			[field]: true,
+			...(field === 'country' ? { region: true } : {}),
+		}
 		setInvoiceAddress(prev => {
 			if (field === 'country') {
 				const selected = COUNTRY_OPTIONS.find(item => item.name === value)
@@ -551,6 +569,11 @@ export default function Checkout({
 		} catch {
 			// no-op
 		}
+	}
+
+	const handleInvoiceEmailChange = e => {
+		touchedInvoiceEmailRef.current = true
+		setInvoiceEmail(e.target.value)
 	}
 
 	const deliveryOptions = useMemo(() => {
@@ -875,7 +898,7 @@ export default function Checkout({
 												name='invoiceEmail'
 												id='invoiceEmail'
 												value={invoiceEmail}
-												onChange={e => setInvoiceEmail(e.target.value)}
+												onChange={handleInvoiceEmailChange}
 											/>
 										</div>
 

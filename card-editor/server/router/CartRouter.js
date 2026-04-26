@@ -257,10 +257,10 @@ export const buildZugferdInvoiceData = ({
   const lineUnitPrice = toNumber(subtotal, 0);
   const safeProjectName = String(projectName || order?.orderName || 'Signs order');
   const invoiceIssueDate = new Date(order?.createdAt || Date.now());
-  const sellerIdentifier = String(process.env.ZUGFERD_SELLER_IDENTIFIER || 'xxxx').trim();
+  const sellerIdentifier = '';
   const sellerRegistrationId = String(process.env.ZUGFERD_SELLER_REGISTRATION_ID || '').trim();
-  const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || '').trim();
-  const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || 'xxxx').trim();
+  const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || 'DE461817538').trim();
+  const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || '53/411/50012').trim();
   const sellerName = 'Kostyantyn Utvenko, SignXpert';
   const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || 'SignXpert').trim();
   const sellerStreetLine1 = String(process.env.ZUGFERD_SELLER_STREET1 || 'Baumwiesen 2').trim();
@@ -358,7 +358,7 @@ export const buildZugferdInvoiceData = ({
           name: safeProjectName,
         },
         seller: {
-          identifier: sellerIdentifier,
+          identifier: sellerIdentifier || undefined,
           globalIdentifier: sellerGlobalIdentifierNode,
           name: sellerName,
           description: vatExemptionReasonText,
@@ -451,7 +451,6 @@ export const buildZugferdInvoiceData = ({
         remittanceInformation: String(remittanceInformation || `Order No: ${invoiceNumber || order?.id || ''}`),
         payee: sellerAccountHolderName
           ? {
-              identifier: sellerIdentifier || undefined,
               name: sellerAccountHolderName,
             }
           : undefined,

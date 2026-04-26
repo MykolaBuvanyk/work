@@ -3233,8 +3233,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
               <td class="footer-value-cell">SOLADES1BAL</td>
             </tr>
             <tr>
-              <td>St.-Nr.:</td>
-              <td class="footer-value-cell">xx/xxx/xxxxx Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
+              <td>USt-IdNr.:</td>
+              <td class="footer-value-cell">DE461817538 Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
             </tr>
             <tr>
               <td></td>

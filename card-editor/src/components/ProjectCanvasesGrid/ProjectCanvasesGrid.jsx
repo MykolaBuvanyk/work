@@ -16,6 +16,7 @@ import {
   reapplyTextAttributes,
   ensureFontsLoaded,
   collectFontFamiliesFromJson,
+  createBlankCanvasSnapshot,
 } from '../../utils/projectStorage';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
@@ -99,12 +100,13 @@ const ProjectCanvasesGrid = () => {
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
   const prevCanvasCountRef = useRef(null);
   const paginationReadyRef = useRef(false);
+  const blankUnsavedAutocreatedRef = useRef(false);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
 
   useEffect(() => {
     let isEffectActive = true;
 
-    const load = () => {
+    const load = async () => {
       let id = null;
       try {
         id = localStorage.getItem('currentProjectId');
@@ -114,37 +116,107 @@ const ProjectCanvasesGrid = () => {
         setIsProjectLoaded(true);
         return;
       }
-      getProject(id)
-        .then(p => {
-          setProject(p || { id, canvases: [] });
-          setIsProjectLoaded(true);
-        })
-        .catch(() => {
-          setProject({ id, canvases: [] });
-          setIsProjectLoaded(true);
-        });
-    };
-    const loadUnsaved = () => {
-      getAllUnsavedSigns()
-        .then(list => {
-          const mapped = list.map(s => ({ ...s, _unsaved: true }));
-          setUnsavedSigns(mapped);
-          setIsUnsavedLoaded(true);
-          // Maintain selection of current unsaved after refresh
+
+      try {
+        const p = await getProject(id);
+        const safeProject = p || { id, canvases: [] };
+        const canvases = Array.isArray(safeProject?.canvases) ? safeProject.canvases : [];
+
+        if (canvases.length === 0) {
           try {
-            const active = localStorage.getItem('currentUnsavedSignId');
-            if (active) {
-              const exists = mapped.find(x => x.id === active);
-              if (exists) {
-                setSelectedId(active);
-              }
+            const persisted = await addCanvasSnapshotToCurrentProject(createBlankCanvasSnapshot(), {
+              setAsCurrent: true,
+            });
+            const nextProject = persisted || safeProject;
+            if (!isEffectActive) return;
+            setProject(nextProject);
+            setIsProjectLoaded(true);
+
+            const newCanvas = Array.isArray(nextProject?.canvases)
+              ? nextProject.canvases[nextProject.canvases.length - 1] || null
+              : null;
+            if (newCanvas?.id) {
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('canvas:autoOpen', {
+                    detail: { canvasId: newCanvas.id, isUnsaved: false },
+                  })
+                );
+              } catch {}
             }
-          } catch {}
-        })
-        .catch(() => {
-          setUnsavedSigns([]);
-          setIsUnsavedLoaded(true);
-        });
+            return;
+          } catch (error) {
+            console.warn('Failed to create blank canvas for empty project', error);
+          }
+        }
+
+        if (!isEffectActive) return;
+        setProject(safeProject);
+        setIsProjectLoaded(true);
+      } catch {
+        if (!isEffectActive) return;
+        setProject({ id, canvases: [] });
+        setIsProjectLoaded(true);
+      }
+    };
+    const loadUnsaved = async () => {
+      try {
+        const list = await getAllUnsavedSigns();
+        let mapped = (list || []).map(s => ({ ...s, _unsaved: true }));
+
+        // If there is no current project and no drafts, auto-create a blank draft sign.
+        // This prevents the UI from getting stuck in an empty state until page refresh.
+        let currentProjectId = null;
+        try {
+          currentProjectId = localStorage.getItem('currentProjectId');
+        } catch {}
+
+        if (!currentProjectId && mapped.length === 0 && !blankUnsavedAutocreatedRef.current) {
+          blankUnsavedAutocreatedRef.current = true;
+          try {
+            const PX_PER_MM = 72 / 25.4;
+            const DEFAULT_WIDTH = Math.round(120 * PX_PER_MM);
+            const DEFAULT_HEIGHT = Math.round(80 * PX_PER_MM);
+            const newSign = await addBlankUnsavedSign(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+            if (newSign?.id) {
+              try {
+                localStorage.setItem('currentUnsavedSignId', newSign.id);
+              } catch {}
+              mapped = [{ ...newSign, _unsaved: true }];
+              setSelectedId(newSign.id);
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('canvas:autoOpen', {
+                    detail: { canvasId: newSign.id, isUnsaved: true },
+                  })
+                );
+              } catch {}
+            }
+          } catch (error) {
+            console.warn('Failed to auto-create blank unsaved sign', error);
+          }
+        }
+
+        if (!isEffectActive) return;
+        setUnsavedSigns(mapped);
+        setIsUnsavedLoaded(true);
+
+        // Maintain selection of current unsaved after refresh
+        try {
+          const active = localStorage.getItem('currentUnsavedSignId');
+          if (active) {
+            const exists = mapped.find(x => x.id === active);
+            if (exists) {
+              setSelectedId(active);
+            }
+          }
+        } catch {}
+      } catch {
+        if (!isEffectActive) return;
+        setUnsavedSigns([]);
+        setIsUnsavedLoaded(true);
+      }
     };
     loadUnsaved();
     load();
@@ -185,6 +257,7 @@ const ProjectCanvasesGrid = () => {
       initialCanvasLoadRef.current = false;
       currentUnsavedIdRef.current = null;
       currentProjectCanvasIdRef.current = null;
+      blankUnsavedAutocreatedRef.current = false;
       setSelectedId(null);
       setProject({ id: null, canvases: [] });
       setUnsavedSigns([]);
@@ -198,6 +271,7 @@ const ProjectCanvasesGrid = () => {
       initialCanvasLoadRef.current = false;
       currentUnsavedIdRef.current = null;
       currentProjectCanvasIdRef.current = null;
+      blankUnsavedAutocreatedRef.current = false;
       setSelectedId(null);
       setProject({ id: null, canvases: [] });
       setUnsavedSigns([]);
@@ -334,6 +408,30 @@ const ProjectCanvasesGrid = () => {
             }
           } else {
             console.log('No canvases in project');
+            try {
+              const persisted = await addCanvasSnapshotToCurrentProject(createBlankCanvasSnapshot(), {
+                setAsCurrent: true,
+              });
+              if (persisted) {
+                setProject(persisted);
+                setIsProjectLoaded(true);
+                const newCanvas = Array.isArray(persisted?.canvases)
+                  ? persisted.canvases[persisted.canvases.length - 1] || null
+                  : null;
+                if (newCanvas?.id) {
+                  try {
+                    window.dispatchEvent(
+                      new CustomEvent('canvas:autoOpen', {
+                        detail: { canvasId: newCanvas.id, isUnsaved: false },
+                      })
+                    );
+                  } catch {}
+                }
+                return;
+              }
+            } catch (error) {
+              console.warn('Failed to create blank canvas for empty project', error);
+            }
             try {
               localStorage.removeItem('currentProjectCanvasId');
               localStorage.removeItem('currentProjectCanvasIndex');

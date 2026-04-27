@@ -415,26 +415,67 @@ export async function generateCanvasPreviews(canvas, options = {}) {
 }
 
 function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      // Projects store
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: "id" });
-        store.createIndex("updatedAt", "updatedAt", { unique: false });
-        store.createIndex("name", "name", { unique: false });
+  const openOnce = (version) =>
+    new Promise((resolve, reject) => {
+      if (typeof indexedDB === "undefined") {
+        reject(new Error("IndexedDB is not available"));
+        return;
       }
-      // Unsaved signs store
-      if (!db.objectStoreNames.contains(UNSAVED_STORE)) {
-        const u = db.createObjectStore(UNSAVED_STORE, { keyPath: "id" });
-        u.createIndex("createdAt", "createdAt", { unique: false });
-        u.createIndex("updatedAt", "updatedAt", { unique: false });
+
+      const req =
+        typeof version === "number" ? indexedDB.open(DB_NAME, version) : indexedDB.open(DB_NAME);
+
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        // Projects store
+        if (!db.objectStoreNames.contains(STORE)) {
+          const store = db.createObjectStore(STORE, { keyPath: "id" });
+          store.createIndex("updatedAt", "updatedAt", { unique: false });
+          store.createIndex("name", "name", { unique: false });
+        }
+        // Unsaved signs store
+        if (!db.objectStoreNames.contains(UNSAVED_STORE)) {
+          const u = db.createObjectStore(UNSAVED_STORE, { keyPath: "id" });
+          u.createIndex("createdAt", "createdAt", { unique: false });
+          u.createIndex("updatedAt", "updatedAt", { unique: false });
+        }
+      };
+
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error || new Error("Failed to open IndexedDB"));
+    });
+
+  const ensureStores = async (db) => {
+    try {
+      const hasProjects = db.objectStoreNames.contains(STORE);
+      const hasUnsaved = db.objectStoreNames.contains(UNSAVED_STORE);
+      if (hasProjects && hasUnsaved) return db;
+
+      // Upgrade to add missing stores, regardless of current DB version.
+      const nextVersion = Math.max(Number(db.version || 1) + 1, DB_VERSION);
+      try {
+        db.close();
+      } catch {}
+      return openOnce(nextVersion);
+    } catch (error) {
+      try {
+        db.close();
+      } catch {}
+      throw error;
+    }
+  };
+
+  // Prefer opening at our expected schema version, but gracefully recover if the
+  // user's browser already has a higher IndexedDB version (VersionError).
+  return openOnce(DB_VERSION)
+    .catch(async (error) => {
+      if (error && String(error.name) === "VersionError") {
+        const db = await openOnce(); // open latest existing version
+        return ensureStores(db);
       }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+      throw error;
+    })
+    .then(ensureStores);
 }
 
 function tx(db, mode = "readonly") {
@@ -986,7 +1027,12 @@ export async function putUnsavedSign(sign) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = txUnsaved(db, "readwrite");
-    const req = store.put(sign);
+    const safeSign = makeIndexedDbCloneSafe(sign);
+    if (!safeSign) {
+      reject(new Error("Failed to sanitize unsaved sign for IndexedDB"));
+      return;
+    }
+    const req = store.put(safeSign);
     req.onsuccess = () => resolve(sign);
     req.onerror = () => reject(req.error);
   });
@@ -1018,6 +1064,58 @@ function broadcastUnsavedUpdate() {
   try {
     window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
   } catch {}
+}
+
+function isPlainObject(value) {
+  if (!value || typeof value !== "object") return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function makeIndexedDbCloneSafe(value) {
+  if (value === null || value === undefined) return value;
+
+  // Prefer structuredClone when available (it matches IndexedDB structured clone rules closely).
+  try {
+    if (typeof structuredClone === "function") {
+      return structuredClone(value);
+    }
+  } catch {}
+
+  // Fallback: JSON clone that drops non-serializable values (functions, class instances, cyclic refs).
+  try {
+    const seen = new WeakSet();
+    const replacer = (_key, v) => {
+      if (typeof v === "function" || typeof v === "symbol") return undefined;
+      if (!v || typeof v !== "object") return v;
+
+      // Avoid cycles / repeated references
+      if (seen.has(v)) return undefined;
+      seen.add(v);
+
+      if (v instanceof Date) return v.toISOString();
+      if (v instanceof Map) return Array.from(v.entries());
+      if (v instanceof Set) return Array.from(v.values());
+
+      // Drop class instances (e.g. Fabric canvas/objects) unless they can serialize themselves.
+      if (!Array.isArray(v) && !isPlainObject(v)) {
+        if (typeof v.toJSON === "function") {
+          try {
+            return v.toJSON();
+          } catch {
+            return undefined;
+          }
+        }
+        return undefined;
+      }
+
+      return v;
+    };
+
+    return JSON.parse(JSON.stringify(value, replacer));
+  } catch {
+    return null;
+  }
 }
 
 export async function addUnsavedSignFromSnapshot(snapshot) {
@@ -1334,7 +1432,12 @@ export async function putProject(project) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const store = tx(db, "readwrite");
-    const req = store.put(normalizedProject);
+    const safeProject = makeIndexedDbCloneSafe(normalizedProject);
+    if (!safeProject) {
+      reject(new Error("Failed to sanitize project for IndexedDB"));
+      return;
+    }
+    const req = store.put(safeProject);
     req.onsuccess = () => {
       invalidateProjectListCache();
       resolve(normalizedProject);
@@ -2104,6 +2207,48 @@ function getDefaultToolbarState() {
     hasUserPickedShape: false,
     copiesCount: 1,
     hasBorder: false,
+  };
+}
+
+export function createBlankCanvasSnapshot(options = {}) {
+  const widthMmRaw = Number(options?.widthMm);
+  const heightMmRaw = Number(options?.heightMm);
+  const widthMm =
+    Number.isFinite(widthMmRaw) && widthMmRaw > 0
+      ? widthMmRaw
+      : DEFAULT_SIGN_SIZE_MM.width;
+  const heightMm =
+    Number.isFinite(heightMmRaw) && heightMmRaw > 0
+      ? heightMmRaw
+      : DEFAULT_SIGN_SIZE_MM.height;
+
+  const PX_PER_MM = 72 / 25.4;
+  const width = Math.round(widthMm * PX_PER_MM);
+  const height = Math.round(heightMm * PX_PER_MM);
+
+  const toolbarState = {
+    ...getDefaultToolbarState(),
+    sizeValues: {
+      width: Math.round(widthMm),
+      height: Math.round(heightMm),
+      cornerRadius: 0,
+    },
+    globalColors: { ...DEFAULT_GLOBAL_COLORS },
+    copiesCount: 1,
+  };
+
+  return {
+    json: { objects: [], version: "fabric" },
+    preview: "",
+    previewSvg: "",
+    width,
+    height,
+    backgroundColor: "#FFFFFF",
+    backgroundType: "solid",
+    canvasType: "rectangle",
+    cornerRadius: 2,
+    toolbarState,
+    copiesCount: 1,
   };
 }
 

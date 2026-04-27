@@ -324,6 +324,7 @@ const TopToolbar = ({ className }) => {
       await saveCurrentProject(canvas);
     } catch (e) {
       console.error("Save failed", e);
+      alert("Failed to save project. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -1015,6 +1016,10 @@ const TopToolbar = ({ className }) => {
             }
           }}
           onSaveAs={async (name) => {
+            if (!canvas) {
+              alert("Canvas is not ready yet. Please try again.");
+              return;
+            }
             if (!name || !name.trim()) {
               alert("Please enter a project name");
               return;

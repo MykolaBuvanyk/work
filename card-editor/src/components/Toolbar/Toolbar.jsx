@@ -296,14 +296,34 @@ const Toolbar = ({ formData }) => {
         // This avoids forcing project creation and prevents the "first copy creates 2" bug
         // (one being the original persisted into a project canvas).
         let activeUnsavedId = null;
+        let activeProjectCanvasId = null;
         try {
           activeUnsavedId = localStorage.getItem('currentUnsavedSignId');
+          activeProjectCanvasId =
+            localStorage.getItem('currentProjectCanvasId') ||
+            (typeof window !== 'undefined' ? window.__currentProjectCanvasId : null) ||
+            null;
         } catch {}
 
-        if (activeUnsavedId) {
+        const designId = currentDesignId ? String(currentDesignId) : null;
+        const isEditingUnsaved =
+          !!activeUnsavedId &&
+          ((designId && designId === String(activeUnsavedId)) ||
+            (!designId && !activeProjectCanvasId));
+
+        if (isEditingUnsaved) {
           // Keep ids clean
           const unsaved = await getAllUnsavedSigns().catch(() => []);
           const byId = new Map((unsaved || []).map(entry => [entry?.id, entry]));
+
+          // If localStorage has a stale unsaved id, fall back to project-canvas mode.
+          if (!byId.get(activeUnsavedId)) {
+            console.warn('[Editable Copies] Stale currentUnsavedSignId detected, falling back to project copies', {
+              activeUnsavedId,
+              designId,
+              activeProjectCanvasId,
+            });
+          } else {
 
           if (!state.groupId && Array.isArray(state.copyCanvasIds) && state.copyCanvasIds.length) {
             const first = byId.get(state.copyCanvasIds[0]);
@@ -427,6 +447,7 @@ const Toolbar = ({ formData }) => {
             window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
           } catch {}
           return;
+          }
         }
 
         // Always store editable copies as project canvases.

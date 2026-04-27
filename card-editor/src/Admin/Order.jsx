@@ -295,6 +295,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [enableGaps, setEnableGaps] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isOpeningProject, setIsOpeningProject] = useState(false);
+  const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
 
   const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
   const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
@@ -1527,6 +1528,32 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     }
   }
 
+  const deleteCustomerAccount = async () => {
+    const userId = Number(order?.userId || order?.user?.id);
+    if (!Number.isFinite(userId)) {
+      alert('Customer id not found');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete customer account #${userId} and all customer orders? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setIsDeletingCustomer(true);
+    try {
+      await $authHost.delete(`cart/customer/${userId}`);
+      setOrder(null);
+      update();
+      alert('Customer account and all orders were deleted');
+    } catch (err) {
+      console.error('DELETE CUSTOMER ERROR:', err);
+      alert(err?.response?.data?.message || 'Failed to delete customer account');
+    } finally {
+      setIsDeletingCustomer(false);
+    }
+  };
+
   const openProject = async () => {
     // Project snapshot is stored under order.orderMongo.project (CartProject.project)
     const project = order?.orderMongo?.project || order?.project || order?.order || null;
@@ -2117,7 +2144,13 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     <br/>
     <br/>
     <div style={{display:'flex',alignItems:'flex-end',justifyContent:'right'}} className="right">
-      <button style={{alignItems:'flex-end',marginBottom:"30px",justifyContent:'right',display:'flex',background:'#0095e2',color:'#ff2828ff', fontWeight:'550', padding:'0 5px'}} onClick={()=>setStatus('Deleted')}>Delete Cust. Account</button>
+      <button
+        style={{alignItems:'flex-end',marginBottom:"30px",justifyContent:'right',display:'flex',background:'#0095e2',color:'#ff2828ff', fontWeight:'550', padding:'0 5px'}}
+        onClick={deleteCustomerAccount}
+        disabled={isDeletingCustomer}
+      >
+        {isDeletingCustomer ? 'Deleting...' : 'Delete Cust. Account'}
+      </button>
     </div>
     </>
   );

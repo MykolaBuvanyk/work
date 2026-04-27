@@ -6,6 +6,7 @@ import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
 import { Order, User } from '../models/models.js';
+import sequelize from '../db.js';
 import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
@@ -1438,6 +1439,71 @@ CartRouter.get('/get/:id', requireAuth, requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('GET ORDER ERROR:', err);
     return res.status(500).json({ message: err.message });
+  }
+});
+
+CartRouter.delete('/customer/:userId', requireAuth, requireAdmin, async (req, res) => {
+  const userId = Number(req.params.userId);
+
+  if (!Number.isFinite(userId) || userId <= 0) {
+    return res.status(400).json({ message: 'Invalid customer id' });
+  }
+
+  if (userId === Number(req.user.id)) {
+    return res.status(400).json({ message: 'Admin account cannot delete itself here' });
+  }
+
+  try {
+    const orders = await Order.findAll({
+      where: { userId },
+      attributes: ['id', 'idMongo'],
+    });
+
+    const customer = await User.findOne({ where: { id: userId } });
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    if (customer.type === 'Admin') {
+      return res.status(400).json({ message: 'Admin accounts cannot be deleted here' });
+    }
+
+    await sequelize.transaction(async (transaction) => {
+      await Order.destroy({ where: { userId }, transaction });
+      await User.destroy({ where: { id: userId }, transaction });
+    });
+
+    const mongoObjectIds = [];
+    const projectIds = [];
+
+    orders.forEach((order) => {
+      const key = String(order?.idMongo || '').trim();
+      if (!key) return;
+      if (isMongoObjectId(key)) {
+        mongoObjectIds.push(key);
+      } else {
+        projectIds.push(key);
+      }
+    });
+
+    const mongoDeleteOr = [{ userId: String(userId) }];
+    if (mongoObjectIds.length > 0) {
+      mongoDeleteOr.push({ _id: { $in: mongoObjectIds } });
+    }
+    if (projectIds.length > 0) {
+      mongoDeleteOr.push({ projectId: { $in: projectIds } });
+    }
+
+    await CartProject.deleteMany({ $or: mongoDeleteOr });
+
+    return res.json({
+      success: true,
+      userId,
+      deletedOrders: orders.length,
+    });
+  } catch (err) {
+    console.error('DELETE CUSTOMER ERROR:', err);
+    return res.status(500).json({ message: err.message || 'Failed to delete customer' });
   }
 });
 

@@ -819,10 +819,7 @@ const InfoAboutProject = () => {
         <SaveAsModal
           onClose={() => setIsSaveAsModalOpen(false)}
           onSaveAs={async (name) => {
-            if (!canvas) {
-              alert("Canvas is not ready yet. Please try again.");
-              return;
-            }
+            if (!canvas) return;
             if (!name || !name.trim()) {
               alert("Please enter a project name");
               return;

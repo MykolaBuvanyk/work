@@ -304,6 +304,20 @@ export const useUndoRedo = () => {
   const pendingChangesRef = useRef(false);
   const batchStartTimeRef = useRef(null);
 
+  const isBorderObject = useCallback((obj) => {
+    if (!obj || typeof obj !== "object") return false;
+    if (obj.isBorderShape || obj.isBorderMask) return true;
+    if (obj?.data?.isBorderShape || obj?.data?.isBorderMask) return true;
+    if (obj.cardBorderMode || obj.cardBorderThicknessPx) return true;
+    if (
+      (obj.id === "canvaShape" || obj.id === "canvaShapeCustom") &&
+      obj.isBorderShape
+    ) {
+      return true;
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
     const subscriber = (snapshot) => setSharedSnapshot(snapshot);
     sharedUndoRedoStore.subscribers.add(subscriber);
@@ -594,6 +608,10 @@ export const useUndoRedo = () => {
   const saveState = useCallback(async (description = 'State saved', options = {}) => {
     const { force = false } = options || {};
     const now = Date.now();
+
+    if (typeof description === "string" && /border/i.test(description)) {
+      return null;
+    }
     
     // Перевірка на період ігнорування saves
     if (!force && now < (ignoreSavesUntilRef.current || 0)) {
@@ -1704,6 +1722,10 @@ export const useUndoRedo = () => {
       if (event?.fromUndoRedo || event?.detail?.fromUndoRedo) {
         return;
       }
+
+      if (isBorderObject(event?.target)) {
+        return;
+      }
       
       // Строга перевірка блокувань
       if (isRestoringRef.current || canvas.__suspendUndoRedo) {
@@ -1776,7 +1798,7 @@ export const useUndoRedo = () => {
       }
       isHistoryOwnerRef.current = false;
     };
-  }, [canvas, saveStateWhenReady, debouncedSaveState, batchSaveState]);
+  }, [canvas, saveStateWhenReady, debouncedSaveState, batchSaveState, isBorderObject]);
 
   // ============================================================================
   // TOOLBAR CHANGE LISTENER - відстеження змін розміру та кольорів

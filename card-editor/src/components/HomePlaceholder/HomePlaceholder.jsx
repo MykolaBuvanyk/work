@@ -12,6 +12,7 @@ const heroImages = [
 
 const HomePlaceholder = () => {
   const [activeHeroImage, setActiveHeroImage] = useState(0);
+  const [isVolumeDiscountModalOpen, setIsVolumeDiscountModalOpen] = useState(false);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -22,6 +23,22 @@ const HomePlaceholder = () => {
       window.clearInterval(intervalId);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isVolumeDiscountModalOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsVolumeDiscountModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isVolumeDiscountModalOpen]);
 
   return (
     <main className={styles.page}>
@@ -115,7 +132,14 @@ const HomePlaceholder = () => {
 
                 <p className={styles.readMore}>
                   <em>
-                    *Read more <a href="#">here</a>
+                    *Read more{' '}
+                    <button
+                      type="button"
+                      className={styles.readMoreButton}
+                      onClick={() => setIsVolumeDiscountModalOpen(true)}
+                    >
+                      here
+                    </button>
                   </em>
                 </p>
               </div>
@@ -125,6 +149,77 @@ const HomePlaceholder = () => {
           </div>
         </div>
       </section>
+
+      {isVolumeDiscountModalOpen && (
+        <div
+          className={styles.volumeDiscountModal}
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="volume-discount-title"
+        >
+          <button
+            type="button"
+            className={styles.volumeDiscountClose}
+            onClick={() => setIsVolumeDiscountModalOpen(false)}
+            aria-label="Close volume discounts"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12.0008 12.0001L14.8292 14.8285M9.17236 14.8285L12.0008 12.0001L9.17236 14.8285ZM14.8292 9.17163L12.0008 12.0001L14.8292 9.17163ZM12.0008 12.0001L9.17236 9.17163L12.0008 12.0001Z"
+                stroke="#006CA4"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                stroke="#006CA4"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <h2 id="volume-discount-title">Volume Discounts</h2>
+
+          <div className={styles.volumeDiscountContent}>
+            <p>
+              <strong>
+                We strive to offer you the best prices, which is why we&apos;ve
+                introduced a volume discount system:
+              </strong>
+            </p>
+            <p>the higher your order amount, the lower the price.</p>
+            <p>
+              The discount applies to the current project only (not cumulative)
+              and is calculated automatically:
+            </p>
+
+            <div className={styles.volumeDiscountList}>
+              <p>Order amount :</p>
+              <p>from €30 to €50 — 5%</p>
+              <p>from €50 to €100 — 10%</p>
+              <p>from €100 to €200 — 15%</p>
+              <p>from €200 to €500 — 20%</p>
+              <p>from €500 to €10000 — 25%</p>
+            </div>
+
+            <p className={styles.volumeDiscountNote}>
+              <strong>
+                Discount applies to the current project only and does not include
+                accessories.
+              </strong>
+            </p>
+          </div>
+        </div>
+      )}
 
       <section className={styles.customSection}>
         <div className={styles.container}>

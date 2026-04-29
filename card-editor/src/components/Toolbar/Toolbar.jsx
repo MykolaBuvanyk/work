@@ -27,7 +27,6 @@ import {
 } from '../../utils/svgThemeTransform';
 import styles from './Toolbar.module.css';
 import {
-  exportCanvas,
   addUnsavedSignFromSnapshot,
   deleteUnsavedSign,
   getAllUnsavedSigns,
@@ -224,6 +223,248 @@ const Toolbar = ({ formData }) => {
     editableCopiesBusyRef.current = isEditableCopiesBusy;
   }, [isEditableCopiesBusy]);
 
+  const prepareCanvasForEditableCopyExport = useCallback(async canvasInstance => {
+    if (!canvasInstance || typeof canvasInstance.getObjects !== 'function') return;
+
+    const isTextObject = obj =>
+      !!obj && (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox');
+
+    try {
+      canvasInstance.getObjects().forEach(obj => {
+        if (!isTextObject(obj)) return;
+
+        try {
+          if (obj.isEditing && typeof obj.exitEditing === 'function') {
+            obj.exitEditing();
+          }
+        } catch {}
+
+        try {
+          if (obj.hiddenTextarea && typeof obj.hiddenTextarea.blur === 'function') {
+            obj.hiddenTextarea.blur();
+          }
+        } catch {}
+
+        try {
+          obj.set && obj.set({ objectCaching: false, dirty: true });
+        } catch {}
+
+        try {
+          if (typeof obj.initDimensions === 'function') obj.initDimensions();
+        } catch {}
+
+        try {
+          if (typeof obj.setCoords === 'function') obj.setCoords();
+        } catch {}
+      });
+
+      canvasInstance.discardActiveObject?.();
+      canvasInstance.requestRenderAll?.();
+      canvasInstance.renderAll?.();
+    } catch {}
+
+    await new Promise(resolve => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => resolve());
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+  }, []);
+
+  const buildEditableCopySnapshot = useCallback((canvasInstance, toolbarState = {}) => {
+    if (!canvasInstance) return null;
+
+    const extraProps = [
+      'data',
+      'shapeType',
+      'isCutElement',
+      'cutType',
+      'cutSource',
+      'isStaticCutShape',
+      'fromIconMenu',
+      'fromShapeTab',
+      'isCircle',
+      'clipPath',
+      'baseCornerRadius',
+      'displayCornerRadiusMm',
+      'cornerRadiusMm',
+      'strokeUniform',
+      'fillRule',
+      'clipRule',
+      'innerStrokeWidth',
+      'isBorderShape',
+      'cardBorderMode',
+      'cardBorderThicknessPx',
+      'cardBorderDisplayStrokeColor',
+      'cardBorderExportStrokeColor',
+      'cardBorderExportFill',
+      'isQRCode',
+      'qrText',
+      'qrSize',
+      'qrColor',
+      'isBarCode',
+      'barCodeText',
+      'barCodeType',
+      'barCodeColor',
+      'originalSrc',
+      'imageSource',
+      'isUploadedImage',
+      'isUploadedSvg',
+      'isUploadPreviewElement',
+      'uploadPreviewType',
+      'uploadPreviewId',
+      'svg',
+      'previewSvg',
+      'previewSVG',
+      'originalSvgSource',
+      'uploadedSvgStrokeOnly',
+      'svgKnockout',
+      'filters',
+      'customTextData',
+      'fontFamily',
+      'fontSize',
+      'fontWeight',
+      'fontStyle',
+      'id',
+      'name',
+      'layerId',
+      'groupId',
+      'customData',
+      'customProperties',
+      'selectable',
+      'evented',
+      'hasControls',
+      'hasBorders',
+      'lockMovementX',
+      'lockMovementY',
+      'lockScalingX',
+      'lockScalingY',
+      'lockUniScaling',
+      'lockRotation',
+      'lockSkewingX',
+      'lockSkewingY',
+      'excludeFromExport',
+      'holeType',
+      'holeDiameter',
+      'holePosition',
+      'visible',
+      'opacity',
+      'shadow',
+      'customPath',
+      'originalGeometry',
+      'transformMatrix',
+      'useThemeColor',
+      'followThemeFill',
+      'followThemeStroke',
+      'svgThemeFillEnabled',
+      'svgThemeStrokeEnabled',
+      'svgEvenOddHoles',
+      'initialFillColor',
+      'initialStrokeColor',
+    ];
+
+    const isTextJson = obj => {
+      const type = typeof obj?.type === 'string' ? obj.type.toLowerCase() : '';
+      return type === 'text' || type === 'i-text' || type === 'itext' || type === 'textbox';
+    };
+
+    const cleanTextJson = obj => {
+      if (!obj || typeof obj !== 'object') return obj;
+      if (isTextJson(obj)) {
+        delete obj.isEditing;
+        delete obj.hiddenTextarea;
+        delete obj.selectionStart;
+        delete obj.selectionEnd;
+        delete obj.selected;
+        delete obj.inCompositionMode;
+        delete obj.compositionStart;
+        delete obj.compositionEnd;
+        if (typeof obj.text !== 'string') {
+          obj.text = Array.isArray(obj.textLines)
+            ? obj.textLines.map(line => String(line ?? '')).join('\n')
+            : String(obj.text ?? '');
+        }
+        if (obj.styles == null || typeof obj.styles !== 'object' || Array.isArray(obj.styles)) {
+          obj.styles = {};
+        }
+      }
+      if (Array.isArray(obj.objects)) obj.objects.forEach(cleanTextJson);
+      return obj;
+    };
+
+    try {
+      let json =
+        typeof canvasInstance.toDatalessJSON === 'function'
+          ? canvasInstance.toDatalessJSON(extraProps)
+          : canvasInstance.toJSON(extraProps);
+      json = JSON.parse(JSON.stringify(json));
+      if (Array.isArray(json.objects)) {
+        json.objects.forEach(cleanTextJson);
+      }
+
+      const width = canvasInstance.getWidth?.() || canvasInstance.width || 0;
+      const height = canvasInstance.getHeight?.() || canvasInstance.height || 0;
+      const canvasShapeType =
+        canvasInstance.get?.('shapeType') || toolbarState.currentShapeType || 'rectangle';
+      const bgType = canvasInstance.get?.('backgroundType') || 'solid';
+      const bgTextureUrl = canvasInstance.get?.('backgroundTextureUrl');
+      let bgColor =
+        canvasInstance.backgroundColor || canvasInstance.get?.('backgroundColor') || '#FFFFFF';
+      if (bgType === 'texture' && bgTextureUrl) {
+        bgColor = bgTextureUrl;
+      } else if (typeof bgColor === 'object' && bgColor !== null) {
+        bgColor = '#FFFFFF';
+      }
+
+      json.shapeType = json.shapeType || canvasShapeType;
+
+      return {
+        json,
+        preview: '',
+        previewSvg: '',
+        width,
+        height,
+        backgroundColor: bgColor,
+        backgroundType: bgType,
+        canvasType: canvasShapeType,
+        cornerRadius:
+          Number(canvasInstance.get?.('cornerRadius')) ||
+          Number(toolbarState?.cornerRadius) ||
+          Number(toolbarState?.sizeValues?.cornerRadius) ||
+          0,
+        hasUserEditedCanvasCornerRadius:
+          !!canvasInstance.get?.('hasUserEditedCanvasCornerRadius') ||
+          !!toolbarState?.hasUserEditedCanvasCornerRadius,
+        toolbarState: {
+          ...toolbarState,
+          currentShapeType: canvasShapeType,
+          copiesCount: 1,
+          globalColors: {
+            ...(toolbarState.globalColors || {}),
+            backgroundColor: bgColor,
+            backgroundType: bgType,
+          },
+          sizeValues: {
+            ...(toolbarState.sizeValues || {}),
+            width: typeof width === 'number' ? Math.round((width * 25.4) / 72) : undefined,
+            height: typeof height === 'number' ? Math.round((height * 25.4) / 72) : undefined,
+          },
+          lastSaved: Date.now(),
+        },
+        copiesCount: 1,
+        canvasMetadata: {
+          objectCount: Array.isArray(json.objects) ? json.objects.length : 0,
+          lastModified: Date.now(),
+          version: 'editable-copy-lite',
+        },
+      };
+    } catch (err) {
+      console.warn('[Editable Copies] Lightweight snapshot failed', err);
+      return null;
+    }
+  }, []);
+
   useEffect(() => {
     if (editableCopiesFocusedRef.current) return;
     setEditableCopiesDraft(String(Number.isFinite(Number(editableCopiesCount)) ? editableCopiesCount : 0));
@@ -336,7 +577,8 @@ const Toolbar = ({ formData }) => {
 
           if (delta > 0) {
             const toolbarState = window.getCurrentToolbarState?.() || {};
-            const baseSnapshot = await exportCanvas(canvas, toolbarState);
+            await prepareCanvasForEditableCopyExport(canvas);
+            const baseSnapshot = buildEditableCopySnapshot(canvas, toolbarState);
             if (!baseSnapshot) return;
             if (!state.groupId) state.groupId = uuid();
 
@@ -368,7 +610,7 @@ const Toolbar = ({ formData }) => {
                 created = await addUnsavedSignFromSnapshot(snap);
               } catch (err) {
                 if (err?.code === 'MAX_UNSAVED_SIGNS_LIMIT_REACHED') {
-                  alert('Maximum number of signs reached (30). Please create a new project.');
+                  alert('Maximum number of signs reached (100). Please create a new project.');
                   break;
                 }
                 throw err;
@@ -497,7 +739,8 @@ const Toolbar = ({ formData }) => {
 
         if (delta > 0) {
           const toolbarState = window.getCurrentToolbarState?.() || {};
-          const baseSnapshot = await exportCanvas(canvas, toolbarState);
+          await prepareCanvasForEditableCopyExport(canvas);
+          const baseSnapshot = buildEditableCopySnapshot(canvas, toolbarState);
           if (!baseSnapshot) {
             console.warn('[Editable Copies] Failed to export canvas snapshot');
             return;
@@ -618,7 +861,13 @@ const Toolbar = ({ formData }) => {
         if (!editableCopiesFocusedRef.current) setEditableCopiesDraft('0');
       }
     },
-    [canvas, currentDesignId, getEditableCopiesKey]
+    [
+      buildEditableCopySnapshot,
+      canvas,
+      currentDesignId,
+      getEditableCopiesKey,
+      prepareCanvasForEditableCopyExport,
+    ]
   );
 
   // Для lock: по умолчанию 5мм, тип дырки 2 (сверху), ограничения 2-6мм

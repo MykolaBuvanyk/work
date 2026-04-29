@@ -99,34 +99,42 @@ const ProjectCanvasesGrid = () => {
   const [isUnsavedLoaded, setIsUnsavedLoaded] = useState(false);
   const prevCanvasCountRef = useRef(null);
   const paginationReadyRef = useRef(false);
+  const projectLoadSeqRef = useRef(0);
+  const unsavedLoadSeqRef = useRef(0);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
 
   useEffect(() => {
     let isEffectActive = true;
 
     const load = () => {
+      const seq = ++projectLoadSeqRef.current;
       let id = null;
       try {
         id = localStorage.getItem('currentProjectId');
       } catch {}
       if (!id) {
+        if (seq !== projectLoadSeqRef.current) return;
         setProject({ id: null, canvases: [] });
         setIsProjectLoaded(true);
         return;
       }
       getProject(id)
         .then(p => {
+          if (!isEffectActive || seq !== projectLoadSeqRef.current) return;
           setProject(p || { id, canvases: [] });
           setIsProjectLoaded(true);
         })
         .catch(() => {
+          if (!isEffectActive || seq !== projectLoadSeqRef.current) return;
           setProject({ id, canvases: [] });
           setIsProjectLoaded(true);
         });
     };
     const loadUnsaved = () => {
+      const seq = ++unsavedLoadSeqRef.current;
       getAllUnsavedSigns()
         .then(list => {
+          if (!isEffectActive || seq !== unsavedLoadSeqRef.current) return;
           const mapped = list.map(s => ({ ...s, _unsaved: true }));
           setUnsavedSigns(mapped);
           setIsUnsavedLoaded(true);
@@ -142,6 +150,7 @@ const ProjectCanvasesGrid = () => {
           } catch {}
         })
         .catch(() => {
+          if (!isEffectActive || seq !== unsavedLoadSeqRef.current) return;
           setUnsavedSigns([]);
           setIsUnsavedLoaded(true);
         });
@@ -194,13 +203,19 @@ const ProjectCanvasesGrid = () => {
       load();
     };
     const reset = () => {
+      let activeUnsavedId = null;
+      try {
+        activeUnsavedId = localStorage.getItem('currentUnsavedSignId');
+      } catch {}
       // Під час reset гарантовано очищаємо попередні дані перед завантаженням нових.
       initialCanvasLoadRef.current = false;
       currentUnsavedIdRef.current = null;
       currentProjectCanvasIdRef.current = null;
       setSelectedId(null);
       setProject({ id: null, canvases: [] });
-      setUnsavedSigns([]);
+      if (!activeUnsavedId) {
+        setUnsavedSigns([]);
+      }
       setIsProjectLoaded(false);
       setIsUnsavedLoaded(false);
       loadUnsaved();

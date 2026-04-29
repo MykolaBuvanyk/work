@@ -14,7 +14,9 @@ import {
     hasAddressContent,
     findCartProjectForOrder,
     buildZugferdInvoiceData,
-    buildPdfFooterTemplate
+    buildPdfFooterTemplate,
+    INTER_FONT_FACE_CSS,
+    waitForPdfFonts
 } from '../router/CartRouter.js';
 import CartProject from "../models/CartProject.js";
 
@@ -455,7 +457,26 @@ class SendEmailForStatus {
             const invoiceAddress = hasSeparateInvoiceAddress && checkout?.invoiceAddress && typeof checkout.invoiceAddress === 'object'
                 ? checkout.invoiceAddress
                 : null;
-            const customerAddress = hasAddressContent(invoiceAddress) ? invoiceAddress : deliveryAddress;
+            const invoiceAddressFromUser = {
+                fullName: [order.user?.firstName2, order.user?.surname2].filter(hasContent).join(' '),
+                companyName: order.user?.company2,
+                address1: order.user?.address4,
+                address2: order.user?.address5,
+                address3: order.user?.address6,
+                town: order.user?.city2,
+                postalCode: order.user?.postcode2,
+                country: order.user?.country2,
+                state: order.user?.state2,
+                email: order.user?.eMailInvoice,
+                mobile: order.user?.phone2,
+            };
+            const hasCheckoutInvoiceAddress = hasSeparateInvoiceAddress && hasAddressContent(invoiceAddress);
+            const hasUserInvoiceAddress = hasSeparateInvoiceAddress && hasAddressContent(invoiceAddressFromUser);
+            const customerAddress = hasCheckoutInvoiceAddress
+                ? invoiceAddress
+                : hasUserInvoiceAddress
+                    ? invoiceAddressFromUser
+                    : deliveryAddress;
         
             const customerCompany = escapeHtml(
                 customerAddress?.companyName || order.user?.company || 'Water Design Solution GmbH'
@@ -476,7 +497,8 @@ class SendEmailForStatus {
                 checkout?.invoiceAddressEmail
                 || checkout?.invoiceEmail
                 || invoiceAddress?.email
-                || deliveryAddress?.email
+                || invoiceAddressFromUser?.email
+                || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.email : '')
                 || customerAddress?.email
                 || order.user?.eMailInvoice
                 || order.user?.email
@@ -484,7 +506,8 @@ class SendEmailForStatus {
             ).trim();
             const customerPhoneRaw = String(
                 invoiceAddress?.mobile
-                || deliveryAddress?.mobile
+                || invoiceAddressFromUser?.mobile
+                || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.mobile : '')
                 || customerAddress?.mobile
                 || order.user?.phone2
                 || order.user?.phone
@@ -494,12 +517,10 @@ class SendEmailForStatus {
             const customerName = escapeHtml(
                 customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' ')
             );
-            const addressLine1 = escapeHtml(
-                [customerStreetLine1Raw, customerStreetLine2Raw, customerStreetLine3Raw]
-                .filter(hasContent)
-                .join(', ')
-            );
-            const addressLine2 = escapeHtml(
+            const addressLine1 = escapeHtml(customerStreetLine1Raw);
+            const addressLine2 = escapeHtml(customerStreetLine2Raw);
+            const addressLine3 = escapeHtml(customerStreetLine3Raw);
+            const cityLine = escapeHtml(
                 [customerPostalCodeRaw, customerCityRaw].filter(hasContent).join(' ')
             );
             const countryLine = escapeHtml(customerCountryRaw);
@@ -562,8 +583,8 @@ class SendEmailForStatus {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Invoice - SignXpert</title>
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
             <style>
+                ${INTER_FONT_FACE_CSS}
                 * {
                 box-sizing: border-box;
                 -webkit-print-color-adjust: exact;
@@ -813,6 +834,8 @@ class SendEmailForStatus {
                 ${customerName ? `${customerName}<br>` : ''}
                 ${addressLine1 ? `${addressLine1}<br>` : ''}
                 ${addressLine2 ? `${addressLine2}<br>` : ''}
+                ${addressLine3 ? `${addressLine3}<br>` : ''}
+                ${cityLine ? `${cityLine}<br>` : ''}
                 ${countryLine ? `${countryLine}<br>` : ''}
                 ${phoneLine ? `Phone: ${phoneLine}` : ''}
                 ${vatIdMarkup}
@@ -865,7 +888,7 @@ class SendEmailForStatus {
                 <h3><u>Payment information:</u></h3>
                 <div class="payment-grid">
                 <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
-                <div>Account holder:</div><div>SignXpert (Kostyantyn Utvenko)</div>
+                <div>Account holder:</div><div>Kostyantyn Utvenko</div>
                 <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
                 <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
                 <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>
@@ -905,8 +928,8 @@ class SendEmailForStatus {
                         <td class="footer-value-cell">SOLADES1BAL</td>
                     </tr>
                     <tr>
-                        <td>St.-Nr.:</td>
-                        <td class="footer-value-cell">xx/xxx/xxxxx Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
+                        <td>USt-IdNr.:</td>
+                        <td class="footer-value-cell">DE461817538 Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
                     </tr>
                     <tr>
                         <td></td>
@@ -927,6 +950,7 @@ class SendEmailForStatus {
         </html>`
         
             await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+            await waitForPdfFonts(page);
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,

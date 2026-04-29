@@ -705,6 +705,38 @@ const buildSvgDebugInfo = ({ stage, index = null, liveObj = null, serializedObj 
   };
 };
 
+const isFabricTextLike = (obj) => {
+  const type = typeof obj?.type === "string" ? obj.type.toLowerCase() : "";
+  return type === "text" || type === "i-text" || type === "itext" || type === "textbox";
+};
+
+const normalizeSerializedTextObject = (obj) => {
+  if (!obj || typeof obj !== "object" || !isFabricTextLike(obj)) return obj;
+
+  delete obj.isEditing;
+  delete obj.hiddenTextarea;
+  delete obj.selectionStart;
+  delete obj.selectionEnd;
+  delete obj.selected;
+  delete obj.inCompositionMode;
+  delete obj.compositionStart;
+  delete obj.compositionEnd;
+
+  if (typeof obj.text !== "string") {
+    if (Array.isArray(obj.textLines) && obj.textLines.length > 0) {
+      obj.text = obj.textLines.map((line) => String(line ?? "")).join("\n");
+    } else {
+      obj.text = obj.text == null ? "" : String(obj.text);
+    }
+  }
+
+  if (obj.styles == null || typeof obj.styles !== "object" || Array.isArray(obj.styles)) {
+    obj.styles = {};
+  }
+
+  return obj;
+};
+
 const stripSvgFieldsDeepForMongo = (value) => {
   if (Array.isArray(value)) {
     let changed = false;
@@ -1427,6 +1459,38 @@ export function uuid() {
 export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
   if (!canvas) return null;
   try {
+    try {
+      const objects = typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
+      objects.forEach((obj) => {
+        if (!isFabricTextLike(obj)) return;
+
+        try {
+          if (obj.isEditing && typeof obj.exitEditing === "function") {
+            obj.exitEditing();
+          }
+        } catch {}
+
+        try {
+          if (obj.hiddenTextarea && typeof obj.hiddenTextarea.blur === "function") {
+            obj.hiddenTextarea.blur();
+          }
+        } catch {}
+
+        try {
+          obj.set?.({ objectCaching: false, dirty: true });
+        } catch {}
+
+        try {
+          obj.initDimensions?.();
+        } catch {}
+
+        try {
+          obj.setCoords?.();
+        } catch {}
+      });
+      canvas.requestRenderAll?.();
+    } catch {}
+
     // Include ALL custom props used across the app to preserve element-specific data
     const extraProps = [
       // Basic element metadata
@@ -1653,7 +1717,8 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
         const liveObj = liveObjects[idx] || null;
         const nextObj = obj && typeof obj === "object" ? { ...obj } : obj;
         if (nextObj && typeof nextObj === "object") {
-          if (liveObj && typeof liveObj === "object") {
+          const isTextObject = isFabricTextLike(nextObj) || isFabricTextLike(liveObj);
+          if (liveObj && typeof liveObj === "object" && !isTextObject) {
             const blockedLiveKeys = new Set([
               "canvas",
               "group",
@@ -1682,6 +1747,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
             }
           }
 
+          normalizeSerializedTextObject(nextObj);
           nextObj.svgDebugInfo = buildSvgDebugInfo({
             stage: "exportCanvas",
             index: idx,
@@ -1809,6 +1875,8 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
     // Enhance JSON with additional element-specific metadata
     if (json && json.objects && Array.isArray(json.objects)) {
       json.objects = json.objects.map((obj) => {
+        normalizeSerializedTextObject(obj);
+
         // Add element creation timestamp if not present
         if (!obj.createdAt) {
           obj.createdAt = Date.now();

@@ -152,9 +152,9 @@ const buildInterFontFaceCss = () => {
   return fontFaces.join('\n');
 };
 
-const INTER_FONT_FACE_CSS = buildInterFontFaceCss();
+export const INTER_FONT_FACE_CSS = buildInterFontFaceCss();
 
-const waitForPdfFonts = async (page) => {
+export const waitForPdfFonts = async (page) => {
   await page.evaluate(async () => {
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;

@@ -334,6 +334,125 @@ export const useUndoRedo = () => {
     if (!canvas || typeof canvas.getObjects !== "function") return;
 
     try {
+      const isVisiblePaint = (value) => {
+        if (typeof value !== "string") return false;
+        const normalized = value.trim().toLowerCase().replace(/\s+/g, "");
+        return (
+          normalized &&
+          normalized !== "none" &&
+          normalized !== "transparent" &&
+          normalized !== "rgba(0,0,0,0)"
+        );
+      };
+
+      const readBooleanMeta = (obj, key) => {
+        if (typeof obj?.[key] === "boolean") return obj[key];
+        if (typeof obj?.data?.[key] === "boolean") return obj.data[key];
+        return null;
+      };
+
+      const normalizeFrameShapeObject = (obj) => {
+        if (!obj || typeof obj !== "object") return;
+
+        const fromShapeTab =
+          obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
+        const hasShapeIdentity =
+          fromShapeTab ||
+          (typeof obj.shapeType === "string" && obj.shapeType.trim() !== "") ||
+          (typeof obj.id === "string" && obj.id.startsWith("shape-")) ||
+          (typeof obj.shapeSvgId === "string" && obj.shapeSvgId.startsWith("shape-")) ||
+          (typeof obj?.data?.shapeSvgId === "string" && obj.data.shapeSvgId.startsWith("shape-"));
+
+        if (!hasShapeIdentity) return;
+
+        const frameMeta = readBooleanMeta(obj, "hasFrameEnabled");
+        const isFrameMeta = readBooleanMeta(obj, "isFrameElement");
+        const fillMeta = readBooleanMeta(obj, "hasFillEnabled");
+        const shapeType = String(obj.shapeType || obj?.data?.shapeType || "").trim().toLowerCase();
+        const isLineShape =
+          obj.type === "line" ||
+          shapeType === "line" ||
+          shapeType === "dashedline";
+        const isCutShape = obj.isCutElement === true || !!obj.cutType;
+        const inferredFrame =
+          frameMeta === true ||
+          isFrameMeta === true ||
+          (frameMeta === null &&
+            isFrameMeta === null &&
+            !isCutShape &&
+            !isLineShape &&
+            fillMeta !== true &&
+            !isVisiblePaint(obj.fill));
+
+        if (!inferredFrame) return;
+
+        obj.hasFrameEnabled = true;
+        obj.isFrameElement = true;
+        obj.hasFillEnabled = false;
+
+        if (typeof obj.set === "function") {
+          obj.set({
+            hasFrameEnabled: true,
+            isFrameElement: true,
+            hasFillEnabled: false,
+            fill: "transparent",
+          });
+        } else {
+          obj.fill = "transparent";
+        }
+
+        if (!obj.data || typeof obj.data !== "object") obj.data = {};
+        obj.data.hasFrameEnabled = true;
+        obj.data.isFrameElement = true;
+        obj.data.hasFillEnabled = false;
+        obj.data.fromShapeTab = fromShapeTab || obj.data.fromShapeTab === true;
+      };
+
+      const getShapeIdentity = (obj) => {
+        if (!obj || typeof obj !== "object") return null;
+        const candidates = [
+          obj.shapeSvgId,
+          obj?.data?.shapeSvgId,
+          obj.svgTagId,
+          obj.id,
+        ];
+        const identity = candidates.find(
+          (value) => typeof value === "string" && value.trim().startsWith("shape-")
+        );
+        return identity ? identity.trim() : null;
+      };
+
+      const removeRestoredFrameDuplicates = () => {
+        const objects = canvas.getObjects?.() || [];
+        const byIdentity = new Map();
+
+        objects.forEach((obj) => {
+          const identity = getShapeIdentity(obj);
+          if (!identity) return;
+          if (!byIdentity.has(identity)) byIdentity.set(identity, []);
+          byIdentity.get(identity).push(obj);
+        });
+
+        byIdentity.forEach((items) => {
+          if (!Array.isArray(items) || items.length < 2) return;
+
+          const frameItems = items.filter(
+            (obj) =>
+              readBooleanMeta(obj, "hasFrameEnabled") === true ||
+              readBooleanMeta(obj, "isFrameElement") === true
+          );
+          if (!frameItems.length) return;
+
+          const keep = frameItems[frameItems.length - 1];
+          items.forEach((obj) => {
+            if (obj === keep) return;
+            try {
+              canvas.remove(obj);
+            } catch {}
+          });
+        });
+      };
+
       canvas.getObjects().forEach((obj) => {
         if (!obj) return;
         try {
@@ -420,6 +539,8 @@ export const useUndoRedo = () => {
           const fromShapeTab =
             obj.fromShapeTab === true || (obj.data && obj.data.fromShapeTab === true);
 
+          normalizeFrameShapeObject(obj);
+
           if (fromShapeTab) {
             try {
               ensureShapeObjectSvgId(obj, canvas);
@@ -455,6 +576,8 @@ export const useUndoRedo = () => {
           }
         } catch {}
       });
+
+      removeRestoredFrameDuplicates();
 
       canvas.renderAll?.();
       canvas.requestRenderAll?.();

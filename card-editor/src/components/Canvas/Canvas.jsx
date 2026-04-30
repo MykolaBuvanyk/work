@@ -35,6 +35,7 @@ const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
+const FRAME_VISUAL_STROKE_MULTIPLIER = 2;
 
 const buildSilverGradientPattern = targetCanvas => {
   try {
@@ -202,9 +203,45 @@ const Canvas = ({ className }) => {
       return null;
     };
 
+    const getQrOwner = object => {
+      let current = object;
+      while (current) {
+        if (current.isQRCode === true || current?.data?.isQRCode === true) return current;
+        current = current.group || null;
+      }
+      return null;
+    };
+
     const shouldKeepCutStrokeFixed = object => {
       const cutOwner = getCutOwner(object);
       return !!cutOwner;
+    };
+
+    const readBooleanMeta = (object, key) => {
+      if (!object) return null;
+      if (typeof object[key] === 'boolean') return object[key];
+      if (typeof object?.data?.[key] === 'boolean') return object.data[key];
+      return null;
+    };
+
+    const shouldBoostFrameStrokeVisual = object => {
+      if (!object || shouldKeepCutStrokeFixed(object) || getQrOwner(object)) return false;
+
+      const type = String(object.type || '').toLowerCase();
+      if (!['path', 'rect', 'circle', 'ellipse', 'polygon', 'polyline'].includes(type)) {
+        return false;
+      }
+
+      const hasFrameEnabled = readBooleanMeta(object, 'hasFrameEnabled');
+      const isFrameElement = readBooleanMeta(object, 'isFrameElement');
+      const isManualCut = object.isCutElement === true || object.cutType === 'manual';
+      const isHoleShape = object.cutType === 'hole' || object.isHoleElement === true;
+
+      return (
+        !isManualCut &&
+        !isHoleShape &&
+        (hasFrameEnabled === true || isFrameElement === true)
+      );
     };
 
     const shouldIgnoreStrokeInObjectDimensions = object => {
@@ -269,13 +306,18 @@ const Canvas = ({ className }) => {
       object.__cutStrokeVisualPatched = true;
       object.__originalRenderStroke = object._renderStroke;
       object._renderStroke = function patchedCutStrokeRender(ctx) {
-        if (!shouldKeepCutStrokeFixed(this)) {
+        const keepCutStrokeFixed = shouldKeepCutStrokeFixed(this);
+        const boostFrameStroke = !keepCutStrokeFixed && shouldBoostFrameStrokeVisual(this);
+
+        if (!keepCutStrokeFixed && !boostFrameStroke) {
           return object.__originalRenderStroke.call(this, ctx);
         }
 
         const displayScale = Math.max(scaleRef.current || 1, 0.0001);
-        const nextStrokeWidth = CUT_VISUAL_STROKE_WIDTH_CSS / displayScale;
         const prevStrokeWidth = this.strokeWidth;
+        const nextStrokeWidth = keepCutStrokeFixed
+          ? CUT_VISUAL_STROKE_WIDTH_CSS / displayScale
+          : Math.max(0, Number(prevStrokeWidth) || 0) * FRAME_VISUAL_STROKE_MULTIPLIER;
 
         this.strokeWidth = nextStrokeWidth;
         try {
@@ -288,6 +330,7 @@ const Canvas = ({ className }) => {
 
     const refreshCutStrokeVisual = object => {
       if (!object) return;
+      if (getQrOwner(object)) return;
 
       ensureCutStrokeVisual(object);
 
@@ -295,7 +338,11 @@ const Canvas = ({ className }) => {
         object.forEachObject(child => refreshCutStrokeVisual(child));
       }
 
-      if (!getCutOwner(object) && object.isCutElement !== true) return;
+      if (
+        !getCutOwner(object) &&
+        object.isCutElement !== true &&
+        !shouldBoostFrameStrokeVisual(object)
+      ) return;
 
       try {
         object.set({ objectCaching: false, dirty: true });

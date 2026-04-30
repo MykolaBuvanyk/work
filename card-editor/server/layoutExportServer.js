@@ -2390,13 +2390,10 @@ const buildCutOverlaySvgMarkup = (svgElement) => {
       const id = String(node.getAttribute('id') || '').trim().toLowerCase();
       const dataCut = String(node.getAttribute('data-shape-cut') || '').trim().toLowerCase();
       const dataCutType = String(node.getAttribute('data-shape-cut-type') || '').trim().toLowerCase();
-      const dataDoubleContour = String(node.getAttribute('data-shape-double-contour') || '').trim().toLowerCase();
 
       if (dataCut === 'true') return true;
       if (dataCutType) return true;
-      if (dataDoubleContour === 'true') return true;
       if (id === 'canvashapecustom') return true;
-      if (id.startsWith('shape-')) return true;
 
       return false;
     };

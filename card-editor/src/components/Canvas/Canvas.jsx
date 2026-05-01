@@ -38,6 +38,37 @@ const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
 const CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER = 2;
 const FRAME_VISUAL_STROKE_MULTIPLIER = 2;
 
+const hasObjectFlag = (object, flagName) => {
+  let current = object;
+  while (current) {
+    if (current[flagName] === true || (current.data && current.data[flagName] === true)) {
+      return true;
+    }
+    current = current.group || null;
+  }
+  return false;
+};
+
+const shouldDoubleCanvasStrokeVisual = object => {
+  if (!object || !object.stroke || Number(object.strokeWidth) <= 0) return false;
+  if (
+    object.isQRCode === true ||
+    (object.data && object.data.isQRCode === true) ||
+    object.isBarCode === true
+  ) {
+    return false;
+  }
+
+  return (
+    hasObjectFlag(object, 'fromShapeTab') ||
+    hasObjectFlag(object, 'isFrameElement') ||
+    hasObjectFlag(object, 'isBorderShape') ||
+    !!object.cardBorderMode ||
+    object.hasFrameEnabled === true ||
+    (object.data && object.data.hasFrameEnabled === true)
+  );
+};
+
 const buildSilverGradientPattern = targetCanvas => {
   try {
     if (!targetCanvas || !fabric?.Pattern) return null;
@@ -307,7 +338,9 @@ const Canvas = ({ className }) => {
       object.__cutStrokeVisualPatched = true;
       object.__originalRenderStroke = object._renderStroke;
       object._renderStroke = function patchedCutStrokeRender(ctx) {
-        if (!shouldKeepCutStrokeFixed(this)) {
+        const keepCutStrokeFixed = shouldKeepCutStrokeFixed(this);
+
+        if (!keepCutStrokeFixed) {
           if (shouldDoubleCanvasStrokeVisual(this)) {
             const prevStrokeWidth = this.strokeWidth;
             this.strokeWidth =
@@ -323,9 +356,9 @@ const Canvas = ({ className }) => {
         }
 
         const displayScale = Math.max(scaleRef.current || 1, 0.0001);
-        const nextStrokeWidth =
-          (CUT_VISUAL_STROKE_WIDTH_CSS * CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER) /
-          displayScale;
+        // const nextStrokeWidth =
+        //   (CUT_VISUAL_STROKE_WIDTH_CSS * CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER) /
+        //   displayScale;
         const prevStrokeWidth = this.strokeWidth;
         const nextStrokeWidth = keepCutStrokeFixed
           ? CUT_VISUAL_STROKE_WIDTH_CSS / displayScale

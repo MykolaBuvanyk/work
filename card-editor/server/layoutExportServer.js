@@ -456,6 +456,23 @@ const FONTKIT_CACHE = new Map();
 const TEXT_TO_SVG_CACHE = new Map();
 const TEXT_TO_SVG_ANCHOR = 'left top';
 const PLACEMENT_TEXT_TO_SVG_ANCHOR = 'left baseline';
+const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
+  'ComicSansMS',
+  'ComicSansMS-Bold',
+  'ComicSansMS-BoldItalic',
+  'Courgette-Regular',
+  'DancingScript-Bold',
+  'Daniel-Bold',
+  'Exmouth',
+  'GreatVibes-Regular',
+  'Handlee-Regular',
+  'Kalam-Regular',
+  'Kalam-Bold',
+  'Lobster-Regular',
+  'Pacifico-Regular',
+  'Sacramento-Regular',
+  'Satisfy-Regular',
+]);
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -468,6 +485,9 @@ const FONT_ALIAS_LOOKUP = FONT_DEFINITIONS.reduce((map, def) => {
 }, new Map());
 
 const getFontDefinition = fontId => FONT_DEFINITION_MAP.get(fontId);
+
+const shouldClipGlyphOverlapsForFont = fontId =>
+  HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS.has(fontId);
 
 const resolveFontPath = fontId => {
   const def = getFontDefinition(fontId);
@@ -575,6 +595,7 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
     const unitsPerEm = Number(font.unitsPerEm) || 1000;
     const unitToPx = fontSize / unitsPerEm;
     let cursorXPx = 0;
+    let didClipGlyphOverlap = false;
 
     for (let i = 0; i < glyphs.length; i += 1) {
       const glyph = glyphs[i];
@@ -649,11 +670,19 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
           leftGlyph.remove();
         } catch {}
         glyphItems[i] = clipped;
+        didClipGlyphOverlap = true;
       } else {
         try {
           if (clipped) clipped.remove();
         } catch {}
       }
+    }
+
+    // If no glyph was actually trimmed, keep TextToSVG's native positioning.
+    // Rebuilding glyphs here can slightly change kerning/placement in the PDF.
+    if (!didClipGlyphOverlap) {
+      scope.project.clear();
+      return null;
     }
 
     const pathData = glyphItems
@@ -1048,6 +1077,12 @@ const parseNumericListValue = (value, fallback = 0) => {
     }
   }
   return fallback;
+};
+
+const parsePositiveNumberAttr = (node, attrName) => {
+  if (!node || typeof node.getAttribute !== 'function') return null;
+  const value = Number(node.getAttribute(attrName));
+  return Number.isFinite(value) && value > 0 ? value : null;
 };
 
 const resolveTextNodePosition = textNode => {
@@ -3196,6 +3231,20 @@ app.post('/api/layout-pdf', async (req, res) => {
                 });
 
                 const textWidth = segmentMetrics.reduce((acc, segment) => acc + segment.width, 0);
+                const fabricTextWidth = parsePositiveNumberAttr(
+                  textNode,
+                  'data-fabric-text-width'
+                );
+                const targetTextWidth = fabricTextWidth
+                  ? hasMatrixRotation
+                    ? fabricTextWidth
+                    : fabricTextWidth * fontScaleX
+                  : null;
+                const effectiveTextWidth = targetTextWidth || textWidth;
+                const textWidthScale =
+                  targetTextWidth && textWidth > 0
+                    ? targetTextWidth / textWidth
+                    : 1;
                 const maxLineHeight =
                   segmentMetrics.reduce((max, segment) => Math.max(max, segment.lineHeight), 0) ||
                   scaledFontSize;
@@ -3208,9 +3257,9 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                 let drawXLocal = 0;
                 if (anchorMode === 'end' || anchorMode === 'right') {
-                  drawXLocal -= textWidth;
+                  drawXLocal -= effectiveTextWidth;
                 } else if (anchorMode === 'middle' || anchorMode === 'center') {
-                  drawXLocal -= textWidth / 2;
+                  drawXLocal -= effectiveTextWidth / 2;
                 } else if (anchorMode === 'start' || anchorMode === 'left') {
                   drawXLocal += 0;
                 } else {
@@ -3219,7 +3268,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                   if (positionSource === 'tspan') {
                     drawXLocal += 0;
                   } else {
-                    drawXLocal -= textWidth / 2;
+                    drawXLocal -= effectiveTextWidth / 2;
                   }
                 }
 
@@ -3240,7 +3289,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                     drawY > yTopPt + heightPt * 1.5;
 
                   if (outOfBounds) {
-                    drawX = xPt + widthPt / 2 - textWidth / 2;
+                    drawX = xPt + widthPt / 2 - effectiveTextWidth / 2;
                     const centerY = yTopPt + heightPt / 2;
                     drawY = centerY;
                   }
@@ -3251,8 +3300,17 @@ app.post('/api/layout-pdf', async (req, res) => {
                 doc.lineJoin('round');
                 doc.lineCap('round');
 
-                const drawSegments = (segmentStartX, baselineY) => {
-                  let segmentX = segmentStartX;
+                const drawSegments = (segmentStartX, baselineY, widthScale = 1) => {
+                  const safeWidthScale =
+                    Number.isFinite(widthScale) && widthScale > 0 ? widthScale : 1;
+                  const useWidthScale = Math.abs(safeWidthScale - 1) > 0.0001;
+                  let segmentX = useWidthScale ? 0 : segmentStartX;
+                  if (useWidthScale) {
+                    doc.save();
+                    doc.translate(segmentStartX, baselineY);
+                    doc.scale(safeWidthScale, 1);
+                  }
+
                   segmentMetrics.forEach(segment => {
                     if (!segment.text) {
                       return;
@@ -3268,7 +3326,8 @@ app.post('/api/layout-pdf', async (req, res) => {
                       doc.text(
                         segment.text,
                         segmentX,
-                        baselineY - (Number(segment.baselineOffset) || maxBaselineOffset),
+                        (useWidthScale ? 0 : baselineY) -
+                          (Number(segment.baselineOffset) || maxBaselineOffset),
                         {
                         lineBreak: false,
                         stroke: true,
@@ -3279,18 +3338,23 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                     if (segment.textToSvg) {
                       try {
+                        const shouldClipGlyphOverlaps = shouldClipGlyphOverlapsForFont(
+                          segment.fontId
+                        );
                         const pathData =
-                          buildIntersectedGlyphPathData(
-                            segment.textToSvg,
-                            segment.text,
-                            scaledFontSize
-                          ) ||
+                          (shouldClipGlyphOverlaps
+                            ? buildIntersectedGlyphPathData(
+                                segment.textToSvg,
+                                segment.text,
+                                scaledFontSize
+                              )
+                            : null) ||
                           segment.textToSvg.getD(segment.text, {
                             fontSize: scaledFontSize,
                             anchor: PLACEMENT_TEXT_TO_SVG_ANCHOR,
                           });
                         doc.save();
-                        doc.translate(segmentX, baselineY);
+                        doc.translate(segmentX, useWidthScale ? 0 : baselineY);
                         doc.path(pathData);
                         doc.stroke();
                         doc.restore();
@@ -3308,6 +3372,10 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                     segmentX += segment.width;
                   });
+
+                  if (useWidthScale) {
+                    doc.restore();
+                  }
                 };
 
                 if (hasMatrixRotation) {
@@ -3329,10 +3397,10 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                   doc.save();
                   doc.transform(aPdf, bPdf, cPdf, dPdf, ePdf, fPdf);
-                  drawSegments(baseX + drawXLocal, baseY);
+                  drawSegments(baseX + drawXLocal, baseY, textWidthScale);
                   doc.restore();
                 } else {
-                  drawSegments(drawX, drawY);
+                  drawSegments(drawX, drawY, textWidthScale);
                 }
 
                 doc.restore();

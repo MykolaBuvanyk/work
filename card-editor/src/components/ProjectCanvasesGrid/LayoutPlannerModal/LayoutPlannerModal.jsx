@@ -220,6 +220,21 @@ const LAYOUT_OUTLINE_COLOR = "#0000FF";
 const PREVIEW_OUTLINE_COLOR = "#0000FF";
 const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
 const TEXT_STROKE_COLOR = "#008181";
+const HANDWRITTEN_TEXT_OUTLINE_FONTS = new Set([
+  "comic sans ms",
+  "courgette",
+  "dancing script",
+  "daniel",
+  "exmouth",
+  "exmouth script",
+  "great vibes",
+  "handlee",
+  "kalam",
+  "lobster",
+  "pacifico",
+  "sacramento",
+  "satisfy",
+]);
 // const BLACK_STROKE_VALUES = new Set(["#000", "#000000", "black", "rgb(0,0,0)", "rgba(0,0,0,1)", "#000000ff"]);
 // const BLACK_STROKE_STYLE_PATTERN = /(stroke\s*:\s*)(#000(?:000)?|black|rgb\(0\s*,\s*0\s*,\s*0\)|rgba\(0\s*,\s*0\s*,\s*0\s*,\s*1\))/gi;
 const CUT_FLAG_ATTRIBUTE = "data-shape-cut";
@@ -997,6 +1012,8 @@ const ensureDesignFontsLoaded = async (designs = []) => {
 const resolveDesignJsonTemplate = (design = {}) =>
   design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
 
+const TEXT_OBJECT_TYPES = new Set(["i-text", "text", "textbox"]);
+
 const sanitizeFabricJsonForSvgExport = (jsonTemplate) => {
   if (!jsonTemplate || typeof jsonTemplate !== "object") return jsonTemplate;
 
@@ -1049,6 +1066,43 @@ const sanitizeFabricJsonForSvgExport = (jsonTemplate) => {
   visitObject(jsonTemplate);
 
   return jsonTemplate;
+};
+
+const annotateFabricTextMetricsInSvgMarkup = (markup, fabricObjects = []) => {
+  if (typeof markup !== "string" || !markup.trim()) return markup;
+  if (typeof DOMParser === "undefined" || typeof XMLSerializer === "undefined") {
+    return markup;
+  }
+
+  const textObjects = (Array.isArray(fabricObjects) ? fabricObjects : []).filter(
+    (object) => object && TEXT_OBJECT_TYPES.has(object.type)
+  );
+  if (!textObjects.length) return markup;
+
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(markup, "image/svg+xml");
+    const textNodes = Array.from(doc.getElementsByTagName("text"));
+
+    textNodes.forEach((node, index) => {
+      const object = textObjects[index];
+      if (!object) return;
+
+      const width = Number(object.width);
+      const height = Number(object.height);
+      if (Number.isFinite(width) && width > 0) {
+        node.setAttribute("data-fabric-text-width", String(width));
+      }
+      if (Number.isFinite(height) && height > 0) {
+        node.setAttribute("data-fabric-text-height", String(height));
+      }
+    });
+
+    return new XMLSerializer().serializeToString(doc.documentElement);
+  } catch (error) {
+    console.warn("Failed to annotate Fabric text metrics in SVG", error);
+    return markup;
+  }
 };
 
 export const generateSvgMarkupFromJsonTemplate = async (
@@ -1151,8 +1205,9 @@ export const generateSvgMarkupFromJsonTemplate = async (
     });
 
     staticCanvas.renderAll();
-    const markup =
+    const rawMarkup =
       typeof staticCanvas.toSVG === "function" ? staticCanvas.toSVG() : "";
+    const markup = annotateFabricTextMetricsInSvgMarkup(rawMarkup, loadedObjects);
     return typeof markup === "string" && markup.trim() ? markup : null;
   } catch (error) {
     console.warn("Failed to generate SVG from canvas JSON template", error);
@@ -3618,6 +3673,19 @@ const collectStyleFromNode = (node) => {
   return style;
 };
 
+const normalizeFontFamilyName = (value = "") =>
+  String(value || "")
+    .split(",")[0]
+    .trim()
+    .replace(/^['"]|['"]$/g, "")
+    .toLowerCase();
+
+const shouldOutlineTextWithPaper = (textNode) => {
+  const style = collectStyleFromNode(textNode);
+  const fontFamily = normalizeFontFamilyName(style["font-family"]);
+  return HANDWRITTEN_TEXT_OUTLINE_FONTS.has(fontFamily);
+};
+
 const formatSvgNumber = (value) => {
   if (!Number.isFinite(value)) return "0";
   const rounded = Math.round(value * 1000) / 1000;
@@ -4809,6 +4877,11 @@ const convertTextToOutlinedPaths = (rootElement) => {
     try {
       const parent = textNode.parentNode;
       if (!parent) return;
+
+      if (!shouldOutlineTextWithPaper(textNode)) {
+        applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+        return;
+      }
 
       const doc = textNode.ownerDocument;
       const baseStyle = collectStyleFromNode(textNode);

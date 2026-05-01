@@ -35,6 +35,7 @@ const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
+const CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER = 2;
 
 const buildSilverGradientPattern = targetCanvas => {
   try {
@@ -207,6 +208,37 @@ const Canvas = ({ className }) => {
       return !!cutOwner;
     };
 
+    const hasObjectFlag = (object, flagName) => {
+      let current = object;
+      while (current) {
+        if (current[flagName] === true || (current.data && current.data[flagName] === true)) {
+          return true;
+        }
+        current = current.group || null;
+      }
+      return false;
+    };
+
+    const shouldDoubleCanvasStrokeVisual = object => {
+      if (!object || !object.stroke || Number(object.strokeWidth) <= 0) return false;
+      if (
+        object.isQRCode === true ||
+        (object.data && object.data.isQRCode === true) ||
+        object.isBarCode === true
+      ) {
+        return false;
+      }
+
+      return (
+        hasObjectFlag(object, 'fromShapeTab') ||
+        hasObjectFlag(object, 'isFrameElement') ||
+        hasObjectFlag(object, 'isBorderShape') ||
+        !!object.cardBorderMode ||
+        object.hasFrameEnabled === true ||
+        (object.data && object.data.hasFrameEnabled === true)
+      );
+    };
+
     const shouldIgnoreStrokeInObjectDimensions = object => {
       if (!object) return false;
 
@@ -270,11 +302,24 @@ const Canvas = ({ className }) => {
       object.__originalRenderStroke = object._renderStroke;
       object._renderStroke = function patchedCutStrokeRender(ctx) {
         if (!shouldKeepCutStrokeFixed(this)) {
+          if (shouldDoubleCanvasStrokeVisual(this)) {
+            const prevStrokeWidth = this.strokeWidth;
+            this.strokeWidth =
+              (Number(prevStrokeWidth) || 0) * CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER;
+            try {
+              return object.__originalRenderStroke.call(this, ctx);
+            } finally {
+              this.strokeWidth = prevStrokeWidth;
+            }
+          }
+
           return object.__originalRenderStroke.call(this, ctx);
         }
 
         const displayScale = Math.max(scaleRef.current || 1, 0.0001);
-        const nextStrokeWidth = CUT_VISUAL_STROKE_WIDTH_CSS / displayScale;
+        const nextStrokeWidth =
+          (CUT_VISUAL_STROKE_WIDTH_CSS * CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER) /
+          displayScale;
         const prevStrokeWidth = this.strokeWidth;
 
         this.strokeWidth = nextStrokeWidth;

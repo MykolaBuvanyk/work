@@ -1858,12 +1858,20 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         text-decoration: underline;
       }
       .order-title {
-        font-size: 22px;
+        width: 40%;
+        flex: 0 0 40%;
+        max-width: 40%;
+        font-size: 16px;
         font-weight: bold;
         margin-top: 30px;
-        text-align: right;
+        text-align: left;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .order-title--continued {
+        width: 100%;
+        flex: none;
+        max-width: 100%;
         margin-top: 0;
         margin-bottom: 20px;
         text-align: left;
@@ -3287,7 +3295,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
             </tr>
             <tr>
               <td>Address:</td>
-              <td class="footer-value-cell">Baumwiesen 2, Haigerloch 72401, Germany</td>
+              <td class="footer-value-cell">Baumwiesen 2, 72401 Haigerloch, Germany</td>
             </tr>
             <tr>
               <td>IBAN:</td>

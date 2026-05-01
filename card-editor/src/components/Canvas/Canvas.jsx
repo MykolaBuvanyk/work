@@ -36,6 +36,7 @@ const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
 const CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER = 2;
+const FRAME_VISUAL_STROKE_MULTIPLIER = 2;
 
 const buildSilverGradientPattern = targetCanvas => {
   try {
@@ -203,39 +204,44 @@ const Canvas = ({ className }) => {
       return null;
     };
 
+    const getQrOwner = object => {
+      let current = object;
+      while (current) {
+        if (current.isQRCode === true || current?.data?.isQRCode === true) return current;
+        current = current.group || null;
+      }
+      return null;
+    };
+
     const shouldKeepCutStrokeFixed = object => {
       const cutOwner = getCutOwner(object);
       return !!cutOwner;
     };
 
-    const hasObjectFlag = (object, flagName) => {
-      let current = object;
-      while (current) {
-        if (current[flagName] === true || (current.data && current.data[flagName] === true)) {
-          return true;
-        }
-        current = current.group || null;
-      }
-      return false;
+    const readBooleanMeta = (object, key) => {
+      if (!object) return null;
+      if (typeof object[key] === 'boolean') return object[key];
+      if (typeof object?.data?.[key] === 'boolean') return object.data[key];
+      return null;
     };
 
-    const shouldDoubleCanvasStrokeVisual = object => {
-      if (!object || !object.stroke || Number(object.strokeWidth) <= 0) return false;
-      if (
-        object.isQRCode === true ||
-        (object.data && object.data.isQRCode === true) ||
-        object.isBarCode === true
-      ) {
+    const shouldBoostFrameStrokeVisual = object => {
+      if (!object || shouldKeepCutStrokeFixed(object) || getQrOwner(object)) return false;
+
+      const type = String(object.type || '').toLowerCase();
+      if (!['path', 'rect', 'circle', 'ellipse', 'polygon', 'polyline'].includes(type)) {
         return false;
       }
 
+      const hasFrameEnabled = readBooleanMeta(object, 'hasFrameEnabled');
+      const isFrameElement = readBooleanMeta(object, 'isFrameElement');
+      const isManualCut = object.isCutElement === true || object.cutType === 'manual';
+      const isHoleShape = object.cutType === 'hole' || object.isHoleElement === true;
+
       return (
-        hasObjectFlag(object, 'fromShapeTab') ||
-        hasObjectFlag(object, 'isFrameElement') ||
-        hasObjectFlag(object, 'isBorderShape') ||
-        !!object.cardBorderMode ||
-        object.hasFrameEnabled === true ||
-        (object.data && object.data.hasFrameEnabled === true)
+        !isManualCut &&
+        !isHoleShape &&
+        (hasFrameEnabled === true || isFrameElement === true)
       );
     };
 
@@ -321,6 +327,9 @@ const Canvas = ({ className }) => {
           (CUT_VISUAL_STROKE_WIDTH_CSS * CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER) /
           displayScale;
         const prevStrokeWidth = this.strokeWidth;
+        const nextStrokeWidth = keepCutStrokeFixed
+          ? CUT_VISUAL_STROKE_WIDTH_CSS / displayScale
+          : Math.max(0, Number(prevStrokeWidth) || 0) * FRAME_VISUAL_STROKE_MULTIPLIER;
 
         this.strokeWidth = nextStrokeWidth;
         try {
@@ -333,6 +342,7 @@ const Canvas = ({ className }) => {
 
     const refreshCutStrokeVisual = object => {
       if (!object) return;
+      if (getQrOwner(object)) return;
 
       ensureCutStrokeVisual(object);
 
@@ -340,7 +350,11 @@ const Canvas = ({ className }) => {
         object.forEachObject(child => refreshCutStrokeVisual(child));
       }
 
-      if (!getCutOwner(object) && object.isCutElement !== true) return;
+      if (
+        !getCutOwner(object) &&
+        object.isCutElement !== true &&
+        !shouldBoostFrameStrokeVisual(object)
+      ) return;
 
       try {
         object.set({ objectCaching: false, dirty: true });

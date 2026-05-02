@@ -32,6 +32,58 @@ const PANEL_BG_WIDTH = 163; // ширина фону меню (CSS px)
 const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
 
 // Стиль рамки: використовуємо акцентний синій як в інших компонентах
+const TEXT_OBJECT_TYPES = ['i-text', 'text', 'textbox'];
+
+const isTextObjectType = target => !!target && TEXT_OBJECT_TYPES.includes(target.type);
+
+const setTextSelectionToEnd = target => {
+  try {
+    const len = typeof target.text === 'string' ? target.text.length : 0;
+    if (typeof target.setSelectionStart === 'function') target.setSelectionStart(len);
+    else target.selectionStart = len;
+    if (typeof target.setSelectionEnd === 'function') target.setSelectionEnd(len);
+    else target.selectionEnd = len;
+  } catch {}
+};
+
+const focusTextHiddenTextarea = target => {
+  try {
+    if (target.hiddenTextarea && typeof target.hiddenTextarea.focus === 'function') {
+      target.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
+      target.hiddenTextarea.focus();
+    }
+  } catch {}
+};
+
+const enableTextEditing = target => {
+  if (!isTextObjectType(target) || typeof target.enterEditing !== 'function') return true;
+
+  try {
+    const targetCanvas = target.canvas;
+    try {
+      if (targetCanvas && targetCanvas.getActiveObject?.() !== target) {
+        targetCanvas.setActiveObject?.(target);
+      }
+    } catch {}
+
+    try {
+      target.set?.({ editable: true });
+    } catch {}
+    target.editable = true;
+    target.__allowTextEditing = true;
+    target.__allowNextEditing = true;
+
+    if (!target.isEditing) target.enterEditing();
+    setTextSelectionToEnd(target);
+    focusTextHiddenTextarea(target);
+    targetCanvas?.requestRenderAll?.();
+  } catch {}
+
+  return true;
+};
+
+export const editTextHandler = async (evt, transform) => enableTextEditing(transform?.target);
+
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
@@ -410,7 +462,21 @@ const Canvas = ({ className }) => {
         o.isUploadedSvg === true ||
         (o.data && (o.data.isUploadedImage === true || o.data.isUploadedSvg === true)));
 
-    const isTextObj = o => !!o && ['i-text', 'text', 'textbox'].includes(o.type);
+    const isTextObj = isTextObjectType;
+
+    const disableTextDirectEditing = target => {
+      if (!isTextObj(target) || target.isEditing) return;
+      try {
+        target.set?.({ editable: false });
+      } catch { }
+      target.editable = false;
+      target.__allowTextEditing = false;
+      target.__allowNextEditing = false;
+      try {
+        target.hoverCursor = 'default';
+        target.moveCursor = 'move';
+      } catch { }
+    };
 
     const refreshTextLayout = async target => {
       if (!isTextObj(target)) return;
@@ -1000,6 +1066,12 @@ const Canvas = ({ className }) => {
         setShapePropertiesOpen(false);
         return;
       }
+      if (isTextObj(obj)) {
+        disableTextDirectEditing(obj);
+        setActiveObject(obj);
+        setShapePropertiesOpen(false);
+        return;
+      }
       if (isShapeWithProps(obj)) {
         setActiveObject(obj);
         // Не відкривати модалку Shape Properties в режимі кастомної фігури та для іконок з IconMenu
@@ -1211,6 +1283,7 @@ const Canvas = ({ className }) => {
           if (textsUnder.length > 0) {
             // Обираємо верхній текст (вони вже зверху завдяки bringAllTextsToFront)
             const topText = textsUnder[textsUnder.length - 1];
+            disableTextDirectEditing(topText);
             fCanvas.setActiveObject(topText);
             ensureActionControls(topText);
             setShapePropertiesOpen(false);
@@ -1252,7 +1325,7 @@ const Canvas = ({ className }) => {
       if (t && (t.type === 'i-text' || t.type === 'text' || t.type === 'textbox')) {
         try {
           // Заборонити автоперехід у редагування на одинарному кліку
-          t.__allowNextEditing = false;
+          disableTextDirectEditing(t);
           setActiveObject(t);
           fCanvas.setActiveObject(t);
           // panel appears on selection events; avoid forcing controls here to prevent flicker
@@ -1265,7 +1338,12 @@ const Canvas = ({ className }) => {
       const t = e.target;
       if (t && (t.type === 'i-text' || t.type === 'text' || t.type === 'textbox')) {
         try {
+          t.__allowTextEditing = true;
           t.__allowNextEditing = true;
+          try {
+            t.set?.({ editable: true });
+          } catch { }
+          t.editable = true;
           if (typeof t.enterEditing === 'function') t.enterEditing();
           const len = (t.text || '').length;
           if (typeof t.setSelectionStart === 'function') t.setSelectionStart(len);
@@ -1281,7 +1359,7 @@ const Canvas = ({ className }) => {
     fCanvas.on('text:editing:entered', e => {
       const t = e?.target;
       if (t && (t.type === 'i-text' || t.type === 'text' || t.type === 'textbox')) {
-        if (!t.__allowNextEditing) {
+        if (!t.__allowTextEditing && !t.__allowNextEditing) {
           try {
             if (typeof t.exitEditing === 'function') t.exitEditing();
           } catch { }
@@ -1293,6 +1371,7 @@ const Canvas = ({ className }) => {
           return;
         }
         // спожити дозвіл тільки для цього входу
+        t.__allowTextEditing = true;
         t.__allowNextEditing = false;
         // Скрываем нативный caret у hiddenTextarea и включаем периодическую подстраховку
         try {
@@ -1351,6 +1430,9 @@ const Canvas = ({ className }) => {
       } catch { }
       try {
         if (t && t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
+      } catch { }
+      try {
+        disableTextDirectEditing(t);
       } catch { }
       try {
         refreshTextLayout(t);
@@ -2247,13 +2329,18 @@ const Canvas = ({ className }) => {
       const target = transform?.target;
       if (!target) return true;
       // Определяем, можно ли редактировать текст напрямую
-      const canEditText = typeof target.enterEditing === 'function';
+      const canEditText = isTextObj(target) && typeof target.enterEditing === 'function';
       if (!canEditText) {
         // Ничего не делаем для не-текста
         return true;
       }
       try {
         // Явно разрешаем вход в редактирование, минуя запрет одиночного клика
+        try {
+          target.set?.({ editable: true });
+        } catch { }
+        target.editable = true;
+        target.__allowTextEditing = true;
         target.__allowNextEditing = true;
         target.enterEditing && target.enterEditing();
         const txt = typeof target.text === 'string' ? target.text : '';
@@ -2593,10 +2680,9 @@ const Canvas = ({ className }) => {
       // Панель з 5 кнопок (іконки поверх фону)
       const BUTTONS = [
         {
-          key: 'a',
+          key: 'edit',
           render: aIconRenderer,
-          handler: copyHandler, // теперь: режим редактирования текста / no-op
-          // курсор зададим динамічно нижче через cursorStyleHandler
+          handler: editTextHandler,
           w: 24,
           h: 24,
         },
@@ -2654,11 +2740,11 @@ const Canvas = ({ className }) => {
           sizeX: (btn.w || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
           sizeY: (btn.h || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
         });
-        if (btn.key === 'a') {
+        if (btn.key === 'edit') {
           // Динамический курсор: 'text' для редактируемого текста, иначе 'default'
           control.cursorStyleHandler = (_e, t) => {
             const target = t?.target || obj;
-            const canEdit = target && typeof target.enterEditing === 'function';
+            const canEdit = isTextObj(target) && typeof target.enterEditing === 'function';
             return canEdit ? 'text' : 'default';
           };
         }
@@ -2688,6 +2774,7 @@ const Canvas = ({ className }) => {
           setShapePropertiesOpen(false);
           return;
         }
+        disableTextDirectEditing(o);
         ensureActionControls(o);
         fCanvas.requestRenderAll();
       }
@@ -2703,6 +2790,7 @@ const Canvas = ({ className }) => {
           setShapePropertiesOpen(false);
           return;
         }
+        disableTextDirectEditing(o);
         ensureActionControls(o);
         fCanvas.requestRenderAll();
       }
@@ -4122,13 +4210,18 @@ export const copyHandler = async (evt, transform) => {
   const target = transform?.target;
   if (!target) return true;
   // Определяем, можно ли редактировать текст напрямую
-  const canEditText = typeof target.enterEditing === 'function';
+  const canEditText = isTextObjectType(target) && typeof target.enterEditing === 'function';
   if (!canEditText) {
     // Ничего не делаем для не-текста
     return true;
   }
   try {
     // Явно разрешаем вход в редактирование, минуя запрет одиночного клика
+    try {
+      target.set?.({ editable: true });
+    } catch { }
+    target.editable = true;
+    target.__allowTextEditing = true;
     target.__allowNextEditing = true;
     target.enterEditing && target.enterEditing();
     const txt = typeof target.text === 'string' ? target.text : '';

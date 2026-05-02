@@ -1459,22 +1459,26 @@ export function uuid() {
 export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
   if (!canvas) return null;
   try {
+    const shouldExitEditing = options.exitEditing === true;
+
     try {
       const objects = typeof canvas.getObjects === "function" ? canvas.getObjects() : [];
       objects.forEach((obj) => {
         if (!isFabricTextLike(obj)) return;
 
-        try {
-          if (obj.isEditing && typeof obj.exitEditing === "function") {
-            obj.exitEditing();
-          }
-        } catch {}
+        if (shouldExitEditing) {
+          try {
+            if (obj.isEditing && typeof obj.exitEditing === "function") {
+              obj.exitEditing();
+            }
+          } catch {}
 
-        try {
-          if (obj.hiddenTextarea && typeof obj.hiddenTextarea.blur === "function") {
-            obj.hiddenTextarea.blur();
-          }
-        } catch {}
+          try {
+            if (obj.hiddenTextarea && typeof obj.hiddenTextarea.blur === "function") {
+              obj.hiddenTextarea.blur();
+            }
+          } catch {}
+        }
 
         try {
           obj.set?.({ objectCaching: false, dirty: true });

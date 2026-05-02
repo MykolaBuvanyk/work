@@ -23,9 +23,7 @@ export default function Layout() {
           <Outlet /> {/* Тут рендеряться внутрішні сторінки */}
         </main>
 
-        <footer>
-          <Footer />
-        </footer>
+        <Footer />
 
         <CookieConsent />
       </CanvasProvider>

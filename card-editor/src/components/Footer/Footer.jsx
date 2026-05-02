@@ -65,7 +65,147 @@ const Footer = () => {
   const navigate=useNavigate();
   
   return (
-    <div className="footer-container">
+    <footer class="footer">
+      <div class="footer-inner">
+
+        <div class="footer-company">
+          <div class="logo-footer">
+            <img src="/images/logo.svg" alt="SignXpert" />
+          </div>
+
+          <div class="footer-slogan">
+            Engraving · Printing · Signs
+          </div>
+
+          <div class="footer-address">
+            <p>Baumwiesen 2</p>
+            <p>72401 Haigerloch</p>
+            <p>Germany</p>
+            <p><a href="tel:+4915776625125">+49 157 766 25 125</a></p>
+            <p><a href="mailto:info@sign-xpert.com">info@sign-xpert.com</a></p>
+          </div>
+        </div>
+
+        <div class="footer-menu">
+          <h4>Menu:</h4>
+          <ul>
+            <li><a href="https://sign-xpert.com/">Home</a></li>
+            <li><a href="https://sign-xpert.com/account">My Account</a></li>
+            <li><a href="https://sign-xpert.com/online-sign-editor">New Project</a></li>
+            <li><a href="https://sign-xpert.com/products">Products</a></li>
+            <li><a href="https://sign-xpert.com/faq">FAQ</a></li>
+            <li><a href="https://sign-xpert.com/quick-guide">Quick Guide</a></li>
+            <li><a href="https://sign-xpert.com/industries">Industries</a></li>
+            <li><a href="https://sign-xpert.com/contacts">Contacts</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-info">
+          <h4>Information:</h4>
+          <ul>
+            <li><a href="https://sign-xpert.com/privacy-policy">Privacy Policy</a></li>
+            <li><a href="https://sign-xpert.com/terms-of-purchasing">Terms of Purchasing</a></li>
+            <li><a href="https://sign-xpert.com/Impressum">Impressum</a></li>
+            <li><a href="https://sign-xpert.com/eu-online-dispute-resolution">EU Online Dispute Resolution</a></li>
+          </ul>
+
+          <div class="footer-note">
+            <p>All prices are final.</p>
+            <p>No VAT is charged according to § 19 UStG.</p>
+            <p>Plus shipping costs.</p>
+          </div>
+        </div>
+
+        <div class="footer-methods">
+          <div class="footer-payment">
+            <h4>Payment Method</h4>
+
+            <div class="payment-grid">
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/invoice.svg" alt="Invoice" />
+                </div>
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/visa.svg" alt="Visa" />
+                </div>
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/mastercard.svg" alt="MasterCard" />
+                </div>
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/paypal.svg" alt="PayPal" />
+                </div>
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/apple.svg" alt="Apple Pay" />
+                </div>
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/sepa.svg" alt="SEPA" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-delivery">
+            <h4>Delivery Method</h4>
+
+            <div class="delivery-grid">
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/ups.svg" alt="UPS" />
+                </div>
+
+              </div>
+
+              <div class="footer-icon-card">
+                <div class="footer-icon">
+                  <img src="/images/dhl.svg" alt="DHL" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-user">
+          {isAuth?<>
+          <div>{user.firstName||'' + ' ' + user.surname||''}</div>
+          <div class="login-btn" onClick={()=>dispatch(logout())}>Log out</div></>
+            :
+          <>
+            <div></div>
+            <Link to='/login' style={{cursor:'pointer',fontWeight:600}} className="login-btn">
+              Log in or <span style={{color:'red'}}>Register</span>
+            </Link>
+          </>}
+        </div>
+
+      </div>
+
+      <div class="footer-copy">
+        © 2026, SignXpert. All rights reserved.
+      </div>
+    </footer>
+    
+  );
+};
+
+export default Footer;
+
+
+/*<div className="footer-container">
       <div className="up">
         <div className="logo-and-lang">
           <svg
@@ -229,7 +369,7 @@ const Footer = () => {
                 </div>
               ))}
             </div>
-          </div>*/}
+          </div>*}
         </div>
         <div className="list-urls">
           {urls.map(x => (
@@ -251,8 +391,4 @@ const Footer = () => {
         </div>
         <div className="info">© 2026, SignXpert. All rights reserved.</div>
       </div>
-    </div>
-  );
-};
-
-export default Footer;
+    </div>*/

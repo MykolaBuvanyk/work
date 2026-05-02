@@ -86,4 +86,11 @@ textarea[data-fabric-hidden-textarea] {
   background: transparent !important;
   border: 0 !important;
   outline: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  transform: translate3d(-100000px, -100000px, 0) !important;
+  z-index: -1 !important;
 }

@@ -36,6 +36,32 @@ const TEXT_OBJECT_TYPES = ['i-text', 'text', 'textbox'];
 
 const isTextObjectType = target => !!target && TEXT_OBJECT_TYPES.includes(target.type);
 
+const hideFabricHiddenTextarea = ta => {
+  if (!ta) return;
+  try {
+    ta.setAttribute('data-fabric-hidden-textarea', '1');
+    ta.style.caretColor = 'transparent';
+    ta.style.color = 'transparent';
+    ta.style.background = 'transparent';
+    ta.style.border = '0';
+    ta.style.outline = 'none';
+    ta.style.position = 'fixed';
+    ta.style.top = '-100000px';
+    ta.style.left = '-100000px';
+    ta.style.width = '0';
+    ta.style.height = '0';
+    ta.style.minWidth = '0';
+    ta.style.minHeight = '0';
+    ta.style.padding = '0';
+    ta.style.margin = '0';
+    ta.style.opacity = '0';
+    ta.style.pointerEvents = 'none';
+    ta.style.overflow = 'hidden';
+    ta.style.transform = 'translate3d(-100000px, -100000px, 0)';
+    ta.style.zIndex = '-1';
+  } catch {}
+};
+
 const setTextSelectionToEnd = target => {
   try {
     const len = typeof target.text === 'string' ? target.text.length : 0;
@@ -49,8 +75,9 @@ const setTextSelectionToEnd = target => {
 const focusTextHiddenTextarea = target => {
   try {
     if (target.hiddenTextarea && typeof target.hiddenTextarea.focus === 'function') {
-      target.hiddenTextarea.setAttribute('data-fabric-hidden-textarea', '1');
+      hideFabricHiddenTextarea(target.hiddenTextarea);
       target.hiddenTextarea.focus();
+      hideFabricHiddenTextarea(target.hiddenTextarea);
     }
   } catch {}
 };
@@ -73,9 +100,38 @@ const enableTextEditing = target => {
     target.__allowTextEditing = true;
     target.__allowNextEditing = true;
 
+    try {
+      target.initDimensions?.();
+      target.setCoords?.();
+    } catch {}
+
     if (!target.isEditing) target.enterEditing();
+    try {
+      target.initDimensions?.();
+      target.setCoords?.();
+    } catch {}
     setTextSelectionToEnd(target);
     focusTextHiddenTextarea(target);
+    try {
+      requestAnimationFrame(() => {
+        try {
+          target.initDimensions?.();
+          target.setCoords?.();
+          setTextSelectionToEnd(target);
+          focusTextHiddenTextarea(target);
+          targetCanvas?.requestRenderAll?.();
+        } catch {}
+      });
+    } catch {}
+    try {
+      setTimeout(() => {
+        try {
+          setTextSelectionToEnd(target);
+          focusTextHiddenTextarea(target);
+          targetCanvas?.requestRenderAll?.();
+        } catch {}
+      }, 0);
+    } catch {}
     targetCanvas?.requestRenderAll?.();
   } catch {}
 
@@ -221,18 +277,8 @@ const Canvas = ({ className }) => {
     // Утилиты: скрыть/показать hiddenTextarea Fabric, чтобы не мигал нативный курсор
     const applyHiddenTextareaStyle = ta => {
       try {
-        ta.style.caretColor = 'transparent';
-        ta.style.color = 'transparent';
-        ta.style.background = 'transparent';
-        ta.style.border = '0';
-        ta.style.outline = 'none';
+        hideFabricHiddenTextarea(ta);
         ta.style.position = 'fixed'; // вне потока, чтобы не мелькала
-        ta.style.top = '-10000px';
-        ta.style.left = '-10000px';
-        ta.style.width = '0';
-        ta.style.height = '0';
-        ta.style.opacity = '0';
-        ta.style.pointerEvents = 'none';
       } catch { }
     };
     const clearHiddenTextareaStyle = ta => {
@@ -254,6 +300,55 @@ const Canvas = ({ className }) => {
           } catch { }
           applyHiddenTextareaStyle(obj.hiddenTextarea);
         }
+      } catch { }
+    };
+    const drawSingleTextCaret = () => {
+      try {
+        const obj = fCanvas.getActiveObject?.();
+        if (!isTextObjectType(obj) || !obj.isEditing) return;
+        const start = typeof obj.selectionStart === 'number' ? obj.selectionStart : 0;
+        const end = typeof obj.selectionEnd === 'number' ? obj.selectionEnd : start;
+        if (start !== end) return;
+
+        const phase = (Date.now() % 1000) / 1000;
+        if (phase >= 0.55) return;
+
+        const ctx = fCanvas.getTopContext ? fCanvas.getTopContext() : fCanvas.contextTop;
+        if (!ctx) return;
+
+        const text = String(obj.text || '');
+        const caretIndex = Math.max(0, Math.min(start, text.length));
+        const before = text.slice(0, caretIndex);
+        const fontSize = Math.max(1, Number(obj.fontSize) || 16);
+        const lineHeight = fontSize * (Number(obj.lineHeight) || 1.16);
+
+        ctx.save();
+        ctx.font = `${obj.fontStyle || 'normal'} ${obj.fontWeight || 'normal'} ${fontSize}px ${obj.fontFamily || 'sans-serif'}`;
+        const measured = ctx.measureText(before).width || 0;
+        const fullWidth = obj.width || ctx.measureText(text).width || 0;
+        const fullHeight = obj.height || lineHeight;
+        const localX = -fullWidth / 2 + measured;
+        const localY = -fullHeight / 2;
+        ctx.restore();
+
+        const p1 = fabric.util.transformPoint(
+          new fabric.Point(localX, localY),
+          obj.calcTransformMatrix()
+        );
+        const p2 = fabric.util.transformPoint(
+          new fabric.Point(localX, localY + lineHeight * 0.92),
+          obj.calcTransformMatrix()
+        );
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineWidth = 1.5 / (scaleRef.current || 1);
+        ctx.strokeStyle = obj.fill || obj.stroke || '#000';
+        ctx.lineCap = 'butt';
+        ctx.stroke();
+        ctx.restore();
       } catch { }
     };
     if (canvasRef.current) canvasRef.current.__fabricCanvas = fCanvas;
@@ -1348,8 +1443,21 @@ const Canvas = ({ className }) => {
           const len = (t.text || '').length;
           if (typeof t.setSelectionStart === 'function') t.setSelectionStart(len);
           if (typeof t.setSelectionEnd === 'function') t.setSelectionEnd(len);
-          if (t.hiddenTextarea && typeof t.hiddenTextarea.focus === 'function')
+          if (t.hiddenTextarea && typeof t.hiddenTextarea.focus === 'function') {
+            hideFabricHiddenTextarea(t.hiddenTextarea);
             t.hiddenTextarea.focus();
+            hideFabricHiddenTextarea(t.hiddenTextarea);
+          }
+          try {
+            requestAnimationFrame(() => {
+              try {
+                t.initDimensions?.();
+                t.setCoords?.();
+                hideFabricHiddenTextarea(t.hiddenTextarea);
+                fCanvas.requestRenderAll();
+              } catch { }
+            });
+          } catch { }
           fCanvas.requestRenderAll();
         } catch { }
       }
@@ -1386,8 +1494,9 @@ const Canvas = ({ className }) => {
                 } catch { }
                 applyHiddenTextareaStyle(t.hiddenTextarea);
               }
+              fCanvas.requestRenderAll();
             } catch { }
-          }, 100);
+          }, 250);
         } catch { }
         try {
           if (t.hiddenTextarea) {
@@ -1410,10 +1519,29 @@ const Canvas = ({ className }) => {
             applyHiddenTextareaStyle(t.hiddenTextarea);
           }
         } catch { }
+        try {
+          requestAnimationFrame(() => {
+            try {
+              t.initDimensions?.();
+              t.setCoords?.();
+              if (t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
+              fCanvas.requestRenderAll();
+            } catch { }
+          });
+        } catch { }
+        try {
+          setTimeout(() => {
+            try {
+              if (t.hiddenTextarea) applyHiddenTextareaStyle(t.hiddenTextarea);
+              fCanvas.requestRenderAll();
+            } catch { }
+          }, 0);
+        } catch { }
       }
     });
     // На каждом кадре после рендера убеждаемся, что hiddenTextarea остаётся скрытой
     fCanvas.on('after:render', enforceHideCaretIfEditing);
+    fCanvas.on('after:render', drawSingleTextCaret);
     // При выходе из редактирования: очищаем интервал и ещё раз убеждаемся, что hiddenTextarea скрыта
     fCanvas.on('text:editing:exited', e => {
       const t = e?.target;
@@ -3740,6 +3868,7 @@ const Canvas = ({ className }) => {
         document.removeEventListener('pointerdown', outsideClickHandler, true);
       } catch { }
       fCanvas.off('before:render', clearTop);
+      fCanvas.off('after:render', drawSingleTextCaret);
       fCanvas.off('after:render', drawFrame);
       fCanvas.off('display:scale', onDisplayScale);
       fCanvas.off('object:rotating', onRotatingSnap);

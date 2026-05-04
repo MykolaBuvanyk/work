@@ -39,8 +39,7 @@ const QuickGuide = () => {
             </li>
         </ul>
         <div className="how-start">
-            <h2>How to start</h2>
-            <img src='/images/quick.avif'/>
+            <img src='/images/quick1.png'/>
         </div>
         <h2>How to use the editor</h2>
         <div className="instruction">

@@ -548,7 +548,6 @@ const InfoAboutProject = () => {
         checkout: {
           deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
-          isInvoiceDifferent: Boolean(checkoutTotals?.isInvoiceDifferent),
           phoneOk: Boolean(checkoutTotals?.phoneOk),
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),
@@ -576,6 +575,7 @@ const InfoAboutProject = () => {
       } catch {}
 
       const cartResult = await addProjectToCart(payload);
+      console.log(234324,cartResult);
 
       try {
         const orderedAtTs = (() => {
@@ -689,7 +689,7 @@ const InfoAboutProject = () => {
     setIsCartAccessoriesOpen(true);
   };
 
-  const handleCartAccessoriesClose = async() => {
+  const handleCartAccessoriesClose = () => {
     setIsCartAccessoriesOpen(false);
   };
 
@@ -698,7 +698,7 @@ const InfoAboutProject = () => {
     setIsCheckoutOpen(true);
   };
 
-  const handleCheckoutClose = async() => {
+  const handleCheckoutClose = () => {
     setIsCheckoutOpen(false);
   };
 
@@ -722,14 +722,12 @@ const InfoAboutProject = () => {
   const handleCheckoutPlaceOrder = async (checkoutTotals) => {
     setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
-    console.log(42342356456);
-    await addCurrentProjectToCart(checkoutTotalsDraft || {});
-    console.log(87238423842384)
     setIsPayOpen(true)
-
   };
 
   const handlePayModalPlaceOrder = async () => {
+    const added = await addCurrentProjectToCart(checkoutTotalsDraft || {});
+    if (!added) return false;
     return true;
   };
 

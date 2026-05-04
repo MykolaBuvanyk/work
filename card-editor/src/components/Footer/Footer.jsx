@@ -65,7 +65,7 @@ const Footer = () => {
   const navigate=useNavigate();
   
   return (
-    <footer class="footer">
+    <footer id='footer' class="footer">
       <div class="footer-inner">
 
         <div class="footer-company">
@@ -87,7 +87,7 @@ const Footer = () => {
         </div>
 
         <div class="footer-menu">
-          <h4>Menu:</h4>
+          <h4 style={{fontWeight:'700'}}>Menu:</h4>
           <ul>
             <li><a href="https://sign-xpert.com/">Home</a></li>
             <li><a href="https://sign-xpert.com/account">My Account</a></li>
@@ -182,7 +182,7 @@ const Footer = () => {
         <div class="footer-user">
           {isAuth?<>
           <div>{user.firstName||'' + ' ' + user.surname||''}</div>
-          <div class="login-btn" onClick={()=>dispatch(logout())}>Log out</div></>
+          <div class="login-btn" style={{fontWeight:'600',cursor:'pointer',fontSize:'13px'}} onClick={()=>dispatch(logout())}>Log out</div></>
             :
           <>
             <div></div>

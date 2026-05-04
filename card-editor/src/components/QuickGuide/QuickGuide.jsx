@@ -44,7 +44,7 @@ const QuickGuide = () => {
         </div>
         <h2>How to use the editor</h2>
         <div className="instruction">
-            <img src='/images/quick2.avif'/>
+            <img src='/images/quick3.png'/>
         </div>
         <div className="butons-url">
             <Link to='/online-sign-editor'>New Project</Link>

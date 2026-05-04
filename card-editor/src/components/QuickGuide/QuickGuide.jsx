@@ -48,7 +48,6 @@ const QuickGuide = () => {
         </div>
         <div className="butons-url">
             <Link to='/online-sign-editor'>New Project</Link>
-            <Link to='/templates'>Templates</Link>
             <Link to='/contacts'>Contact us</Link>
         </div>
 

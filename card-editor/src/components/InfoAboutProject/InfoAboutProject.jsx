@@ -689,7 +689,7 @@ const InfoAboutProject = () => {
     setIsCartAccessoriesOpen(true);
   };
 
-  const handleCartAccessoriesClose = () => {
+  const handleCartAccessoriesClose = async() => {
     setIsCartAccessoriesOpen(false);
   };
 
@@ -698,7 +698,7 @@ const InfoAboutProject = () => {
     setIsCheckoutOpen(true);
   };
 
-  const handleCheckoutClose = () => {
+  const handleCheckoutClose = async() => {
     setIsCheckoutOpen(false);
   };
 
@@ -722,12 +722,14 @@ const InfoAboutProject = () => {
   const handleCheckoutPlaceOrder = async (checkoutTotals) => {
     setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
+    console.log(42342356456);
+    await addCurrentProjectToCart(checkoutTotalsDraft || {});
+    console.log(87238423842384)
     setIsPayOpen(true)
+
   };
 
   const handlePayModalPlaceOrder = async () => {
-    const added = await addCurrentProjectToCart(checkoutTotalsDraft || {});
-    if (!added) return false;
     return true;
   };
 

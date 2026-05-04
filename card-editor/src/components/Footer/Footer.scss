@@ -24,7 +24,7 @@
 }
 
 .logo-footer img {
-  width: 170px;
+  width: 185px;
   height: auto;
   display: block;
   margin-bottom: 8px;
@@ -45,6 +45,7 @@
 .footer a {
   text-decoration: none;
   color: inherit;
+  font-weight: 400;
 }
 
 .footer a:hover {
@@ -71,6 +72,11 @@
   font-size: 13px;
   line-height: 1.5;
   white-space: nowrap;
+  font-weight: 600;
+  font-style: Semi Bold;
+  a{
+    font-weight: 400;
+  }
 }
 
 .footer-menu li::before,
@@ -129,6 +135,7 @@
   height: 80px;
   display: block;
   object-fit: contain;
+  object-position: left;
 }
 
 .footer-icon-card {
@@ -144,6 +151,12 @@
   color: #0d1c35;
 }
 
+.footer-company{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 .footer-user {
   position: absolute;
   right: 45px;
@@ -153,7 +166,7 @@
 
 .footer-user > *:first-child {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   color: #0076b7;
   margin-bottom: 4px;
 }

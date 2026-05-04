@@ -522,6 +522,7 @@ export default function Checkout({
 		if (!String(deliveryAddress?.country || '').trim()) {
 			alert('Please select a country')
 			return
+			
 		}
 		const shouldIncludeInvoiceAddress =
 			isInvoiceDifferent && hasInvoiceAddressContent(invoiceAddress)

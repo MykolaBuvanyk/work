@@ -518,6 +518,7 @@ const InfoAboutProject = () => {
 
       const fallbackSum = Number(netAfterDiscount || 0);
       const fallbackTotal = Number(totalPrice || 0);
+
       const normalizedSum = Number(checkoutTotals?.sum);
       const normalizedTotalSum = Number(checkoutTotals?.totalSum);
       const sum = Number.isFinite(normalizedSum) ? normalizedSum : fallbackSum;
@@ -707,7 +708,7 @@ const InfoAboutProject = () => {
 
   const PayClose=()=>{
     setIsPayOpen(false);
-    setCheckoutTotalsDraft(null);
+    //setCheckoutTotalsDraft(null);
     setIsOrderSuccessOpen(true);
   }
 
@@ -723,9 +724,11 @@ const InfoAboutProject = () => {
   };
 
   const handleCheckoutPlaceOrder = async (checkoutTotals) => {
+    console.log(4234234,checkoutTotals);
     setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
-    await addCurrentProjectToCart(checkoutTotalsDraft || {});
+    await addCurrentProjectToCart(checkoutTotals);
+    
     setIsPayOpen(true)
   };
 

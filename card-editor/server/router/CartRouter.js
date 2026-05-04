@@ -3638,6 +3638,21 @@ CartRouter.post('/sendOrderEmails', requireAuth, async (req, resp, next) => {
   }
 })
 
+CartRouter.get('/isBisy/:id',async(req,resp,next)=>{
+  try{
+    let {id}=req.params;
+    id=parseInt(id);
+    const res=await Order.findOne({where:{id}});
+    let isBisy=false;
+    if(res){
+      isBisy=true;
+    }
+    return resp.json({isBisy});
+  }catch(err){
+    return next(ErrorApi.badRequest(err));
+  }
+})
+
 //Виніс в layout
 /*CartRouter.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
   const sig = req.headers['stripe-signature'];

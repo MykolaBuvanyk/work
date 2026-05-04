@@ -575,7 +575,9 @@ const InfoAboutProject = () => {
       } catch {}
 
       const cartResult = await addProjectToCart(payload);
-      console.log(234324,cartResult);
+      if(cartResult===true){
+        return true;
+      }
 
       try {
         const orderedAtTs = (() => {
@@ -603,6 +605,7 @@ const InfoAboutProject = () => {
   };
 
   const onCartClick = async () => {
+    localStorage.removeItem('MySqlOrderId')
     if (!isAuth) {
       setIsAuthModalOpen(true);
       return;
@@ -722,12 +725,11 @@ const InfoAboutProject = () => {
   const handleCheckoutPlaceOrder = async (checkoutTotals) => {
     setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
+    await addCurrentProjectToCart(checkoutTotalsDraft || {});
     setIsPayOpen(true)
   };
 
   const handlePayModalPlaceOrder = async () => {
-    const added = await addCurrentProjectToCart(checkoutTotalsDraft || {});
-    if (!added) return false;
     return true;
   };
 
@@ -755,8 +757,8 @@ const InfoAboutProject = () => {
 
   const [reviews,setReviews]=useState({rating:0,comment:''});
 
-  console.log(434,reviews);
 
+  
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>

@@ -8,6 +8,10 @@
   align-items: center;
   /* margin-top: 55px; */
   margin-bottom: 10px;
+  
+}
+.terms_page p {
+  margin: 10px 0;
 }
 .terms_page_wrapper {
   margin-top: 55px;

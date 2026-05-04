@@ -7,375 +7,174 @@ const PrivacyPolicy = () => {
   }
   return (
     <div className={styles.terms_page}>
-      <div className={styles.terms_page_wrapper}>
-        <div className={styles.terms_page_title}>
-          <h1>Privacy Policy</h1>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-12 text-gray-800 font-sans leading-relaxed">
+        {/* Заголовок */}
+        <h1 style={{fontSize:'28px',marginBottom:'20px'}} className="text-2xl font-bold mb-8 text-gray-900 border-b pb-4">
+          Privacy Policy
+        </h1>
+        
+        <p className="mb-8 text-sm text-gray-600">
+          Your trust is important to us. To ensure you feel confident when visiting our website, we comply with all legal requirements of Germany and the EU regarding the processing of personal data (GDPR/DSGVO, BDSG, TDDDG). Below you’ll find information about how we collect, manage, and use your data.
+        </p>
 
-        <div className={styles.term_page_content}>
-          <p>
-            Your trust is important to us. To ensure you feel confident when visiting our website,
-            we comply with all legal requirements regarding the processing of personal data. Below
-            you’ll find information about how we collect, manage, and use your data. This privacy
-            policy explains what information we collect, how we process it, and who you can contact
-            if you have any questions regarding our data management.
+        {/* 1. Responsible Party */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">
+            1. Responsible Party (Verantwortlicher)
+          </h2>
+          <p className="mb-3">
+            The responsible party for the collection, processing, and use of personal data is the owner of the <strong>SignXpert</strong> brand:
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>1. Responsible party</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            The responsible party for the collection, processing, and use of personal data is
-            SignXpert, organization number 556756-8760, owner of the SignXpert brand.
+          <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 text-sm space-y-2">
+            <p><strong>Name:</strong> Kostyantyn Utvenko</p>
+            <p><strong>VAT ID (USt-IdNr.):</strong> DE461817538</p>
+            <p><strong>E-mail:</strong> <a href="mailto:info@sign-xpert.com" className="text-blue-600 hover:underline">info@sign-xpert.com</a></p>
+            <p><strong>Mail:</strong> Kostyantyn Utvenko, SignXpert Baumwiesen 2 72401 Haigerloch Germany</p>
+            <p><strong>URL:</strong> <a href="https://sign-xpert.com" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">https://sign-xpert.com</a></p>
+            <p><strong>Contact form:</strong> <a href="https://sign-xpert.com/contacts" target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">https://sign-xpert.com/contacts</a></p>
+          </div>
+        </section>
+
+        {/* 2. Collection, Processing, and Use of Personal Data */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">
+            2. Collection, Processing, and Use of Personal Data
+          </h2>
+          <p className="mb-5">
+            We are personally responsible for the information you share with us. Personal data refers to any information that can be traced back to an identifiable person. We collect and process your information to handle your orders. Data is only shared with third parties when permitted by law (e.g., for logistics or payment processing).
           </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            <strong>E-mail:</strong> info@sign-xpert.com
+          <p className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-800">
+            <strong>Retention Periods:</strong> In accordance with German commercial and tax laws (<em>Handelsgesetzbuch — HGB</em> and <em>Abgabenordnung — AO</em>), we store customer and order information, including accounting documents and invoices, for <strong>10 years</strong>.
           </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            <strong>Mail:</strong>
+
+          {/* 2.1 Registration */}
+          <h3 className="text-lg font-medium mt-8 mb-3 text-gray-900">2.1 Registration of Customer Account and Ordering</h3>
+          <p className="mb-3 text-sm text-gray-700">
+            To fulfill our contractual obligations (Art. 6 para. 1 lit. b GDPR), the following information must be provided when creating an account or placing an order:
           </p>
-          <p>SignXpert</p>
-          <p>Baumwiesen 2</p>
-          <p>Haigerloch</p>
-          <p>72401 Germany</p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            <strong>URL:</strong> https://sign-xpert.com
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            <strong>A contact form is also available on the following page:</strong>{' '}
-            https://sign-xpert.com/contact
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2. Collection, processing and use of personal data</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We are personally responsible for all information you share directly with us. Personal
-            data refers to information that can be traced back to an identifiable person, such as
-            name, phone number, address, and email.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We collect, store, and process your information to handle your order. Personal data will
-            only be shared with third parties when permitted by law—for example, for contract
-            processing or debt collection—or if you have given prior consent. Your data will not be
-            shared with third parties for marketing purposes without your approval.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            To process orders, our service providers (such as logistics companies, payment services,
-            and banks) may need access to the information required for fulfilling your order. These
-            partners may only use the transmitted data for their assigned tasks.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We store customer and order information for seven years, in accordance with the Swedish
-            Accounting Act.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We also collect information about your site usage through cookies. For detailed
-            information about what we collect and why, see section 8.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.1 Registration of customer account and when ordering</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Visitors who create a customer account receive password-protected access to their stored
-            data. You can also view previously placed orders and manage subscriptions.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            To place an order or create a customer account, the following information must be
-            provided. This data is required in order for us to fulfill our obligations when
-            processing your order:
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <ul>
+          <ul className="list-disc pl-5 mb-6 space-y-1.5 text-sm text-gray-700">
             <li>Your email address</li>
-            <li>Your name</li>
-            <li>Your address</li>
-            <li>Your phone number (used only for delivery notifications on traceable shipments)</li>
-            <li>Your password</li>
+            <li>Your full name</li>
+            <li>Company name (if applicable)</li>
+            <li>Company VAT ID (USt-IdNr.)</li>
+            <li>Your address (shipping and billing)</li>
+            <li>Your phone number (used only for delivery notifications and logistics coordination)</li>
+            <li>Your password (stored in encrypted form)</li>
           </ul>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.2 Creation of signs</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            When you design a sign, we save the content you add, along with other necessary
-            information required to process your order. We never share sign content with other
-            accounts or third parties for marketing purposes.
+
+          {/* 2.2 Creation of Signs */}
+          <h3 className="text-lg font-medium mt-6 mb-3 text-gray-900">2.2 Creation of Signs</h3>
+          <p className="mb-6 text-sm text-gray-700">
+            When you design a sign, we save the content you add to process your order. We never share sign content with third parties for marketing purposes.
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.3 Managing payments</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            You can pay securely by card. Card payments are handled by Adyen B.V. using secure
-            encryption and strict banking standards. Your card details are sent directly to Adyen
-            B.V. We only have access to the cardholder’s name, card type, the last 4 digits of the
-            card number, the IP address used at payment, and transaction details. This information
-            is used solely to process refunds or investigate incorrect charges. Only staff
-            responsible for such tasks have access to this data.
+
+          {/* 2.3 Managing Payments */}
+          <h3 className="text-lg font-medium mt-6 mb-3 text-gray-900">2.3 Managing Payments</h3>
+          <p className="mb-4 text-sm text-gray-700">
+            We use modern encryption standards to ensure the security of your transactions.
           </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            PayPal payments are handled by PayPal, who act as the data controller for their own
-            processing. We receive necessary information from PayPal to manage payments or
-            investigate incorrect transactions. For more details, see PayPal’s Privacy Policy:
-            https://www.paypal.com/us/legalhub/paypal/privacy-full
+          <div className="space-y-4 mb-6 text-sm text-gray-700">
+            <p>
+              <strong>Stripe:</strong> Card payments and other online methods are handled by the payment provider <em>Stripe</em>. Your full card details are sent directly to Stripe. We only have access to the cardholder's name, card type, last 4 digits, and transaction details to process refunds.
+            </p>
+            <p>
+              <strong>Sparkasse:</strong> For direct bank transfers (e.g., payment by invoice or prepayment), your payment data (name, IBAN, amount) is processed through our bank, <em>Sparkasse</em>.
+            </p>
+            <p>
+              <strong>PayPal:</strong> Payments via PayPal are subject to PayPal’s own privacy policy. We receive only the information necessary to identify the payment.
+            </p>
+          </div>
+
+          {/* 2.4 Newsletter */}
+          <h3 className="text-lg font-medium mt-6 mb-3 text-gray-900">2.4 Newsletter</h3>
+          <p className="text-sm text-gray-700">
+            Your email address is used to send news and offers only if you have provided explicit consent. You can unsubscribe at any time via the link in the email or through your account settings.
           </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            For other direct payment methods, and where required, we may handle your email, IP
-            address, phone number, account number, and name. For invoice payments, personal data
-            included on the invoice is processed and stored according to the Accounting Act
-            (1999:1078) and kept for the tax year plus 7 years.
+        </section>
+
+        {/* 3. Credit Control */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">3. Credit Control</h2>
+          <p className="text-sm text-gray-700 leading-normal">
+            We reserve the right to perform a credit check before manufacturing or delivering your order. For this purpose, necessary data may be transferred to credit reporting agencies (e.g., SCHUFA).
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.4 Newsletter</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We use the email address you provide to send you news and offers. Your consent is
-            required to subscribe as a private individual. If you no longer wish to receive our
-            newsletter, you can unsubscribe via the link in each email, via the contact details in
-            section 1, or through the settings in your customer account.
+        </section>
+
+        {/* 4. Transfer to Third Countries */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">4. Transfer of Data to Third Countries</h2>
+          <p className="text-sm text-gray-700 leading-normal">
+            We strive to process all data within the EU/EEA. When using global services (e.g., Stripe), data may be transferred to countries outside the EEA. In such cases, we ensure a level of protection comparable to EU standards through Standard Contractual Clauses (SCC).
           </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Your information is not shared with third parties for other purposes and is used solely
-            for sending our news, products, and offers.
+        </section>
+
+        {/* 5. Your Rights */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">5. Your Rights</h2>
+          <p className="mb-4 text-sm text-gray-700">
+            Under the GDPR, you have the following rights regarding your personal data:
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.5 Web tracking</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We collect information about how you use and navigate our website based on our
-            legitimate interest in improving quality. For more information, see section 8.
+          <ul className="list-disc pl-5 mb-6 space-y-3 text-sm text-gray-700">
+            <li><strong>Right to access:</strong> You have the right to request information about your stored data and receive a copy (Art. 15 GDPR).</li>
+            <li><strong>Right to rectification:</strong> You have the right to request correction of inaccurate or incomplete data (Art. 16 GDPR).</li>
+            <li><strong>Right to erasure:</strong> You have the right to request the deletion of your data, provided legal retention periods (like the 10-year tax record requirement) do not apply (Art. 17 GDPR).</li>
+            <li><strong>Right to restriction:</strong> You have the right to request the restriction of processing under certain conditions (Art. 18 GDPR).</li>
+            <li><strong>Right to data portability:</strong> You have the right to receive your data in a structured, commonly used format (Art. 20 GDPR).</li>
+            <li><strong>Right to object:</strong> You have the right to object to the processing of your data based on legitimate interests or for direct marketing purposes (Art. 21 GDPR).</li>
+            <li><strong>Right to withdraw consent:</strong> You may withdraw your consent for marketing at any time via the unsubscribe link in our emails or your account settings.</li>
+            <li><strong>Right to lodge a complaint:</strong> In accordance with Art. 77 GDPR, you have the right to lodge a complaint with a competent data protection supervisory authority if you believe that the processing of your personal data violates the GDPR.</li>
+          </ul>
+          <div className="bg-gray-50 p-5 rounded-lg border border-gray-200 text-sm">
+            <p className="font-semibold text-gray-900 mb-2">The competent authority for us is located in the state of Baden-Württemberg:</p>
+            <p>Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg</p>
+            <p><strong>Address:</strong> Lautenschlagerstraße 20, 70173 Stuttgart, Germany</p>
+          </div>
+        </section>
+
+        {/* 6. Log Files */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">6. Log Files</h2>
+          <p className="mb-3 text-sm text-gray-700">
+            When you visit <strong>SignXpert</strong> pages, your browser automatically transfers data that is stored in server log files:
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.6 Customer reviews</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Your contact details may be shared with trusted third parties for the purpose of
-            collecting customer reviews, based on our legitimate interest. Your data will not be
-            shared with third parties for marketing.
+          <p className="mb-3 text-sm text-gray-600 italic">
+            Date and time of access, page name, IP address, data volume, and browser version.
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.7 Customer service issues</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            When contacting customer service, we process the personal data you provide in order to
-            handle your case. Your information will not be used for other purposes and will be
-            deleted within 12 months.
+          <p className="text-sm text-gray-700">
+            These files are used exclusively to ensure technical security and fix errors. They are accessible only to developers and are automatically deleted after <strong>30 days</strong>. No passwords or sensitive payment details are logged.
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.8 Social media</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Personal data shared with us through social media is processed according to each
-            platform’s privacy policy. We manage and remove illegal content. If communication on
-            social media becomes customer service-related, we handle it according to the policy in
-            section 2.7.
+        </section>
+
+        {/* 7. Secure Data Transfer */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">7. Secure Data Transfer</h2>
+          <p className="text-sm text-gray-700 leading-normal">
+            Your personal information is securely transmitted using <strong>SSL (Secure Socket Layer)</strong> encryption. This applies to ordering, payment, and customer login. We continuously update our systems to protect your data from unauthorized access or loss.
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>2.9 Competitions</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>For competitions, we use your information solely to announce any winnings.</p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>3. Credit control</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We reserve the right to perform a credit check before manufacturing or delivering your
-            order. For this purpose, personal data necessary for a credit check may be transferred
-            to a credit reporting company.
+        </section>
+
+        {/* 8. Cookies */}
+        <section className="mb-12">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">8. Cookies</h2>
+          <p className="mb-4 text-sm text-gray-700">
+            We use cookies to improve your experience in accordance with the <em>TDDDG</em> and Art. 6 para. 1 lit. f GDPR.
           </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>3.1 Recruitment</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            When applying for a position—either vacant or spontaneously—we collect only the
-            information needed to conduct the recruitment process. Your data will not be used for
-            other purposes and will be deleted within 24 months unless you have agreed to remain in
-            our candidate database.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>4. Transfer of personal data to third countries</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We strive to process all personal data within the EU/EEA. In some cases, however, data
-            may be transferred to or processed in non-EU/EEA countries by one of our suppliers or
-            subcontractors. We take all necessary legal, technical, and organizational measures to
-            ensure your data is handled securely and with an adequate level of protection comparable
-            to EU/EEA standards.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>4.1 Marketing and Profiling</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            To provide the best possible information and offers, we sometimes use customer matching
-            for advertising on third-party platforms. Using contact details you have provided (e.g.,
-            email or phone number), third parties such as Google or Meta may match your data with
-            information they already have. Once matched, you may receive relevant messages or offers
-            from us.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>5. Your rights</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            You have the right to access the information we store about you. You can request details
-            about all or part of your stored data within a reasonable time and free of charge. To do
-            so, contact us using the details in section 1.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            You also have the right to request corrections or deletion of your data. If you object
-            to how we collect or use your personal data, you may submit your objection to us in
-            writing. You may withdraw your consent to marketing at any time via the unsubscribe link
-            in our emails, the contact details in section 1, or your customer account settings.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>6. Log files</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            When you visit Signomatic pages, certain data is automatically transferred by your
-            browser and stored in server log files. These records include: date and time of access,
-            page name, IP address, data volume transferred, and browser version information. Order
-            and customer information may also be logged.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            These log files are used primarily to detect and fix errors. They are accessible only to
-            our developers and deleted automatically after 30 days.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>No passwords or sensitive payment details are logged or stored.</p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>7. Secure data transfer</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Your personal information is securely transmitted through encryption. This applies to
-            ordering, payment, and customer login. We use SSL (Secure Socket Layer) encryption. We
-            also work continuously to keep our website, systems, and organization protected from
-            loss, destruction, unauthorized access, modification, or distribution of your data.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>8. Cookies</h2>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We want you to have the best experience on our website. In accordance with GDPR Article
-            6.1.f, we use cookies, analytics tools, and social media plugins. Accepting cookies is
-            not required to visit the website, but disabling them may limit certain
-            functions—including the ability to place an order.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Cookies are small text files stored on your device that save certain settings and
-            information for communication with our system. They help enable website functionality,
-            improve user experience, collect visitor statistics, personalize offers, measure ad
-            performance, and support customer service.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We use both our own cookies and third-party cookies (including Google) for analytics,
-            advertising, and personalization.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            Some cookies may share personal data with third parties such as Google, for purposes
-            like ad personalization and analytics.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            To comply with the law, we require your active consent before placing any non-essential
-            cookies. You can change or withdraw your consent at any time through our cookie
-            settings.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            We do not store sensitive or directly identifiable personal information in our own
-            cookies.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            If you wish to disable cookies, you can adjust your browser settings or use opt-out
-            tools. Note that this must be done on each browser you use. Some website functions may
-            stop working if cookies are disabled.
-          </p>
-        </div>
-        <div className={styles.term_page_content}>
-          <p>
-            You can change your cookie preferences at any time via the “Cookie Settings” link at the
-            bottom of the page.
-          </p>
-        </div>
-        <div className={styles.terms_page_subtitle}>
-          <h2>8.1 Which cookies are used?</h2>
-        </div>
+          <div className="space-y-4 text-sm text-gray-700">
+            <p>
+              <strong>Essential Cookies:</strong> Required for the website to function (e.g., shopping cart).
+            </p>
+            <p>
+              <strong>Analytical and Marketing Cookies (e.g., Google):</strong> Used only with your <em>active consent</em> via the cookie banner.
+            </p>
+            <p>
+              You can change your preferences or withdraw consent at any time by clicking the "Cookie Settings" link at the bottom of any page on the website.
+            </p>
+          </div>
+        </section>
         <div id='cookie' className={styles.term_page_btn}>
           <button onClick={openCookie}>Cookie settings</button>
         </div>
+        <br/>
       </div>
     </div>
   );

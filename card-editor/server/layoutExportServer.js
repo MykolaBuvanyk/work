@@ -2028,8 +2028,10 @@ app.post('/api/cart/webhook', express.raw({type: 'application/json'}), async(req
   
           if (updated) {
             console.log(`✅ Success: Order №${orderId} marked as PAID in DB.`);
-            SendEmailForStatus.SendAdminStatusPaid(order);
-            SendEmailForStatus.SendStatusPaid(order);
+            setTimeout(()=>{
+              SendEmailForStatus.SendAdminStatusPaid(order);
+              SendEmailForStatus.SendStatusPaid(order);
+            },1000*60*2)
           } else {
             console.log(`⚠️ Warning: Order №${orderId} found, but status NOT updated (maybe already paid?).`);
           }

@@ -28,6 +28,8 @@ import IndustryArticlePage from './components/Industries/IndustryArticlePage';
 import Products from './components/Products/Products';
 import HomePlaceholder from './components/HomePlaceholder/HomePlaceholder';
 import PaymentSuccess from './components/PaySuccess/PaySuccess';
+import Impressum from './components/Impressum/Impressum';
+import EUOnlineDisputeResolution from './components/EuOnlineDisputeResolution/EuOnlineDisputeResolution';
 
 
 
@@ -57,6 +59,8 @@ function App() {
       <Route path="pay-success" element={<PaymentSuccess />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
+      <Route path='Impressum' element={<Impressum />} />
+      <Route path='eu-online-dispute-resolution' element={<EUOnlineDisputeResolution />} />
       <Route
         path="checkout"
         element={

@@ -12,7 +12,7 @@ i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },
     ua: { translation: ua },
-    de: { translation: ua }, // тимчасово
+    de: { translation: en }, // тимчасово
   },
   lng: 'de',
   fallbackLng: 'de',

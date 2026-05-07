@@ -8,14 +8,16 @@ const Login = () => {
     <div className="login-container">
       <h1>Register a new account</h1>
       <p>To place an order with us, you first need to create an account. It’s quick and easy!</p>
-      <div className="info">
-        Fields marked with an asterisk (*) are required. Choose a password, and we’ll send you a confirmation email shortly.
+      <div className="info" style={{ marginBottom: '46px' }}>
+        Fields marked with an asterisk (*) are required. Choose a password, and we’ll send you a
+        confirmation email shortly.
       </div>
       <div className="login-main">
         <div className="form-log">
-           <LoginForm />
-           {//<PleaceTell/>
-}
+          <LoginForm />
+          {
+            //<PleaceTell/>
+          }
         </div>
         <div className="form-log">
           <LoginRegister />

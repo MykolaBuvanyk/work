@@ -5,7 +5,7 @@ const Impressum = () => {
   return (
     <div className="impressum max-w-4xl mx-auto px-4 py-12 text-gray-800 font-sans leading-relaxed">
       {/* Заголовок */}
-      <h1 style={{fontSize:'26px'}} className="text-2xl font-bold mb-8 text-gray-900 border-b pb-4">
+      <h1 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-gray-900 border-b pb-4">
         Impressum (Imprint)
       </h1>
 

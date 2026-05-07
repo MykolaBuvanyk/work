@@ -8,7 +8,7 @@
   width: 100%;
   max-width: 1210px;
   margin: 0 auto;
-  padding: 0 0;
+  padding: 0 24px;
 }
 
 .pageTitle {
@@ -53,7 +53,8 @@
 .industryContent {
   padding: 0 4px;
   display: flex;
-  height: 360px;
+  min-height: 360px;
+  height: auto;
 }
 
 .industryContent ul {
@@ -90,6 +91,9 @@
 
 .articleContent {
   width: 100%;
+  overflow-x: hidden;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .articleContent::after {
@@ -149,43 +153,85 @@
   margin: 18px 0 22px;
 }
 
+/* Tablet */
 @media (max-width: 992px) {
+  .container {
+    padding: 0 20px;
+  }
+
   .industryRow,
   .industryRow.reverse {
     grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .industryContent {
+    min-height: unset;
+    height: auto;
+  }
+
+  .industryContent ul {
+    justify-content: flex-start;
   }
 
   .industryContent li {
-    font-size: 18px;
-    line-height: 38px;
+    font-size: 16px;
+    line-height: 32px;
   }
 
   .articleContent .float-img,
-  .articleContent .float-image {
+  .articleContent .float-image,
+  .articleContent > img {
     float: none;
     width: 100%;
-    max-width: 600px;
+    max-width: 100%;
     height: auto;
     margin: 0 0 20px 0;
   }
-}
 
-@media (max-width: 600px) {
   .pageTitle {
     font-size: 22px;
   }
 
-  .industryMedia h2 {
+  .articleTitle {
+    font-size: 20px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .page {
+    padding: 20px 0 40px;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .pageTitle {
+    font-size: 20px;
+    margin: 0 0 18px;
+  }
+
+  .articleTitle {
     font-size: 18px;
   }
 
+  .industryMedia h2 {
+    font-size: 16px;
+  }
+
   .industryContent li {
-    font-size: 18px;
-    line-height: 38px;
+    font-size: 15px;
+    line-height: 28px;
   }
 
   .articleContent p,
   .articleContent li {
     font-size: 15px;
+  }
+
+  .articleContent h2 {
+    font-size: 16px;
   }
 }

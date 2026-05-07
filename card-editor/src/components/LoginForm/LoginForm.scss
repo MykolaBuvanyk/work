@@ -1,6 +1,11 @@
 .login-form-container {
   width: 550px;
-  padding: 25px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 20px;
+  }
+  padding: 20px;
   border: 1px solid #777; // Сіра тонка рамка навколо всієї форми
   border-radius: 8px;
   background-color: #fff;
@@ -20,7 +25,7 @@
   }
 
   .login-table {
-    border: 1px solid #7D7D7D;
+    border: 1px solid #7d7d7d;
     border-radius: 5px;
     overflow: hidden;
     background-color: #ffffff;
@@ -31,9 +36,14 @@
     .table-row {
       display: flex;
       gap: 2px;
-      
+
       &:last-child {
         border-bottom: none;
+      }
+
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 2px;
       }
     }
 
@@ -45,6 +55,11 @@
       width: 55%;
       min-width: 275px;
 
+      @media (max-width: 768px) {
+        min-width: 0;
+        width: 100%;
+      }
+
       label {
         color: #333;
         font-weight: 500;
@@ -52,32 +67,31 @@
         font-size: 14px;
         line-height: 100%;
         white-space: nowrap;
-
       }
     }
 
     .table-input {
       flex: 1;
       padding: 8px 10px;
-      background-color: #F0F0F0;
+      background-color: #f0f0f0;
       display: flex;
       align-items: center;
-      .pass-input-container{
+      .pass-input-container {
         width: 100%;
       }
-      .text-input-container{
+      .text-input-container {
         width: 100%;
       }
 
       input {
         width: 100%;
-        border: 1px solid #006CA4;
+        border: 1px solid #006ca4;
         border-radius: 4px;
         padding: 0px 8px;
         outline: none;
         background-color: #ffffff;
         height: 25px;
-      } 
+      }
     }
   }
 
@@ -111,7 +125,7 @@
       background-color: #005a8a;
     }
   }
-  .toReg{
+  .toReg {
     margin-top: 10px;
     display: flex;
     justify-content: center;

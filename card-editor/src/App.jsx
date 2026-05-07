@@ -31,8 +31,6 @@ import PaymentSuccess from './components/PaySuccess/PaySuccess';
 import Impressum from './components/Impressum/Impressum';
 import EUOnlineDisputeResolution from './components/EuOnlineDisputeResolution/EuOnlineDisputeResolution';
 
-
-
 function App() {
   // Виносимо спільні маршрути в змінну, щоб не дублювати код
   const mainRoutes = (
@@ -48,10 +46,7 @@ function App() {
       <Route path="contacts" element={<Contacts />} />
       <Route path="products" element={<Products />} />
       <Route path="industries" element={<Industries />} />
-      <Route
-        path="industries/:sectionSlug/:articleSlug"
-        element={<IndustryArticlePage />}
-      />
+      <Route path="industries/:sectionSlug/:articleSlug" element={<IndustryArticlePage />} />
       <Route path="quick-guide" element={<QuickGuide />} />
       <Route path="share/:token" element={<ShareProjectPage />} />
       <Route path="account" element={<Account />} />
@@ -59,8 +54,8 @@ function App() {
       <Route path="pay-success" element={<PaymentSuccess />} />
       <Route path="account/setting" element={<AccountSetting />} />
       <Route path="account/detail" element={<AccoutDetail />} />
-      <Route path='Impressum' element={<Impressum />} />
-      <Route path='eu-online-dispute-resolution' element={<EUOnlineDisputeResolution />} />
+      <Route path="Impressum" element={<Impressum />} />
+      <Route path="eu-online-dispute-resolution" element={<EUOnlineDisputeResolution />} />
       <Route
         path="checkout"
         element={

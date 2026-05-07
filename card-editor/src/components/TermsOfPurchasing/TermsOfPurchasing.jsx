@@ -3,9 +3,9 @@ import './TermsOfPurchasing.scss'
 
 const TermsOfPurchasing = () => {
   return (
-    <div className="TermsOfPurchasing max-w-4xl mx-auto px-4 py-12 text-gray-800 font-sans leading-relaxed">
+    <div className="TermsOfPurchasing max-w-4xl mx-auto px-4 py-12 text-gray-800 font-sans leading-relaxed overflow-x-hidden w-full">
       {/* Заголовок */}
-      <h1 className="text-2xl font-bold mb-8 text-gray-900 border-b pb-4">
+      <h1 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-gray-900 border-b pb-4">
         Terms of Purchasing
       </h1>
 

@@ -22,6 +22,17 @@
   gap: 30px;
 }
 
+.desktopLogoWrap {
+  width: 200px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.desktopLogoWrap svg {
+  width: 100%;
+  height: auto;
+}
+
 .leftList {
   display: grid;
   grid-template-columns: repeat(3, min-content);
@@ -198,6 +209,325 @@
   height: 100%;
   object-fit: cover;
 }
+/* ── Mobile bar ── */
+.mobileBar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .header {
+    display: none;
+  }
+
+  /* ── Mobile top bar ── */
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid #8b909b;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .mobileLogoWrap {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 155px;
+    height: 40px;
+  }
+
+  .mobileLogoWrap svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .mobileIconBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    color: #262626;
+  }
+
+  /* ── Overlay ── */
+  .mobileOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 2000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  /* ── Drawer ── */
+  .mobileDrawer {
+    background: #fff;
+    width: min(280px, 85vw);
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-top: 26px;
+    padding-bottom: 26px;
+  }
+
+  /* ── Drawer header: logo + circle-X ── */
+  .drawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px 12px;
+    border-bottom: 0.5px solid #8b909b;
+  }
+
+  .drawerLogoWrap {
+    width: 120px;
+    height: 31px;
+    flex-shrink: 0;
+  }
+
+  .drawerLogoWrap svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .drawerCloseBtn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid #006CA4;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    color: #006CA4;
+  }
+
+  /* ── Features: one row per item ── */
+  .drawerFeatures {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f2f3fa;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .drawerFeatureRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .drawerCheckSvg {
+    flex-shrink: 0;
+  }
+
+  .drawerKeyword {
+    font-weight: 700;
+    font-style: italic;
+    color: #006ca4;
+    text-decoration: underline;
+    font-size: 14px;
+    white-space: nowrap;
+    margin-right: 4px;
+  }
+
+  .drawerValue {
+    font-size: 14px;
+    font-weight: 500;
+    color: #000;
+  }
+
+  /* ── Language selector ── */
+  .drawerLang {
+    margin: 8px 20px;
+    border: 1px solid #006ca4;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 14px;
+  }
+
+  .drawerLangTrigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px;
+    cursor: pointer;
+  }
+
+  .drawerLangLeft {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .drawerLangList {
+    display: flex;
+    gap: 4px;
+    padding-bottom: 6px;
+  }
+
+  .drawerLangScroll {
+    flex: 1;
+    max-height: 160px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #006ca4 #d1d0dc;
+  }
+
+  .drawerLangScroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .drawerLangScroll::-webkit-scrollbar-track {
+    background: #d1d0dc;
+    border-radius: 100px;
+  }
+
+  .drawerLangScroll::-webkit-scrollbar-thumb {
+    background: #006ca4;
+    border-radius: 100px;
+  }
+
+  .drawerLangItem {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .drawerLangItem:hover {
+    background: #ecf2fa;
+  }
+
+  .drawerLangItemActive {
+    background: #ecf2fa;
+  }
+
+  /* ── Nav sections ── */
+  .drawerSection {
+    border-top: 1px solid #f2f3fa;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .drawerSectionLabel {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b778a;
+    text-transform: uppercase;
+    margin: 0 0 5px;
+    padding: 0 6px;
+    letter-spacing: 0.04em;
+  }
+
+  .drawerNavList {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawerNavItem {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px;
+    height: 40px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #262626;
+  }
+
+  .drawerNavItem:hover {
+    background: #f2f3fa;
+  }
+
+  .drawerNavItemActive {
+    background: #ecf2fa;
+    color: #13456b;
+  }
+
+  .drawerNavIcon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: inherit;
+  }
+
+  /* ── Account ── */
+  .drawerAccount {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .drawerUserRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .drawerAvatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #d5d5d5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #6b778a;
+  }
+
+  .drawerUserInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .drawerUserName {
+    font-size: 14px;
+    font-weight: 500;
+    color: #262626;
+    margin: 0;
+  }
+
+  .drawerUserCompany {
+    font-size: 12px;
+    color: #697989;
+    margin: 0;
+  }
+
+  .drawerLogout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #a0353b;
+    padding: 0;
+  }
+}
+
 .company {
   font-weight: 400;
   font-style: Regular;

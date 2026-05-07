@@ -12,7 +12,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    
+
     width: 100%;
   }
   h1 {
@@ -37,6 +37,30 @@
     line-height: 100%;
     color: #006CA4;
     margin: 20px 0;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0 12px;
+
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin: 20px 0 14px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+
+    .info {
+      font-size: 14px;
+      margin: 10px 0;
+    }
+
+    .login-main {
+      flex-direction: column;
+      gap: 16px;
+    }
   }
   .we-will-container {
     margin-top: 20px;

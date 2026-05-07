@@ -187,4 +187,120 @@
     font-size: 13px;
   }
 
+  @media (max-width: 768px) {
+    height: auto;
+    overflow: visible;
+    padding: 24px 16px 16px;
+    margin-top: 0;
+
+    /* Outer layout: 2 equal columns, rows auto */
+    .footer-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 16px;
+      row-gap: 24px;
+    }
+
+    /* Row 1: company (logo+slogan left, address right) — full width */
+    .footer-company {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 16px;
+    }
+
+    .logo-footer {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .logo-footer img {
+      width: 140px;
+    }
+
+    .footer-slogan {
+      grid-column: 1;
+      grid-row: 2;
+      margin-bottom: 0;
+    }
+
+    .footer-address {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+
+    /* Row 2: menu left, info right */
+    .footer-menu {
+      grid-column: 1;
+      justify-content: flex-start;
+    }
+
+    .footer-info {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+
+    .footer-note p {
+      white-space: normal;
+    }
+
+    /* Row 3: payment + delivery side by side */
+    .footer-methods {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .payment-grid {
+      grid-template-columns: repeat(3, 52px);
+      gap: 8px;
+    }
+
+    .delivery-grid {
+      grid-template-columns: repeat(2, 52px);
+      gap: 8px;
+    }
+
+    .footer-icon {
+      width: 52px;
+      height: 52px;
+    }
+
+    .footer-icon img,
+    .footer-icon svg {
+      width: 52px;
+      height: 52px;
+    }
+
+    .footer-icon-card {
+      width: 52px;
+    }
+
+    /* Row 4: login centered */
+    .footer-user {
+      position: static;
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .footer-user > *:first-child {
+      display: block;
+    }
+
+    .login-btn {
+      font-size: 14px;
+    }
+
+    /* Copyright below grid, centered */
+    .footer-copy {
+      position: static;
+      margin-top: 12px;
+      padding-bottom: 8px;
+    }
+  }
 }

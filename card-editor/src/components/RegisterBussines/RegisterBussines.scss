@@ -21,6 +21,12 @@
 
       &:last-child { border-bottom: none; }
 
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 2px;
+        min-height: auto;
+      }
+
       .label-cell {
         flex: 0 0 35%;
         background-color: #F0F0F0;
@@ -30,6 +36,12 @@
         font-size: 13px;
         font-weight: 600;
         color: #000;
+
+        @media (max-width: 768px) {
+          flex: none;
+          width: 100%;
+          font-size: 14px;
+        }
       }
 
       .input-cell {
@@ -38,6 +50,10 @@
         display: flex;
         align-items: center;
         background-color: #F0F0F0;
+
+        @media (max-width: 768px) {
+          padding: 8px 10px;
+        }
 
         input {
           width: 100%;

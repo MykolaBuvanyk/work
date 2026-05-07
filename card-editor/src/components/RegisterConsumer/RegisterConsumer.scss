@@ -18,6 +18,12 @@
       min-height: 40px;
       background-color: #FFFFFF;
 
+      @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 2px;
+        min-height: auto;
+      }
+
       .label-cell {
         flex: 0 0 35%;
         background-color: #F0F0F0;
@@ -27,6 +33,13 @@
         font-size: 13px;
         font-weight: 600;
         color: #000;
+
+        @media (max-width: 768px) {
+          flex: none;
+          width: 100%;
+          padding: 10px 15px;
+          font-size: 14px;
+        }
       }
 
       .input-cell {
@@ -35,6 +48,10 @@
         display: flex;
         align-items: center;
         background-color: #F0F0F0;
+
+        @media (max-width: 768px) {
+          padding: 8px 10px;
+        }
 
         input {
           width: 100%;
@@ -129,7 +146,7 @@
     background-color: #006ca4;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     font-weight: bold;
     cursor: pointer;
     height: 25px;

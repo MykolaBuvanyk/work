@@ -127,15 +127,39 @@
 @media (max-width: 768px) {
     .cookie_container {
         flex-direction: column;
-        padding: 20px;
+        padding: 20px 12px;
+    }
+
+    .cookie_title {
+        font-size: 20px;
+    }
+
+    .cookie_text {
+        font-size: 14px;
+        margin-top: 12px;
+    }
+
+    .cookie_text_strong {
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .cookie_text_gray {
+        font-size: 12px;
+        margin-top: 8px;
+        margin-bottom: 12px;
     }
 
     .cookie_buttons {
         width: 100%;
+        gap: 6px;
     }
 
     .cookie_button_accept,
     .cookie_button_decline {
         flex: 1;
+        padding: 0;
+        height: 40px;
+        font-size: 14px;
     }
 }

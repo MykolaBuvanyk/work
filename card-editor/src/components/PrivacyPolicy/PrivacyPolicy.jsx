@@ -1,6 +1,8 @@
 import styles from './PrivacyPolicy.module.css';
+import { useTranslation } from 'react-i18next';
 
 const PrivacyPolicy = () => {
+  const {t}=useTranslation()
   const openCookie = () => {
     localStorage.removeItem('cookieConsent');
     window.location.reload();
@@ -10,35 +12,30 @@ const PrivacyPolicy = () => {
     <div className={styles.page}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Privacy Policy</h1>
+          <h1 className={styles.title}>{t("privacy-policy.description_3")}</h1>
           <p className={styles.intro}>
-            Your trust is important to us. To ensure you feel confident when visiting our website,
-            we comply with all legal requirements of Germany and the EU regarding the processing of
-            personal data (GDPR/DSGVO, BDSG, TDDDG). Below you'll find information about how we
-            collect, manage, and use your data.
+            {t("privacy-policy.description_1")}
           </p>
         </div>
 
         <div className={styles.sections}>
           {/* 1 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>1. Responsible Party (Verantwortlicher)</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_2")}</h2>
             <div className={styles.body}>
               <p>
-                The responsible party for the collection, processing, and use of personal data is
-                the owner of the <strong>SignXpert</strong> brand:
+                {t("privacy-policy.description_4")} <strong>SignXpert</strong> {t("privacy-policy.description_5")}
               </p>
             </div>
             <div className={styles.infoBox}>
-              <p><strong>Name:</strong> Kostyantyn Utvenko</p>
+              <p><strong>{t("privacy-policy.description_6")}</strong> {t("privacy-policy.description_7")}</p>
               <p><strong>VAT ID (USt-IdNr.):</strong> DE461817538</p>
               <p>
                 <strong>E-mail:</strong>{' '}
                 <a href="mailto:info@sign-xpert.com">info@sign-xpert.com</a>
               </p>
               <p>
-                <strong>Mail:</strong> Kostyantyn Utvenko, SignXpert Baumwiesen 2 72401 Haigerloch
-                Germany
+                <strong>{t("privacy-policy.description_8")}</strong> {t("privacy-policy.description_9")}
               </p>
               <p>
                 <strong>URL:</strong>{' '}
@@ -47,7 +44,7 @@ const PrivacyPolicy = () => {
                 </a>
               </p>
               <p>
-                <strong>Contact form:</strong>{' '}
+                <strong>{t("privacy-policy.description_10")}</strong>{' '}
                 <a href="https://sign-xpert.com/contacts" target="_blank" rel="noreferrer">
                   https://sign-xpert.com/contacts
                 </a>
@@ -58,151 +55,120 @@ const PrivacyPolicy = () => {
           {/* 2 */}
           <section className={styles.section}>
             <h2 className={styles.sectionHeading}>
-              2. Collection, Processing, and Use of Personal Data
+              {t("privacy-policy.description_11")}
             </h2>
             <div className={styles.body}>
               <p>
-                We are personally responsible for the information you share with us. Personal data
-                refers to any information that can be traced back to an identifiable person. We
-                collect and process your information to handle your orders. Data is only shared with
-                third parties when permitted by law (e.g., for logistics or payment processing).
+                {t("privacy-policy.description_12")}
               </p>
             </div>
             <div className={styles.warningBox}>
-              <strong>Retention Periods:</strong> In accordance with German commercial and tax laws
-              (<em>Handelsgesetzbuch — HGB</em> and <em>Abgabenordnung — AO</em>), we store
-              customer and order information, including accounting documents and invoices, for{' '}
-              <strong>10 years</strong>.
+              <strong>{t("privacy-policy.description_13")}</strong> {t("privacy-policy.description_14")}
+              (<em>{t("privacy-policy.description_15")}</em> {t("privacy-policy.description_16")} <em>{t("privacy-policy.description_17")}</em>), {t("privacy-policy.description_18")}{' '}
+              <strong>{t("privacy-policy.description_19")}</strong>.
             </div>
 
             <h3 className={styles.subHeading}>
-              2.1 Registration of Customer Account and Ordering
+              {t("privacy-policy.description_20")}
             </h3>
             <div className={styles.body}>
               <p>
-                To fulfill our contractual obligations (Art. 6 para. 1 lit. b GDPR), the following
-                information must be provided when creating an account or placing an order:
+                {t("privacy-policy.description_21")}
               </p>
               <ul>
-                <li>Your email address</li>
-                <li>Your full name</li>
-                <li>Company name (if applicable)</li>
-                <li>Company VAT ID (USt-IdNr.)</li>
-                <li>Your address (shipping and billing)</li>
+                <li>{t("privacy-policy.description_22")}</li>
+                <li>{t("privacy-policy.description_23")}</li>
+                <li>{t("privacy-policy.description_24")}</li>
+                <li>{t("privacy-policy.description_25")}</li>
+                <li>{t("privacy-policy.description_26")}</li>
                 <li>
-                  Your phone number (used only for delivery notifications and logistics coordination)
+                  {t("privacy-policy.description_27")}
                 </li>
-                <li>Your password (stored in encrypted form)</li>
+                <li>{t("privacy-policy.description_28")}</li>
               </ul>
             </div>
 
-            <h3 className={styles.subHeading}>2.2 Creation of Signs</h3>
+            <h3 className={styles.subHeading}>{t("privacy-policy.description_29")}</h3>
             <div className={styles.body}>
               <p>
-                When you design a sign, we save the content you add to process your order. We never
-                share sign content with third parties for marketing purposes.
+                {t("privacy-policy.description_30")}
               </p>
             </div>
 
-            <h3 className={styles.subHeading}>2.3 Managing Payments</h3>
+            <h3 className={styles.subHeading}>{t("privacy-policy.description_31")}</h3>
             <div className={styles.body}>
               <p>
-                We use modern encryption standards to ensure the security of your transactions.
+                {t("privacy-policy.description_32")}
               </p>
               <p>
-                <strong>Stripe:</strong> Card payments and other online methods are handled by the
-                payment provider <em>Stripe</em>. Your full card details are sent directly to
-                Stripe. We only have access to the cardholder's name, card type, last 4 digits, and
-                transaction details to process refunds.
+                <strong>{t("privacy-policy.description_33")}</strong> {t("privacy-policy.description_34")} <em>{t("privacy-policy.description_35")}</em>. {t("privacy-policy.description_36")}
               </p>
               <p>
-                <strong>Sparkasse:</strong> For direct bank transfers (e.g., payment by invoice or
-                prepayment), your payment data (name, IBAN, amount) is processed through our bank,{' '}
-                <em>Sparkasse</em>.
+                <strong>{t("privacy-policy.description_37")}</strong> {t("privacy-policy.description_38")}{' '}
+                <em>{t("privacy-policy.description_39")}</em>.
               </p>
               <p>
-                <strong>PayPal:</strong> Payments via PayPal are subject to PayPal's own privacy
-                policy. We receive only the information necessary to identify the payment.
+                <strong>{t("privacy-policy.description_40")}</strong> {t("privacy-policy.description_41")}
               </p>
             </div>
 
-            <h3 className={styles.subHeading}>2.4 Newsletter</h3>
+            <h3 className={styles.subHeading}>{t("privacy-policy.description_42")}</h3>
             <div className={styles.body}>
               <p>
-                Your email address is used to send news and offers only if you have provided
-                explicit consent. You can unsubscribe at any time via the link in the email or
-                through your account settings.
+                {t("privacy-policy.description_43")}
               </p>
             </div>
           </section>
 
           {/* 3 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>3. Credit Control</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_44")}</h2>
             <div className={styles.body}>
               <p>
-                We reserve the right to perform a credit check before manufacturing or delivering
-                your order. For this purpose, necessary data may be transferred to credit reporting
-                agencies (e.g., SCHUFA).
+                {t("privacy-policy.description_45")}
               </p>
             </div>
           </section>
 
           {/* 4 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>4. Transfer of Data to Third Countries</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_46")}</h2>
             <div className={styles.body}>
               <p>
-                We strive to process all data within the EU/EEA. When using global services (e.g.,
-                Stripe), data may be transferred to countries outside the EEA. In such cases, we
-                ensure a level of protection comparable to EU standards through Standard Contractual
-                Clauses (SCC).
+               {t("privacy-policy.description_47")}
               </p>
             </div>
           </section>
 
           {/* 5 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>5. Your Rights</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_48")}</h2>
             <div className={styles.body}>
-              <p>Under the GDPR, you have the following rights regarding your personal data:</p>
+              <p>{t("privacy-policy.description_49")}</p>
               <ul>
                 <li>
-                  <strong>Right to access:</strong> You have the right to request information about
-                  your stored data and receive a copy (Art. 15 GDPR).
+                  <strong>{t("privacy-policy.description_50")}</strong> {t("privacy-policy.description_51")}
                 </li>
                 <li>
-                  <strong>Right to rectification:</strong> You have the right to request correction
-                  of inaccurate or incomplete data (Art. 16 GDPR).
+                  <strong>{t("privacy-policy.description_52")}</strong> {t("privacy-policy.description_53")}
                 </li>
                 <li>
-                  <strong>Right to erasure:</strong> You have the right to request the deletion of
-                  your data, provided legal retention periods (like the 10-year tax record
-                  requirement) do not apply (Art. 17 GDPR).
+                  <strong>{t("privacy-policy.description_54")}</strong> {t("privacy-policy.description_55")}
                 </li>
                 <li>
-                  <strong>Right to restriction:</strong> You have the right to request the
-                  restriction of processing under certain conditions (Art. 18 GDPR).
+                  <strong>{t("privacy-policy.description_56")}</strong> {t("privacy-policy.description_57")}
                 </li>
                 <li>
-                  <strong>Right to data portability:</strong> You have the right to receive your
-                  data in a structured, commonly used format (Art. 20 GDPR).
+                  <strong>{t("privacy-policy.description_58")}</strong> {t("privacy-policy.description_59")}
                 </li>
                 <li>
-                  <strong>Right to object:</strong> You have the right to object to the processing
-                  of your data based on legitimate interests or for direct marketing purposes (Art.
-                  21 GDPR).
+                  <strong>{t("privacy-policy.description_60")}</strong> {t("privacy-policy.description_61")}
                 </li>
                 <li>
-                  <strong>Right to withdraw consent:</strong> You may withdraw your consent for
-                  marketing at any time via the unsubscribe link in our emails or your account
-                  settings.
+                  <strong>{t("privacy-policy.description_62")}</strong> {t("privacy-policy.description_63")}
                 </li>
                 <li>
-                  <strong>Right to lodge a complaint:</strong> In accordance with Art. 77 GDPR, you
-                  have the right to lodge a complaint with a competent data protection supervisory
-                  authority if you believe that the processing of your personal data violates the
-                  GDPR.
+                  <strong>{t("privacy-policy.description_64")}</strong> {t("privacy-policy.description_65")}
                 </li>
               </ul>
             </div>
@@ -213,68 +179,59 @@ const PrivacyPolicy = () => {
                 </strong>
               </p>
               <p>
-                Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit
-                Baden-Württemberg
+                {t("privacy-policy.description_66")}
               </p>
               <p>
-                <strong>Address:</strong> Lautenschlagerstraße 20, 70173 Stuttgart, Germany
+                <strong>{t("privacy-policy.description_67")}</strong> {t("privacy-policy.description_68")}
               </p>
             </div>
           </section>
 
           {/* 6 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>6. Log Files</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_69")}</h2>
             <div className={styles.body}>
               <p>
-                When you visit <strong>SignXpert</strong> pages, your browser automatically
-                transfers data that is stored in server log files:
+                {t("privacy-policy.description_70")} <strong>SignXpert</strong> {t("privacy-policy.description_71")}
               </p>
               <p>
                 <em>
-                  Date and time of access, page name, IP address, data volume, and browser version.
+                  {t("privacy-policy.description_72")}
                 </em>
               </p>
               <p>
-                These files are used exclusively to ensure technical security and fix errors. They
-                are accessible only to developers and are automatically deleted after{' '}
-                <strong>30 days</strong>. No passwords or sensitive payment details are logged.
+                {t("privacy-policy.description_73")}{' '}
+                <strong>{t("privacy-policy.description_74")}</strong>. {t("privacy-policy.description_75")}
               </p>
             </div>
           </section>
 
           {/* 7 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>7. Secure Data Transfer</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_76")}</h2>
             <div className={styles.body}>
               <p>
-                Your personal information is securely transmitted using{' '}
-                <strong>SSL (Secure Socket Layer)</strong> encryption. This applies to ordering,
-                payment, and customer login. We continuously update our systems to protect your data
-                from unauthorized access or loss.
+                {t("privacy-policy.description_77")}{' '}
+                <strong>SSL (Secure Socket Layer)</strong> {t("privacy-policy.description_78")}
               </p>
             </div>
           </section>
 
           {/* 8 */}
           <section className={styles.section}>
-            <h2 className={styles.sectionHeading}>8. Cookies</h2>
+            <h2 className={styles.sectionHeading}>{t("privacy-policy.description_79")}</h2>
             <div className={styles.body}>
               <p>
-                We use cookies to improve your experience in accordance with the <em>TDDDG</em> and
-                Art. 6 para. 1 lit. f GDPR.
+                {t("privacy-policy.description_80")} <em>TDDDG</em> {t("privacy-policy.description_81")}
               </p>
               <p>
-                <strong>Essential Cookies:</strong> Required for the website to function (e.g.,
-                shopping cart).
+                <strong>{t("privacy-policy.description_82")}</strong> {t("privacy-policy.description_83")}
               </p>
               <p>
-                <strong>Analytical and Marketing Cookies (e.g., Google):</strong> Used only with
-                your <em>active consent</em> via the cookie banner.
+                <strong>{t("privacy-policy.description_84")}</strong> {t("privacy-policy.description_85")} <em>{t("privacy-policy.description_86")}</em> {t("privacy-policy.description_87")}
               </p>
               <p>
-                You can change your preferences or withdraw consent at any time by clicking the
-                "Cookie Settings" link at the bottom of any page on the website.
+                {t("privacy-policy.description_88")}
               </p>
             </div>
           </section>

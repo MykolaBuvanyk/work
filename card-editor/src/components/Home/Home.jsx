@@ -11,9 +11,11 @@ import ProjectCanvasesGrid from '../ProjectCanvasesGrid/ProjectCanvasesGrid';
 import Canvas from '../Canvas/Canvas';
 import { CanvasProvider } from '../../contexts/CanvasContext';
 import { $host } from '../../http';
+import { useTranslation } from 'react-i18next';
 
 
 const Home = () => {
+  const {t}=useTranslation()
   const [formData, setFormData] = useState({ colour16: [] });
 
   const getFormData = async () => {

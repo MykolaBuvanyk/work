@@ -231,7 +231,6 @@ export const buildZugferdInvoiceData = ({
   customerCompany,
   customerName,
   customerEmail,
-  customerPhone,
   customerStreetLine1,
   customerStreetLine2,
   customerStreetLine3,
@@ -417,7 +416,6 @@ export const buildZugferdInvoiceData = ({
             : undefined,
           tradeContact: {
             name: String(customerName || customerCompany || '').trim() || undefined,
-            phoneNumber: String(customerPhone || '').trim() || undefined,
             emailAddress: String(customerEmail || '').trim() || undefined,
           },
           postalAddress: {
@@ -2882,15 +2880,6 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       || order.user?.email
       || ''
     ).trim();
-    const customerPhoneRaw = String(
-      invoiceAddress?.mobile
-      || invoiceAddressFromUser?.mobile
-      || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.mobile : '')
-      || customerAddress?.mobile
-      || order.user?.phone2
-      || order.user?.phone
-      || ''
-    ).trim();
     const customerVatNumberRaw = String(checkout?.vatNumber || order.user?.vatNumber || '').trim();
     const customerName = escapeHtml(
       customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' ')
@@ -2902,7 +2891,6 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       [customerPostalCodeRaw, customerCityRaw].filter(hasContent).join(' ')
     );
     const countryLine = escapeHtml(customerCountryRaw);
-    const phoneLine = escapeHtml(customerPhoneRaw);
     const vatNumber = escapeHtml(customerVatNumberRaw);
 
     const invoiceNumberRaw = String(order.id || '');
@@ -2952,7 +2940,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         No VAT is charged according to § 19 UStG.
       </div>`;
 
-    const vatIdMarkup = vatNumber ? `<br>VAT ID: ${vatNumber}` : '';
+    const vatIdMarkup = vatNumber ? `<tr><td>VAT ID:</td><td>${vatNumber}</td></tr>` : '';
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -3215,13 +3203,12 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         ${addressLine3 ? `${addressLine3}<br>` : ''}
         ${cityLine ? `${cityLine}<br>` : ''}
         ${countryLine ? `${countryLine}<br>` : ''}
-        ${phoneLine ? `Phone: ${phoneLine}` : ''}
-        ${vatIdMarkup}
         </div>
       <div class="details-block">
         <table class="details-table">
           <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
           <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
+          ${vatIdMarkup}
           <tr><td>Date:</td><td>${invoiceDate}</td></tr>
           ${isInvoiceUnpaidCase
             ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
@@ -3345,7 +3332,6 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       customerCompany: customerAddress?.companyName || order.user?.company || '',
       customerName: customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' '),
       customerEmail: customerEmailRaw,
-      customerPhone: customerPhoneRaw,
       customerStreetLine1: customerStreetLine1Raw,
       customerStreetLine2: customerStreetLine2Raw,
       customerStreetLine3: customerStreetLine3Raw,

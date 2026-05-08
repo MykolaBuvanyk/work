@@ -504,15 +504,6 @@ class SendEmailForStatus {
                 || order.user?.email
                 || ''
             ).trim();
-            const customerPhoneRaw = String(
-                invoiceAddress?.mobile
-                || invoiceAddressFromUser?.mobile
-                || (!hasCheckoutInvoiceAddress && !hasUserInvoiceAddress ? deliveryAddress?.mobile : '')
-                || customerAddress?.mobile
-                || order.user?.phone2
-                || order.user?.phone
-                || ''
-            ).trim();
             const customerVatNumberRaw = String(checkout?.vatNumber || order.user?.vatNumber || '').trim();
             const customerName = escapeHtml(
                 customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' ')
@@ -524,7 +515,6 @@ class SendEmailForStatus {
                 [customerPostalCodeRaw, customerCityRaw].filter(hasContent).join(' ')
             );
             const countryLine = escapeHtml(customerCountryRaw);
-            const phoneLine = escapeHtml(customerPhoneRaw);
             const vatNumber = escapeHtml(customerVatNumberRaw);
         
             const invoiceNumberRaw = String(order.id || '');
@@ -574,7 +564,7 @@ class SendEmailForStatus {
                 No VAT is charged according to § 19 UStG.
                 </div>`;
         
-            const vatIdMarkup = vatNumber ? `<br>VAT ID: ${vatNumber}` : '';
+            const vatIdMarkup = vatNumber ? `<tr><td>VAT ID:</td><td>${vatNumber}</td></tr>` : '';
         
             const htmlContent = `
         <!DOCTYPE html>
@@ -837,13 +827,12 @@ class SendEmailForStatus {
                 ${addressLine3 ? `${addressLine3}<br>` : ''}
                 ${cityLine ? `${cityLine}<br>` : ''}
                 ${countryLine ? `${countryLine}<br>` : ''}
-                ${phoneLine ? `Phone: ${phoneLine}` : ''}
-                ${vatIdMarkup}
                 </div>
                 <div class="details-block">
                 <table class="details-table">
                     <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
                     <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
+                    ${vatIdMarkup}
                     <tr><td>Date:</td><td>${invoiceDate}</td></tr>
                     ${isInvoiceUnpaidCase
                     ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
@@ -967,7 +956,6 @@ class SendEmailForStatus {
                 customerCompany: customerAddress?.companyName || order.user?.company || '',
                 customerName: customerAddress?.fullName || [order.user?.firstName, order.user?.surname].filter(Boolean).join(' '),
                 customerEmail: customerEmailRaw,
-                customerPhone: customerPhoneRaw,
                 customerStreetLine1: customerStreetLine1Raw,
                 customerStreetLine2: customerStreetLine2Raw,
                 customerStreetLine3: customerStreetLine3Raw,

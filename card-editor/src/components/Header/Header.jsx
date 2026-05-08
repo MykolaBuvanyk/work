@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './Header.module.css';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
-import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuImage, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe } from 'react-icons/lu';
+import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuImage, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, mergeUser } from '../../store/reducers/user';
 import combinedCountries from '../Countries';
@@ -229,7 +229,7 @@ const Header = () => {
     '/account': <LuUser size={18} />,
     '/online-sign-editor': <LuFilePlus size={18} />,
     '/products': <LuTag size={18} />,
-    '/industries': <LuTag size={18} />,
+    '/industries': <LuFactory size={18} />,
     '/faq': <LuLightbulb size={18} />,
     '/quick-guide': <LuLightbulb size={18} />,
     '/contacts': <LuMessageSquare size={18} />,

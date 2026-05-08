@@ -518,6 +518,100 @@
   }
 }
 
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding: 0 24px;
+  }
+
+  /* Hero */
+  .heroSection {
+    min-height: 340px;
+  }
+
+  .heroContainer {
+    min-height: 340px;
+  }
+
+  .heroTitle {
+    font-size: 30px;
+  }
+
+  .heroDescription {
+    font-size: 16px;
+  }
+
+  .heroNote {
+    font-size: 22px;
+  }
+
+  .heroText {
+    max-width: 440px;
+  }
+
+  /* Section titles */
+  .sectionTitle {
+    font-size: 28px;
+  }
+
+  /* Why section — keep 2 columns */
+  .whyGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .whyCard h3 {
+    font-size: 20px;
+  }
+
+  .whyCard p,
+  .accentText {
+    font-size: 16px;
+  }
+
+  .whyCard img {
+    height: 130px;
+  }
+
+  /* Custom / Fast / Durable — keep 2 columns */
+  .equalGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .textBox {
+    width: 95%;
+    padding: 24px;
+  }
+
+  .customHeading,
+  .sideTitle {
+    font-size: 28px;
+  }
+
+  .customTextBox p,
+  .customTextBox li,
+  .sideTextBox p,
+  .sideTextBox li {
+    font-size: 16px;
+  }
+
+  .photoBox,
+  .photoBox img {
+    height: 360px;
+  }
+
+  /* Benefits — 2×2 grid */
+  .benefitsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    justify-content: stretch;
+  }
+
+  .benefitCard {
+    width: auto;
+    height: 320px;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 20px;

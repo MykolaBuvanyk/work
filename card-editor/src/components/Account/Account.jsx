@@ -207,6 +207,81 @@ const Account = () => {
                     </tbody>
                 </table>
             </div>
+
+            <div className="orders-cards">
+                {myOrders.sort((a,b)=>b.id-a.id).map((order) => {
+                    const isPaid = order.isPaid;
+                    return (
+                        <div className="order-card" key={order.id}>
+                            <div className="order-card__top">
+                                <span className="order-card__num">{order.orderNo}</span>
+                                <button
+                                    type="button"
+                                    className="order-card__open"
+                                    onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}
+                                    disabled={!!openingOrderId}
+                                >
+                                    {openingOrderId === order.id ? 'Opening…' : 'Open project'}
+                                </button>
+                            </div>
+                            <div className="order-card__meta">
+                                <span className="order-card__id">#{order.id}</span>
+                                <span className="order-card__date">
+                                    {new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                            <div className="order-card__name">{order.orderName || 'Water sifgns 23'}</div>
+                            <div className="order-card__sums">
+                                <div className="order-card__sum">
+                                    <span className="order-card__label">Order Sum</span>
+                                    <strong>{order.netAfterDiscount?.toFixed(2)}$</strong>
+                                </div>
+                                <div className="order-card__sum">
+                                    <span className="order-card__label">Sum (Incl.VAT & Del.)</span>
+                                    <strong>{order.sum?.toFixed(2)}</strong>
+                                </div>
+                            </div>
+                            <div className="order-card__statuses">
+                                <div className="order-card__status">
+                                    <span className="order-card__label">Status</span>
+                                    <span className="order-card__pill order-card__pill--neutral">
+                                        {order.status || 'Received'}
+                                    </span>
+                                </div>
+                                <div className="order-card__status">
+                                    <span className="order-card__label">Inv. Status</span>
+                                    <span className={`order-card__pill ${isPaid ? 'order-card__pill--paid' : 'order-card__pill--unpaid'}`}>
+                                        {isPaid ? 'Received' : 'Unpaid'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="order-card__actions">
+                                <button type="button" className="order-card__action" onClick={() => downloadPdf(order.id, '2')}>
+                                    <span className="order-card__action-icon icon-green">📄</span>
+                                    <span className="order-card__action-label">Del. Note</span>
+                                </button>
+                                <button type="button" className="order-card__action">
+                                    <span className="order-card__action-icon icon-blue">🚚</span>
+                                    <span className="order-card__action-label">Tracking</span>
+                                </button>
+                                <button type="button" className="order-card__action" onClick={() => downloadPdf(order.id, '3')}>
+                                    <span className="order-card__action-icon icon-red">🧾</span>
+                                    <span className="order-card__action-label">Invoice</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className="order-card__action"
+                                    onClick={() => !isPaid && window.open('/account/pay/' + order.id, '_blank')}
+                                    disabled={isPaid}
+                                >
+                                    <span className="order-card__action-icon to-pay-icon">💳</span>
+                                    <span className="order-card__action-label">To Pay</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
             <div className="pagination">
                 {/* Кнопка "Попередня" */}
                 <button

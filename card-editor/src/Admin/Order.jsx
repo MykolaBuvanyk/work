@@ -1580,6 +1580,12 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       return;
     }
 
+    const editorTab = window.open('about:blank', '_blank');
+    if (!editorTab) {
+      alert('Please allow pop-ups to open this project in a new tab');
+      return;
+    }
+
     const projectToOpen = {
       ...project,
       accessories: Array.isArray(orderedAccessories) ? orderedAccessories : [],
@@ -1646,14 +1652,18 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
         );
       } catch {}
 
-      // Navigate to editor root
+      // Open editor root in the new tab.
       try {
         const prefix = (location && location.pathname && String(location.pathname).match(/^\/([a-z]{2})(\/|$)/i)) ? `/${String(location.pathname).slice(1,3)}` : '';
-        // Use window.location to navigate, as Admin may not have router here
         const targetUrl = prefix ? `${prefix}/online-sign-editor` : '/online-sign-editor';
-        window.location.href = targetUrl;
-      } catch {}
+        editorTab.location.href = targetUrl;
+      } catch {
+        editorTab.location.href = '/online-sign-editor';
+      }
     } catch (e) {
+      try {
+        editorTab.close();
+      } catch {}
       console.error('Failed to open ordered project', e);
       alert(e?.message || 'Failed to open ordered project');
     } finally {

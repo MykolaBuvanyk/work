@@ -28,5 +28,19 @@
                 }
             }
         }
-    }    
+    }
+
+    @media (max-width: 768px) {
+        ul {
+            margin-top: 16px;
+            margin-bottom: 12px;
+            gap: 4px;
+            li a {
+                display: inline-block;
+                padding: 8px 14px;
+                font-size: 15px;
+                border-radius: 4px 4px 0 0;
+            }
+        }
+    }
 }

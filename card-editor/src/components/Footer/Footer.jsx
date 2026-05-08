@@ -110,6 +110,7 @@ const Footer = () => {
           </ul>
 
           <div class="footer-note">
+            <span class="footer-note-title-spacer" aria-hidden="true"></span>
             <p>All prices are final.</p>
             <p>No VAT is charged according to § 19 UStG.</p>
             <p>Plus shipping costs.</p>
@@ -167,7 +168,6 @@ const Footer = () => {
                 <div class="footer-icon">
                   <img src="/images/ups.svg" alt="UPS" />
                 </div>
-
               </div>
 
               <div class="footer-icon-card">

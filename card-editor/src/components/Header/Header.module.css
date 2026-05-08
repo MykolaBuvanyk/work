@@ -209,6 +209,49 @@
   height: 100%;
   object-fit: cover;
 }
+@media (min-width: 769px) and (max-width: 1024px) {
+  .secondPart {
+    height: auto;
+  }
+
+  .secondPartList {
+    padding: 3px 8px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .secondPartList::-webkit-scrollbar {
+    display: none;
+  }
+
+  .secondPartList li {
+    padding: 0 12px;
+    font-size: 13px;
+    flex-shrink: 0;
+    width: auto;
+  }
+
+  .secondPartList li a {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .secondPartEl2 a {
+    font-size: 13px;
+  }
+
+  .headerBaner {
+    display: none;
+  }
+
+  .leftList {
+    display: none;
+  }
+}
+
 /* ── Mobile bar ── */
 .mobileBar {
   display: none;
@@ -264,6 +307,12 @@
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
   /* ── Drawer ── */
@@ -276,6 +325,12 @@
     flex-direction: column;
     padding-top: 26px;
     padding-bottom: 26px;
+    animation: slideIn 0.22s ease;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
   }
 
   /* ── Drawer header: logo + circle-X ── */

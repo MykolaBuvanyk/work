@@ -155,4 +155,143 @@
     border: 1px solid #7D7D7D;
     color: #ffffff;
   }
+
+  @media (max-width: 768px) {
+    padding: 0 12px;
+
+    .blue-notice {
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .update-text {
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .tables-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+
+      h3 {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+    }
+
+    .registration-table {
+      border: none;
+      background: transparent;
+      gap: 4px;
+
+      .table-row {
+        flex-direction: column;
+        align-items: stretch;
+        min-height: 0;
+        gap: 8px;
+        background: #F0F0F0;
+        padding: 12px;
+
+        .label-cell {
+          flex: 0 0 auto;
+          background: transparent;
+          padding: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #000;
+          border-right: none;
+        }
+
+        .input-cell {
+          flex: 0 0 auto;
+          background: transparent;
+          padding: 0;
+
+          input, .table-select {
+            width: 100%;
+            height: 36px;
+            border: 1px solid #006ca4;
+            border-radius: 4px;
+            background: #fff;
+            padding: 0 10px;
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    .pass-table.registration-table .table-row {
+      background: #F0F0F0;
+      padding: 12px;
+      .pass-input-container {
+        width: 100%;
+        input {
+          width: 100%;
+          height: 36px;
+          border: 1px solid #006ca4;
+          border-radius: 4px;
+          background: #fff;
+          padding: 0 36px 0 10px;
+          font-size: 14px;
+        }
+      }
+    }
+
+    .invoice-email-block {
+      margin-top: 20px;
+      p { font-size: 13px; margin-bottom: 8px; }
+
+      .invoice-input-row {
+        gap: 12px;
+        .blue-outline-input { flex: 1 1 auto; }
+      }
+
+      .save-changes-row {
+        justify-content: center;
+        margin-top: 16px;
+      }
+    }
+
+    .password-section {
+      margin-top: 24px;
+
+      h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+
+      .password-flex-row {
+        max-width: 100%;
+        > div:first-child {
+          align-items: stretch !important;
+          width: 100%;
+        }
+        .pass-table { width: 100%; }
+        .pass-forgot-block {
+          align-items: stretch;
+          padding-bottom: 0;
+          margin-top: 16px;
+          p { font-size: 13px; }
+        }
+      }
+
+      .action-center {
+        width: 100%;
+        margin: 16px 0;
+        justify-content: center;
+      }
+    }
+
+    button {
+      width: 100%;
+      max-width: none;
+      height: 44px;
+      font-size: 15px;
+      border-radius: 6px;
+    }
+
+    .save-changes-row,
+    .action-center,
+    .pass-forgot-block {
+      width: 100%;
+      button { width: 100%; }
+    }
+  }
 }

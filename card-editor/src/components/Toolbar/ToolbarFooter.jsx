@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./Toolbar.module.css";
 import { useCanvasContext } from "../../contexts/CanvasContext";
+import { getProject } from "../../utils/projectStorage";
 
 const emitManufacturerNoteChanged = (value) => {
   try {
@@ -10,6 +11,19 @@ const emitManufacturerNoteChanged = (value) => {
       })
     );
   } catch {}
+};
+
+const readCachedManufacturerNote = (fallback = "") => {
+  try {
+    if (
+      typeof window !== "undefined" &&
+      Object.prototype.hasOwnProperty.call(window, "_manufacturerNote")
+    ) {
+      return String(window._manufacturerNote ?? "");
+    }
+  } catch {}
+
+  return String(fallback ?? "");
 };
 
 const ToolbarFooter = () => {
@@ -41,6 +55,15 @@ const ToolbarFooter = () => {
   });
   const [manufacturerNote, setManufacturerNote] = useState('');
 
+  const applyManufacturerNote = useCallback((value) => {
+    const next = String(value ?? "");
+    setManufacturerNote(next);
+    try {
+      window._manufacturerNote = next;
+    } catch {}
+    emitManufacturerNoteChanged(next);
+  }, []);
+
   // Compute current/total using context or window helper
   const currentIndex = useMemo(() => {
     if (orderInfo.index >= 0) return orderInfo.index;
@@ -59,13 +82,9 @@ const ToolbarFooter = () => {
   useEffect(() => {
     // Expose getter/setter for manufacturer note so other UI can read it
     try {
-      window.getManufacturerNote = () => String(window._manufacturerNote || manufacturerNote || '').trim();
+      window.getManufacturerNote = () => readCachedManufacturerNote("").trim();
       window.setManufacturerNote = (v) => {
-        window._manufacturerNote = String(v || '');
-        try {
-          setManufacturerNote(String(v || ''));
-        } catch {}
-        emitManufacturerNoteChanged(String(v || ''));
+        applyManufacturerNote(v);
       };
     } catch {}
 
@@ -98,6 +117,48 @@ const ToolbarFooter = () => {
     window.addEventListener("unsaved:signsUpdated", handler);
     window.addEventListener("project:canvasesUpdated", handler);
     window.addEventListener("grid:navigationReady", readyHandler);
+
+    let noteSyncRun = 0;
+    const syncManufacturerNoteFromProject = async (event) => {
+      const runId = ++noteSyncRun;
+      const projectIdFromEvent = event?.detail?.projectId;
+
+      if (projectIdFromEvent === null) {
+        applyManufacturerNote("");
+        return;
+      }
+
+      let projectId = projectIdFromEvent || "";
+      if (!projectId) {
+        try {
+          projectId = localStorage.getItem("currentProjectId") || "";
+        } catch {}
+      }
+
+      if (!projectId) {
+        applyManufacturerNote("");
+        return;
+      }
+
+      try {
+        const project = await getProject(projectId);
+        if (runId !== noteSyncRun) return;
+        applyManufacturerNote(project?.manufacturerNote || "");
+      } catch {
+        if (runId === noteSyncRun) applyManufacturerNote("");
+      }
+    };
+
+    const resetManufacturerNote = () => {
+      noteSyncRun += 1;
+      applyManufacturerNote("");
+    };
+
+    syncManufacturerNoteFromProject();
+    window.addEventListener("project:opened", syncManufacturerNoteFromProject);
+    window.addEventListener("project:switched", syncManufacturerNoteFromProject);
+    window.addEventListener("project:reset", resetManufacturerNote);
+
     return () => {
       try {
         delete window.getManufacturerNote;
@@ -110,13 +171,16 @@ const ToolbarFooter = () => {
       window.removeEventListener("unsaved:signsUpdated", handler);
       window.removeEventListener("project:canvasesUpdated", handler);
       window.removeEventListener("grid:navigationReady", readyHandler);
+      window.removeEventListener("project:opened", syncManufacturerNoteFromProject);
+      window.removeEventListener("project:switched", syncManufacturerNoteFromProject);
+      window.removeEventListener("project:reset", resetManufacturerNote);
     };
-  }, []);
+  }, [applyManufacturerNote]);
 
   // Keep global getter in sync when note changes
   useEffect(() => {
     try {
-      window.getManufacturerNote = () => String(window._manufacturerNote || manufacturerNote || '').trim();
+      window.getManufacturerNote = () => readCachedManufacturerNote(manufacturerNote).trim();
     } catch {}
   }, [manufacturerNote]);
 
@@ -285,12 +349,7 @@ const ToolbarFooter = () => {
           className={styles.footerNoteInput}
           value={manufacturerNote}
           onChange={(e) => {
-            const v = e.target.value || '';
-            setManufacturerNote(v);
-            try {
-              window._manufacturerNote = v;
-            } catch {}
-            emitManufacturerNoteChanged(v);
+            applyManufacturerNote(e.target.value || '');
           }}
         />
       </div>

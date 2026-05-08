@@ -217,6 +217,7 @@ const toProjectPayload = ({ doc, canvases }) => {
       : Number.isFinite(Number(snapshot?.lastOrderedAt))
         ? Number(snapshot.lastOrderedAt)
         : null,
+    manufacturerNote: typeof snapshot?.manufacturerNote === 'string' ? snapshot.manufacturerNote : '',
     canvases: resolveProjectCanvases({ doc, canvases }),
     accessories: normalizeAccessories(doc?.accessories ?? snapshot?.accessories),
     checkout: snapshot?.checkout && typeof snapshot.checkout === 'object' ? snapshot.checkout : null,
@@ -236,6 +237,7 @@ const toProjectPayloadFromSnapshot = ({ doc, snapshot, canvases }) => {
       : Number.isFinite(Number(base?.lastOrderedAt))
         ? Number(base.lastOrderedAt)
         : null,
+    manufacturerNote: typeof base?.manufacturerNote === 'string' ? base.manufacturerNote : '',
     canvases: Array.isArray(canvases) ? canvases : [],
     accessories: normalizeAccessories(base?.accessories),
     checkout: base?.checkout && typeof base.checkout === 'object' ? base.checkout : null,

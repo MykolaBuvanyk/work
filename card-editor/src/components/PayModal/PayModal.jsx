@@ -26,28 +26,24 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
         if (orderId) getClientSecret();
     }, [orderId]);
 
-    useEffect(() => {
-      const savePaymentMethod = async () => {
-        try {
-          await $authHost.post('cart/set-payment-method/' + orderId, {
-            paymentMethod: paymentOption,
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-      if (isPayOpen && orderId) {
-        savePaymentMethod();
+    const savePaymentMethod = async (paymentMethod) => {
+      if (!orderId) return;
+      try {
+        await $authHost.post('cart/set-payment-method/' + orderId, {
+          paymentMethod,
+        });
+      } catch (err) {
+        console.error(err);
       }
-    }, [isPayOpen, orderId, paymentOption]);
+    };
 
     // Налаштування зовнішнього вигляду (опціонально)
     const options = {
         clientSecret,
         appearance: { theme: 'stripe' },
     };
-    const payTrue=()=>{
+    const payTrue=async()=>{
+        await savePaymentMethod('online');
         onClose();
     }
 
@@ -56,6 +52,7 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
       if (typeof onPlaceOrder === 'function') {
         setIsSubmittingOrder(true);
         try {
+          await savePaymentMethod('invoice');
           const placed = await Promise.resolve(onPlaceOrder());
           if (!placed) return;
         } finally {

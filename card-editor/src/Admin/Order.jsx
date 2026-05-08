@@ -1711,6 +1711,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     String(order?.orderMongo?.manufacturerNote || order?.orderMongo?.project?.manufacturerNote || '').trim() || null;
   const deliveryTypeLabel = resolveDeliveryType(order);
   const deliveryPriceLabel = resolveDeliveryPrice(order);
+  const paymentMethodRaw = String(order?.orderMongo?.checkout?.paymentMethod || '').trim().toLowerCase();
+  const paymentMethodLabel = paymentMethodRaw === 'online' ? 'Paid Online' : 'Invoice';
   return (
     <>
     <div className="order-container">
@@ -1820,7 +1822,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       </div>
       <div className="row">
         <p>Payment Method:</p>
-        <span>Invoice</span>
+        <span>{paymentMethodLabel}</span>
         <div />
       </div>
       <div className="row box">

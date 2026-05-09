@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import GlobalInputFormat from '../GlobalInputFormat';
 import Header from '../Header/Header';
 import TopSidebar from '../TopSidebar/TopSidebar';
-import Toolbar from '../Toolbar/Toolbar';
+import { Toolbar } from '../Toolbar/Toolbar';
 import Accessories from '../Accessories/Accessories';
 import ToolbarFooter from '../Toolbar/ToolbarFooter';
 import TopToolbar from '../TopToolbar/TopToolbar';

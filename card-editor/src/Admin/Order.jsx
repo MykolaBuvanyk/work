@@ -603,7 +603,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   }, [appliedMaxPageHeight, appliedMaxPageWidth, appliedMinPageHeight, appliedMinPageWidth, exportMode, formatKey, orientation]);
 
   const isMjFrameMode = exportMode === 'Sheet optimized (MJ) Fr.';
-  const hasBrownFrame = exportMode === 'Normal (MJ) Frame' || exportMode === 'Sheet optimized (MJ) Fr.';
+  const hasLightBlueFrame = exportMode === 'Normal (MJ) Frame' || exportMode === 'Sheet optimized (MJ) Fr.';
 
   const planned = useMemo(() => {
     if (isMjFrameMode) {
@@ -873,8 +873,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     const safePageMarginMm = Math.max(0, safeNumber(pdfPageMargin, 0));
     const safeFrameSpacingMm = Math.max(0, safeNumber(frameSpacingMm, 0));
 
-    const pageInsetMm = hasBrownFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
-    const frameInsetMm = hasBrownFrame ? safeFrameSpacingMm : 0;
+    const pageInsetMm = hasLightBlueFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
+    const frameInsetMm = hasLightBlueFrame ? safeFrameSpacingMm : 0;
 
     return planSheets(
       normalizedItems,
@@ -884,7 +884,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       frameInsetMm,
       {}
     );
-  }, [effectiveSignSpacingMm, frameSpacingMm, hasBrownFrame, isMjFrameMode, normalizedItems, pdfPageMargin, pdfSortOrder, sheetSize]);
+  }, [effectiveSignSpacingMm, frameSpacingMm, hasLightBlueFrame, isMjFrameMode, normalizedItems, pdfPageMargin, pdfSortOrder, sheetSize]);
 
   const sheetsWithIndex = useMemo(() => {
     const sheetCount = Array.isArray(planned?.sheets) ? planned.sheets.length : 0;
@@ -924,7 +924,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       const sheetLabel = FORMATS[formatKey]?.label || 'sheet';
 
     const computeFrameRect = (sheet) => {
-      if (!hasBrownFrame) return null;
+      if (!hasLightBlueFrame) return null;
       if (isMjFrameMode) return null;
       const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
       if (!placements.length) return null;
@@ -1969,8 +1969,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
               'grey / white': A12,
               'orange / white': A11,
               'orange/white': A11,
-              'brown / white': A10,
-              'brown/white': A10,
+              'light blue / white': A10,
+              'light blue/white': A10,
               'silver / black': A9,
               'silver/black': A9,
               'wood / black': A13,

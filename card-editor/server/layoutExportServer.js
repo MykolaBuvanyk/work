@@ -3543,7 +3543,7 @@ app.post('/api/layout-pdf', async (req, res) => {
         if (isMjFrameSheet) {
           doc.save();
           doc.lineWidth(0.5);
-          doc.strokeColor('#8B4513');
+          doc.strokeColor('#00c7fe');
 
           const radiusPt = mmToPoints(1.5);
           doc.roundedRect(frameXPt, frameYPt, frameWidthPt, frameHeightPt, radiusPt).stroke();
@@ -3560,7 +3560,7 @@ app.post('/api/layout-pdf', async (req, res) => {
           const stripLeftXmm = frameRect.x;
           const stripRightXmm = frameRect.x + stripWidthMm;
           // Compute hole center X so there is exactly 2mm clearance
-          // from the circle edge to the brown frame edge (left) and
+          // from the circle edge to the light blue frame edge (left) and
           // 2mm clearance from the circle edge to the canvas start (right).
           // holeCenterXmm must satisfy both:
           //   holeCenterXmm - holeRadiusMm - frameRect.x >= 2

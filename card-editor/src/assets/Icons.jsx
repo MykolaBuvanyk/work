@@ -318,7 +318,7 @@ export const A8 = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect y="0.880615" width="35.1323" height="35.1323" rx="4" fill="#FFFF01" />
+    <rect y="0.880615" width="35.1323" height="35.1323" rx="4" fill="#fdf030" />
     <rect
       x="0.5"
       y="1.38062"
@@ -389,7 +389,7 @@ export const A10 = (props) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <rect width="35.1323" height="35.1323" rx="4" fill="#964B21" />
+    <rect width="35.1323" height="35.1323" rx="4" fill="#00c7fe" />
     <rect
       x="0.5"
       y="0.5"

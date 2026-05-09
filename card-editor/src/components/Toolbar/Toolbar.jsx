@@ -92,9 +92,9 @@ const COLOR_THEME_PRESETS = [
   { index: 4, textColor: '#FFFFFF', backgroundColor: '#00558b', backgroundType: 'solid' },
   { index: 5, textColor: '#FFFFFF', backgroundColor: '#FF0000', backgroundType: 'solid' },
   { index: 6, textColor: '#FFFFFF', backgroundColor: '#018001', backgroundType: 'solid' },
-  { index: 7, textColor: '#000000', backgroundColor: '#FFFF00', backgroundType: 'solid' },
+  { index: 7, textColor: '#000000', backgroundColor: '#fdf030', backgroundType: 'solid' },
   { index: 8, textColor: '#000000', backgroundColor: '#F0F0F0', backgroundType: 'gradient' },
-  { index: 9, textColor: '#FFFFFF', backgroundColor: '#8B4513', backgroundType: 'solid' },
+  { index: 9, textColor: '#FFFFFF', backgroundColor: '#00c7fe', backgroundType: 'solid' },
   { index: 10, textColor: '#FFFFFF', backgroundColor: '#FFA500', backgroundType: 'solid' },
   { index: 11, textColor: '#FFFFFF', backgroundColor: '#808080', backgroundType: 'solid' },
   { index: 12, textColor: '#000000', backgroundColor: '/textures/Wood.jpg', backgroundType: 'texture' },
@@ -118,7 +118,7 @@ const inferThemeIndexByColors = (textColor, backgroundColor, backgroundType = 's
   return found ? found.index : 0;
 };
 
-const Toolbar = ({ formData }) => {
+export const Toolbar = ({ formData }) => {
   const {
     canvas,
     globalColors,
@@ -10848,7 +10848,7 @@ const Toolbar = ({ formData }) => {
 
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][7].isSelect && (
             <span
-              onClick={() => handleColorPick(7, '#000000', '#FFFF00', 'solid')}
+              onClick={() => handleColorPick(7, '#000000', '#fdf030', 'solid')}
               title="Yellow / Black"
             >
               <A8
@@ -10874,8 +10874,8 @@ const Toolbar = ({ formData }) => {
 
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][9].isSelect && (
             <span
-              onClick={() => handleColorPick(9, '#FFFFFF', '#8B4513', 'solid')}
-              title="Brown / White"
+              onClick={() => handleColorPick(9, '#FFFFFF', '#00c7fe', 'solid')}
+              title="Light blue / White"
             >
               <A10
                 borderColor={selectedColorIndex === 9 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -11490,5 +11490,4 @@ const Toolbar = ({ formData }) => {
   );
 };
 
-export { Toolbar };
 export default Toolbar;

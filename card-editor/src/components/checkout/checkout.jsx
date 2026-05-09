@@ -203,7 +203,7 @@ const COLOR_THEME_BY_INDEX = {
 	6: 'Green / White',
 	7: 'Yellow / Black',
 	8: 'Silver / Black',
-	9: 'Brown / White',
+	9: 'Light blue / White',
 	10: 'Orange / White',
 	11: 'Gray / White',
 	12: 'Wood / Black',

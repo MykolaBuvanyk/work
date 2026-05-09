@@ -578,7 +578,7 @@ const COLOR_THEME_BY_INDEX_CAPS = {
   6: 'Green / White',
   7: 'Yellow / Black',
   8: 'Silver / Black',
-  9: 'Brown / White',
+  9: 'Light blue / White',
   10: 'Orange / White',
   11: 'Gray / White',
   12: 'Wood / Black',
@@ -602,9 +602,9 @@ const MATERIAL_ICON_SVGS = {
   'blue / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#00558b"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
   'red / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#FD0100"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
   'green / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="#017F01"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="white"/></svg>`,
-  'yellow / black': `<svg width="36" height="37" viewBox="0 0 36 37" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.880615" width="35.1323" height="35.1323" rx="4" fill="#FFFF01"/><rect x="0.5" y="1.38062" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.8806H9.59659L15.8778 8.42607H18.9205L25.2017 25.8806H22.4062L17.4716 11.5965H17.3352L12.392 25.8806ZM12.8608 19.0454H21.929V21.2613H12.8608V19.0454Z" fill="black"/></svg>`,
+  'yellow / black': `<svg width="36" height="37" viewBox="0 0 36 37" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.880615" width="35.1323" height="35.1323" rx="4" fill="#fdf030"/><rect x="0.5" y="1.38062" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.8806H9.59659L15.8778 8.42607H18.9205L25.2017 25.8806H22.4062L17.4716 11.5965H17.3352L12.392 25.8806ZM12.8608 19.0454H21.929V21.2613H12.8608V19.0454Z" fill="black"/></svg>`,
   'silver / black': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="35.1323" height="35.1323" rx="4" fill="url(#paint0_linear_icon_a9)"/><rect x="0.5" y="0.5" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z" fill="black"/><defs><linearGradient id="paint0_linear_icon_a9" x1="8.31186" y1="0" x2="26.8204" y2="35.1323" gradientUnits="userSpaceOnUse"><stop offset="0.240385" stop-color="#B5B5B5"/><stop offset="0.528846" stop-color="#F5F5F5"/><stop offset="0.788462" stop-color="#979797"/></linearGradient></defs></svg>`,
-  'brown / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="35.1323" height="35.1323" rx="4" fill="#964B21"/><rect x="0.5" y="0.5" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z" fill="white"/></svg>`,
+  'light blue / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="35.1323" height="35.1323" rx="4" fill="#00c7fe"/><rect x="0.5" y="0.5" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25H9.59659L15.8778 7.54545H18.9205L25.2017 25H22.4062L17.4716 10.7159H17.3352L12.392 25ZM12.8608 18.1648H21.929V20.3807H12.8608V18.1648Z" fill="white"/></svg>`,
   'orange / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.216553" width="35.1323" height="35.1323" rx="4" fill="#FD7714"/><rect x="0.5" y="0.716553" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.2166H9.59659L15.8778 7.76201H18.9205L25.2017 25.2166H22.4062L17.4716 10.9325H17.3352L12.392 25.2166ZM12.8608 18.3813H21.929V20.5972H12.8608V18.3813Z" fill="white"/></svg>`,
   'gray / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.216553" width="35.1323" height="35.1323" rx="4" fill="#808080"/><rect x="0.5" y="0.716553" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.2166H9.59659L15.8778 7.76201H18.9205L25.2017 25.2166H22.4062L17.4716 10.9325H17.3352L12.392 25.2166ZM12.8608 18.3813H21.929V20.5972H12.8608V18.3813Z" fill="white"/></svg>`,
   'grey / white': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.216553" width="35.1323" height="35.1323" rx="4" fill="#808080"/><rect x="0.5" y="0.716553" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.2166H9.59659L15.8778 7.76201H18.9205L25.2017 25.2166H22.4062L17.4716 10.9325H17.3352L12.392 25.2166ZM12.8608 18.3813H21.929V20.5972H12.8608V18.3813Z" fill="white"/></svg>`,
@@ -998,6 +998,35 @@ const expandParsedSigns = (signs = []) => {
 
 const buildDeliveryNoteSummary = (order, orderMongo) => {
   const storedSummary = orderMongo?.checkout?.orderTestSummary;
+  const projectSnapshot = normalizeProjectForCart(orderMongo?.project || {});
+  const canvases = Array.isArray(projectSnapshot?.canvases) ? projectSnapshot.canvases : [];
+  const parsedProjectSigns = canvases.map((canvasSnap, index) => {
+    const content = analyzeCanvasContent(canvasSnap);
+    const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
+    const metaParts = [
+      formatCanvasSizeMm(canvasSnap),
+      resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap),
+      thickness ? `${thickness}` : null,
+      resolveTapeLabel(canvasSnap),
+    ].filter(Boolean);
+
+    return {
+      id: String(canvasSnap?.id || index),
+      title: `Sign ${index + 1}`,
+      metaLine: metaParts.join(', '),
+      textLine: content.texts.length > 0 ? content.texts.join(', ') : 'вЂ”',
+      counts: {
+        shapes: content.shapes,
+        cutFigures: content.cutFigures,
+        holes: content.holes,
+        qrCodes: content.qrCodes,
+        barcodes: content.barcodes,
+        images: content.images,
+      },
+      copiesCount: resolveCopiesCount(canvasSnap),
+    };
+  });
+  const expandedProjectSigns = expandParsedSigns(parsedProjectSigns);
 
   if (storedSummary && typeof storedSummary === 'object') {
     const expandedStoredSigns = expandParsedSigns(
@@ -1005,7 +1034,7 @@ const buildDeliveryNoteSummary = (order, orderMongo) => {
         ? storedSummary.signs.map((sign, index) => ({
             id: String(sign?.id || index),
             title: String(sign?.title || `Sign ${index + 1}`),
-            metaLine: String(sign?.metaLine || ''),
+            metaLine: String(expandedProjectSigns[index]?.metaLine || sign?.metaLine || ''),
             textLine: String(sign?.textLine || '—'),
             counts: {
               shapes: Math.max(0, Math.floor(toNumber(sign?.counts?.shapes, 0))),
@@ -1028,8 +1057,6 @@ const buildDeliveryNoteSummary = (order, orderMongo) => {
     };
   }
 
-  const projectSnapshot = normalizeProjectForCart(orderMongo?.project || {});
-  const canvases = Array.isArray(projectSnapshot?.canvases) ? projectSnapshot.canvases : [];
   const parsedSigns = canvases.map((canvasSnap, index) => {
     const content = analyzeCanvasContent(canvasSnap);
     const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
@@ -1610,7 +1637,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         'gray / white': 'bg-gray-white',
         'grey / white': 'bg-gray-white',
         'orange / white': 'bg-orange-white',
-        'brown / white': 'bg-brown-white',
+        'light blue / white': 'bg-light-blue-white',
         'silver / black': 'bg-silver-black',
         'wood / black': 'bg-wood-black',
         'carbon / white': 'bg-carbon-white',
@@ -2019,10 +2046,10 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       .bg-blue-white { background: #0000ff; color: #fff; }
       .bg-red-white { background: #ff0000; color: #fff; }
       .bg-green-white { background: #15803d; color: #fff; }
-      .bg-yellow-black { background: #facc15; color: #000; }
+      .bg-yellow-black { background: #fdf030; color: #000; }
       .bg-gray-white { background: #6b7280; color: #fff; }
       .bg-orange-white { background: #f97316; color: #fff; }
-      .bg-brown-white { background: #92400e; color: #fff; }
+      .bg-light-blue-white { background: #00c7fe; color: #fff; }
       .bg-silver-black { background: #c0c0c0; border: 1px solid #999; color: #000; }
       .bg-wood-black { background: #b08968; color: #000; }
       .bg-carbon-white { background: #374151; color: #fff; }

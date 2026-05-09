@@ -170,7 +170,7 @@ const MJ_FRAME_DECOR_STRIP_WIDTH_MM = MJ_FRAME_STRIP_WIDTH_MM;
 const MJ_FRAME_HOLE_DIAMETER_MM = 5.5;
 const MJ_FRAME_HOLE_SPACING_MM = 80;
 const MJ_FRAME_SECOND_HOLE_MIN_HEIGHT_MM = 135;
-const MJ_FRAME_STRIP_COLOR = "#8B4513";
+const MJ_FRAME_STRIP_COLOR = "#00c7fe";
 const MJ_FRAME_CORNER_RADIUS_MM = 5;
 
 const safeNumber = (value, fallback = 0) => {
@@ -851,7 +851,7 @@ const COLOR_LABEL_BY_INDEX = {
   6: "Green / White",
   7: "Yellow / Black",
   8: "Silver / Black",
-  9: "Brown / White",
+  9: "Light blue / White",
   10: "Orange / White",
   11: "Gray / White",
   12: "Wood / Black",
@@ -893,9 +893,9 @@ const resolveMaterialColorLabel = ({ selectedColorIndex, backgroundColor, stroke
     if (c === "#0000ff" || c === "#0000ffff") return "Blue";
     if (c === "#ff0000" || c === "#ff0000ff") return "Red";
     if (c === "#018001" || c === "#018001ff") return "Green";
-    if (c === "#ffff00" || c === "#ffff00ff") return "Yellow";
+    if (c === "#fdf030" || c === "#fdf030ff") return "Yellow";
     if (c === "#808080" || c === "#808080ff") return "Gray";
-    if (c === "#8b4513" || c === "#8b4513ff") return "Brown";
+    if (c === "#00c7fe" || c === "#00c7feff") return "Light blue";
     if (c === "#ffa500" || c === "#ffa500ff") return "Orange";
     if (c === "#f0f0f0" || c === "#f0f0f0ff") return "Silver";
     return null;
@@ -6264,7 +6264,7 @@ const LayoutPlannerModal = ({
   const isMjFrameMode = exportMode === "Sheet optimized (MJ) Fr.";
   const isAnyMjFrameMode =
     exportMode === "Normal (MJ) Frame" || exportMode === "Sheet optimized (MJ) Fr.";
-  const hasBrownFrame =
+  const hasLightBlueFrame =
     exportMode === "Normal (MJ) Frame" || exportMode === "Sheet optimized (MJ) Fr.";
 
   const getSheetUsableArea = useCallback(
@@ -6573,8 +6573,8 @@ const LayoutPlannerModal = ({
     const safeFrameSpacingMm = Math.max(0, Number(frameSpacingMm) || 0);
 
     // If there's no frame, treat frameSpacing as a sheet-edge inset.
-    const pageInsetMm = hasBrownFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
-    const frameInsetMm = hasBrownFrame ? safeFrameSpacingMm : 0;
+    const pageInsetMm = hasLightBlueFrame ? safePageMarginMm : safePageMarginMm + safeFrameSpacingMm;
+    const frameInsetMm = hasLightBlueFrame ? safeFrameSpacingMm : 0;
 
     const planned = planSheets(
       normalizedItems,
@@ -6583,7 +6583,7 @@ const LayoutPlannerModal = ({
       pageInsetMm,
       frameInsetMm,
       {
-        // Normal MJ frame should have only the brown frame, without strip offset area.
+        // Normal MJ frame should have only the light blue frame, without strip offset area.
         leftStripWidthMm: 0,
       }
     );
@@ -6596,7 +6596,7 @@ const LayoutPlannerModal = ({
     }));
 
     return { sheets: sheetsWithIndex, leftovers: planned?.leftovers || [] };
-  }, [normalizedItems, sheetSize, pdfSortOrder, effectiveSignSpacingMm, pdfPageMargin, frameSpacingMm, isMjFrameMode, hasBrownFrame]);
+  }, [normalizedItems, sheetSize, pdfSortOrder, effectiveSignSpacingMm, pdfPageMargin, frameSpacingMm, isMjFrameMode, hasLightBlueFrame]);
 
   const { visibleSheets, visibleLeftovers } = useMemo(() => {
     if (selectedMaterialKey === "all") {
@@ -6664,7 +6664,7 @@ const LayoutPlannerModal = ({
       const sheetLabel = FORMATS[formatKey]?.label || "sheet";
 
       const computeFrameRect = (sheet) => {
-        if (!hasBrownFrame) return null;
+        if (!hasLightBlueFrame) return null;
         const placements = Array.isArray(sheet?.placements) ? sheet.placements : [];
         if (!placements.length) return null;
 
@@ -7507,7 +7507,7 @@ const LayoutPlannerModal = ({
                   if (labelBandWidthMm <= 0) return null;
 
                   const fallbackYCenterMm = (() => {
-                    if (hasBrownFrame && frameRect) return frameRect.y + frameRect.height / 2;
+                    if (hasLightBlueFrame && frameRect) return frameRect.y + frameRect.height / 2;
                     if (placementsBounds) return (placementsBounds.minY + placementsBounds.maxY) / 2;
                     return (Number(sheet?.height) || 0) / 2;
                   })();
@@ -7595,7 +7595,7 @@ const LayoutPlannerModal = ({
                           </svg>
                         </div>
                       ) : null}
-                      {hasBrownFrame && frameRect ? (
+                      {hasLightBlueFrame && frameRect ? (
                         <div
                           className={styles.frameRect}
                           style={{

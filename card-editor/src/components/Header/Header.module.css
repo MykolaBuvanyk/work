@@ -23,14 +23,14 @@
 }
 
 .desktopLogoWrap {
-  width: 200px;
-  height: auto;
+  width: 315px;
+  height: 80px;
   flex-shrink: 0;
 }
 
 .desktopLogoWrap svg {
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .leftList {

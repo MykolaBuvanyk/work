@@ -1096,6 +1096,9 @@ const annotateFabricTextMetricsInSvgMarkup = (markup, fabricObjects = []) => {
       if (Number.isFinite(height) && height > 0) {
         node.setAttribute("data-fabric-text-height", String(height));
       }
+      if (object.underline === true) {
+        node.setAttribute("data-fabric-underline", "true");
+      }
     });
 
     return new XMLSerializer().serializeToString(doc.documentElement);
@@ -5195,6 +5198,9 @@ const isLikelyBarcodeBarPath = (scope, item) => {
   if (!(item instanceof scope.Path)) return false;
   if (!item.closed) return false;
 
+  const itemName = String(item?.name || "").trim().toLowerCase();
+  if (itemName.startsWith(GENERIC_SHAPE_ID_PREFIX)) return false;
+
   const segmentCount = Array.isArray(item.segments) ? item.segments.length : 0;
   if (segmentCount < 4 || segmentCount > 6) return false;
 
@@ -5209,7 +5215,26 @@ const isLikelyBarcodeBarPath = (scope, item) => {
   const maxSide = Math.max(width, height);
   const aspect = maxSide / minSide;
 
-  return Number.isFinite(aspect) && aspect >= 3.5;
+  if (!Number.isFinite(aspect) || aspect < 3.5) return false;
+
+  const uniqueWithin = (values, tolerance = 1e-4) => {
+    const unique = [];
+    values.forEach((value) => {
+      if (!Number.isFinite(value)) return;
+      if (!unique.some((existing) => Math.abs(existing - value) <= tolerance)) {
+        unique.push(value);
+      }
+    });
+    return unique;
+  };
+
+  const points = (item.segments || [])
+    .map((segment) => segment?.point)
+    .filter(Boolean);
+  const uniqueX = uniqueWithin(points.map((point) => Number(point.x)));
+  const uniqueY = uniqueWithin(points.map((point) => Number(point.y)));
+
+  return uniqueX.length === 2 && uniqueY.length === 2;
 };
 
 const copyPaperPathStyle = (fromPath, toPath) => {

@@ -987,6 +987,24 @@ const resolveTextStyleValue = (textNode, property) => {
   return getDescendantNodeStyleValue(textNode, 'tspan', property) || '';
 };
 
+const resolveTextDecoration = (textNode) => {
+  const decorationLine = resolveTextStyleValue(textNode, 'text-decoration-line');
+  const decoration = resolveTextStyleValue(textNode, 'text-decoration');
+  const dataUnderline =
+    resolveTextStyleValue(textNode, 'data-fabric-underline') ||
+    resolveTextStyleValue(textNode, 'data-underline') ||
+    resolveTextStyleValue(textNode, 'underline');
+  const normalized = String(decorationLine || decoration || '').toLowerCase();
+  const normalizedData = String(dataUnderline || '').toLowerCase();
+  return {
+    underline:
+      normalized.includes('underline') ||
+      normalizedData === 'true' ||
+      normalizedData === '1' ||
+      normalizedData === 'underline',
+  };
+};
+
 const getDeclaredNodeFontSizePx = (node, inheritedSizePx = 16) => {
   if (!node || typeof node.getAttribute !== 'function') return null;
 
@@ -3147,6 +3165,8 @@ app.post('/api/layout-pdf', async (req, res) => {
                   continue;
                 }
 
+                const { underline: hasUnderline } = resolveTextDecoration(textNode);
+
                 doc.save();
 
                 const measureWithPdfkit = (requestedFontId, text) => {
@@ -3371,6 +3391,24 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                     segmentX += segment.width;
                   });
+
+                  if (hasUnderline) {
+                    const underlineOffset = scaledFontSize * 0.12;
+                    const underlineThickness = Math.max(
+                      scaledFontSize * 0.04,
+                      0.2
+                    );
+                    const outlineWidth = Math.max(strokeWidthPt, 0.2);
+                    const lineStartX = useWidthScale ? 0 : segmentStartX;
+                    const lineY = (useWidthScale ? 0 : baselineY) + underlineOffset;
+                    const lineWidth = Math.max(textWidth, 0);
+                    doc.save();
+                    doc.lineWidth(outlineWidth);
+                    doc.lineCap('butt');
+                    doc.rect(lineStartX, lineY, lineWidth, underlineThickness);
+                    doc.stroke();
+                    doc.restore();
+                  }
 
                   if (useWidthScale) {
                     doc.restore();

@@ -946,10 +946,10 @@ const ShapeProperties = ({
   const makeRoundedTurnRightPath = (w, h, r) => {
     const pts = [
       { x: w * 0.675, y: h },
-      { x: 0, y: h },
-      { x: 0, y: 0 },
-      { x: w * 0.7, y: 0 },
       { x: w, y: h * 0.51 },
+      { x: w * 0.7, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: h },
     ];
     const maxR = Math.min(w, h) * 0.49;
     const rClamped = Math.max(0, Math.min(r || 0, maxR));

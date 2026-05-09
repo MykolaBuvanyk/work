@@ -48,7 +48,7 @@ const HomePlaceholder = () => {
       <section className={styles.topTitleSection}>
         <div className={styles.container}>
           <h1 className={styles.topTitle}>
-            From design to delivery - your sign <span>in 24 hours!</span>
+            {t("HomePlaceholder.h_1")} <span> {t("HomePlaceholder.h_2")}</span>
           </h1>
         </div>
       </section>
@@ -71,21 +71,20 @@ const HomePlaceholder = () => {
         <div className={`${styles.container} ${styles.heroContainer}`}>
           <div className={styles.heroText}>
             <h2 className={styles.heroTitle}>
-              <span className={styles.brandBlue}>SignXpert</span> - Expert-Level
+              <span className={styles.brandBlue}>SignXpert</span>  {t("HomePlaceholder.h_3")}
               <br />
-              Industrial Marking
+               {t("HomePlaceholder.h_4")}
             </h2>
 
             <p className={styles.heroDescription}>
-              We produce durable engraved signs and nameplates from high-quality plastic for
-              Industry, energy, and business sectors.
+               {t("HomePlaceholder.h_5")}
             </p>
 
             <Link to="/online-sign-editor" className={styles.heroButton}>
-              Design Your Sign
+               {t("HomePlaceholder.h_6")}
             </Link>
 
-            <p className={styles.heroNote}>Order before 16:00 for same-day dispatch</p>
+            <p className={styles.heroNote}> {t("HomePlaceholder.h_7")}</p>
           </div>
         </div>
       </section>
@@ -93,21 +92,20 @@ const HomePlaceholder = () => {
       <section className={styles.whySection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center}`}>
-            Why Choose <span className={styles.brandBlue}>SignXpert</span>
+             {t("HomePlaceholder.h_8")} <span className={styles.brandBlue}>SignXpert</span>
           </h2>
 
           <div className={styles.whyGrid}>
             <article className={styles.whyCard}>
               <div className={styles.whyCardContent}>
-                <h3>Fair Pricing. Industrial Quality.</h3>
+                <h3> {t("HomePlaceholder.h_9")}</h3>
 
                 <p className={styles.accentText}>
-                  In today&apos;s market, we know that budget matters.
+                   {t("HomePlaceholder.h_10")}
                 </p>
 
                 <p>
-                  SignXpert provides high-quality signs and fast production at competitive rates -
-                  professional results without overpaying.
+                  {t("HomePlaceholder.h_11")}
                 </p>
               </div>
 
@@ -116,24 +114,23 @@ const HomePlaceholder = () => {
 
             <article className={styles.whyCard}>
               <div className={styles.whyCardContent}>
-                <h3>Volume Discounts</h3>
+                <h3> {t("HomePlaceholder.h_12")}</h3>
 
-                <p className={styles.accentText}>The more you order, the lower the price.</p>
+                <p className={styles.accentText}> {t("HomePlaceholder.h_13")}</p>
 
                 <p>
-                  Our transparent discount system automatically reduces costs as your volume grows -
-                  the smart way to save.
+                   {t("HomePlaceholder.h_14")}
                 </p>
 
                 <p className={styles.readMore}>
                   <em>
-                    *Read more{' '}
+                    {t("HomePlaceholder.h_15")}{' '}
                     <button
                       type="button"
                       className={styles.readMoreButton}
                       onClick={() => setIsVolumeDiscountModalOpen(true)}
                     >
-                      here
+                       {t("HomePlaceholder.h_16")}
                     </button>
                   </em>
                 </p>
@@ -188,33 +185,31 @@ const HomePlaceholder = () => {
             </svg>
           </button>
 
-          <h2 id="volume-discount-title">Volume Discounts</h2>
+          <h2 id="volume-discount-title"> {t("HomePlaceholder.h_17")}</h2>
 
           <div className={styles.volumeDiscountContent}>
             <p>
               <strong>
-                We strive to offer you the best prices, which is why we&apos;ve introduced a volume
-                discount system:
+                 {t("HomePlaceholder.h_18")}
               </strong>
             </p>
-            <p>the higher your order amount, the lower the price.</p>
+            <p> {t("HomePlaceholder.h_19")}</p>
             <p>
-              The discount applies to the current project only (not cumulative) and is calculated
-              automatically:
+               {t("HomePlaceholder.h_20")}
             </p>
 
             <div className={styles.volumeDiscountList}>
-              <p>Order amount :</p>
-              <p>from €30 to €50 — 5%</p>
-              <p>from €50 to €100 — 10%</p>
-              <p>from €100 to €200 — 15%</p>
-              <p>from €200 to €500 — 20%</p>
-              <p>from €500 to €10000 — 25%</p>
+              <p> {t("HomePlaceholder.h_21")}</p>
+              <p> {t("HomePlaceholder.h_22")}</p>
+              <p> {t("HomePlaceholder.h_23")}</p>
+              <p> {t("HomePlaceholder.h_24")}</p>
+              <p> {t("HomePlaceholder.h_25")}</p>
+              <p> {t("HomePlaceholder.h_26")}</p>
             </div>
 
             <p className={styles.volumeDiscountNote}>
               <strong>
-                Discount applies to the current project only and does not include accessories.
+                 {t("HomePlaceholder.h_27")}
               </strong>
             </p>
           </div>
@@ -224,31 +219,29 @@ const HomePlaceholder = () => {
       <section className={styles.customSection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center} ${styles.customTitle}`}>
-            Custom Engraved <span className={styles.highlightYellow}>Signs</span> Made Easy
+             {t("HomePlaceholder.h_28")} <span className={styles.highlightYellow}> {t("HomePlaceholder.h_29")}</span>  {t("HomePlaceholder.h_30")}
           </h2>
 
           <div className={styles.equalGrid}>
             <div className={`${styles.textBox} ${styles.customTextBox}`}>
               <h3 className={styles.customHeading}>
-                Design professional engraved plastic signs, labels and nameplates in minutes with{' '}
+                 {t("HomePlaceholder.h_31")}{' '}
                 <span className={styles.brandBlue}>SignXpert</span>
               </h3>
 
               <p>
-                Using our easy <Link to="/online-sign-editor">online sign editor</Link>, you can
-                create fully customized signs for:
+                {t("HomePlaceholder.h_32")} <Link to="/online-sign-editor"> {t("HomePlaceholder.h_33")}</Link>  {t("HomePlaceholder.h_34")}
               </p>
 
               <ul>
-                <li>Machines</li>
-                <li>Electrical panels</li>
-                <li>Technical installations</li>
-                <li>Offices</li>
+                <li> {t("HomePlaceholder.h_35")}</li>
+                <li> {t("HomePlaceholder.h_36")}</li>
+                <li> {t("HomePlaceholder.h_37")}</li>
+                <li> {t("HomePlaceholder.h_38")}</li>
               </ul>
-              <p style={{ color: '#006ca4' }}>— exactly the way you need them.</p>
+              <p style={{ color: '#006ca4' }}> {t("HomePlaceholder.h_39")}</p>
               <p>
-                Whether you need one sign or a large batch, SignXpert delivers reliable quality and
-                fast production.
+                 {t("HomePlaceholder.h_40")}
               </p>
             </div>
 
@@ -268,25 +261,23 @@ const HomePlaceholder = () => {
 
             <div className={`${styles.textBox} ${styles.sideTextBox}`}>
               <h2 className={styles.sideTitle}>
-                <span className={styles.brandBlue}>Fast</span> Production and Delivery
+                <span className={styles.brandBlue}> {t("HomePlaceholder.h_41")}</span>  {t("HomePlaceholder.h_42")}
               </h2>
 
               <p>
-                <strong>At SignXpert,</strong> we combine modern production technology with an
-                efficient online ordering system to provide fast delivery.
+                <strong> {t("HomePlaceholder.h_43")}</strong>  {t("HomePlaceholder.h_44")}
               </p>
 
               <ul>
                 <li>
-                  <span className={styles.brandBlue}>Order before 16:00 for same-day dispatch</span>
+                  <span className={styles.brandBlue}> {t("HomePlaceholder.h_45")}</span>
                 </li>
-                <li>reliable shipping across Germany and Europe</li>
-                <li>fast response and customer support</li>
+                <li> {t("HomePlaceholder.h_46")}</li>
+                <li> {t("HomePlaceholder.h_47")}</li>
               </ul>
 
               <p>
-                This allows businesses and professionals to receive their custom engraved signs
-                quickly and reliably.
+                 {t("HomePlaceholder.h_48")}
               </p>
             </div>
           </div>
@@ -298,20 +289,17 @@ const HomePlaceholder = () => {
           <div className={styles.equalGrid}>
             <div className={`${styles.textBox} ${styles.sideTextBox}`}>
               <h2 className={styles.sideTitle}>
-                <span className={styles.brandBlue}>Durable</span> Engraved Plastic Signs
+                <span className={styles.brandBlue}> {t("HomePlaceholder.h_49")}</span>  {t("HomePlaceholder.h_50")}
               </h2>
 
               <p>
                 <strong>
-                  All SignXpert products are manufactured from high-quality two-layer engraving
-                  plastic.
+                   {t("HomePlaceholder.h_51")}
                 </strong>
               </p>
 
               <p>
-                During laser engraving, the top layer is engraved to reveal the contrasting color
-                underneath. This ensures permanent, high-contrast markings that remain readable for
-                years.
+                 {t("HomePlaceholder.h_52")}
               </p>
             </div>
 
@@ -325,7 +313,7 @@ const HomePlaceholder = () => {
       <section className={styles.benefitsSection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center}`}>
-            Your Benefits with <span className={styles.brandBlue}>SignXpert</span>
+             {t("HomePlaceholder.h_53")} <span className={styles.brandBlue}>SignXpert</span>
           </h2>
 
           <div className={styles.benefitsGrid}>
@@ -334,7 +322,7 @@ const HomePlaceholder = () => {
                 src="/images/home/icon-custom-production.png"
                 alt="Custom production from 1 piece"
               />
-              <h3>Custom production from 1 Piece</h3>
+              <h3> {t("HomePlaceholder.h_54")}</h3>
             </article>
 
             <article className={styles.benefitCard}>
@@ -342,7 +330,7 @@ const HomePlaceholder = () => {
                 src="/images/home/icon-industry-solutions.png"
                 alt="Professional solutions for industry and business"
               />
-              <h3>Professional solutions for Industry and Business</h3>
+              <h3> {t("HomePlaceholder.h_55")}</h3>
             </article>
 
             <article className={styles.benefitCard}>
@@ -350,12 +338,12 @@ const HomePlaceholder = () => {
                 src="/images/home/icon-laser-engraved.png"
                 alt="Precision laser engraved signs"
               />
-              <h3>Precision laser engraved signs</h3>
+              <h3> {t("HomePlaceholder.h_56")}</h3>
             </article>
 
             <article className={styles.benefitCard}>
               <img src="/images/home/icon-adhesive-sign.png" alt="Self-adhesive signs" />
-              <h3>Self-Adhesive signs</h3>
+              <h3> {t("HomePlaceholder.h_57")}</h3>
             </article>
           </div>
         </div>

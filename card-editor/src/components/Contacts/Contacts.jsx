@@ -2,8 +2,10 @@ import React from 'react';
 import './Contacts.scss';
 import { Link } from 'react-router-dom';
 import { $host } from '../../http';
+import { useTranslation } from 'react-i18next';
 
 const Contacts = () => {
+  const {t}=useTranslation()
   const sendWithContact = async (e) => {
     e.preventDefault();
 
@@ -29,12 +31,12 @@ const Contacts = () => {
 
   return (
     <div className='contacts-container'>
-      <h1>Contacts</h1>
+      <h1>{t("contacts.description_90")}</h1>
 
       <div className="contact-grid">
         <div className="info-column">
           <section>
-            <div className="section-title2">Customer Service</div>
+            <div className="section-title2">{t("contacts.description_91")}</div>
 
             <div className="whatsapp-link">
               <span>Whats App</span>
@@ -51,7 +53,7 @@ const Contacts = () => {
           </section>
 
           <section>
-            <div className="section-title2">Registered Address</div>
+            <div className="section-title2">{t("contacts.description_92")}</div>
             <div className="contact-text address-box">
               Baumwiesen 2<br />
               Haigerloch<br />
@@ -60,19 +62,19 @@ const Contacts = () => {
           </section>
 
           <section>
-            <div className="section-title2">Opening Times</div>
-            <div className="contact-text">Monday - Friday, 08:00 - 19:00</div>
+            <div className="section-title2">{t("contacts.description_93")}</div>
+            <div className="contact-text">{t("contacts.description_94")}</div>
           </section>
         </div>
 
         <div className="form-column">
           <div className="form-title2">
-            Or use this form to contact us
+           {t("contacts.description_95")}
           </div>
 
           <form onSubmit={sendWithContact}>
             <div className="input-group">
-              <label htmlFor="name">Name</label>
+              <label htmlFor="name">{t("contacts.description_96")}</label>
               <input type="text" id="name" name="name" required />
             </div>
 
@@ -82,7 +84,7 @@ const Contacts = () => {
             </div>
 
             <div className="input-group">
-              <label htmlFor="question">*Question</label>
+              <label htmlFor="question">{t("contacts.description_97")}</label>
               <textarea
                 id="question"
                 name="question"
@@ -92,7 +94,7 @@ const Contacts = () => {
             </div>
 
             <button type="submit" className="send-btn">
-              SEND
+              {t("contacts.description_98")}
             </button>
           </form>
         </div>

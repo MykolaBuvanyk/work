@@ -1,11 +1,13 @@
 import React from 'react'
 import './QuickGuide.scss'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next';
 
 const QuickGuide = () => {
+    const {t}=useTranslation()
   return (
     <div className='quick-guide-container'>
-        <h1>We provide</h1>
+        <h1>{t("QuickGuide.d_1")}</h1>
         <ul>
             <li>
                 <div className="svg">
@@ -13,9 +15,9 @@ const QuickGuide = () => {
                     <path d="M1.79861 9.49495L10.7986 18.8175L28.7986 1.81754" stroke="#0BC944" stroke-width="5"/>
                     </svg>
                 </div>
-                <div className="a">Easy</div>
-                <p>Design by</p>
-                <span>your Self</span>
+                <div className="a">{t("QuickGuide.d_2")}</div>
+                <p>{t("QuickGuide.d_3")}</p>
+                <span>{t("QuickGuide.d_4")}</span>
             </li>
             <li>
                 <div className="svg">
@@ -23,9 +25,9 @@ const QuickGuide = () => {
                     <path d="M1.79861 9.49495L10.7986 18.8175L28.7986 1.81754" stroke="#0BC944" stroke-width="5"/>
                     </svg>
                 </div>
-                <div className="a">Fast</div>
-                <p>Manufacturing</p>
-                <span>Within 8h</span>
+                <div className="a">{t("QuickGuide.d_5")}</div>
+                <p>{t("QuickGuide.d_6")}</p>
+                <span>{t("QuickGuide.d_7")}</span>
             </li>
             <li>
                 <div className="svg">
@@ -33,21 +35,21 @@ const QuickGuide = () => {
                     <path d="M1.79861 9.49495L10.7986 18.8175L28.7986 1.81754" stroke="#0BC944" stroke-width="5"/>
                     </svg>
                 </div>
-                <div className="a">Quick</div>
-                <p>Delivery</p>
-                <span>Yours in 24–48h</span>
+                <div className="a">{t("QuickGuide.d_8")}</div>
+                <p>{t("QuickGuide.d_9")}</p>
+                <span>{t("QuickGuide.d_10")}</span>
             </li>
         </ul>
         <div className="how-start">
             <img src='/images/quick1.png'/>
         </div>
-        <h2>How to use the editor</h2>
+        <h2>{t("QuickGuide.d_11")}</h2>
         <div className="instruction">
             <img src='/images/quick3.png'/>
         </div>
         <div className="butons-url">
-            <Link to='/online-sign-editor'>New Project</Link>
-            <Link to='/contacts'>Contact us</Link>
+            <Link to='/online-sign-editor'>{t("QuickGuide.d_12")}</Link>
+            <Link to='/contacts'>{t("QuickGuide.d_13")}</Link>
         </div>
 
     </div>

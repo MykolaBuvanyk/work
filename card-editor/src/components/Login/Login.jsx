@@ -2,15 +2,16 @@ import React from 'react';
 import './Login.scss';
 import LoginForm from '../LoginForm/LoginForm';
 import LoginRegister from '../LoginRegister/LoginRegister';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
+  const {t}=useTranslation()
   return (
     <div className="login-container">
-      <h1>Register a new account</h1>
-      <p>To place an order with us, you first need to create an account. It’s quick and easy!</p>
+      <h1>{t("Login.l_1")}</h1>
+      <p>{t("Login.l_2")}</p>
       <div className="info" style={{ marginBottom: '46px' }}>
-        Fields marked with an asterisk (*) are required. Choose a password, and we’ll send you a
-        confirmation email shortly.
+        {t("Login.l_3")}
       </div>
       <div className="login-main">
         <div className="form-log">

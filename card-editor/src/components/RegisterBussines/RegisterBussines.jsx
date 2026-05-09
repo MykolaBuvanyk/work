@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import ReadMoreModal from './ReadMoreModal';
 import { $host } from '../../http';
 import combinedCountries from '../Countries';
+import { useTranslation } from 'react-i18next';
 
 const tellAboutList=[
   'Online / Internet',
@@ -62,11 +63,12 @@ const replaceEmailInList = (emails, previousEmail, nextEmail) => {
 };
 
 const RegisterBussines = () => {
+    const {t}=useTranslation()
     const [isInvoice,setIsInvoice]=useState(false);
-  const [isReadMoreOpen, setIsReadMoreOpen] = useState(false);
+    const [isReadMoreOpen, setIsReadMoreOpen] = useState(false);
     const [vatCheckState, setVatCheckState] = useState(null); // null | 'valid' | 'invalid'
-  const [tellAboutSelection, setTellAboutSelection] = useState('');
-  const [invoiceEmailSync, setInvoiceEmailSync] = useState({
+    const [tellAboutSelection, setTellAboutSelection] = useState('');
+    const [invoiceEmailSync, setInvoiceEmailSync] = useState({
     linked: true,
     sourceValue: '',
   });
@@ -176,39 +178,39 @@ const RegisterBussines = () => {
       <div className="registration-table">
         {/* Row: First Name */}
         <div className="table-row">
-          <div className="label-cell">*First name and Surname</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_1")}</div>
           <div className="input-cell"><MyTextInput required value={formData.firstName} setValue={handleInput('firstName')} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">*Company Name</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_22")}</div>
           <div className="input-cell"><MyTextInput required value={formData.company} setValue={handleInput('company')} /></div>
         </div>
         {/* Row: Address 1 */}
         <div className="table-row">
-          <div className="label-cell">*Address 1</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_2")}</div>
           <div className="input-cell"><MyTextInput required value={formData.address} setValue={handleInput('address')} /></div>
         </div>
         {/* Rows: Address 2 & 3 */}
         <div className="table-row">
-          <div className="label-cell">Address 2</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_3")}</div>
           <div className="input-cell"><MyTextInput value={formData.address2} setValue={handleInput('address2')} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">Address 3</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_4")}</div>
           <div className="input-cell"><MyTextInput value={formData.address3} setValue={handleInput('address3')} /></div>
         </div>
         {/* Town & Postal */}
         <div className="table-row">
-          <div className="label-cell">*Town</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_5")}</div>
           <div className="input-cell"><MyTextInput required value={formData.city} setValue={handleInput('city')} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">*Postal code</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_6")}</div>
           <div className="input-cell"><MyTextInput required value={formData.postcode} setValue={handleInput('postcode')} /></div>
         </div>
         {/* Country Select */}
         <div className="table-row">
-          <div className="label-cell">*Country</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_7")}</div>
           <div className="input-cell country-row">
             <select onChange={e => handleInput('country')(e.target.value)} value={formData.country}>
               {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
@@ -218,18 +220,18 @@ const RegisterBussines = () => {
         </div>
         {/* E-mail & Phone */}
         <div className="table-row">
-          <div className="label-cell">*E-Mail address</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_8")}</div>
           <div className="input-cell"><MyTextInput required value={formData.email} setValue={handlePrimaryEmailInput} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">*Mobile Phone</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_9")}</div>
           <div className="input-cell"><MyTextInput required value={formData.phone} setValue={handleInput('phone')} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">Vat Number</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_23")}</div>
           <div className="input-cell">
             <div className="vat-row">
-              <MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} placeholder={"No VAT? Continue without it."} />
+              <MyTextInput value={formData.vatNumber} setValue={handleInput('vatNumber')} placeholder={t("RegisterConsumer.rr_24")} />
               {/* {formData.country !== 'DE' && (
                 <>
                   <button
@@ -260,16 +262,16 @@ const RegisterBussines = () => {
         </div>
         {/* Password Fields */}
         <div className="table-row">
-          <div className="label-cell">*Password</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_10")}</div>
           <div className="input-cell"><MyTextPassword required value={formData.password} setValue={handleInput('password')} /></div>
         </div>
         <div className="table-row">
-          <div className="label-cell">*Confirm Password</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_11")}</div>
           <div className="input-cell"><MyTextPassword required value={formData.confirmPassword} setValue={handleInput('confirmPassword')} /></div>
         </div>
         {/* Additional Info */}
         <div className="table-row">
-          <div className="label-cell">Additional Information</div>
+          <div className="label-cell">{t("RegisterConsumer.rr_12")}</div>
           <div className="input-cell"><MyTextInput value={formData.additional} setValue={handleInput('additional')} /></div>
         </div>
       </div>
@@ -277,7 +279,7 @@ const RegisterBussines = () => {
         *Companies can only receive VAT-free orders when providing a valid VAT-number. <a href="#" onClick={e => { e.preventDefault(); setIsReadMoreOpen(true); }}>Read more</a>
       </p> */}
       <p className="vat-notice">
-        *Currently no VAT charged per § 19 UStG (Small Business).
+        {t("RegisterConsumer.rr_25")}
       </p>
       {vatCheckState === 'valid' && (
         <div className="vat-check-result valid">VAT Confirmed. Thank you!</div>
@@ -294,55 +296,55 @@ const RegisterBussines = () => {
             onChange={e => setIsInvoice(e.target.checked)} 
           />
           <span className="checkmark"></span>
-          Invoice address (if different from above)
+          {t("RegisterConsumer.rr_13")}
         </label>
 
         {isInvoice&&
         <div className="registration-table">
           <div className="table-row">
-            <div className="label-cell">*First name and Surname</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_1")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.firstName2} setValue={handleInput('firstName2')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Company Name</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_22")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.company2} setValue={handleInput('company2')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Address 1</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_2")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.address4} setValue={handleInput('address4')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">Address 2</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_3")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.address5} setValue={handleInput('address5')} />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">Address 3</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_4")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.address6} setValue={handleInput('address6')} />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Town</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_5")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.city2} setValue={handleInput('city2')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Postal code </div>
+            <div className="label-cell">{t("RegisterConsumer.rr_6")} </div>
             <div className="input-cell">
               <MyTextInput value={formData.postcode2} setValue={handleInput('postcode2')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Country</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_7")}</div>
             <div className="input-cell country-row">
               <select onChange={e => handleInput('country2')(e.target.value)} value={formData.country2}>
                 {combinedCountries.map(x => <option key={x.code} value={x.code}>{x.label}</option>)}
@@ -351,13 +353,13 @@ const RegisterBussines = () => {
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*E-Mail address</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_8")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.eMailInvoice} setValue={handleInput('eMailInvoice')} required />
             </div>
           </div>
           <div className="table-row">
-            <div className="label-cell">*Mobile Phone</div>
+            <div className="label-cell">{t("RegisterConsumer.rr_9")}</div>
             <div className="input-cell">
               <MyTextInput value={formData.phone2} setValue={handleInput('phone2')} required />
             </div>
@@ -367,12 +369,12 @@ const RegisterBussines = () => {
         <label className="radio-style">
           <input type="checkbox" checked={formData.isSubscribe} onChange={e => handleInput('isSubscribe')(e.target.checked)} />
           <span className="checkmark"></span>
-          Yes please. I would like to subscribe to your mailings and receive news and offers.
+          {t("RegisterConsumer.rr_14")}
         </label>
         <div className="we-will-container">
           <div className="text-content">
-            <p>We will send the invoice to the e-mail you provided.</p>
-            <p>You can also add another e-mail, separated by a comma, if you wish.</p>
+            <p>{t("RegisterConsumer.rr_15")}</p>
+            <p>{t("RegisterConsumer.rr_16")}</p>
           </div>
           
           <div className="input-group">
@@ -381,7 +383,7 @@ const RegisterBussines = () => {
         </div>
         <div style={{marginTop:'7.5px'}} className="we-will-container we-will-container2">
           <div className="text-content">
-            <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>Please tell us where you heard about us — it will help us improve!</p>
+            <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>{t("RegisterConsumer.rr_17")}</p>
           </div>
           {tellAboutSelection === 'Other' ? (
             <div className="tell-about-combo">
@@ -401,18 +403,17 @@ const RegisterBussines = () => {
             </div>
           ) : (
             <select onChange={e => handleTellAboutSelect(e.target.value)} value={tellAboutSelection}>
-              <option value="" disabled>Choose the answer</option>
+              <option value="" disabled>{t("RegisterConsumer.rr_18")}</option>
               {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
             </select>
           )}
         </div>
       </div>
 
-      <button className="register-btn">Register</button>
+      <button className="register-btn">{t("RegisterConsumer.rr_19")}</button>
 
       <div className="footer-info">
-        SignXpert gathers your personal information when you set up an account, using it for
-        advertising purposes and to handle and complete any future orders. You can learn more in our <Link to="/privacy-policy">privacy policy.</Link>
+        {t("RegisterConsumer.rr_20")} <Link to="/privacy-policy">{t("RegisterConsumer.rr_21")}</Link>
       </div>
       {isReadMoreOpen && <ReadMoreModal onClose={() => setIsReadMoreOpen(false)} />}
     </form>

@@ -536,6 +536,16 @@ const mapRemoteToLocalProject = (remote, existingLocal = null) => {
     existingLocal?.id ||
     (typeof remote.clientProjectId === "string" && remote.clientProjectId.trim()) ||
     uuid();
+  const remoteSnapshot =
+    remote.project && typeof remote.project === "object" ? remote.project : {};
+  const manufacturerNote =
+    typeof remote.manufacturerNote === "string"
+      ? remote.manufacturerNote
+      : typeof remoteSnapshot.manufacturerNote === "string"
+        ? remoteSnapshot.manufacturerNote
+        : typeof existingLocal?.manufacturerNote === "string"
+          ? existingLocal.manufacturerNote
+          : "";
 
   return {
     ...(existingLocal || {}),
@@ -551,6 +561,7 @@ const mapRemoteToLocalProject = (remote, existingLocal = null) => {
     lastOrderedAt: Number.isFinite(Number(remote.lastOrderedAt))
       ? Number(remote.lastOrderedAt)
       : existingLocal?.lastOrderedAt,
+    manufacturerNote,
     canvases: Array.isArray(remote.canvases)
       ? remote.canvases.map(normalizeCanvasEntryForUi)
       : Array.isArray(existingLocal?.canvases)
@@ -856,6 +867,20 @@ const persistLocallyAndSyncOnSave = async (
   return localProject;
 };
 
+const readCurrentManufacturerNote = () => {
+  try {
+    if (typeof window === "undefined") return "";
+    if (typeof window.getManufacturerNote === "function") {
+      return String(window.getManufacturerNote() || "");
+    }
+    if (Object.prototype.hasOwnProperty.call(window, "_manufacturerNote")) {
+      return String(window._manufacturerNote ?? "");
+    }
+  } catch {}
+
+  return "";
+};
+
 export async function resetEditorStateForUserSwitch() {
   try {
     await clearAllUnsavedSigns();
@@ -889,6 +914,7 @@ export async function resetEditorStateForUserSwitch() {
       window.__currentProjectCanvasId = null;
       window.__currentProjectCanvasIndex = null;
       window.__pendingUnsavedCleanupId = null;
+      window._manufacturerNote = "";
     }
   } catch {}
 
@@ -3067,6 +3093,7 @@ export async function saveNewProject(name, canvas, options = {}) {
     name: name && String(name).trim() ? String(name).trim() : "Untitled",
     createdAt: now,
     updatedAt: now,
+    manufacturerNote: readCurrentManufacturerNote(),
     canvases,
     accessories: getSelectedAccessoriesSnapshot(),
   };
@@ -3314,6 +3341,7 @@ export async function saveCurrentProject(canvas, options = {}) {
             ...existing,
             canvases,
             updatedAt: now,
+            manufacturerNote: readCurrentManufacturerNote(),
             accessories: getSelectedAccessoriesSnapshot(),
           };
           const persistedUpdated = syncRemote
@@ -3430,6 +3458,7 @@ export async function saveCurrentProject(canvas, options = {}) {
     ...existing,
     canvases,
     updatedAt: now,
+    manufacturerNote: readCurrentManufacturerNote(),
     accessories: getSelectedAccessoriesSnapshot(),
   };
   const persistedUpdated = syncRemote

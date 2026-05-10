@@ -298,6 +298,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [isOpeningProject, setIsOpeningProject] = useState(false);
   const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
   const [upsModalOpen, setUpsModalOpen] = useState(false);
+  const [manualTracking, setManualTracking] = useState('');
 
   const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
   const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
@@ -1530,6 +1531,19 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     }
   }
 
+  const saveManualTracking = async () => {
+    const tracking = manualTracking.trim();
+    if (!tracking) return;
+    try {
+      await $authHost.post('cart/setStatus', { orderId, newStatus: 'Shipped', trackingNumber: tracking });
+      setManualTracking('');
+      getOrder();
+      update();
+    } catch {
+      alert('Помилка збереження tracking number');
+    }
+  };
+
   const deleteCustomerAccount = async () => {
     const userId = Number(order?.userId || order?.user?.id);
     if (!Number.isFinite(userId)) {
@@ -1780,26 +1794,55 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           {isOpeningProject ? 'Opening...' : 'Open Project'}
         </div>
       </div>
+      <div className="row">
+        <p>Tracking Number:</p>
+        <span>
+          {order.trackingNumber
+            ? <a href={`https://www.ups.com/track?tracknum=${order.trackingNumber}`} target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>{order.trackingNumber}</a>
+            : '---'}
+        </span>
+        <div
+          style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer', whiteSpace:'nowrap'}}
+          onClick={() => setUpsModalOpen(true)}
+        >
+          Create shipment
+        </div>
+      </div>
+      <div className="row">
+        <p>Weight (kg):</p>
+        <span>
+          <span style={{background:'#0095e2', color:'#fff', borderRadius:'4px', padding:'1px 8px', fontSize:'13px'}}>
+            {parseFloat((order.signs * 0.2).toFixed(2))}
+          </span>
+        </span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Manual tracking:</p>
+        <span>
+          <input
+            placeholder="Enter tracking number"
+            value={manualTracking}
+            onChange={e => setManualTracking(e.target.value)}
+            style={{border:'1px solid #ccc', borderRadius:'4px', padding:'2px 6px', width:'100%', fontSize:'13px'}}
+          />
+        </span>
+        <div
+          style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer'}}
+          onClick={saveManualTracking}
+        >
+          Save
+        </div>
+      </div>
       <div className="buttons">
         <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>
-        <button className={order.status=='Shipped'?'active':''} onClick={()=>setUpsModalOpen(true)}>Shipped</button>
+        <button className={order.status=='Shipped'?'active':''} onClick={()=>setStatus('Shipped')}>Shipped</button>
         <button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
         <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
         <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
         {//<button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button>
         }</div>
-      {order.trackingNumber && (
-        <div className="row">
-          <p>Tracking Number:</p>
-          <span>
-            <a href={`https://www.ups.com/track?tracknum=${order.trackingNumber}`} target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>
-              {order.trackingNumber}
-            </a>
-          </span>
-          <div />
-        </div>
-      )}
       {upsModalOpen && (
         <UPSShipmentModal
           order={order}

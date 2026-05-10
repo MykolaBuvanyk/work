@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './OrderContainer.scss';
 import { $authHost } from '../http';
+import UPSShipmentModal from './UPSShipmentModal';
 import {
   clearAllUnsavedSigns,
   putProject,
@@ -296,6 +297,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const [isExporting, setIsExporting] = useState(false);
   const [isOpeningProject, setIsOpeningProject] = useState(false);
   const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
+  const [upsModalOpen, setUpsModalOpen] = useState(false);
 
   const [pdfMinPageWidth, setPdfMinPageWidth] = useState(0);
   const [pdfMinPageHeight, setPdfMinPageHeight] = useState(0);
@@ -1520,13 +1522,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
   const setStatus = async(newStatus) => {
     try {
-      let trackingNumber = undefined;
-      if (newStatus === 'Shipped') {
-        const input = window.prompt('Enter UPS tracking number (optional):');
-        if (input === null) return;
-        trackingNumber = input.trim() || undefined;
-      }
-      await $authHost.post('cart/setStatus', {orderId, newStatus, trackingNumber});
+      await $authHost.post('cart/setStatus', {orderId, newStatus});
       getOrder();
       update();
     }catch {
@@ -1790,12 +1786,35 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="buttons">
         <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>
-        <button className={order.status=='Shipped'?'active':''} onClick={()=>setStatus('Shipped')}>Shipped</button>
+        <button className={order.status=='Shipped'?'active':''} onClick={()=>setUpsModalOpen(true)}>Shipped</button>
         <button className={order.status=='Returned'?'active':''} onClick={()=>setStatus('Returned')}>Returned</button>
         <button className={order.status=='Delivered'?'active':''} onClick={()=>setStatus('Delivered')}>Delivered</button>
         <button className={order.status=='Waiting'?'active':''} onClick={()=>setStatus('Waiting')}>Waiting</button>
         {//<button className={order.status=='Received'?'active':''} onClick={()=>setStatus('Received')}>Received</button>
         }</div>
+      {order.trackingNumber && (
+        <div className="row">
+          <p>Tracking Number:</p>
+          <span>
+            <a href={`https://www.ups.com/track?tracknum=${order.trackingNumber}`} target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>
+              {order.trackingNumber}
+            </a>
+          </span>
+          <div />
+        </div>
+      )}
+      {upsModalOpen && (
+        <UPSShipmentModal
+          order={order}
+          deliverySectionData={deliverySectionData}
+          onClose={() => setUpsModalOpen(false)}
+          onSuccess={(trackingNumber) => {
+            getOrder();
+            update();
+            alert(`Shipment created! Tracking: ${trackingNumber}`);
+          }}
+        />
+      )}
       <div className="row">
         <p>Delivery Type</p>
         <span>{deliveryTypeLabel || '---'}</span>

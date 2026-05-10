@@ -24,6 +24,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     postalCode: deliverySectionData?.postalCode || '',
     country: countryRaw.toUpperCase().slice(0, 2),
     phone: deliverySectionData?.mobile || order?.user?.phone || '',
+    email: deliverySectionData?.email || order?.user?.email || '',
     weight: '1.0',
     serviceCode: '11',
   });
@@ -73,6 +74,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         <Field label="Postal Code" value={form.postalCode} onChange={set('postalCode')} required />
         <Field label="Country (2-letter)" value={form.country} onChange={set('country')} required maxLength={2} />
         <Field label="Phone" value={form.phone} onChange={set('phone')} />
+        <Field label="Email" value={form.email} onChange={set('email')} />
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Weight (kg)</label>

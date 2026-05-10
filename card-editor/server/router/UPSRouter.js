@@ -95,16 +95,18 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
               },
             },
           },
-          Package: {
-            PackagingType: {
-              Code: packagingCode,
-              Description: isEnvelope ? 'UPS Letter' : 'Customer Supplied Package',
+          Package: [
+            {
+              PackagingType: {
+                Code: packagingCode,
+                Description: isEnvelope ? 'UPS Letter' : 'Customer Supplied Package',
+              },
+              PackageWeight: {
+                UnitOfMeasurement: { Code: 'KGS', Description: 'Kilograms' },
+                Weight: String(parseFloat(weight) || 1),
+              },
             },
-            PackageWeight: {
-              UnitOfMeasurement: { Code: 'KGS', Description: 'Kilograms' },
-              Weight: String(parseFloat(weight) || 1),
-            },
-          },
+          ],
         },
         LabelSpecification: {
           LabelImageFormat: { Code: 'GIF' },
@@ -148,12 +150,14 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     return res.json({ success: true, trackingNumber });
   } catch (err) {
-    console.error('UPS shipment error:', err?.response?.data || err.message);
+    const upsData = err?.response?.data;
+    console.error('UPS shipment error:', JSON.stringify(upsData, null, 2) || err.message);
     const upsMsg =
-      err?.response?.data?.response?.errors?.[0]?.message ||
-      err?.response?.data?.message ||
+      upsData?.response?.errors?.[0]?.message ||
+      upsData?.response?.errors?.[0]?.code ||
+      upsData?.message ||
       err.message;
-    return res.status(500).json({ message: upsMsg });
+    return res.status(500).json({ message: upsMsg, detail: upsData?.response?.errors || [] });
   }
 });
 

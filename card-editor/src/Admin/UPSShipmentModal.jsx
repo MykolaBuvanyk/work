@@ -52,6 +52,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createdTracking, setCreatedTracking] = useState(null);
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -74,14 +75,42 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         orderId: order.id,
         ...form,
       });
+      setCreatedTracking(res.data.trackingNumber);
       onSuccess(res.data.trackingNumber);
-      onClose();
     } catch (err) {
       setError(err?.response?.data?.message || 'UPS shipment creation failed.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (createdTracking) {
+    return (
+      <div style={styles.overlay} onClick={onClose}>
+        <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <h3 style={{...styles.title, color:'#1a7a1a'}}>✓ Shipment Created</h3>
+          <p style={{fontSize:'14px', marginBottom:'8px'}}>Tracking number saved to order:</p>
+          <div style={{background:'#f0f7ff', border:'1px solid #0073bc', borderRadius:'6px', padding:'12px 16px', marginBottom:'16px'}}>
+            <span style={{fontSize:'18px', fontWeight:'700', color:'#0073bc', letterSpacing:'1px'}}>{createdTracking}</span>
+          </div>
+          <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>
+            You can review or edit this shipment on UPS.com. If you create a new label there with different data — copy the new tracking number and paste it in <b>Manual tracking</b> field in the order.
+          </p>
+          <div style={{display:'flex', gap:'10px', flexDirection:'column'}}>
+            <a
+              href={`https://www.ups.com/track?tracknum=${createdTracking}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{...styles.submitBtn, textDecoration:'none', textAlign:'center', display:'block'}}
+            >
+              View on UPS.com →
+            </a>
+            <button style={styles.cancelBtn} onClick={onClose}>Close</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.overlay} onClick={onClose}>

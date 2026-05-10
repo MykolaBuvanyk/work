@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
-import { Order, User } from '../models/models.js';
-import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
+import { Order } from '../models/models.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -166,19 +165,9 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
     }
 
     await Order.update(
-      { trackingNumber, status: 'Shipped' },
+      { trackingNumber },
       { where: { id: Number(orderId) } }
     );
-
-    const orderWithUser = await Order.findOne({
-      where: { id: Number(orderId) },
-      include: [{ model: User }],
-    });
-
-    await Promise.allSettled([
-      SendEmailForStatus.StatusShipped(orderWithUser),
-      SendEmailForStatus.StatusShipped2(orderWithUser),
-    ]);
 
     return res.json({ success: true, trackingNumber });
   } catch (err) {

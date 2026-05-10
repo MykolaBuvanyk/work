@@ -52,7 +52,6 @@ export default function Seo() {
     <Helmet>
       {/* base */}
       <html lang={lang} />
-      <meta name="google-site-verification" content="tX17DupBteIgDwvaNoBO68wNvQhHSWO5a5aVJYC19Ww" />
       <meta charSet="UTF-8" />
 
       <meta

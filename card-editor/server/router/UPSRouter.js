@@ -82,6 +82,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
               CountryCode: country.toUpperCase(),
             },
           },
+          Description: 'Signs',
           Service: {
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',

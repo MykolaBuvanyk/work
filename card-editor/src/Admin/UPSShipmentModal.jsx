@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
 import { $authHost } from '../http';
+import combinedCountries from '../components/Countries';
+
+function resolveCountryCode(raw) {
+  if (!raw) return '';
+  const s = raw.trim();
+  if (s.length === 2) return s.toUpperCase();
+  const found = combinedCountries.find(
+    c => c.label.toLowerCase() === s.toLowerCase()
+  );
+  return found ? found.code : s.toUpperCase().slice(0, 2);
+}
 
 const UPS_SERVICES = [
   { code: 'ENV', label: 'UPS Envelope' },
@@ -12,9 +23,9 @@ const UPS_SERVICES = [
 
 export default function UPSShipmentModal({ order, deliverySectionData, onClose, onSuccess }) {
   const countryRaw =
-    order?.orderMongo?.checkout?.deliveryAddress?.country ||
     order?.country ||
     order?.user?.country ||
+    order?.orderMongo?.checkout?.deliveryAddress?.country ||
     '';
 
   const [form, setForm] = useState({
@@ -25,7 +36,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     address3: deliverySectionData?.address3 || '',
     city: deliverySectionData?.town || '',
     postalCode: deliverySectionData?.postalCode || '',
-    country: countryRaw.toUpperCase().slice(0, 2),
+    country: resolveCountryCode(countryRaw),
     phone: deliverySectionData?.mobile || order?.user?.phone || '',
     email: deliverySectionData?.email || order?.user?.email || '',
     weight: '1.0',

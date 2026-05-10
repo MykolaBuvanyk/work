@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
@@ -24,6 +25,7 @@ import { createShareLink } from "../../http/share";
 
 
 const YourProjectsModal = ({ onClose }) => {
+  const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const [currentSlideIndex, setCurrentSlideIndex] = useState({});
@@ -423,7 +425,7 @@ const YourProjectsModal = ({ onClose }) => {
     }
 
     if (!deleted) {
-      alert("Failed to delete project");
+      alert(t("yourProjectsModal.alerts.deleteFailed"));
       return;
     }
 
@@ -605,7 +607,7 @@ const YourProjectsModal = ({ onClose }) => {
       setSharingProjectId(id);
       const project = await getProject(id);
       if (!project) {
-        alert("Project not found");
+        alert(t("yourProjectsModal.alerts.projectNotFound"));
         return;
       }
 
@@ -622,7 +624,7 @@ const YourProjectsModal = ({ onClose }) => {
 
       const token = String(response?.token || "").trim();
       if (!token) {
-        alert("Failed to create share link");
+        alert(t("yourProjectsModal.alerts.shareCreateFailed"));
         return;
       }
 
@@ -630,13 +632,13 @@ const YourProjectsModal = ({ onClose }) => {
 
       try {
         await navigator.clipboard.writeText(shareUrl);
-        alert("Share link copied to clipboard");
+        alert(t("yourProjectsModal.alerts.shareCopied"));
       } catch {
-        window.prompt("Copy share link", shareUrl);
+        window.prompt(t("yourProjectsModal.copyShareLink"), shareUrl);
       }
     } catch (error) {
       console.error("Failed to share project", error);
-      alert("Failed to create share link");
+      alert(t("yourProjectsModal.alerts.shareCreateFailed"));
     } finally {
       setSharingProjectId(null);
     }
@@ -656,7 +658,7 @@ const YourProjectsModal = ({ onClose }) => {
   // Обробник додавання вибраних проектів до поточного
   const handleAddToCurrentProject = async () => {
     if (selectedProjects.length === 0) {
-      alert("Please select at least one project to add");
+      alert(t("yourProjectsModal.alerts.selectAtLeastOne"));
       return;
     }
 
@@ -672,12 +674,12 @@ const YourProjectsModal = ({ onClose }) => {
     // "Add current (unsaved) canvas into the selected saved project".
     if (!currentProjectId) {
       if (!canvas) {
-        alert("Canvas is not ready yet. Please try again.");
+        alert(t("yourProjectsModal.alerts.canvasNotReady"));
         return;
       }
 
       if (selectedProjects.length !== 1) {
-        alert("Please select exactly one project to add your current changes to");
+        alert(t("yourProjectsModal.alerts.selectExactlyOne"));
         return;
       }
 
@@ -697,7 +699,7 @@ const YourProjectsModal = ({ onClose }) => {
           const toolbarState = window.getCurrentToolbarState?.() || {};
           const snap = await exportCanvas(canvas, toolbarState);
           if (!snap) {
-            alert("Failed to capture current canvas");
+            alert(t("yourProjectsModal.alerts.captureFailed"));
             return;
           }
           const entry = await addUnsavedSignFromSnapshot(snap);
@@ -705,7 +707,7 @@ const YourProjectsModal = ({ onClose }) => {
         }
 
         if (!currentUnsavedId) {
-          alert("Nothing to add: no unsaved canvas found");
+          alert(t("yourProjectsModal.alerts.nothingToAdd"));
           return;
         }
 
@@ -715,7 +717,7 @@ const YourProjectsModal = ({ onClose }) => {
         );
 
         if (!updatedProject) {
-          alert("Failed to add current changes to the selected project");
+          alert(t("yourProjectsModal.alerts.addCurrentFailed"));
           return;
         }
 
@@ -774,12 +776,12 @@ const YourProjectsModal = ({ onClose }) => {
         } catch {}
 
         setSelectedProjects([]);
-        alert("Successfully added your current changes to the selected project");
+        alert(t("yourProjectsModal.alerts.addCurrentSuccess"));
         onClose && onClose();
         return;
       } catch (error) {
         console.error("Failed to add current (unsaved) canvas to project:", error);
-        alert("An error occurred while adding canvases");
+        alert(t("yourProjectsModal.alerts.addCanvasesError"));
         return;
       }
     }
@@ -804,16 +806,16 @@ const YourProjectsModal = ({ onClose }) => {
         setSelectedProjects([]);
         
         // Показуємо повідомлення
-        alert(`Successfully added canvases from ${selectedProjects.length} project(s)`);
+        alert(t("yourProjectsModal.alerts.addCanvasesSuccess", { count: selectedProjects.length }));
         
         // Закриваємо модалку
         onClose && onClose();
       } else {
-        alert("Failed to add canvases. Please make sure you have a current project open.");
+        alert(t("yourProjectsModal.alerts.addCanvasesFailed"));
       }
     } catch (error) {
       console.error("Failed to add canvases to current project:", error);
-      alert("An error occurred while adding canvases");
+      alert(t("yourProjectsModal.alerts.addCanvasesError"));
     }
   };
 
@@ -833,7 +835,7 @@ const YourProjectsModal = ({ onClose }) => {
       }
 
       if (!targetProject) {
-        alert("Failed to prepare selected project for cart.");
+        alert(t("yourProjectsModal.alerts.prepareCartFailed"));
         return;
       }
 
@@ -846,7 +848,7 @@ const YourProjectsModal = ({ onClose }) => {
       } catch {}
     } catch (error) {
       console.error("Failed to prepare selected project for cart:", error);
-      alert("An error occurred while adding canvases");
+      alert(t("yourProjectsModal.alerts.addCanvasesError"));
     }
   };
 
@@ -877,7 +879,7 @@ const YourProjectsModal = ({ onClose }) => {
   return (
     <div className={styles.yourProjectsModal}>
       <div className={styles.headerWrapper}>
-        My Projects
+        {t("yourProjectsModal.title")}
         <svg
           onClick={onClose}
           width="24"
@@ -904,10 +906,10 @@ const YourProjectsModal = ({ onClose }) => {
       </div>
       <div className={styles.addInfoWrapper}>
         <span className={styles.infoText}>
-          You can choose from your saved projects or place an ORDER.
+          {t("yourProjectsModal.info.chooseOrOrder")}
         </span>
         <span className={styles.infoTextSecondary}>
-          Also, you can add selected projects to the current project.
+          {t("yourProjectsModal.info.addSelected")}
         </span>
         <button
           type="button"
@@ -942,7 +944,7 @@ const YourProjectsModal = ({ onClose }) => {
               </clipPath>
             </defs>
           </svg>
-          Cart
+          {t("yourProjectsModal.cart")}
         </button>
       </div>
 
@@ -959,14 +961,14 @@ const YourProjectsModal = ({ onClose }) => {
             aria-modal="true"
           >
             <div className={styles.confirmText}>
-              The first selected project will be used as the base, and all others will be added to it. Continue?
+              {t("yourProjectsModal.confirmMerge")}
             </div>
             <div className={styles.confirmActions}>
               <button type="button" onClick={handleCartConfirmYes}>
-                Yes
+                {t("yourProjectsModal.yes")}
               </button>
               <button type="button" onClick={handleCartConfirmCancel}>
-                Cancel
+                {t("yourProjectsModal.cancel")}
               </button>
             </div>
           </div>
@@ -974,7 +976,7 @@ const YourProjectsModal = ({ onClose }) => {
       )}
       {isProjectsLoading && (
         <p className={styles.statusNotice}>
-          Opening your projects may take some time. Please wait until they appear here.
+          {t("yourProjectsModal.openingNotice")}
         </p>
       )}
       <div className={styles.projectsTableWrapper}>
@@ -982,11 +984,11 @@ const YourProjectsModal = ({ onClose }) => {
           <tbody>
             <tr className={styles.tr}>
               <td></td>
-              <td>Nr.</td>
-              <td>Name</td>
-              <td>Last date saved</td>
-              <td>Last order date</td>
-              <td>Image</td>
+              <td>{t("yourProjectsModal.table.number")}</td>
+              <td>{t("yourProjectsModal.table.name")}</td>
+              <td>{t("yourProjectsModal.table.lastDateSaved")}</td>
+              <td>{t("yourProjectsModal.table.lastOrderDate")}</td>
+              <td>{t("yourProjectsModal.table.image")}</td>
               <td></td>
               <td></td>
             </tr>
@@ -1031,7 +1033,7 @@ const YourProjectsModal = ({ onClose }) => {
                           !needsSliderButtons(project) ||
                           (currentSlideIndex[project.id] || 0) === 0
                         }
-                        aria-label="Previous images"
+                        aria-label={t("yourProjectsModal.previousImages")}
                       >
                         &lt;
                       </button>
@@ -1041,9 +1043,10 @@ const YourProjectsModal = ({ onClose }) => {
                           <div key={imgIndex} className={styles.imageItem}>
                             <img
                               src={image.src}
-                              alt={`Project ${project.name} image ${
-                                imgIndex + 1
-                              }`}
+                              alt={t("yourProjectsModal.projectImageAlt", {
+                                name: project.name,
+                                number: imgIndex + 1,
+                              })}
                               onError={(e) => {
                                 if (image.fallback && e.currentTarget.src !== image.fallback) {
                                   e.currentTarget.src = image.fallback;
@@ -1062,7 +1065,7 @@ const YourProjectsModal = ({ onClose }) => {
                           (currentSlideIndex[project.id] || 0) >=
                             Math.ceil(project.images.length / 3) - 1
                         }
-                        aria-label="Next images"
+                        aria-label={t("yourProjectsModal.nextImages")}
                       >
                         &gt;
                       </button>
@@ -1107,7 +1110,7 @@ const YourProjectsModal = ({ onClose }) => {
                             </clipPath>
                           </defs>
                         </svg>
-                        Edit
+                        {t("yourProjectsModal.edit")}
                       </li>
                       <li onClick={() => handleDelete(project.id)} style={{cursor:"pointer"}}>
                         <svg
@@ -1122,14 +1125,14 @@ const YourProjectsModal = ({ onClose }) => {
                             fill="#FF0000"
                           />
                         </svg>
-                        Delete
+                        {t("yourProjectsModal.delete")}
                       </li>
                     </ul>
                   </td>
                   <td>
                     <div
                       className={styles.shareCell}
-                      title="Share Project"
+                      title={t("yourProjectsModal.shareProject")}
                       onClick={() => handleShare(project.id)}
                       style={{
                         cursor: sharingProjectId ? "wait" : "pointer",
@@ -1188,7 +1191,7 @@ const YourProjectsModal = ({ onClose }) => {
               </clipPath>
             </defs>
           </svg>
-          Add to current project {selectedProjects.length > 0 && `(${selectedProjects.length})`}
+          {t("yourProjectsModal.addToCurrentProject")} {selectedProjects.length > 0 && `(${selectedProjects.length})`}
         </div>
         {/* Пагінація */}
         {projects.length > itemsPerPage && (

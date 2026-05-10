@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import * as fabric from 'fabric';
 import styles from './IconMenu.module.css';
@@ -9,6 +10,7 @@ import axios from 'axios';
 const currentLang = 'de';
 
 const IconMenu = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { canvas, globalColors } = useCanvasContext();
   const [selectedCategory, setSelectedCategory] = useState('Animals');
   const [isLoading, setIsLoading] = useState(false);
@@ -357,7 +359,7 @@ const IconMenu = ({ isOpen, onClose }) => {
     <div className={styles.iconMenu}>
       <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.header}>
-          <h3>Виберіть іконку</h3>
+          <h3>{t('toolbar.iconMenu.title')}</h3>
           <button className={styles.closeButton} onClick={onClose}>
             <svg
               width="24"
@@ -429,7 +431,7 @@ const IconMenu = ({ isOpen, onClose }) => {
                         </div>
                       ))
                     ) : (
-                      <div className={styles.noIcons}>Іконки недоступні</div>
+                      <div className={styles.noIcons}>{t('toolbar.iconMenu.noIcons')}</div>
                     )}
                   </div>
                 )}

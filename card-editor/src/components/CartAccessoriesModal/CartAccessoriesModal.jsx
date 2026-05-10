@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import baseStyles from "../AccessoriesModal/AccessoriesModal.module.css";
 import styles from "./CartAccessoriesModal.module.css";
 import SimpleButton from "../ui/buttons/simple-button/simple-button";
@@ -8,13 +9,14 @@ const CartAccessoriesModal = ({
   onClose,
   onProceed,
   proceedDisabled = false,
-  title = "The Accessories you selected:",
+  title,
   items,
   onToggle,
   onSetQty,
   onInc,
   onDec,
 }) => {
+  const { t } = useTranslation();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -97,20 +99,22 @@ const CartAccessoriesModal = ({
   };
 
   const formatPrice = (val) => `€ ${Number(val || 0).toFixed(2)}`;
+  const getAccessoryName = (item) => (item?.nameKey ? t(item.nameKey) : item.name);
+  const getAccessoryDesc = (item) => (item?.descKey ? t(item.descKey) : item.desc);
 
   return (
     <div className={baseStyles.modalRoot}>
       <div className={baseStyles.dropdown} ref={ref}>
         <div className={baseStyles.dropdownHeader}>
-          <h3>{title}</h3>
+          <h3>{title || t("infoAboutProject.accessoriesSelected")}</h3>
           <div className={styles.headerActions}>
             <SimpleButton
-              text={proceedDisabled ? "Processing..." : "Continue to checkout"}
+              text={proceedDisabled ? t("cartAccessoriesModal.processing") : t("cartAccessoriesModal.continueToCheckout")}
               onClick={proceedDisabled ? undefined : onProceed}
               withIcon={true}
             />
           </div>
-          <button className={baseStyles.closeBtn} onClick={onClose} aria-label="Close">
+          <button className={baseStyles.closeBtn} onClick={onClose} aria-label={t("cartAccessoriesModal.close")}>
             <svg
               width="24"
               height="24"
@@ -148,9 +152,9 @@ const CartAccessoriesModal = ({
                   />
                 </div>
                 <div className={baseStyles.colThumb}>
-                  <img className={baseStyles.thumb} src={it.img} alt={`${it.name} image`} />
+                  <img className={baseStyles.thumb} src={it.img} alt={t("accessoriesModal.itemImageAlt", { name: getAccessoryName(it) })} />
                 </div>
-                <div className={baseStyles.colName}>{it.name}</div>
+                <div className={baseStyles.colName}>{getAccessoryName(it)}</div>
                 <div className={baseStyles.colQty}>
                   <div className={baseStyles.inputGroup}>
                     <input
@@ -166,15 +170,15 @@ const CartAccessoriesModal = ({
                   </div>
                 </div>
                 <div className={baseStyles.colPrice}>{formatPrice(it.price * parseNumber(it.qty))}</div>
-                <div className={baseStyles.colDesc}>{it.desc}</div>
+                <div className={baseStyles.colDesc}>{getAccessoryDesc(it)}</div>
                 <div className={baseStyles.colExtra}>
                   {it.hasExtra && it.extraImg ? (
                     <div className={baseStyles.extraWrap}>
-                      {it.id === 4 ? <div className={baseStyles.extraLabel}>Example use</div> : null}
+                      {it.id === 4 ? <div className={baseStyles.extraLabel}>{t("cartAccessoriesModal.exampleUse")}</div> : null}
                       <img
                         className={baseStyles.extraThumb}
                         src={it.extraImg}
-                        alt={`${it.name} extra`}
+                        alt={t("accessoriesModal.itemExtraAlt", { name: getAccessoryName(it) })}
                         style={{
                           width: it.id === 4 ? 117 : it.id === 5 ? 96 : it.id === 6 ? 85 : undefined,
                           height: it.id === 4 ? 113 : it.id === 5 ? 130 : it.id === 6 ? 145 : undefined,

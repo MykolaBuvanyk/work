@@ -1,6 +1,7 @@
 import './order-success.sass'
 
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import CloseIcon from '/images/icon/close.svg'
 import Head from '/images/icon/head.svg'
@@ -53,6 +54,7 @@ const SelectedStar = ({ className = '', onClick, gradientId }) => (
 )
 
 export default function ThankYou({ onClose, onSend, setData }) {
+	const { t } = useTranslation()
 	const [rating, setRating] = useState(0)
 	const [comment,setComment]=useState('')
 	const [isSending, setIsSending] = useState(false)
@@ -84,24 +86,22 @@ export default function ThankYou({ onClose, onSend, setData }) {
 				</header> */}
 				<section className='success'>
 					<button className='success__close' onClick={onClose}>
-						<img src={CloseIcon} alt='close' />
+						<img src={CloseIcon} alt={t('orderSuccess.close')} />
 					</button>
-					<h1 className='success__title'>Thank you for your order!</h1>
+					<h1 className='success__title'>{t('orderSuccess.title')}</h1>
 
 					<div className='success__text'>
 						<p>
-							We’re processing it now. As soon as your order is registered,
-							you’ll receive an order confirmation by email.
+							{t('orderSuccess.processing')}
 						</p>
 						<p>
-							You can then check the status of your order anytime in your
-							account.
+							{t('orderSuccess.accountStatus')}
 						</p>
 					</div>
 
 					<div className='success__rating'>
 						<p className='success__rating-title'>
-							How was your experience with SignXpert?
+							{t('orderSuccess.ratingTitle')}
 						</p>
 
 						<div className='success__stars'>
@@ -111,7 +111,7 @@ export default function ThankYou({ onClose, onSend, setData }) {
 									key={value}
 									className='success__star-btn'
 									onClick={() => setRating(value)}
-									aria-label={`Rate ${value} out of 5`}
+									aria-label={t('orderSuccess.rateAria', { value })}
 								>
 									{value <= rating ? (
 										<SelectedStar
@@ -132,18 +132,18 @@ export default function ThankYou({ onClose, onSend, setData }) {
 
 					<div className='success__feedback'>
 						<label className='success__label' htmlFor='feedback'>
-							Please leave us a comment — we’d love to hear from you!
+							{t('orderSuccess.commentLabel')}
 						</label>
 
 						<textarea value={comment} onChange={(e)=>setComment(e.target.value)} className='success__textarea' id='feedback' />
 					</div>
 
 					<button className='action-btn' type='button' onClick={handleSend} disabled={isSending}>
-						{isSending ? 'sending...' : 'send'}
+						{isSending ? t('orderSuccess.sending') : t('orderSuccess.send')}
 					</button>
 
 					<footer className='success__footer'>
-						<span>Kind regards,</span>
+						<span>{t('orderSuccess.kindRegards')}</span>
 						<span>SignXpert</span>
 					</footer>
 				</section>

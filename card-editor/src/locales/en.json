@@ -400,6 +400,547 @@
       }
     }
   },
+  "toolbar": {
+    "actions": {
+      "update": "Update",
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "new": "New",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
+    "states": {
+      "on": "On",
+      "off": "Off"
+    },
+    "alerts": {
+      "maxSignsReached": "Maximum number of signs reached (100). Please create a new project.",
+      "selectImageFile": "Please select an image file.",
+      "fileTooLarge": "File is too large. Maximum size: 5MB.",
+      "canvasNotInitialized": "Canvas is not initialized.",
+      "excelRowsImported": "Imported {{count}} text rows.",
+      "excelImportFailed": "Could not import text: {{message}}",
+      "excelReadFailed": "Could not read the Excel file."
+    },
+    "sections": {
+      "shape": "Shape",
+      "colour": "Colour"
+    },
+    "shape": {
+      "rectangle": "Rectangle",
+      "round": "Round",
+      "oval": "Oval",
+      "lockTitle": "Rectangle with a loop (Hanging Sign)",
+      "lockAlt": "Lock",
+      "circleWithLineTitle": "Round with a line",
+      "circleWithLineAlt": "Circle with line",
+      "circleWithTTitle": "Round with a T-shaped line",
+      "circleWithTAlt": "Circle with T shape",
+      "warningTriangle": "Warning Triangle",
+      "semiRound": "Semi round",
+      "roundTop": "Round Top",
+      "hexagon": "Hexagon",
+      "octagon": "Octagon",
+      "triangle": "Triangle",
+      "leftArrow": "Left arrow",
+      "rightArrow": "Right arrow",
+      "customShape": "Custom shape",
+      "customAlt": "Custom"
+    },
+    "size": {
+      "width": "Width",
+      "height": "Height",
+      "cornerRadius": "Corner radius"
+    },
+    "units": {
+      "mm": "(mm)",
+      "mmRequired": "* (mm)"
+    },
+    "thickness": {
+      "title": "Thickness:",
+      "adhesiveTape": "Adhesive Tape"
+    },
+    "colours": {
+      "whiteBlack": "White / Black",
+      "whiteBlue": "White / Blue",
+      "whiteRed": "White / Red",
+      "blackWhite": "Black / White",
+      "blueWhite": "Blue / White",
+      "redWhite": "Red / White",
+      "greenWhite": "Green / White",
+      "yellowBlack": "Yellow / Black",
+      "silverBlack": "Silver / Black",
+      "lightBlueWhite": "Light blue / White",
+      "orangeWhite": "Orange / White",
+      "grayWhite": "Gray / White",
+      "mapleWoodBlack": "Maple (\"Wood\") / Black",
+      "carbonWhite": "Carbon / White"
+    },
+    "elements": {
+      "text": "Text",
+      "image": "Image",
+      "upload": "Upload",
+      "shape": "Shape",
+      "shapeTitle": "Fill + Cut + Frame",
+      "border": "Border",
+      "cut": "Cut",
+      "cutTitle": "Different Shapes",
+      "qrCode": "QR Code",
+      "barCode": "Bar Code"
+    },
+    "holes": {
+      "title": "Holes",
+      "diameterUnit": "Ø mm",
+      "without": "Without holes",
+      "oneTopCenter": "One hole at the top center",
+      "twoSides": "Two holes on the sides",
+      "fourCorners": "Four holes in the corners",
+      "fourCableTies": "Four rectangular holes for cable ties",
+      "leftCentered": "Left-centered hole",
+      "rightCentered": "Right-centered hole"
+    },
+    "copies": {
+      "exact": "Exact",
+      "editable": "Editable",
+      "copies": "Copies"
+    },
+    "footer": {
+      "yourSigns": "Your Signs:",
+      "uniqueTypes": "Unique types:",
+      "totalSigns": "Total signs:",
+      "manufacturerNote": "Note for the manufacturer",
+      "notePlaceholder": "Text"
+    },
+    "customShapeStop": {
+      "title": "Stop shape customization",
+      "description": "Finish editing current shape?",
+      "confirm": "Yes"
+    },
+    "qr": {
+      "title": "QR Code",
+      "minimumSize": "The minimum size of QR Code is 20 x 20 mm",
+      "defaults": {
+        "message": "Default message"
+      },
+      "security": {
+        "wpa": "WPA",
+        "wpa2Eap": "WPA2-EAP",
+        "withoutPassword": "Without Password"
+      },
+      "types": {
+        "url": "URL (Website)",
+        "email": "E-MAIL",
+        "phone": "Call (Phone)",
+        "whatsapp": "WhatsApp",
+        "wifi": "Wi-Fi",
+        "message": "Message"
+      },
+      "descriptions": {
+        "url": "* Scan to visit Website",
+        "email": "* Scan to send an Email",
+        "phone": "* Scan to call directly",
+        "whatsapp": "* Scan to send Message",
+        "wifi": "* Scan to connect to Network",
+        "message": "* Scan to read Custom Message"
+      },
+      "fields": {
+        "websiteLink": "Website - Link",
+        "emailAddress": "Email Address",
+        "phoneNumber": "Phone Number",
+        "whatsappNumber": "WhatsApp Number",
+        "networkName": "Network Name (SSID)",
+        "password": "Password",
+        "securityType": "Security Type",
+        "customMessage": "Custom Message"
+      },
+      "placeholders": {
+        "website": "example.com or https://example.com",
+        "email": "example@domain.com",
+        "phone": "+380123456789",
+        "networkName": "WiFi Network Name",
+        "password": "WiFi Password",
+        "message": "Enter your message here..."
+      },
+      "errors": {
+        "empty": "X Empty field",
+        "invalidData": "X Incorrect data",
+        "incorrectEmail": "X Incorrect email",
+        "incorrectPhone": "X Incorrect phone number",
+        "passwordRequired": "X Password required"
+      },
+      "alerts": {
+        "generateFailed": "Could not generate the QR code.",
+        "selectToUpdate": "Select a QR code on canvas to update.",
+        "createFailed": "QR code creation failed."
+      },
+      "actions": {
+        "delete": "Delete QR",
+        "duplicate": "Duplicate QR",
+        "new": "New QR"
+      }
+    },
+    "barcode": {
+      "title": "Bar Code",
+      "description": "Enter text or numbers to encode",
+      "defaultText": "ABC-abc-1234",
+      "types": {
+        "code128": "Code 128",
+        "code39": "Code 39"
+      },
+      "alerts": {
+        "enterText": "Please enter text for the barcode.",
+        "generateFailed": "Could not generate the barcode. Please check the text and type.",
+        "selectToUpdate": "Select a barcode on canvas to update.",
+        "createVectorFailed": "Could not create the barcode vector.",
+        "placeFailed": "Could not place the barcode on the canvas."
+      }
+    },
+    "shapeSelector": {
+      "title": "Shapes",
+      "defaultText": "New text",
+      "shapes": {
+        "rectangle": "Rectangle",
+        "roundedCorners": "Rounded Corners",
+        "round": "Round",
+        "oval": "Oval",
+        "hexagon": "Hexagon",
+        "octagon": "Octagon",
+        "triangle": "Triangle",
+        "warningTriangle": "Warning Triangle",
+        "semiRound": "Semi round",
+        "roundTop": "Round Top",
+        "leftArrow": "Left arrow",
+        "rightArrow": "Right arrow",
+        "turnLeft": "Turn left",
+        "turnRight": "Turn right",
+        "customShape": "Custom shape",
+        "arc180": "180° arc",
+        "arc90": "90° arc",
+        "circleWithCut": "Circle with cut off",
+        "line": "Line",
+        "dashedLine": "Dashed Line"
+      }
+    },
+    "cutSelector": {
+      "title": "Cut Shapes",
+      "cutShape": "Cut Shape {{number}}",
+      "tabs": {
+        "cut": "CUT",
+        "shape": "SHAPE"
+      }
+    },
+    "iconMenu": {
+      "title": "Select icon",
+      "noIcons": "Icons are not available"
+    },
+    "uploadPreview": {
+      "title": "Upload preview",
+      "precision": "Precision",
+      "brightness": "Brightness",
+      "invert": "Invert",
+      "strokeOnly": "Stroke only (lines)",
+      "original": "Original",
+      "originalAlt": "original",
+      "result": "Result",
+      "processing": "Processing...",
+      "noPreview": "No preview",
+      "addToCanvas": "Add to canvas"
+    },
+    "shapeProperties": {
+      "title": "Shape",
+      "width": "Width:",
+      "rotate": "Rotate:",
+      "height": "Height:",
+      "cornerRadius": "Corner Radius:",
+      "fill": "Fill",
+      "cut": "Cut",
+      "thickness": "Thickness",
+      "frame": "Frame"
+    }
+  },
+  "infoAboutProject": {
+    "project": {
+      "label": "Project",
+      "notSaved": "Not saved",
+      "untitled": "Untitled"
+    },
+    "cart": "Cart",
+    "currentSign": "Current sign",
+    "discount": "Discount",
+    "totalPrice": "Total Price",
+    "accessoriesSelected": "The Accessories you selected:",
+    "alerts": {
+      "addToCartFailed": "Failed to add project to cart. Please try again.",
+      "prepareOrderFailed": "Failed to prepare order summary. Please try again.",
+      "enterProjectName": "Please enter a project name",
+      "saveProjectFailed": "Failed to save project. Please try again."
+    }
+  },
+  "checkout": {
+    "actions": {
+      "backToAccessories": "Back to accessories",
+      "proceedToPayment": "Proceed to Payment",
+      "change": "Change",
+      "close": "close"
+    },
+    "alerts": {
+      "selectCountry": "Please select a country"
+    },
+    "processingRequest": "Processing your request... Please wait, this may take some time.",
+    "updateDeliveryAddress": "Update or add a Delivery address",
+    "deliveryAddress": "Delivery address",
+    "invoiceAddress": "Invoice address",
+    "orderSummary": "Order summary",
+    "myOrder": "My Order",
+    "selectCountry": "Select country",
+    "phoneQuestionNote": "This phone number may be used for any questions",
+    "yes": "YES",
+    "invoiceEmailNote": "This email will be used to send you the invoice",
+    "invoiceDifferent": "Invoice address (if different from above)",
+    "vatAndTotal": "VAT and total",
+    "vatNote": "No VAT is charged according to § 19 UStG.",
+    "productionComment": "Leave a comment for production here:",
+    "fields": {
+      "fullName": "First name and surname",
+      "companyName": "Company Name",
+      "address1": "Address 1",
+      "address2": "Address 2",
+      "address3": "Address 3",
+      "town": "Town",
+      "postalCode": "Postal code",
+      "country": "Country",
+      "region": "Region",
+      "invoiceRegion": "Invoice region",
+      "emailAddress": "E-Mail address",
+      "mobilePhone": "Mobile Phone"
+    },
+    "summary": {
+      "description": "Description",
+      "quantity": "Quantity",
+      "totalSigns": "Total Signs",
+      "discount": "Discount",
+      "price": "Price",
+      "accessories": "Accessories",
+      "types": "Types",
+      "totalAmount": "Total amount"
+    },
+    "delivery": {
+      "title": "Delivery",
+      "price": "Del. Price",
+      "comment": "Delivery comment",
+      "options": {
+        "upsEnvelope": "UPS Envelope",
+        "upsNextDayPackage": "UPS Next Day Package",
+        "upsExpressBeforeNoon": "UPS Express before 12 PM",
+        "upsSaturdayDelivery": "UPS Saturday Delivery"
+      },
+      "hints": {
+        "saturday": "Available on Fridays only.",
+        "weekdays": "Delivery from Monday to Friday."
+      }
+    },
+    "shippingNotes": {
+      "title": "Shipping notes",
+      "sameDay": "Orders placed before 4:00 PM are usually shipped the same day.",
+      "nextDay": "For next-day delivery, please select UPS Next Day Package.",
+      "euros": "All prices are in Euros."
+    },
+    "countries": {
+      "austria": "Austria",
+      "belgium": "Belgium",
+      "croatia": "Croatia",
+      "czechRepublic": "Czech Republic",
+      "denmark": "Denmark",
+      "estonia": "Estonia",
+      "france": "France",
+      "germany": "Germany",
+      "hungary": "Hungary",
+      "ireland": "Ireland",
+      "italy": "Italy",
+      "lithuania": "Lithuania",
+      "luxembourg": "Luxembourg",
+      "netherlands": "Netherlands",
+      "poland": "Poland",
+      "romania": "Romania",
+      "slovakia": "Slovakia",
+      "slovenia": "Slovenia",
+      "spain": "Spain",
+      "sweden": "Sweden",
+      "switzerland": "Switzerland",
+      "ukraine": "Ukraine",
+      "unitedKingdom": "United Kingdom"
+    }
+  },
+  "yourProjectsModal": {
+    "title": "My Projects",
+    "info": {
+      "chooseOrOrder": "You can choose from your saved projects or place an ORDER.",
+      "addSelected": "Also, you can add selected projects to the current project."
+    },
+    "cart": "Cart",
+    "confirmMerge": "The first selected project will be used as the base, and all others will be added to it. Continue?",
+    "yes": "Yes",
+    "cancel": "Cancel",
+    "openingNotice": "Opening your projects may take some time. Please wait until they appear here.",
+    "previousImages": "Previous images",
+    "nextImages": "Next images",
+    "projectImageAlt": "Project {{name}} image {{number}}",
+    "edit": "Edit",
+    "delete": "Delete",
+    "shareProject": "Share Project",
+    "addToCurrentProject": "Add to current project",
+    "copyShareLink": "Copy share link",
+    "table": {
+      "number": "Nr.",
+      "name": "Name",
+      "lastDateSaved": "Last date saved",
+      "lastOrderDate": "Last order date",
+      "image": "Image"
+    },
+    "alerts": {
+      "deleteFailed": "Failed to delete project",
+      "projectNotFound": "Project not found",
+      "shareCreateFailed": "Failed to create share link",
+      "shareCopied": "Share link copied to clipboard",
+      "selectAtLeastOne": "Please select at least one project to add",
+      "canvasNotReady": "Canvas is not ready yet. Please try again.",
+      "selectExactlyOne": "Please select exactly one project to add your current changes to",
+      "captureFailed": "Failed to capture current canvas",
+      "nothingToAdd": "Nothing to add: no unsaved canvas found",
+      "addCurrentFailed": "Failed to add current changes to the selected project",
+      "addCurrentSuccess": "Successfully added your current changes to the selected project",
+      "addCanvasesError": "An error occurred while adding canvases",
+      "addCanvasesSuccess": "Successfully added canvases from {{count}} project(s)",
+      "addCanvasesFailed": "Failed to add canvases. Please make sure you have a current project open.",
+      "prepareCartFailed": "Failed to prepare selected project for cart."
+    }
+  },
+  "saveAsModal": {
+    "title": "Save Project as",
+    "name": "Name",
+    "projectNamePlaceholder": "Project name",
+    "save": "Save",
+    "cancel": "Cancel",
+    "savingNotice": "Saving your project may take some time. Please wait until it appears here.",
+    "previousImages": "Previous images",
+    "nextImages": "Next images",
+    "projectImageAlt": "Project {{name}} image {{number}}",
+    "table": {
+      "number": "Nr.",
+      "name": "Name",
+      "date": "Date",
+      "image": "Image"
+    }
+  },
+  "cartSaveProjectModal": {
+    "message": "Please save your project before adding it to the cart.",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "cartAccessoriesModal": {
+    "processing": "Processing...",
+    "continueToCheckout": "Continue to checkout",
+    "close": "Close",
+    "exampleUse": "Example use"
+  },
+  "accessories": {
+    "title": "Accessories",
+    "moreAccessories": "More Accessories",
+    "accessoryIconAlt": "{{name}} icon",
+    "toolbar": {
+      "newSign": "New Sign",
+      "deleteSign": "Delete sign",
+      "importViaExcel": "Import via Excel",
+      "templates": "Templates"
+    },
+    "tooltips": {
+      "maxSignsReached": "Maximum number of signs reached (30). Create a new project.",
+      "createNewCanvas": "Create new canvas (sign)",
+      "deleteCurrentCanvas": "Delete current canvas (sign)",
+      "toggleAccessory": "Toggle accessory"
+    },
+    "alerts": {
+      "maxSignsReached": "Maximum number of signs in this project has been reached (30). Please create a new project."
+    },
+    "items": {
+      "cableTies": {
+        "name": "Cable ties",
+        "desc": "Black plastic cable ties, size 3.6 × 140 mm"
+      },
+      "screws95": {
+        "name": "Screws 9.5 mm",
+        "desc": "Size 2.9 × 9.5 mm"
+      },
+      "screws13": {
+        "name": "Screws 13 mm",
+        "desc": "Size 2.9 × 13 mm"
+      },
+      "carabiner": {
+        "name": "Carabiner",
+        "desc": "Metal spring clip 40mm"
+      },
+      "keyrings": {
+        "name": "Keyrings",
+        "desc": "30 mm"
+      },
+      "ballChains": {
+        "name": "Ball chains",
+        "desc": "length 10cm"
+      }
+    }
+  },
+  "accessoriesModal": {
+    "close": "Close",
+    "exampleUse": "Example use",
+    "itemImageAlt": "{{name}} image",
+    "itemExtraAlt": "{{name}} extra"
+  },
+  "payModal": {
+    "backToPayment": "Back to Proceed to Payment",
+    "title": "Choose your payment option",
+    "description": "You can complete your order using one of the following payment methods:",
+    "placeOrder": "PLACE ORDER",
+    "alerts": {
+      "paymentDataFailed": "Could not load payment data."
+    },
+    "invoice": {
+      "title": "Pay by Invoice",
+      "placeOrder": "Place your order and pay the invoice within 30 days.",
+      "shipped": "Once your order has been shipped, the invoice will be sent to your email and will also be included with your shipment.",
+      "optionsIntro": "You can pay the invoice using one of the following options:",
+      "onlinePrefix": "• Online in your account - log in to",
+      "myAccount": "My Account",
+      "myOrders": "My Orders",
+      "onlineSuffix": ", find your order and click",
+      "pay": "Pay",
+      "bankTransfer": "• Bank transfer - you can also pay manually using the bank details provided.",
+      "received": "Once the payment has been received, the order will be marked as paid.",
+      "preferred": "(Preferred by many of our business customers.)"
+    },
+    "online": {
+      "title": "Pay Online",
+      "loadingGateway": "Loading payment gateway..."
+    }
+  },
+  "paySuccess": {
+    "title": "Payment Successful",
+    "message": "Thank you for your purchase! Your payment has been successfully processed.",
+    "sub": "You can view your order details in your account.",
+    "goToAccount": "Go to Account",
+    "backToHome": "Back to Home"
+  },
+  "orderSuccess": {
+    "close": "close",
+    "title": "Thank you for your order!",
+    "processing": "We're processing it now. As soon as your order is registered, you'll receive an order confirmation by email.",
+    "accountStatus": "You can then check the status of your order anytime in your account.",
+    "ratingTitle": "How was your experience with SignXpert?",
+    "rateAria": "Rate {{value}} out of 5",
+    "commentLabel": "Please leave us a comment - we'd love to hear from you!",
+    "sending": "sending...",
+    "send": "send",
+    "kindRegards": "Kind regards,"
+  },
   "contacts": {
     "description_90": "Contacts",
     "description_91": "Customer Service",

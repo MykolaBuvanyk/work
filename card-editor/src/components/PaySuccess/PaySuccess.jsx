@@ -1,31 +1,32 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom"; // або next/link
 import './style.scss'
 
 const PaymentSuccess = () => {
+  const { t } = useTranslation();
   return (
     <div className="success-page">
       <div className="success-card">
         <div className="icon">✔</div>
 
-        <h1>Payment Successful</h1>
+        <h1>{t("paySuccess.title")}</h1>
 
         <p>
-          Thank you for your purchase! Your payment has been successfully
-          processed.
+          {t("paySuccess.message")}
         </p>
 
         <p className="sub">
-          You can view your order details in your account.
+          {t("paySuccess.sub")}
         </p>
 
         <div className="actions">
           <Link to="/account" className="btn primary">
-            Go to Account
+            {t("paySuccess.goToAccount")}
           </Link>
 
           <Link to="/" className="btn secondary">
-            Back to Home
+            {t("paySuccess.backToHome")}
           </Link>
         </div>
       </div>

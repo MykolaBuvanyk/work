@@ -1,6 +1,7 @@
 import './checkout.sass'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 
 import SimpleButton from '../ui/buttons/simple-button/simple-button'
@@ -20,6 +21,13 @@ const DELIVERY_LABELS = [
 	'UPS Express before 12 PM',
 	'UPS Saturday Delivery',
 ]
+
+const DELIVERY_LABEL_KEYS = {
+	'UPS Envelope': 'checkout.delivery.options.upsEnvelope',
+	'UPS Next Day Package': 'checkout.delivery.options.upsNextDayPackage',
+	'UPS Express before 12 PM': 'checkout.delivery.options.upsExpressBeforeNoon',
+	'UPS Saturday Delivery': 'checkout.delivery.options.upsSaturdayDelivery',
+}
 
 const COUNTRY_OPTIONS = [
 	{ name: 'Austria', code: 'AT' },
@@ -46,6 +54,32 @@ const COUNTRY_OPTIONS = [
 	{ name: 'Ukraine', code: 'UA' },
 	{ name: 'United Kingdom', code: 'UK' },
 ]
+
+const COUNTRY_NAME_KEYS_BY_CODE = {
+	AT: 'checkout.countries.austria',
+	BE: 'checkout.countries.belgium',
+	HR: 'checkout.countries.croatia',
+	CZ: 'checkout.countries.czechRepublic',
+	DK: 'checkout.countries.denmark',
+	EE: 'checkout.countries.estonia',
+	FR: 'checkout.countries.france',
+	DE: 'checkout.countries.germany',
+	HU: 'checkout.countries.hungary',
+	IE: 'checkout.countries.ireland',
+	IT: 'checkout.countries.italy',
+	LT: 'checkout.countries.lithuania',
+	LU: 'checkout.countries.luxembourg',
+	NL: 'checkout.countries.netherlands',
+	PL: 'checkout.countries.poland',
+	RO: 'checkout.countries.romania',
+	SK: 'checkout.countries.slovakia',
+	SI: 'checkout.countries.slovenia',
+	ES: 'checkout.countries.spain',
+	SE: 'checkout.countries.sweden',
+	CH: 'checkout.countries.switzerland',
+	UA: 'checkout.countries.ukraine',
+	UK: 'checkout.countries.unitedKingdom',
+}
 
 const COUNTRY_BY_NAME = Object.fromEntries(
 	COUNTRY_OPTIONS.map(item => [String(item.name).toLowerCase(), item])
@@ -245,6 +279,7 @@ export default function Checkout({
 	accessoriesPrice = 0,
 	selectedAccessories = [],
 }) {
+	const { t } = useTranslation()
 	const emailDraft = readCheckoutEmailsDraft()
 	const [delivery, setDelivery] = useState(DELIVERY_LABELS[0])
 	const [deliveryAddress, setDeliveryAddress] = useState(() => ({
@@ -520,7 +555,7 @@ export default function Checkout({
 		e?.preventDefault?.()
 		if (isPlacingOrder) return
 		if (!String(deliveryAddress?.country || '').trim()) {
-			alert('Please select a country')
+			alert(t('checkout.alerts.selectCountry'))
 			return
 			
 		}
@@ -592,8 +627,11 @@ export default function Checkout({
 
 	const deliveryHintText =
 		delivery === 'UPS Saturday Delivery'
-			? 'Available on Fridays only.'
-			: 'Delivery from Monday to Friday.'
+			? t('checkout.delivery.hints.saturday')
+			: t('checkout.delivery.hints.weekdays')
+
+	const getDeliveryLabel = label => t(DELIVERY_LABEL_KEYS[label] || label)
+	const getCountryName = country => t(COUNTRY_NAME_KEYS_BY_CODE[country.code] || country.name)
 
 	useEffect(() => {
 		if (!Array.isArray(deliveryOptions) || deliveryOptions.length === 0) return
@@ -679,11 +717,11 @@ export default function Checkout({
 			<div className='checkout__container'>
 				<section className='checkout__sheet'>
 					<header className='checkout__header'>
-						<SimpleButton text={'Back to accessories'} onClick={onBackToAccessories || onClose} />
+						<SimpleButton text={t('checkout.actions.backToAccessories')} onClick={onBackToAccessories || onClose} />
 
 						<div className='checkout__proceed-group'>
 							<SimpleButton
-								text={'Proceed to Payment'}
+								text={t('checkout.actions.proceedToPayment')}
 								onClick={handlePlaceOrder}
 								withIcon
 								disabled={isPlacingOrder}
@@ -691,13 +729,13 @@ export default function Checkout({
 							/>
 							{isPlacingOrder && (
 								<p className='checkout__loading-hint'>
-									Processing your request... Please wait, this may take some time.
+									{t('checkout.processingRequest')}
 								</p>
 							)}
 						</div>
 
 						<button className='checkout__close' onClick={onClose}>
-							<img src={CloseIcon} alt='close' />
+							<img src={CloseIcon} alt={t('checkout.actions.close')} />
 						</button>
 					</header>
 
@@ -706,23 +744,23 @@ export default function Checkout({
 							<div className='checkout__layout'>
 								<section
 									className='checkout__left'
-									aria-label='Delivery address'
+									aria-label={t('checkout.deliveryAddress')}
 								>
 									<div className='checkout__title-row'>
 										<h2 className='checkout__title'>
-											Update or add a Delivery address
+											{t('checkout.updateDeliveryAddress')}
 										</h2>
 
-										<ActionButton text='Change' onClick={() => {}} />
+										<ActionButton text={t('checkout.actions.change')} onClick={() => {}} />
 									</div>
 
 									<fieldset className='address-card'>
 										<legend className='address-card__legend'>
-											Delivery address
+											{t('checkout.deliveryAddress')}
 										</legend>
 
 										<div className='field-row-wrap'>
-											<FieldRow id='fullName' label='First name and surname'>
+											<FieldRow id='fullName' label={t('checkout.fields.fullName')}>
 												<input
 													id='fullName'
 													name='fullName'
@@ -735,7 +773,7 @@ export default function Checkout({
 											</FieldRow>
 
 											{(isBusiness) && (
-												<FieldRow id='companyName' label='Company Name'>
+												<FieldRow id='companyName' label={t('checkout.fields.companyName')}>
 													<input
 														id='companyName'
 														name='companyName'
@@ -748,7 +786,7 @@ export default function Checkout({
 												</FieldRow>
 											)}
 
-											<FieldRow id='address1' label='Address 1'>
+											<FieldRow id='address1' label={t('checkout.fields.address1')}>
 												<input
 													id='address1'
 													name='address1'
@@ -760,7 +798,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='address2' label='Address 2'>
+											<FieldRow id='address2' label={t('checkout.fields.address2')}>
 												<input
 													id='address2'
 													name='address2'
@@ -772,7 +810,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='address3' label='Address 3'>
+											<FieldRow id='address3' label={t('checkout.fields.address3')}>
 												<input
 													id='address3'
 													name='address3'
@@ -784,7 +822,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='town' label='Town'>
+											<FieldRow id='town' label={t('checkout.fields.town')}>
 												<input
 													id='town'
 													name='town'
@@ -796,7 +834,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='postalCode' label='Postal code'>
+											<FieldRow id='postalCode' label={t('checkout.fields.postalCode')}>
 												<input
 													id='postalCode'
 													name='postalCode'
@@ -808,7 +846,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='country' label='Country'>
+											<FieldRow id='country' label={t('checkout.fields.country')}>
 												<select
 													className='select-country'
 													id='country'
@@ -818,11 +856,11 @@ export default function Checkout({
 														required
 												>
 														<option value='' disabled>
-															Select country
+															{t('checkout.selectCountry')}
 														</option>
 													{COUNTRY_OPTIONS.map(country => (
 														<option key={country.code} value={country.name}>
-															{country.name}
+															{getCountryName(country)}
 														</option>
 													))}
 												</select>
@@ -831,7 +869,7 @@ export default function Checkout({
 													className='select-region'
 													id='region'
 													name='region'
-													aria-label='Region'
+													aria-label={t('checkout.fields.region')}
 													value={deliveryAddress.region}
 													onChange={e => updateDeliveryField('region', e.target.value)}
 													disabled
@@ -845,7 +883,7 @@ export default function Checkout({
 												</select>
 											</FieldRow>
 
-											<FieldRow id='email' label='E-Mail address'>
+											<FieldRow id='email' label={t('checkout.fields.emailAddress')}>
 												<input
 													id='email'
 													name='email'
@@ -855,7 +893,7 @@ export default function Checkout({
 												/>
 											</FieldRow>
 
-											<FieldRow id='mobile' label='Mobile Phone'>
+											<FieldRow id='mobile' label={t('checkout.fields.mobilePhone')}>
 												<input
 													id='mobile'
 													name='mobile'
@@ -872,7 +910,7 @@ export default function Checkout({
 											<label
 												className={`address-extra__note ${isPhoneOk ? 'address-extra__note--checked' : ''}`}
 											>
-												This phone number may be used for any questions
+												{t('checkout.phoneQuestionNote')}
 											</label>
 
 											<Radio
@@ -881,7 +919,7 @@ export default function Checkout({
 												value='yes'
 												checked={isPhoneOk}
 												onChange={e => setIsPhoneOk(e.target.checked)}
-												label='YES'
+												label={t('checkout.yes')}
 											/>
 										</div>
 
@@ -890,7 +928,7 @@ export default function Checkout({
 												htmlFor='invoiceEmail'
 												className='address-extra__invoice-text'
 											>
-												This email will be used to send you the invoice
+												{t('checkout.invoiceEmailNote')}
 											</label>
 
 											<input
@@ -909,18 +947,18 @@ export default function Checkout({
 											value='yes'
 											checked={isInvoiceDifferent}
 											onChange={e => setIsInvoiceDifferent(e.target.checked)}
-											label='Invoice address (if different from above)'
+											label={t('checkout.invoiceDifferent')}
 											strong
 										/>
 
 										{isInvoiceDifferent && (
 											<fieldset className='address-card'>
 												<legend className='address-card__legend'>
-													Invoice address
+													{t('checkout.invoiceAddress')}
 												</legend>
 
 												<div className='field-row-wrap'>
-													<FieldRow id='invoiceFullName' label='First name and surname'>
+													<FieldRow id='invoiceFullName' label={t('checkout.fields.fullName')}>
 														<input
 															id='invoiceFullName'
 															name='invoiceFullName'
@@ -930,7 +968,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceCompanyName' label='Company Name'>
+													<FieldRow id='invoiceCompanyName' label={t('checkout.fields.companyName')}>
 														<input
 															id='invoiceCompanyName'
 															name='invoiceCompanyName'
@@ -940,7 +978,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceAddress1' label='Address 1'>
+													<FieldRow id='invoiceAddress1' label={t('checkout.fields.address1')}>
 														<input
 															id='invoiceAddress1'
 															name='invoiceAddress1'
@@ -950,7 +988,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceAddress2' label='Address 2'>
+													<FieldRow id='invoiceAddress2' label={t('checkout.fields.address2')}>
 														<input
 															id='invoiceAddress2'
 															name='invoiceAddress2'
@@ -960,7 +998,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceAddress3' label='Address 3'>
+													<FieldRow id='invoiceAddress3' label={t('checkout.fields.address3')}>
 														<input
 															id='invoiceAddress3'
 															name='invoiceAddress3'
@@ -970,7 +1008,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceTown' label='Town'>
+													<FieldRow id='invoiceTown' label={t('checkout.fields.town')}>
 														<input
 															id='invoiceTown'
 															name='invoiceTown'
@@ -980,7 +1018,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoicePostalCode' label='Postal code'>
+													<FieldRow id='invoicePostalCode' label={t('checkout.fields.postalCode')}>
 														<input
 															id='invoicePostalCode'
 															name='invoicePostalCode'
@@ -990,7 +1028,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceCountry' label='Country'>
+													<FieldRow id='invoiceCountry' label={t('checkout.fields.country')}>
 														<select
 															className='select-country'
 															id='invoiceCountry'
@@ -1000,11 +1038,11 @@ export default function Checkout({
 															required
 														>
 															<option value='' disabled>
-																Select country
+																{t('checkout.selectCountry')}
 															</option>
 															{COUNTRY_OPTIONS.map(country => (
 																<option key={`invoice-${country.code}`} value={country.name}>
-																	{country.name}
+																	{getCountryName(country)}
 																</option>
 															))}
 														</select>
@@ -1013,7 +1051,7 @@ export default function Checkout({
 															className='select-region'
 															id='invoiceRegion'
 															name='invoiceRegion'
-															aria-label='Invoice region'
+															aria-label={t('checkout.fields.invoiceRegion')}
 															value={invoiceAddress.region}
 															onChange={e => updateInvoiceField('region', e.target.value)}
 															disabled
@@ -1027,7 +1065,7 @@ export default function Checkout({
 														</select>
 													</FieldRow>
 
-													<FieldRow id='invoiceEmailAddress' label='E-Mail address'>
+													<FieldRow id='invoiceEmailAddress' label={t('checkout.fields.emailAddress')}>
 														<input
 															id='invoiceEmailAddress'
 															name='invoiceEmailAddress'
@@ -1039,7 +1077,7 @@ export default function Checkout({
 														/>
 													</FieldRow>
 
-													<FieldRow id='invoiceMobile' label='Mobile Phone'>
+													<FieldRow id='invoiceMobile' label={t('checkout.fields.mobilePhone')}>
 														<input
 															id='invoiceMobile'
 															name='invoiceMobile'
@@ -1054,9 +1092,9 @@ export default function Checkout({
 									</div>
 								</section>
 
-								<aside className='checkout__right' aria-label='Order summary'>
+								<aside className='checkout__right' aria-label={t('checkout.orderSummary')}>
 									<h3 className='summary-title'>
-										My Order:{' '}
+										{t('checkout.myOrder')}:{' '}
 										<span className='summary-title__muted'>{projectTitle}</span>
 									</h3>
 
@@ -1064,12 +1102,12 @@ export default function Checkout({
 										<div className='summary-row'>
 											<table
 												className='summary-table summary-table--order'
-												aria-label='My order'
+												aria-label={t('checkout.myOrder')}
 											>
 												<thead>
 													<tr>
-														<th>Description:</th>
-														<th>Quantity:</th>
+														<th>{t('checkout.summary.description')}:</th>
+														<th>{t('checkout.summary.quantity')}:</th>
 													</tr>
 												</thead>
 
@@ -1089,28 +1127,28 @@ export default function Checkout({
 													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>Total Signs: {totalSigns}</td>
+														<td>{t('checkout.summary.totalSigns')}: {totalSigns}</td>
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
 														<td>
-															Discount ({Number(discountPercent || 0).toFixed(0)}%): {Number(discountAmount || 0).toFixed(2)} €
+															{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%): {Number(discountAmount || 0).toFixed(2)} €
 														</td>
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>Price: {Number(priceExclVat || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {Number(priceExclVat || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
 										</div>
 
 										<div className='summary-subtitle'>
-											Accessories: {accessoriesTypesCount} Types:
+											{t('checkout.summary.accessories')}: {accessoriesTypesCount} {t('checkout.summary.types')}:
 										</div>
 
 										<div className='summary-row'>
-											<table className='summary-table' aria-label='Accessories'>
+											<table className='summary-table' aria-label={t('checkout.summary.accessories')}>
 												<tbody>
 													{selectedAccessoriesNormalized.length > 0 ? (
 														selectedAccessoriesNormalized.map(item => (
@@ -1127,7 +1165,7 @@ export default function Checkout({
 													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>Price: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
@@ -1135,11 +1173,11 @@ export default function Checkout({
 
 										<table
 											className='summary-table summary-table__delivery'
-											aria-label='Delivery'
+											aria-label={t('checkout.delivery.title')}
 										>
 											<tbody>
 												<tr>
-													<td>Delivery</td>
+													<td>{t('checkout.delivery.title')}</td>
 													<td>
 														<select
 															className='summary-select'
@@ -1149,7 +1187,7 @@ export default function Checkout({
 														>
 															{deliveryOptions.map(opt => (
 																<option key={opt.label} value={opt.label}>
-																	{opt.label}
+																	{getDeliveryLabel(opt.label)}
 																</option>
 															))}
 														</select>
@@ -1158,7 +1196,7 @@ export default function Checkout({
 												<tr>
 													<td className='summary-table__blank'></td>
 													<td>
-														Del. Price: {deliveryPrice.toFixed(2)} €
+														{t('checkout.delivery.price')}: {deliveryPrice.toFixed(2)} €
 													</td>
 												</tr>
 											</tbody>
@@ -1169,7 +1207,7 @@ export default function Checkout({
 												className='delivery-comment__label'
 												htmlFor='deliveryComment'
 											>
-												Delivery comment
+												{t('checkout.delivery.comment')}
 											</label>
 
 											<input
@@ -1186,7 +1224,7 @@ export default function Checkout({
 											</div>
 										</div>
 
-										<table className='summary-table' aria-label='VAT and total'>
+										<table className='summary-table' aria-label={t('checkout.vatAndTotal')}>
 											<tbody>
 												{/* <tr>
 													<td>VAT {Number(vatPercentForCheckout || 0).toFixed(0)}%</td>
@@ -1194,19 +1232,19 @@ export default function Checkout({
 												</tr> */}
 												<tr>
 													<td>
-														<strong>Total amount</strong>
+														<strong>{t('checkout.summary.totalAmount')}</strong>
 													</td>
 													<td>{Number(totalAmount || 0).toFixed(2)} €</td>
 												</tr>
 											</tbody>
 										</table>
-											<p className='checkout__vat-note'>No VAT is charged according to § 19 UStG.</p>
+											<p className='checkout__vat-note'>{t('checkout.vatNote')}</p>
 										<div className='production-comment'>
 											<label
 												className='production-comment__label'
 												htmlFor='productionComment'
 											>
-												Leave a comment for production here:
+												{t('checkout.productionComment')}
 											</label>
 
 											<textarea
@@ -1218,24 +1256,22 @@ export default function Checkout({
 											/>
 										</div>
 
-										<div className='summary-notes' aria-label='Shipping notes'>
+										<div className='summary-notes' aria-label={t('checkout.shippingNotes.title')}>
 											<p>
-												Orders placed before 4:00 PM are usually shipped the
-												same day.
+												{t('checkout.shippingNotes.sameDay')}
 											</p>
 											<p>
-												For next-day delivery, please select UPS Next Day
-												Package.
+												{t('checkout.shippingNotes.nextDay')}
 											</p>
-											<p>All prices are in Euros.</p>
+											<p>{t('checkout.shippingNotes.euros')}</p>
 										</div>
 
 										<div className='summary-actions'>
 											<div className='checkout__proceed-group'>
-												<SimpleButton text='Proceed to Payment' onClick={handlePlaceOrder} withIcon disabled={isPlacingOrder} className='checkout__proceed-btn'/>
+												<SimpleButton text={t('checkout.actions.proceedToPayment')} onClick={handlePlaceOrder} withIcon disabled={isPlacingOrder} className='checkout__proceed-btn'/>
 												{isPlacingOrder && (
 													<p className='checkout__loading-hint'>
-														Processing your request... Please wait, this may take some time.
+														{t('checkout.processingRequest')}
 													</p>
 												)}
 											</div>

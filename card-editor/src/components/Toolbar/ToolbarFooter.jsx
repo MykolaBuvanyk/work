@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./Toolbar.module.css";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { getProject } from "../../utils/projectStorage";
@@ -27,6 +28,7 @@ const readCachedManufacturerNote = (fallback = "") => {
 };
 
 const ToolbarFooter = () => {
+  const { t } = useTranslation();
   const { designs, currentDesignId } = useCanvasContext();
 
   const uniqueTypesCount = useMemo(() => {
@@ -239,7 +241,7 @@ const ToolbarFooter = () => {
     <div className={styles.toolbarFooter}>
       <div className={styles.footerTopRow}>
         <div className={styles.footerInfo}>
-          <span>Your Signs:</span>
+          <span>{t('toolbar.footer.yourSigns')}</span>
           <span className={styles.footerPageCount}>
             <span>{currentDisplay}</span>
             <span>/</span>
@@ -328,13 +330,13 @@ const ToolbarFooter = () => {
 
       <div style={{gap:'30px', marginTop:'10px'}} className={styles.footerInfo}>
         <div className={styles.row}>
-          <span>Unique types:</span>
+          <span>{t('toolbar.footer.uniqueTypes')}</span>
           <span className={styles.footerPageCount}>
             <span>{uniqueTypesCount}</span>
           </span>
         </div>
         <div className={styles.row}>
-          <span>Total signs:</span>
+          <span>{t('toolbar.footer.totalSigns')}</span>
           <span className={styles.footerPageCount}>
             <span>{totalSignsCount}</span>
           </span>
@@ -342,10 +344,10 @@ const ToolbarFooter = () => {
       </div>
 
       <div className={styles.footerNoteSection}>
-        <div className={styles.footerNoteTitle}>Note for the manufacturer</div>
+        <div className={styles.footerNoteTitle}>{t('toolbar.footer.manufacturerNote')}</div>
         <input
           type="text"
-          placeholder="Text"
+          placeholder={t('toolbar.footer.notePlaceholder')}
           className={styles.footerNoteInput}
           value={manufacturerNote}
           onChange={(e) => {

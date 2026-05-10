@@ -1,16 +1,18 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./AccessoriesModal.module.css";
 
 const AccessoriesModal = ({
   isOpen,
   onClose,
-  title = "Accessories",
+  title,
   items,
   onToggle,
   onSetQty,
   onInc,
   onDec,
 }) => {
+  const { t } = useTranslation();
   const ref = useRef(null);
 
   useEffect(() => {
@@ -98,6 +100,8 @@ const AccessoriesModal = ({
   };
 
   const formatPrice = (val) => `€ ${Number(val || 0).toFixed(2)}`;
+  const getAccessoryName = (item) => (item?.nameKey ? t(item.nameKey) : item.name);
+  const getAccessoryDesc = (item) => (item?.descKey ? t(item.descKey) : item.desc);
 
   // Show only admin-provided & available items, or those already selected (checked).
   const visibleItems = orderedItems.filter((it) => {
@@ -110,11 +114,11 @@ const AccessoriesModal = ({
     <div className={styles.modalRoot}>
       <div className={styles.dropdown} ref={ref}>
         <div className={styles.dropdownHeader}>
-          <h3>{title}</h3>
+          <h3>{title || t("accessories.title")}</h3>
           <button
             className={styles.closeBtn}
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("accessoriesModal.close")}
           >
             <svg
               width="24"
@@ -156,10 +160,10 @@ const AccessoriesModal = ({
                   <img
                     className={styles.thumb}
                     src={it.img}
-                    alt={`${it.name} image`}
+                    alt={t("accessoriesModal.itemImageAlt", { name: getAccessoryName(it) })}
                   />
                 </div>
-                <div className={styles.colName}>{it.name}</div>
+                <div className={styles.colName}>{getAccessoryName(it)}</div>
                 <div className={styles.colQty}>
                   <div className={styles.inputGroup}>
                     <input
@@ -181,17 +185,17 @@ const AccessoriesModal = ({
                   </div>
                 </div>
                 <div className={styles.colPrice}>{formatPrice(it.price * parseNumber(it.qty))}</div>
-                <div className={styles.colDesc}>{it.desc}</div>
+                <div className={styles.colDesc}>{getAccessoryDesc(it)}</div>
                 <div className={styles.colExtra}>
                   {it.hasExtra && it.extraImg ? (
                     <div className={styles.extraWrap}>
                       {it.id === 4 ? (
-                        <div className={styles.extraLabel}>Example use</div>
+                        <div className={styles.extraLabel}>{t("accessoriesModal.exampleUse")}</div>
                       ) : null}
                       <img
                         className={styles.extraThumb}
                         src={it.extraImg}
-                        alt={`${it.name} extra`}
+                        alt={t("accessoriesModal.itemExtraAlt", { name: getAccessoryName(it) })}
                         style={{
                           // Фіксовані розміри додаткових картинок без наведення
                           width:

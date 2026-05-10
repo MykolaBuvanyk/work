@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useExcelImport } from "../../hooks/useExcelImport";
 import {
@@ -31,15 +32,14 @@ import iconKeyring from "/images/accessories/Keyring.svg";
 import iconBallchain from "/images/accessories/Ballchain.svg";
 
 const MAX_SIGNS_PER_PROJECT = 100;
-const MAX_SIGNS_REACHED_MESSAGE =
-  "Maximum number of signs in this project has been reached (30). Please create a new project.";
-
 const BASE_ACCESSORIES = [
   {
     id: 1,
     name: "Cable ties",
+    nameKey: "accessories.items.cableTies.name",
     price: 0.05,
     desc: "Black plastic cable ties, size 3.6 × 140 mm",
+    descKey: "accessories.items.cableTies.desc",
     iconKey: "cable.svg",
     img: imgCableTies,
     hasExtra: false,
@@ -50,8 +50,10 @@ const BASE_ACCESSORIES = [
   {
     id: 2,
     name: "Screws 9,5 mm",
+    nameKey: "accessories.items.screws95.name",
     price: 0.1,
     desc: "Size 2.9 × 9.5 mm",
+    descKey: "accessories.items.screws95.desc",
     iconKey: "screws.svg",
     img: imgPh95,
     hasExtra: false,
@@ -62,8 +64,10 @@ const BASE_ACCESSORIES = [
   {
     id: 3,
     name: "Screws 13 mm",
+    nameKey: "accessories.items.screws13.name",
     price: 0.1,
     desc: "Size 2.9 × 13 mm",
+    descKey: "accessories.items.screws13.desc",
     iconKey: "screws.svg",
     img: imgPh13,
     hasExtra: false,
@@ -74,8 +78,10 @@ const BASE_ACCESSORIES = [
   {
     id: 4,
     name: "Carabiner",
+    nameKey: "accessories.items.carabiner.name",
     price: 0.25,
     desc: "Metal spring clip 40mm",
+    descKey: "accessories.items.carabiner.desc",
     iconKey: "carabiner-40mmicon.svg",
     img: imgCarabiner,
     extraImg: imgCarabinerUse,
@@ -87,8 +93,10 @@ const BASE_ACCESSORIES = [
   {
     id: 5,
     name: "Keyrings",
+    nameKey: "accessories.items.keyrings.name",
     price: 0.7,
     desc: "30 mm",
+    descKey: "accessories.items.keyrings.desc",
     iconKey: "keyring.svg",
     img: imgKeyring,
     extraImg: imgKeyringUse,
@@ -100,8 +108,10 @@ const BASE_ACCESSORIES = [
   {
     id: 6,
     name: "Ball chains",
+    nameKey: "accessories.items.ballChains.name",
     price: 0.25,
     desc: "length 10cm",
+    descKey: "accessories.items.ballChains.desc",
     iconKey: "ballchain.svg",
     img: imgBallchain,
     extraImg: imgBallchainUse,
@@ -113,6 +123,7 @@ const BASE_ACCESSORIES = [
 ];
 
 const TopToolbar = ({ className, formData }) => {
+  const { t } = useTranslation();
   const { canvas } = useCanvasContext();
   const { importFromExcel } = useExcelImport();
   const [working, setWorking] = useState(false);
@@ -193,12 +204,13 @@ const TopToolbar = ({ className, formData }) => {
     if (!m) return "";
     return `${m[1].replace(",", ".")} × ${m[2].replace(",", ".")}`;
   };
+  const getAccessoryName = (it) => (it?.nameKey ? t(it.nameKey) : it.name);
   const displayName = (it) => {
     if (it.name.toLowerCase() === "screws") {
       const sz = extractSize(it.desc);
-      return sz ? `${it.name} ${sz}` : it.name;
+      return sz ? `${getAccessoryName(it)} ${sz}` : getAccessoryName(it);
     }
-    return it.name;
+    return getAccessoryName(it);
   };
 
   const openAccessories = () => setAccessoriesOpen(true);
@@ -292,7 +304,7 @@ const TopToolbar = ({ className, formData }) => {
           : 0;
 
         if (currentProjectCanvasesCount >= MAX_SIGNS_PER_PROJECT) {
-          alert(MAX_SIGNS_REACHED_MESSAGE);
+          alert(t("accessories.alerts.maxSignsReached"));
           return;
         }
       } else {
@@ -302,7 +314,7 @@ const TopToolbar = ({ className, formData }) => {
           : unsavedSignsCount;
 
         if (currentUnsavedSignsCount >= MAX_SIGNS_PER_PROJECT) {
-          alert(MAX_SIGNS_REACHED_MESSAGE);
+          alert(t("accessories.alerts.maxSignsReached"));
           return;
         }
       }
@@ -903,8 +915,8 @@ const TopToolbar = ({ className, formData }) => {
             onClick={isCreateNewSignDisabled ? undefined : handleNewSign}
             title={
               isCreateNewSignDisabled
-                ? "Maximum number of signs reached (30). Create a new project."
-                : "Create new canvas (sign)"
+                ? t("accessories.tooltips.maxSignsReached")
+                : t("accessories.tooltips.createNewCanvas")
             }
           >
             <svg
@@ -927,12 +939,12 @@ const TopToolbar = ({ className, formData }) => {
                 </clipPath>
               </defs>
             </svg>
-            New Sign
+            {t("accessories.toolbar.newSign")}
           </li>
           <li
             className={styles.toolbarItem}
             onClick={handleDeleteSign}
-            title="Delete current canvas (sign)"
+            title={t("accessories.tooltips.deleteCurrentCanvas")}
           >
             <svg
               width="24"
@@ -946,7 +958,7 @@ const TopToolbar = ({ className, formData }) => {
                 fill="#FF3B30"
               />
             </svg>
-            Delete sign
+            {t("accessories.toolbar.deleteSign")}
           </li>
           <li className={styles.toolbarItem} onClick={importFromExcel}>
             <svg
@@ -968,9 +980,9 @@ const TopToolbar = ({ className, formData }) => {
                 </clipPath>
               </defs>
             </svg>
-            Import via Excel
+            {t("accessories.toolbar.importViaExcel")}
           </li>
-          <li className={styles.toolbarItem} onClick={openTemplates} title="Templates">
+          <li className={styles.toolbarItem} onClick={openTemplates} title={t("accessories.toolbar.templates")}>
             <svg
               width="21"
               height="24"
@@ -987,12 +999,12 @@ const TopToolbar = ({ className, formData }) => {
                 fill="#007AFF"
               />
             </svg>
-            Templates
+            {t("accessories.toolbar.templates")}
           </li>
         </ul>
       </div>
       <div className={styles.secondPart}>
-        <h3 className={styles.title}>Accessories:</h3>
+        <h3 className={styles.title}>{t("accessories.title")}:</h3>
         {/* Selected accessories list (synced with modal) */}
         <ul className={styles.accessoriesList}>
           {(() => {
@@ -1032,12 +1044,12 @@ const TopToolbar = ({ className, formData }) => {
                     type="checkbox"
                     checked={it.checked}
                     onChange={() => toggleAccessory(it.id)}
-                    title="Toggle accessory"
+                    title={t("accessories.tooltips.toggleAccessory")}
                   />
                   {iconUrl ? (
                     <img
                       src={iconUrl}
-                      alt={`${it.name} icon`}
+                      alt={t("accessories.accessoryIconAlt", { name: displayName(it) })}
                       className={styles.accessoryIcon}
                     />
                   ) : (
@@ -1114,7 +1126,7 @@ const TopToolbar = ({ className, formData }) => {
                 </clipPath>
               </defs>
             </svg>
-            More Accessories</>}
+            {t("accessories.moreAccessories")}</>}
         </div>
         {isTemplatesOpen && (
           <TemplatesModal onClose={closeTemplates} />
@@ -1122,7 +1134,7 @@ const TopToolbar = ({ className, formData }) => {
         <AccessoriesModal
           isOpen={isAccessoriesOpen}
           onClose={closeAccessories}
-          title="Accessories"
+          title={t("accessories.title")}
           items={accessories}
           onToggle={toggleAccessory}
           onSetQty={setQty}

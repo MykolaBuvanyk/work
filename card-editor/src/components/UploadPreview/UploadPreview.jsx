@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./UploadPreview.module.css";
 import { vectorizeDataURLToSVG } from "../../utils/vectorizeImage";
 import {
@@ -82,6 +83,7 @@ const UploadPreview = ({
   onClose,
   onConfirm, // ({ svg: string, strokeOnly: boolean, mode: 'raster' | 'svg' }) => void
 }) => {
+  const { t } = useTranslation();
   const PREVIEW_RESULT_COLOR = "#000";
   const [detail, setDetail] = useState(60);
   const [strokeOnly, setStrokeOnly] = useState(false);
@@ -148,7 +150,7 @@ const UploadPreview = ({
       <div className={styles.modal}>
         <div className={styles.headerWrapper}>
           <div className={styles.headerWrapperText}>
-            <p className={styles.para}>Upload preview</p>
+            <p className={styles.para}>{t("toolbar.uploadPreview.title")}</p>
           </div>
           <svg
             onClick={onClose}
@@ -179,7 +181,7 @@ const UploadPreview = ({
         <div className={styles.controls}>
           {canAdjustPrecision && (
             <div className={styles.row}>
-              <label htmlFor="prec">Precision</label>
+              <label htmlFor="prec">{t("toolbar.uploadPreview.precision")}</label>
               <input
                 id="prec"
                 type="range"
@@ -194,7 +196,7 @@ const UploadPreview = ({
           )}
           {canAdjustPrecision && (
             <div className={styles.row}>
-              <label htmlFor="bright">Brightness</label>
+              <label htmlFor="bright">{t("toolbar.uploadPreview.brightness")}</label>
               <input
                 id="bright"
                 type="range"
@@ -209,19 +211,19 @@ const UploadPreview = ({
           )}
           {canAdjustPrecision && (
             <div className={styles.row}>
-              <label style={{ minWidth: 80 }}>Invert</label>
+              <label style={{ minWidth: 80 }}>{t("toolbar.uploadPreview.invert")}</label>
               <button
                 type="button"
                 role="switch"
                 aria-checked={invert}
                 className={`${styles.toggle} ${invert ? styles.on : ''}`}
                 onClick={() => setInvert((v) => !v)}
-                title={invert ? 'On' : 'Off'}
+                title={invert ? t("toolbar.states.on") : t("toolbar.states.off")}
               >
                 <span className={styles.toggleTrack}>
                   <span className={styles.toggleThumb} />
                 </span>
-                <span className={styles.toggleLabel}>{invert ? 'On' : 'Off'}</span>
+                <span className={styles.toggleLabel}>{invert ? t("toolbar.states.on") : t("toolbar.states.off")}</span>
               </button>
             </div>
           )}
@@ -232,17 +234,17 @@ const UploadPreview = ({
                 checked={strokeOnly}
                 onChange={(e) => setStrokeOnly(e.target.checked)}
               />
-              Stroke only (lines)
+              {t("toolbar.uploadPreview.strokeOnly")}
             </label>
           </div>
         </div>
 
         <div className={styles.previewWrap}>
           <div className={styles.previewCol}>
-            <div className={styles.previewTitle}>Original</div>
+            <div className={styles.previewTitle}>{t("toolbar.uploadPreview.original")}</div>
             <div className={styles.previewBox}>
               {mode === "raster" && dataURL && (
-                <img src={dataURL} alt="original" />
+                <img src={dataURL} alt={t("toolbar.uploadPreview.originalAlt")} />
               )}
               {mode === "svg" && svgText && (
                 <div
@@ -253,17 +255,17 @@ const UploadPreview = ({
             </div>
           </div>
           <div className={styles.previewCol}>
-            <div className={styles.previewTitle}>Result</div>
+            <div className={styles.previewTitle}>{t("toolbar.uploadPreview.result")}</div>
             <div className={styles.previewBox}>
         {processing ? (
-                <div className={styles.spinner}>Processing…</div>
+                <div className={styles.spinner}>{t("toolbar.uploadPreview.processing")}</div>
               ) : svgOut ? (
                 <div
                   className={styles.svgBox}
           dangerouslySetInnerHTML={{ __html: makeSVGContain(svgOut) }}
                 />
               ) : (
-                <div className={styles.placeholder}>No preview</div>
+                <div className={styles.placeholder}>{t("toolbar.uploadPreview.noPreview")}</div>
               )}
             </div>
           </div>
@@ -271,14 +273,14 @@ const UploadPreview = ({
 
         <div className={styles.footer}>
           <button className={styles.secondary} onClick={onClose}>
-            Cancel
+            {t("toolbar.actions.cancel")}
           </button>
           <button
             className={styles.primary}
             disabled={processing || !svgOut}
             onClick={() => svgOut && onConfirm && onConfirm({ svg: svgOut, strokeOnly, mode })}
           >
-            Add to canvas
+            {t("toolbar.uploadPreview.addToCanvas")}
           </button>
         </div>
       </div>

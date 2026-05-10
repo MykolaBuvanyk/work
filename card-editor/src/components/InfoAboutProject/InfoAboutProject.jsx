@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
 import { useSelector } from "react-redux";
@@ -335,6 +336,7 @@ const buildOrderTestSummary = ({ projectTitle, projectSnapshot, accessories }) =
 };
 
 const InfoAboutProject = () => {
+  const { t } = useTranslation();
   const { isAuth } = useSelector((state) => state.user);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isSaveProjectModalOpen, setIsSaveProjectModalOpen] = useState(false);
@@ -395,10 +397,10 @@ const InfoAboutProject = () => {
   }, []);
 
   const projectTitle = useMemo(() => {
-    if (!projectMeta?.id) return "Not saved";
+    if (!projectMeta?.id) return t("infoAboutProject.project.notSaved");
     if (projectMeta?.name) return projectMeta.name;
-    return "Untitled";
-  }, [projectMeta]);
+    return t("infoAboutProject.project.untitled");
+  }, [projectMeta, t]);
 
   const getSelectedAccessoriesSnapshot = () => {
     try {
@@ -598,7 +600,7 @@ const InfoAboutProject = () => {
       return true;
     } catch (e) {
       console.error("Failed to add to cart", e);
-      alert("Failed to add project to cart. Please try again.");
+      alert(t("infoAboutProject.alerts.addToCartFailed"));
       return false;
     } finally {
       setIsAddingToCart(false);
@@ -659,7 +661,7 @@ const InfoAboutProject = () => {
       setIsOrderTestOpen(true);
     } catch (error) {
       console.error("Failed to prepare order summary", error);
-      alert("Failed to prepare order summary. Please try again.");
+      alert(t("infoAboutProject.alerts.prepareOrderFailed"));
     } finally {
       setIsPreparingOrderSummary(false);
     }
@@ -765,7 +767,7 @@ const InfoAboutProject = () => {
   return (
     <div className={styles.infoAboutProject}>
       <div className={styles.infoAboutProjectEl}>
-        <h3 className={styles.title}>Project: {projectTitle}</h3>
+        <h3 className={styles.title}>{t("infoAboutProject.project.label")}: {projectTitle}</h3>
         <button
           className={styles.cartButton}
           onClick={onCartClick}
@@ -791,21 +793,21 @@ const InfoAboutProject = () => {
               </clipPath>
             </defs>
           </svg>
-          Cart
+          {t("infoAboutProject.cart")}
         </button>
       </div>
       <div className={styles.infoAboutProjectEl}>
-        <p className={styles.para}>Current sign</p>
+        <p className={styles.para}>{t("infoAboutProject.currentSign")}</p>
         <span className={styles.price}>{isLoading ? "…" : formatted}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>
-          Discount <span>({Number(discountPercent || 0).toFixed(0)}%)</span>
+          {t("infoAboutProject.discount")} <span>({Number(discountPercent || 0).toFixed(0)}%)</span>
         </p>
         <span className={styles.price}>{isLoading ? "…" : formattedDiscount}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
-        <p className={styles.para}>Total Price</p>
+        <p className={styles.para}>{t("infoAboutProject.totalPrice")}</p>
         <span className={styles.price}>{isLoading ? "…" : formattedTotal}</span>
       </div>
 
@@ -826,7 +828,7 @@ const InfoAboutProject = () => {
           onSaveAs={async (name) => {
             if (!canvas) return;
             if (!name || !name.trim()) {
-              alert("Please enter a project name");
+              alert(t("infoAboutProject.alerts.enterProjectName"));
               return;
             }
 
@@ -848,7 +850,7 @@ const InfoAboutProject = () => {
               setIsSaveAsModalOpen(false);
             } catch (e) {
               console.error("Save as failed:", e);
-              alert("Failed to save project. Please try again.");
+              alert(t("infoAboutProject.alerts.saveProjectFailed"));
             }
           }}
         />
@@ -881,7 +883,7 @@ const InfoAboutProject = () => {
         onClose={handleCartAccessoriesClose}
         onProceed={handleProceedToCheckout}
         proceedDisabled={isAddingToCart}
-        title="The Accessories you selected:"
+        title={t("infoAboutProject.accessoriesSelected")}
         items={cartAccessories}
         onToggle={toggleCartAccessory}
         onSetQty={setCartAccessoryQty}

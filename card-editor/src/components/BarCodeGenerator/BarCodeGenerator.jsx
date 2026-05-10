@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import JsBarcode from "jsbarcode";
 import * as fabric from "fabric";
@@ -6,11 +7,12 @@ import styles from "./BarCodeGenerator.module.css";
 import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const BarCodeGenerator = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { canvas, globalColors } = useCanvasContext();
   const dropdownRef = useRef(null);
   const autoCreateOnOpenRef = useRef(false);
   const [formData, setFormData] = useState({
-    text: "ABC-abc-1234",
+    text: t("toolbar.barcode.defaultText"),
     codeType: "CODE128",
   });
 
@@ -31,8 +33,8 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   const barcodeTypes = [
-    { value: "CODE128", label: "Code 128" },
-    { value: "CODE39", label: "Code 39" },
+    { value: "CODE128", labelKey: "toolbar.barcode.types.code128" },
+    { value: "CODE39", labelKey: "toolbar.barcode.types.code39" },
   ];
 
   const generateBarCode = async ({
@@ -40,7 +42,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     createNew = false,
   } = {}) => {
     if (!canvas || !formData.text.trim()) {
-      alert("Please enter text for the barcode");
+      alert(t("toolbar.barcode.alerts.enterText"));
       return;
     }
 
@@ -66,7 +68,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       svgText = serializer.serializeToString(svgEl);
     } catch (e) {
       console.error("Помилка побудови бар-коду:", e);
-      alert("Не вдалося згенерувати бар-код. Перевірте текст / тип.");
+      alert(t("toolbar.barcode.alerts.generateFailed"));
       return;
     }
 
@@ -76,7 +78,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     let target = active && active.isBarCode ? active : null;
 
     if (!createNew && !target) {
-      alert("Select a barcode on canvas to update");
+      alert(t("toolbar.barcode.alerts.selectToUpdate"));
       return;
     }
 
@@ -109,7 +111,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         );
     } catch (e) {
       console.error("Помилка створення Fabric SVG бар-коду:", e);
-      alert("Не вдалося створити вектор бар-коду");
+      alert(t("toolbar.barcode.alerts.createVectorFailed"));
       return;
     }
 
@@ -195,7 +197,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     } catch (e) {
       console.error("Помилка додавання бар-коду на canvas:", e);
       if (obj && canvas.getObjects().includes(obj)) canvas.remove(obj);
-      alert("Помилка розміщення бар-коду на полотні");
+      alert(t("toolbar.barcode.alerts.placeFailed"));
     } finally {
       if (replacing) {
         canvas.__suspendUndoRedo = false;
@@ -368,8 +370,8 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.dropdownHeader}>
           <div className={styles.titleWrapper}>
-            <h3>Bar Code</h3>
-            <p>Enter text or numbers to encode</p>
+            <h3>{t("toolbar.barcode.title")}</h3>
+            <p>{t("toolbar.barcode.description")}</p>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
             <svg
@@ -410,7 +412,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                 >
                   {barcodeTypes.map((type) => (
                     <option key={type.value} value={type.value}>
-                      {type.label}
+                      {t(type.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -436,7 +438,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                   formData.text.trim() ? () => generateBarCode() : undefined
                 }
               >
-                Update
+                {t("toolbar.actions.update")}
               </button>
             </div>
             <div className={styles.extraActions}>
@@ -454,9 +456,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                   />
                 </svg>
                 <span className={styles.actionText}>
-                  Delete
+                  {t("toolbar.actions.delete")}
                   <br />
-                  Bar Code
+                  {t("toolbar.barcode.title")}
                 </span>
               </button>
               <button className={styles.actionBtn} onClick={duplicateBarCode}>
@@ -499,9 +501,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                   />
                 </svg>
                 <span className={styles.actionText}>
-                  Duplicate
+                  {t("toolbar.actions.duplicate")}
                   <br />
-                  Bar Code
+                  {t("toolbar.barcode.title")}
                 </span>
               </button>
               <button className={styles.actionBtn} onClick={createNewBarCode}>
@@ -526,9 +528,9 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
                   </defs>
                 </svg>
                 <span className={styles.actionText}>
-                  New
+                  {t("toolbar.actions.new")}
                   <br />
-                  Bar Code
+                  {t("toolbar.barcode.title")}
                 </span>
               </button>
             </div>

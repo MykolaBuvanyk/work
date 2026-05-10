@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import CustomShapeStopModal from './CustomShapeStopModal';
 import { copyHandler } from '../Canvas/Canvas';
+import { useTranslation } from 'react-i18next';
 // lock shape now: rectangle + top half-circle (width 16mm, height 8mm)
 import { useCanvasContext } from '../../contexts/CanvasContext';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
@@ -119,6 +120,7 @@ const inferThemeIndexByColors = (textColor, backgroundColor, backgroundType = 's
 };
 
 export const Toolbar = ({ formData }) => {
+  const { t } = useTranslation();
   const {
     canvas,
     globalColors,
@@ -610,7 +612,7 @@ export const Toolbar = ({ formData }) => {
                 created = await addUnsavedSignFromSnapshot(snap);
               } catch (err) {
                 if (err?.code === 'MAX_UNSAVED_SIGNS_LIMIT_REACHED') {
-                  alert('Maximum number of signs reached (100). Please create a new project.');
+                  alert(t('toolbar.alerts.maxSignsReached'));
                   break;
                 }
                 throw err;
@@ -7399,13 +7401,13 @@ export const Toolbar = ({ formData }) => {
 
       // Перевіряємо тип файлу
       if (!isSvgFile && !file.type.startsWith('image/')) {
-        alert('Будь ласка, виберіть файл зображення');
+        alert(t('toolbar.alerts.selectImageFile'));
         return;
       }
 
       // Перевіряємо розмір файлу (максимум 5MB)
       if (file.size > 6 * 1024 * 1024) {
-        alert('Файл занадто великий. Максимальний розмір: 5MB');
+        alert(t('toolbar.alerts.fileTooLarge'));
         return;
       }
 
@@ -8618,7 +8620,7 @@ export const Toolbar = ({ formData }) => {
   // Новий імпорт тексту з Excel: кожний рядок стає окремим текстовим об'єктом
   const importFromExcel = () => {
     if (!canvas) {
-      alert('Canvas не ініціалізований');
+      alert(t('toolbar.alerts.canvasNotInitialized'));
       return;
     }
 
@@ -8703,16 +8705,16 @@ export const Toolbar = ({ formData }) => {
             canvas.setActiveObject(createdObjects[0]);
           }
 
-          alert(`Імпортовано ${createdObjects.length} текстових рядків`);
+          alert(t('toolbar.alerts.excelRowsImported', { count: createdObjects.length }));
         } catch (error) {
           console.error('Помилка імпорту тексту з Excel:', error);
-          alert(`Не вдалося імпортувати текст: ${error.message}`);
+          alert(t('toolbar.alerts.excelImportFailed', { message: error.message }));
         }
       };
 
       reader.onerror = error => {
         console.error('Помилка читання файлу Excel:', error);
-        alert('Не вдалося прочитати файл Excel');
+        alert(t('toolbar.alerts.excelReadFailed'));
       };
 
       reader.readAsArrayBuffer(file);
@@ -10442,52 +10444,52 @@ export const Toolbar = ({ formData }) => {
           <p>1</p>
         </div>
         <div className={styles.icons}>
-          <h3>Shape</h3>
-          <span title="Rectangle" onClick={withShapePick(addRectangle)}>
-            <img src="/images/icon/rectangle.png" alt="Rectangle" draggable={false} />
+          <h3>{t('toolbar.sections.shape')}</h3>
+          <span title={t('toolbar.shape.rectangle')} onClick={withShapePick(addRectangle)}>
+            <img src="/images/icon/rectangle.png" alt={t('toolbar.shape.rectangle')} draggable={false} />
           </span>
-          <span title="Round" onClick={withShapePick(addCircle)}>
-            <img src="/images/icon/circle.png" alt="Round" draggable={false} />
+          <span title={t('toolbar.shape.round')} onClick={withShapePick(addCircle)}>
+            <img src="/images/icon/circle.png" alt={t('toolbar.shape.round')} draggable={false} />
           </span>
-          <span title="Oval" onClick={withShapePick(addEllipse)}>
-            <img src="/images/icon/elipse.png" alt="Oval" draggable={false} />
+          <span title={t('toolbar.shape.oval')} onClick={withShapePick(addEllipse)}>
+            <img src="/images/icon/elipse.png" alt={t('toolbar.shape.oval')} draggable={false} />
           </span>
-          <span title="Rectangle with a loop (Hanging Sing)" onClick={withShapePick(addLock)}>
-            <img src="/images/icon/lock.png" alt="Lock" draggable={false} />
+          <span title={t('toolbar.shape.lockTitle')} onClick={withShapePick(addLock)}>
+            <img src="/images/icon/lock.png" alt={t('toolbar.shape.lockAlt')} draggable={false} />
           </span>
-          <span title="Round with a line" onClick={withShapePick(addCircleWithLine)}>
-            <img src="/images/icon/circle_line.png" alt="Circle with line" draggable={false} />
+          <span title={t('toolbar.shape.circleWithLineTitle')} onClick={withShapePick(addCircleWithLine)}>
+            <img src="/images/icon/circle_line.png" alt={t('toolbar.shape.circleWithLineAlt')} draggable={false} />
           </span>
-          <span title="Round with a T-shaped line" onClick={withShapePick(addCircleWithCross)}>
-            <img src="/images/icon/circle_t_shape.png" alt="Circle with T shape" draggable={false} />
+          <span title={t('toolbar.shape.circleWithTTitle')} onClick={withShapePick(addCircleWithCross)}>
+            <img src="/images/icon/circle_t_shape.png" alt={t('toolbar.shape.circleWithTAlt')} draggable={false} />
           </span>
-          <span title="Warning Triangle" onClick={withShapePick(addAdaptiveTriangle)}>
-            <img src="/images/icon/adaptive_triangle.png" alt="Warning Triangle" draggable={false} />
+          <span title={t('toolbar.shape.warningTriangle')} onClick={withShapePick(addAdaptiveTriangle)}>
+            <img src="/images/icon/adaptive_triangle.png" alt={t('toolbar.shape.warningTriangle')} draggable={false} />
           </span>
-          <span title="Semi round" onClick={withShapePick(addHalfCircle)}>
-            <img src="/images/icon/half_circle.png" alt="Semi round" draggable={false} />
+          <span title={t('toolbar.shape.semiRound')} onClick={withShapePick(addHalfCircle)}>
+            <img src="/images/icon/half_circle.png" alt={t('toolbar.shape.semiRound')} draggable={false} />
           </span>
-          <span title="Round Top" onClick={withShapePick(addExtendedHalfCircle)}>
-            <img src="/images/icon/extend_half_circle.png" alt="Round Top" draggable={false} />
+          <span title={t('toolbar.shape.roundTop')} onClick={withShapePick(addExtendedHalfCircle)}>
+            <img src="/images/icon/extend_half_circle.png" alt={t('toolbar.shape.roundTop')} draggable={false} />
           </span>
-          <span title="Hexagon" onClick={withShapePick(addHexagon)}>
-            <img src="/images/icon/sexagon.png" alt="Hexagon" draggable={false} />
+          <span title={t('toolbar.shape.hexagon')} onClick={withShapePick(addHexagon)}>
+            <img src="/images/icon/sexagon.png" alt={t('toolbar.shape.hexagon')} draggable={false} />
           </span>
-          <span title="Octagon" onClick={withShapePick(addOctagon)}>
-            <img src="/images/icon/octagon.png" alt="Octagon" draggable={false} />
+          <span title={t('toolbar.shape.octagon')} onClick={withShapePick(addOctagon)}>
+            <img src="/images/icon/octagon.png" alt={t('toolbar.shape.octagon')} draggable={false} />
           </span>
-          <span title="Triangle" onClick={withShapePick(addTriangleUp)}>
-            <img src="/images/icon/triangle.png" alt="Triangle" draggable={false} />
+          <span title={t('toolbar.shape.triangle')} onClick={withShapePick(addTriangleUp)}>
+            <img src="/images/icon/triangle.png" alt={t('toolbar.shape.triangle')} draggable={false} />
           </span>
-          <span title="Left arrow" onClick={withShapePick(addArrowLeft)}>
-            <img src="/images/icon/left_arrow.png" alt="Left arrow" draggable={false} />
+          <span title={t('toolbar.shape.leftArrow')} onClick={withShapePick(addArrowLeft)}>
+            <img src="/images/icon/left_arrow.png" alt={t('toolbar.shape.leftArrow')} draggable={false} />
           </span>
-          <span title="Right arrow" onClick={withShapePick(addArrowRight)}>
-            <img src="/images/icon/rigth_arrow.png" alt="Right arrow" draggable={false} />
+          <span title={t('toolbar.shape.rightArrow')} onClick={withShapePick(addArrowRight)}>
+            <img src="/images/icon/rigth_arrow.png" alt={t('toolbar.shape.rightArrow')} draggable={false} />
           </span>
           {(() => {
             const disabled = blockedCustomTypes.has(currentShapeType);
-            const title = 'Custom shape';
+            const title = t('toolbar.shape.customShape');
             return (
               <span
                 onClick={disabled ? undefined : toggleCustomShapeMode}
@@ -10497,7 +10499,7 @@ export const Toolbar = ({ formData }) => {
                 title={title}
                 // Прибрано inline-outline для активної іконки
               >
-                <img src="/images/icon/custom.png" alt="Custom" draggable={false} />
+                <img src="/images/icon/custom.png" alt={t('toolbar.shape.customAlt')} draggable={false} />
               </span>
             );
           })()}
@@ -10510,7 +10512,7 @@ export const Toolbar = ({ formData }) => {
         </div>
         <div className={styles.grid}>
           <div className={styles.field}>
-            <label>Width</label>
+            <label>{t('toolbar.size.width')}</label>
             <div className={styles.inputGroup}>
               <input
                 type="number"
@@ -10558,7 +10560,7 @@ export const Toolbar = ({ formData }) => {
                 cursor: isCircleSelected || isCustomShapeApplied ? 'not-allowed' : 'inherit',
               }}
             >
-              Corner radius
+              {t('toolbar.size.cornerRadius')}
             </label>
             <div className={styles.inputGroup}>
               <input
@@ -10639,7 +10641,7 @@ export const Toolbar = ({ formData }) => {
           </div>
 
           <div className={styles.field}>
-            <label>Height</label>
+            <label>{t('toolbar.size.height')}</label>
             <div className={styles.inputGroup}>
               <input
                 type="number"
@@ -10675,7 +10677,7 @@ export const Toolbar = ({ formData }) => {
             </div>
           </div>
 
-          <div className={styles.unitLabel}>{'* (mm)'}</div>
+          <div className={styles.unitLabel}>{t('toolbar.units.mmRequired')}</div>
         </div>
       </div>
       {/* 3. Thickness */}
@@ -10685,7 +10687,7 @@ export const Toolbar = ({ formData }) => {
         </div>
         <div className={styles.thicknessWrapper}>
           <div className={styles.field}>
-            <h3>Thickness:</h3>
+            <h3>{t('toolbar.thickness.title')}</h3>
             <label>1.6</label>
             <input
               type="radio"
@@ -10725,7 +10727,7 @@ export const Toolbar = ({ formData }) => {
             />
           </div>
           <div className={styles.fieldAdhesive}>
-            <label>Adhesive Tape</label>
+            <label>{t('toolbar.thickness.adhesiveTape')}</label>
             <input
               type="checkbox"
               checked={isAdhesiveTape}
@@ -10743,7 +10745,7 @@ export const Toolbar = ({ formData }) => {
                 ? holesDiameter
                 : 0
               : '*'}{' '}
-            (mm)
+            {t('toolbar.units.mm')}
           </div>
         </div>
       </div>
@@ -10753,13 +10755,13 @@ export const Toolbar = ({ formData }) => {
           <div className={styles.numbering}>
             <p>4</p>
           </div>
-          <h3>Colour</h3>
+          <h3>{t('toolbar.sections.colour')}</h3>
         </div>
         <div className={styles.colors}>
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][0].isSelect && (
             <span
               onClick={() => handleColorPick(0, '#000000', '#FFFFFF', 'solid')}
-              title="White / Black"
+              title={t('toolbar.colours.whiteBlack')}
             >
               <A1
                 borderColor={selectedColorIndex === 0 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10772,7 +10774,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][1].isSelect && (
             <span
               onClick={() => handleColorPick(1, '#00558b', '#FFFFFF', 'solid')}
-              title="White / Blue"
+              title={t('toolbar.colours.whiteBlue')}
             >
               <A2
                 borderColor={selectedColorIndex === 1 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10785,7 +10787,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][2].isSelect && (
             <span
               onClick={() => handleColorPick(2, '#FF0000', '#FFFFFF', 'solid')}
-              title="White / Red"
+              title={t('toolbar.colours.whiteRed')}
             >
               <A3
                 borderColor={selectedColorIndex === 2 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10798,7 +10800,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][3].isSelect && (
             <span
               onClick={() => handleColorPick(3, '#FFFFFF', '#000000', 'solid')}
-              title="Black / White"
+              title={t('toolbar.colours.blackWhite')}
             >
               <A4
                 borderColor={selectedColorIndex === 3 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10810,7 +10812,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][4].isSelect && (
             <span
               onClick={() => handleColorPick(4, '#FFFFFF', '#00558b', 'solid')}
-              title="Blue / White"
+              title={t('toolbar.colours.blueWhite')}
             >
               <A5
                 borderColor={selectedColorIndex === 4 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10823,7 +10825,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][5].isSelect && (
             <span
               onClick={() => handleColorPick(5, '#FFFFFF', '#FF0000', 'solid')}
-              title="Red / White"
+              title={t('toolbar.colours.redWhite')}
             >
               <A6
                 borderColor={selectedColorIndex === 5 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10836,7 +10838,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][6].isSelect && (
             <span
               onClick={() => handleColorPick(6, '#FFFFFF', '#018001', 'solid')}
-              title="Green / White"
+              title={t('toolbar.colours.greenWhite')}
             >
               <A7
                 borderColor={selectedColorIndex === 6 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10849,7 +10851,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][7].isSelect && (
             <span
               onClick={() => handleColorPick(7, '#000000', '#fdf030', 'solid')}
-              title="Yellow / Black"
+              title={t('toolbar.colours.yellowBlack')}
             >
               <A8
                 borderColor={selectedColorIndex === 7 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10862,7 +10864,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][8].isSelect && (
             <span
               onClick={() => handleColorPick(8, '#000000', '#F0F0F0', 'gradient')}
-              title="Silver / Black"
+              title={t('toolbar.colours.silverBlack')}
             >
               <A9
                 borderColor={selectedColorIndex === 8 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10875,7 +10877,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][9].isSelect && (
             <span
               onClick={() => handleColorPick(9, '#FFFFFF', '#00c7fe', 'solid')}
-              title="Light blue / White"
+              title={t('toolbar.colours.lightBlueWhite')}
             >
               <A10
                 borderColor={selectedColorIndex === 9 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10888,7 +10890,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][10].isSelect && (
             <span
               onClick={() => handleColorPick(10, '#FFFFFF', '#FFA500', 'solid')}
-              title="Orange / White"
+              title={t('toolbar.colours.orangeWhite')}
             >
               <A11
                 borderColor={selectedColorIndex === 10 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10900,7 +10902,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][11].isSelect && (
             <span
               onClick={() => handleColorPick(11, '#FFFFFF', '#808080', 'solid')}
-              title="Gray / White"
+              title={t('toolbar.colours.grayWhite')}
             >
               <A12
                 borderColor={selectedColorIndex === 11 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10912,7 +10914,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][12].isSelect && (
             <span
               onClick={() => handleColorPick(12, '#000000', '/textures/Wood.jpg', 'texture')}
-              title="Maple (“Wood”) / Black"
+              title={t('toolbar.colours.mapleWoodBlack')}
             >
               <A13
                 borderColor={selectedColorIndex === 12 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10925,7 +10927,7 @@ export const Toolbar = ({ formData }) => {
           {formData[`${isAdhesiveTape?'A':''}colour${thickness.toString().replace('.', '')}`][13].isSelect && (
             <span
               onClick={() => handleColorPick(13, '#FFFFFF', '/textures/Carbon.jpg', 'texture')}
-              title="Carbon / White"
+              title={t('toolbar.colours.carbonWhite')}
             >
               <A14
                 borderColor={selectedColorIndex === 13 ? 'rgba(0, 108, 164, 1)' : 'black'}
@@ -10946,7 +10948,7 @@ export const Toolbar = ({ formData }) => {
           <li className={styles.elementsEl} onClick={addText}>
             <span className={styles.elementsSpanWrapper}>
               <span style={{ fontWeight: 'bold' }}>A</span>
-              <span>Text</span>
+              <span>{t('toolbar.elements.text')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addImage}>
@@ -10956,22 +10958,22 @@ export const Toolbar = ({ formData }) => {
               )}
             >
               {Image}
-              <span>Image</span>
+              <span>{t('toolbar.elements.image')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addUploadImage}>
             <span className={styles.elementsSpanWrapper}>
               {Upload}
-              <span>Upload</span>
+              <span>{t('toolbar.elements.upload')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addShape}>
             <span
-              title="Fill + Cut + Frame"
+              title={t('toolbar.elements.shapeTitle')}
               className={[styles.elementsSpanWrapper, isShapeOpen ? styles.active : ''].join(' ')}
             >
               {Shape}
-              <span>Shape</span>
+              <span>{t('toolbar.elements.shape')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addBorder}>
@@ -10981,22 +10983,22 @@ export const Toolbar = ({ formData }) => {
               )}
             >
               {Border}
-              <span>Border</span>
+              <span>{t('toolbar.elements.border')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={cut}>
             <span
-              title="Different Shapes"
+              title={t('toolbar.elements.cutTitle')}
               className={[styles.elementsSpanWrapper, isCutOpen ? styles.active : ''].join(' ')}
             >
               {Cut}
-              <span>Cut</span>
+              <span>{t('toolbar.elements.cut')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addQrCode}>
             <span className={[styles.elementsSpanWrapper, isQrOpen ? styles.active : ''].join(' ')}>
               {QrCode}
-              <span>QR Code</span>
+              <span>{t('toolbar.elements.qrCode')}</span>
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addBarCode}>
@@ -11004,7 +11006,7 @@ export const Toolbar = ({ formData }) => {
               className={[styles.elementsSpanWrapper, isBarCodeOpen ? styles.active : ''].join(' ')}
             >
               {BarCode}
-              <span>Bar Code</span>
+              <span>{t('toolbar.elements.barCode')}</span>
             </span>
           </li>
           {/* <li className={styles.elementsEl} onClick={exportToExcel}>
@@ -11262,7 +11264,7 @@ export const Toolbar = ({ formData }) => {
             <p>6</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-            <h3 style={{ marginRight: '60px' }}>Holes</h3>
+            <h3 style={{ marginRight: '60px' }}>{t('toolbar.holes.title')}</h3>
             {isHolesSelected && activeHolesType !== 5 && (
               <>
                 <div className={styles.field} style={{ margin: 0 }}>
@@ -11319,7 +11321,7 @@ export const Toolbar = ({ formData }) => {
                     </div>
                   </div>
                 </div>
-                <p style={{ padding: '0', margin: '0 0 0 10px' }}>Ø mm</p>
+                <p style={{ padding: '0', margin: '0 0 0 10px' }}>{t('toolbar.holes.diameterUnit')}</p>
               </>
             )}
           </div>
@@ -11327,49 +11329,49 @@ export const Toolbar = ({ formData }) => {
         <div className={styles.holes}>
           <span
             onClick={addHoleType1}
-            title="Without holes"
+            title={t('toolbar.holes.without')}
             className={activeHolesType === 1 ? styles.holeActive : ''}
           >
             {Hole1}
           </span>
           <span
             onClick={() => selectSingleRoundHoleType(addHoleType2)}
-            title="One hole at the top center"
+            title={t('toolbar.holes.oneTopCenter')}
             className={activeHolesType === 2 ? styles.holeActive : ''}
           >
             {Hole2}
           </span>
           <span
             onClick={() => selectMultiRoundHoleType(addHoleType3)}
-            title="Two holes on the sides"
+            title={t('toolbar.holes.twoSides')}
             className={activeHolesType === 3 ? styles.holeActive : ''}
           >
             {Hole3}
           </span>
           <span
             onClick={() => selectMultiRoundHoleType(addHoleType4)}
-            title="Four holes in the corners"
+            title={t('toolbar.holes.fourCorners')}
             className={activeHolesType === 4 ? styles.holeActive : ''}
           >
             {Hole4}
           </span>
           <span
             onClick={addHoleType5}
-            title="Four rectangular holes for cable ties"
+            title={t('toolbar.holes.fourCableTies')}
             className={activeHolesType === 5 ? styles.holeActive : ''}
           >
             {Hole5}
           </span>
           <span
             onClick={() => selectSingleRoundHoleType(addHoleType6)}
-            title="Left-centered hole"
+            title={t('toolbar.holes.leftCentered')}
             className={activeHolesType === 6 ? styles.holeActive : ''}
           >
             {Hole6}
           </span>
           <span
             onClick={() => selectSingleRoundHoleType(addHoleType7)}
-            title="Right-centered hole"
+            title={t('toolbar.holes.rightCentered')}
             className={activeHolesType === 7 ? styles.holeActive : ''}
           >
             {Hole7}
@@ -11381,8 +11383,8 @@ export const Toolbar = ({ formData }) => {
         <div className={`${styles.colorTitleWrapper} ${styles.copiesWrapper}`}>
           <div className={styles.copyItem}>
             <h3 className={styles.copyTitle}>
-              <span className={styles.copyTitleTop}>Exact</span>
-              <span>Copies</span>
+              <span className={styles.copyTitleTop}>{t('toolbar.copies.exact')}</span>
+              <span>{t('toolbar.copies.copies')}</span>
             </h3>
             <div className={`${styles.field} ${styles.copyField}`}>
               <div className={`${styles.inputGroup} ${styles.copyInputGroup}`}>
@@ -11421,8 +11423,8 @@ export const Toolbar = ({ formData }) => {
 
           <div className={styles.copyItem}>
             <h3 className={styles.copyTitle}>
-              <span className={styles.copyTitleTop}>Editable</span>
-              <span>Copies</span>
+              <span className={styles.copyTitleTop}>{t('toolbar.copies.editable')}</span>
+              <span>{t('toolbar.copies.copies')}</span>
             </h3>
             <div className={`${styles.field} ${styles.copyField}`}>
               <div className={`${styles.inputGroup} ${styles.copyInputGroup}`}>

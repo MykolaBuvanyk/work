@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import { NumericFormat } from "react-number-format";
@@ -112,6 +113,7 @@ const ShapeProperties = ({
   activeShape: propActiveShape,
   onClose: propOnClose,
 }) => {
+  const { t } = useTranslation();
   const { canvas, shapePropertiesOpen, setShapePropertiesOpen, globalColors } =
     useCanvasContext();
 
@@ -1951,11 +1953,11 @@ const ShapeProperties = ({
     <div className={styles.modalOverlay} data-shape-properties="true" onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.titleWrapper}>
-          <h3 className={styles.title}>Shape</h3>
+          <h3 className={styles.title}>{t("toolbar.shapeProperties.title")}</h3>
           <button
             className={styles.closeIcon}
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("toolbar.actions.close")}
           >
             <svg
               width="24"
@@ -1983,7 +1985,7 @@ const ShapeProperties = ({
         </div>
         <div className={styles.propertyGroup}>
           <label className={styles.label}>
-            Width:
+            {t("toolbar.shapeProperties.width")}
             <div className={styles.inputGroup}>
               <NumericFormat
                 value={properties.width === 0 ? "" : properties.width}
@@ -2038,7 +2040,7 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Rotate:
+            {t("toolbar.shapeProperties.rotate")}
             <div className={styles.inputGroup}>
               <NumericFormat
                 value={properties.rotation === 0 ? "" : properties.rotation}
@@ -2096,7 +2098,7 @@ const ShapeProperties = ({
             </div>
           </label>
           <label className={styles.label}>
-            Height:
+            {t("toolbar.shapeProperties.height")}
             <div className={styles.inputGroup}>
               <NumericFormat
                 value={properties.height === 0 ? "" : properties.height}
@@ -2161,7 +2163,7 @@ const ShapeProperties = ({
                 isCircle || !supportsCornerRadius ? "not-allowed" : "default",
             }}
           >
-            Corner Radius:
+            {t("toolbar.shapeProperties.cornerRadius")}
             <div className={styles.inputGroup}>
               <NumericFormat
                 value={
@@ -2253,7 +2255,7 @@ const ShapeProperties = ({
 
           <div className={styles.cutFillWrapper}>
             <div className={`${styles.cutFillWrapperEl} ${styles.fillEl}`}>
-              Fill
+              {t("toolbar.shapeProperties.fill")}
               <input
                 type="checkbox"
                 checked={properties.fill}
@@ -2276,7 +2278,7 @@ const ShapeProperties = ({
             </div>
 
             <div className={`${styles.cutFillWrapperEl} ${styles.cutEl}`}>
-              Cut
+              {t("toolbar.shapeProperties.cut")}
               <input
                 type="checkbox"
                 checked={properties.cut}
@@ -2319,7 +2321,7 @@ const ShapeProperties = ({
           <div className={styles.bottomRow}>
             <div className={styles.bottomRowThickness}>
               <div className={styles.thicknessInline}>
-                <span className={styles.thicknessLabel}>Thickness</span>
+                <span className={styles.thicknessLabel}>{t("toolbar.shapeProperties.thickness")}</span>
                 <div className={styles.inputGroup}>
                   <NumericFormat
                     value={
@@ -2418,7 +2420,7 @@ const ShapeProperties = ({
 
             <div className={styles.bottomRowFrame}>
               <div className={`${styles.cutFillWrapperEl} ${styles.frameEl}`}>
-                Frame
+                {t("toolbar.shapeProperties.frame")}
                 <input
                   type="checkbox"
                   checked={properties.frame}

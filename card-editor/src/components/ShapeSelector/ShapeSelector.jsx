@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import CircleWithCut from "../../utils/CircleWithCut";
@@ -32,6 +33,7 @@ const BASE_MIN_SIDE_MM = Math.min(BASE_CANVAS_WIDTH_MM, BASE_CANVAS_HEIGHT_MM);
 const DEFAULT_SHAPE_STROKE_WIDTH_PX = DEFAULT_SHAPE_THICKNESS_MM * PX_PER_MM;
 
 const ShapeSelector = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { canvas, globalColors, setActiveObject, setShapePropertiesOpen } =
     useCanvasContext();
   const [selectedShape, setSelectedShape] = useState(null);
@@ -54,27 +56,27 @@ const ShapeSelector = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   const shapes = [
-    { id: "rectangle", name: "Rectangle" },
-    { id: "roundedCorners", name: "Rounded Corners" },
-    { id: "round", name: "Round" },
-    { id: "oval", name: "Oval" },
-    { id: "hexagon", name: "Hexagon" },
-    { id: "octagon", name: "Octagon" },
-    { id: "triangle", name: "Triangle" },
-    { id: "warningTriangle", name: "Warning Triangle" },
-    { id: "semiround", name: "Semi round" },
-    { id: "roundTop", name: "Round Top" },
-    { id: "leftArrow", name: "Left arrow" },
-    { id: "rightArrow", name: "Right arrow" },
-    { id: "turnLeft", name: "Turn left" },
-    { id: "turnRight", name: "Turn right" },
-    { id: "customShape", name: "Custom shape" },
-    { id: "arch", name: "180° arc" },
-    { id: "quarterCircleTR", name: "90° arc" },
-    { id: "rightTriangle", name: "Triangle" },
-    { id: "circleWithCut", name: "Circle with cut off" },
-    { id: "line", name: "Line" },
-    { id: "dashedLine", name: "Dashed Line" },
+    { id: "rectangle", nameKey: "toolbar.shapeSelector.shapes.rectangle" },
+    { id: "roundedCorners", nameKey: "toolbar.shapeSelector.shapes.roundedCorners" },
+    { id: "round", nameKey: "toolbar.shapeSelector.shapes.round" },
+    { id: "oval", nameKey: "toolbar.shapeSelector.shapes.oval" },
+    { id: "hexagon", nameKey: "toolbar.shapeSelector.shapes.hexagon" },
+    { id: "octagon", nameKey: "toolbar.shapeSelector.shapes.octagon" },
+    { id: "triangle", nameKey: "toolbar.shapeSelector.shapes.triangle" },
+    { id: "warningTriangle", nameKey: "toolbar.shapeSelector.shapes.warningTriangle" },
+    { id: "semiround", nameKey: "toolbar.shapeSelector.shapes.semiRound" },
+    { id: "roundTop", nameKey: "toolbar.shapeSelector.shapes.roundTop" },
+    { id: "leftArrow", nameKey: "toolbar.shapeSelector.shapes.leftArrow" },
+    { id: "rightArrow", nameKey: "toolbar.shapeSelector.shapes.rightArrow" },
+    { id: "turnLeft", nameKey: "toolbar.shapeSelector.shapes.turnLeft" },
+    { id: "turnRight", nameKey: "toolbar.shapeSelector.shapes.turnRight" },
+    { id: "customShape", nameKey: "toolbar.shapeSelector.shapes.customShape" },
+    { id: "arch", nameKey: "toolbar.shapeSelector.shapes.arc180" },
+    { id: "quarterCircleTR", nameKey: "toolbar.shapeSelector.shapes.arc90" },
+    { id: "rightTriangle", nameKey: "toolbar.shapeSelector.shapes.triangle" },
+    { id: "circleWithCut", nameKey: "toolbar.shapeSelector.shapes.circleWithCut" },
+    { id: "line", nameKey: "toolbar.shapeSelector.shapes.line" },
+    { id: "dashedLine", nameKey: "toolbar.shapeSelector.shapes.dashedLine" },
   ];
 
   // Додаємо універсальну функцію для додавання об'єкта на canvas з коректною ініціалізацією координат
@@ -262,7 +264,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
             Math.round(BASE_TEXT_SIZE_MM * (minSideMm / (BASE_MIN_SIDE_MM || 1)) * 1.8) || BASE_TEXT_SIZE_MM
           );
 
-        shape = new fabric.IText("Новий текст", {
+        shape = new fabric.IText(t("toolbar.shapeSelector.defaultText"), {
           ...baseOptions,
           fontSize: mmToPx(defaultTextSizeMm),
           fontFamily: "Arial",
@@ -938,7 +940,7 @@ const ShapeSelector = ({ isOpen, onClose }) => {
         <div className={styles.shapeSelector}>
           <div className={styles.dropdown} ref={dropdownRef}>
             <div className={styles.dropdownHeader}>
-              <h3>Shapes</h3>
+              <h3>{t("toolbar.shapeSelector.title")}</h3>
               <button className={styles.closeBtn} onClick={onClose}>
                 <svg
                   width="24"
@@ -979,12 +981,12 @@ const ShapeSelector = ({ isOpen, onClose }) => {
                         className={`${styles.shapeItem} ${isLine ? styles.lineItem : ""
                           }`}
                         onClick={() => addShape(shape.id)}
-                        title={shape.name}
+                        title={t(shape.nameKey)}
                       >
                         <div className={styles.shapeIcon}>
                           {renderShapeIcon(shape.id)}
                         </div>
-                        <span className={styles.shapeName}>{shape.name}</span>
+                        <span className={styles.shapeName}>{t(shape.nameKey)}</span>
                       </div>
                     </React.Fragment>
                   );

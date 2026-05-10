@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import { useUndoRedo } from "../../hooks/useUndoRedo";
 import { useExcelImport } from "../../hooks/useExcelImport";
@@ -7,6 +8,7 @@ import styles from "./SaveAsModal.module.css";
 import { getAllProjects, formatDate } from "../../utils/projectStorage";
 
 const SaveAsModal = ({ onClose, onSaveAs }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("saved");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6; // по 6 записів на сторінку
@@ -157,9 +159,9 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
     <div className={styles.yourProjectsModal}>
       <div className={styles.headerWrapper}>
         <div className={styles.headerWrapperText}>
-          <p className={styles.para}>Save Project as</p>
-          <p className={styles.name}>(Name)</p>
-          <input className={styles.inputName} value={name} onChange={(e)=>setName(e.target.value)} placeholder="Project name" />
+          <p className={styles.para}>{t("saveAsModal.title")}</p>
+          <p className={styles.name}>({t("saveAsModal.name")})</p>
+          <input className={styles.inputName} value={name} onChange={(e)=>setName(e.target.value)} placeholder={t("saveAsModal.projectNamePlaceholder")} />
         </div>
         <svg
           onClick={onClose}
@@ -222,7 +224,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
               stroke-width="1.5"
             />
           </svg>
-          Save
+          {t("saveAsModal.save")}
         </button>
         <button onMouseDown={(e)=>e.preventDefault()} onClick={onClose}>
           <svg
@@ -247,22 +249,22 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
               stroke-linejoin="round"
             />
           </svg>
-          Cancel
+          {t("saveAsModal.cancel")}
         </button>
       </div>
       {isRefreshingProjects && (
         <p className={styles.statusNotice}>
-          Saving your project may take some time. Please wait until it appears here.
+          {t("saveAsModal.savingNotice")}
         </p>
       )}
       <div className={styles.projectsTableWrapper}>
         <table className={styles.table}>
           <tbody>
             <tr className={styles.tr}>
-              <td>Nr.</td>
-              <td>Name</td>
-              <td>Date</td>
-              <td>Image</td>
+              <td>{t("saveAsModal.table.number")}</td>
+              <td>{t("saveAsModal.table.name")}</td>
+              <td>{t("saveAsModal.table.date")}</td>
+              <td>{t("saveAsModal.table.image")}</td>
             </tr>
 
             {currentProjects.map((project, index) => {
@@ -283,7 +285,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                           onMouseDown={(e)=>e.preventDefault()}
                           onClick={() => handleSlideChange(project.id, "prev")}
                           disabled={(currentSlideIndex[project.id] || 0) === 0}
-                          aria-label="Previous images"
+                          aria-label={t("saveAsModal.previousImages")}
                         >
                           &lt;
                         </button>
@@ -294,9 +296,10 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                           <div key={imgIndex} className={styles.imageItem}>
                             <img
                               src={image.src}
-                              alt={`Project ${project.name} image ${
-                                imgIndex + 1
-                              }`}
+                              alt={t("saveAsModal.projectImageAlt", {
+                                name: project.name,
+                                number: imgIndex + 1,
+                              })}
                               onError={(e) => {
                                 if (image.fallback && e.currentTarget.src !== image.fallback) {
                                   e.currentTarget.src = image.fallback;
@@ -316,7 +319,7 @@ const SaveAsModal = ({ onClose, onSaveAs }) => {
                             (currentSlideIndex[project.id] || 0) >=
                             Math.ceil(project.images.length / perSlide) - 1
                           }
-                          aria-label="Next images"
+                          aria-label={t("saveAsModal.nextImages")}
                         >
                           &gt;
                         </button>

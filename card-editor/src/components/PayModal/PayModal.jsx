@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next';
 import { $authHost } from '../../http';
 import CheckoutForm from '../Account/CheckoutForm';
 import { Elements } from '@stripe/react-stripe-js';
@@ -9,6 +10,7 @@ import './PayModal.scss'
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);
 
 const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
+    const { t } = useTranslation();
     const [clientSecret, setClientSecret] = useState('');
     const [paymentOption, setPaymentOption] = useState('invoice');
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -20,11 +22,11 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
             setClientSecret(res.data.clientSecret);
         } catch (err) {
             console.error(err);
-            alert('Помилка при отриманні даних для оплати');
+            alert(t('payModal.alerts.paymentDataFailed'));
         }
         };
         if (orderId) getClientSecret();
-    }, [orderId]);
+    }, [orderId, t]);
 
     const savePaymentMethod = async (paymentMethod) => {
       if (!orderId) return;
@@ -67,11 +69,11 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
     <div className='pay-modal'>
         <div className="modal">
 
-        <button onClick={backToPayment} className="back-btn">Back to Proceed to Payment</button>
+        <button onClick={backToPayment} className="back-btn">{t('payModal.backToPayment')}</button>
 
         <div className="modal-header">
-          <h2>Choose your payment option</h2>
-          <p>You can complete your order using one of the following payment methods:</p>
+          <h2>{t('payModal.title')}</h2>
+          <p>{t('payModal.description')}</p>
         </div>
 
         <div className="divider"></div>
@@ -89,26 +91,30 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
                 onChange={() => setPaymentOption('invoice')}
               />
               <span className="circle"></span>
-              <span className="title">Pay by Invoice</span>
+              <span className="title">{t('payModal.invoice.title')}</span>
             </label>
 
             <div className="text-block">
-              <p>Place your order and pay the invoice within 30 days.</p>
+              <p>{t('payModal.invoice.placeOrder')}</p>
 
-              <p>Once your order has been shipped, the invoice will be sent to your email and will also be included with your shipment.</p>
+              <p>{t('payModal.invoice.shipped')}</p>
 
-              <p>You can pay the invoice using one of the following options:</p>
+              <p>{t('payModal.invoice.optionsIntro')}</p>
 
-            • Online in your account – log in to 
-            <a href="https://sign-xpert.com/account" target="_blank" rel="noopener noreferrer"> My Account</a> →
-            <a href="https://sign-xpert.com/account/detail" target="_blank" rel="noopener noreferrer">My Orders</a>,
-    find your order and click 
-        <a href="https://sign-xpert.com/account" target="_blank" rel="noopener noreferrer"> Pay</a>
-              <p>• Bank transfer – you can also pay manually using the bank details provided.</p>
+              <p>
+                {t('payModal.invoice.onlinePrefix')}{' '}
+                <a href="https://sign-xpert.com/account" target="_blank" rel="noopener noreferrer">{t('payModal.invoice.myAccount')}</a>
+                {' -> '}
+                <a href="https://sign-xpert.com/account/detail" target="_blank" rel="noopener noreferrer">{t('payModal.invoice.myOrders')}</a>
+                {t('payModal.invoice.onlineSuffix')}{' '}
+                <a href="https://sign-xpert.com/account" target="_blank" rel="noopener noreferrer">{t('payModal.invoice.pay')}</a>
+              </p>
+              <p>{t('payModal.invoice.bankTransfer')}</p>
 
-              <p>Once the payment has been received, the order will be marked as paid.</p>
+              <p>{t('payModal.invoice.received')}</p>
 
-    <p><strong><em>(Preferred by many of our business customers.)</em></strong></p>        </div>
+              <p><strong><em>{t('payModal.invoice.preferred')}</em></strong></p>
+            </div>
     
 
             <button
@@ -116,7 +122,7 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
               className={`place-btn ${paymentOption === 'online' ? 'disabled' : 'active'}`}
               disabled={paymentOption === 'online' || isSubmittingOrder}
             >
-              PLACE ORDER
+              {t('payModal.placeOrder')}
             </button>
 
           </div>
@@ -132,14 +138,14 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
                 onChange={() => setPaymentOption('online')}
               />
               <span className="circle"></span>
-              <span className="title">Pay Online</span>
+              <span className="title">{t('payModal.online.title')}</span>
             </label>
             {clientSecret ? (
               <Elements stripe={stripePromise} options={options}>
                 <CheckoutForm payTrue={payTrue} isModal={true} />
               </Elements>
             ) : (
-              <p>Завантаження платіжного шлюзу...</p>
+              <p>{t('payModal.online.loadingGateway')}</p>
             )}
 
           </div>

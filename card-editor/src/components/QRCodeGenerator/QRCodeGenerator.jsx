@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import qrGenerator from "qrcode-generator";
 import * as fabric from "fabric";
@@ -13,6 +14,7 @@ import {
 import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   // Закриття по клику вне модального окна
   const dropdownRef = useRef(null);
   useEffect(() => {
@@ -31,9 +33,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
   // Типи безпеки WiFi для селектора
   const wifiSecurityTypes = [
-    { value: "WPA", label: "WPA" },
-    { value: "WPA2-EAP", label: "WPA2-EAP" },
-    { value: "nopass", label: "Without Password" },
+    { value: "WPA", labelKey: "toolbar.qr.security.wpa" },
+    { value: "WPA2-EAP", labelKey: "toolbar.qr.security.wpa2Eap" },
+    { value: "nopass", labelKey: "toolbar.qr.security.withoutPassword" },
   ];
 
   // Функція для зміни значень інпутів
@@ -84,12 +86,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
   };
 
   const qrTypes = [
-    { id: "url", label: "URL (Website)" },
-    { id: "email", label: "E-MAIL" },
-    { id: "phone", label: "Call (Phone)" },
-    { id: "whatsapp", label: "WhatsApp" },
-    { id: "wifi", label: "Wi-Fi" },
-    { id: "message", label: "Message" },
+    { id: "url", labelKey: "toolbar.qr.types.url" },
+    { id: "email", labelKey: "toolbar.qr.types.email" },
+    { id: "phone", labelKey: "toolbar.qr.types.phone" },
+    { id: "whatsapp", labelKey: "toolbar.qr.types.whatsapp" },
+    { id: "wifi", labelKey: "toolbar.qr.types.wifi" },
+    { id: "message", labelKey: "toolbar.qr.types.message" },
   ];
 
   const [selectedType, setSelectedType] = useState(qrTypes[0]?.id || null);
@@ -181,7 +183,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         }
         return `WIFI:T:${formData.wifiSecurity};S:${formData.wifiSSID};P:${formData.wifiPassword};;`;
       case "message":
-        return formData.message || "Default message";
+        return formData.message || t("toolbar.qr.defaults.message");
       default:
         return "https://example.com";
     }
@@ -220,7 +222,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       generatedSize = size;
     } catch (e) {
       console.error("Помилка створення QR:", e);
-      if (!auto) alert("Не вдалося згенерувати QR-код");
+      if (!auto) alert(t("toolbar.qr.alerts.generateFailed"));
       return;
     }
 
@@ -229,7 +231,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     const active = canvas.getActiveObject();
     const target = active && active.isQRCode ? active : null;
     if (mode === "update" && !target) {
-      if (!auto) alert("Select a QR code on canvas to update");
+      if (!auto) alert(t("toolbar.qr.alerts.selectToUpdate"));
       return;
     }
     let left, top, scaleX, scaleY, angle;
@@ -353,7 +355,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       } catch {}
     } catch (e) {
       console.error("Помилка створення нового QR (SVG):", e);
-      if (!auto) alert("Помилка створення QR-коду");
+      if (!auto) alert(t("toolbar.qr.alerts.createFailed"));
     } finally {
       if (replacing) {
         canvas.__suspendUndoRedo = false;
@@ -509,48 +511,48 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     if (typeId === "url") {
       value = formData.url;
       fieldKey = "url";
-      label = "Website - Link";
-      placeholder = "example.com або https://example.com";
+      label = "toolbar.qr.fields.websiteLink";
+      placeholder = "toolbar.qr.placeholders.website";
       // Дозволяємо вводити без схеми; валідація через хост з TLD
       inputType = "text";
       isValid = isValidUrlInput(value);
       showBtn = isValid;
       showError = value && !isValid;
-      if (!value) error = "X Empty field";
-      else if (!isValid) error = "X Неправильно введені дані";
+      if (!value) error = "toolbar.qr.errors.empty";
+      else if (!isValid) error = "toolbar.qr.errors.invalidData";
     }
 
     if (typeId === "email") {
       value = formData.email;
       fieldKey = "email";
-      label = "Email Address";
-      placeholder = "example@domain.com";
+      label = "toolbar.qr.fields.emailAddress";
+      placeholder = "toolbar.qr.placeholders.email";
       inputType = "email";
       isValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value);
       showBtn = isValid;
       showError = value && !isValid;
-      if (!value) error = "X Empty field";
-      else if (!isValid) error = "X Incorrect email";
+      if (!value) error = "toolbar.qr.errors.empty";
+      else if (!isValid) error = "toolbar.qr.errors.incorrectEmail";
     }
 
     if (typeId === "phone" || typeId === "whatsapp") {
       value = formData.phone;
       fieldKey = "phone";
-      label = typeId === "phone" ? "Phone Number" : "WhatsApp Number";
-      placeholder = "+380123456789";
+      label = typeId === "phone" ? "toolbar.qr.fields.phoneNumber" : "toolbar.qr.fields.whatsappNumber";
+      placeholder = "toolbar.qr.placeholders.phone";
       inputType = "tel";
       isValid = /^\+?\d{10,15}$/.test(value);
       showBtn = isValid;
       showError = value && !isValid;
-      if (!value) error = "X Empty field";
-      else if (!isValid) error = "X Incorrect phone number";
+      if (!value) error = "toolbar.qr.errors.empty";
+      else if (!isValid) error = "toolbar.qr.errors.incorrectPhone";
     }
 
     if (typeId === "wifi") {
       value = formData.wifiSSID;
       fieldKey = "wifiSSID";
-      label = "Network Name (SSID)";
-      placeholder = "WiFi Network Name";
+      label = "toolbar.qr.fields.networkName";
+      placeholder = "toolbar.qr.placeholders.networkName";
       inputType = "text";
       // Для WiFi перевіряємо SSID та пароль (якщо потрібен)
       isValid =
@@ -558,17 +560,17 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
         (formData.wifiSecurity === "nopass" || !!formData.wifiPassword);
       showBtn = isValid;
       showError = submitAttempted && !value;
-      if (!value) error = "X Empty field";
+      if (!value) error = "toolbar.qr.errors.empty";
       else if (formData.wifiSecurity !== "nopass" && !formData.wifiPassword)
-        error = "X Password required";
+        error = "toolbar.qr.errors.passwordRequired";
       extra = (
         <div>
           {formData.wifiSecurity !== "nopass" && (
             <div>
-              <label style={{ position: "static" }}>Password</label>
+              <label style={{ position: "static" }}>{t("toolbar.qr.fields.password")}</label>
               <input
                 type="password"
-                placeholder="WiFi Password"
+                placeholder={t("toolbar.qr.placeholders.password")}
                 value={formData.wifiPassword}
                 onChange={(e) =>
                   handleInputChange("wifiPassword", e.target.value)
@@ -583,12 +585,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                 formData.wifiSecurity !== "nopass" &&
                 !formData.wifiPassword && (
                   <div className={styles.formGroupError}>
-                    X Password required
+                    {t("toolbar.qr.errors.passwordRequired")}
                   </div>
                 )}
             </div>
           )}
-          <label style={{ position: "static" }}>Security Type</label>
+          <label style={{ position: "static" }}>{t("toolbar.qr.fields.securityType")}</label>
           <select
             value={formData.wifiSecurity}
             onChange={(e) => handleInputChange("wifiSecurity", e.target.value)}
@@ -596,7 +598,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           >
             {wifiSecurityTypes.map((type) => (
               <option key={type.value} value={type.value}>
-                {type.label}
+                {t(type.labelKey)}
               </option>
             ))}
           </select>
@@ -607,8 +609,8 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     if (typeId === "message") {
       value = formData.message;
       fieldKey = "message";
-      label = "Custom Message";
-      placeholder = "Enter your message here...";
+      label = "toolbar.qr.fields.customMessage";
+      placeholder = "toolbar.qr.placeholders.message";
       inputType = "textarea";
       isValid = !!value;
       showBtn = !!value;
@@ -641,12 +643,12 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       <div className={styles.formGroup}>
         <div className={styles.inputWrapper}>
           {/* Лейбл зникає якщо є значення */}
-          {!value && <label className={styles.floatingLabel}>{label}</label>}
+          {!value && <label className={styles.floatingLabel}>{t(label)}</label>}
           {inputType !== "textarea" ? (
             typeId === "phone" || typeId === "whatsapp" ? (
               <input
                 type={inputType}
-                placeholder={placeholder}
+                placeholder={t(placeholder)}
                 value={value}
                 onChange={handlePhoneInput}
                 className={styles.formInput}
@@ -658,7 +660,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
             ) : (
               <input
                 type={inputType}
-                placeholder={placeholder}
+                placeholder={t(placeholder)}
                 value={value}
                 onChange={(e) => handleInputChange(fieldKey, e.target.value)}
                 className={styles.formInput}
@@ -670,7 +672,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
             )
           ) : (
             <textarea
-              placeholder={placeholder}
+              placeholder={t(placeholder)}
               value={value}
               onChange={(e) => handleInputChange(fieldKey, e.target.value)}
               rows={3}
@@ -692,9 +694,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           }}
           onClick={handleBtnClick}
         >
-          Update
+          {t("toolbar.actions.update")}
         </button>
-        {showError && <div className={styles.formGroupError}>{error}</div>}
+        {showError && <div className={styles.formGroupError}>{t(error)}</div>}
       </div>
     );
   };
@@ -704,7 +706,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     <div className={styles.qrGenerator}>
       <div className={styles.dropdown} ref={dropdownRef}>
         <div className={styles.dropdownHeader}>
-          <h3>QR Code</h3>
+          <h3>{t("toolbar.qr.title")}</h3>
           <button className={styles.closeBtn} onClick={onClose}>
             <svg
               width="24"
@@ -731,7 +733,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className={styles.content}>
-          <p>The minimum size of QR Code is 20 x 20 mm</p>
+          <p>{t("toolbar.qr.minimumSize")}</p>
           <div className={styles.typesList}>
             {qrTypes.map((type) => (
               <div key={type.id} className={styles.typeItem}>
@@ -744,14 +746,9 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                     }
                     style={{ marginRight: 8 }}
                   />
-                  <span className={styles.typeLabel}>{type.label}</span>
+                  <span className={styles.typeLabel}>{t(type.labelKey)}</span>
                   <span className={styles.description}>
-                    {type.id === "url" && "* Scan to visit Website"}
-                    {type.id === "email" && "* Scan to send an Email"}
-                    {type.id === "phone" && "* Scan to call directly"}
-                    {type.id === "whatsapp" && "* Scan to send Message"}
-                    {type.id === "wifi" && "* Scan to connect to Network"}
-                    {type.id === "message" && "* Scan to read Custom Message"}
+                    {t(`toolbar.qr.descriptions.${type.id}`)}
                   </span>
                 </div>
                 <div
@@ -781,7 +778,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                   fill="#FF3B30"
                 />
               </svg>
-              <span className={styles.actionText}>Delete QR</span>
+              <span className={styles.actionText}>{t("toolbar.qr.actions.delete")}</span>
             </button>
             <button className={styles.actionBtn} onClick={duplicateQRCode}>
               <svg
@@ -822,7 +819,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                   strokeWidth="2"
                 />
               </svg>
-              <span className={styles.actionText}>Duplicate QR</span>
+              <span className={styles.actionText}>{t("toolbar.qr.actions.duplicate")}</span>
             </button>
             <button className={styles.actionBtn} onClick={createNewQRCode}>
               <svg
@@ -845,7 +842,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
                   </clipPath>
                 </defs>
               </svg>
-              <span className={styles.actionText}>New QR</span>
+              <span className={styles.actionText}>{t("toolbar.qr.actions.new")}</span>
             </button>
           </div>
         </div>

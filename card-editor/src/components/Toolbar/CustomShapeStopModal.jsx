@@ -1,15 +1,18 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./CustomShapeStopModal.module.css";
 
 const CustomShapeStopModal = ({ onConfirm }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={styles.stopModalWrapper}>
       <div className={styles.stopModal}>
-        <h4 className={styles.title}>Stop shape customization</h4>
-        <p className={styles.desc}>Finish editing current shape?</p>
+        <h4 className={styles.title}>{t('toolbar.customShapeStop.title')}</h4>
+        <p className={styles.desc}>{t('toolbar.customShapeStop.description')}</p>
         <div className={styles.actions}>
           <button className={styles.yesBtn} onClick={onConfirm}>
-            Yes
+            {t('toolbar.customShapeStop.confirm')}
           </button>
         </div>
       </div>

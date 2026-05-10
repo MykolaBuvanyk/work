@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import CircleWithCut from "../../utils/CircleWithCut";
@@ -7,6 +8,7 @@ const FabricNS = (fabric && (fabric.fabric || fabric)) || null;
 import styles from "./CutSelector.module.css";
 
 const CutSelector = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { canvas, setActiveObject } = useCanvasContext();
   const dropdownRef = useRef(null);
   const [activeTab, setActiveTab] = useState("cut"); // 'cut' | 'shape'
@@ -701,12 +703,12 @@ const CutSelector = ({ isOpen, onClose }) => {
     ];
     // Названия для вкладки SHAPE (в указанном порядке)
     const shapeLabelByTitle = {
-      Arch: "180° arc",
-      "Quarter Circle TR": "90° arc",
-      Hexagon: "Hexagon",
-      Octagon: "Octagon",
-      "Right Triangle": "Triangle",
-      "Circle with Cut": "Circle with cut off",
+      Arch: "toolbar.shapeSelector.shapes.arc180",
+      "Quarter Circle TR": "toolbar.shapeSelector.shapes.arc90",
+      Hexagon: "toolbar.shapeSelector.shapes.hexagon",
+      Octagon: "toolbar.shapeSelector.shapes.octagon",
+      "Right Triangle": "toolbar.shapeSelector.shapes.triangle",
+      "Circle with Cut": "toolbar.shapeSelector.shapes.circleWithCut",
     };
     // Определяем индекс фигуры по названию title
     let cutIndex = null;
@@ -722,7 +724,7 @@ const CutSelector = ({ isOpen, onClose }) => {
         onMouseDown={handleTrigger}
         onClick={handleTrigger}
         onKeyDown={handleKey}
-        title={title}
+        title={cutIndex !== null ? t("toolbar.cutSelector.cutShape", { number: cutIndex + 1 }) : shapeLabelByTitle[title] ? t(shapeLabelByTitle[title]) : title}
       >
         {svgIcon}
         {cutIndex !== null && cutIndex < cutNames.length && (
@@ -754,7 +756,7 @@ const CutSelector = ({ isOpen, onClose }) => {
               lineHeight: "1.2",
             }}
           >
-            {shapeLabelByTitle[title]}
+            {t(shapeLabelByTitle[title])}
           </div>
         )}
       </div>
@@ -773,7 +775,7 @@ const CutSelector = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab("cut")}
               type="button"
             >
-              CUT
+              {t("toolbar.cutSelector.tabs.cut")}
             </button>
             <button
               className={`${styles.tabBtn} ${
@@ -782,10 +784,10 @@ const CutSelector = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab("shape")}
               type="button"
             >
-              SHAPE
+              {t("toolbar.cutSelector.tabs.shape")}
             </button>
           </div>
-          <h3>Cut Shapes</h3>
+          <h3>{t("toolbar.cutSelector.title")}</h3>
           <button className={styles.closeBtn} onClick={onClose} type="button">
             <svg
               width="24"

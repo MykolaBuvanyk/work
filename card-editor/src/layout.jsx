@@ -7,6 +7,7 @@ import Breadcrumbs from './components/Breadcrumbs/Breadcrumbs';
 import Providers from './store/provider';
 import ScrollToTop from './components/ScrollToTop/ScrollToTop';
 import ScrollToHash from './components/ScrollToHash/ScrollToHash';
+import Seo from './Seo';
 
 export default function Layout() {
   return (
@@ -14,6 +15,7 @@ export default function Layout() {
       <CanvasProvider>
         <ScrollToTop/>
         <ScrollToHash />
+        <Seo />
         <header>
           <Header />
         </header>

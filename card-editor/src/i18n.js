@@ -5,9 +5,9 @@ import en from './locales/en.json';
 import { languageCountries } from './components/Header/Header';
 
 // Список мов, які мають префікс у URL (всі, крім англійської)
-export const prefixedLngs = languageCountries.map(l =>
+export const prefixedLngs = languageCountries.filter(x=>x.code.toLocaleLowerCase()!='en').map(l =>
   l.code.toLowerCase()
-);
+)
 i18n.use(initReactI18next).init({
   resources: {
     en: { translation: en },

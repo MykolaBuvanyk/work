@@ -1,123 +1,138 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import styles from './Products.module.css';
 
 const usesItems = [
   {
-    title: 'Industry\nand Manufacturing',
+    title: 'products.uses.industry.title',
     image: '/images/products/use-industry-manufacturing.png',
-    alt: 'Industry and manufacturing',
+    alt: 'products.uses.industry.alt',
   },
   {
-    title: 'Electrical\nInstallations',
+    title: 'products.uses.electrical.title',
     image: '/images/products/use-electrical-installations.png',
-    alt: 'Electrical installations',
+    alt: 'products.uses.electrical.alt',
   },
   {
-    title: 'Machinery\nand Equipment labeling',
+    title: 'products.uses.machinery.title',
     image: '/images/products/use-machinery-equipment.png',
-    alt: 'Machinery and equipment labeling',
+    alt: 'products.uses.machinery.alt',
   },
   {
-    title: 'Offices\nand Buildings',
+    title: 'products.uses.offices.title',
     image: '/images/products/use-offices-buildings.png',
-    alt: 'Offices and buildings',
+    alt: 'products.uses.offices.alt',
   },
   {
-    title: 'Technical\nInstallations',
+    title: 'products.uses.technical.title',
     image: '/images/products/use-technical-installations.png',
-    alt: 'Technical installations',
+    alt: 'products.uses.technical.alt',
   },
 ];
 
 const featureItems = [
   {
-    title: 'Self-adhesive option with\nstrong 3M tape',
+    title: 'products.features.selfAdhesive.title',
     image: '/images/products/feature-self-adhesive-3m.png',
-    alt: 'Self-adhesive option with strong 3M tape',
+    alt: 'products.features.selfAdhesive.alt',
   },
   {
-    title: 'Versatile use for industrial\nand office environments',
+    title: 'products.features.versatile.title',
     image: '/images/products/feature-versatile-use.png',
-    alt: 'Versatile use for industrial and office environments',
+    alt: 'products.features.versatile.alt',
   },
   {
-    title: 'Fire behavior class B2\n(DIN 4102)',
+    title: 'products.features.fireClass.title',
     image: '/images/products/feature-fire-class-b2.png',
-    alt: 'Fire behavior class B2 according to DIN 4102',
+    alt: 'products.features.fireClass.alt',
   },
   {
-    title: 'UV-resistant material\nsuitable for outdoor use',
+    title: 'products.features.uvResistant.title',
     image: '/images/products/feature-uv-resistant.png',
-    alt: 'UV-resistant material suitable for outdoor use',
+    alt: 'products.features.uvResistant.alt',
   },
   {
-    title: 'Large format options: up to\n600 x 295 mm',
+    title: 'products.features.largeFormat.title',
     image: '/images/products/feature-large-format.png',
-    alt: 'Large format options up to 600 by 295 millimeters',
+    alt: 'products.features.largeFormat.alt',
   },
   {
-    title: 'Material thickness\n0.8 mm and 1.6 mm',
+    title: 'products.features.thickness.title',
     image: '/images/products/feature-material-thickness.png',
-    alt: 'Material thickness 0.8 millimeters and 1.6 millimeters',
+    alt: 'products.features.thickness.alt',
   },
   {
-    title: 'Durable and long-lasting\nengraving',
+    title: 'products.features.durable.title',
     image: '/images/products/feature-durable-engraving.png',
-    alt: 'Durable and long-lasting engraving',
+    alt: 'products.features.durable.alt',
   },
   {
-    title: 'High contrast for excellent\nreadability',
+    title: 'products.features.contrast.title',
     image: '/images/products/feature-high-contrast.png',
-    alt: 'High contrast for excellent readability',
+    alt: 'products.features.contrast.alt',
   },
 ];
 
 const categoryItems = [
   {
-    title: 'Electrical Panel Labels',
+    title: 'products.categories.electricalPanel.title',
     className: styles.plateCardRed,
-    items: ['electrical panels', 'switchboards', 'control cabinets', 'circuit identification'],
+    items: [
+      'products.categories.electricalPanel.item_1',
+      'products.categories.electricalPanel.item_2',
+      'products.categories.electricalPanel.item_3',
+      'products.categories.electricalPanel.item_4',
+    ],
   },
   {
-    title: 'Machine Nameplates',
+    title: 'products.categories.machineNameplates.title',
     className: styles.plateCardSilver,
     items: [
-      'machinery identification',
-      'manufacturer plates',
-      'technical specification plates',
-      'equipment labeling',
+      'products.categories.machineNameplates.item_1',
+      'products.categories.machineNameplates.item_2',
+      'products.categories.machineNameplates.item_3',
+      'products.categories.machineNameplates.item_4',
     ],
   },
   {
-    title: 'Warning and Safety Signs',
+    title: 'products.categories.warningSafety.title',
     className: styles.plateCardYellow,
     items: [
-      'safety warnings',
-      'hazard identification',
-      'machine safety labels',
-      'operational instructions',
+      'products.categories.warningSafety.item_1',
+      'products.categories.warningSafety.item_2',
+      'products.categories.warningSafety.item_3',
+      'products.categories.warningSafety.item_4',
     ],
   },
   {
-    title: 'Control Panel Labels',
+    title: 'products.categories.controlPanel.title',
     className: styles.plateCardGreen,
     items: [
-      'button labels',
-      'switch labels',
-      'machine control panels',
-      'operator interface labels',
+      'products.categories.controlPanel.item_1',
+      'products.categories.controlPanel.item_2',
+      'products.categories.controlPanel.item_3',
+      'products.categories.controlPanel.item_4',
     ],
   },
   {
-    title: 'Serial Number Plates',
+    title: 'products.categories.serialNumber.title',
     className: styles.plateCardBlack,
-    items: ['serial number plates', 'asset tags', 'equipment ID plates', 'inventory labels'],
+    items: [
+      'products.categories.serialNumber.item_1',
+      'products.categories.serialNumber.item_2',
+      'products.categories.serialNumber.item_3',
+      'products.categories.serialNumber.item_4',
+    ],
   },
   {
-    title: 'Door and Office Nameplates',
+    title: 'products.categories.doorOffice.title',
     className: styles.plateCardOrange,
-    items: ['office door signs', 'room identification', 'workplace labels'],
+    items: [
+      'products.categories.doorOffice.item_1',
+      'products.categories.doorOffice.item_2',
+      'products.categories.doorOffice.item_3',
+    ],
   },
 ];
 
@@ -141,6 +156,8 @@ const HoleDots = () => (
 );
 
 const Products = () => {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const id = 'inter-font-products';
     if (!document.getElementById(id)) {
@@ -163,33 +180,29 @@ const Products = () => {
         <div className={styles.container}>
           <header className={`${styles.sectionHeading} ${styles.sectionHeadingHero}`}>
             <h1>
-              <span style={{ color: '#006CA4' }}>Custom </span>Engraved Plastic Signs and Nameplates
+              <Trans
+                i18nKey="products.hero.title"
+                components={{ accent: <span style={{ color: '#006CA4' }} /> }}
+              />
             </h1>
           </header>
 
           <div className={styles.heroGrid}>
             <div className={styles.heroVisual}>
-              <img src="/images/products/hero-bg.png" alt="Engraved plastic signs and labels" />
+              <img src="/images/products/hero-bg.png" alt={t('products.hero.imageAlt')} />
             </div>
 
             <div className={styles.heroContent}>
               <h2 className={styles.heroAddTitle}>
-                At{' '}
-                <Link to="/" className={styles.brandHomeLink}>
-                  SignXpert
-                </Link>
-                , we produce high-quality engraved plastic signs, nameplates and industrial labels
-                using durable two-layer engraving plastic.
+                <Trans
+                  i18nKey="products.hero.intro"
+                  components={{ home: <Link to="/" className={styles.brandHomeLink} /> }}
+                />
               </h2>
               <p className={styles.heroPara}>
-                Our engraved signs provide clear, permanent and professional identification for
-                machines, electrical installations, offices, buildings and workplaces.
+                {t('products.hero.description')}
               </p>
-              <p className={styles.heroAddPara}>
-                Using precision laser engraving, the top layer of the plastic is engraved to reveal
-                the contrasting color layer underneath. This creates high-contrast markings that
-                remain readable for years, even in demanding industrial environments.
-              </p>
+              <p className={styles.heroAddPara}>{t('products.hero.details')}</p>
             </div>
           </div>
         </div>
@@ -199,7 +212,7 @@ const Products = () => {
         <div className={styles.container}>
           <div className={styles.sectionHeading}>
             <h2 className={`${styles.sectionTitle}`}>
-              Our engraved plastic signs are widely used in:
+              {t('products.uses.title')}
             </h2>
           </div>
 
@@ -207,9 +220,9 @@ const Products = () => {
             {usesItems.map((item) => (
               <article className={styles.iconCard} key={item.title}>
                 <div className={styles.iconCardImage}>
-                  <img src={item.image} alt={item.alt} />
+                  <img src={item.image} alt={t(item.alt)} />
                 </div>
-                <h3>{renderMultiline(item.title)}</h3>
+                <h3>{renderMultiline(t(item.title))}</h3>
               </article>
             ))}
           </div>
@@ -220,18 +233,17 @@ const Products = () => {
         <div className={styles.container}>
           <div className={`${styles.sectionHeading} ${styles.sectionHeadingLeftText}`}>
             <h2 className={`${styles.sectionTitle} `}>
-              <span className={styles.featuresTitleAccent}>Product</span> Features
+              <Trans
+                i18nKey="products.features.title"
+                components={{ accent: <span className={styles.featuresTitleAccent} /> }}
+              />
             </h2>
             <p
               className={`${styles.sectionHeadingDescription} ${styles.sectionHeadingDescriptionLeft}`}
             >
-              <strong>
-                Our engraved plastic signs are manufactured from high-quality two-layer plastic
-                designed for technical and industrial applications.
-              </strong>
+              <strong>{t('products.features.descriptionStrong')}</strong>
               <br />
-              Because the text is engraved into the material, it will not fade, peel or wear off
-              like printed labels.
+              {t('products.features.description')}
             </p>
           </div>
 
@@ -239,9 +251,9 @@ const Products = () => {
             {featureItems.map((item) => (
               <article className={styles.featureCard} key={item.title}>
                 <div className={styles.featureCardImage}>
-                  <img src={item.image} alt={item.alt} />
+                  <img src={item.image} alt={t(item.alt)} />
                 </div>
-                <h3>{renderMultiline(item.title)}</h3>
+                <h3>{renderMultiline(t(item.title))}</h3>
               </article>
             ))}
           </div>
@@ -254,7 +266,10 @@ const Products = () => {
         <div className={`${styles.container} ${styles.infoBlockContainerWide}`}>
           <div className={styles.sectionHeading}>
             <h2 className={`${styles.sectionTitle} `}>
-              Design Your Engraved <span style={{ color: '#006CA4' }}>Sign Online </span>
+              <Trans
+                i18nKey="products.design.title"
+                components={{ accent: <span style={{ color: '#006CA4' }} /> }}
+              />
             </h2>
           </div>
 
@@ -262,46 +277,47 @@ const Products = () => {
             <div className={styles.infoBlockContent}>
               <h3 className={styles.infoBlockContentTitle}>
                 <strong>
-                  With the SignXpert{' '}
-                  <a href="#" className={styles.onlineEditorLink} style={{ fontWeight: 'black' }}>
-                    Online Editor
-                  </a>
-                  , creating a custom engraved sign is simple and fast.
+                  <Trans
+                    i18nKey="products.design.intro"
+                    components={{
+                      editor: (
+                        <Link
+                          to="/online-sign-editor"
+                          className={styles.onlineEditorLink}
+                          style={{ fontWeight: 'black' }}
+                        />
+                      ),
+                    }}
+                  />
                 </strong>
               </h3>
               <p
                 className={styles.infoBlockHighlight}
                 style={{ color: '#006CA4', fontSize: '18px', fontWeight: 'bold' }}
               >
-                You can design your sign directly in your browser and see every change instantly.
+                {t('products.design.highlight')}
               </p>
-              <p>Features of our online editor:</p>
+              <p>{t('products.design.listTitle')}</p>
 
               <ul className={styles.bulletList}>
-                <li>choose your sign size and layout</li>
-                <li>customize text, symbols and colors</li>
-                <li>add mounting holes or adhesive backing</li>
-                <li>preview your sign in real time</li>
+                <li>{t('products.design.item_1')}</li>
+                <li>{t('products.design.item_2')}</li>
+                <li>{t('products.design.item_3')}</li>
+                <li>{t('products.design.item_4')}</li>
               </ul>
 
-              <p>
-                This makes it easy to create professional engraved labels, machine nameplates and
-                technical signs in just a few minutes.
-              </p>
-              <p>
-                Signs can also be ordered via phone or email, and our team will help you prepare the
-                design if needed.
-              </p>
+              <p>{t('products.design.summary')}</p>
+              <p>{t('products.design.support')}</p>
             </div>
 
             <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/design.jpg" alt="Design your sign by SignXpert" />
+              <img src="/images/products/design.jpg" alt={t('products.design.imageAlt')} />
             </aside>
           </div>
 
           <div className={styles.infoBlockCtaWrap}>
             <Link to="/online-sign-editor" className={styles.infoBlockCta}>
-              Design Your Sign
+              {t('products.design.cta')}
             </Link>
           </div>
         </div>
@@ -314,29 +330,23 @@ const Products = () => {
           <div className={`${styles.infoBlockGrid} ${styles.infoBlockGridReversed}`}>
             <div className={`${styles.infoBlockContent}`}>
               <h2 className={`${styles.sectionTitle} ${styles.infoBlockSecondaryTitle}`}>
-                Custom Production
+                {t('products.production.titleLine_1')}
                 <br />
-                with <span style={{ color: '#006CA4' }}>SignXpert</span>
+                <Trans
+                  i18nKey="products.production.titleLine_2"
+                  components={{ accent: <span style={{ color: '#006CA4' }} /> }}
+                />
               </h2>
               <p style={{ fontWeight: 'bold', marginBottom: '20px' }}>
-                At SignXpert, every engraved sign can be customized to your needs.
+                {t('products.production.lead')}
               </p>
-              <p>
-                Whether you need a single sign or large production batches, we provide reliable
-                quality and precise engraving.
-              </p>
-              <p>
-                You can design your sign directly in our online sign editor, upload your own files
-                or contact us with your requirements.
-              </p>
-              <p>
-                Our goal is to provide durable, professional and easy-to-order engraved plastic
-                signs for industry and businesses.
-              </p>
+              <p>{t('products.production.description_1')}</p>
+              <p>{t('products.production.description_2')}</p>
+              <p>{t('products.production.description_3')}</p>
             </div>
 
             <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/design1.jpg" alt="Custom production by SignXpert" />
+              <img src="/images/products/design1.jpg" alt={t('products.production.imageAlt')} />
             </aside>
           </div>
         </div>
@@ -346,8 +356,10 @@ const Products = () => {
         <div className={styles.container}>
           <div className={styles.sectionHeading}>
             <h2 className={`${styles.sectionTitle} `}>
-              Our <span style={{ color: '#006CA4' }}>Product Categories</span> and Typical
-              Applications
+              <Trans
+                i18nKey="products.categories.title"
+                components={{ accent: <span style={{ color: '#006CA4' }} /> }}
+              />
             </h2>
           </div>
 
@@ -355,10 +367,10 @@ const Products = () => {
             {categoryItems.map((category) => (
               <article className={`${styles.plateCard} ${category.className}`} key={category.title}>
                 <HoleDots />
-                <h3>{category.title}</h3>
+                <h3>{t(category.title)}</h3>
                 <ul>
                   {category.items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>{t(item)}</li>
                   ))}
                 </ul>
               </article>

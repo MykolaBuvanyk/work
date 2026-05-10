@@ -264,6 +264,142 @@
     "answer_11_list_5": "Provide a brief description of the issue",
     "answer_11_4": "We will get back to you as quickly as possible to resolve the issue and send the correct product."
   },
+  "products": {
+    "hero": {
+      "title": "<accent>Custom</accent> Engraved Plastic Signs and Nameplates",
+      "imageAlt": "Engraved plastic signs and labels",
+      "intro": "At <home>SignXpert</home>, we produce high-quality engraved plastic signs, nameplates and industrial labels using durable two-layer engraving plastic.",
+      "description": "Our engraved signs provide clear, permanent and professional identification for machines, electrical installations, offices, buildings and workplaces.",
+      "details": "Using precision laser engraving, the top layer of the plastic is engraved to reveal the contrasting color layer underneath. This creates high-contrast markings that remain readable for years, even in demanding industrial environments."
+    },
+    "uses": {
+      "title": "Our engraved plastic signs are widely used in:",
+      "industry": {
+        "title": "Industry\nand Manufacturing",
+        "alt": "Industry and manufacturing"
+      },
+      "electrical": {
+        "title": "Electrical\nInstallations",
+        "alt": "Electrical installations"
+      },
+      "machinery": {
+        "title": "Machinery\nand Equipment labeling",
+        "alt": "Machinery and equipment labeling"
+      },
+      "offices": {
+        "title": "Offices\nand Buildings",
+        "alt": "Offices and buildings"
+      },
+      "technical": {
+        "title": "Technical\nInstallations",
+        "alt": "Technical installations"
+      }
+    },
+    "features": {
+      "title": "<accent>Product</accent> Features",
+      "descriptionStrong": "Our engraved plastic signs are manufactured from high-quality two-layer plastic designed for technical and industrial applications.",
+      "description": "Because the text is engraved into the material, it will not fade, peel or wear off like printed labels.",
+      "selfAdhesive": {
+        "title": "Self-adhesive option with\nstrong 3M tape",
+        "alt": "Self-adhesive option with strong 3M tape"
+      },
+      "versatile": {
+        "title": "Versatile use for industrial\nand office environments",
+        "alt": "Versatile use for industrial and office environments"
+      },
+      "fireClass": {
+        "title": "Fire behavior class B2\n(DIN 4102)",
+        "alt": "Fire behavior class B2 according to DIN 4102"
+      },
+      "uvResistant": {
+        "title": "UV-resistant material\nsuitable for outdoor use",
+        "alt": "UV-resistant material suitable for outdoor use"
+      },
+      "largeFormat": {
+        "title": "Large format options: up to\n600 x 295 mm",
+        "alt": "Large format options up to 600 by 295 millimeters"
+      },
+      "thickness": {
+        "title": "Material thickness\n0.8 mm and 1.6 mm",
+        "alt": "Material thickness 0.8 millimeters and 1.6 millimeters"
+      },
+      "durable": {
+        "title": "Durable and long-lasting\nengraving",
+        "alt": "Durable and long-lasting engraving"
+      },
+      "contrast": {
+        "title": "High contrast for excellent\nreadability",
+        "alt": "High contrast for excellent readability"
+      }
+    },
+    "design": {
+      "title": "Design Your Engraved <accent>Sign Online</accent>",
+      "intro": "With the SignXpert <editor>Online Editor</editor>, creating a custom engraved sign is simple and fast.",
+      "highlight": "You can design your sign directly in your browser and see every change instantly.",
+      "listTitle": "Features of our online editor:",
+      "item_1": "choose your sign size and layout",
+      "item_2": "customize text, symbols and colors",
+      "item_3": "add mounting holes or adhesive backing",
+      "item_4": "preview your sign in real time",
+      "summary": "This makes it easy to create professional engraved labels, machine nameplates and technical signs in just a few minutes.",
+      "support": "Signs can also be ordered via phone or email, and our team will help you prepare the design if needed.",
+      "imageAlt": "Design your sign by SignXpert",
+      "cta": "Design Your Sign"
+    },
+    "production": {
+      "titleLine_1": "Custom Production",
+      "titleLine_2": "with <accent>SignXpert</accent>",
+      "lead": "At SignXpert, every engraved sign can be customized to your needs.",
+      "description_1": "Whether you need a single sign or large production batches, we provide reliable quality and precise engraving.",
+      "description_2": "You can design your sign directly in our online sign editor, upload your own files or contact us with your requirements.",
+      "description_3": "Our goal is to provide durable, professional and easy-to-order engraved plastic signs for industry and businesses.",
+      "imageAlt": "Custom production by SignXpert"
+    },
+    "categories": {
+      "title": "Our <accent>Product Categories</accent> and Typical Applications",
+      "electricalPanel": {
+        "title": "Electrical Panel Labels",
+        "item_1": "electrical panels",
+        "item_2": "switchboards",
+        "item_3": "control cabinets",
+        "item_4": "circuit identification"
+      },
+      "machineNameplates": {
+        "title": "Machine Nameplates",
+        "item_1": "machinery identification",
+        "item_2": "manufacturer plates",
+        "item_3": "technical specification plates",
+        "item_4": "equipment labeling"
+      },
+      "warningSafety": {
+        "title": "Warning and Safety Signs",
+        "item_1": "safety warnings",
+        "item_2": "hazard identification",
+        "item_3": "machine safety labels",
+        "item_4": "operational instructions"
+      },
+      "controlPanel": {
+        "title": "Control Panel Labels",
+        "item_1": "button labels",
+        "item_2": "switch labels",
+        "item_3": "machine control panels",
+        "item_4": "operator interface labels"
+      },
+      "serialNumber": {
+        "title": "Serial Number Plates",
+        "item_1": "serial number plates",
+        "item_2": "asset tags",
+        "item_3": "equipment ID plates",
+        "item_4": "inventory labels"
+      },
+      "doorOffice": {
+        "title": "Door and Office Nameplates",
+        "item_1": "office door signs",
+        "item_2": "room identification",
+        "item_3": "workplace labels"
+      }
+    }
+  },
   "contacts": {
     "description_90": "Contacts",
     "description_91": "Customer Service",

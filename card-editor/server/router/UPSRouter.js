@@ -88,6 +88,18 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
+          ShipmentServiceOptions: email ? {
+            Notification: {
+              NotificationCode: '6',
+              EMail: {
+                EMailAddress: [email],
+                FromEMailAddress: process.env.GMAIL_USER_SEND || 'info@sign-xpert.com',
+                FromName: 'SignXpert',
+                Subject: 'Your order has been shipped',
+                Memo: 'Your SignXpert order is on its way!',
+              },
+            },
+          } : undefined,
           PaymentInformation: {
             ShipmentCharge: {
               Type: '01',

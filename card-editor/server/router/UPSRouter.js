@@ -182,4 +182,37 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+UPSRouter.post('/void-shipment', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { trackingNumber } = req.body;
+    if (!trackingNumber) return res.status(400).json({ message: 'trackingNumber required' });
+
+    const isSandbox = process.env.UPS_SANDBOX === 'true';
+    const voidUrl = isSandbox
+      ? `https://wwwcie.ups.com/api/shipments/v2403/void/cancel/${trackingNumber}`
+      : `https://onlinetools.ups.com/api/shipments/v2403/void/cancel/${trackingNumber}`;
+
+    const token = await getUpsToken();
+
+    await axios.delete(voidUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        transId: `void-${trackingNumber}-${Date.now()}`,
+        transactionSrc: 'SignXpert',
+      },
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    const upsData = err?.response?.data;
+    console.error('UPS void error:', JSON.stringify(upsData, null, 2) || err.message);
+    const upsMsg =
+      upsData?.response?.errors?.[0]?.message ||
+      upsData?.message ||
+      err.message;
+    return res.status(500).json({ message: upsMsg });
+  }
+});
+
 export default UPSRouter;

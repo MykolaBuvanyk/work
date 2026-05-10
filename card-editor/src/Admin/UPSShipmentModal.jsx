@@ -53,6 +53,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
+  const [voiding, setVoiding] = useState(false);
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -84,9 +85,23 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     }
   };
 
+  const voidAndEdit = async () => {
+    setVoiding(true);
+    try {
+      await $authHost.post('ups/void-shipment', { trackingNumber: createdTracking });
+      setCreatedTracking(null);
+      setError('');
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to void shipment. Try voiding on UPS.com manually.');
+      setCreatedTracking(null);
+    } finally {
+      setVoiding(false);
+    }
+  };
+
   if (createdTracking) {
     return (
-      <div style={styles.overlay} onClick={onClose}>
+      <div style={styles.overlay}>
         <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
           <h3 style={{...styles.title, color:'#1a7a1a'}}>✓ Shipment Created</h3>
           <p style={{fontSize:'14px', marginBottom:'8px'}}>Tracking number saved to order:</p>
@@ -94,7 +109,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             <span style={{fontSize:'18px', fontWeight:'700', color:'#0073bc', letterSpacing:'1px'}}>{createdTracking}</span>
           </div>
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>
-            You can review or edit this shipment on UPS.com. If you create a new label there with different data — copy the new tracking number and paste it in <b>Manual tracking</b> field in the order.
+            To edit data — void this shipment and create a new one with corrected details.
           </p>
           <div style={{display:'flex', gap:'10px', flexDirection:'column'}}>
             <a
@@ -105,6 +120,13 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             >
               View on UPS.com →
             </a>
+            <button
+              style={{...styles.cancelBtn, borderColor:'#d00', color:'#d00'}}
+              onClick={voidAndEdit}
+              disabled={voiding}
+            >
+              {voiding ? 'Voiding...' : '✕ Void & Edit data'}
+            </button>
             <button style={styles.cancelBtn} onClick={onClose}>Close</button>
           </div>
         </div>

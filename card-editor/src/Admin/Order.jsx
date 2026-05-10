@@ -1780,9 +1780,6 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           {isOpeningProject ? 'Opening...' : 'Open Project'}
         </div>
       </div>
-      <div className="delivery">
-        <button>Delivery Note</button>
-      </div>
       <div className="buttons">
         <button className={order.status=='Printed'?'active':''} onClick={()=>setStatus('Printed')}>Printed</button>
         <button className={order.status=='Manufact'?'active':''} onClick={()=>setStatus('Manufact')}>Manufact</button>

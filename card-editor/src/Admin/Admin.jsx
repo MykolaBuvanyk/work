@@ -322,7 +322,6 @@ const Admin = () => {
                 <tr
                   style={{backgroundColor: orderId==order.id?'#CACACA': (index+1)%2==0? '#f9f9f9':'unset'}} 
                   onClick={()=>{
-                    console.log('Clicked order:', order);
                     if(orderId==order.id)setOrderId(null)
                     else setOrderId(order.id)
                     }} key={order.id}>

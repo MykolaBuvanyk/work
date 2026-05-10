@@ -1534,7 +1534,7 @@ CartRouter.delete('/customer/:userId', requireAuth, requireAdmin, async (req, re
 
 CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { orderId, newStatus } = req.body;
+    const { orderId, newStatus, trackingNumber } = req.body;
 
     let updatedCount;
 
@@ -1544,8 +1544,12 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
         { where: { userId: req.user.id } }
       );
     } else {
+      const updateFields = { status: newStatus };
+      if (newStatus === 'Shipped' && trackingNumber) {
+        updateFields.trackingNumber = String(trackingNumber).trim();
+      }
       [updatedCount] = await Order.update(
-        { status: newStatus },
+        updateFields,
         { where: { id: Number(orderId) } }
       );
     }
@@ -1559,15 +1563,25 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
       ]
     });
     if (newStatus == 'Printed') {
-      SendEmailForStatus.StatusPrinted(orderWithUser);
+      SendEmailForStatus.StatusPrinted(orderWithUser).catch(e =>
+        console.error('Email StatusPrinted failed:', e)
+      );
     }
     if (newStatus == 'Shipped') {
-      SendEmailForStatus.StatusShipped(orderWithUser);
-      SendEmailForStatus.StatusShipped2(orderWithUser);
+      const [r1, r2] = await Promise.allSettled([
+        SendEmailForStatus.StatusShipped(orderWithUser),
+        SendEmailForStatus.StatusShipped2(orderWithUser),
+      ]);
+      const emailFailed = [r1, r2].some(r => r.status === 'rejected' || r.value === false);
+      if (emailFailed) {
+        console.error('Email StatusShipped failed for order', orderId);
+      }
     }
     if (newStatus == 'Delivered') {
       setTimeout(() => {
-        SendEmailForStatus.StatusDelivered(orderWithUser);
+        SendEmailForStatus.StatusDelivered(orderWithUser).catch(e =>
+          console.error('Email StatusDelivered failed:', e)
+        );
       }, 48 * 60 * 60 * 1000);
     }
 
@@ -1579,6 +1593,7 @@ CartRouter.post('/setStatus', requireAuth, requireAdmin, async (req, res) => {
       success: true,
       orderId,
       status: newStatus,
+      trackingNumber: orderWithUser?.trackingNumber ?? null,
     });
   } catch (err) {
     console.error('SET STATUS ERROR:', err);

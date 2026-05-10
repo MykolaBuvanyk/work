@@ -1256,9 +1256,10 @@ class SendEmailForStatus {
         const urlAccount = urlFrontend + 'account/detail';
         const urlOrders = urlFrontend + 'account';
         
-        // В реальності тут має бути поле з БД, наприклад order.trackingNumber
-        const trackingNumber = 'XXXXXXXX'; 
-        const trackingUrl = `https://www.ups.com/track?tracknum=${trackingNumber}`;
+        const trackingNumber = order.trackingNumber || '';
+        const trackingUrl = trackingNumber
+          ? `https://www.ups.com/track?tracknum=${trackingNumber}`
+          : 'https://www.ups.com/track';
 
         const html = `
 <!DOCTYPE html>
@@ -1293,8 +1294,8 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 10px 0;">Good news!</p>
                             <p style="margin: 0 0 20px 0;">Your order has now been shipped via UPS and is on its way to you.</p>
                             
-                            <p style="margin: 0 0 20px 0;">Tracking number: ${trackingNumber}</p>
-                            
+                            ${trackingNumber ? `<p style="margin: 0 0 20px 0;">Tracking number: <strong>${trackingNumber}</strong></p>` : ''}
+
                             <p style="margin: 0 0 20px 0;">You can track your order directly on the UPS website by clicking the link below:</p>
 
                             <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px auto;">
@@ -1307,7 +1308,7 @@ class SendEmailForStatus {
                                 </tr>
                             </table>
 
-                            <p style="margin: 0 0 20px 0;">Please note that it may take some time for the tracking number to become active in the UPS system. Once active, you can follow the journey of your package and see its current status.</p>
+                            ${trackingNumber ? `<p style="margin: 0 0 20px 0;">Please note that it may take some time for the tracking number to become active in the UPS system. Once active, you can follow the journey of your package and see its current status.</p>` : ''}
                             
                             <p style="margin: 0 0 20px 0;">You can also always check the detailed status of your order in your account.</p>
                             <p style="margin: 0 0 30px 0;">Simply log in to <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0073bc; text-decoration: underline;">My Orders</a></p>

@@ -3751,7 +3751,7 @@ const start = async () => {
     // MySQL is used for auth; do not block server startup during local dev
     try {
       await sequelize.authenticate();
-      await sequelize.sync();
+      await sequelize.sync({ alter: { drop: false } });
       console.log('MySQL connected');
     } catch (mysqlError) {
       console.log('MySQL connection failed (server will still run):', mysqlError);

@@ -58,7 +58,8 @@ const Order=sequelize.define('orders',{
   accessories:{type:DataTypes.TEXT,allowNull:false,defaultValue:''},
   idMongo:{type:DataTypes.STRING,allowNull:false},
   isPaid:{type:DataTypes.BOOLEAN,allowNull:true,defaultValue:false},
-  netAfterDiscount:{type:DataTypes.FLOAT,allowNull:false}
+  netAfterDiscount:{type:DataTypes.FLOAT,allowNull:false},
+  trackingNumber:{type:DataTypes.STRING,allowNull:true,defaultValue:null}
 })
 
 User.hasMany(Order);

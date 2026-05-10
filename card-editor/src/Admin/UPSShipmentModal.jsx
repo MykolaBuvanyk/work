@@ -43,6 +43,10 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     phone: deliverySectionData?.mobile || order?.user?.phone || '',
     email: deliverySectionData?.email || order?.user?.email || '',
     weight: '1.0',
+    length: '',
+    width: '',
+    height: '',
+    declaredValue: '',
     serviceCode: '11',
   });
 
@@ -110,6 +114,18 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             <button style={styles.weightBtn} onClick={() => adjustWeight(0.5)}>+0.5</button>
           </div>
         </div>
+
+        <div style={styles.fieldGroup}>
+          <label style={styles.label}>Dimensions (cm) — optional for parcel</label>
+          <div style={{display:'flex', gap:'8px'}}>
+            <input style={{...styles.input, width:'80px'}} placeholder="L" type="number" min="1" value={form.length} onChange={set('length')} />
+            <input style={{...styles.input, width:'80px'}} placeholder="W" type="number" min="1" value={form.width} onChange={set('width')} />
+            <input style={{...styles.input, width:'80px'}} placeholder="H" type="number" min="1" value={form.height} onChange={set('height')} />
+          </div>
+          <span style={{fontSize:'11px', color:'#888'}}>Length × Width × Height</span>
+        </div>
+
+        <Field label="Declared Value (EUR) — optional" value={form.declaredValue} onChange={set('declaredValue')} />
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Service</label>

@@ -1523,7 +1523,8 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
   const setStatus = async(newStatus) => {
     try {
-      await $authHost.post('cart/setStatus', {orderId, newStatus});
+      const trackingNumber = newStatus === 'Shipped' ? order.trackingNumber : undefined;
+      await $authHost.post('cart/setStatus', {orderId, newStatus, trackingNumber});
       getOrder();
       update();
     }catch {
@@ -1535,10 +1536,9 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     const tracking = manualTracking.trim();
     if (!tracking) return;
     try {
-      await $authHost.post('cart/setStatus', { orderId, newStatus: 'Shipped', trackingNumber: tracking });
+      await $authHost.post('cart/saveTracking', { orderId, trackingNumber: tracking });
       setManualTracking('');
       getOrder();
-      update();
     } catch {
       alert('Помилка збереження tracking number');
     }

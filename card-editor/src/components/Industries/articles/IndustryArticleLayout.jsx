@@ -1,7 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from '../Industries.module.css';
 
-const IndustryArticleLayout = ({ title, html }) => {
+const IndustryArticleLayout = ({ articleKey }) => {
+  const { t } = useTranslation();
+  const title = t(`${articleKey}.title`);
+  const html = t(`${articleKey}.html`);
+
   return (
     <main className={styles.page}>
       <div className={styles.container}>

@@ -1,268 +1,269 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import styles from './Industries.module.css';
 
 const INDUSTRY_SECTIONS = [
   {
-    title: 'MEP & Building Services',
+    titleKey: 'industries.sections.mep-building-services.title',
     slug: 'mep-building-services',
     image: '/images/industries/mep-building-services.jpg',
     reverse: false,
     items: [
       {
-        label: 'Electrical Installation',
+        labelKey: 'industries.sections.mep-building-services.items.electrical-installation',
         slug: 'electrical-installation',
       },
       {
-        label: 'Sprinkler Installations',
+        labelKey: 'industries.sections.mep-building-services.items.sprinkler-installations',
         slug: 'sprinkler-installations',
       },
       {
-        label: 'Fire Installation',
+        labelKey: 'industries.sections.mep-building-services.items.fire-installation',
         slug: 'fire-installation',
       },
       {
-        label: 'Refrigeration Installations',
+        labelKey: 'industries.sections.mep-building-services.items.refrigeration-installations',
         slug: 'refrigeration-installations',
       },
       {
-        label: 'Ventilation Installations',
+        labelKey: 'industries.sections.mep-building-services.items.ventilation-installations',
         slug: 'ventilation-installations',
       },
       {
-        label: 'Elevators and Lift Systems: Durable Identification and Passenger Safety',
+        labelKey: 'industries.sections.mep-building-services.items.elevators-and-lift-systems',
         slug: 'elevators-and-lift-systems',
       },
       {
-        label: 'Electrical and Control Cabinets: Clear and Durable Labeling',
+        labelKey: 'industries.sections.mep-building-services.items.electrical-and-control-cabinets',
         slug: 'electrical-and-control-cabinets',
       },
       {
-        label: 'Electrical in Control and Building Automation',
+        labelKey: 'industries.sections.mep-building-services.items.electrical-in-control-and-building-automation',
         slug: 'electrical-in-control-and-building-automation',
       },
       {
-        label: 'Plumbing Installations',
+        labelKey: 'industries.sections.mep-building-services.items.plumbing-installations-across',
         slug: 'plumbing-installations-across',
       },
     ],
   },
   {
-    title: 'Security & Automation',
+    titleKey: 'industries.sections.security-automation.title',
     slug: 'security-automation',
     image: '/images/industries/security-automation.jpg',
     reverse: true,
     items: [
       {
-        label: 'Alarm and Security Installations',
+        labelKey: 'industries.sections.security-automation.items.alarm-and-security-installations',
         slug: 'alarm-and-security-installations',
       },
       {
-        label: 'Robotics Industry: Clear Labeling for Safe and Efficient Automation',
+        labelKey: 'industries.sections.security-automation.items.robotics-industry',
         slug: 'robotics-industry',
       },
       {
-        label: 'Production Lines: Optimized Safety and Efficiency',
+        labelKey: 'industries.sections.security-automation.items.production-lines',
         slug: 'production-lines',
       },
       {
-        label: 'Industrial Maintenance: Safety, Efficiency, and Structured Operations',
+        labelKey: 'industries.sections.security-automation.items.industrial-maintenance',
         slug: 'industrial-maintenance',
       },
       {
-        label: 'Hydraulic Systems and Fluid Technology',
+        labelKey: 'industries.sections.security-automation.items.hydraulic-systems-and-fluid-technology',
         slug: 'hydraulic-systems-and-fluid-technology',
       },
     ],
   },
   {
-    title: 'Energy & Environment',
+    titleKey: 'industries.sections.energy-environment.title',
     slug: 'energy-environment',
     image: '/images/industries/energy-environment.jpg',
     reverse: false,
     items: [
       {
-        label: 'Solar Energy and Photovoltaics: Durable UV-Resistant Labeling for Sustainable Power',
+        labelKey: 'industries.sections.energy-environment.items.solar-energy-and-photovoltaics',
         slug: 'solar-energy-and-photovoltaics',
       },
       {
-        label: 'Nuclear Power: Safe, Reliable, and Carbon-Free Energy',
+        labelKey: 'industries.sections.energy-environment.items.nuclear-power',
         slug: 'nuclear-power',
       },
       {
-        label: 'Hydropower: Reliable and Renewable Energy',
+        labelKey: 'industries.sections.energy-environment.items.hydropower',
         slug: 'hydropower',
       },
       {
-        label: 'Combined Heat and Power Plants',
+        labelKey: 'industries.sections.energy-environment.items.combined-heat-and-power-plants',
         slug: 'combined-heat-and-power-plants',
       },
       {
-        label: 'Biogas: Sustainable Energy Production',
+        labelKey: 'industries.sections.energy-environment.items.biogas',
         slug: 'biogas',
       },
       {
-        label: 'Waste Stations: Safe and Efficient Waste Management',
+        labelKey: 'industries.sections.energy-environment.items.waste-stations',
         slug: 'waste-stations',
       },
       {
-        label: 'Wastewater Treatment Plants: Safe, Organized, and Durable Signage',
+        labelKey: 'industries.sections.energy-environment.items.wastewater-treatment-plants',
         slug: 'wastewater-treatment-plants',
       },
       {
-        label: 'Power Grids: Safe, Efficient, and Durable Signage',
+        labelKey: 'industries.sections.energy-environment.items.power-grids',
         slug: 'power-grids',
       },
     ],
   },
   {
-    title: 'Infrastructure & Mobility',
+    titleKey: 'industries.sections.infrastructure-mobility.title',
     slug: 'infrastructure-mobility',
     image: '/images/industries/infrastructure-mobility.jpg',
     reverse: true,
     items: [
       {
-        label: 'Rail Industry: Ensuring Safety and Efficiency',
+        labelKey: 'industries.sections.infrastructure-mobility.items.rail-industry',
         slug: 'rail-industry',
       },
       {
-        label: 'Railway Infrastructure: Durable Signage and Safe Operations',
+        labelKey: 'industries.sections.infrastructure-mobility.items.railway-infrastructure',
         slug: 'railway-infrastructure',
       },
       {
-        label: 'Airports: Safety, Navigation, and Durable Signage',
+        labelKey: 'industries.sections.infrastructure-mobility.items.airports',
         slug: 'airports',
       },
       {
-        label: 'Ports: Safe, Organized, and Durable Signage for Maritime Operations',
+        labelKey: 'industries.sections.infrastructure-mobility.items.ports',
         slug: 'ports',
       },
       {
-        label: 'Tunnels & Bridges: Durable Signage and Labeling',
+        labelKey: 'industries.sections.infrastructure-mobility.items.tunnels-and-bridges',
         slug: 'tunnels-and-bridges',
       },
       {
-        label: 'Ships & Offshore Industry: Durable Safety and Clear Labeling',
+        labelKey: 'industries.sections.infrastructure-mobility.items.ships-and-offshore-industry',
         slug: 'ships-and-offshore-industry',
       },
       {
-        label: 'Charging Infrastructure for Electric Vehicles',
+        labelKey: 'industries.sections.infrastructure-mobility.items.charging-infrastructure-for-electric-vehicles',
         slug: 'charging-infrastructure-for-electric-vehicles',
       },
       {
-        label: 'Construction Projects',
+        labelKey: 'industries.sections.infrastructure-mobility.items.construction-projects',
         slug: 'construction-projects',
       },
       {
-        label: 'Architecture and Construction',
+        labelKey: 'industries.sections.infrastructure-mobility.items.architecture-and-construction',
         slug: 'architecture-and-construction',
       },
     ],
   },
   {
-    title: 'Manufacturing & Heavy Industry',
+    titleKey: 'industries.sections.manufacturing-heavy-industry.title',
     slug: 'manufacturing-heavy-industry',
     image: '/images/industries/manufacturing-heavy-industry.jpg',
     reverse: false,
     items: [
       {
-        label: 'Automotive Industry Signage and Labeling',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.automotive-industry-signage-and-labeling',
         slug: 'automotive-industry-signage-and-labeling',
       },
       {
-        label: 'Aviation Industry: Precision, Safety, and High-Performance Infrastructure',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.aviation-industry',
         slug: 'aviation-industry',
       },
       {
-        label: 'Electronics Industry: High-Tech Manufacturing',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.electronics-industry-signage-and-labeling',
         slug: 'electronics-industry-signage-and-labeling',
       },
       {
-        label: 'Steel & Metal Industry: Organized and Safe Labeling',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.steel-and-metal-industry',
         slug: 'steel-and-metal-industry',
       },
       {
-        label: 'Mining Industry: Safety, Durability, and Operational Control',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.mining-industry',
         slug: 'mining-industry',
       },
       {
-        label: 'Pulp and Paper Industry: Safe and Efficient Labeling',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.pulp-and-paper-industry',
         slug: 'pulp-and-paper-industry',
       },
       {
-        label: 'Machinery Industry: Precision Engineering and Industrial Performance',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.machinery-industry',
         slug: 'machinery-industry',
       },
       {
-        label: 'Tool Manufacturing and Fitness Equipment: High-Performance Branding and Serial Identification',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.tool-manufacturing-and-fitness-equipment',
         slug: 'tool-manufacturing-and-fitness-equipment',
       },
       {
-        label: 'Battery Factories: Safety, Efficiency, and Durable Signage',
+        labelKey: 'industries.sections.manufacturing-heavy-industry.items.battery-factories',
         slug: 'battery-factories',
       },
     ],
   },
   {
-    title: 'IT & Telecom',
+    titleKey: 'industries.sections.it-telecom.title',
     slug: 'it-telecom',
     image: '/images/industries/it-telecom.jpg',
     reverse: true,
     items: [
       {
-        label: 'Tele- and Data Installations',
+        labelKey: 'industries.sections.it-telecom.items.tele-and-data-installations',
         slug: 'tele-and-data-installations',
       },
       {
-        label: 'Telecom: Reliable Signage and Labeling',
+        labelKey: 'industries.sections.it-telecom.items.telecom',
         slug: 'telecom',
       },
       {
-        label: 'IT Infrastructure and Data Centers: Precision Labeling and High-Tech Identification',
+        labelKey: 'industries.sections.it-telecom.items.it-infrastructure-and-data-centers',
         slug: 'it-infrastructure-and-data-centers',
       },
     ],
   },
   {
-    title: 'Branding & Industrial Labeling',
+    titleKey: 'industries.sections.branding-industrial-labeling.title',
     slug: 'branding-industrial-labeling',
     image: '/images/industries/branding-industrial-labeling.jpg',
     reverse: false,
     items: [
       {
-        label: 'Food Industry: Safety, Hygiene, and Efficiency',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.food-industry-safety-hygiene-and-efficiency',
         slug: 'food-industry-safety-hygiene-and-efficiency',
       },
       {
-        label: 'Furniture and Kitchen Manufacturing: Premium Branding and Functional Labeling',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.furniture-and-kitchen-manufacturing',
         slug: 'furniture-and-kitchen-manufacturing',
       },
       {
-        label: 'Warehouse Logistics and Industrial Facilities: Precision Identification and Asset Tracking',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.warehouse-logistics-and-industrial-facilities',
         slug: 'warehouse-logistics-and-industrial-facilities',
       },
       {
-        label: 'Medical and Healthcare: Hygienic Labeling and Patient Identification',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.medical-and-healthcare',
         slug: 'medical-and-healthcare',
       },
       {
-        label: 'Oils, Lubricants, and Industrial Fluids: Chemically Resistant Identification',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.oils-lubricants-and-industrial-fluids',
         slug: 'oils-lubricants-and-industrial-fluids',
       },
       {
-        label: 'Branding and Event Identity: Premium Signage and Decorative Labeling',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.branding-and-event-identity',
         slug: 'branding-and-event-identity',
       },
       {
-        label: 'Packaging Industry: Innovation, Protection, and Efficiency',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.packaging-industry',
         slug: 'packaging-industry',
       },
       {
-        label: 'Our Technologies and Materials',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.our-technologies-and-materials',
         slug: 'our-technologies-and-materials',
       },
       {
-        label: 'Packaging Systems and Food Engineering',
+        labelKey: 'industries.sections.branding-industrial-labeling.items.packaging-systems-and-food-engineering',
         slug: 'packaging-systems-and-food-engineering',
       },
     ],
@@ -275,30 +276,31 @@ const getLangPrefix = (pathname = '') => {
 };
 
 const Industries = () => {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const prefix = getLangPrefix(pathname);
 
   return (
     <main className={styles.page}>
       <div className={styles.container}>
-        <h1 className={styles.pageTitle}>Industries</h1>
+        <h1 className={styles.pageTitle}>{t('industries.title')}</h1>
 
         {INDUSTRY_SECTIONS.map((section, index) => (
-          <React.Fragment key={section.title}>
+          <React.Fragment key={section.slug}>
             <section
               className={`${styles.industryRow} ${section.reverse ? styles.reverse : ''}`.trim()}
             >
               {!section.reverse && (
                 <div className={styles.industryMedia}>
-                  <img src={section.image} alt={section.title} />
-                  <h2>{section.title}</h2>
+                  <img src={section.image} alt={t(section.titleKey)} />
+                  <h2>{t(section.titleKey)}</h2>
                 </div>
               )}
 
               <div className={styles.industryContent}>
                 <ul>
                   {section.items.map((item) => (
-                    <li key={typeof item === 'string' ? item : item.label}>
+                    <li key={typeof item === 'string' ? item : item.slug}>
                       {typeof item === 'string' ? (
                         item
                       ) : (
@@ -306,7 +308,7 @@ const Industries = () => {
                           className={styles.itemLink}
                           to={`${prefix}/industries/${section.slug}/${item.slug}`}
                         >
-                          {item.label}
+                          {t(item.labelKey)}
                         </Link>
                       )}
                     </li>
@@ -316,8 +318,8 @@ const Industries = () => {
 
               {section.reverse && (
                 <div className={styles.industryMedia}>
-                  <img src={section.image} alt={section.title} />
-                  <h2>{section.title}</h2>
+                  <img src={section.image} alt={t(section.titleKey)} />
+                  <h2>{t(section.titleKey)}</h2>
                 </div>
               )}
             </section>

@@ -21,6 +21,8 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     name: deliverySectionData?.fullName || '',
     company: deliverySectionData?.companyName || '',
     address: deliverySectionData?.address1 || '',
+    address2: deliverySectionData?.address2 || '',
+    address3: deliverySectionData?.address3 || '',
     city: deliverySectionData?.town || '',
     postalCode: deliverySectionData?.postalCode || '',
     country: countryRaw.toUpperCase().slice(0, 2),
@@ -70,7 +72,9 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <Field label="Name" value={form.name} onChange={set('name')} required />
         <Field label="Company" value={form.company} onChange={set('company')} />
-        <Field label="Address" value={form.address} onChange={set('address')} required />
+        <Field label="Address Line 1" value={form.address} onChange={set('address')} required />
+        <Field label="Address Line 2" value={form.address2} onChange={set('address2')} />
+        <Field label="Address Line 3" value={form.address3} onChange={set('address3')} />
         <Field label="City" value={form.city} onChange={set('city')} required />
         <Field label="Postal Code" value={form.postalCode} onChange={set('postalCode')} required />
         <Field label="Country (2-letter)" value={form.country} onChange={set('country')} required maxLength={2} />

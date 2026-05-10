@@ -38,7 +38,7 @@ async function getUpsToken() {
 
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { orderId, name, company, address, city, postalCode, country, phone, weight, serviceCode } = req.body;
+    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, weight, serviceCode } = req.body;
 
     if (!orderId || !name || !address || !city || !postalCode || !country) {
       return res.status(400).json({ message: 'Missing required shipment fields' });
@@ -71,12 +71,12 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             },
           },
           ShipTo: {
-            Name: name,
+            Name: company || name,
             AttentionName: name,
-            CompanyDisplayableName: company || name,
+            CompanyDisplayableName: company || undefined,
             Phone: { Number: String(phone || '').replace(/\s+/g, '') },
             Address: {
-              AddressLine: [address],
+              AddressLine: [address, address2, address3].filter(Boolean),
               City: city,
               PostalCode: postalCode,
               CountryCode: country.toUpperCase(),

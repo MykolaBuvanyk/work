@@ -1520,7 +1520,13 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
 
   const setStatus = async(newStatus) => {
     try {
-      const res=await $authHost.post('cart/setStatus', {orderId,newStatus});
+      let trackingNumber = undefined;
+      if (newStatus === 'Shipped') {
+        const input = window.prompt('Enter UPS tracking number (optional):');
+        if (input === null) return;
+        trackingNumber = input.trim() || undefined;
+      }
+      await $authHost.post('cart/setStatus', {orderId, newStatus, trackingNumber});
       getOrder();
       update();
     }catch {

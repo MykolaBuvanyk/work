@@ -86,6 +86,14 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
+          PaymentInformation: {
+            ShipmentCharge: {
+              Type: '01',
+              BillShipper: {
+                AccountNumber: process.env.UPS_SHIPPER_NUMBER,
+              },
+            },
+          },
           Package: {
             PackagingType: { Code: packagingCode },
             PackageWeight: {

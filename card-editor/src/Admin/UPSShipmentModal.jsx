@@ -14,6 +14,9 @@ function resolveCountryCode(raw) {
 
 const UPS_SERVICES = [
   { code: 'ENV', label: 'UPS Envelope' },
+  { code: 'NDA', label: 'UPS Next Day Package' },
+  { code: 'E12', label: 'UPS Express before 12 PM' },
+  { code: 'SAT', label: 'UPS Saturday Delivery' },
   { code: '65', label: 'UPS Worldwide Saver' },
   { code: '07', label: 'UPS Worldwide Express' },
   { code: '08', label: 'UPS Worldwide Expedited' },

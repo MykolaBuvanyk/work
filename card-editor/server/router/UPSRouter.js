@@ -10,6 +10,9 @@ const UPSRouter = express.Router();
 
 const UPS_SERVICES = {
   'ENV': 'UPS Envelope',
+  'NDA': 'UPS Next Day Package',
+  'E12': 'UPS Express before 12 PM',
+  'SAT': 'UPS Saturday Delivery',
   '65': 'UPS Worldwide Saver',
   '07': 'UPS Worldwide Express',
   '08': 'UPS Worldwide Expedited',
@@ -52,7 +55,9 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
     const token = await getUpsToken();
 
     const isEnvelope = serviceCode === 'ENV';
-    const resolvedServiceCode = isEnvelope ? '07' : (serviceCode || '11');
+    const isSaturday = serviceCode === 'SAT';
+    const serviceMap = { 'ENV': '07', 'NDA': '07', 'E12': '54', 'SAT': '07' };
+    const resolvedServiceCode = serviceMap[serviceCode] || serviceCode || '11';
     const packagingCode = isEnvelope ? '01' : '02';
 
     const payload = {
@@ -88,18 +93,21 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
-          ShipmentServiceOptions: email ? {
-            Notification: {
-              NotificationCode: '6',
-              EMail: {
-                EMailAddress: [email],
-                FromEMailAddress: process.env.GMAIL_USER_SEND || 'info@sign-xpert.com',
-                FromName: 'SignXpert',
-                Subject: 'Your order has been shipped',
-                Memo: 'Your SignXpert order is on its way!',
+          ShipmentServiceOptions: {
+            ...(isSaturday ? { SaturdayDeliveryIndicator: '' } : {}),
+            ...(email ? {
+              Notification: {
+                NotificationCode: '6',
+                EMail: {
+                  EMailAddress: [email],
+                  FromEMailAddress: process.env.GMAIL_USER_SEND || 'info@sign-xpert.com',
+                  FromName: 'SignXpert',
+                  Subject: 'Your order has been shipped',
+                  Memo: 'Your SignXpert order is on its way!',
+                },
               },
-            },
-          } : undefined,
+            } : {}),
+          },
           PaymentInformation: {
             ShipmentCharge: {
               Type: '01',

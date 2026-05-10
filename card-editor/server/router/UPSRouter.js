@@ -96,9 +96,12 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             },
           },
           Package: {
-            PackagingType: { Code: packagingCode },
+            PackagingType: {
+              Code: packagingCode,
+              Description: isEnvelope ? 'UPS Letter' : 'Customer Supplied Package',
+            },
             PackageWeight: {
-              UnitOfMeasurement: { Code: 'KGS' },
+              UnitOfMeasurement: { Code: 'KGS', Description: 'Kilograms' },
               Weight: String(parseFloat(weight) || 1),
             },
           },

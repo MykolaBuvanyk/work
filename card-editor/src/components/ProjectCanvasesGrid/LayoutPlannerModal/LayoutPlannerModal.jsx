@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as paperNamespace from "paper";
 import * as ClipperLibNamespace from "clipper-lib";
 import paper from "paper";
@@ -159,6 +160,16 @@ const FORMATS = {
   MJ_295x600: { label: "MJ 295×600", width: 295, height: 600 },
 };
 
+const EXPORT_MODE_TRANSLATION_KEYS = {
+  Normal: "layoutPlannerModal.exportModes.normal",
+  "Normal (MJ) Frame": "layoutPlannerModal.exportModes.normalMjFrame",
+  "Sheet optimized (MJ) Fr.": "layoutPlannerModal.exportModes.sheetOptimizedMjFr",
+  "Sheet A4 portrait": "layoutPlannerModal.exportModes.sheetA4Portrait",
+  "Sheet A5 portrait": "layoutPlannerModal.exportModes.sheetA5Portrait",
+  "Sheet A4 landscape": "layoutPlannerModal.exportModes.sheetA4Landscape",
+  "Production optimized": "layoutPlannerModal.exportModes.productionOptimized",
+};
+
 const GIT_OPTIMIZED_SHEET_WIDTH_MM = 600;
 const GIT_OPTIMIZED_SHEET_HEIGHT_MM = 300;
 const GIT_OPTIMIZED_MAX_FRAME_WIDTH_MM = 188.5;
@@ -209,9 +220,9 @@ const normalizeProjectIdForLabel = (value) => {
   return null;
 };
 
-const ORIENTATION_LABELS = {
-  portrait: "Вертикально",
-  landscape: "Горизонтально",
+const ORIENTATION_TRANSLATION_KEYS = {
+  portrait: "layoutPlannerModal.orientationValues.portrait",
+  landscape: "layoutPlannerModal.orientationValues.landscape",
 };
 
 const HIDE_PROJECT_NAME_IN_MAIN_PAGE_PDF = true;
@@ -1222,8 +1233,13 @@ export const generateSvgMarkupFromJsonTemplate = async (
   }
 };
 
-const normalizeDesigns = (designs = []) =>
-  designs
+const normalizeDesigns = (designs = [], options = {}) => {
+  const getFallbackName =
+    typeof options.getFallbackName === "function"
+      ? options.getFallbackName
+      : (index) => `Canvas ${index + 1}`;
+
+  return designs
     .map((design, index) => {
       const widthMm = toMm(design?.width);
       const heightMm = toMm(design?.height);
@@ -1286,7 +1302,7 @@ const normalizeDesigns = (designs = []) =>
 
       return {
         id: design.id ?? `design-${index}`,
-        name: design.name || `Полотно ${index + 1}`,
+        name: design.name || getFallbackName(index),
         widthMm,
         heightMm,
         area: widthMm * heightMm,
@@ -1309,6 +1325,7 @@ const normalizeDesigns = (designs = []) =>
       if (largestSideDiff !== 0) return largestSideDiff;
       return b.area - a.area;
     });
+};
 
 const planSheets = (
   items,
@@ -6058,6 +6075,7 @@ const LayoutPlannerModal = ({
   spacingMm = 5,
   projectId = null,
 }) => {
+  const { t } = useTranslation();
   const [formatKey, setFormatKey] = useState("MJ_295x600");
   const [orientation, setOrientation] = useState("portrait");
   const [enableGaps, setEnableGaps] = useState(false);
@@ -6217,7 +6235,14 @@ const LayoutPlannerModal = ({
     appliedMaxPageHeight,
   ]);
 
-  const normalizedItems = useMemo(() => normalizeDesigns(designs), [designs]);
+  const normalizedItems = useMemo(
+    () =>
+      normalizeDesigns(designs, {
+        getFallbackName: (index) =>
+          t("layoutPlannerModal.canvasNameFallback", { number: index + 1 }),
+      }),
+    [designs, t]
+  );
 
   const effectiveSignSpacingMm = (() => {
     const parsed = Number(pdfSignSpacing);
@@ -7065,9 +7090,7 @@ const LayoutPlannerModal = ({
     } catch (error) {
       console.error("Failed to export PDF", error);
       if (typeof window !== "undefined" && typeof window.alert === "function") {
-        window.alert(
-          "Не вдалося зберегти PDF. Переконайтеся, що сервер експорту запущено та доступний."
-        );
+        window.alert(t("layoutPlannerModal.alerts.exportPdfFailed"));
       }
     } finally {
       setIsExporting(false);
@@ -7085,16 +7108,17 @@ const LayoutPlannerModal = ({
     pdfAddSheetInfo,
     projectId,
     isMjFrameMode,
+    t,
   ]);
 
   if (!isOpen) return null;
 
   const selectedMaterialLabel =
     selectedMaterialKey === "all"
-      ? "Всі"
+      ? t("layoutPlannerModal.all")
       : (() => {
           const group = materialGroups.find((g) => g.key === selectedMaterialKey);
-          if (!group) return "Всі";
+          if (!group) return t("layoutPlannerModal.all");
           return formatMaterialLabel(group);
         })();
 
@@ -7108,21 +7132,32 @@ const LayoutPlannerModal = ({
     "Production optimized",
   ];
 
+  const getExportModeLabel = (modeLabel) => {
+    const translationKey = EXPORT_MODE_TRANSLATION_KEYS[modeLabel];
+    return translationKey ? t(translationKey) : modeLabel;
+  };
+
   return (
     <div className={styles.backdrop}>
       <div className={styles.modal}>
         <div className={styles.header}>
           <div>
-            <h2>План друку полотен</h2>
+            <h2>{t("layoutPlannerModal.title")}</h2>
             <p className={styles.subtitle}>
-              Формат {sheetSize.label} · {sheetSize.width}×{sheetSize.height} мм · проміжок між полотнами{" "}
-              {effectiveSignSpacingMm} мм · {ORIENTATION_LABELS[orientation]} · матеріал: {selectedMaterialLabel}
+              {t("layoutPlannerModal.subtitle", {
+                format: sheetSize.label,
+                width: sheetSize.width,
+                height: sheetSize.height,
+                spacing: effectiveSignSpacingMm,
+                orientation: t(ORIENTATION_TRANSLATION_KEYS[orientation]),
+                material: selectedMaterialLabel,
+              })}
             </p>
           </div>
           <button
             className={styles.closeBtn}
             onClick={onClose}
-            aria-label="Закрити"
+            aria-label={t("layoutPlannerModal.close")}
           >
             ×
           </button>
@@ -7130,23 +7165,23 @@ const LayoutPlannerModal = ({
 
         <div className={styles.controls}>
           <label className={`${styles.controlGroup} ${styles.hiddenControl}`}>
-            <span>Формат аркуша</span>
+            <span>{t("layoutPlannerModal.sheetFormat")}</span>
             <select
               value={formatKey}
               onChange={() => {}}
               disabled
-              title="Автоматично визначається вибраним режимом"
+              title={t("layoutPlannerModal.autoByMode")}
             >
               {Object.entries(FORMATS).map(([key, format]) => (
                 <option key={key} value={key}>
-                  {format.label} · {format.width}×{format.height} мм
+                  {format.label} · {format.width}×{format.height} {t("layoutPlannerModal.units.mm")}
                 </option>
               ))}
             </select>
           </label>
 
           <div className={`${styles.controlGroup} ${styles.hiddenControl}`}>
-            <span>Орієнтація</span>
+            <span>{t("layoutPlannerModal.orientation")}</span>
             <div className={styles.orientationToggle}>
               {["portrait", "landscape"].map((value) => (
                 <button
@@ -7157,22 +7192,22 @@ const LayoutPlannerModal = ({
                   }
                   onClick={() => {}}
                   disabled
-                  title="Автоматично визначається вибраним режимом"
+                  title={t("layoutPlannerModal.autoByMode")}
                 >
-                  {ORIENTATION_LABELS[value]}
+                  {t(ORIENTATION_TRANSLATION_KEYS[value])}
                 </button>
               ))}
             </div>
           </div>
 
           <div className={`${styles.controlGroup} ${styles.hiddenControl}`}>
-            <span>Розриви контуру</span>
+            <span>{t("layoutPlannerModal.contourGaps")}</span>
             <button
               type="button"
               className={enableGaps ? styles.orientationActive : ""}
               onClick={() => {}}
               disabled
-              title="Автоматично визначається вибраним режимом"
+              title={t("layoutPlannerModal.autoByMode")}
               style={{
                 padding: "6px 12px",
                 borderRadius: "4px",
@@ -7182,89 +7217,89 @@ const LayoutPlannerModal = ({
                 marginLeft: "10px"
               }}
             >
-              {enableGaps ? "Увімкнено" : "Вимкнено"}
+              {enableGaps ? t("layoutPlannerModal.enabled") : t("layoutPlannerModal.disabled")}
             </button>
           </div>
 
           <label className={styles.controlGroup}>
-            <span>Група (колір/товщина)</span>
+            <span>{t("layoutPlannerModal.materialGroup")}</span>
             <select
               value={selectedMaterialKey}
               onChange={(event) => setSelectedMaterialKey(event.target.value)}
             >
-              <option value="all">Всі матеріали ({totalRequestedCopies} шт)</option>
+              <option value="all">{t("layoutPlannerModal.allMaterials", { count: totalRequestedCopies })}</option>
               {materialGroups.map((group) => (
                 <option key={group.key} value={group.key}>
-                  {formatMaterialLabel(group)} — {group.count} шт
+                  {formatMaterialLabel(group)} — {t("layoutPlannerModal.pieces", { count: group.count })}
                 </option>
               ))}
             </select>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Режим (PDF)</span>
+            <span>{t("layoutPlannerModal.pdfMode")}</span>
             <select
               value={exportMode}
               onChange={(event) => setExportMode(event.target.value)}
             >
               {exportModeOptions.map((modeLabel) => (
                 <option key={modeLabel} value={modeLabel}>
-                  {modeLabel}
+                  {getExportModeLabel(modeLabel)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Min page width</span>
+            <span>{t("layoutPlannerModal.minPageWidth")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
                 value={pdfMinPageWidth}
                 onChange={(e) => setPdfMinPageWidth(Number(e.target.value) || 0)}
               />
-              <span className={styles.hint}>0 = defaults</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.zeroDefaults")}</span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Min page height</span>
+            <span>{t("layoutPlannerModal.minPageHeight")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
                 value={pdfMinPageHeight}
                 onChange={(e) => setPdfMinPageHeight(Number(e.target.value) || 0)}
               />
-              <span className={styles.hint}>0 = defaults</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.zeroDefaults")}</span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Max page width</span>
+            <span>{t("layoutPlannerModal.maxPageWidth")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
                 value={pdfMaxPageWidth}
                 onChange={(e) => setPdfMaxPageWidth(Number(e.target.value) || 0)}
               />
-              <span className={styles.hint}>0 = defaults</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.zeroDefaults")}</span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Max page height</span>
+            <span>{t("layoutPlannerModal.maxPageHeight")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
                 value={pdfMaxPageHeight}
                 onChange={(e) => setPdfMaxPageHeight(Number(e.target.value) || 0)}
               />
-              <span className={styles.hint}>0 = defaults</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.zeroDefaults")}</span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Page margin (to frame)</span>
+            <span>{t("layoutPlannerModal.pageMarginToFrame")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
@@ -7273,13 +7308,13 @@ const LayoutPlannerModal = ({
                 disabled={isMjFrameMode}
               />
               <span className={styles.hint}>
-                {isMjFrameMode ? "ignored for MJ mode" : ""}
+                {isMjFrameMode ? t("layoutPlannerModal.hints.ignoredForMj") : ""}
               </span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Frame spacing</span>
+            <span>{t("layoutPlannerModal.frameSpacing")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
@@ -7287,36 +7322,36 @@ const LayoutPlannerModal = ({
                 onChange={(e) => setFrameSpacingMm(Number(e.target.value) || 0)}
               />
               <span className={styles.hint}>
-                {isMjFrameMode ? "MJ mode: top/right/bottom only" : "applies on all sides"}
+                {isMjFrameMode ? t("layoutPlannerModal.hints.mjTopRightBottom") : t("layoutPlannerModal.hints.allSides")}
               </span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Sign spacing</span>
+            <span>{t("layoutPlannerModal.signSpacing")}</span>
             <div className={styles.controlInline}>
               <input
                 type="number"
                 value={pdfSignSpacing}
                 onChange={(e) => setPdfSignSpacing(Number(e.target.value) || 0)}
               />
-              <span className={styles.hint}>2 = defaults</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.twoDefaults")}</span>
             </div>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Sort order</span>
+            <span>{t("layoutPlannerModal.sortOrder")}</span>
             <select
               value={pdfSortOrder}
               onChange={(e) => setPdfSortOrder(e.target.value)}
             >
-              <option value="high-first">High first</option>
-              <option value="low-first">Low first</option>
+              <option value="high-first">{t("layoutPlannerModal.sort.highFirst")}</option>
+              <option value="low-first">{t("layoutPlannerModal.sort.lowFirst")}</option>
             </select>
           </label>
 
           <label className={styles.controlGroup}>
-            <span>Add sheet info</span>
+            <span>{t("layoutPlannerModal.addSheetInfo")}</span>
             <div className={styles.controlInline}>
               <input
                 className={styles.sheetInfoCheckbox}
@@ -7324,21 +7359,21 @@ const LayoutPlannerModal = ({
                 checked={pdfAddSheetInfo}
                 onChange={(e) => setPdfAddSheetInfo(e.target.checked)}
               />
-              <span className={styles.hint}>Only if sheets are used</span>
+              <span className={styles.hint}>{t("layoutPlannerModal.hints.onlyIfSheetsUsed")}</span>
             </div>
           </label>
 
           <div className={styles.summary}>
-            <strong>{sheetsCount || 0}</strong> арк.
+            <strong>{sheetsCount || 0}</strong> {t("layoutPlannerModal.summary.sheets")}
             <span>
-              · розміщено <strong>{placedCopies}</strong>
+              · {t("layoutPlannerModal.summary.placed")} <strong>{placedCopies}</strong>
               {totalRequestedCopies ? ` / ${totalRequestedCopies}` : ""}
             </span>
             <span>
-              · залишок <strong>{leftoverCopies}</strong>
+              · {t("layoutPlannerModal.summary.leftover")} <strong>{leftoverCopies}</strong>
             </span>
             <span>
-              · заповнення ≈ <strong>{coverage || 0}%</strong>
+              · {t("layoutPlannerModal.summary.coverage")} ≈ <strong>{coverage || 0}%</strong>
             </span>
           </div>
 
@@ -7348,7 +7383,7 @@ const LayoutPlannerModal = ({
             onClick={handleExportPdf}
             disabled={!sheetsCount || isExporting}
           >
-            {isExporting ? "Готуємо PDF…" : "Завантажити PDF"}
+            {isExporting ? t("layoutPlannerModal.preparingPdf") : t("layoutPlannerModal.downloadPdf")}
           </button>
         </div>
 
@@ -7356,8 +7391,8 @@ const LayoutPlannerModal = ({
           {sheetsCount === 0 ? (
             <div className={styles.emptyState}>
               {nothingToPlace
-                ? "Немає полотен для розміщення."
-                : "Жодна копія не вмістилася у вибраний формат. Спробуйте більший аркуш або зменште відступи."}
+                ? t("layoutPlannerModal.empty.nothingToPlace")
+                : t("layoutPlannerModal.empty.noCopiesFit")}
             </div>
           ) : (
             <div className={styles.sheetList}>
@@ -7531,10 +7566,19 @@ const LayoutPlannerModal = ({
                 return (
                   <div key={`sheet-${sheetIndex}`} className={styles.sheetCard}>
                     <div className={styles.sheetHeader}>
-                      <h3>Аркуш {sheetIndex + 1}</h3>
+                      <h3>
+                        {t("layoutPlannerModal.sheetPreview.title", {
+                          number: sheetIndex + 1,
+                        })}
+                      </h3>
                       <span>
-                        {sheet.width}×{sheet.height} мм · заповнення{" "}
-                        {Math.round((sheet.usedArea / Math.max(1, sheetUsableArea)) * 100)}%
+                        {t("layoutPlannerModal.sheetPreview.stats", {
+                          width: sheet.width,
+                          height: sheet.height,
+                          usage: Math.round(
+                            (sheet.usedArea / Math.max(1, sheetUsableArea)) * 100
+                          ),
+                        })}
                       </span>
                     </div>
                     <div
@@ -7651,7 +7695,10 @@ const LayoutPlannerModal = ({
                               ) : hasPreview ? (
                                 <img
                                   src={previewData?.url}
-                                  alt={placement.name || "Полотно"}
+                                  alt={
+                                    placement.name ||
+                                    t("layoutPlannerModal.sheetPreview.canvasAlt")
+                                  }
                                   style={rotatedPreviewStyle}
                                 />
                               ) : null}
@@ -7670,15 +7717,26 @@ const LayoutPlannerModal = ({
 
         {visibleLeftovers.length > 0 ? (
           <div className={styles.leftovers}>
-            <h4>Не помістилося ({visibleLeftovers.length})</h4>
+            <h4>
+              {t("layoutPlannerModal.leftovers.title", {
+                count: visibleLeftovers.length,
+              })}
+            </h4>
             <ul>
               {visibleLeftovers.map((item) => (
                 <li key={item.id}>
                   {item.label || item.name}
                   {item.copies > 1
-                    ? ` (копія ${item.copyIndex ?? 1}/${item.copies})`
+                    ? ` (${t("layoutPlannerModal.leftovers.copy", {
+                        index: item.copyIndex ?? 1,
+                        total: item.copies,
+                      })})`
                     : ""}
-                  : {round1(item.widthMm)}×{round1(item.heightMm)} мм
+                  :{" "}
+                  {t("layoutPlannerModal.leftovers.size", {
+                    width: round1(item.widthMm),
+                    height: round1(item.heightMm),
+                  })}
                 </li>
               ))}
             </ul>

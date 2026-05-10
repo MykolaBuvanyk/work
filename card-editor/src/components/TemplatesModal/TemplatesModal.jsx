@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./TemplatesModal.module.css";
 import {
   fetchTemplates,
@@ -36,6 +37,7 @@ const buildPreviewSrc = (tpl) => {
 };
 
 const TemplatesModal = ({ onClose }) => {
+  const { t } = useTranslation();
   const isAdmin = useSelector((state) => state?.user?.isAdmin);
   const { canvas, currentDesignId, loadDesign } = useFabricCanvas();
   const [templates, setTemplates] = useState([]);
@@ -47,7 +49,7 @@ const TemplatesModal = ({ onClose }) => {
   const applyTemplateToCurrentDesign = async (templateId, opts = {}) => {
     if (!templateId) return;
     if (!canvas || !currentDesignId || typeof loadDesign !== "function") {
-      alert("Canvas is not ready yet");
+      alert(t("templatesModal.alerts.canvasNotReady"));
       return;
     }
 
@@ -57,7 +59,7 @@ const TemplatesModal = ({ onClose }) => {
     const json = snapshot?.json || snapshot?.jsonTemplate || null;
 
     if (!json || typeof json !== "object") {
-      alert("Template canvas is empty or invalid");
+      alert(t("templatesModal.alerts.emptyTemplateCanvas"));
       return;
     }
 
@@ -259,9 +261,9 @@ const TemplatesModal = ({ onClose }) => {
     tpl?.categoryId ? String(tpl.categoryId) : UNCATEGORIZED_KEY;
 
   const categoryNameByKey = (key) => {
-    if (key === UNCATEGORIZED_KEY) return "Uncategorized";
+    if (key === UNCATEGORIZED_KEY) return t("templatesModal.uncategorized");
     const found = categories.find((c) => String(c.id) === String(key));
-    return found?.name || "Category";
+    return found?.name || t("templatesModal.category");
   };
 
   const templatesByCategoryKey = templates.reduce((acc, tpl) => {
@@ -334,7 +336,7 @@ const TemplatesModal = ({ onClose }) => {
   return (
     <div className={styles.modal}>
       <div className={styles.header}>
-        <p className={styles.title}>Templates</p>
+        <p className={styles.title}>{t("templatesModal.title")}</p>
         <svg
           onClick={onClose}
           width="24"
@@ -361,11 +363,11 @@ const TemplatesModal = ({ onClose }) => {
       </div>
 
       {loading ? (
-        <div className={styles.empty}>Loading…</div>
+        <div className={styles.empty}>{t("templatesModal.loading")}</div>
       ) : selectedCategoryKey === null ? (
         <div className={styles.categoriesWrap}>
           <div className={styles.subtitle}>
-            You can choose from various templates here or use your previously saved ones.
+            {t("templatesModal.subtitle")}
           </div>
 
           <button
@@ -373,7 +375,7 @@ const TemplatesModal = ({ onClose }) => {
             className={styles.sectionTitleBtn}
             onClick={() => setSelectedCategoryKey(MY_TEMPLATES_KEY)}
           >
-            My Templates
+            {t("templatesModal.myTemplates")}
           </button>
 
           <ul className={styles.categoryList}>
@@ -383,11 +385,11 @@ const TemplatesModal = ({ onClose }) => {
                   <button
                     type="button"
                     className={`${styles.iconOnlyBtn} ${styles.iconDanger}`}
-                    title="Delete"
+                    title={t("templatesModal.actions.delete")}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      alert("Uncategorized can't be deleted");
+                      alert(t("templatesModal.alerts.uncategorizedDelete"));
                     }}
                   >
                     {renderTrashIcon()}
@@ -395,11 +397,11 @@ const TemplatesModal = ({ onClose }) => {
                   <button
                     type="button"
                     className={styles.iconOnlyBtn}
-                    title="Edit"
+                    title={t("templatesModal.actions.edit")}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      alert("Uncategorized can't be renamed");
+                      alert(t("templatesModal.alerts.uncategorizedRename"));
                     }}
                   >
                     {renderEditIcon()}
@@ -411,7 +413,7 @@ const TemplatesModal = ({ onClose }) => {
                 className={styles.categoryLink}
                 onClick={() => setSelectedCategoryKey(UNCATEGORIZED_KEY)}
               >
-                Uncategorized
+                {t("templatesModal.uncategorized")}
               </button>
             </li>
 
@@ -424,12 +426,12 @@ const TemplatesModal = ({ onClose }) => {
                       <button
                         type="button"
                         className={`${styles.iconOnlyBtn} ${styles.iconDanger}`}
-                        title="Delete"
+                        title={t("templatesModal.actions.delete")}
                         onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const ok = window.confirm(
-                            `Delete category "${c.name}"? Templates will become Uncategorized.`
+                            t("templatesModal.confirm.deleteCategory", { name: c.name })
                           );
                           if (!ok) return;
                           try {
@@ -437,7 +439,7 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (err) {
                             console.error("Category delete failed", err);
-                            alert("Failed to delete category");
+                            alert(t("templatesModal.alerts.deleteCategoryFailed"));
                           }
                         }}
                       >
@@ -446,18 +448,18 @@ const TemplatesModal = ({ onClose }) => {
                       <button
                         type="button"
                         className={styles.iconOnlyBtn}
-                        title="Edit"
+                        title={t("templatesModal.actions.edit")}
                         onClick={async (e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           const nextName = window.prompt(
-                            "New category name",
+                            t("templatesModal.prompts.newCategoryName"),
                             c.name || ""
                           );
                           if (nextName === null) return;
                           const trimmed = String(nextName || "").trim();
                           if (!trimmed) {
-                            alert("Please enter a category name");
+                            alert(t("templatesModal.alerts.enterCategoryName"));
                             return;
                           }
                           try {
@@ -465,7 +467,7 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (err) {
                             console.error("Category update failed", err);
-                            alert("Failed to update category");
+                            alert(t("templatesModal.alerts.updateCategoryFailed"));
                           }
                         }}
                       >
@@ -492,11 +494,11 @@ const TemplatesModal = ({ onClose }) => {
                 type="button"
                 className={styles.addIconBtn}
                 onClick={async () => {
-                  const nextName = window.prompt("Category name");
+                  const nextName = window.prompt(t("templatesModal.prompts.categoryName"));
                   if (nextName === null) return;
                   const trimmed = String(nextName || "").trim();
                   if (!trimmed) {
-                    alert("Please enter a category name");
+                    alert(t("templatesModal.alerts.enterCategoryName"));
                     return;
                   }
                   try {
@@ -504,10 +506,10 @@ const TemplatesModal = ({ onClose }) => {
                     await reloadAll();
                   } catch (err) {
                     console.error("Category create failed", err);
-                    alert("Failed to create category");
+                    alert(t("templatesModal.alerts.createCategoryFailed"));
                   }
                 }}
-                title="Add New"
+                title={t("templatesModal.actions.addNew")}
               >
                 <span className={styles.plusCircle}>+</span>
               </button>
@@ -515,11 +517,11 @@ const TemplatesModal = ({ onClose }) => {
                 type="button"
                 className={styles.addNewBtn}
                 onClick={async () => {
-                  const nextName = window.prompt("Category name");
+                  const nextName = window.prompt(t("templatesModal.prompts.categoryName"));
                   if (nextName === null) return;
                   const trimmed = String(nextName || "").trim();
                   if (!trimmed) {
-                    alert("Please enter a category name");
+                    alert(t("templatesModal.alerts.enterCategoryName"));
                     return;
                   }
                   try {
@@ -527,11 +529,11 @@ const TemplatesModal = ({ onClose }) => {
                     await reloadAll();
                   } catch (err) {
                     console.error("Category create failed", err);
-                    alert("Failed to create category");
+                    alert(t("templatesModal.alerts.createCategoryFailed"));
                   }
                 }}
               >
-                Add New
+                {t("templatesModal.actions.addNew")}
               </button>
             </div>
           ) : null}
@@ -543,10 +545,10 @@ const TemplatesModal = ({ onClose }) => {
             className={styles.sectionTitleBtn}
             onClick={() => setSelectedCategoryKey(null)}
           >
-            Back
+            {t("templatesModal.actions.back")}
           </button>
           <div className={styles.emptyInner}>
-            {isMyView ? "No templates yet" : "No templates in this category"}
+            {isMyView ? t("templatesModal.empty.myTemplates") : t("templatesModal.empty.category")}
           </div>
         </div>
       ) : (
@@ -556,7 +558,7 @@ const TemplatesModal = ({ onClose }) => {
             className={styles.sectionTitleBtn}
             onClick={() => setSelectedCategoryKey(null)}
           >
-            Back
+            {t("templatesModal.actions.back")}
           </button>
           <div className={styles.grid}>
           {visibleTemplates.map((tpl, index) => {
@@ -568,7 +570,7 @@ const TemplatesModal = ({ onClose }) => {
                     <img
                       className={styles.previewImg}
                       src={previewSrc}
-                      alt="preview"
+                      alt={t("templatesModal.previewAlt")}
                     />
                   ) : (
                     <div className={styles.previewEmpty}>—</div>
@@ -587,11 +589,11 @@ const TemplatesModal = ({ onClose }) => {
                         });
                       } catch (e) {
                         console.error("Apply template failed", e);
-                        alert("Failed to apply template");
+                        alert(t("templatesModal.alerts.applyTemplateFailed"));
                       }
                     }}
                   >
-                    Edit
+                    {t("templatesModal.actions.edit")}
                   </button>
 
                   {isMyView ? (
@@ -600,13 +602,13 @@ const TemplatesModal = ({ onClose }) => {
                         className={styles.actionBtn}
                         onClick={async () => {
                           const nextName = window.prompt(
-                            "New template name",
+                            t("templatesModal.prompts.newTemplateName"),
                             tpl.name || ""
                           );
                           if (nextName === null) return;
                           const trimmed = String(nextName || "").trim();
                           if (!trimmed) {
-                            alert("Please enter a template name");
+                            alert(t("templatesModal.alerts.enterTemplateName"));
                             return;
                           }
                           try {
@@ -614,17 +616,17 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (e) {
                             console.error("Local template rename failed", e);
-                            alert("Failed to rename template");
+                            alert(t("templatesModal.alerts.renameTemplateFailed"));
                           }
                         }}
                       >
-                        Rename
+                        {t("templatesModal.actions.rename")}
                       </button>
                       <button
                         className={`${styles.actionBtn} ${styles.dangerBtn}`}
                         onClick={async () => {
                           const ok = window.confirm(
-                            `Delete template "${tpl.name}"?`
+                            t("templatesModal.confirm.deleteTemplate", { name: tpl.name })
                           );
                           if (!ok) return;
                           try {
@@ -632,11 +634,11 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (e) {
                             console.error("Local template delete failed", e);
-                            alert("Failed to delete template");
+                            alert(t("templatesModal.alerts.deleteTemplateFailed"));
                           }
                         }}
                       >
-                        Delete
+                        {t("templatesModal.actions.delete")}
                       </button>
                     </>
                   ) : isAdmin ? (
@@ -645,13 +647,13 @@ const TemplatesModal = ({ onClose }) => {
                         className={styles.actionBtn}
                         onClick={async () => {
                           const nextName = window.prompt(
-                            "New template name",
+                            t("templatesModal.prompts.newTemplateName"),
                             tpl.name || ""
                           );
                           if (nextName === null) return;
                           const trimmed = String(nextName || "").trim();
                           if (!trimmed) {
-                            alert("Please enter a template name");
+                            alert(t("templatesModal.alerts.enterTemplateName"));
                             return;
                           }
                           try {
@@ -659,18 +661,18 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (e) {
                             console.error("Template update failed", e);
-                            alert("Failed to update template");
+                            alert(t("templatesModal.alerts.updateTemplateFailed"));
                           }
                         }}
                       >
-                        Rename
+                        {t("templatesModal.actions.rename")}
                       </button>
 
                       <button
                         className={`${styles.actionBtn} ${styles.dangerBtn}`}
                         onClick={async () => {
                           const ok = window.confirm(
-                            `Delete template "${tpl.name}"?`
+                            t("templatesModal.confirm.deleteTemplate", { name: tpl.name })
                           );
                           if (!ok) return;
                           try {
@@ -678,11 +680,11 @@ const TemplatesModal = ({ onClose }) => {
                             await reloadAll();
                           } catch (e) {
                             console.error("Template delete failed", e);
-                            alert("Failed to delete template");
+                            alert(t("templatesModal.alerts.deleteTemplateFailed"));
                           }
                         }}
                       >
-                        Delete
+                        {t("templatesModal.actions.delete")}
                       </button>
                     </>
                   ) : null}

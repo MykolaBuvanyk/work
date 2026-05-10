@@ -941,6 +941,161 @@
     "send": "send",
     "kindRegards": "Kind regards,"
   },
+  "projectCanvasesGrid": {
+    "pdf": "PDF",
+    "empty": "No canvases in current project.",
+    "preview": "Preview",
+    "previewAlt": "preview",
+    "createNewSign": "Create the new sign",
+    "units": {
+      "mm": "(mm)",
+      "pcs": "pcs"
+    },
+    "tooltips": {
+      "maxSignsReached": "Maximum number of signs reached (30). Create a new project.",
+      "createNewCanvas": "Create new canvas (sign)"
+    },
+    "alerts": {
+      "maxSignsReached": "Maximum number of signs in this project has been reached (30). Please create a new project."
+    }
+  },
+  "templatesModal": {
+    "title": "Templates",
+    "loading": "Loading...",
+    "subtitle": "You can choose from various templates here or use your previously saved ones.",
+    "myTemplates": "My Templates",
+    "uncategorized": "Uncategorized",
+    "category": "Category",
+    "previewAlt": "preview",
+    "actions": {
+      "delete": "Delete",
+      "edit": "Edit",
+      "rename": "Rename",
+      "addNew": "Add New",
+      "back": "Back"
+    },
+    "empty": {
+      "myTemplates": "No templates yet",
+      "category": "No templates in this category"
+    },
+    "prompts": {
+      "categoryName": "Category name",
+      "newCategoryName": "New category name",
+      "newTemplateName": "New template name"
+    },
+    "confirm": {
+      "deleteCategory": "Delete category \"{{name}}\"? Templates will become Uncategorized.",
+      "deleteTemplate": "Delete template \"{{name}}\"?"
+    },
+    "alerts": {
+      "canvasNotReady": "Canvas is not ready yet",
+      "emptyTemplateCanvas": "Template canvas is empty or invalid",
+      "uncategorizedDelete": "Uncategorized can't be deleted",
+      "uncategorizedRename": "Uncategorized can't be renamed",
+      "deleteCategoryFailed": "Failed to delete category",
+      "enterCategoryName": "Please enter a category name",
+      "updateCategoryFailed": "Failed to update category",
+      "createCategoryFailed": "Failed to create category",
+      "applyTemplateFailed": "Failed to apply template",
+      "enterTemplateName": "Please enter a template name",
+      "renameTemplateFailed": "Failed to rename template",
+      "deleteTemplateFailed": "Failed to delete template",
+      "updateTemplateFailed": "Failed to update template"
+    }
+  },
+  "saveAsTemplateModal": {
+    "title": "Save Template as",
+    "name": "Name",
+    "category": "Category",
+    "templateNamePlaceholder": "Template name",
+    "uncategorized": "Uncategorized",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "alerts": {
+      "enterTemplateName": "Please enter a template name",
+      "saveFailed": "Failed to save template. Please try again."
+    }
+  },
+  "layoutPlannerModal": {
+    "title": "Print layout plan",
+    "subtitle": "Format {{format}} · {{width}}×{{height}} mm · spacing between signs {{spacing}} mm · {{orientation}} · material: {{material}}",
+    "close": "Close",
+    "sheetFormat": "Sheet format",
+    "orientation": "Orientation",
+    "orientationValues": {
+      "portrait": "Portrait",
+      "landscape": "Landscape"
+    },
+    "contourGaps": "Contour gaps",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "all": "All",
+    "materialGroup": "Group (color/thickness)",
+    "allMaterials": "All materials ({{count}} pcs)",
+    "pieces": "{{count}} pcs",
+    "canvasNameFallback": "Canvas {{number}}",
+    "pdfMode": "Mode (PDF)",
+    "minPageWidth": "Min page width",
+    "minPageHeight": "Min page height",
+    "maxPageWidth": "Max page width",
+    "maxPageHeight": "Max page height",
+    "pageMarginToFrame": "Page margin (to frame)",
+    "frameSpacing": "Frame spacing",
+    "signSpacing": "Sign spacing",
+    "sortOrder": "Sort order",
+    "addSheetInfo": "Add sheet info",
+    "preparingPdf": "Preparing PDF...",
+    "downloadPdf": "Download PDF",
+    "autoByMode": "Automatically determined by the selected mode",
+    "units": {
+      "mm": "mm"
+    },
+    "hints": {
+      "zeroDefaults": "0 = defaults",
+      "twoDefaults": "2 = defaults",
+      "ignoredForMj": "ignored for MJ mode",
+      "mjTopRightBottom": "MJ mode: top/right/bottom only",
+      "allSides": "applies on all sides",
+      "onlyIfSheetsUsed": "Only if sheets are used"
+    },
+    "sort": {
+      "highFirst": "High first",
+      "lowFirst": "Low first"
+    },
+    "summary": {
+      "sheets": "sheets",
+      "placed": "placed",
+      "leftover": "leftover",
+      "coverage": "coverage"
+    },
+    "empty": {
+      "nothingToPlace": "There are no signs to place.",
+      "noCopiesFit": "No copy fit into the selected format. Try a larger sheet or reduce the margins."
+    },
+    "alerts": {
+      "exportPdfFailed": "Failed to save PDF. Make sure the export server is running and available."
+    },
+    "sheetPreview": {
+      "title": "Sheet {{number}}",
+      "stats": "{{width}}×{{height}} mm · usage {{usage}}%",
+      "canvasAlt": "Canvas"
+    },
+    "leftovers": {
+      "title": "Did not fit ({{count}})",
+      "copy": "copy {{index}}/{{total}}",
+      "size": "{{width}}×{{height}} mm"
+    },
+    "exportModes": {
+      "normal": "Normal",
+      "normalMjFrame": "Normal (MJ) Frame",
+      "sheetOptimizedMjFr": "Sheet optimized (MJ) Fr.",
+      "sheetA4Portrait": "Sheet A4 portrait",
+      "sheetA5Portrait": "Sheet A5 portrait",
+      "sheetA4Landscape": "Sheet A4 landscape",
+      "productionOptimized": "Production optimized"
+    }
+  },
   "contacts": {
     "description_90": "Contacts",
     "description_91": "Customer Service",

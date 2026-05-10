@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./SaveAsTemplateModal.module.css";
 import { fetchTemplateCategories } from "../../http/templates";
 
 const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -32,7 +34,7 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
     if (!onSave || isSaving) return;
     const trimmed = String(name || "").trim();
     if (!trimmed) {
-      alert("Please enter a template name");
+      alert(t("saveAsTemplateModal.alerts.enterTemplateName"));
       return;
     }
 
@@ -42,7 +44,7 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
       onClose && onClose();
     } catch (e) {
       console.error("Save template failed", e);
-      alert("Failed to save template. Please try again.");
+      alert(t("saveAsTemplateModal.alerts.saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -51,7 +53,7 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
   return (
     <div className={styles.modal}>
       <div className={styles.header}>
-        <p className={styles.title}>Save Template as</p>
+        <p className={styles.title}>{t("saveAsTemplateModal.title")}</p>
         <svg
           onClick={onClose}
           width="24"
@@ -77,24 +79,24 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
         </svg>
 
         <div className={styles.field}>
-          <div className={styles.label}>(Name)</div>
+          <div className={styles.label}>({t("saveAsTemplateModal.name")})</div>
           <input
             className={styles.input}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Template name"
+            placeholder={t("saveAsTemplateModal.templateNamePlaceholder")}
           />
         </div>
 
         {isAdmin ? (
           <div className={styles.field}>
-            <div className={styles.label}>(Category)</div>
+            <div className={styles.label}>({t("saveAsTemplateModal.category")})</div>
             <select
               className={styles.input}
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
             >
-              <option value="">Uncategorized</option>
+              <option value="">{t("saveAsTemplateModal.uncategorized")}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -130,7 +132,7 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
               strokeWidth="1.5"
             />
           </svg>
-          {isSaving ? "Saving..." : "Save"}
+          {isSaving ? t("saveAsTemplateModal.saving") : t("saveAsTemplateModal.save")}
         </button>
 
         <button onClick={onClose} disabled={isSaving}>
@@ -156,7 +158,7 @@ const SaveAsTemplateModal = ({ onClose, onSave, isAdmin }) => {
               strokeLinejoin="round"
             />
           </svg>
-          Cancel
+          {t("saveAsTemplateModal.cancel")}
         </button>
       </div>
     </div>

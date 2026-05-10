@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styles from './ProjectCanvasesGrid.module.css';
 import {
@@ -26,8 +27,6 @@ import LayoutPlannerModal from './LayoutPlannerModal/LayoutPlannerModal';
 // Pagination similar to YourProjectsModal: ranges of 8 (1–8, 9–16, ...)
 const PAGE_SIZE = 8;
 const MAX_SIGNS_PER_PROJECT = 100;
-const MAX_SIGNS_REACHED_MESSAGE =
-  'Maximum number of signs in this project has been reached (30). Please create a new project.';
 const DEFAULT_DESIGN_SIZE = { width: 1200, height: 800 };
 const COLOR_THEME_PRESETS = [
   { index: 0, textColor: '#000000', backgroundColor: '#FFFFFF', backgroundType: 'solid' },
@@ -81,6 +80,7 @@ const getLiveToolbarStateSnapshot = () => {
 };
 
 const ProjectCanvasesGrid = () => {
+  const { t } = useTranslation();
   const userType = useSelector(state => state?.user?.user?.type);
   const isAdmin = String(userType || '').trim().toLowerCase() === 'admin';
   const { setDesigns: setContextDesigns, updateGlobalColors } = useCanvasContext();
@@ -1728,7 +1728,7 @@ const ProjectCanvasesGrid = () => {
           : storedCanvases.length;
 
         if (latestProjectCanvasesCount >= MAX_SIGNS_PER_PROJECT) {
-          alert(MAX_SIGNS_REACHED_MESSAGE);
+          alert(t('projectCanvasesGrid.alerts.maxSignsReached'));
           return;
         }
 
@@ -1803,7 +1803,7 @@ const ProjectCanvasesGrid = () => {
         : sortedUnsavedSigns.length;
 
       if (latestUnsavedSignsCount >= MAX_SIGNS_PER_PROJECT) {
-        alert(MAX_SIGNS_REACHED_MESSAGE);
+        alert(t('projectCanvasesGrid.alerts.maxSignsReached'));
         return;
       }
 
@@ -1888,14 +1888,14 @@ const ProjectCanvasesGrid = () => {
                 className={styles.layoutPlannerBtn}
                 onClick={() => setIsLayoutModalOpen(true)}
               >
-                PDF
+                {t('projectCanvasesGrid.pdf')}
               </button>
             </div>
           ) : null}
         </div>
 
         {current.length === 0 ? (
-          <div className={styles.empty}>No canvases in current project.</div>
+          <div className={styles.empty}>{t('projectCanvasesGrid.empty')}</div>
         ) : (
           <div className={styles.grid}>
             {current.map((c, index) => {
@@ -1938,7 +1938,7 @@ const ProjectCanvasesGrid = () => {
                     {previewSrc ? (
                       <img
                         src={previewSrc}
-                        alt="preview"
+                        alt={t('projectCanvasesGrid.previewAlt')}
                         onError={e => {
                           if (hasSvgPreview && hasPngPreview) {
                             e.target.onerror = null;
@@ -1947,14 +1947,14 @@ const ProjectCanvasesGrid = () => {
                         }}
                       />
                     ) : (
-                      <span>Preview</span>
+                      <span>{t('projectCanvasesGrid.preview')}</span>
                     )}
                   </div>
                   <div className={styles.meta}>
                     <span>
-                      {pxToMm(c.width)} × {pxToMm(c.height)} (mm)
+                      {pxToMm(c.width)} × {pxToMm(c.height)} {t('projectCanvasesGrid.units.mm')}
                     </span>
-                    <span>{c.copiesCount || c.toolbarState?.copiesCount || 1} pcs</span>
+                    <span>{c.copiesCount || c.toolbarState?.copiesCount || 1} {t('projectCanvasesGrid.units.pcs')}</span>
                   </div>
                 </div>
               );
@@ -1966,8 +1966,8 @@ const ProjectCanvasesGrid = () => {
               onClick={isCreateNewSignDisabled ? undefined : handleNewSign}
               title={
                 isCreateNewSignDisabled
-                  ? 'Maximum number of signs reached (30). Create a new project.'
-                  : 'Create new canvas (sign)'
+                  ? t('projectCanvasesGrid.tooltips.maxSignsReached')
+                  : t('projectCanvasesGrid.tooltips.createNewCanvas')
               }
               style={{
                 opacity: isCreateNewSignDisabled ? 0.7 : 1,
@@ -2002,7 +2002,7 @@ const ProjectCanvasesGrid = () => {
                   </g>
                 </svg>
               </div>
-              <div className={styles.newSignButtonLabel}>Create the new sign</div>
+              <div className={styles.newSignButtonLabel}>{t('projectCanvasesGrid.createNewSign')}</div>
             </div>
           </div>
         )}

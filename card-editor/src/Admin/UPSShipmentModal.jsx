@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { $authHost } from '../http';
 
 const UPS_SERVICES = [
+  { code: 'ENV', label: 'UPS Envelope' },
   { code: '65', label: 'UPS Worldwide Saver' },
   { code: '07', label: 'UPS Worldwide Express' },
   { code: '08', label: 'UPS Worldwide Expedited' },

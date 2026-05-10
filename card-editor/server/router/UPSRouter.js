@@ -9,6 +9,7 @@ dotenv.config();
 const UPSRouter = express.Router();
 
 const UPS_SERVICES = {
+  'ENV': 'UPS Envelope',
   '65': 'UPS Worldwide Saver',
   '07': 'UPS Worldwide Express',
   '08': 'UPS Worldwide Expedited',
@@ -50,6 +51,10 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     const token = await getUpsToken();
 
+    const isEnvelope = serviceCode === 'ENV';
+    const resolvedServiceCode = isEnvelope ? '07' : (serviceCode || '11');
+    const packagingCode = isEnvelope ? '01' : '02';
+
     const payload = {
       ShipmentRequest: {
         Shipment: {
@@ -78,11 +83,11 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             },
           },
           Service: {
-            Code: serviceCode || '11',
+            Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
           Package: {
-            PackagingType: { Code: '02' },
+            PackagingType: { Code: packagingCode },
             PackageWeight: {
               UnitOfMeasurement: { Code: 'KGS' },
               Weight: String(parseFloat(weight) || 1),

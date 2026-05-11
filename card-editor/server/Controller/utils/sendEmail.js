@@ -1,14 +1,8 @@
 import nodemailer from 'nodemailer';
-import { localize } from '../../i18n/localize.js';
 
 // Функція для надсилання повідомлення на пошту
-// Optional `lang` — if provided, both html and subject are localized via dictionary
-const sendEmail = async (to, messageHtml, subject, file = null, lang = null) => {
+const sendEmail = async (to, messageHtml, subject, file = null) => {
   try {
-    if (lang) {
-      messageHtml = localize(messageHtml, lang);
-      subject = localize(subject, lang);
-    }
     // Налаштування транспорту (використовуємо Gmail)
     const transporter = nodemailer.createTransport({
       service: 'gmail',

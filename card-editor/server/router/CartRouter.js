@@ -14,16 +14,6 @@ import Stripe  from 'stripe';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import ErrorApi from '../error/ErrorApi.js';
-import { countryToLanguage, DEFAULT_LANGUAGE } from '../i18n/index.js';
-import { localize } from '../i18n/localize.js';
-
-// Pick the customer's language for PDF rendering.
-// Priority: order.language snapshot (taken at order creation) → user.language → mapped from country → default.
-const pdfLang = (order) => {
-  if (order?.language) return order.language;
-  const user = order?.user;
-  return user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
-};
 
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
@@ -1193,21 +1183,19 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     }
 
     const fallbackCountry = String(user?.country || '').trim() || 'NO';
-    const orderCountry = checkoutCountryRegion || checkoutCountryName || fallbackCountry;
     const order = await Order.create({
       sum: user.type == 'Admin' ? 0 : totalPriceInclVat,
       netAfterDiscount: user.type == ' Admin' ? 0 : netAfterDiscount,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
-      country: orderCountry,
+      country: checkoutCountryRegion || checkoutCountryName || fallbackCountry,
       status: 'Received',
       orderName: body.projectName,
       orderType: '',
       deliveryType: checkoutDeliveryLabel,
       accessories: JSON.stringify(normalizedAccessories),
       idMongo: String(created._id),
-      isPaid: user.type == 'Admin' ? null : false,
-      language: user?.language || countryToLanguage(orderCountry),
+      isPaid: user.type == 'Admin' ? null : false
     })
 
     const userOrders = await Order.findOne({ where: { userId: req.user.id, status: 'Deleted' } });
@@ -2149,7 +2137,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       </body>
       </html>`;
 
-      await measurementPage.setContent(localize(measureHtml, pdfLang(order)), { waitUntil: 'domcontentloaded' });
+      await measurementPage.setContent(measureHtml, { waitUntil: 'domcontentloaded' });
       measureResult = await measurementPage.evaluate(() => {
         const toOuterHeight = (el) => {
           if (!el) return 0;
@@ -2379,7 +2367,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       overflowSafety += 1;
 
       const htmlForCheck = buildCsaOrderHtml(pagedOrderBlocks);
-      await page.setContent(localize(htmlForCheck, pdfLang(order)), { waitUntil: 'domcontentloaded' });
+      await page.setContent(htmlForCheck, { waitUntil: 'domcontentloaded' });
 
       const overflowIndex = await page.evaluate(() => {
         const sheets = Array.from(document.querySelectorAll('.sheet'));
@@ -2407,7 +2395,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     }
 
     const htmlContent = buildCsaOrderHtml(pagedOrderBlocks);
-    await page.setContent(localize(htmlContent, pdfLang(order)), { waitUntil: 'networkidle0' });
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -2802,7 +2790,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       overflowSafety += 1;
 
       const htmlForCheck = buildDeliveryNoteHtml(pagedDeliveryBlocks);
-      await page.setContent(localize(htmlForCheck, pdfLang(order)), { waitUntil: 'domcontentloaded' });
+      await page.setContent(htmlForCheck, { waitUntil: 'domcontentloaded' });
 
       const overflowIndex = await page.evaluate(() => {
         const sheets = Array.from(document.querySelectorAll('.sheet'));
@@ -2831,7 +2819,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
 
     const htmlContent = buildDeliveryNoteHtml(pagedDeliveryBlocks);
 
-    await page.setContent(localize(htmlContent, pdfLang(order)), { waitUntil: 'networkidle0' });
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -3379,7 +3367,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 </body>
 </html>`
 
-  await page.setContent(localize(htmlContent, pdfLang(order)), { waitUntil: 'networkidle0' });
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
   await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',

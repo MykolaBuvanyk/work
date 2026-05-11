@@ -2,13 +2,6 @@ import ErrorApi from "../error/ErrorApi.js";
 import sendEmail from "./utils/sendEmail.js";
 import 'dotenv/config'; // для ES модулів
 import puppeteer from 'puppeteer';
-import { countryToLanguage, DEFAULT_LANGUAGE } from '../i18n/index.js';
-import { localize } from '../i18n/localize.js';
-
-// Derive UI language for a user (from saved language, fallback to country mapping, else default).
-const userLang = (user) => user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
-// Admin emails go in default operational language.
-const ADMIN_LANG = DEFAULT_LANGUAGE;
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import { 
@@ -142,7 +135,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        sendEmail(ADMIN_EMAIL, messageHtml, subject, null, ADMIN_LANG)
+        sendEmail(ADMIN_EMAIL, messageHtml, subject)
     }
 
     static SendStatusPaid=async(order)=>{
@@ -211,7 +204,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        sendEmail(order.user.email, messageHtml, subject, null, userLang(order.user))
+        sendEmail(order.user.email, messageHtml, subject)
     }
 
     static SendUserNewPassword=async(user,newPassword)=>{
@@ -286,7 +279,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        const result = await sendEmail(user.email, messageHtml, subjectAdmin, null, userLang(user));
+        const result = await sendEmail(user.email, messageHtml, subjectAdmin);
         if (!result || result.status !== 200) {
             throw new Error(result?.message || 'Failed to send password recovery email');
         }
@@ -372,7 +365,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`;
-        await sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin, null, ADMIN_LANG)
+        await sendEmail(ADMIN_EMAIL,messageHtmlToAdmin,subjectAdmin)
     }
 
     static SendToAdminNewOrder = async (newOrder, comment, countStar, typeDelivery) => {
@@ -426,7 +419,7 @@ class SendEmailForStatus {
 </html>`;
 
             
-            await sendEmail(ADMIN_EMAIL, messageHtmlToAdmin, subjectAdmin, null, ADMIN_LANG);
+            await sendEmail(ADMIN_EMAIL, messageHtmlToAdmin, subjectAdmin);
             return true;
         }
         catch(err){
@@ -1013,7 +1006,7 @@ class SendEmailForStatus {
                 contentType: 'application/pdf'
             } : null;
 
-            sendEmail(to, textHTML, subject, fileAttachment, userLang(newOrder?.user))
+            sendEmail(to, textHTML, subject, fileAttachment)
 
         } catch (err) {
             console.error('Error in SendToAdminNewOrder Final Step:', err);
@@ -1128,7 +1121,7 @@ class SendEmailForStatus {
 </html>
 `
             const to=order.user.email;
-            await sendEmail(to, html, subject, null, userLang(order.user));
+            await sendEmail(to, html, subject);
             return true;
         }catch(err){
             console.error('error send email where create order.'+err);
@@ -1241,9 +1234,9 @@ class SendEmailForStatus {
 
 </body>
 </html>
-`
+`       
             const to=order.user.email;
-            await sendEmail(to,html,subject, null, userLang(order.user));
+            await sendEmail(to,html,subject);
         }catch(err){
             console.error('error send email where status printed.'+err);
             return false
@@ -1345,8 +1338,8 @@ class SendEmailForStatus {
 </html>`;
 
         const to = order.user.email;
-        await sendEmail(to, html, subject, null, userLang(order.user));
-
+        await sendEmail(to, html, subject, null);
+        
         return true;
     } catch (err) {
         console.error('error send email where status shipped.' + err);
@@ -1604,7 +1597,7 @@ class SendEmailForStatus {
                 return true;
             }
 
-            await Promise.all(recipients.map((to) => sendEmail(to, html, subject, null, userLang(order.user))));
+            await Promise.all(recipients.map((to) => sendEmail(to, html, subject)));
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);
@@ -1686,9 +1679,9 @@ class SendEmailForStatus {
         </tr>
     </table>
 </body>
-</html>`
+</html>`       
             const to=order.user.email;
-            await sendEmail(to,html,subject, null, userLang(order.user));
+            await sendEmail(to,html,subject);
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);
@@ -1939,7 +1932,7 @@ class SendEmailForStatus {
     </html>
     `;
 
-            await sendEmail(ADMIN_EMAIL, messageHTML, subject, null, ADMIN_LANG);
+            await sendEmail(ADMIN_EMAIL, messageHTML, subject);
             const userMessageHTML = `
 <!DOCTYPE html>
 <html>

@@ -61,6 +61,24 @@ export function formatInvoiceDate(dateStr) {
   return `${day}.${month}.${year}`;
 }
 
+export function resolveOrderPaymentDate(order) {
+  const candidates = [
+    order?.paidAt,
+    order?.paymentDate,
+    order?.paymentDateAt,
+    order?.updatedAt,
+    order?.createdAt,
+    Date.now(),
+  ];
+
+  for (const value of candidates) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+
+  return new Date();
+}
+
 export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
     '&': '&amp;',
@@ -252,16 +270,18 @@ export const buildZugferdInvoiceData = ({
   totalAmount,
 }) => {
   const hasVat = toNumber(vatPercent, 0) > 0;
+  const isPaidInvoice = order?.user?.type !== 'Admin' && Boolean(order?.isPaid);
   const quantity = 1;
   const totalSignsCount = Math.max(0, Math.floor(toNumber(signsCount, 0)));
   const lineUnitPrice = toNumber(subtotal, 0);
   const safeProjectName = String(projectName || order?.orderName || 'Signs order');
   const invoiceIssueDate = new Date(order?.createdAt || Date.now());
+  const invoicePaymentDate = resolveOrderPaymentDate(order);
   const sellerIdentifier = '';
   const sellerRegistrationId = String(process.env.ZUGFERD_SELLER_REGISTRATION_ID || '').trim();
   const sellerVatId = String(process.env.ZUGFERD_SELLER_VAT_ID || 'DE461817538').trim();
   const sellerTaxId = String(process.env.ZUGFERD_SELLER_TAX_ID || '53/411/50012').trim();
-  const sellerName = 'Kostyantyn Utvenko, SignXpert';
+  const sellerName = 'Kostyantyn Utvenko';
   const sellerTradingName = String(process.env.ZUGFERD_SELLER_TRADING_NAME || 'SignXpert').trim();
   const sellerStreetLine1 = String(process.env.ZUGFERD_SELLER_STREET1 || 'Baumwiesen 2').trim();
   const sellerStreetLine2 = String(process.env.ZUGFERD_SELLER_STREET2 || '').trim();
@@ -292,6 +312,12 @@ export const buildZugferdInvoiceData = ({
   const invoiceRemarks = 'Kleinunternehmer gemäß § 19 UStG. Keine Umsatzsteuer wird berechnet.\nNo VAT is charged under the small business exemption (§ 19 UStG).';
   const lineItemName = `Count Signs:${totalSignsCount}`;
   const lineGlobalIdentifierValue = String(order?.id || invoiceNumber || '').trim();
+  const settledPaidAmount = isPaidInvoice ? formatMoney(totalAmount) : undefined;
+  const duePayableAmount = isPaidInvoice ? '0.00' : formatMoney(totalAmount);
+  const paymentTermsDescription = isPaidInvoice ? 'Rechnung bereits beglichen' : '30 days net';
+  const paymentTermsDueDate = isPaidInvoice
+    ? invoicePaymentDate
+    : paymentDueDate || new Date(order?.createdAt || Date.now());
 
   const sellerRegistrationIdentifier = sellerRegistrationId
     ? {
@@ -472,8 +498,8 @@ export const buildZugferdInvoiceData = ({
             : undefined,
         },
         paymentTerms: {
-          description: '30 days net',
-          dueDate: paymentDueDate || new Date(order?.createdAt || Date.now()),
+          description: paymentTermsDescription,
+          dueDate: paymentTermsDueDate,
         },
         invoicingPeriod: {
           startDate: invoiceIssueDate,
@@ -532,7 +558,8 @@ export const buildZugferdInvoiceData = ({
           taxBasisTotalAmount: formatMoney(taxBasisAmount),
           taxTotal: formatMoney(vatAmount),
           grandTotalAmount: formatMoney(totalAmount),
-          duePayableAmount: formatMoney(totalAmount),
+          paidAmount: settledPaidAmount,
+          duePayableAmount,
         },
       },
     },

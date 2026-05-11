@@ -3,7 +3,6 @@ import './Account.scss';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
-import { useNavigate } from 'react-router-dom';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -142,7 +141,6 @@ const Account = () => {
         }
     };
 
-    const navigate=useNavigate();
 
     return (
         <div id='account-container'>

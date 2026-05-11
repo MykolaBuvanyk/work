@@ -5,8 +5,9 @@ import MyTextPassword from '../MyInput/MyTextPassword';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/reducers/user';
-import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import Link from '../Localized/LocalizedLink';
+import useNavigate from '../Localized/useLocalizedNavigate';
 
 const LoginForm = ({toRegister=false, onSuccess}) => {
   const {t}=useTranslation()

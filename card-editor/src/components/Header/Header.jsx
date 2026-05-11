@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Header.module.css';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate as UseRealNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
 import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuImage, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,6 +12,7 @@ import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
 import LogoSvg from './LogoSvg';
 import i18n, { prefixedLngs } from '../../i18n';
 import Link from '../Localized/LocalizedLink';
+import useNavigate from '../Localized/useLocalizedNavigate';
  
 export const languageCountries = [
   { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
@@ -237,6 +238,8 @@ const Header = () => {
     '/admin': <LuUser size={18} />,
   };
 
+  const realNavigate=UseRealNavigate();
+
   const setLangOpen = (code) => {
     setIsLangOpen(false);
 
@@ -255,7 +258,7 @@ const Header = () => {
       ? `/${cleanPath.join('/')}`
       : `/${lang}/${cleanPath.join('/')}`;
 
-    navigate(newUrl || '/');
+    realNavigate(newUrl || '/');
   };
 
     useEffect(() => {

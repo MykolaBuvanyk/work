@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
-import { getLocalizedPath } from '../utils/localizedPath';
+import { useNavigate as UseRealNavigate } from 'react-router-dom';
+import { getLocalizedPath } from '../../utils/localizedPath';
 
-export default function useLocalizedNavigate() {
-  const navigate = useNavigate();
+export default function useNavigate() {
+  const navigate = UseRealNavigate();
 
   return (to, options) => {
     navigate(getLocalizedPath(to), options);

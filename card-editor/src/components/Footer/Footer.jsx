@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import './Footer.scss';
-import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../store/reducers/user';
 import { useDispatch, useSelector } from 'react-redux';
 import Flag from 'react-flagkit';
 import { SlArrowDown } from 'react-icons/sl';
 import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
+import Link from '../Localized/LocalizedLink';
+import useNavigate from '../Localized/useLocalizedNavigate';
 
 const urls = [
   { title: 'Home', url: '/' },
@@ -89,24 +90,24 @@ const Footer = () => {
         <div class="footer-menu">
           <h4 style={{fontWeight:'700'}}>Menu:</h4>
           <ul>
-            <li><a href="https://sign-xpert.com/">Home</a></li>
-            <li><a href="https://sign-xpert.com/account">My Account</a></li>
-            <li><a href="https://sign-xpert.com/online-sign-editor">New Project</a></li>
-            <li><a href="https://sign-xpert.com/products">Products</a></li>
-            <li><a href="https://sign-xpert.com/faq">FAQ</a></li>
-            <li><a href="https://sign-xpert.com/quick-guide">Quick Guide</a></li>
-            <li><a href="https://sign-xpert.com/industries">Industries</a></li>
-            <li><a href="https://sign-xpert.com/contacts">Contacts</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/account">My Account</Link></li>
+            <li><Link to="/online-sign-editor">New Project</Link></li>
+            <li><Link to="/products">Products</Link></li>
+            <li><Link to="/faq">FAQ</Link></li>
+            <li><Link to="/quick-guide">Quick Guide</Link></li>
+            <li><Link to="/industries">Industries</Link></li>
+            <li><Link to="/contacts">Contacts</Link></li>
           </ul>
         </div>
 
         <div class="footer-info">
           <h4>Information:</h4>
           <ul>
-            <li><a href="https://sign-xpert.com/privacy-policy">Privacy Policy</a></li>
-            <li><a href="https://sign-xpert.com/terms-of-purchasing">Terms of Purchasing</a></li>
-            <li><a href="https://sign-xpert.com/Impressum">Impressum</a></li>
-            <li><a href="https://sign-xpert.com/eu-online-dispute-resolution">EU Online Dispute Resolution</a></li>
+            <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+            <li><Link to="/terms-of-purchasing">Terms of Purchasing</Link></li>
+            <li><Link to="/Impressum">Impressum</Link></li>
+            <li><Link to="/eu-online-dispute-resolution">EU Online Dispute Resolution</Link></li>
           </ul>
 
           <div class="footer-note">

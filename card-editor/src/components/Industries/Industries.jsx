@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import styles from './Industries.module.css';
+import Link from '../Localized/LocalizedLink';
 
 const INDUSTRY_SECTIONS = [
   {

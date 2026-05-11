@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Header.module.css';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
 import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuImage, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,9 +10,10 @@ import Flag from 'react-flagkit';
 import { $authHost } from '../../http';
 import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
 import LogoSvg from './LogoSvg';
+import i18n, { prefixedLngs } from '../../i18n';
+import Link from '../Localized/LocalizedLink';
  
 export const languageCountries = [
-  { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
   { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
   { flag: "🇫🇷", code: "FR", codeFlag: "FR" },
   { flag: "🇮🇹", code: "IT", codeFlag: "IT" },
@@ -30,7 +31,7 @@ export const languageCountries = [
   { flag: "🇸🇮", code: "SL", codeFlag: "SI" },
   { flag: "🇸🇪", code: "SV", codeFlag: "SE" },
   { flag: "🇺🇦", code: "UA", codeFlag: "UA" },
-  //{ flag: "🇩🇪", code: "DE", codeFlag: "DE" },
+  { flag: "🇩🇪", code: "DE", codeFlag: "DE" },
 ];
 
 
@@ -236,6 +237,41 @@ const Header = () => {
     '/admin': <LuUser size={18} />,
   };
 
+  const setLangOpen = (code) => {
+    setIsLangOpen(false);
+
+    const lang = code.toLowerCase();
+    const isEnglish = lang === 'en';
+
+    const pathParts = location.pathname.split('/').filter(Boolean);
+
+    const hasLangPrefix = prefixedLngs.includes(pathParts[0]);
+
+    const cleanPath = hasLangPrefix
+      ? pathParts.slice(1)
+      : pathParts;
+
+    const newUrl = isEnglish
+      ? `/${cleanPath.join('/')}`
+      : `/${lang}/${cleanPath.join('/')}`;
+
+    navigate(newUrl || '/');
+  };
+
+    useEffect(() => {
+      const pathParts = location.pathname.split('/').filter(Boolean);
+
+      // чи є префікс мови
+      const urlLang = prefixedLngs.includes(pathParts[0])
+        ? pathParts[0]
+        : 'en';
+
+      // змінюємо мову тільки якщо треба
+      if (i18n.language !== urlLang) {
+        i18n.changeLanguage(urlLang);
+      }
+    }, [location.pathname]);
+
   return (
     <>
     {/* Mobile bar */}
@@ -417,16 +453,16 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              <Flag size={22} country='DE' /> DE
+              <Flag size={22} country={languageCountries.find(x=>x.code.toLocaleLowerCase()==i18n.language)?.codeFlag||'DE'} /> {languageCountries.find(x=>x.code.toLocaleLowerCase()==i18n.language)?.code.toLocaleUpperCase()||'DE'}
               <div className={isLangOpen&&styles.rotate}>
                 <SlArrowDown size={14} />
               </div>
             </div>
             <div className={isLangOpen ? styles.dropdown : styles.open}>
-              {languageCountries.slice(1).map(lang => (
+              {languageCountries.filter(x=>x.code.toLocaleLowerCase()!=i18n.language).map(lang => (
                 <div
                   key={lang.code}
-                  onClick={() => setIsLangOpen(false)}
+                  onClick={() => {setLangOpen(lang.code)}}
                   className={styles.countries}
                   style={{whiteSpace:"nowrap"}}
                 >

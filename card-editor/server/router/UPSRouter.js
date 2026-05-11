@@ -68,6 +68,12 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             ShipperNumber: process.env.UPS_SHIPPER_NUMBER,
             Phone: { Number: process.env.UPS_SHIPPER_PHONE || '' },
             EMailAddress: process.env.GMAIL_USER_SEND || 'info@sign-xpert.com',
+            Address: {
+              AddressLine: [process.env.UPS_SHIPPER_ADDRESS || ''],
+              City: process.env.UPS_SHIPPER_CITY || '',
+              PostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+              CountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+            },
           },
           ShipTo: {
             Name: company || name,

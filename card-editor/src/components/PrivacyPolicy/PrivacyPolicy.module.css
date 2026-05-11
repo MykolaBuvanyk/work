@@ -4,9 +4,8 @@
 }
 
 .container {
-  max-width: 900px;
   margin: 0 auto;
-  padding: 48px 32px;
+  padding: 0 4px;
   display: flex;
   flex-direction: column;
   gap: 48px;
@@ -182,17 +181,12 @@
   }
 
   .infoBox {
-    background: transparent;
-    border: none;
-    padding: 0;
+    padding: 12px 14px;
     gap: 6px;
   }
 
   .warningBox {
-    background: transparent;
-    border-left: none;
-    padding: 0;
-    color: #111;
+    padding: 12px 14px;
     font-size: 14px;
   }
 }

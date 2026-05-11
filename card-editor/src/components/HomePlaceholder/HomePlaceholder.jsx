@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useTransition } from 'react';
-import { Link } from 'react-router-dom';
 import styles from './HomePlaceholder.module.css';
 import { useTranslation } from 'react-i18next';
+import Link from '../Localized/LocalizedLink';
 
 const heroImages = [
   '/images/home/hero-bg.jpg',

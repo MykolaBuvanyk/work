@@ -3,7 +3,6 @@ import './Account.scss';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
-import { useNavigate } from 'react-router-dom';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -142,7 +141,6 @@ const Account = () => {
         }
     };
 
-    const navigate=useNavigate();
 
     return (
         <div id='account-container'>
@@ -183,7 +181,14 @@ const Account = () => {
                                 <td>{order.sum?.toFixed(2)}</td>
                                 <td>{order.status || 'Received'}</td>
                                 <td onClick={() => downloadPdf(order.id, '2')} className="clickable"><DelNoteIcon /></td>
-                                <td className="clickable"><TrackingIcon /></td>
+                                <td
+                                    className="clickable"
+                                    onClick={() => order.trackingNumber && window.open(`https://www.ups.com/track?tracknum=${order.trackingNumber}`, '_blank')}
+                                    style={{opacity: order.trackingNumber ? 1 : 0.35, cursor: order.trackingNumber ? 'pointer' : 'default'}}
+                                    title={order.trackingNumber || 'No tracking number yet'}
+                                >
+                                    <TrackingIcon />
+                                </td>
                                 <td onClick={() => downloadPdf(order.id, '3')} className="clickable">
                                     <div className="invoice-cell">
                                         <span>{order.invoiceNo || order.id}</span>
@@ -260,7 +265,13 @@ const Account = () => {
                                     <span className="order-card__action-icon icon-green">📄</span>
                                     <span className="order-card__action-label">Del. Note</span>
                                 </button>
-                                <button type="button" className="order-card__action">
+                                <button
+                                    type="button"
+                                    className="order-card__action"
+                                    onClick={() => order.trackingNumber && window.open(`https://www.ups.com/track?tracknum=${order.trackingNumber}`, '_blank')}
+                                    disabled={!order.trackingNumber}
+                                    title={order.trackingNumber || 'No tracking number yet'}
+                                >
                                     <span className="order-card__action-icon icon-blue">🚚</span>
                                     <span className="order-card__action-label">Tracking</span>
                                 </button>

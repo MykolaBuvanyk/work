@@ -1,7 +1,7 @@
 import React from 'react'
 import './QuickGuide.scss'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
+import Link from '../Localized/LocalizedLink';
 
 const QuickGuide = () => {
     const {t}=useTranslation()

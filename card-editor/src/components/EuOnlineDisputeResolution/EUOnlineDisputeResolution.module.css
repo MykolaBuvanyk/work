@@ -1,7 +1,6 @@
 .page {
-  max-width: 900px;
   margin: 0 auto;
-  padding: 48px 32px;
+  padding: 48px 4px;
   color: #111;
   line-height: 1.5;
   display: flex;

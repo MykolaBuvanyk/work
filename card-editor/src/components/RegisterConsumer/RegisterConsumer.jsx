@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import './RegisterConsumer.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
-import { Link, useNavigate } from 'react-router-dom';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
 import combinedCountries from '../Countries';
 import { useTranslation } from 'react-i18next';
+import Link from '../Localized/LocalizedLink';
+import useNavigate from '../Localized/useLocalizedNavigate';
 
 const tellAboutList=[
   'Online / Internet',

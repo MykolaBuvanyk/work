@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom"; // або next/link
 import './style.scss'
+import Link from "../Localized/LocalizedLink";
 
 const PaymentSuccess = () => {
   const { t } = useTranslation();

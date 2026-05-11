@@ -1,7 +1,7 @@
 import React, { Fragment, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Trans, useTranslation } from 'react-i18next'
 import styles from './FAQ.module.scss'
+import Link from '../Localized/LocalizedLink'
 
 const Chevron = () => (
   <svg

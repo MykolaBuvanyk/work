@@ -8,8 +8,8 @@ import FormFogotPass from '../FormFogotPass/FormFogotPass';
 import { $host } from '../../http';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/reducers/user';
-import { Link, useNavigate } from 'react-router-dom';
 import LoginForm from '../LoginForm/LoginForm';
+import useNavigate from '../Localized/useLocalizedNavigate';
 
 const CartAuthModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');

@@ -90,27 +90,24 @@ function App() {
 
   return (
     <div className="app">
-      <Routes>
-        {/* АНГЛІЙСЬКА: Доступна просто за посиланням / (без /en) */}
-        <Route path="/" element={<LanguageGuard isDefault={true} />}>
-          <Route element={<Layout />}>{mainRoutes}</Route>
+     <Routes>
+      {/* ENGLISH WITHOUT PREFIX */}
+      <Route path="/" element={<LanguageGuard isDefault={true} />}>
+        <Route element={<Layout />}>
+          {mainRoutes}
         </Route>
+      </Route>
 
-        {/* ІНШІ МОВИ: Доступні за посиланням /ua, /de тощо */}
-        <Route path="/:lng" element={<LanguageGuard isDefault={false} />}>
-          <Route element={<Layout />}>{mainRoutes}</Route>
+      {/* OTHER LANGUAGES */}
+      <Route path=":lng" element={<LanguageGuard isDefault={false} />}>
+        <Route element={<Layout />}>
+          {mainRoutes}
         </Route>
+      </Route>
 
-        {/* Глобальна 404 */}
-        <Route
-          path="*"
-          element={
-            <div style={{ textAlign: 'center' }}>
-              <h1>404</h1>
-            </div>
-          }
-        />
-      </Routes>
+      {/* 404 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
     </div>
   );
 }

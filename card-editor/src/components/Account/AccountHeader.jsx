@@ -1,6 +1,6 @@
 import React from 'react'
 import './AccountHeader.scss'
-import { Link } from 'react-router-dom'
+import Link from '../Localized/LocalizedLink'
 
 const AccountHeader = () => {
     const urls=[

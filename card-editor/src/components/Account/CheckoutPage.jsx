@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { $authHost } from '../../http';
 import CheckoutForm from './CheckoutForm'; // Імпортуємо форму нижче
 import './CheckoutPage.scss'
+import Link from '../Localized/LocalizedLink';
 
 // Ініціалізуємо Stripe за межами компонента, щоб не створювати дублікати при рендері
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);

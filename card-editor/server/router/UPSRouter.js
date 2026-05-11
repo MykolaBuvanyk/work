@@ -1,7 +1,6 @@
 import express from 'express';
 import axios from 'axios';
-import { Order, User } from '../models/models.js';
-import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
+import { Order } from '../models/models.js';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -41,7 +40,7 @@ async function getUpsToken() {
 
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, serviceCode } = req.body;
+    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode } = req.body;
 
     if (!orderId || !name || !address || !city || !postalCode || !country) {
       return res.status(400).json({ message: 'Missing required shipment fields' });
@@ -68,6 +67,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             AttentionName: process.env.UPS_SHIPPER_ATTENTION || 'SignXpert',
             ShipperNumber: process.env.UPS_SHIPPER_NUMBER,
             Phone: { Number: process.env.UPS_SHIPPER_PHONE || '' },
+            EMailAddress: process.env.GMAIL_USER_SEND || 'info@sign-xpert.com',
             Address: {
               AddressLine: [process.env.UPS_SHIPPER_ADDRESS || ''],
               City: process.env.UPS_SHIPPER_CITY || '',
@@ -122,6 +122,22 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
               UnitOfMeasurement: { Code: 'KGS' },
               Weight: String(parseFloat(weight) || 1),
             },
+            ...(length && width && height ? {
+              Dimensions: {
+                UnitOfMeasurement: { Code: 'CM' },
+                Length: String(length),
+                Width: String(width),
+                Height: String(height),
+              },
+            } : {}),
+            ...(declaredValue ? {
+              PackageServiceOptions: {
+                DeclaredValue: {
+                  CurrencyCode: 'EUR',
+                  MonetaryValue: String(parseFloat(declaredValue).toFixed(2)),
+                },
+              },
+            } : {}),
           },
         },
         LabelSpecification: {
@@ -150,19 +166,9 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
     }
 
     await Order.update(
-      { trackingNumber, status: 'Shipped' },
+      { trackingNumber },
       { where: { id: Number(orderId) } }
     );
-
-    const orderWithUser = await Order.findOne({
-      where: { id: Number(orderId) },
-      include: [{ model: User }],
-    });
-
-    await Promise.allSettled([
-      SendEmailForStatus.StatusShipped(orderWithUser),
-      SendEmailForStatus.StatusShipped2(orderWithUser),
-    ]);
 
     return res.json({ success: true, trackingNumber });
   } catch (err) {
@@ -174,6 +180,39 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
       upsData?.message ||
       err.message;
     return res.status(500).json({ message: upsMsg, detail: upsData?.response?.errors || [] });
+  }
+});
+
+UPSRouter.post('/void-shipment', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { trackingNumber } = req.body;
+    if (!trackingNumber) return res.status(400).json({ message: 'trackingNumber required' });
+
+    const isSandbox = process.env.UPS_SANDBOX === 'true';
+    const voidUrl = isSandbox
+      ? `https://wwwcie.ups.com/api/shipments/v2403/void/cancel/${trackingNumber}`
+      : `https://onlinetools.ups.com/api/shipments/v2403/void/cancel/${trackingNumber}`;
+
+    const token = await getUpsToken();
+
+    await axios.delete(voidUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        transId: `void-${trackingNumber}-${Date.now()}`,
+        transactionSrc: 'SignXpert',
+      },
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    const upsData = err?.response?.data;
+    console.error('UPS void error:', JSON.stringify(upsData, null, 2) || err.message);
+    const upsMsg =
+      upsData?.response?.errors?.[0]?.message ||
+      upsData?.message ||
+      err.message;
+    return res.status(500).json({ message: upsMsg });
   }
 });
 

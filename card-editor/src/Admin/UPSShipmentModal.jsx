@@ -43,11 +43,17 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     phone: deliverySectionData?.mobile || order?.user?.phone || '',
     email: deliverySectionData?.email || order?.user?.email || '',
     weight: '1.0',
+    length: '',
+    width: '',
+    height: '',
+    declaredValue: '',
     serviceCode: '11',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createdTracking, setCreatedTracking] = useState(null);
+  const [voiding, setVoiding] = useState(false);
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -70,14 +76,63 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         orderId: order.id,
         ...form,
       });
+      setCreatedTracking(res.data.trackingNumber);
       onSuccess(res.data.trackingNumber);
-      onClose();
     } catch (err) {
       setError(err?.response?.data?.message || 'UPS shipment creation failed.');
     } finally {
       setLoading(false);
     }
   };
+
+  const voidAndEdit = async () => {
+    setVoiding(true);
+    try {
+      await $authHost.post('ups/void-shipment', { trackingNumber: createdTracking });
+      setCreatedTracking(null);
+      setError('');
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to void shipment. Try voiding on UPS.com manually.');
+      setCreatedTracking(null);
+    } finally {
+      setVoiding(false);
+    }
+  };
+
+  if (createdTracking) {
+    return (
+      <div style={styles.overlay}>
+        <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <h3 style={{...styles.title, color:'#1a7a1a'}}>✓ Shipment Created</h3>
+          <p style={{fontSize:'14px', marginBottom:'8px'}}>Tracking number saved to order:</p>
+          <div style={{background:'#f0f7ff', border:'1px solid #0073bc', borderRadius:'6px', padding:'12px 16px', marginBottom:'16px'}}>
+            <span style={{fontSize:'18px', fontWeight:'700', color:'#0073bc', letterSpacing:'1px'}}>{createdTracking}</span>
+          </div>
+          <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>
+            To edit data — void this shipment and create a new one with corrected details.
+          </p>
+          <div style={{display:'flex', gap:'10px', flexDirection:'column'}}>
+            <a
+              href={`https://www.ups.com/track?tracknum=${createdTracking}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{...styles.submitBtn, textDecoration:'none', textAlign:'center', display:'block'}}
+            >
+              View on UPS.com →
+            </a>
+            <button
+              style={{...styles.cancelBtn, borderColor:'#d00', color:'#d00'}}
+              onClick={voidAndEdit}
+              disabled={voiding}
+            >
+              {voiding ? 'Voiding...' : '✕ Void & Edit data'}
+            </button>
+            <button style={styles.cancelBtn} onClick={onClose}>Close</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -110,6 +165,18 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             <button style={styles.weightBtn} onClick={() => adjustWeight(0.5)}>+0.5</button>
           </div>
         </div>
+
+        <div style={styles.fieldGroup}>
+          <label style={styles.label}>Dimensions (cm) — optional for parcel</label>
+          <div style={{display:'flex', gap:'8px'}}>
+            <input style={{...styles.input, width:'80px'}} placeholder="L" type="number" min="1" value={form.length} onChange={set('length')} />
+            <input style={{...styles.input, width:'80px'}} placeholder="W" type="number" min="1" value={form.width} onChange={set('width')} />
+            <input style={{...styles.input, width:'80px'}} placeholder="H" type="number" min="1" value={form.height} onChange={set('height')} />
+          </div>
+          <span style={{fontSize:'11px', color:'#888'}}>Length × Width × Height</span>
+        </div>
+
+        <Field label="Declared Value (EUR) — optional" value={form.declaredValue} onChange={set('declaredValue')} />
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Service</label>

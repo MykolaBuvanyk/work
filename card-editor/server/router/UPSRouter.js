@@ -131,9 +131,9 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             } : {}),
             ...(declaredValue ? {
               PackageServiceOptions: {
-                InsuredValue: {
+                DeclaredValue: {
                   CurrencyCode: 'EUR',
-                  MonetaryValue: String(parseFloat(declaredValue)),
+                  MonetaryValue: String(parseFloat(declaredValue).toFixed(2)),
                 },
               },
             } : {}),

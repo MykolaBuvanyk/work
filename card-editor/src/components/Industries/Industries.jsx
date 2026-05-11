@@ -278,8 +278,7 @@ const getLangPrefix = (pathname = '') => {
 
 const Industries = () => {
   const { t } = useTranslation();
-  const { pathname } = useLocation();
-  const prefix = getLangPrefix(pathname);
+  const prefix = '';
 
   return (
     <main className={styles.page}>

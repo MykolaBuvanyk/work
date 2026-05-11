@@ -3,6 +3,7 @@ import './Account.scss';
 import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
+import { useTranslation } from 'react-i18next';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -11,6 +12,7 @@ const InvoiceIcon = () => <span className="icon-red">🧾</span>;
 const OpenProjectIcon = () => <span className="icon-folder">📂</span>;
 
 const Account = () => {
+    const { t } = useTranslation();
     const [myOrders, setMyOrders] = useState([]);
     const [openingOrderId, setOpeningOrderId] = useState(null);
     const [page,setPage]=useState(1);
@@ -69,8 +71,8 @@ const Account = () => {
             link.setAttribute('download', `${fileNameByType[type] || type}-${id}.pdf`);
             document.body.appendChild(link);
             link.click();
-        } catch (err) {
-            alert('Помилка завантаження файлу');
+        } catch {
+            alert(t('MyAccount.orders.downloadFileFailed'));
         }
     };
 
@@ -82,11 +84,11 @@ const Account = () => {
 
         const project = order?.orderMongo?.project || order?.project || order?.order || null;
         if (!project || typeof project !== 'object') {
-            alert('No project snapshot in this order');
+            alert(t('MyAccount.orders.noProjectSnapshot'));
             return;
         }
         if (!project.id) {
-            alert('Project snapshot has no id');
+            alert(t('MyAccount.orders.projectSnapshotNoId'));
             return;
         }
 
@@ -95,22 +97,30 @@ const Account = () => {
         try {
             try {
                 await clearAllUnsavedSigns();
-            } catch {}
+            } catch {
+                // Best-effort cleanup before opening the ordered project.
+            }
 
             try {
                 localStorage.removeItem('currentUnsavedSignId');
-            } catch {}
+            } catch {
+                // Best-effort cleanup before opening the ordered project.
+            }
 
             try {
                 window.dispatchEvent(new CustomEvent('unsaved:signsUpdated'));
-            } catch {}
+            } catch {
+                // Best-effort notification for other editor surfaces.
+            }
 
             await putProject(project);
 
             try {
                 localStorage.setItem('currentProjectId', project.id);
                 localStorage.setItem('currentProjectName', project.name || order?.orderName || '');
-            } catch {}
+            } catch {
+                // Best-effort persistence for editor state.
+            }
 
             const first = Array.isArray(project.canvases) ? project.canvases[0] : null;
 
@@ -134,7 +144,7 @@ const Account = () => {
 
         } catch (e) {
             console.error('Failed to open ordered project', e);
-            alert(e?.message || 'Failed to open ordered project');
+            alert(e?.message || t('MyAccount.orders.openProjectFailed'));
             if (newTab) newTab.close();
         } finally {
             setOpeningOrderId(null);
@@ -147,7 +157,7 @@ const Account = () => {
             <AccountHeader />
             {isOrdersLoading && (
                 <p className="orders-loading-note">
-                    Loading your orders may take some time. Please wait until they appear here.
+                    {t('MyAccount.orders.loadingNote')}
                 </p>
             )}
             
@@ -155,23 +165,23 @@ const Account = () => {
                 <table className="orders-table">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Order Date</th>
-                            <th>Ord. No</th>
-                            <th>Project Name</th>
-                            <th>Order Sum</th>
-                            <th>Sum & Del.</th>
-                            <th>Status</th>
-                            <th>Del. Note</th>
-                            <th>Tracking</th>
-                            <th>Invoice</th>
-                            <th>Inv. Status</th>
-                            <th>To Pay</th>
-                            <th>Open Project</th>
+                            <th>{t('MyAccount.orders.table.no')}</th>
+                            <th>{t('MyAccount.orders.table.orderDate')}</th>
+                            <th>{t('MyAccount.orders.table.orderNo')}</th>
+                            <th>{t('MyAccount.orders.table.projectName')}</th>
+                            <th>{t('MyAccount.orders.table.orderSum')}</th>
+                            <th>{t('MyAccount.orders.table.sumDelivery')}</th>
+                            <th>{t('MyAccount.orders.table.status')}</th>
+                            <th>{t('MyAccount.orders.table.deliveryNote')}</th>
+                            <th>{t('MyAccount.orders.table.tracking')}</th>
+                            <th>{t('MyAccount.orders.table.invoice')}</th>
+                            <th>{t('MyAccount.orders.table.invoiceStatus')}</th>
+                            <th>{t('MyAccount.orders.table.toPay')}</th>
+                            <th>{t('MyAccount.orders.table.openProject')}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {myOrders.sort((a,b)=>b.id-a.id).map((order, index) => (
+                        {myOrders.sort((a,b)=>b.id-a.id).map((order) => (
                             <tr key={order.id}>
                                 <td className="row-number">{order.orderNo }</td>
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
@@ -179,13 +189,13 @@ const Account = () => {
                                 <td>{order.orderName || 'Water sifgns 23'}</td>
                                 <td>{order.netAfterDiscount?.toFixed(2)}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
-                                <td>{order.status || 'Received'}</td>
+                                <td>{order.status || t('MyAccount.orders.status.received')}</td>
                                 <td onClick={() => downloadPdf(order.id, '2')} className="clickable"><DelNoteIcon /></td>
                                 <td
                                     className="clickable"
                                     onClick={() => order.trackingNumber && window.open(`https://www.ups.com/track?tracknum=${order.trackingNumber}`, '_blank')}
                                     style={{opacity: order.trackingNumber ? 1 : 0.35, cursor: order.trackingNumber ? 'pointer' : 'default'}}
-                                    title={order.trackingNumber || 'No tracking number yet'}
+                                    title={order.trackingNumber || t('MyAccount.orders.noTrackingYet')}
                                 >
                                     <TrackingIcon />
                                 </td>
@@ -196,16 +206,16 @@ const Account = () => {
                                     </div>
                                 </td>
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
-                                    {order.isPaid ? 'Paid' : 'Unpaid'}
+                                    {order.isPaid ? t('MyAccount.orders.status.paid') : t('MyAccount.orders.status.unpaid')}
                                 </td>
                                 <td>{!order.isPaid && <span onClick={()=>window.open('/account/pay/' + order.id, '_blank')} className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}
                                     style={{ cursor: openingOrderId ? 'default' : 'pointer', opacity: openingOrderId ? 0.6 : 1 }}
-                                    title={openingOrderId === order.id ? 'Opening…' : 'Open project'}
+                                    title={openingOrderId === order.id ? t('MyAccount.orders.opening') : t('MyAccount.orders.openProject')}
                                 >
-                                    {openingOrderId === order.id ? 'Opening…' : <OpenProjectIcon />}
+                                    {openingOrderId === order.id ? t('MyAccount.orders.opening') : <OpenProjectIcon />}
                                 </td>
                             </tr>
                         ))}
@@ -226,7 +236,7 @@ const Account = () => {
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}
                                     disabled={!!openingOrderId}
                                 >
-                                    {openingOrderId === order.id ? 'Opening…' : 'Open project'}
+                                    {openingOrderId === order.id ? t('MyAccount.orders.opening') : t('MyAccount.orders.openProject')}
                                 </button>
                             </div>
                             <div className="order-card__meta">
@@ -238,46 +248,46 @@ const Account = () => {
                             <div className="order-card__name">{order.orderName || 'Water sifgns 23'}</div>
                             <div className="order-card__sums">
                                 <div className="order-card__sum">
-                                    <span className="order-card__label">Order Sum</span>
+                                    <span className="order-card__label">{t('MyAccount.orders.table.orderSum')}</span>
                                     <strong>{order.netAfterDiscount?.toFixed(2)}$</strong>
                                 </div>
                                 <div className="order-card__sum">
-                                    <span className="order-card__label">Sum (Incl.VAT & Del.)</span>
+                                    <span className="order-card__label">{t('MyAccount.orders.sumInclVatDelivery')}</span>
                                     <strong>{order.sum?.toFixed(2)}</strong>
                                 </div>
                             </div>
                             <div className="order-card__statuses">
                                 <div className="order-card__status">
-                                    <span className="order-card__label">Status</span>
+                                    <span className="order-card__label">{t('MyAccount.orders.table.status')}</span>
                                     <span className="order-card__pill order-card__pill--neutral">
-                                        {order.status || 'Received'}
+                                        {order.status || t('MyAccount.orders.status.received')}
                                     </span>
                                 </div>
                                 <div className="order-card__status">
-                                    <span className="order-card__label">Inv. Status</span>
+                                    <span className="order-card__label">{t('MyAccount.orders.table.invoiceStatus')}</span>
                                     <span className={`order-card__pill ${isPaid ? 'order-card__pill--paid' : 'order-card__pill--unpaid'}`}>
-                                        {isPaid ? 'Received' : 'Unpaid'}
+                                        {isPaid ? t('MyAccount.orders.status.received') : t('MyAccount.orders.status.unpaid')}
                                     </span>
                                 </div>
                             </div>
                             <div className="order-card__actions">
                                 <button type="button" className="order-card__action" onClick={() => downloadPdf(order.id, '2')}>
                                     <span className="order-card__action-icon icon-green">📄</span>
-                                    <span className="order-card__action-label">Del. Note</span>
+                                    <span className="order-card__action-label">{t('MyAccount.orders.table.deliveryNote')}</span>
                                 </button>
                                 <button
                                     type="button"
                                     className="order-card__action"
                                     onClick={() => order.trackingNumber && window.open(`https://www.ups.com/track?tracknum=${order.trackingNumber}`, '_blank')}
                                     disabled={!order.trackingNumber}
-                                    title={order.trackingNumber || 'No tracking number yet'}
+                                    title={order.trackingNumber || t('MyAccount.orders.noTrackingYet')}
                                 >
                                     <span className="order-card__action-icon icon-blue">🚚</span>
-                                    <span className="order-card__action-label">Tracking</span>
+                                    <span className="order-card__action-label">{t('MyAccount.orders.table.tracking')}</span>
                                 </button>
                                 <button type="button" className="order-card__action" onClick={() => downloadPdf(order.id, '3')}>
                                     <span className="order-card__action-icon icon-red">🧾</span>
-                                    <span className="order-card__action-label">Invoice</span>
+                                    <span className="order-card__action-label">{t('MyAccount.orders.table.invoice')}</span>
                                 </button>
                                 <button
                                     type="button"
@@ -286,7 +296,7 @@ const Account = () => {
                                     disabled={isPaid}
                                 >
                                     <span className="order-card__action-icon to-pay-icon">💳</span>
-                                    <span className="order-card__action-label">To Pay</span>
+                                    <span className="order-card__action-label">{t('MyAccount.orders.table.toPay')}</span>
                                 </button>
                             </div>
                         </div>

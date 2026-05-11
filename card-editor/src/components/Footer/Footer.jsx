@@ -1,69 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './Footer.scss';
 import { logout } from '../../store/reducers/user';
 import { useDispatch, useSelector } from 'react-redux';
-import Flag from 'react-flagkit';
-import { SlArrowDown } from 'react-icons/sl';
-import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
 import Link from '../Localized/LocalizedLink';
-import useNavigate from '../Localized/useLocalizedNavigate';
-
-const urls = [
-  { title: 'Home', url: '/' },
-  { title: 'New Project', url: '/online-sign-editor' },
-  { title: 'Templates', url: '/templates' },
-  { title: 'Products', url: '/products' },
-  { title: 'Quick Guide', url: '/quick-guide' },
-  { title: 'Contacts', url: '/contacts' },
-];
-
-const addUrls = [
-  { title: 'Privacy policy', url: '/privacy-policy' },
-  { title: 'Terms of purchasing', url: '/terms-of-purchasing' },
-  { title: 'Cookie settings', url: '/privacy-policy#cookie' },
-  { title: 'company', url: '/login#Business' },
-  { title: 'Consumer', url: '/login' },
-
-];
-
-const languages = [
-  { countryCode: 'GB', label: 'EN', description: 'United Kingdom' },
-  { countryCode: 'FR', label: 'FR', description: 'France' },
-  { countryCode: 'IT', label: 'IT', description: 'Italia' },
-  { countryCode: 'ES', label: 'ES', description: 'España' },
-  { countryCode: 'PL', label: 'PL', description: 'Polska' },
-  { countryCode: 'CZ', label: 'CS', description: 'Česko' },
-  { countryCode: 'NL', label: 'NL', description: 'Nederland' },
-  { countryCode: 'SE', label: 'SV', description: 'Sverige' },
-  { countryCode: 'NO', label: 'NO', description: 'Norge' },
-  { countryCode: 'DK', label: 'DA', description: 'Danmark' },
-  { countryCode: 'HU', label: 'HU', description: 'Magyarország' },
-  { countryCode: 'HR', label: 'HR', description: 'Hrvatska' },
-  { countryCode: 'UA', label: 'UK', description: 'Україна' },
-  { countryCode: 'RU', label: 'RU', description: 'Россия' },
-  { countryCode: 'de', label: 'DE', description: 'Deutsch' },
-];
-
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
+  const { t } = useTranslation();
 
-  const { isAuth, isAdmin, user } = useSelector(state => state.user);
+  const { isAuth, user } = useSelector(state => state.user);
 
   const dispatch = useDispatch();
-
-  const exit = async () => {
-    try {
-      await resetEditorStateForUserSwitch();
-    } catch {}
-    try {
-      localStorage.removeItem('editorAuthUserId');
-    } catch {}
-    dispatch(logout());
-  };
-
-  const [isLangOpen, setIsLangOpen] = useState(false);
-
-  const navigate=useNavigate();
   
   return (
     <footer id='footer' class="footer">
@@ -75,52 +22,52 @@ const Footer = () => {
           </div>
 
           <div class="footer-slogan">
-            Engraving · Printing · Signs
+            {t('Footer.slogan')}
           </div>
 
           <div class="footer-address">
             <p>Baumwiesen 2</p>
             <p>72401 Haigerloch</p>
-            <p>Germany</p>
+            <p>{t('Footer.address.country')}</p>
             <p><a href="tel:+4915776625125">+49 157 766 25 125</a></p>
             <p><a href="mailto:info@sign-xpert.com">info@sign-xpert.com</a></p>
           </div>
         </div>
 
         <div class="footer-menu">
-          <h4 style={{fontWeight:'700'}}>Menu:</h4>
+          <h4 style={{fontWeight:'700'}}>{t('Footer.menuTitle')}</h4>
           <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/account">My Account</Link></li>
-            <li><Link to="/online-sign-editor">New Project</Link></li>
-            <li><Link to="/products">Products</Link></li>
-            <li><Link to="/faq">FAQ</Link></li>
-            <li><Link to="/quick-guide">Quick Guide</Link></li>
-            <li><Link to="/industries">Industries</Link></li>
-            <li><Link to="/contacts">Contacts</Link></li>
+            <li><Link to="/">{t('Footer.nav.home')}</Link></li>
+            <li><Link to="/account">{t('Footer.nav.myAccount')}</Link></li>
+            <li><Link to="/online-sign-editor">{t('Footer.nav.newProject')}</Link></li>
+            <li><Link to="/products">{t('Footer.nav.products')}</Link></li>
+            <li><Link to="/faq">{t('Footer.nav.faq')}</Link></li>
+            <li><Link to="/quick-guide">{t('Footer.nav.quickGuide')}</Link></li>
+            <li><Link to="/industries">{t('Footer.nav.industries')}</Link></li>
+            <li><Link to="/contacts">{t('Footer.nav.contacts')}</Link></li>
           </ul>
         </div>
 
         <div class="footer-info">
-          <h4>Information:</h4>
+          <h4>{t('Footer.infoTitle')}</h4>
           <ul>
-            <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-            <li><Link to="/terms-of-purchasing">Terms of Purchasing</Link></li>
-            <li><Link to="/Impressum">Impressum</Link></li>
-            <li><Link to="/eu-online-dispute-resolution">EU Online Dispute Resolution</Link></li>
+            <li><Link to="/privacy-policy">{t('Footer.info.privacyPolicy')}</Link></li>
+            <li><Link to="/terms-of-purchasing">{t('Footer.info.termsOfPurchasing')}</Link></li>
+            <li><Link to="/Impressum">{t('Footer.info.impressum')}</Link></li>
+            <li><Link to="/eu-online-dispute-resolution">{t('Footer.info.euOnlineDisputeResolution')}</Link></li>
           </ul>
 
           <div class="footer-note">
             <span class="footer-note-title-spacer" aria-hidden="true"></span>
-            <p>All prices are final.</p>
-            <p>No VAT is charged according to § 19 UStG.</p>
-            <p>Plus shipping costs.</p>
+            <p>{t('Footer.note.allPricesFinal')}</p>
+            <p>{t('Footer.note.noVat')}</p>
+            <p>{t('Footer.note.plusShipping')}</p>
           </div>
         </div>
 
         <div class="footer-methods">
           <div class="footer-payment">
-            <h4>Payment Method</h4>
+            <h4>{t('Footer.paymentMethod')}</h4>
 
             <div class="payment-grid">
               <div class="footer-icon-card">
@@ -162,7 +109,7 @@ const Footer = () => {
           </div>
 
           <div class="footer-delivery">
-            <h4>Delivery Method</h4>
+            <h4>{t('Footer.deliveryMethod')}</h4>
 
             <div class="delivery-grid">
               <div class="footer-icon-card">
@@ -183,12 +130,12 @@ const Footer = () => {
         <div class="footer-user">
           {isAuth?<>
           <div>{user.firstName||'' + ' ' + user.surname||''}</div>
-          <div class="login-btn" style={{fontWeight:'600',cursor:'pointer',fontSize:'13px'}} onClick={()=>dispatch(logout())}>Log out</div></>
+          <div class="login-btn" style={{fontWeight:'600',cursor:'pointer',fontSize:'13px'}} onClick={()=>dispatch(logout())}>{t('Footer.auth.logout')}</div></>
             :
           <>
             <div></div>
             <Link to='/login' style={{cursor:'pointer',fontWeight:600}} className="login-btn">
-              Log in or <span style={{color:'red'}}>Register</span>
+              {t('Footer.auth.loginOr')} <span style={{color:'red'}}>{t('Footer.auth.register')}</span>
             </Link>
           </>}
         </div>
@@ -196,7 +143,7 @@ const Footer = () => {
       </div>
 
       <div class="footer-copy">
-        © 2026, SignXpert. All rights reserved.
+        {t('Footer.copyright')}
       </div>
     </footer>
     

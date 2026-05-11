@@ -1373,6 +1373,186 @@
     "l_2": "To place an order with us, you first need to create an account. It’s quick and easy!",
     "l_3": "Register a new account"
   },
+  "Enter": {
+    "e_1": "Welcome to SignXpert - we're glad to have you with us!",
+    "e_2": "Your personal customer number is: <strong>{{customerNumber}}</strong>",
+    "e_3": "To make things easy, we've also sent your customer number directly to your email address.",
+    "e_4": "You can now <strong>Log in</strong> below to start creating projects and placing orders.",
+    "e_7": "If you need any assistance, our team is always happy to support you.",
+    "e_8": "Kind regards,",
+    "e_9": "SignXpert"
+  },
+  "MyAccount": {
+    "common": {
+      "loading": "Loading...",
+      "saveChanges": "Save Changes",
+      "send": "Send",
+      "sending": "Sending..."
+    },
+    "header": {
+      "orders": "My Orders",
+      "details": "My Details",
+      "settings": "My Settings"
+    },
+    "orders": {
+      "loadingNote": "Loading your orders may take some time. Please wait until they appear here.",
+      "noProjectSnapshot": "No project snapshot in this order",
+      "projectSnapshotNoId": "Project snapshot has no id",
+      "openProjectFailed": "Failed to open ordered project",
+      "downloadFileFailed": "Error downloading file",
+      "noTrackingYet": "No tracking number yet",
+      "opening": "Opening...",
+      "openProject": "Open project",
+      "sumInclVatDelivery": "Sum (Incl.VAT & Del.)",
+      "table": {
+        "no": "No",
+        "orderDate": "Order Date",
+        "orderNo": "Ord. No",
+        "projectName": "Project Name",
+        "orderSum": "Order Sum",
+        "sumDelivery": "Sum & Del.",
+        "status": "Status",
+        "deliveryNote": "Del. Note",
+        "tracking": "Tracking",
+        "invoice": "Invoice",
+        "invoiceStatus": "Inv. Status",
+        "toPay": "To Pay",
+        "openProject": "Open Project"
+      },
+      "status": {
+        "received": "Received",
+        "paid": "Paid",
+        "unpaid": "Unpaid"
+      }
+    },
+    "details": {
+      "invoiceDeliveryNotice": "*The invoice and Delivery Note will be included with the shipment and sent to the same address.",
+      "updateText": "If you want to update your registration details, do it here and click \"Save Changes.\"",
+      "addressTitle": "Address",
+      "invoiceAddressTitle": "Invoice address (if different from the left)",
+      "invoiceEmailText": "We will send the invoice to the e-mail you provided.",
+      "invoiceEmailExtraText": "You can also add another e-mail, separated by a comma, if you wish.",
+      "errorLoadingUserData": "Error loading user data",
+      "changesSaved": "Changes saved successfully!",
+      "saveFailed": "Save failed",
+      "fields": {
+        "name": "Name",
+        "companyName": "Company Name",
+        "address1": "Address 1",
+        "address2": "Address 2",
+        "address3": "Address 3",
+        "town": "Town",
+        "postalCode": "Postal code",
+        "country": "Country",
+        "requiredCountry": "*Country",
+        "email": "E-Mail address",
+        "mobilePhone": "Mobile Phone",
+        "vatNumber": "VAT Number"
+      }
+    },
+    "settings": {
+      "title": "Here you can write additional information that will be included with each of your orders.",
+      "additionalInformation": "Additional Information",
+      "errorLoadingMessage": "Error loading your message",
+      "messageSaved": "Message saved successfully!",
+      "saveMessageFailed": "Failed to save message"
+    },
+    "password": {
+      "title": "Change Password",
+      "existingPassword": "Existing Password",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "forgotPasswordText": "* Forgot Password? Click send and we will email you a new temporary password.",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "passwordUpdated": "Password updated",
+      "incorrectPassword": "Incorrect password",
+      "emailNotFound": "Unable to find your email in profile.",
+      "newPasswordSent": "A new password has been sent to your email.",
+      "sendPasswordFailed": "Failed to send password email."
+    }
+  },
+  "PreviewModal": {
+    "title": "Preview",
+    "updating": "Updating...",
+    "refresh": "Refresh",
+    "downloadSvg": "Download SVG",
+    "reset": "Reset",
+    "canvasPreviewAlt": "Canvas preview",
+    "noData": "No data"
+  },
+  "Header": {
+    "nav": {
+      "home": "Home",
+      "registration": "Registration",
+      "myAccount": "My Account",
+      "newProject": "New Project",
+      "products": "Products",
+      "industries": "Industries",
+      "faq": "FAQ",
+      "quickGuide": "Quick Guide",
+      "contacts": "Contacts",
+      "admin": "Admin"
+    },
+    "features": {
+      "easy": "Easy",
+      "design": "Design",
+      "fast": "Fast",
+      "manufacturing": "Manufacturing",
+      "quick": "Quick",
+      "delivery": "Delivery"
+    },
+    "sections": {
+      "menu": "Menu",
+      "account": "Account"
+    },
+    "auth": {
+      "logout": "Log out",
+      "loginOr": "Log in or",
+      "register": "Register",
+      "loginRegisterSlash": "Log in / Register"
+    }
+  },
+  "Footer": {
+    "slogan": "Engraving - Printing - Signs",
+    "address": {
+      "country": "Germany"
+    },
+    "menuTitle": "Menu:",
+    "infoTitle": "Information:",
+    "paymentMethod": "Payment Method",
+    "deliveryMethod": "Delivery Method",
+    "copyright": "© 2026, SignXpert. All rights reserved.",
+    "nav": {
+      "home": "Home",
+      "myAccount": "My Account",
+      "newProject": "New Project",
+      "templates": "Templates",
+      "products": "Products",
+      "industries": "Industries",
+      "faq": "FAQ",
+      "quickGuide": "Quick Guide",
+      "contacts": "Contacts"
+    },
+    "info": {
+      "privacyPolicy": "Privacy Policy",
+      "termsOfPurchasing": "Terms of Purchasing",
+      "cookieSettings": "Cookie settings",
+      "company": "company",
+      "consumer": "Consumer",
+      "impressum": "Impressum",
+      "euOnlineDisputeResolution": "EU Online Dispute Resolution"
+    },
+    "note": {
+      "allPricesFinal": "All prices are final.",
+      "noVat": "No VAT is charged according to § 19 UStG.",
+      "plusShipping": "Plus shipping costs."
+    },
+    "auth": {
+      "logout": "Log out",
+      "loginOr": "Log in or",
+      "register": "Register"
+    }
+  },
   "LoginForm": {
     "l_4": "Already Customer",
     "l_5": "E-Mail address or Customer number",
@@ -1382,7 +1562,11 @@
     "l_9": "E-mail address",
     "l_10": "send",
     "l_11": "Sign In",
-    "l_12": "Don't have an account? Register now"
+    "l_12": "Don't have an account? Register now",
+    "error": "Error",
+    "enterEmail": "Please enter your e-mail address.",
+    "newPasswordSent": "A new password has been sent to your email.",
+    "sendPasswordFailed": "Failed to send password email."
   },
   "LoginRegister": {
     "r_1": "Register a new account",
@@ -1414,7 +1598,33 @@
     "rr_22": "*Company Name",
     "rr_23": "Vat Number",
     "rr_24": "No VAT? Continue without it.",
-    "rr_25": "*Currently no VAT charged per § 19 UStG (Small Business)."
+    "rr_25": "*Currently no VAT charged per § 19 UStG (Small Business).",
+    "passwordMustMatch": "Password must match",
+    "registrationFailed": "Registration failed",
+    "pleaseSpecify": "Please specify",
+    "vatConfirmed": "VAT Confirmed. Thank you!",
+    "vatNotConfirmed": "VAT not Confirmed. Check the number and try again.",
+    "tellAbout": {
+      "onlineInternet": "Online / Internet",
+      "throughSamples": "Through samples",
+      "viaFlyer": "Via flyer",
+      "colleague": "Colleague",
+      "socialMedia": "Social media",
+      "eventExhibition": "Event / exhibition",
+      "newsletter": "Newsletter",
+      "email": "E-Mail",
+      "other": "Other"
+    }
+  },
+  "ReadMoreModal": {
+    "title": "How can I get my order VAT-free?",
+    "description": "If you are placing an order on behalf of a company, you may be eligible to receive your order VAT-free. To do this, enter your VAT number in the designated field on the registration page and click the \"Check\" button. The system will verify your number and inform you whether it has passed validation.",
+    "validVat": "If your VAT number is valid, you will not be charged VAT for orders within the EU (except Germany).",
+    "invalidVat": "If the check fails, first make sure your number is entered correctly. Sometimes waiting a short time and trying again helps.",
+    "noVatNumber": "If no VAT number is entered or the validation fails, VAT will be charged at the rate applicable in your country.",
+    "germanyVat": "For consumers and for companies located in Germany, regardless of whether they have a valid VAT number, the standard 19% VAT applies.",
+    "outsideEu": "If you are outside the European Union, for example in Switzerland, the UK, or other countries, a 0% VAT rate will apply for exported goods.",
+    "contactUs": "If you still have questions or encounter any issues, please contact us, and our team will be happy to assist you."
   },
   "HomePlaceholder": {
     "h_1": "From design to delivery - your sign",

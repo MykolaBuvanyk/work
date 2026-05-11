@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import styles from "./PreviewModal.module.css";
+import { useTranslation } from "react-i18next";
 import {
   collectFontFamiliesFromCanvas,
   embedFontsIntoSvgMarkup,
@@ -13,6 +14,7 @@ const ZOOM_IN_FACTOR = 1.15;
 
 // Modal to show current Fabric canvas snapshot
 const PreviewModal = ({ canvas, onClose }) => {
+  const { t } = useTranslation();
   const [previewUrl, setPreviewUrl] = useState(null);
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,14 +38,23 @@ const PreviewModal = ({ canvas, onClose }) => {
       if (typeof document !== "undefined" && document.fonts?.ready) {
         try {
           await document.fonts.ready;
-        } catch {}
+        } catch {
+          // Browser font readiness can fail without blocking the preview.
+        }
       }
-      try { canvas.requestRenderAll(); } catch {}
+      try {
+        canvas.requestRenderAll();
+      } catch {
+        // Continue with the current canvas snapshot if rerendering is unavailable.
+      }
       let svg = typeof canvas.toSVG === "function" ? canvas.toSVG() : "";
 
-      const sanitizedSvg = svg
-        .replace(/[\x00-\x1F\x7F]/g, "")
-        .replace(/[\uFFFE\uFFFF]/g, "");
+      const sanitizedSvg = Array.from(svg)
+        .filter((char) => {
+          const code = char.charCodeAt(0);
+          return !((code >= 0 && code <= 31) || code === 127 || code === 0xfffe || code === 0xffff);
+        })
+        .join("");
 
       svg = await embedFontsIntoSvgMarkup(sanitizedSvg, fontFamilies);
 
@@ -144,7 +155,7 @@ const PreviewModal = ({ canvas, onClose }) => {
     if (event?.pointerId != null) {
       try {
         target?.releasePointerCapture?.(event.pointerId);
-      } catch (err) {
+      } catch {
         // ignore release errors
       }
     }
@@ -180,7 +191,7 @@ const PreviewModal = ({ canvas, onClose }) => {
       <div className={styles.modal}>
         <div className={styles.headerWrapper}>
           <div className={styles.headerWrapperText}>
-            <p className={styles.para}>Preview</p>
+            <p className={styles.para}>{t("PreviewModal.title")}</p>
           </div>
           <svg
             onClick={onClose}
@@ -210,7 +221,7 @@ const PreviewModal = ({ canvas, onClose }) => {
         <div className={styles.actions}>
           <div className={styles.actionsLeft}>
             <button onClick={makeSnapshot} disabled={loading}>
-              {loading ? "Updating..." : "Refresh"}
+              {loading ? t("PreviewModal.updating") : t("PreviewModal.refresh")}
             </button>
             {downloadUrl && (
               <a
@@ -218,7 +229,7 @@ const PreviewModal = ({ canvas, onClose }) => {
                 download={`canvas-export-${Date.now()}.svg`}
                 className={styles.downloadBtn}
               >
-                Download SVG
+                {t("PreviewModal.downloadSvg")}
               </a>
             )}
           </div>
@@ -232,7 +243,7 @@ const PreviewModal = ({ canvas, onClose }) => {
                 +
               </button>
               <button onClick={handleZoomReset} disabled={!canResetView}>
-                Reset
+                {t("PreviewModal.reset")}
               </button>
             </div>
           )}
@@ -251,7 +262,7 @@ const PreviewModal = ({ canvas, onClose }) => {
             >
               <img
                 src={previewUrl}
-                alt="Canvas preview"
+                alt={t("PreviewModal.canvasPreviewAlt")}
                 style={{
                   transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
                   transition: isDragging ? "none" : "transform 0.15s ease-out"
@@ -259,7 +270,7 @@ const PreviewModal = ({ canvas, onClose }) => {
               />
             </div>
           ) : (
-            <div className={styles.placeholder}>No data</div>
+            <div className={styles.placeholder}>{t("PreviewModal.noData")}</div>
           )}
         </div>
       </div>

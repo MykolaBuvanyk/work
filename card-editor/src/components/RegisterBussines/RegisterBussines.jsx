@@ -10,15 +10,15 @@ import useNavigate from '../Localized/useLocalizedNavigate';
 import Link from '../Localized/LocalizedLink';
 
 const tellAboutList=[
-  'Online / Internet',
-  'Through samples',
-  'Via flyer',
-  'Colleague',
-  'Social media',
-  'Event / exhibition',
-  'Newsletter',
-  'E-Mail',
-  'Other'
+  { value: 'Online / Internet', labelKey: 'RegisterConsumer.tellAbout.onlineInternet' },
+  { value: 'Through samples', labelKey: 'RegisterConsumer.tellAbout.throughSamples' },
+  { value: 'Via flyer', labelKey: 'RegisterConsumer.tellAbout.viaFlyer' },
+  { value: 'Colleague', labelKey: 'RegisterConsumer.tellAbout.colleague' },
+  { value: 'Social media', labelKey: 'RegisterConsumer.tellAbout.socialMedia' },
+  { value: 'Event / exhibition', labelKey: 'RegisterConsumer.tellAbout.eventExhibition' },
+  { value: 'Newsletter', labelKey: 'RegisterConsumer.tellAbout.newsletter' },
+  { value: 'E-Mail', labelKey: 'RegisterConsumer.tellAbout.email' },
+  { value: 'Other', labelKey: 'RegisterConsumer.tellAbout.other' }
 ]
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
@@ -67,7 +67,7 @@ const RegisterBussines = () => {
     const {t}=useTranslation()
     const [isInvoice,setIsInvoice]=useState(false);
     const [isReadMoreOpen, setIsReadMoreOpen] = useState(false);
-    const [vatCheckState, setVatCheckState] = useState(null); // null | 'valid' | 'invalid'
+    const [vatCheckState] = useState(null); // null | 'valid' | 'invalid'
     const [tellAboutSelection, setTellAboutSelection] = useState('');
     const [invoiceEmailSync, setInvoiceEmailSync] = useState({
     linked: true,
@@ -137,7 +137,7 @@ const RegisterBussines = () => {
     const normalizedEmails = new Set(parseEmailList(value).map(normalizeEmail));
 
     setFormData((prev) => ({ ...prev, weWill: value }));
-    setInvoiceEmailSync((prev) => ({
+    setInvoiceEmailSync(() => ({
       linked: !!currentPrimaryEmail && normalizedEmails.has(normalizeEmail(currentPrimaryEmail)),
       sourceValue: currentPrimaryEmail,
     }));
@@ -149,7 +149,7 @@ const RegisterBussines = () => {
       ...prev,
       tellAbout:
         value === 'Other'
-          ? (tellAboutList.includes(prev.tellAbout) ? '' : prev.tellAbout)
+          ? (tellAboutList.some((item) => item.value === prev.tellAbout) ? '' : prev.tellAbout)
           : value
     }));
   };
@@ -160,7 +160,7 @@ const RegisterBussines = () => {
     try {
       e.preventDefault();
       if(formData.password!=formData.confirmPassword){
-        alert("password must match");
+        alert(t("RegisterConsumer.passwordMustMatch"));
         formData.password='';
         formData.confirmPassword='';
         return;
@@ -169,7 +169,7 @@ const RegisterBussines = () => {
       //dispatch(setUser({ token: res.data.token }));
       navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
-      const message = err?.response?.data?.message || 'Registration failed';
+      const message = err?.response?.data?.message || t("RegisterConsumer.registrationFailed");
       alert(message);
     }
   };
@@ -283,10 +283,10 @@ const RegisterBussines = () => {
         {t("RegisterConsumer.rr_25")}
       </p>
       {vatCheckState === 'valid' && (
-        <div className="vat-check-result valid">VAT Confirmed. Thank you!</div>
+        <div className="vat-check-result valid">{t("RegisterConsumer.vatConfirmed")}</div>
       )}
       {vatCheckState === 'invalid' && (
-        <div className="vat-check-result invalid">VAT not Confirmed. Check the number and try again.</div>
+        <div className="vat-check-result invalid">{t("RegisterConsumer.vatNotConfirmed")}</div>
       )}
 
       <div className="checkbox-section">
@@ -391,7 +391,7 @@ const RegisterBussines = () => {
               <input
                 value={formData.tellAbout}
                 onChange={e => handleInput('tellAbout')(e.target.value)}
-                placeholder="Please specify"
+                placeholder={t("RegisterConsumer.pleaseSpecify")}
               />
               <select
                 className="tell-about-switch"
@@ -399,13 +399,13 @@ const RegisterBussines = () => {
                 value=""
               >
               <option value="" disabled></option>
-                {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+                {tellAboutList.map(x => <option key={x.value} value={x.value}>{t(x.labelKey)}</option>)}
               </select>
             </div>
           ) : (
             <select onChange={e => handleTellAboutSelect(e.target.value)} value={tellAboutSelection}>
               <option value="" disabled>{t("RegisterConsumer.rr_18")}</option>
-              {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+              {tellAboutList.map(x => <option key={x.value} value={x.value}>{t(x.labelKey)}</option>)}
             </select>
           )}
         </div>

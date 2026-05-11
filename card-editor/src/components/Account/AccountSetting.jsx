@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import './AccountSetting.scss'
 import AccountHeader from './AccountHeader'
 import { $authHost } from '../../http'
+import { useTranslation } from 'react-i18next'
 
 const extractLegacyAdditionalInformation = (rawValue) => {
     const raw = String(rawValue || '').trim();
@@ -22,6 +23,7 @@ const extractLegacyAdditionalInformation = (rawValue) => {
 };
 
 const AccountSetting = () => {
+    const { t } = useTranslation();
     const [additionalInformation, setAdditionalInformation] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -34,7 +36,7 @@ const AccountSetting = () => {
             setAdditionalInformation(parsedAdditional);
         } catch (err) {
             console.error(err);
-            alert('Error loading your message');
+            alert(t('MyAccount.settings.errorLoadingMessage'));
         } finally {
             setIsLoading(false);
         }
@@ -52,10 +54,10 @@ const AccountSetting = () => {
             await $authHost.put('auth/updateProfile', {
                 additional: nextValue,
             });
-            alert('Message saved successfully!');
+            alert(t('MyAccount.settings.messageSaved'));
         } catch (err) {
             console.error(err);
-            alert('Failed to save message');
+            alert(t('MyAccount.settings.saveMessageFailed'));
         } finally {
             setIsSaving(false);
         }
@@ -75,12 +77,12 @@ const AccountSetting = () => {
         
         <div className="message-section">
             <h2 className="message-title">
-                Here you can write a additional information that will be included with each your order.
+                {t('MyAccount.settings.title')}
             </h2>
 
             <div className="message-box">
                 <div className="message-label">
-                    Additional Information
+                    {t('MyAccount.settings.additionalInformation')}
                 </div>
                 <div className="message-input-container">
                     <textarea
@@ -94,7 +96,9 @@ const AccountSetting = () => {
             </div>
             
             <div className="button-container">
-                <button className="send-button" onClick={handleSend} disabled={isSaving}>Send</button>
+                <button className="send-button" onClick={handleSend} disabled={isSaving}>
+                    {isSaving ? t('MyAccount.common.sending') : t('MyAccount.common.send')}
+                </button>
             </div>
         </div>
     </div>

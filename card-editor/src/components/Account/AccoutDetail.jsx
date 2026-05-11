@@ -7,6 +7,7 @@ import ChangePassword from './ChangePassword';
 import combinedCountries from '../Countries';
 import { useDispatch } from 'react-redux';
 import { mergeUser } from '../../store/reducers/user';
+import { useTranslation } from 'react-i18next';
 
 const AUTO_EMAIL_PREFS_KEY = 'account-detail-invoice-email-sync';
 const CHECKOUT_EMAILS_DRAFT_STORAGE_KEY = 'checkout:emails-draft';
@@ -85,7 +86,9 @@ const saveAutoEmailSyncState = (userId, syncState) => {
       },
     };
     localStorage.setItem(AUTO_EMAIL_PREFS_KEY, JSON.stringify(parsed));
-  } catch {}
+  } catch {
+    // Keep profile editing usable if localStorage is unavailable.
+  }
 };
 
 const replaceEmailInList = (emails, previousEmail, nextEmail) => {
@@ -148,34 +151,35 @@ const syncManagedInvoiceEmails = ({ currentValue, syncState, nextSourceValues })
 
 // Оновлені ключі, що відповідають вашій моделі Sequelize
 const addressFields = [
-  { label: 'Name', key: 'firstName' },
-  { label: 'Company Name', key: 'company' },
-  { label: 'Address 1', key: 'address' },
-  { label: 'Address 2', key: 'address2' },
-  { label: 'Address 3', key: 'address3' },
-  { label: 'Town', key: 'city' },
-  { label: 'Postal code', key: 'postcode' },
-  { label: 'Country', key: 'country', isSelect: true },
-  { label: 'E-Mail address', key: 'email' },
-  { label: 'Mobile Phone', key: 'phone' },
-  { label: 'VAT Number', key: 'vatNumber' },
+  { label: 'MyAccount.details.fields.name', key: 'firstName' },
+  { label: 'MyAccount.details.fields.companyName', key: 'company' },
+  { label: 'MyAccount.details.fields.address1', key: 'address' },
+  { label: 'MyAccount.details.fields.address2', key: 'address2' },
+  { label: 'MyAccount.details.fields.address3', key: 'address3' },
+  { label: 'MyAccount.details.fields.town', key: 'city' },
+  { label: 'MyAccount.details.fields.postalCode', key: 'postcode' },
+  { label: 'MyAccount.details.fields.country', key: 'country', isSelect: true },
+  { label: 'MyAccount.details.fields.email', key: 'email' },
+  { label: 'MyAccount.details.fields.mobilePhone', key: 'phone' },
+  { label: 'MyAccount.details.fields.vatNumber', key: 'vatNumber' },
 ];
 
 const invoiceFields = [
-  { label: 'Name', key: 'firstName2' },
-  { label: 'Company Name', key: 'company2' },
-  { label: 'Address 1', key: 'address4' },
-  { label: 'Address 2', key: 'address5' },
-  { label: 'Address 3', key: 'address6' },
-  { label: 'Town', key: 'city2' },
-  { label: 'Postal code', key: 'postcode2' },
-  { label: '*Country', key: 'country2', isSelect: true },
-  { label: 'E-Mail address', key: 'eMailInvoice' },
-  { label: 'Mobile Phone', key: 'phone2' },
+  { label: 'MyAccount.details.fields.name', key: 'firstName2' },
+  { label: 'MyAccount.details.fields.companyName', key: 'company2' },
+  { label: 'MyAccount.details.fields.address1', key: 'address4' },
+  { label: 'MyAccount.details.fields.address2', key: 'address5' },
+  { label: 'MyAccount.details.fields.address3', key: 'address6' },
+  { label: 'MyAccount.details.fields.town', key: 'city2' },
+  { label: 'MyAccount.details.fields.postalCode', key: 'postcode2' },
+  { label: 'MyAccount.details.fields.requiredCountry', key: 'country2', isSelect: true },
+  { label: 'MyAccount.details.fields.email', key: 'eMailInvoice' },
+  { label: 'MyAccount.details.fields.mobilePhone', key: 'phone2' },
 ];
 
 
 const AccoutDetail = () => {
+  const { t } = useTranslation();
   const [address, setAddress] = useState({});
   const [invoice, setInvoice] = useState({});
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -256,7 +260,7 @@ const AccoutDetail = () => {
       setLoading(false);
     } catch (err) {
       console.error(err);
-      alert("Error loading user data");
+      alert(t('MyAccount.details.errorLoadingUserData'));
     }
   };
 
@@ -343,7 +347,9 @@ const AccoutDetail = () => {
       // Reset checkout email draft so checkout modal uses fresh profile values.
       try {
         localStorage.removeItem(CHECKOUT_EMAILS_DRAFT_STORAGE_KEY);
-      } catch {}
+      } catch {
+        // Best-effort cleanup so checkout uses fresh profile values.
+      }
 
       // Refresh server-side user and update redux store + local state
       try {
@@ -358,10 +364,10 @@ const AccoutDetail = () => {
         console.warn('Failed to refresh user after save', e);
       }
 
-      alert("Changes saved successfully!");
+      alert(t('MyAccount.details.changesSaved'));
     } catch (err) {
       console.error(err);
-      alert("Save failed");
+      alert(t('MyAccount.details.saveFailed'));
     }
   };
 
@@ -369,7 +375,7 @@ const AccoutDetail = () => {
     <div className="registration-table">
       {fieldsList.map((f) => (
         <div className="table-row" key={f.key}>
-          <div className="label-cell">{f.label}</div>
+          <div className="label-cell">{t(f.label)}</div>
           <div className="input-cell">
             {f.isSelect ? (
               <select 
@@ -393,28 +399,28 @@ const AccoutDetail = () => {
     </div>
   );
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>{t('MyAccount.common.loading')}</div>;
 
   return (
     <div className="account-detail-container">
       <AccountHeader />
       <br />
       <p className="blue-notice">
-        *The invoice and Delivery Note will be included with the shipment and sent to the same address.
+        {t('MyAccount.details.invoiceDeliveryNotice')}
       </p>
 
       <p className="update-text">
-        If you want to update your registration details, do it here and click “Save Changes.”
+        {t('MyAccount.details.updateText')}
       </p>
 
       <div className="tables-grid">
         <div className="grid-col">
-          <h3>Address</h3>
+          <h3>{t('MyAccount.details.addressTitle')}</h3>
           {renderTable(addressFields, address, setAddress)}
 
           <div className="invoice-email-block">
-            <p>We will send the invoice to the e-mail you provided.</p>
-            <p>You can also add another e-mail, separated by a comma, if you wish.</p>
+            <p>{t('MyAccount.details.invoiceEmailText')}</p>
+            <p>{t('MyAccount.details.invoiceEmailExtraText')}</p>
 
             <div className="invoice-input-row">
               <MyTextInput
@@ -423,12 +429,12 @@ const AccoutDetail = () => {
               />
             </div>
             <div className="save-changes-row">
-              <button className="btn-blue-rect" onClick={handleSave}>Save Changes</button>
+              <button className="btn-blue-rect" onClick={handleSave}>{t('MyAccount.common.saveChanges')}</button>
             </div>
           </div>
         </div>
         <div className="grid-col">
-          <h3>Invoice address (if different from the left)</h3>
+          <h3>{t('MyAccount.details.invoiceAddressTitle')}</h3>
           {renderTable(invoiceFields, invoice, setInvoice)}
         </div>
       </div>

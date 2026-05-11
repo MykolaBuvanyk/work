@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import MyTextPassword from '../MyInput/MyTextPassword';
 import { $authHost } from '../../http';
+import { useTranslation } from 'react-i18next';
 
 const ChangePassword = () => {
+    const { t } = useTranslation();
     const [oldPassowrd,setOldPassword]=useState('');
     const [newPassowrd,setNewPassowrd]=useState('');
     const [newPassowrd2,setNewPassowrd2]=useState('')
@@ -16,14 +18,14 @@ const ChangePassword = () => {
 
     const updatePassword=async()=>{
         if(newPassowrd!=newPassowrd2){
-            alert('passwords do not match');
+            alert(t('MyAccount.password.passwordsDoNotMatch'));
             return;
         }
         try{
-            const res=await $authHost.post('auth/update-password',{oldPassword:oldPassowrd,newPassword:newPassowrd});
-            alert('password updated')
-        }catch(err){
-            alert("incorrect password");
+            await $authHost.post('auth/update-password',{oldPassword:oldPassowrd,newPassword:newPassowrd});
+            alert(t('MyAccount.password.passwordUpdated'))
+        }catch{
+            alert(t('MyAccount.password.incorrectPassword'));
         }
     }
 
@@ -35,14 +37,14 @@ const ChangePassword = () => {
             const email = String(me?.data?.user?.email || '').trim().toLowerCase();
 
             if (!email) {
-                alert('Unable to find your email in profile.');
+                alert(t('MyAccount.password.emailNotFound'));
                 return;
             }
 
             await $authHost.post('auth/sendNewPassword', { email });
-            alert('A new password has been sent to your email.');
+            alert(t('MyAccount.password.newPasswordSent'));
         } catch (err) {
-            const message = err?.response?.data?.message || 'Failed to send password email.';
+            const message = err?.response?.data?.message || t('MyAccount.password.sendPasswordFailed');
             alert(message);
         } finally {
             setIsSendingReset(false);
@@ -50,31 +52,31 @@ const ChangePassword = () => {
     }
   return (
     <div className="password-section">
-        <h3>Change Password</h3>
+        <h3>{t('MyAccount.password.title')}</h3>
         <div className="password-flex-row">
             <div style={{display:'flex',flexDirection:'column',justifyContent:'right',alignItems:'flex-end'}}>
                 <div className="registration-table pass-table">
                     <div className="table-row">
-                        <div className="label-cell">Existing Password</div>
+                        <div className="label-cell">{t('MyAccount.password.existingPassword')}</div>
                         <div className="input-cell"><MyTextPassword name="existing-password" autoComplete="new-password" value={oldPassowrd} setValue={setOldPassword} /></div>
                     </div>
                     <div className="table-row">
-                        <div className="label-cell">New Password</div>
+                        <div className="label-cell">{t('MyAccount.password.newPassword')}</div>
                         <div className="input-cell"><MyTextPassword name="new-password" autoComplete="new-password" value={newPassowrd} setValue={setNewPassowrd} /></div>
                     </div>
                     <div className="table-row">
-                        <div className="label-cell">Confirm New Password</div>
+                        <div className="label-cell">{t('MyAccount.password.confirmNewPassword')}</div>
                         <div className="input-cell"><MyTextPassword name="confirm-new-password" autoComplete="new-password" value={newPassowrd2} setValue={setNewPassowrd2}/></div>
                     </div>
                 </div>
                 <div className="action-center">
-                    <button  onClick={updatePassword} className="btn-blue-rect">Save Changes</button>
+                    <button  onClick={updatePassword} className="btn-blue-rect">{t('MyAccount.common.saveChanges')}</button>
                 </div>
             </div>
             <div className="pass-forgot-block">
-                <p>* Forgot Password? Click send and we will email you a new temporary password.</p>
+                <p>{t('MyAccount.password.forgotPasswordText')}</p>
                 <button className="btn-blue-oval" onClick={sendForgotPassword} disabled={isSendingReset}>
-                    {isSendingReset ? 'Sending...' : 'Send'}
+                    {isSendingReset ? t('MyAccount.common.sending') : t('MyAccount.common.send')}
                 </button>
             </div>
         </div>

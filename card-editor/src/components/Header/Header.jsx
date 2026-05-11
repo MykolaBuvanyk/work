@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import styles from './Header.module.css';
 import { useLocation, useNavigate as UseRealNavigate } from 'react-router-dom';
 import { SlArrowDown } from 'react-icons/sl';
-import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuImage, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
+import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, mergeUser } from '../../store/reducers/user';
-import combinedCountries from '../Countries';
 import Flag from 'react-flagkit';
 import { $authHost } from '../../http';
 import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
@@ -13,7 +12,9 @@ import LogoSvg from './LogoSvg';
 import i18n, { prefixedLngs } from '../../i18n';
 import Link from '../Localized/LocalizedLink';
 import useNavigate from '../Localized/useLocalizedNavigate';
+import { useTranslation } from 'react-i18next';
  
+// eslint-disable-next-line react-refresh/only-export-components
 export const languageCountries = [
   { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
   { flag: "🇫🇷", code: "FR", codeFlag: "FR" },
@@ -38,6 +39,7 @@ export const languageCountries = [
 
 
 const Header = () => {
+  const { t } = useTranslation();
   const EDITOR_AUTH_USER_KEY = 'editorAuthUserId';
   const { pathname } = useLocation(); // <-- тут шлях
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -47,35 +49,42 @@ const Header = () => {
   const [urls, setUrls] = useState([
     {
       name: 'Home',
+      labelKey: 'Header.nav.home',
       url: '/',
     },
     {
       name: 'Registration',
+      labelKey: 'Header.nav.registration',
       url: '/login',
     },
     {
       name: 'New Project',
+      labelKey: 'Header.nav.newProject',
       url: '/online-sign-editor',
     },
     {
-      name: 'Templates',
       name: 'FAQ',
+      labelKey: 'Header.nav.faq',
       url: '/faq',
     },
     {
       name: 'Products',
+      labelKey: 'Header.nav.products',
       url: '/products',
     },
     {
       name: 'Industries',
+      labelKey: 'Header.nav.industries',
       url: '/industries',
     },
     {
       name: 'Quick Guide',
+      labelKey: 'Header.nav.quickGuide',
       url: '/quick-guide',
     },
     {
       name: 'Contacts',
+      labelKey: 'Header.nav.contacts',
       url: '/contacts',
     },
   ]);
@@ -85,6 +94,7 @@ const Header = () => {
     const newUrls = [
       {
         name: 'Home',
+        labelKey: 'Header.nav.home',
         url: '/',
       },
     ];
@@ -92,11 +102,13 @@ const Header = () => {
     if (!isAuth) {
       newUrls.push({
         name: 'Registration',
+        labelKey: 'Header.nav.registration',
         url: '/login',
       });
     } else {
       newUrls.push({
         name: 'My Account',
+        labelKey: 'Header.nav.myAccount',
         url: '/account',
       });
     }
@@ -105,26 +117,32 @@ const Header = () => {
       ...[
         {
           name: 'New Project',
+          labelKey: 'Header.nav.newProject',
           url: '/online-sign-editor',
         },
         {
           name: 'Products',
+          labelKey: 'Header.nav.products',
           url: '/products',
         },
         {
           name: 'Industries',
+          labelKey: 'Header.nav.industries',
           url: '/industries',
         },
         {
           name: 'FAQ',
+          labelKey: 'Header.nav.faq',
           url: '/faq',
         },
         {
           name: 'Quick Guide',
+          labelKey: 'Header.nav.quickGuide',
           url: '/quick-guide',
         },
         {
           name: 'Contacts',
+          labelKey: 'Header.nav.contacts',
           url: '/contacts',
         },
       ]
@@ -133,6 +151,7 @@ const Header = () => {
     if (isAdmin) {
       newUrls.push({
         name: 'Admin',
+        labelKey: 'Header.nav.admin',
         url: '/admin',
       });
     }
@@ -145,10 +164,14 @@ const Header = () => {
   const exit = async () => {
     try {
       await resetEditorStateForUserSwitch();
-    } catch {}
+    } catch {
+      // Best-effort cleanup on logout.
+    }
     try {
       localStorage.removeItem(EDITOR_AUTH_USER_KEY);
-    } catch {}
+    } catch {
+      // Best-effort cleanup on logout.
+    }
     dispatch(logout());
   };
 
@@ -305,13 +328,17 @@ const Header = () => {
 
           {/* Easy / Fast / Quick rows */}
           <div className={styles.drawerFeatures}>
-            {[['Easy','Design'],['Fast','Manufacturing'],['Quick','Delivery']].map(([kw, val]) => (
+            {[
+              ['Header.features.easy', 'Header.features.design'],
+              ['Header.features.fast', 'Header.features.manufacturing'],
+              ['Header.features.quick', 'Header.features.delivery'],
+            ].map(([kw, val]) => (
               <div key={kw} className={styles.drawerFeatureRow}>
                 <svg width="14" height="9" viewBox="0 0 20 16" fill="none" className={styles.drawerCheckSvg}>
                   <path d="M2 6.51613L7.33333 12L18 2" stroke="#0BC944" strokeWidth="4"/>
                 </svg>
-                <span className={styles.drawerKeyword}>{kw}</span>
-                <span className={styles.drawerValue}>{val}</span>
+                <span className={styles.drawerKeyword}>{t(kw)}</span>
+                <span className={styles.drawerValue}>{t(val)}</span>
               </div>
             ))}
           </div>
@@ -347,7 +374,7 @@ const Header = () => {
 
           {/* MENU section */}
           <div className={styles.drawerSection}>
-            <p className={styles.drawerSectionLabel}>Menu</p>
+            <p className={styles.drawerSectionLabel}>{t('Header.sections.menu')}</p>
             <div className={styles.drawerNavList}>
               {urls.map(x => (
                 <Link
@@ -357,7 +384,7 @@ const Header = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <span className={styles.drawerNavIcon}>{menuIcons[x.url] || <LuHouse size={18} />}</span>
-                  {x.name}
+                  {t(x.labelKey || x.name)}
                 </Link>
               ))}
             </div>
@@ -365,7 +392,7 @@ const Header = () => {
 
           {/* ACCOUNT section */}
           <div className={styles.drawerSection}>
-            <p className={styles.drawerSectionLabel}>Account</p>
+            <p className={styles.drawerSectionLabel}>{t('Header.sections.account')}</p>
             {isAuth ? (
               <div className={styles.drawerAccount}>
                 <div className={styles.drawerUserRow}>
@@ -376,12 +403,12 @@ const Header = () => {
                   </div>
                 </div>
                 <button className={styles.drawerLogout} onClick={() => { exit(); setIsMobileMenuOpen(false); }}>
-                  <LuArrowRight size={16} color="#a0353b" /> Log out
+                  <LuArrowRight size={16} color="#a0353b" /> {t('Header.auth.logout')}
                 </button>
               </div>
             ) : (
               <button className={styles.drawerLogout} onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}>
-                <LuArrowRight size={16} color="#a0353b" /> Log in / Register
+                <LuArrowRight size={16} color="#a0353b" /> {t('Header.auth.loginRegisterSlash')}
               </button>
             )}
           </div>
@@ -407,8 +434,8 @@ const Header = () => {
                 <path d="M2 6.51613L7.33333 12L18 2" stroke="#0BC944" strokeWidth="5" />
               </svg>
             </li>
-            <li className={styles.leftListEl}>Easy</li>
-            <li>Design</li>
+            <li className={styles.leftListEl}>{t('Header.features.easy')}</li>
+            <li>{t('Header.features.design')}</li>
             <li className={styles.leftListEl}>
               <svg
                 width="20"
@@ -420,8 +447,8 @@ const Header = () => {
                 <path d="M2 6.51613L7.33333 12L18 2" stroke="#0BC944" strokeWidth="5" />
               </svg>
             </li>
-            <li className={styles.leftListEl}>Fast</li>
-            <li>Manufacturing</li>
+            <li className={styles.leftListEl}>{t('Header.features.fast')}</li>
+            <li>{t('Header.features.manufacturing')}</li>
             <li className={styles.leftListEl}>
               <svg
                 width="20"
@@ -433,8 +460,8 @@ const Header = () => {
                 <path d="M2 6.51613L7.33333 12L18 2" stroke="#0BC944" strokeWidth="5" />
               </svg>
             </li>
-            <li className={styles.leftListEl}>Quick</li>
-            <li>Delivery</li>
+            <li className={styles.leftListEl}>{t('Header.features.quick')}</li>
+            <li>{t('Header.features.delivery')}</li>
           </ul>
         </div>
         <div className={styles.headerBaner}>
@@ -446,7 +473,7 @@ const Header = () => {
             <p className={styles.company} style={{textAlign:'right'}}>{isAuth ? (user?.company || '') : ''}</p>
           </div>
           <p onClick={()=>isAuth? exit():navigate('/login')} className={styles.logOut} style={{ margin: 0 }}>
-            {isAuth ? 'Log out' : <>Log in or <span style={{color:'red'}}>Register</span></>}
+            {isAuth ? t('Header.auth.logout') : <>{t('Header.auth.loginOr')} <span style={{color:'red'}}>{t('Header.auth.register')}</span></>}
           </p>
 
           <div className={styles.lang}>
@@ -485,7 +512,7 @@ const Header = () => {
               key={x.url}
               className={`${styles.secondPartEl2} ${pathname == x.url ? styles.current : ''}`}
             >
-              <Link to={`${x.url}`}>{x.name}</Link>
+              <Link to={`${x.url}`}>{t(x.labelKey || x.name)}</Link>
             </li>
           ))}
         </ul>

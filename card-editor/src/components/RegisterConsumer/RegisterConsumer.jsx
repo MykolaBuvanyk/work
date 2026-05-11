@@ -3,22 +3,21 @@ import './RegisterConsumer.scss';
 import MyTextPassword from '../MyInput/MyTextPassword';
 import MyTextInput from '../MyInput/MyTextInput';
 import { $host } from '../../http';
-import { useDispatch } from 'react-redux';
 import combinedCountries from '../Countries';
 import { useTranslation } from 'react-i18next';
 import Link from '../Localized/LocalizedLink';
 import useNavigate from '../Localized/useLocalizedNavigate';
 
 const tellAboutList=[
-  'Online / Internet',
-  'Through samples',
-  'Via flyer',
-  'Colleague',
-  'Social media',
-  'Event / exhibition',
-  'Newsletter',
-  'E-Mail',
-  'Other'
+  { value: 'Online / Internet', labelKey: 'RegisterConsumer.tellAbout.onlineInternet' },
+  { value: 'Through samples', labelKey: 'RegisterConsumer.tellAbout.throughSamples' },
+  { value: 'Via flyer', labelKey: 'RegisterConsumer.tellAbout.viaFlyer' },
+  { value: 'Colleague', labelKey: 'RegisterConsumer.tellAbout.colleague' },
+  { value: 'Social media', labelKey: 'RegisterConsumer.tellAbout.socialMedia' },
+  { value: 'Event / exhibition', labelKey: 'RegisterConsumer.tellAbout.eventExhibition' },
+  { value: 'Newsletter', labelKey: 'RegisterConsumer.tellAbout.newsletter' },
+  { value: 'E-Mail', labelKey: 'RegisterConsumer.tellAbout.email' },
+  { value: 'Other', labelKey: 'RegisterConsumer.tellAbout.other' }
 ]
 
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
@@ -65,7 +64,6 @@ const replaceEmailInList = (emails, previousEmail, nextEmail) => {
 
 const RegisterConsumer = () => {
   const {t}=useTranslation()
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [tellAboutSelection, setTellAboutSelection] = useState('');
   
@@ -75,8 +73,8 @@ const RegisterConsumer = () => {
     phone: '', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false, firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',
-    country2: '', state2: '', isSubscribe: false, type: 'Consumer',
-    firstName2:'',company2:'',address4:'',address5:'', address6:'',
+    country2: '', state2: '', type: 'Consumer',
+    company2:'',address4:'',address5:'', address6:'',
     eMailInvoice:'', weWill:'',tellAbout:''
   });
 
@@ -91,7 +89,7 @@ const RegisterConsumer = () => {
   const sumbit = async e => {
     if(formData.password!=formData.confirmPassword){
       e.preventDefault()
-      alert("password must match");
+      alert(t("RegisterConsumer.passwordMustMatch"));
       formData.password='';
       formData.confirmPassword='';
       return;
@@ -104,7 +102,7 @@ const RegisterConsumer = () => {
       navigate(`/login/enter/${res.data.newUser.id}`);
     } catch (err) {
       console.log(4324,err);
-      const message = err?.response?.data?.message || 'Registration failed';
+      const message = err?.response?.data?.message || t("RegisterConsumer.registrationFailed");
       alert(message);
     }
   };
@@ -162,7 +160,7 @@ const RegisterConsumer = () => {
     const normalizedEmails = new Set(parseEmailList(value).map(normalizeEmail));
 
     setFormData((prev) => ({ ...prev, weWill: value }));
-    setInvoiceEmailSync((prev) => ({
+    setInvoiceEmailSync(() => ({
       linked: !!currentPrimaryEmail && normalizedEmails.has(normalizeEmail(currentPrimaryEmail)),
       sourceValue: currentPrimaryEmail,
     }));
@@ -174,7 +172,7 @@ const RegisterConsumer = () => {
       ...prev,
       tellAbout:
         value === 'Other'
-          ? (tellAboutList.includes(prev.tellAbout) ? '' : prev.tellAbout)
+          ? (tellAboutList.some((item) => item.value === prev.tellAbout) ? '' : prev.tellAbout)
           : value
     }));
   };
@@ -344,7 +342,7 @@ const RegisterConsumer = () => {
               <input
                 value={formData.tellAbout}
                 onChange={e => handleInput('tellAbout')(e.target.value)}
-                placeholder="Please specify"
+                placeholder={t("RegisterConsumer.pleaseSpecify")}
               />
               <select
                 className="tell-about-switch"
@@ -352,13 +350,13 @@ const RegisterConsumer = () => {
                 value=""
               >
                 <option value="" disabled></option>
-                {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+                {tellAboutList.map(x => <option key={x.value} value={x.value}>{t(x.labelKey)}</option>)}
               </select>
             </div>
           ) : (
             <select onChange={e => handleTellAboutSelect(e.target.value)} value={tellAboutSelection}>
               <option value="" disabled>{t("RegisterConsumer.rr_18")}</option>
-              {tellAboutList.map(x => <option key={x} value={x}>{x}</option>)}
+              {tellAboutList.map(x => <option key={x.value} value={x.value}>{t(x.labelKey)}</option>)}
             </select>
           )}
         </div>

@@ -25,8 +25,8 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
       dispatch(setUser({ token: res.data.token }));
       onSuccess?.();
       navigate('/online-sign-editor');
-    } catch (err) {
-      alert('error');
+    } catch {
+      alert(t("LoginForm.error"));
     }
   };
 
@@ -34,13 +34,13 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
     try {
       const normalizedEmail = String(forgotEmail || '').trim().toLowerCase();
       if (!normalizedEmail) {
-        alert('Please enter your e-mail address.');
+        alert(t("LoginForm.enterEmail"));
         return;
       }
-      const res=await $host.post('auth/sendNewPassword',{email:normalizedEmail});
-      alert('A new password has been sent to your email.');
+      await $host.post('auth/sendNewPassword',{email:normalizedEmail});
+      alert(t("LoginForm.newPasswordSent"));
     }catch(err){
-      const message = err?.response?.data?.message || 'Failed to send password email.';
+      const message = err?.response?.data?.message || t("LoginForm.sendPasswordFailed");
       alert(message);
     }
   }

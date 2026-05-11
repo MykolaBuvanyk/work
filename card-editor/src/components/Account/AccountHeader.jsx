@@ -1,19 +1,21 @@
 import React from 'react'
 import './AccountHeader.scss'
 import Link from '../Localized/LocalizedLink'
+import { useTranslation } from 'react-i18next'
 
 const AccountHeader = () => {
+    const { t } = useTranslation()
     const urls=[
         {
-            name:'My Orders',
+            name:'MyAccount.header.orders',
             url:'/account'
         },
         {
-            name:'My Details',
+            name:'MyAccount.header.details',
             url:'/account/detail'
         },
         {
-            name:'My Settings',
+            name:'MyAccount.header.settings',
             url:'/account/setting'
         },
     ]
@@ -26,7 +28,7 @@ const AccountHeader = () => {
                       className={x.url==location.pathname?'active':""}
                       to={x.url}
                     >
-                        {x.name}
+                        {t(x.name)}
                     </Link>
                 </li>
                 )

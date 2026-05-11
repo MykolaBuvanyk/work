@@ -34,7 +34,7 @@ export default function Seo() {
   const page =
     cleanPath === '/'
       ? 'home'
-      : cleanPath.split('/')[1];
+      : cleanPath.split('/').slice(1).join('/');
 
   // meta
   const title = t(`meta.${page}.title`);

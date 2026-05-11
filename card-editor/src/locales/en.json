@@ -1,4 +1,250 @@
 {
+  "meta": {
+    "home":{
+      "title":"Custom Signs & Engraved Plates in Germany | SignXpert",
+      "description":"Design custom signs, labels and nameplates with SignXpert. High-quality engraving and printing with fast delivery across Germany. Perfect for business and home use."
+    },
+    "login": {
+      "title": "Log In – SignXpert",
+      "description": "Log in to your SignXpert account to manage orders, download files and track your custom signs. Secure access for customers in Germany."
+    },
+    "account": {
+      "title": "My Account – Orders, Settings & Dashboard | SignXpert",
+      "description": "Access your SignXpert account to manage orders, track shipments and update your details. Secure login for business and industrial customers in Germany."
+    },
+    "online-sign-editor": {
+      "title": "Design Custom Signs Online – Sign Editor Tool | SignXpert",
+      "description": "Use the SignXpert online sign editor to design custom signs, labels and engraved nameplates in minutes. Easy customization, real-time preview and fast delivery across Germany."
+    },
+    "products": {
+      "title": "Industrial Signs & Electrical Labels in Germany | SignXpert",
+      "description": "Discover custom industrial signs, engraved labels and nameplates for electrical and technical use. Durable materials, precise engraving and fast delivery across Germany with SignXpert."
+    },
+    "faq": {
+      "title": "FAQ – Custom Signs & Industrial Labels | SignXpert",
+      "description": "Find answers about custom signs, industrial labels, engraving and ordering process at SignXpert. Fast help and support for customers across Germany."
+    },
+    "quick-guide": {
+      "title": "How to Create Custom Signs Online – Quick Guide | SignXpert",
+      "description": "Follow this quick guide to design custom signs, labels and engraved nameplates with SignXpert. Easy steps using our online editor with fast delivery in Germany."
+    },
+    "contacts": {
+      "title": "Contact & Support – Industrial Signs | SignXpert",
+      "description": "Contact SignXpert for custom industrial signs, engraved labels and technical nameplates. Our team supports orders, design and technical questions across Germany."
+    },
+    "industries": {
+      "title": "Industries – Industrial & Electrical Sign Solutions | SignXpert",
+      "description": "Explore industries served by SignXpert including electrical, industrial and technical sectors. Discover custom signs, engraved labels and nameplates for professional applications in Germany."
+    },
+    "industries/mep-building-services/electrical-installation": {
+      "title": "Electrical Installation Signage & Labels for MEP Projects | SignXpert",
+      "description": "High-quality electrical installation signs, labels and nameplates for MEP and building services projects. Durable, precise and compliant solutions for industrial applications across Germany."
+    },
+    "industries/mep-building-services/sprinkler-installations": {
+      "title": "Sprinkler Installation Labels & Fire System Signage | SignXpert",
+      "description": "High-quality sprinkler installation labels, fire system signs and identification tags for MEP and building services projects. Durable, compliant solutions for industrial safety systems across Germany."
+    },
+    "industries/mep-building-services/fire-installation": {
+      "title": "Fire Installation Labels & Safety Signage for MEP Projects | SignXpert",
+      "description": "High-quality fire installation labels, safety signs and identification tags for MEP and building services projects. Durable and compliant solutions for industrial fire protection systems across Germany."
+    },
+    "industries/mep-building-services/refrigeration-installations": {
+      "title": "Refrigeration Installation Labels & HVAC Signage | SignXpert",
+      "description": "High-quality refrigeration installation labels, HVAC signs and nameplates for MEP and building services projects. Durable and compliant solutions for industrial cooling systems across Germany."
+    },
+    "industries/mep-building-services/ventilation-installations": {
+      "title": "Ventilation Installation Labels & HVAC Duct Signage | SignXpert",
+      "description": "High-quality ventilation installation labels, duct signage and airflow markers for MEP and HVAC systems. Durable and compliant identification solutions for industrial building projects across Germany."
+    },
+    "industries/mep-building-services/elevators-and-lift-systems": {
+      "title": "Elevator & Lift System Labels for MEP Projects | SignXpert",
+      "description": "High-quality elevator and lift system labels, signage and identification tags for MEP and building services projects. Durable, precise and compliant solutions for industrial vertical transport systems across Germany."
+    },
+    "industries/mep-building-services/electrical-and-control-cabinets": {
+      "title": "Electrical & Control Cabinet Labels for Industrial Systems | SignXpert",
+      "description": "High-quality electrical and control cabinet labels for industrial systems. Durable engraved signage, wire and component identification for safe and efficient panel operation across MEP projects in Germany."
+    },
+    "industries/mep-building-services/electrical-in-control-and-building-automation": {
+      "title": "Electrical & Building Automation Labels for MEP Systems | SignXpert",
+      "description": "High-quality electrical and building automation labels for MEP systems. Durable identification solutions for control panels, sensors and automated building systems across industrial projects in Germany."
+    },
+    "industries/mep-building-services/plumbing-installations-across": {
+      "title": "Plumbing Installation Labels & Pipe Marking for MEP Systems | SignXpert",
+      "description": "High-quality plumbing installation labels, pipe marking and identification tags for MEP systems. Durable and compliant solutions for water, heating and drainage systems across industrial and building projects in Germany."
+    },
+    "industries/security-automation/alarm-and-security-installations": {
+      "title": "Alarm & Security System Labels for Building Automation | SignXpert",
+      "description": "High-quality alarm and security system labels for building automation and industrial installations. Durable identification solutions for access control, intrusion alarms and security systems across Germany."
+    },
+    "industries/security-automation/robotics-industry": {
+      "title": "Robotics Industry Labeling & Automation Signage | SignXpert",
+      "description": "High-quality labeling and signage solutions for robotics and industrial automation systems. Durable identification for robotic production lines, smart factories and Industry 4.0 applications across Germany."
+    },
+    "industries/security-automation/production-lines": {
+      "title": "Production Line Labels & Industrial Marking Systems | SignXpert",
+      "description": "High-quality production line labels and industrial marking systems for manufacturing environments. Durable identification solutions for machines, workflows and safety zones across automated factories in Germany."
+    },
+    "industries/security-automation/industrial-maintenance": {
+      "title": "Industrial Maintenance Labels & Equipment Identification | SignXpert",
+      "description": "Durable industrial maintenance labels and equipment identification solutions for safe servicing, inspection and repair of building and production systems. Reliable marking for maintenance operations across Germany."
+    },
+    "industries/security-automation/hydraulic-systems-and-fluid-technology": {
+      "title": "Hydraulic Systems & Fluid Technology Labels for Industry | SignXpert",
+      "description": "High-quality hydraulic system labels and fluid technology identification solutions for industrial machinery. Durable marking for pipes, valves and hydraulic equipment used in manufacturing and automation systems across Germany."
+    },
+    "industries/energy-environment/solar-energy-and-photovoltaics": {
+      "title": "Solar Energy & Photovoltaic System Labels | SignXpert",
+      "description": "High-quality solar energy and photovoltaic system labels for industrial installations. Durable, weather-resistant identification solutions for PV panels, inverters and electrical components across renewable energy projects in Germany."
+    },
+    "industries/energy-environment/nuclear-power": {
+      "title": "Nuclear Power Plant Labels & Safety Signage | SignXpert",
+      "description": "High-quality nuclear power plant labels and safety signage for energy facilities. Durable, compliant identification solutions for radiation zones, equipment marking and controlled areas in nuclear installations across Germany."
+    },
+    "industries/energy-environment/hydropower": {
+      "title": "Hydropower Plant Labels & Safety Signage | SignXpert",
+      "description": "High-quality hydropower plant labels and safety signage for renewable energy facilities. Durable identification solutions for turbines, generators, water systems and electrical infrastructure in hydroelectric power plants across Germany."
+    },
+    "industries/energy-environment/combined-heat-and-power-plants": {
+      "title": "Combined Heat & Power (CHP) Plant Labels & Signage | SignXpert",
+      "description": "High-quality Combined Heat and Power (CHP) plant labels and signage for industrial energy systems. Durable identification solutions for piping, equipment and safety areas in cogeneration plants across Germany."
+    },
+    "industries/energy-environment/biogas": {
+      "title": "Biogas & Waste-to-Energy Plant Labels & Safety Signage | SignXpert Germany",
+      "description": "Durable biogas plant labels and safety signage for renewable energy systems. Reliable identification for digesters, gas pipelines, valves and equipment in biogas and waste-to-energy facilities across Germany."
+    },
+    "industries/energy-environment/waste-stations": {
+      "title": "Waste Station Labels & Recycling Signage Systems | SignXpert",
+      "description": "High-quality waste station labels and recycling signage systems for industrial and environmental facilities. Durable identification solutions for sorting areas, waste streams and recycling stations across Germany."
+    },
+    "industries/energy-environment/wastewater-treatment-plants": {
+      "title": "Wastewater Treatment Plant Labels & Safety Signage | SignXpert",
+      "description": "High-quality wastewater treatment plant labels and safety signage for industrial water systems. Durable identification solutions for pipes, valves, tanks and process equipment in treatment facilities across Germany."
+    },
+    "industries/energy-environment/power-grids": {
+      "title": "Power Grid Labels & Electrical Infrastructure Signage | SignXpert",
+      "description": "High-quality power grid labels and electrical infrastructure signage for transmission and distribution systems. Durable identification solutions for substations, transformers, cables and utility networks across Germany."
+    },
+    "industries/infrastructure-mobility/rail-industry": {
+      "title": "Railway Infrastructure & Rail System Labels and Signage | SignXpert Germany",
+      "description": "Durable rail industry labels and railway signage systems for transport infrastructure. Reliable identification solutions for tracks, stations, rolling stock and railway equipment across Germany."
+    },
+    "industries/infrastructure-mobility/railway-infrastructure": {
+      "title": "Railway Infrastructure Labels & Signage Systems | SignXpert",
+      "description": "High-quality railway infrastructure labels and signage systems for rail networks. Durable identification solutions for tracks, signaling, switches, tunnels and rail infrastructure across Germany."
+    },
+    "industries/infrastructure-mobility/airports": {
+      "title": "Airport Infrastructure Labels & Aviation Signage Systems | SignXpert",
+      "description": "High-quality airport infrastructure labels and aviation signage systems for terminals, runways and operational areas. Durable identification solutions for wayfinding, safety and ground operations across airports in Germany."
+    },
+    "industries/infrastructure-mobility/ports": {
+      "title": "Port Infrastructure Labels & Maritime Facility Signage | SignXpert",
+      "description": "High-quality port infrastructure labels and signage systems for harbors, terminals and logistics facilities. Durable identification solutions for docks, cargo areas, storage zones and operational port environments across Germany."
+    },
+    "industries/infrastructure-mobility/tunnels-and-bridges": {
+      "title": "Tunnel & Bridge Infrastructure Labels and Safety Signage | SignXpert",
+      "description": "High-quality tunnel and bridge infrastructure labels and signage systems for transport networks. Durable identification solutions for structural elements, safety zones, maintenance areas and operational control in tunnels and bridges across Germany."
+    },
+    "industries/infrastructure-mobility/ships-and-offshore-industry": {
+      "title": "Ships & Offshore Industry Labels and Maritime Signage Systems | SignXpert",
+      "description": "High-quality ships and offshore industry labels and signage systems for marine vessels, platforms and shipyards. Durable identification solutions for safety zones, equipment, pipelines and operational areas in maritime and offshore environments across Germany and global waters."
+    },
+    "industries/infrastructure-mobility/charging-infrastructure-for-electric-vehicles": {
+      "title": "EV Charging Infrastructure Labels & Signage Systems | SignXpert",
+      "description": "High-quality electric vehicle charging infrastructure labels and signage systems for public and private charging stations. Durable identification solutions for charging points, parking zones, safety information and wayfinding in EV infrastructure across Germany."
+    },
+    "industries/infrastructure-mobility/construction-projects": {
+      "title": "Construction Site Labels & Industrial Safety Signage Systems | SignXpert",
+      "description": "High-quality construction site labels and safety signage systems for building projects and industrial environments. Durable identification solutions for hazards, equipment, materials and operational zones across construction sites in Germany."
+    },
+    "industries/infrastructure-mobility/architecture-and-construction": {
+      "title": "Architectural & Construction Industry Labels and Signage Systems | SignXpert",
+      "description": "High-quality architectural and construction industry labels and signage systems for buildings and infrastructure projects. Durable identification solutions for wayfinding, safety, compliance and structural elements across design and construction environments in Germany."
+    },
+    "industries/manufacturing-heavy-industry/automotive-industry-signage-and-labeling": {
+      "title": "Automotive Industry Labels & Vehicle Manufacturing Signage | SignXpert",
+      "description": "High-quality automotive industry labels and signage for vehicle manufacturing. Durable identification solutions for components, engine compartments, assemblies and production lines in the automotive sector across Germany."
+    },
+    "industries/manufacturing-heavy-industry/aviation-industry": {
+      "title": "Aviation Industry Labels & Aircraft Manufacturing Signage | SignXpert",
+      "description": "High-quality aviation industry labels and signage systems for aircraft manufacturing, maintenance and ground operations. Durable identification solutions for components, safety zones, equipment and traceability in the aviation sector across Germany."
+    },
+    "industries/manufacturing-heavy-industry/electronics-industry-signage-and-labeling": {
+      "title": "Electronics Industry Labels & PCB Marking Systems | SignXpert",
+      "description": "High-quality electronics industry labels and signage systems for PCB production, components and electronic assemblies. Durable identification solutions for circuit boards, cables, enclosures and traceability marking in electronics manufacturing across Germany."
+    },
+    "industries/manufacturing-heavy-industry/steel-and-metal-industry": {
+      "title": "Steel & Metal Industry Labels & Industrial Marking Systems | SignXpert",
+      "description": "High-quality steel and metal industry labels and marking systems for production and processing environments. Durable identification solutions for steel components, pipes, coils, machinery and harsh industrial conditions across the metal industry in Germany."
+    },
+    "industries/manufacturing-heavy-industry/mining-industry": {
+      "title": "Mining Industry Labels & Safety Signage Systems | SignXpert",
+      "description": "High-quality mining industry labels and safety signage systems for underground and surface operations. Durable identification solutions for hazardous zones, machinery, tunnels, equipment and safety-critical environments in mining facilities across Germany."
+    },
+    "industries/manufacturing-heavy-industry/pulp-and-paper-industry": {
+      "title": "Pulp & Paper Industry Labels & Industrial Marking Systems | SignXpert",
+      "description": "High-quality pulp and paper industry labels and marking systems for production and processing environments. Durable identification solutions for paper mills, pulp handling, reels, pipes and machinery in demanding industrial conditions across Germany."
+    },
+    "industries/manufacturing-heavy-industry/machinery-industry": {
+      "title": "Machinery Industry Labels & Industrial Equipment Marking Systems | SignXpert",
+      "description": "High-quality machinery industry labels and industrial marking systems for production equipment and industrial machines. Durable identification solutions for components, safety instructions, traceability and maintenance labeling in harsh manufacturing environments across Germany."
+    },
+    "industries/manufacturing-heavy-industry/tool-manufacturing-and-fitness-equipment": {
+      "title": "Tool Manufacturing & Fitness Equipment Labels and Safety Signage | SignXpert",
+      "description": "High-quality labels and safety signage for tool manufacturing and fitness equipment applications. Durable identification solutions for tools, machines, training equipment and safety instructions in industrial and sports environments across Germany."
+    },
+    "industries/manufacturing-heavy-industry/battery-factories": {
+      "title": "Battery Factory Labels & Safety Signage Systems | SignXpert",
+      "description": "High-quality battery factory labels and safety signage systems for energy storage and EV production facilities. Durable identification solutions for production lines, chemical areas, electrical systems and hazardous zones in battery manufacturing plants across Germany."
+    },
+    "industries/it-telecom/tele-and-data-installations": {
+      "title": "Telecom & Data Installation Labels and Network Signage Systems | SignXpert",
+      "description": "High-quality telecom and data installation labels and network signage systems for structured cabling and IT infrastructure. Durable identification solutions for fiber optic networks, server rooms, data cables and communication systems across IT and telecom environments in Germany."
+    },
+    "industries/it-telecom/telecom": {
+      "title": "Telecom Industry Labels & Network Infrastructure Signage | SignXpert",
+      "description": "High-quality telecom industry labels and network infrastructure signage systems for communication networks. Durable identification solutions for fiber optic cables, data centers, telecom equipment, towers and communication systems across Germany."
+    },
+    "industries/it-telecom/it-infrastructure-and-data-centers": {
+      "title": "IT Infrastructure & Data Center Labels and Network Signage | SignXpert",
+      "description": "High-quality IT infrastructure and data center labels and network signage systems for server rooms and digital facilities. Durable identification solutions for cables, racks, servers, patch panels and critical data center equipment across Germany."
+    },
+    "industries/branding-industrial-labeling/food-industry-safety-hygiene-and-efficiency": {
+      "title": "Food Industry Labels & Hygiene Safety Signage Systems | SignXpert",
+      "description": "High-quality food industry labels and hygiene signage systems for production, processing and packaging environments. Durable identification solutions for safety, cleanliness, HACCP compliance and operational efficiency in food facilities across Germany."
+    },
+    "industries/branding-industrial-labeling/furniture-and-kitchen-manufacturing": {
+      "title": "Furniture & Kitchen Manufacturing Labels and Industrial Signage | SignXpert",
+      "description": "High-quality furniture and kitchen manufacturing labels and signage systems for production environments. Durable identification solutions for components, materials, assembly lines and product traceability in furniture and kitchen manufacturing across Germany."
+    },
+    "industries/branding-industrial-labeling/warehouse-logistics-and-industrial-facilities": {
+      "title": "Warehouse Logistics & Industrial Facility Labels and Signage Systems | SignXpert",
+      "description": "High-quality warehouse logistics & industrial facility labels and signage systems for storage, distribution and production environments. Durable identification solutions for shelving, goods flow, safety zones, picking areas and logistics operations across Germany."
+    },
+    "industries/branding-industrial-labeling/medical-and-healthcare": {
+      "title": "Medical & Healthcare Labels and Hospital Safety Signage Systems | SignXpert",
+      "description": "High-quality medical and healthcare labels and signage systems for hospitals, clinics and laboratories. Durable identification solutions for equipment, rooms, safety zones, hygiene areas and patient care environments across healthcare facilities in Germany."
+    },
+    "industries/branding-industrial-labeling/oils-lubricants-and-industrial-fluids": {
+      "title": "Oils, Lubricants & Industrial Fluids Labels and Safety Signage | SignXpert",
+      "description": "High-quality oils, lubricants and industrial fluids labels and safety signage systems for manufacturing and maintenance environments. Durable identification solutions for oil storage, lubrication points, hydraulic systems and fluid handling across industrial facilities in Germany."
+    },
+    "industries/branding-industrial-labeling/branding-and-event-identity": {
+      "title": "Branding & Event Identity Labels and Environmental Signage Systems | SignXpert",
+      "description": "High-quality branding and event identity labels and signage systems for corporate spaces, exhibitions and industrial environments. Durable visual communication solutions for brand activation, event wayfinding, promotional areas and environmental graphics across Germany."
+    },
+    "industries/branding-industrial-labeling/packaging-industry": {
+      "title": "Packaging Industry Labels & Industrial Packaging Signage Systems | SignXpert",
+      "description": "High-quality packaging industry labels and industrial signage systems for production, logistics and supply chain operations. Durable identification solutions for cartons, pallets, shipping packages and packaging lines ensuring traceability, efficiency and compliance across Germany."
+    },
+    "industries/branding-industrial-labeling/our-technologies-and-materials": {
+      "title": "Industrial Label Technologies & Materials for Signage Systems | SignXpert",
+      "description": "High-quality industrial labeling technologies and materials for durable signage systems. Advanced solutions including metals, plastics, coatings and printing technologies designed for extreme environments, ensuring long-lasting identification across industrial applications in Germany."
+    },
+    "industries/branding-industrial-labeling/packaging-systems-and-food-engineering": {
+      "title": "Packaging Systems & Food Engineering Labels and Industrial Signage | SignXpert",
+      "description": "High-quality packaging systems and food engineering labels for industrial production environments. Durable identification solutions for packaging lines, processing equipment, food systems and automated manufacturing ensuring traceability, hygiene and efficiency across Germany."
+    }
+  },
   "TermsOfPurchasing": {
     "t_1": "Terms of Purchasing",
     "t_2": "Company Information",

@@ -211,6 +211,7 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
         transId: `xav-${Date.now()}`,
         transactionSrc: 'SignXpert',
       },
+      timeout: 8000,
     });
 
     const xav = response.data?.XAVResponse;

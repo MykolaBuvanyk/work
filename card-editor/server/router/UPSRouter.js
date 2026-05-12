@@ -185,11 +185,11 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 });
 
 UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
+  const { address, city, postalCode, country } = req.body;
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Request timeout')), 10000)
   );
   try {
-    const { address, city, postalCode, country } = req.body;
     const isSandbox = process.env.UPS_SANDBOX === 'true';
     const url = isSandbox
       ? 'https://wwwcie.ups.com/api/addressvalidation/v1/3'

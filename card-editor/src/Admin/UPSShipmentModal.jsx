@@ -198,9 +198,10 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           </button>
           {validation && (
             <div style={{marginTop:'8px', padding:'10px', borderRadius:'6px',
-              background: validation.isValid ? '#f0fff0' : validation.noCandidate ? '#fff0f0' : '#fff8e1',
-              border: `1px solid ${validation.isValid ? '#4caf50' : validation.noCandidate ? '#f44336' : '#ff9800'}`
+              background: validation.notSupported ? '#f5f5f5' : validation.isValid ? '#f0fff0' : validation.noCandidate ? '#fff0f0' : '#fff8e1',
+              border: `1px solid ${validation.notSupported ? '#ccc' : validation.isValid ? '#4caf50' : validation.noCandidate ? '#f44336' : '#ff9800'}`
             }}>
+              {validation.notSupported && <div style={{color:'#666'}}>ℹ️ {validation.message}</div>}
               {validation.isValid && <div style={{color:'#1a7a1a', fontWeight:600}}>✅ Address is valid</div>}
               {validation.noCandidate && <div style={{color:'#d00', fontWeight:600}}>❌ Address not found by UPS. Check and correct.</div>}
               {validation.isAmbiguous && !validation.noCandidate && (

@@ -229,8 +229,12 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
     return res.json({ isValid, isAmbiguous, noCandidate, candidates });
   } catch (err) {
     const upsData = err?.response?.data;
+    const upsMsg = upsData?.response?.errors?.[0]?.message || err.message;
+    if (upsMsg && (upsMsg.toLowerCase().includes('country') || upsMsg.toLowerCase().includes('invalid'))) {
+      return res.json({ isValid: null, notSupported: true, message: `Address validation not available for country "${country}". You can still create the shipment.` });
+    }
     console.error('XAV error:', JSON.stringify(upsData, null, 2) || err.message);
-    return res.status(500).json({ message: err?.response?.data?.response?.errors?.[0]?.message || err.message });
+    return res.status(500).json({ message: upsMsg });
   }
 });
 

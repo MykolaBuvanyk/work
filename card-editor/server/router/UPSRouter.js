@@ -183,6 +183,57 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { address, city, postalCode, country } = req.body;
+    const isSandbox = process.env.UPS_SANDBOX === 'true';
+    const url = isSandbox
+      ? 'https://wwwcie.ups.com/api/addressvalidation/v1/3'
+      : 'https://onlinetools.ups.com/api/addressvalidation/v1/3';
+
+    const token = await getUpsToken();
+
+    const payload = {
+      XAVRequest: {
+        AddressKeyFormat: {
+          AddressLine: [address].filter(Boolean),
+          PoliticalDivision2: city,
+          PostcodePrimaryLow: postalCode,
+          CountryCode: country.toUpperCase(),
+        },
+      },
+    };
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        transId: `xav-${Date.now()}`,
+        transactionSrc: 'SignXpert',
+      },
+    });
+
+    const xav = response.data?.XAVResponse;
+    const isValid = !!xav?.ValidAddressIndicator;
+    const isAmbiguous = !!xav?.AmbiguousAddressIndicator;
+    const noCandidate = !!xav?.NoCandidatesIndicator;
+
+    const candidates = (xav?.Candidate || []).map(c => ({
+      name: c.AddressKeyFormat?.ConsigneeName || '',
+      address: [].concat(c.AddressKeyFormat?.AddressLine || []).join(', '),
+      city: c.AddressKeyFormat?.PoliticalDivision2 || '',
+      postalCode: c.AddressKeyFormat?.PostcodePrimaryLow || '',
+      country: c.AddressKeyFormat?.CountryCode || '',
+    }));
+
+    return res.json({ isValid, isAmbiguous, noCandidate, candidates });
+  } catch (err) {
+    const upsData = err?.response?.data;
+    console.error('XAV error:', JSON.stringify(upsData, null, 2) || err.message);
+    return res.status(500).json({ message: err?.response?.data?.response?.errors?.[0]?.message || err.message });
+  }
+});
+
 UPSRouter.post('/void-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { trackingNumber } = req.body;

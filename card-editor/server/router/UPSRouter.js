@@ -192,8 +192,8 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
   try {
     const isSandbox = process.env.UPS_SANDBOX === 'true';
     const url = isSandbox
-      ? 'https://wwwcie.ups.com/api/addressvalidation/v1/3'
-      : 'https://onlinetools.ups.com/api/addressvalidation/v1/3';
+      ? 'https://wwwcie.ups.com/api/addressvalidation/v1/1'
+      : 'https://onlinetools.ups.com/api/addressvalidation/v1/1';
 
     const token = await Promise.race([getUpsToken(), timeout]);
 

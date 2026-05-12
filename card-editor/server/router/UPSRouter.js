@@ -34,6 +34,7 @@ async function getUpsToken() {
       Authorization: `Basic ${credentials}`,
       'Content-Type': 'application/x-www-form-urlencoded',
     },
+    timeout: 8000,
   });
   return response.data.access_token;
 }
@@ -184,6 +185,9 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 });
 
 UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Request timeout')), 10000)
+  );
   try {
     const { address, city, postalCode, country } = req.body;
     const isSandbox = process.env.UPS_SANDBOX === 'true';
@@ -191,7 +195,7 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
       ? 'https://wwwcie.ups.com/api/addressvalidation/v1/3'
       : 'https://onlinetools.ups.com/api/addressvalidation/v1/3';
 
-    const token = await getUpsToken();
+    const token = await Promise.race([getUpsToken(), timeout]);
 
     const payload = {
       XAVRequest: {
@@ -231,11 +235,14 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
   } catch (err) {
     const upsData = err?.response?.data;
     const upsMsg = upsData?.response?.errors?.[0]?.message || err.message;
+    if (err.message === 'Request timeout') {
+      return res.json({ isValid: null, notSupported: true, message: 'UPS validation timed out. You can still create the shipment.' });
+    }
     if (upsMsg && (upsMsg.toLowerCase().includes('country') || upsMsg.toLowerCase().includes('invalid'))) {
       return res.json({ isValid: null, notSupported: true, message: `Address validation not available for country "${country}". You can still create the shipment.` });
     }
     console.error('XAV error:', JSON.stringify(upsData, null, 2) || err.message);
-    return res.status(500).json({ message: upsMsg });
+    return res.json({ isValid: null, notSupported: true, message: `Validation unavailable: ${upsMsg}` });
   }
 });
 

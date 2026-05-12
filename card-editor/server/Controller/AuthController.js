@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
 import sendEmail from './utils/sendEmail.js';
 import SendEmailForStatus from './SendEmailForStatus.js';
+import { countryToLanguage } from '../i18n/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -88,9 +89,11 @@ class AuthController {
       }*/
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const userLanguage = countryToLanguage(country);
 
       // Створюємо користувача, optional поля ставимо null, якщо не передано
       const newUser = await User.create({
+        language: userLanguage,
         email,
         eMailInvoice: eMailInvoice || null,
         type,
@@ -183,7 +186,7 @@ class AuthController {
 </div>
 `;
 
-      sendEmail(email, messageHtml, subject)
+      sendEmail(email, messageHtml, subject, null, userLanguage)
 
       SendEmailForStatus.SendUserRegister(newUser);
 
@@ -309,6 +312,11 @@ class AuthController {
 
       // Видаляємо поля, які не можна оновлювати через цей метод (безпека)
       const { id, password, role, ...updateData } = values;
+
+      // Якщо country змінилась — синхронізуємо мову листів/PDF
+      if (Object.prototype.hasOwnProperty.call(updateData, 'country')) {
+        updateData.language = countryToLanguage(updateData.country);
+      }
 
       // Оновлюємо користувача
       // Метод update повертає масив [кількість_оновлених_рядків]

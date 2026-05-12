@@ -65,42 +65,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   };
 
   const openInUPS = () => {
-    const f = document.createElement('form');
-    f.method = 'POST';
-    f.action = 'https://www.ups.com/ship/single-page';
-    f.target = '_blank';
-
-    const fields = {
-      'ShipTo[CompanyOrName]': form.company || form.name,
-      'ShipTo[AttentionName]': form.name,
-      'ShipTo[Address][AddressLine1]': form.address,
-      'ShipTo[Address][AddressLine2]': form.address2 || '',
-      'ShipTo[Address][AddressLine3]': form.address3 || '',
-      'ShipTo[Address][City]': form.city,
-      'ShipTo[Address][PostalCode]': form.postalCode,
-      'ShipTo[Address][CountryCode]': form.country,
-      'ShipTo[Phone]': form.phone || '',
-      'ShipTo[EMailAddress]': form.email || '',
-      'Package[Weight]': form.weight || '1',
-      'Package[Length]': form.length || '',
-      'Package[Width]': form.width || '',
-      'Package[Height]': form.height || '',
-      'loc': 'en_DE',
-    };
-
-    Object.entries(fields).forEach(([name, value]) => {
-      if (value) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = name;
-        input.value = value;
-        f.appendChild(input);
-      }
-    });
-
-    document.body.appendChild(f);
-    f.submit();
-    document.body.removeChild(f);
+    window.open('https://www.ups.com/ship/single-page?loc=en_DE', '_blank');
   };
 
   const submit = async () => {

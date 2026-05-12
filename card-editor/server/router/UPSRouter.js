@@ -219,6 +219,7 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
     });
 
     const xav = response.data?.XAVResponse;
+    console.log('XAV response keys:', xav ? Object.keys(xav) : null);
     const isValid = xav != null && 'ValidAddressIndicator' in xav;
     const isAmbiguous = xav != null && 'AmbiguousAddressIndicator' in xav;
     const noCandidate = xav != null && 'NoCandidatesIndicator' in xav;

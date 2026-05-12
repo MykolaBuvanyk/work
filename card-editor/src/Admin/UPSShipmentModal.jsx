@@ -204,6 +204,9 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
               {validation.notSupported && <div style={{color:'#666'}}>ℹ️ {validation.message}</div>}
               {validation.isValid && <div style={{color:'#1a7a1a', fontWeight:600}}>✅ Address is valid</div>}
               {validation.noCandidate && <div style={{color:'#d00', fontWeight:600}}>❌ Address not found by UPS. Check and correct.</div>}
+              {!validation.notSupported && !validation.isValid && !validation.noCandidate && !validation.isAmbiguous && (
+                <div style={{color:'#666'}}>ℹ️ UPS returned an ambiguous result. You can still create the shipment.</div>
+              )}
               {validation.isAmbiguous && !validation.noCandidate && (
                 <div>
                   <div style={{color:'#e65c00', fontWeight:600, marginBottom:'6px'}}>⚠️ Possible corrections:</div>

@@ -190,7 +190,7 @@ const TextList = () => {
 
       const textList = textObjects.map((obj) => ({
         id: obj.id || `text_${Date.now()}_${Math.random()}`,
-        content: obj.text || "Без тексту",
+        content: typeof obj.text === "string" ? obj.text : "",
         object: obj,
         fontSize: obj.fontSize || 20,
         fontFamily: obj.fontFamily || "Arial",

@@ -3250,11 +3250,20 @@ app.post('/api/layout-pdf', async (req, res) => {
                 });
 
                 const textWidth = segmentMetrics.reduce((acc, segment) => acc + segment.width, 0);
+                const fabricTextType = String(
+                  textNode.getAttribute('data-fabric-text-type') || ''
+                )
+                  .trim()
+                  .toLowerCase();
                 const fabricTextWidth = parsePositiveNumberAttr(
                   textNode,
                   'data-fabric-text-width'
                 );
-                const targetTextWidth = fabricTextWidth
+                const shouldUseFabricTextWidth =
+                  fabricTextWidth &&
+                  fabricTextType !== 'textbox' &&
+                  positionSource !== 'tspan';
+                const targetTextWidth = shouldUseFabricTextWidth
                   ? hasMatrixRotation
                     ? fabricTextWidth
                     : fabricTextWidth * fontScaleX

@@ -1099,6 +1099,10 @@ const annotateFabricTextMetricsInSvgMarkup = (markup, fabricObjects = []) => {
       const object = textObjects[index];
       if (!object) return;
 
+      if (object.type) {
+        node.setAttribute("data-fabric-text-type", String(object.type));
+      }
+
       const width = Number(object.width);
       const height = Number(object.height);
       if (Number.isFinite(width) && width > 0) {
@@ -4905,7 +4909,6 @@ const convertTextToOutlinedPaths = (rootElement) => {
 
       const doc = textNode.ownerDocument;
       const baseStyle = collectStyleFromNode(textNode);
-      const transformAttr = textNode.getAttribute("transform") || "";
       const opacityAttr = textNode.getAttribute("opacity") || baseStyle.opacity;
       const fillOpacityAttr =
         textNode.getAttribute("fill-opacity") || baseStyle["fill-opacity"];
@@ -4917,14 +4920,12 @@ const convertTextToOutlinedPaths = (rootElement) => {
         return;
       }
 
-      const needsGroup = Boolean(
-        transformAttr || opacityAttr || fillOpacityAttr
-      );
+      // Paper import uses applyMatrix:true, so outlined path coordinates already
+      // include the text transform. Re-applying transform on the wrapper shifts
+      // and scales Textbox text in PDF compared with the Fabric canvas.
+      const needsGroup = Boolean(opacityAttr || fillOpacityAttr);
       if (needsGroup) {
         const group = doc.createElementNS(svgNamespace, "g");
-        if (transformAttr) {
-          group.setAttribute("transform", transformAttr);
-        }
         if (opacityAttr != null) {
           group.setAttribute("opacity", opacityAttr);
         }

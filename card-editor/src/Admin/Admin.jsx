@@ -24,6 +24,11 @@ function formatDate(dateStr) {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
 
+const formatMoneyToCents = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(2) : '0.00';
+};
+
 
 const resolveOrderSigns = (order) => {
   const canvases = order?.orderMongo?.project?.canvases;
@@ -296,7 +301,7 @@ const Admin = () => {
                 <button>check</button>
               </div>
               <div className="sum">
-                <input type="number" readOnly value={sum} />
+                <input type="number" readOnly value={formatMoneyToCents(sum)} />
               </div>
             </div>
           </div>

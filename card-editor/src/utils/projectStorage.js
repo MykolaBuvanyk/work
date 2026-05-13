@@ -378,9 +378,10 @@ export const embedFontsIntoSvgMarkup = async (svgMarkup, fontFamilies) => {
 
 export async function generateCanvasPreviews(canvas, options = {}) {
   if (!canvas) {
-    return { preview: "", previewSvg: "", previewPng: "" };
+    return { preview: "", previewSvg: "", previewPng: "", templatePreview: "" };
   }
   let preview = "";
+  let templatePreview = "";
 
   const hasCorruptedObjects = () => {
     try {
@@ -396,7 +397,7 @@ export async function generateCanvasPreviews(canvas, options = {}) {
   try {
     if (hasCorruptedObjects()) {
       console.warn("Skipping preview generation due to non-renderable canvas objects");
-      return { preview: "", previewSvg: "", previewPng: "" };
+      return { preview: "", previewSvg: "", previewPng: "", templatePreview: "" };
     }
 
     if (canvas.toDataURL) {
@@ -406,12 +407,38 @@ export async function generateCanvasPreviews(canvas, options = {}) {
         multiplier: 0.3,
       });
       console.log("Generated WebP preview, length:", preview.length);
+
+      if (options.includeTemplatePreview) {
+        const rawMultiplier =
+          Number(options.templatePreviewMultiplier) ||
+          Number(options.previewPngMultiplier) ||
+          1;
+        const maxDimension =
+          Number(options.templatePreviewMaxDimension) ||
+          Number(options.previewPngMaxDimension) ||
+          0;
+        const canvasWidth = Number(options.width) || Number(canvas.getWidth?.()) || 0;
+        const canvasHeight = Number(options.height) || Number(canvas.getHeight?.()) || 0;
+        const largestSide = Math.max(canvasWidth, canvasHeight);
+        const cappedMultiplier =
+          maxDimension > 0 && largestSide > 0
+            ? Math.min(rawMultiplier, maxDimension / largestSide)
+            : rawMultiplier;
+        const multiplier = Math.max(0.05, cappedMultiplier || 1);
+
+        templatePreview = canvas.toDataURL({
+          format: "webp",
+          quality: Number(options.templatePreviewQuality) || 0.85,
+          multiplier,
+        });
+        console.log("Generated template WebP preview, length:", templatePreview.length);
+      }
     }
   } catch (error) {
     console.error("Failed to generate preview:", error);
   }
 
-  return { preview, previewSvg: "", previewPng: preview };
+  return { preview, previewSvg: "", previewPng: preview, templatePreview };
 }
 
 function openDB() {
@@ -1937,13 +1964,22 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
 
     // Generate WEBP preview only.
     let preview = "";
+    let templatePreview = "";
     if (!options.skipPreview) {
       try {
         const previews = await generateCanvasPreviews(canvas, {
           width,
           height,
+          includeTemplatePreview: options.includeTemplatePreview === true,
+          templatePreviewMultiplier: options.templatePreviewMultiplier,
+          templatePreviewMaxDimension: options.templatePreviewMaxDimension,
+          templatePreviewQuality: options.templatePreviewQuality,
+          // Backward-compatible option names used by the template save flow.
+          previewPngMultiplier: options.previewPngMultiplier,
+          previewPngMaxDimension: options.previewPngMaxDimension,
         });
         preview = previews.preview || previews.previewPng || "";
+        templatePreview = previews.templatePreview || "";
       } catch (previewError) {
         console.error("Failed to produce previews:", previewError);
       }
@@ -2040,6 +2076,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
           ? json.objects.filter((obj) => obj?.isUploadedImage === true).length
           : 0,
         previewLength: getSvgDebugStringLength(preview),
+        templatePreviewLength: getSvgDebugStringLength(templatePreview),
         hasBackgroundImage: !!backgroundImage,
         backgroundType: bgType,
         backgroundColor: bgColor,
@@ -2049,6 +2086,7 @@ export async function exportCanvas(canvas, toolbarState = {}, options = {}) {
     const canvasState = {
       json,
       preview,
+      ...(templatePreview ? { templatePreview } : {}),
       previewSvg: "",
       width,
       height,

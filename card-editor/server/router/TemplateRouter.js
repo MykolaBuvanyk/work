@@ -17,6 +17,7 @@ const mapTemplateListItem = (t) => {
     categoryName: category ? category.name : null,
     width: canvas.width || null,
     height: canvas.height || null,
+    templatePreview: canvas.templatePreview || null,
     preview: canvas.preview || null,
     previewSvg: canvas.previewSvg || null,
   };
@@ -179,6 +180,7 @@ TemplateRouter.get('/my/:id', requireAuth, async (req, res, next) => {
       canvas && typeof canvas === 'object'
         ? {
             ...canvas,
+            templatePreview: undefined,
             preview: undefined,
             previewSvg: undefined,
           }
@@ -226,6 +228,7 @@ TemplateRouter.get('/:id', optionalAuth, async (req, res, next) => {
       canvas && typeof canvas === 'object'
         ? {
             ...canvas,
+            templatePreview: undefined,
             preview: undefined,
             previewSvg: undefined,
           }

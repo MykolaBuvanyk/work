@@ -25,9 +25,17 @@ const MY_TEMPLATES_KEY = "__my_templates__";
 const UNCATEGORIZED_KEY = "__uncategorized__";
 
 const buildPreviewSrc = (tpl) => {
+  const templatePreview =
+    tpl?.templatePreview ||
+    tpl?.canvas?.templatePreview ||
+    tpl?.highResolutionPreview ||
+    tpl?.canvas?.highResolutionPreview;
   const hasSvg = tpl?.previewSvg && String(tpl.previewSvg).trim().length > 0;
   const hasPng = tpl?.preview && String(tpl.preview).trim().length > 0;
-  // Prefer PNG to match how project canvases usually look in previews.
+  if (templatePreview && String(templatePreview).trim().length > 0) {
+    return templatePreview;
+  }
+  // Prefer raster preview to match how project canvases usually look in previews.
   // SVG preview is closer to export/PDF (border tweaks, font embedding) and can look different.
   if (hasPng) return tpl.preview;
   if (hasSvg) {
@@ -193,6 +201,7 @@ const TemplatesModal = ({ onClose }) => {
         name: t.name,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
+        templatePreview: canvas.templatePreview || null,
         preview: canvas.preview || null,
         previewSvg: canvas.previewSvg || null,
       };
@@ -227,6 +236,7 @@ const TemplatesModal = ({ onClose }) => {
             name: t.name,
             createdAt: t.createdAt,
             updatedAt: t.updatedAt,
+            templatePreview: canvas.templatePreview || null,
             preview: canvas.preview || null,
             previewSvg: canvas.previewSvg || null,
           };

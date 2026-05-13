@@ -142,6 +142,10 @@ export async function saveNewTemplate(name, canvas) {
 
   const snapshot = await exportCanvas(canvas, toolbarState, {
     keepClipPath: true,
+    includeTemplatePreview: true,
+    templatePreviewMultiplier: 8,
+    templatePreviewMaxDimension: 500,
+    templatePreviewQuality: 0.85,
   });
 
   if (!snapshot) {

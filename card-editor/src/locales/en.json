@@ -1061,6 +1061,37 @@
       "prepareCartFailed": "Failed to prepare selected project for cart."
     }
   },
+  "topToolbar": {
+    "sharedProjectFallback": "Shared project",
+    "actions": {
+      "importViaExcel": "Import via Excel",
+      "saveAsTemplate": "Save as Template",
+      "templates": "Templates",
+      "preview": "Preview",
+      "newProject": "New project",
+      "yourProject": "Your project",
+      "saving": "Saving...",
+      "saveProject": "Save Project",
+      "saveProjectAs": "Save Project as",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    "alerts": {
+      "openSharedProjectFailed": "Failed to open shared project. Please try again.",
+      "openSharedProjectExpired": "Failed to open shared project. The link may be expired.",
+      "enterProjectName": "Please enter a project name",
+      "saveProjectFailed": "Failed to save project. Please try again."
+    },
+    "shareImport": {
+      "before": "Before opening a",
+      "sharedProject": "Shared Project",
+      "middle": ", please",
+      "save": "Save",
+      "or": "or",
+      "discard": "Discard",
+      "after": "your current work."
+    }
+  },
   "saveAsModal": {
     "title": "Save Project as",
     "name": "Name",

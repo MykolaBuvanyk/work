@@ -13,6 +13,7 @@ import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
 import { useSelector } from "react-redux";
+import { useTranslation } from "react-i18next";
 import {
   getProject,
   putProject,
@@ -31,6 +32,7 @@ const DEFAULT_SHAPE_HEIGHT_MM = 80;
 const MAX_SHARED_CANVASES = 30;
 
 const TopToolbar = ({ className }) => {
+  const { t } = useTranslation();
   const { undo, redo, canUndo, canRedo } = useUndoRedo();
   const { importFromExcel } = useExcelImport(); // exportToExcel - disabled
   const { canvas } = useCanvasContext();
@@ -127,7 +129,9 @@ const TopToolbar = ({ className }) => {
       const nextProject = {
         ...sourceProject,
         id: uuid(),
-        name: String(shared?.projectName || sourceProject?.name || "Shared project").trim(),
+        name: String(
+          shared?.projectName || sourceProject?.name || t("topToolbar.sharedProjectFallback")
+        ).trim(),
         createdAt: now,
         updatedAt: now,
         lastOrderedAt: 0,
@@ -145,7 +149,7 @@ const TopToolbar = ({ className }) => {
 
       return nextProject;
     },
-    [deepClone]
+    [deepClone, t]
   );
 
   const openSharedProjectAsCurrent = useCallback(
@@ -263,9 +267,9 @@ const TopToolbar = ({ className }) => {
       await finishSharedImport(pendingShareToken);
     } catch (error) {
       console.error("Failed to discard current project before opening share", error);
-      alert("Failed to open shared project. Please try again.");
+      alert(t("topToolbar.alerts.openSharedProjectFailed"));
     }
-  }, [finishSharedImport, pendingShareToken]);
+  }, [finishSharedImport, pendingShareToken, t]);
 
   useEffect(() => {
     if (!canvas) return;
@@ -292,7 +296,7 @@ const TopToolbar = ({ className }) => {
         }
       } catch (error) {
         console.error("Failed to process pending shared project", error);
-        alert("Failed to open shared project. The link may be expired.");
+        alert(t("topToolbar.alerts.openSharedProjectExpired"));
         clearPendingSharedToken();
         setPendingShareToken(null);
       } finally {
@@ -301,7 +305,7 @@ const TopToolbar = ({ className }) => {
     };
 
     run();
-  }, [canvas, clearPendingSharedToken, finishSharedImport, getPendingSharedToken]);
+  }, [canvas, clearPendingSharedToken, finishSharedImport, getPendingSharedToken, t]);
 
   const handleSave = async () => {
     if (!canvas || isSaving) return;
@@ -659,7 +663,7 @@ const TopToolbar = ({ className }) => {
                   </clipPath>
                 </defs>
               </svg>
-              Import via Excel
+              {t("topToolbar.actions.importViaExcel")}
             </li>
             <li className={styles.toolbarItem} onClick={handleSaveAsTemplate}>
               <svg
@@ -685,7 +689,7 @@ const TopToolbar = ({ className }) => {
                   strokeWidth="1.5"
                 />
               </svg>
-              Save as Template
+              {t("topToolbar.actions.saveAsTemplate")}
             </li>
             <li className={styles.toolbarItem} onClick={handleOpenTemplates}>
               <svg
@@ -704,7 +708,7 @@ const TopToolbar = ({ className }) => {
                   fill="#007AFF"
                 />
               </svg>
-              Templates
+              {t("topToolbar.actions.templates")}
             </li>
           </ul>
           <div
@@ -790,7 +794,7 @@ const TopToolbar = ({ className }) => {
                 </clipPath>
               </defs>
             </svg>
-            Preview
+            {t("topToolbar.actions.preview")}
           </div>
           {/* <div className={styles.topToolbarEL}>
             <div className={styles.fontSizeControl}>
@@ -854,7 +858,7 @@ const TopToolbar = ({ className }) => {
                   strokeLinejoin="round"
                 />
               </svg>
-              New project
+              {t("topToolbar.actions.newProject")}
             </button>
             <button
               className={styles.blueButton}
@@ -872,7 +876,7 @@ const TopToolbar = ({ className }) => {
                   fill="white"
                 />
               </svg>
-              Your project
+              {t("topToolbar.actions.yourProject")}
             </button>
           </div>
           <div className={styles.topToolbarEL} onClick={handleSave}>
@@ -899,7 +903,7 @@ const TopToolbar = ({ className }) => {
                 stroke-width="1.5"
               />
             </svg>
-            {isSaving ? "Saving..." : "Save Project"}
+            {isSaving ? t("topToolbar.actions.saving") : t("topToolbar.actions.saveProject")}
           </div>
           <div
             className={styles.topToolbarEL}
@@ -955,13 +959,13 @@ const TopToolbar = ({ className }) => {
                 stroke-linejoin="round"
               />
             </svg>
-            Save Project as
+            {t("topToolbar.actions.saveProjectAs")}
           </div>
           <div
             className={`${styles.topToolbarEL} ${
               !canUndo ? styles.disabled : ""
             }`}
-            title="Undo"
+            title={t("topToolbar.actions.undo")}
             onClick={canUndo ? undo : undefined}
           >
             <svg
@@ -981,7 +985,7 @@ const TopToolbar = ({ className }) => {
             className={`${styles.topToolbarEL} ${
               !canRedo ? styles.disabled : ""
             }`}
-            title="Redo"
+            title={t("topToolbar.actions.redo")}
             onClick={canRedo ? redo : undefined}
           >
             <svg
@@ -1016,7 +1020,7 @@ const TopToolbar = ({ className }) => {
           }}
           onSaveAs={async (name) => {
             if (!name || !name.trim()) {
-              alert("Please enter a project name");
+              alert(t("topToolbar.alerts.enterProjectName"));
               return;
             }
             setIsSaving(true);
@@ -1048,7 +1052,7 @@ const TopToolbar = ({ className }) => {
               }
             } catch (e) {
               console.error("Save as failed:", e);
-              alert("Failed to save project. Please try again.");
+              alert(t("topToolbar.alerts.saveProjectFailed"));
             } finally {
               setIsSaving(false);
             }
@@ -1119,8 +1123,13 @@ const TopToolbar = ({ className }) => {
           message={
             newProjectModalMode === "share-import" ? (
               <>
-                Before opening a <strong>Shared Project</strong>, please <strong>Save</strong> or{' '}
-                <strong>Discard</strong> your current work.
+                {t("topToolbar.shareImport.before")}{" "}
+                <strong>{t("topToolbar.shareImport.sharedProject")}</strong>
+                {t("topToolbar.shareImport.middle")}{" "}
+                <strong>{t("topToolbar.shareImport.save")}</strong>
+                {t("topToolbar.shareImport.or")}{" "}
+                <strong>{t("topToolbar.shareImport.discard")}</strong>{" "}
+                {t("topToolbar.shareImport.after")}
               </>
             ) : undefined
           }

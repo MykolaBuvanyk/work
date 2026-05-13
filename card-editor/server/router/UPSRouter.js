@@ -252,12 +252,8 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
       return res.json({ isValid: null, notSupported: true, message: 'UPS validation timed out. You can still create the shipment.' });
     }
     const lowerMsg = (upsMsg || '').toLowerCase();
-    const isCountryUnsupported = lowerMsg.includes('country code is invalid') || lowerMsg.includes('country is not supported');
-    if (isCountryUnsupported) {
-      return res.json({ isValid: null, notSupported: true, message: `Address validation not available for country "${country}". You can still create the shipment.` });
-    }
-    console.error('XAV error:', JSON.stringify(upsData, null, 2) || err.message);
-    return res.json({ isValid: null, notSupported: true, message: `Validation error: ${upsMsg}. You can still create the shipment.` });
+    console.error('XAV error raw:', JSON.stringify(upsData, null, 2) || err.message);
+    return res.json({ isValid: null, notSupported: true, message: `UPS XAV error: ${upsMsg}` });
   }
 });
 

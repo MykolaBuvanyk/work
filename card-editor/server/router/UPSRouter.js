@@ -184,8 +184,15 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+const XAV_SUPPORTED_COUNTRIES = new Set(['US', 'PR']);
+
 UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
   const { address, city, postalCode, country } = req.body;
+
+  if (!XAV_SUPPORTED_COUNTRIES.has((country || '').toUpperCase())) {
+    return res.json({ isValid: null, notSupported: true, message: `UPS address validation is only available for US addresses. Country "${country}" — skip validation and create shipment directly.` });
+  }
+
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Request timeout')), 10000)
   );

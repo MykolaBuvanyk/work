@@ -184,7 +184,12 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
-const XAV_SUPPORTED_COUNTRIES = new Set(['US', 'PR']);
+const XAV_SUPPORTED_COUNTRIES = new Set([
+  'US', 'PR', // USA + Puerto Rico (street-level)
+  'CA', 'GB', // Canada, UK
+  'DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'PL', 'SE', 'NO', 'DK', 'CH', 'AT', 'CZ', 'PT', 'IE', // Europe
+  'AU', 'NZ', 'JP', 'KR', 'SG', // Asia-Pacific
+]);
 
 UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
   const { address, city, postalCode, country } = req.body;

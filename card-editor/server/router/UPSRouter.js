@@ -184,21 +184,34 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+const XAV_SUPPORTED_COUNTRIES = new Set([
+  'US', 'PR', // USA + Puerto Rico (street-level)
+  'CA', 'GB', // Canada, UK
+  'DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'PL', 'SE', 'NO', 'DK', 'CH', 'AT', 'CZ', 'PT', 'IE', // Europe
+  'AU', 'NZ', 'JP', 'KR', 'SG', // Asia-Pacific
+]);
+
 UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
   const { address, city, postalCode, country } = req.body;
+
+  if (!XAV_SUPPORTED_COUNTRIES.has((country || '').toUpperCase())) {
+    return res.json({ isValid: null, notSupported: true, message: `UPS address validation is only available for US addresses. Country "${country}" — skip validation and create shipment directly.` });
+  }
+
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Request timeout')), 10000)
   );
   try {
     const isSandbox = process.env.UPS_SANDBOX === 'true';
     const url = isSandbox
-      ? 'https://wwwcie.ups.com/api/addressvalidation/v1/1'
-      : 'https://onlinetools.ups.com/api/addressvalidation/v1/1';
+      ? 'https://wwwcie.ups.com/api/addressvalidation/v2/1'
+      : 'https://onlinetools.ups.com/api/addressvalidation/v2/1';
 
     const token = await Promise.race([getUpsToken(), timeout]);
 
     const payload = {
       XAVRequest: {
+        Request: { RequestOption: '1' },
         AddressKeyFormat: {
           AddressLine: [address].filter(Boolean),
           PoliticalDivision2: city,
@@ -240,12 +253,8 @@ UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) 
       return res.json({ isValid: null, notSupported: true, message: 'UPS validation timed out. You can still create the shipment.' });
     }
     const lowerMsg = (upsMsg || '').toLowerCase();
-    const isCountryUnsupported = lowerMsg.includes('country code is invalid') || lowerMsg.includes('country is not supported');
-    if (isCountryUnsupported) {
-      return res.json({ isValid: null, notSupported: true, message: `Address validation not available for country "${country}". You can still create the shipment.` });
-    }
-    console.error('XAV error:', JSON.stringify(upsData, null, 2) || err.message);
-    return res.json({ isValid: null, notSupported: true, message: `Validation error: ${upsMsg}. You can still create the shipment.` });
+    console.error('XAV error:', upsMsg || err.message);
+    return res.json({ isValid: null, notSupported: true, message: `Address validation not available for this country. You can still create the shipment.` });
   }
 });
 

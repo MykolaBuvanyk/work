@@ -318,25 +318,49 @@ const Canvas = ({ className }) => {
 
         const text = String(obj.text || '');
         const caretIndex = Math.max(0, Math.min(start, text.length));
-        const before = text.slice(0, caretIndex);
         const fontSize = Math.max(1, Number(obj.fontSize) || 16);
         const lineHeight = fontSize * (Number(obj.lineHeight) || 1.16);
 
-        ctx.save();
-        ctx.font = `${obj.fontStyle || 'normal'} ${obj.fontWeight || 'normal'} ${fontSize}px ${obj.fontFamily || 'sans-serif'}`;
-        const measured = ctx.measureText(before).width || 0;
-        const fullWidth = obj.width || ctx.measureText(text).width || 0;
-        const fullHeight = obj.height || lineHeight;
-        const localX = -fullWidth / 2 + measured;
-        const localY = -fullHeight / 2;
-        ctx.restore();
+        let localX;
+        let localY;
+        let caretHeight = lineHeight * 0.92;
+
+        try {
+          obj.initDimensions?.();
+          obj.cursorOffsetCache = {};
+          const boundaries =
+            typeof obj._getCursorBoundaries === 'function'
+              ? obj._getCursorBoundaries(caretIndex, true)
+              : null;
+          const cursorData =
+            boundaries && typeof obj.getCursorRenderingData === 'function'
+              ? obj.getCursorRenderingData(caretIndex, boundaries)
+              : null;
+          if (cursorData) {
+            localX = Number(cursorData.left) + Number(cursorData.width || 0) / 2;
+            localY = Number(cursorData.top);
+            caretHeight = Number(cursorData.height) || caretHeight;
+          }
+        } catch { }
+
+        if (!Number.isFinite(localX) || !Number.isFinite(localY)) {
+          const before = text.slice(0, caretIndex);
+          ctx.save();
+          ctx.font = `${obj.fontStyle || 'normal'} ${obj.fontWeight || 'normal'} ${fontSize}px ${obj.fontFamily || 'sans-serif'}`;
+          const measured = ctx.measureText(before).width || 0;
+          const fullWidth = obj.width || ctx.measureText(text).width || 0;
+          const fullHeight = obj.height || lineHeight;
+          localX = -fullWidth / 2 + measured;
+          localY = -fullHeight / 2;
+          ctx.restore();
+        }
 
         const p1 = fabric.util.transformPoint(
           new fabric.Point(localX, localY),
           obj.calcTransformMatrix()
         );
         const p2 = fabric.util.transformPoint(
-          new fabric.Point(localX, localY + lineHeight * 0.92),
+          new fabric.Point(localX, localY + caretHeight),
           obj.calcTransformMatrix()
         );
 

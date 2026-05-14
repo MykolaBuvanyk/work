@@ -14,7 +14,7 @@ import Stripe  from 'stripe';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import ErrorApi from '../error/ErrorApi.js';
-import { countryToLanguage, DEFAULT_LANGUAGE } from '../i18n/index.js';
+import { countryToLanguage, DEFAULT_LANGUAGE, t } from '../i18n/index.js';
 import { localize } from '../i18n/localize.js';
 
 // Pick the customer's language for PDF rendering.
@@ -24,6 +24,8 @@ const pdfLang = (order) => {
   const user = order?.user;
   return user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
 };
+
+const pdfText = (key, lang, vars) => escapeHtml(t(key, lang, vars));
 
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
@@ -2490,6 +2492,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       args: ['--no-sandbox', '--disable-setuid-sandbox'] // Важливо для Linux/VPS
     });
     const page = await browser.newPage();
+    const lang = pdfLang(order);
     const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object' ? orderMongo.checkout : {};
     const deliveryAddress = hasAddressContent(checkout?.deliveryAddress) ? checkout.deliveryAddress : null;
     const summary = buildDeliveryNoteSummary(order, orderMongo);
@@ -2508,14 +2511,14 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const totalSigns = escapeHtml(summary.totalSigns || order.signs || 0);
     const accessoriesSummary = summary.accessories.length
       ? summary.accessories.map((item) => `${escapeHtml(item.qty)} ${escapeHtml(item.name)}`).join('; ')
-      : 'No accessories selected';
+      : pdfText('pdf.deliveryNote.noAccessories', lang);
     const accessoriesUnits = estimateDeliveryBlockUnits(
-      `Accessories: ${summary.accessories.length} Types`,
+      `${t('pdf.deliveryNote.accessoriesLabel', lang)} ${summary.accessories.length} ${t('pdf.deliveryNote.typesLabel', lang)}`,
       accessoriesSummary
     );
     const accessoriesBlockHtml = `
     <div class="item-block">
-      <div class="col-left">Accessories: ${escapeHtml(summary.accessories.length)} Types:</div>
+      <div class="col-left">${pdfText('pdf.deliveryNote.accessoriesLabel', lang)} ${escapeHtml(summary.accessories.length)} ${pdfText('pdf.deliveryNote.typesLabel', lang)}</div>
       <div class="col-right">${accessoriesSummary}</div>
     </div>`;
     const shippingCompany = deliveryAddress?.companyName || '';
@@ -2534,7 +2537,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       shippingAddressLine3,
       shippingAddressLine4,
       shippingCountry,
-      shippingPhone ? `Phone: ${shippingPhone}` : '',
+      shippingPhone ? `${t('pdf.deliveryNote.phoneInline', lang)} ${shippingPhone}` : '',
     ]
       .filter(hasContent)
       .map(escapeHtml)
@@ -2544,15 +2547,15 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
         .map((sign, index) => {
           const counts = sign?.counts || {};
           const countsSummary = [
-            toNumber(counts.images, 0) > 0 ? `${Math.floor(toNumber(counts.images, 0))} Images` : null,
-            toNumber(counts.shapes, 0) > 0 ? `${Math.floor(toNumber(counts.shapes, 0))} Shapes` : null,
-            toNumber(counts.cutFigures, 0) > 0 ? `${Math.floor(toNumber(counts.cutFigures, 0))} Cut Figures` : null,
-            toNumber(counts.holes, 0) > 0 ? `${Math.floor(toNumber(counts.holes, 0))} Holes` : null,
-            toNumber(counts.qrCodes, 0) > 0 ? `${Math.floor(toNumber(counts.qrCodes, 0))} QR` : null,
-            toNumber(counts.barcodes, 0) > 0 ? `${Math.floor(toNumber(counts.barcodes, 0))} Bar Codes` : null,
+            toNumber(counts.images, 0) > 0 ? `${Math.floor(toNumber(counts.images, 0))} ${t('pdf.deliveryNote.unitImages', lang)}` : null,
+            toNumber(counts.shapes, 0) > 0 ? `${Math.floor(toNumber(counts.shapes, 0))} ${t('pdf.deliveryNote.unitShapes', lang)}` : null,
+            toNumber(counts.cutFigures, 0) > 0 ? `${Math.floor(toNumber(counts.cutFigures, 0))} ${t('pdf.deliveryNote.unitCutFigures', lang)}` : null,
+            toNumber(counts.holes, 0) > 0 ? `${Math.floor(toNumber(counts.holes, 0))} ${t('pdf.deliveryNote.unitHoles', lang)}` : null,
+            toNumber(counts.qrCodes, 0) > 0 ? `${Math.floor(toNumber(counts.qrCodes, 0))} ${t('pdf.deliveryNote.unitQR', lang)}` : null,
+            toNumber(counts.barcodes, 0) > 0 ? `${Math.floor(toNumber(counts.barcodes, 0))} ${t('pdf.deliveryNote.unitBarCodes', lang)}` : null,
           ].filter(Boolean);
           const copiesCount = Math.max(1, Math.floor(toNumber(sign?.copiesCount, 1)));
-          const signTitle = `${String(sign?.title || `Sign ${index + 1}`)}${copiesCount > 1 ? ` (${copiesCount} pcs)` : ''}`;
+          const signTitle = `${String(sign?.title || `${t('pdf.deliveryNote.signFallback', lang)} ${index + 1}`)}${copiesCount > 1 ? ` (${copiesCount} ${t('pdf.deliveryNote.pcsSuffix', lang)})` : ''}`;
           const signMetaLine = [String(sign?.metaLine || '').trim(), ...countsSummary].filter(hasContent).join(', ');
           const signUnits = estimateDeliveryBlockUnits(signTitle, `${signMetaLine} ${String(sign?.textLine || '—')}`);
 
@@ -2563,8 +2566,8 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     <div class="item-block">
       <div class="col-left">${escapeHtml(signTitle)}:</div>
       <div class="col-right">
-        ${escapeHtml(signMetaLine || 'No sign details available')}<br>
-        <span class="item-details">Text: ${escapeHtml(sign?.textLine || '—')}</span>
+        ${escapeHtml(signMetaLine || t('pdf.deliveryNote.noSignDetails', lang))}<br>
+        <span class="item-details">${pdfText('pdf.deliveryNote.textLineLabel', lang)} ${escapeHtml(sign?.textLine || '-')}</span>
       </div>
     </div>`
           };
@@ -2574,8 +2577,8 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
         units: 1,
         html: `
     <div class="item-block">
-      <div class="col-left">Signs:</div>
-      <div class="col-right">No sign details available for this order.</div>
+      <div class="col-left">${pdfText('pdf.deliveryNote.signsLabel', lang)}</div>
+      <div class="col-right">${pdfText('pdf.deliveryNote.noSignsForOrder', lang)}</div>
     </div>`
       }];
 
@@ -2587,10 +2590,10 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
 
     const buildDeliveryNoteHtml = (pages) => `
   <!DOCTYPE html>
-  <html lang="uk">
+  <html lang="${escapeHtml(lang)}">
   <head>
     <meta charset="UTF-8">
-    <title>Delivery Note - SignXpert</title>
+    <title>${pdfText('pdf.deliveryNote.documentTitle', lang)}</title>
     <style>
       ${INTER_FONT_FACE_CSS}
       @page {
@@ -2786,27 +2789,27 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
           +49 157 766 25 125
         </div>
       </div>
-        <div class="delivery-title${isFirstPage ? '' : ' delivery-title--continued'}">Delivery Note</div>
+        <div class="delivery-title${isFirstPage ? '' : ' delivery-title--continued'}">${pdfText('pdf.deliveryNote.title', lang)}</div>
     </div>
 
     ${isFirstPage ? `
     <div class="info-grid">
       <div class="order-meta">
         <table>
-          <tr><td class="label">Order Date:</td><td class="value">${orderDate}</td></tr>
-          <tr><td class="label">Customer No:</td><td class="value">${customerNumber}</td></tr>
-          <tr><td class="label">Order No:</td><td class="value">${orderNumber}</td></tr>
-          <tr><td class="label">Order name:</td><td class="value">${orderName}</td></tr>
-          <tr><td class="label">Invoice No:</td><td class="value">${invoiceNumber}</td></tr>
+          <tr><td class="label">${pdfText('pdf.deliveryNote.orderDateLabel', lang)}</td><td class="value">${orderDate}</td></tr>
+          <tr><td class="label">${pdfText('pdf.deliveryNote.customerNoLabel', lang)}</td><td class="value">${customerNumber}</td></tr>
+          <tr><td class="label">${pdfText('pdf.deliveryNote.orderNoLabel', lang)}</td><td class="value">${orderNumber}</td></tr>
+          <tr><td class="label">${pdfText('pdf.deliveryNote.orderNameLabel', lang)}</td><td class="value">${orderName}</td></tr>
+          <tr><td class="label">${pdfText('pdf.deliveryNote.invoiceNoLabel', lang)}</td><td class="value">${invoiceNumber}</td></tr>
         </table>
       </div>
       <div class="shipping-address">
-        ${shippingAddressHtml || escapeHtml([order.user?.firstName, order.user?.surname].filter(hasContent).join(' ') || order.orderName || 'No delivery address')}
+        ${shippingAddressHtml || escapeHtml([order.user?.firstName, order.user?.surname].filter(hasContent).join(' ') || order.orderName || t('pdf.deliveryNote.noDeliveryAddress', lang))}
       </div>
     </div>
 
     <div class="count-section">
-      Count Sings: &nbsp;&nbsp; ${totalSigns}
+      ${pdfText('pdf.deliveryNote.countSigns', lang)} &nbsp;&nbsp; ${totalSigns}
     </div>` : ''}
 
     ${pageAccessoryBlocksHtml}
@@ -2815,9 +2818,9 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
 
     ${isLastPage ? `
     <div class="footer-note">
-      Please check the delivery upon receipt.<br>
-      If any items are missing, damaged, or incorrect, please notify us by email at the address stated above.<br><br>
-      <span style="font-weight: 700;">Thank you for choosing SignXpert!</span>
+      ${pdfText('pdf.deliveryNote.footerCheck', lang)}<br>
+      ${pdfText('pdf.deliveryNote.footerIfIssues', lang)}<br><br>
+      <span style="font-weight: 700;">${pdfText('pdf.deliveryNote.footerThanks', lang)}</span>
     </div>` : ''}
   </div>`;
   }).join('')}
@@ -2829,7 +2832,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       overflowSafety += 1;
 
       const htmlForCheck = buildDeliveryNoteHtml(pagedDeliveryBlocks);
-      await page.setContent(localize(htmlForCheck, pdfLang(order)), { waitUntil: 'domcontentloaded' });
+      await page.setContent(htmlForCheck, { waitUntil: 'domcontentloaded' });
 
       const overflowIndex = await page.evaluate(() => {
         const sheets = Array.from(document.querySelectorAll('.sheet'));
@@ -2858,7 +2861,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
 
     const htmlContent = buildDeliveryNoteHtml(pagedDeliveryBlocks);
 
-    await page.setContent(localize(htmlContent, pdfLang(order)), { waitUntil: 'networkidle0' });
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -2911,6 +2914,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       args: ['--no-sandbox', '--disable-setuid-sandbox'] // Важливо для Linux/VPS
     });
     const page = await browser.newPage();
+    const lang = pdfLang(order);
 
     const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object'
       ? orderMongo.checkout
@@ -2996,7 +3000,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const paymentStatusRaw = order.user?.type === 'Admin' ? 'Admin' : order.isPaid ? 'Paid' : 'Unpaid';
     const isInvoiceUnpaidCase = selectedPaymentMethod === 'invoice' && paymentStatusRaw === 'Unpaid';
     const shouldRenderPaymentInformation = !isPayOnline && paymentStatusRaw === 'Unpaid';
-    const paymentStatus = escapeHtml(paymentStatusRaw);
+    const paymentStatus = paymentStatusRaw === 'Paid'
+      ? pdfText('common.statusPaid', lang)
+      : paymentStatusRaw === 'Unpaid'
+        ? pdfText('common.statusUnpaid', lang)
+        : escapeHtml(paymentStatusRaw);
     const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
     const projectName = escapeHtml(projectNameRaw);
     const signsCountRaw = Math.max(0, Number(order.signs || 0));
@@ -3029,18 +3037,18 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       ? ''
       : `
       <div class="tax-note">
-        No VAT is charged according to § 19 UStG.
+        ${pdfText('common.noVatAccording', lang)}
       </div>`;
 
-    const vatIdMarkup = vatNumber ? `<tr><td>VAT ID:</td><td>${vatNumber}</td></tr>` : '';
+    const vatIdMarkup = vatNumber ? `<tr><td>${pdfText('common.vatIdLabel', lang)}</td><td>${vatNumber}</td></tr>` : '';
 
     const htmlContent = `
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="${escapeHtml(lang)}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - SignXpert</title>
+    <title>${pdfText('pdf.invoice.documentTitle', lang)}</title>
     <style>
       ${INTER_FONT_FACE_CSS}
       * {
@@ -3283,7 +3291,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
             <div class="logo">SIGN<span>X</span>PERT</div>
             <div class="logo-sub">Smart <span>Sign & Label</span> Solution</div>
         </div>
-        <div class="invoice-title">INVOICE</div>
+        <div class="invoice-title">${pdfText('pdf.invoice.title', lang)}</div>
     </div>
 
     <div class="info-section">
@@ -3298,15 +3306,15 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         </div>
       <div class="details-block">
         <table class="details-table">
-          <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
-          <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
+          <tr><td><strong>${pdfText('pdf.invoice.invoiceNoLabel', lang)}</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
+          <tr><td>${pdfText('pdf.invoice.customerNoLabel', lang)}</td><td>${customerNumber}</td></tr>
           ${vatIdMarkup}
-          <tr><td>Date:</td><td>${invoiceDate}</td></tr>
+          <tr><td>${pdfText('pdf.invoice.dateLabel', lang)}</td><td>${invoiceDate}</td></tr>
           ${isInvoiceUnpaidCase
-            ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
-          <tr><td>Payment Terms:</td><td>30 days net</td></tr>`
-            : `<tr><td>Payment status:</td><td>${paymentStatus}</td></tr>`}
-          <tr><td>Reference:</td><td>Order No: ${invoiceNumber}</td></tr>
+            ? `<tr><td>${pdfText('pdf.invoice.invoiceDueDateLabel', lang)}</td><td>${invoiceDueDate}</td></tr>
+          <tr><td>${pdfText('pdf.invoice.paymentTermsLabel', lang)}</td><td>${pdfText('common.thirtyDaysNet', lang)}</td></tr>`
+            : `<tr><td>${pdfText('pdf.invoice.paymentStatusLabel', lang)}</td><td>${paymentStatus}</td></tr>`}
+          <tr><td>${pdfText('pdf.invoice.referenceLabel', lang)}</td><td>${pdfText('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumber}</td></tr>
             </table>
         </div>
     </div>
@@ -3314,15 +3322,15 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     <table class="items-table">
         <thead>
             <tr>
-          <th class="col-order nowrap">Order No</th>
-          <th class="col-desc">Description</th>
-          <th class="col-total">Net total</th>
+          <th class="col-order nowrap">${pdfText('pdf.invoice.colOrderNo', lang)}</th>
+          <th class="col-desc">${pdfText('pdf.invoice.colDescription', lang)}</th>
+          <th class="col-total">${pdfText('pdf.invoice.colNetTotal', lang)}</th>
             </tr>
         </thead>
         <tbody>
             <tr>
           <td>${invoiceNumber}</td>
-          <td>Count Signs:${signsCount} (${projectName})</td>
+          <td>${pdfText('pdf.invoice.countSigns', lang)}${signsCount} (${projectName})</td>
           <td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td>
             </tr>
         </tbody>
@@ -3330,11 +3338,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 
     <div class="calc-section">
       <table class="calc-table">
-        <tr><td>Subtotal</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
-        <tr><td>Discount (${discountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
-        <tr><td>Shipping & Packaging cost${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.subtotalLabel', lang)}</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.discountLabel', lang)} (${discountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.shippingAndPackaging', lang)}${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
             <tr class="total-row">
-          <td style="padding-top: 15px; padding-bottom: 6px;"><u>Total amount</u></td>
+          <td style="padding-top: 15px; padding-bottom: 6px;"><u>${pdfText('pdf.invoice.totalAmount', lang)}</u></td>
           <td class="money-cell" style="padding-top: 12px; padding-bottom: 6px;">€&nbsp;${totalAmountFormatted}</td>
             </tr>
         </table>
@@ -3342,25 +3350,25 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 
     ${shouldRenderPaymentInformation ? `
     <div class="payment-info">
-      <h3><u>Payment information:</u></h3>
+      <h3><u>${pdfText('pdf.invoice.paymentInformationHeading', lang)}</u></h3>
       <div class="payment-grid">
-        <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
-        <div>Account holder:</div><div>Kostyantyn Utvenko</div>
-        <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
-        <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
-        <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>
+        <div>${pdfText('pdf.invoice.amountDue', lang)}</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
+        <div>${pdfText('pdf.invoice.accountHolder', lang)}</div><div>Kostyantyn Utvenko</div>
+        <div>${pdfText('pdf.invoice.ibanLabel', lang)}</div><div>DE78 6535 1260 0134 0819 40</div>
+        <div>${pdfText('pdf.invoice.bicSwiftLabel', lang)}</div><div>SOLADES1BAL</div>
+        <div>${pdfText('pdf.invoice.paymentReferenceLabel', lang)}</div><div>${pdfText('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumber}</div>
       </div>
     </div>
 
     <div class="online-payment-note">
-      <span class="first-line">If you would like to pay by card or use any of the other online payment methods available, please visit: <span class="nowrap">sign-xpert.com</span></span><br>
-      Log in to your account and go to: <span class="nowrap">My Account → My Orders</span><br>
-      Select the relevant invoice and click “Pay” to complete your payment securely.
+      <span class="first-line">${pdfText('pdf.invoice.onlinePaymentLine1', lang)} <span class="nowrap">sign-xpert.com</span></span><br>
+      ${pdfText('pdf.invoice.onlinePaymentLine2', lang)} <span class="nowrap">${pdfText('common.myAccountArrowMyOrders', lang)}</span><br>
+      ${pdfText('pdf.invoice.onlinePaymentLine3', lang)}
     </div>
     ` : ''}
 
     <div class="footer-wrapper">
-      <div class="footer-thanks" style="text-align:center;margin-bottom:10px;font-weight:700;"><strong>Thank you for choosing SignXpert!</strong></div>
+      <div class="footer-thanks" style="text-align:center;margin-bottom:10px;font-weight:700;"><strong>${pdfText('pdf.invoice.footerThanks', lang)}</strong></div>
       <div class="footer-box" style="border:0.5pt solid #000;padding:6px 10px;display:flex;justify-content:space-between;font-size:8pt;line-height:1.05;">
         <div class="footer-col-left">
           <table class="footer-info-table">
@@ -3369,12 +3377,12 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
               <td class="footer-value-cell"></td>
             </tr>
             <tr>
-              <td>Owner:</td>
+              <td>${pdfText('pdf.invoice.footerOwnerLabel', lang)}</td>
               <td class="footer-value-cell">Kostyantyn Utvenko</td>
             </tr>
             <tr>
-              <td>Address:</td>
-              <td class="footer-value-cell">Baumwiesen 2, 72401 Haigerloch, Germany</td>
+              <td>${pdfText('pdf.invoice.footerAddressLabel', lang)}</td>
+              <td class="footer-value-cell">${pdfText('pdf.invoice.footerAddressValue2', lang)}</td>
             </tr>
             <tr>
               <td>IBAN:</td>
@@ -3385,12 +3393,12 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
               <td class="footer-value-cell">SOLADES1BAL</td>
             </tr>
             <tr>
-              <td>USt-IdNr.:</td>
-              <td class="footer-value-cell">DE461817538 Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
+              <td>${pdfText('pdf.invoice.footerUstIdLabel', lang)}</td>
+              <td class="footer-value-cell">${pdfText('common.germanVatLine', lang)}</td>
             </tr>
             <tr>
               <td></td>
-              <td class="footer-value-cell">No VAT is charged under the small business exemption (§ 19 UStG).</td>
+              <td class="footer-value-cell">${pdfText('common.noVatSmallBusiness', lang)}</td>
             </tr>
           </table>
         </div>
@@ -3406,7 +3414,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 </body>
 </html>`
 
-  await page.setContent(localize(htmlContent, pdfLang(order)), { waitUntil: 'networkidle0' });
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
   await waitForPdfFonts(page);
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -3433,7 +3441,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       customerCountrySubdivision: customerCountrySubdivisionRaw,
       customerVatNumber: customerVatNumberRaw,
       buyerReference: String(order.user?.reference || order.userId || order.id || ''),
-      remittanceInformation: `Order No: ${invoiceNumberRaw}`,
+      remittanceInformation: `${t('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumberRaw}`,
       paymentDueDate: invoiceDueDateDate,
       signsCount: signsCountRaw,
       projectName: projectNameRaw,
@@ -3448,13 +3456,13 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     const invoice = basicZugferdInvoicer.create(zugferdData);
     const zugferdPdf = await invoice.embedInPdf(pdfBuffer, {
       metadata: {
-        title: `Invoice ${invoiceNumber}`,
-        subject: `Invoice ${invoiceNumber}`,
+        title: `${t('pdf.invoice.title', lang)} ${invoiceNumber}`,
+        subject: `${t('pdf.invoice.title', lang)} ${invoiceNumber}`,
         author: 'SignXpert',
         creator: 'SignXpert backend',
         producer: 'SignXpert backend',
         keywords: ['ZUGFeRD', 'Factur-X', 'Invoice'],
-        language: 'en',
+        language: lang,
       },
     });
     const outputPdfBuffer = Buffer.from(zugferdPdf);

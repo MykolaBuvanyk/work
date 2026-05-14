@@ -1,8 +1,7 @@
 import i18n from '../i18n';
 
 export const getLocalizedPath = (path = '') => {
-  console.log(4349234,path)
-  const lang = i18n.language?.toLowerCase() || 'en';
+  const lang = i18n.language?.toLowerCase() || 'de';
 
   // зовнішні URL не чіпаємо
   if (path.startsWith('http')) {
@@ -14,8 +13,8 @@ export const getLocalizedPath = (path = '') => {
     ? path
     : `/${path}`;
 
-  // en без префікса
-  if (lang === 'en') {
+  // de без префікса
+  if (lang === 'de') {
     return cleanPath;
   }
 

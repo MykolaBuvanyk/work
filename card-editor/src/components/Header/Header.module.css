@@ -80,6 +80,7 @@
 
 .lang {
   position: relative;
+  min-width: 68px;
   cursor: pointer;
   font-family: Roboto;
   font-weight: 400;
@@ -102,15 +103,16 @@
   background-color: #fff;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 45px;
+  width: 58px;
   padding: 7.5px 0;
   z-index: 99;
+  left: 0;
 }
 
 .countries {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   font-family: Roboto;
   font-weight: 400;
   font-style: Regular;
@@ -123,9 +125,11 @@
   /*padding-right: 10px;*/
   display: flex;
   align-items: center;
-  justify-content: left;
+  justify-content: flex-start;
   font-size: 15px;
-  padding-left: 2px;
+  box-sizing: border-box;
+  min-height: 24px;
+  padding: 0 6px;
   
 }
 

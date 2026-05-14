@@ -7,8 +7,8 @@ import { localize } from '../i18n/localize.js';
 
 // Derive UI language for a user (from saved language, fallback to country mapping, else default).
 const userLang = (user) => user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
-// Admin emails go in default operational language.
-const ADMIN_LANG = DEFAULT_LANGUAGE;
+// Admin emails are operational notifications and must always stay in English.
+const ADMIN_LANG = 'en';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import { 

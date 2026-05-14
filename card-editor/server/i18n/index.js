@@ -58,6 +58,7 @@ const loadLanguage = (lang) => {
 
 const getByPath = (obj, key) => {
   if (!obj) return undefined;
+  if (Object.prototype.hasOwnProperty.call(obj, key)) return obj[key];
   return key.split('.').reduce((acc, part) => (acc == null ? undefined : acc[part]), obj);
 };
 

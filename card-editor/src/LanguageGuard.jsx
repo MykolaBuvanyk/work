@@ -7,9 +7,9 @@ export default function LanguageGuard({ isDefault }) {
   const location = useLocation();
 
   useEffect(() => {
-    // DEFAULT LANGUAGE (ENGLISH)
+    // DEFAULT LANGUAGE (GERMAN)
     if (isDefault) {
-      i18n.changeLanguage('en');
+      i18n.changeLanguage('de');
       return;
     }
 
@@ -19,11 +19,11 @@ export default function LanguageGuard({ isDefault }) {
     }
   }, [lng, isDefault]);
 
-  // REDIRECT /en -> /
-  if (lng === 'en') {
+  // REDIRECT /de -> /
+  if (lng === 'de') {
     return (
       <Navigate
-        to={location.pathname.replace('/en', '') || '/'}
+        to={location.pathname.replace('/de', '') || '/'}
         replace
       />
     );

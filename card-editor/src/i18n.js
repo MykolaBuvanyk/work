@@ -26,8 +26,8 @@ const languageCountries = [
   //{ flag: "🇩🇪", code: "DE", codeFlag: "DE" },
 ];
 
-// Список мов, які мають префікс у URL (всі, крім англійської)
-export const prefixedLngs = languageCountries.filter(x=>x.code.toLocaleLowerCase()!='en').map(l =>
+// Список мов, які мають префікс у URL (всі, крім німецької)
+export const prefixedLngs = languageCountries.filter(x=>x.code.toLocaleLowerCase()!='de').map(l =>
   l.code.toLowerCase()
 )
 i18n.use(initReactI18next).init({
@@ -39,7 +39,7 @@ i18n.use(initReactI18next).init({
     },
   ])
 ),
-  lng: 'en',
+  lng: 'de',
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
 });

@@ -11,14 +11,15 @@ export default function Seo() {
   const location = useLocation();
 
   const pathname = location.pathname;
+  const pathParts = pathname.split('/').filter(Boolean);
 
   // визначаємо мову
   const currentLang =
     prefixedLngs.find((lng) =>
-      pathname.startsWith(lng)
-    ) || '/en';
+      pathParts[0] === lng
+    ) || 'de';
 
-  const lang = currentLang.replace('/', '');
+  const lang = currentLang;
 
   // прибираємо префікс мови з url
   // /de/catalog -> /catalog
@@ -84,7 +85,7 @@ export default function Seo() {
             key={hrefLang}
             rel="alternate"
             hrefLang={hrefLang}
-            href={`${BASE_URL}${lngPrefix}${cleanPath}`}
+            href={`${BASE_URL}/${lngPrefix}${cleanPath}`}
           />
         );
       })}

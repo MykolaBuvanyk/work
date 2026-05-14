@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
  
 // eslint-disable-next-line react-refresh/only-export-components
 export const languageCountries = [
+  { flag: "🇩🇪", code: "DE", codeFlag: "DE" },
   { flag: "🇬🇧", code: "EN", codeFlag: "GB" },
   { flag: "🇫🇷", code: "FR", codeFlag: "FR" },
   { flag: "🇮🇹", code: "IT", codeFlag: "IT" },
@@ -33,7 +34,6 @@ export const languageCountries = [
   { flag: "🇸🇮", code: "SL", codeFlag: "SI" },
   { flag: "🇸🇪", code: "SV", codeFlag: "SE" },
   { flag: "🇺🇦", code: "UA", codeFlag: "UA" },
-  { flag: "🇩🇪", code: "DE", codeFlag: "DE" },
 ];
 
 
@@ -260,6 +260,7 @@ const Header = () => {
     '/contacts': <LuMessageSquare size={18} />,
     '/admin': <LuUser size={18} />,
   };
+  const currentLanguage = languageCountries.find(x => x.code.toLowerCase() === i18n.language) || languageCountries[0];
 
   const realNavigate=UseRealNavigate();
 
@@ -267,7 +268,7 @@ const Header = () => {
     setIsLangOpen(false);
 
     const lang = code.toLowerCase();
-    const isEnglish = lang === 'en';
+    const isDefaultLanguage = lang === 'de';
 
     const pathParts = location.pathname.split('/').filter(Boolean);
 
@@ -277,7 +278,7 @@ const Header = () => {
       ? pathParts.slice(1)
       : pathParts;
 
-    const newUrl = isEnglish
+    const newUrl = isDefaultLanguage
       ? `/${cleanPath.join('/')}`
       : `/${lang}/${cleanPath.join('/')}`;
 
@@ -290,7 +291,7 @@ const Header = () => {
       // чи є префікс мови
       const urlLang = prefixedLngs.includes(pathParts[0])
         ? pathParts[0]
-        : 'en';
+        : 'de';
 
       // змінюємо мову тільки якщо треба
       if (i18n.language !== urlLang) {
@@ -348,7 +349,7 @@ const Header = () => {
             <div className={styles.drawerLangTrigger} onClick={() => setIsMobileLangOpen(!isMobileLangOpen)}>
               <div className={styles.drawerLangLeft}>
                 <LuGlobe size={18} />
-                <span>DE</span>
+                <span>{currentLanguage.code}</span>
               </div>
               <div className={isMobileLangOpen ? styles.rotate : ''}>
                 <SlArrowDown size={14} />
@@ -360,8 +361,12 @@ const Header = () => {
                   {languageCountries.map(lang => (
                     <div
                       key={lang.code}
-                      className={`${styles.drawerLangItem} ${lang.code === 'DE' ? styles.drawerLangItemActive : ''}`}
-                      onClick={() => setIsMobileLangOpen(false)}
+                      className={`${styles.drawerLangItem} ${lang.code === currentLanguage.code ? styles.drawerLangItemActive : ''}`}
+                      onClick={() => {
+                        setLangOpen(lang.code);
+                        setIsMobileLangOpen(false);
+                        setIsMobileMenuOpen(false);
+                      }}
                     >
                       <Flag size={15} country={lang.codeFlag} />
                       <span>{lang.code}</span>
@@ -465,7 +470,7 @@ const Header = () => {
           </ul>
         </div>
         <div className={styles.headerBaner}>
-          <img className={styles.headerBanerImg} src={IMG_URL + `images/baner/${(location.pathname.length === 3 || location.pathname[3] !== '/') ? 'DE' : location.pathname.slice(1, 3).toUpperCase()}.jpeg`}/>
+          <img className={styles.headerBanerImg} src={IMG_URL + `images/baner/${currentLanguage.code}.jpeg`}/>
         </div>
         <div className={styles.rightPart}>
           <div className={styles.rightPartWrapper}>
@@ -483,7 +488,7 @@ const Header = () => {
             >
               {//<Flag country="DE" size={32} />
 }
-              <Flag size={22} country={languageCountries.find(x=>x.code.toLocaleLowerCase()==i18n.language)?.codeFlag||'DE'} /> {languageCountries.find(x=>x.code.toLocaleLowerCase()==i18n.language)?.code.toLocaleUpperCase()||'DE'}
+              <Flag size={22} country={currentLanguage.codeFlag} /> {currentLanguage.code}
               <div className={isLangOpen&&styles.rotate}>
                 <SlArrowDown size={14} />
               </div>

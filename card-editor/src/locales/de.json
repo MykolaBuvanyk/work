@@ -3,247 +3,247 @@
     "home":{
       "title":"Individuelle Schilder & Gravurschilder in Deutschland | SignXpert",
       "description":"Gestalten Sie individuelle Schilder, Etiketten und Namensschilder mit SignXpert. Hochwertige Gravuren und Drucke mit schneller Lieferung in ganz Deutschland. Ideal für Unternehmen und Privatkunden."
-    },
-    "login": {
-      "title": "Anmelden – SignXpert",
-      "description": "Melden Sie sich in Ihrem SignXpert-Konto an, um Bestellungen zu verwalten, Dateien herunterzuladen und Ihre individuellen Schilder zu verfolgen. Sicherer Zugang für Kunden in Deutschland."
-    },
-    "account": {
-      "title": "Mein Konto – Bestellungen, Einstellungen & Dashboard | SignXpert",
-      "description": "Greifen Sie auf Ihr SignXpert-Konto zu, um Bestellungen zu verwalten, Sendungen zu verfolgen und Ihre Daten zu aktualisieren. Sicherer Zugang für Industrie- und Geschäftskunden in Deutschland."
-    },
-    "online-sign-editor": {
-      "title": "Individuelle Schilder online gestalten – Sign-Editor | SignXpert",
-      "description": "Nutzen Sie den Online-Sign-Editor von SignXpert, um individuelle Schilder, Etiketten und gravierte Namensschilder in wenigen Minuten zu gestalten. Einfache Anpassung, Echtzeit-Vorschau und schnelle Lieferung in ganz Deutschland."
-    },
-    "products": {
-      "title": "Industrieschilder & Elektrokennzeichnungen in Deutschland | SignXpert",
-      "description": "Entdecken Sie individuelle Industrieschilder, gravierte Etiketten und Namensschilder für elektrische und technische Anwendungen. Robuste Materialien, präzise Gravuren und schnelle Lieferung in ganz Deutschland mit SignXpert."
-    },
-    "faq": {
-      "title": "FAQ – Individuelle Schilder & Industriekennzeichnungen | SignXpert",
-      "description": "Finden Sie Antworten zu individuellen Schildern, Industriekennzeichnungen, Gravuren und dem Bestellprozess bei SignXpert. Schnelle Hilfe und Support für Kunden in ganz Deutschland."
-    },
-    "quick-guide": {
-      "title": "So erstellen Sie individuelle Schilder online – Kurzanleitung | SignXpert",
-      "description": "Folgen Sie dieser Kurzanleitung, um individuelle Schilder, Etiketten und gravierte Namensschilder mit SignXpert zu gestalten. Einfache Schritte mit unserem Online-Editor und schneller Lieferung in Deutschland."
-    },
-    "contacts": {
-      "title": "Kontakt & Support – Industrieschilder | SignXpert",
-      "description": "Kontaktieren Sie SignXpert für individuelle Industrieschilder, gravierte Etiketten und technische Namensschilder. Unser Team unterstützt Sie bei Bestellungen, Designfragen und technischen Anliegen in ganz Deutschland."
-    },
-    "industries": {
-      "title": "Branchen – Lösungen für Industrie- & Elektrokennzeichnung | SignXpert",
-      "description": "Entdecken Sie die Branchen, die von SignXpert unterstützt werden – darunter Elektro-, Industrie- und Technikbereiche. Individuelle Schilder, gravierte Etiketten und Namensschilder für professionelle Anwendungen in Deutschland."
-    },
-    "industries/mep-building-services/electrical-installation": {
-      "title": "Kennzeichnungen & Schilder für Elektroinstallationen in MEP-Projekten | SignXpert",
-      "description": "Hochwertige Schilder, Etiketten und Namensschilder für Elektroinstallationen in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für industrielle Anwendungen in ganz Deutschland."
-    },
-    "industries/mep-building-services/sprinkler-installations": {
-      "title": "Kennzeichnungen für Sprinkleranlagen & Brandschutzsysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen, Brandschutzschilder und Identifikationsschilder für Sprinkleranlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Sicherheitssysteme in ganz Deutschland."
-    },
-    "industries/mep-building-services/fire-installation": {
-      "title": "Brandschutzkennzeichnungen & Sicherheitsschilder für MEP-Projekte | SignXpert",
-      "description": "Hochwertige Brandschutzkennzeichnungen, Sicherheitsschilder und Identifikationsschilder für MEP- und Gebäudetechnikprojekte. Robuste und normgerechte Lösungen für industrielle Brandschutzsysteme in ganz Deutschland."
-    },
-    "industries/mep-building-services/refrigeration-installations": {
-      "title": "Kennzeichnungen für Kälteanlagen & HVAC-Systeme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen, Schilder und Namensschilder für Kälte- und HVAC-Anlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Kühlsysteme in ganz Deutschland."
-    },
-    "industries/mep-building-services/ventilation-installations": {
-      "title": "Kennzeichnungen für Lüftungsanlagen & HVAC-Kanalsysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen, Kanalschilder und Luftstrommarkierungen für MEP- und HVAC-Systeme. Robuste und normgerechte Identifikationslösungen für industrielle Bauprojekte in ganz Deutschland."
-    },
-    "industries/mep-building-services/elevators-and-lift-systems": {
-      "title": "Kennzeichnungen für Aufzüge & Liftsysteme in MEP-Projekten | SignXpert",
-      "description": "Hochwertige Kennzeichnungen, Schilder und Identifikationsschilder für Aufzugs- und Liftsysteme in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für vertikale Transportsysteme in ganz Deutschland."
-    },
-    "industries/mep-building-services/electrical-and-control-cabinets": {
-      "title": "Kennzeichnungen für Schaltschränke & Steuerungssysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für elektrische Schaltschränke und industrielle Steuerungssysteme. Robuste Gravurschilder sowie Kabel- und Komponentenkennzeichnungen für einen sicheren und effizienten Betrieb in MEP-Projekten in Deutschland."
-    },
-    "industries/mep-building-services/electrical-in-control-and-building-automation": {
-      "title": "Kennzeichnungen für Elektro- & Gebäudeautomationssysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für Elektro- und Gebäudeautomationssysteme in MEP-Projekten. Robuste Identifikationslösungen für Steuerungen, Sensoren und automatisierte Gebäudesysteme in industriellen Projekten in Deutschland."
-    },
-    "industries/mep-building-services/plumbing-installations-across": {
-      "title": "Kennzeichnungen für Sanitärinstallationen & Rohrmarkierungen in MEP-Systemen | SignXpert",
-      "description": "Hochwertige Kennzeichnungen, Rohrmarkierungen und Identifikationsschilder für Sanitärinstallationen in MEP-Systemen. Robuste und normgerechte Lösungen für Wasser-, Heizungs- und Entwässerungssysteme in Industrie- und Bauprojekten in Deutschland."
-    },
-    "industries/security-automation/alarm-and-security-installations": {
-      "title": "Kennzeichnungen für Alarm- & Sicherheitssysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für Alarm- und Sicherheitssysteme in der Gebäudeautomation und Industrie. Robuste Identifikationslösungen für Zutrittskontrollen, Einbruchmeldeanlagen und Sicherheitssysteme in ganz Deutschland."
-    },
-    "industries/security-automation/robotics-industry": {
-      "title": "Kennzeichnungen & Beschilderungen für Robotik und Automation | SignXpert",
-      "description": "Hochwertige Kennzeichnungs- und Beschilderungslösungen für Robotik- und Industrieautomationssysteme. Robuste Identifikationen für robotergestützte Produktionslinien, Smart Factories und Industrie-4.0-Anwendungen in ganz Deutschland."
-    },
-    "industries/security-automation/production-lines": {
-      "title": "Kennzeichnungen für Produktionslinien & Industriemarkierungssysteme | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für Produktionslinien und industrielle Markierungssysteme in Fertigungsumgebungen. Robuste Identifikationslösungen für Maschinen, Arbeitsabläufe und Sicherheitsbereiche in automatisierten Fabriken in Deutschland."
-    },
-    "industries/security-automation/industrial-maintenance": {
-      "title": "Kennzeichnungen für industrielle Wartung & Geräteidentifikation | SignXpert",
-      "description": "Robuste Kennzeichnungen und Identifikationslösungen für die sichere Wartung, Inspektion und Reparatur von Industrie- und Gebäudesystemen. Zuverlässige Markierungen für Wartungsarbeiten in ganz Deutschland."
-    },
-    "industries/security-automation/hydraulic-systems-and-fluid-technology": {
-      "title": "Kennzeichnungen für Hydrauliksysteme & Fluidtechnik | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für Hydrauliksysteme und Fluidtechnik in industriellen Anlagen. Robuste Markierungen für Rohre, Ventile und Hydraulikkomponenten in Fertigungs- und Automatisierungssystemen in ganz Deutschland."
-    },
-    "industries/energy-environment/solar-energy-and-photovoltaics": {
-      "title": "Kennzeichnungen für Solarenergie- & Photovoltaikanlagen | SignXpert",
-      "description": "Hochwertige Kennzeichnungen für Solarenergie- und Photovoltaikanlagen. Robuste und wetterbeständige Identifikationslösungen für PV-Module, Wechselrichter und elektrische Komponenten in Projekten für erneuerbare Energien in Deutschland."
-    },
-    "industries/energy-environment/nuclear-power": {
-      "title": "Kennzeichnungen & Sicherheitsschilder für Kernkraftwerke | SignXpert",
-      "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Kernkraftwerke und Energieanlagen. Robuste und normgerechte Identifikationslösungen für Strahlungsbereiche, Gerätekennzeichnungen und kontrollierte Bereiche in kerntechnischen Anlagen in Deutschland."
-    },
-   "industries/energy-environment/hydropower": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Wasserkraftwerke | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Wasserkraftwerke und Anlagen der erneuerbaren Energie. Robuste Identifikationslösungen für Turbinen, Generatoren, Wassersysteme und elektrische Infrastruktur in Wasserkraftanlagen in ganz Deutschland."
-},
-"industries/energy-environment/combined-heat-and-power-plants": {
-  "title": "Kennzeichnungen & Schilder für Blockheizkraftwerke (BHKW) | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Schilder für Blockheizkraftwerke (BHKW) und industrielle Energiesysteme. Robuste Identifikationslösungen für Rohrleitungen, Anlagenkomponenten und Sicherheitsbereiche in Kraft-Wärme-Kopplungsanlagen in ganz Deutschland."
-},
-"industries/energy-environment/biogas": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Biogas- und Abfallenergieanlagen | SignXpert Germany",
-  "description": "Robuste Kennzeichnungen und Sicherheitsschilder für Biogasanlagen und erneuerbare Energiesysteme. Zuverlässige Identifikation für Fermenter, Gasleitungen, Ventile und Anlagenkomponenten in Biogas- und Abfallenergieanlagen in ganz Deutschland."
-},
-"industries/energy-environment/waste-stations": {
-  "title": "Kennzeichnungen für Entsorgungsstationen & Recycling-Beschilderung | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Entsorgungsstationen, Recyclingbereiche sowie Industrie- und Umweltanlagen. Robuste Identifikationslösungen für Sortierbereiche, Abfallströme und Recyclingstationen in ganz Deutschland."
-},
-"industries/energy-environment/wastewater-treatment-plants": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Kläranlagen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Kläranlagen und industrielle Wassersysteme. Robuste Identifikationslösungen für Rohre, Ventile, Tanks und Prozessanlagen in Aufbereitungsanlagen in ganz Deutschland."
-},
-"industries/energy-environment/power-grids": {
-  "title": "Kennzeichnungen für Stromnetze & elektrische Infrastruktur | SignXpert",
-  "description": "Hochwertige Kennzeichnungen für Stromnetze und elektrische Infrastruktur in Übertragungs- und Verteilungssystemen. Robuste Identifikationslösungen für Umspannwerke, Transformatoren, Kabel und Versorgungsnetze in ganz Deutschland."
-},
-"industries/infrastructure-mobility/rail-industry": {
-  "title": "Kennzeichnungen & Schilder für Bahninfrastruktur und Schienensysteme | SignXpert Germany",
-  "description": "Robuste Kennzeichnungen und Beschilderungssysteme für die Bahnindustrie und Verkehrsinfrastruktur. Zuverlässige Identifikationslösungen für Gleise, Bahnhöfe, Schienenfahrzeuge und Bahntechnik in ganz Deutschland."
-},
-"industries/infrastructure-mobility/railway-infrastructure": {
-  "title": "Kennzeichnungen & Beschilderungssysteme für Bahninfrastruktur | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Bahnnetze. Robuste Identifikationslösungen für Gleise, Signaltechnik, Weichen, Tunnel und Bahninfrastruktur in ganz Deutschland."
-},
-"industries/infrastructure-mobility/airports": {
-  "title": "Kennzeichnungen für Flughafeninfrastruktur & Luftfahrt-Beschilderung | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Flughafeninfrastruktur, Terminals, Start- und Landebahnen sowie Betriebsbereiche. Robuste Identifikationslösungen für Orientierung, Sicherheit und Bodenbetrieb an Flughäfen in Deutschland."
-},
-"industries/infrastructure-mobility/ports": {
-  "title": "Kennzeichnungen für Hafeninfrastruktur & maritime Anlagen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Häfen, Terminals und Logistikanlagen. Robuste Identifikationslösungen für Docks, Frachtbereiche, Lagerzonen und betriebliche Hafenumgebungen in ganz Deutschland."
-},
-"industries/infrastructure-mobility/tunnels-and-bridges": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Tunnel und Brücken | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Tunnel, Brücken und Verkehrsnetze. Robuste Identifikationslösungen für Bauteile, Sicherheitszonen, Wartungsbereiche und Betriebssteuerung in Tunneln und Brücken in ganz Deutschland."
-},
-"industries/infrastructure-mobility/ships-and-offshore-industry": {
-  "title": "Kennzeichnungen für Schiffe & Offshore-Industrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und maritime Beschilderungssysteme für Schiffe, Plattformen und Werften. Robuste Identifikationslösungen für Sicherheitszonen, Ausrüstung, Rohrleitungen und Betriebsbereiche in maritimen und Offshore-Umgebungen in Deutschland und internationalen Gewässern."
-},
-"industries/infrastructure-mobility/charging-infrastructure-for-electric-vehicles": {
-  "title": "Kennzeichnungen & Beschilderung für Ladeinfrastruktur von Elektrofahrzeugen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für öffentliche und private Ladestationen für Elektrofahrzeuge. Robuste Identifikationslösungen für Ladepunkte, Parkbereiche, Sicherheitshinweise und Orientierung in der Ladeinfrastruktur in ganz Deutschland."
-},
-"industries/infrastructure-mobility/construction-projects": {
-  "title": "Baustellenkennzeichnungen & industrielle Sicherheitsschilder | SignXpert",
-  "description": "Hochwertige Baustellenkennzeichnungen und Sicherheitsschilder für Bauprojekte und industrielle Umgebungen. Robuste Identifikationslösungen für Gefahrenbereiche, Ausrüstung, Materialien und Betriebszonen auf Baustellen in Deutschland."
-},
-"industries/infrastructure-mobility/architecture-and-construction": {
-  "title": "Kennzeichnungen & Beschilderung für Architektur und Bauwesen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Gebäude und Infrastrukturprojekte. Robuste Identifikationslösungen für Orientierung, Sicherheit, Normkonformität und Bauteile in Planungs- und Bauumgebungen in Deutschland."
-},
-"industries/manufacturing-heavy-industry/automotive-industry-signage-and-labeling": {
-  "title": "Kennzeichnungen & Schilder für die Automobilindustrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Schilder für die Fahrzeugproduktion. Robuste Identifikationslösungen für Komponenten, Motorräume, Baugruppen und Produktionslinien in der Automobilbranche in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/aviation-industry": {
-  "title": "Kennzeichnungen & Schilder für die Luftfahrtindustrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Flugzeugbau, Wartung und Bodenbetrieb. Robuste Identifikationslösungen für Komponenten, Sicherheitszonen, Ausrüstung und Rückverfolgbarkeit in der Luftfahrtbranche in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/electronics-industry-signage-and-labeling": {
-  "title": "Kennzeichnungen für die Elektronikindustrie & Leiterplattenmarkierung | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Leiterplattenfertigung, Komponenten und elektronische Baugruppen. Robuste Identifikationslösungen für Leiterplatten, Kabel, Gehäuse und Rückverfolgbarkeitskennzeichnungen in der Elektronikfertigung in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/steel-and-metal-industry": {
-  "title": "Kennzeichnungen für Stahl- & Metallindustrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Markierungssysteme für Produktions- und Verarbeitungsumgebungen. Robuste Identifikationslösungen für Stahlkomponenten, Rohre, Coils, Maschinen und anspruchsvolle Industriebedingungen in der Metallindustrie in Deutschland."
-},
-"industries/manufacturing-heavy-industry/mining-industry": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für den Bergbau | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Untertage- und Tagebaubetriebe. Robuste Identifikationslösungen für Gefahrenzonen, Maschinen, Tunnel, Ausrüstung und sicherheitskritische Bereiche in Bergbauanlagen in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/pulp-and-paper-industry": {
-  "title": "Kennzeichnungen für Zellstoff- & Papierindustrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Markierungssysteme für Produktions- und Verarbeitungsumgebungen. Robuste Identifikationslösungen für Papierfabriken, Zellstoffverarbeitung, Rollen, Rohre und Maschinen unter anspruchsvollen Industriebedingungen in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/machinery-industry": {
-  "title": "Kennzeichnungen für Maschinenbau & Industrieanlagen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und industrielle Markierungssysteme für Produktionsanlagen und Industriemaschinen. Robuste Identifikationslösungen für Komponenten, Sicherheitshinweise, Rückverfolgbarkeit und Wartungskennzeichnung in anspruchsvollen Fertigungsumgebungen in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/tool-manufacturing-and-fitness-equipment": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Werkzeugbau und Fitnessgeräte | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Werkzeugbau und Fitnessgeräte. Robuste Identifikationslösungen für Werkzeuge, Maschinen, Trainingsgeräte und Sicherheitshinweise in Industrie- und Sportumgebungen in ganz Deutschland."
-},
-"industries/manufacturing-heavy-industry/battery-factories": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Batteriefabriken | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Batteriefabriken, Energiespeicher- und EV-Produktionsanlagen. Robuste Identifikationslösungen für Produktionslinien, chemische Bereiche, elektrische Systeme und Gefahrenzonen in Batteriefertigungsanlagen in ganz Deutschland."
-},
-"industries/it-telecom/tele-and-data-installations": {
-  "title": "Kennzeichnungen für Telekommunikations- & Dateninstallationen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Netzwerk-Beschilderungssysteme für strukturierte Verkabelung und IT-Infrastruktur. Robuste Identifikationslösungen für Glasfasernetze, Serverräume, Datenkabel und Kommunikationssysteme in IT- und Telekommunikationsumgebungen in Deutschland."
-},
-"industries/it-telecom/telecom": {
-  "title": "Kennzeichnungen für Telekommunikation & Netzwerkinfrastruktur | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Kommunikationsnetze und Netzwerkinfrastruktur. Robuste Identifikationslösungen für Glasfaserkabel, Rechenzentren, Telekommunikationsanlagen, Masten und Kommunikationssysteme in ganz Deutschland."
-},
-"industries/it-telecom/it-infrastructure-and-data-centers": {
-  "title": "Kennzeichnungen für IT-Infrastruktur & Rechenzentren | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Netzwerk-Beschilderungssysteme für Serverräume, Rechenzentren und digitale Infrastrukturen. Robuste Identifikationslösungen für Kabel, Racks, Server, Patchpanels und kritische Rechenzentrumsausrüstung in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/food-industry-safety-hygiene-and-efficiency": {
-  "title": "Kennzeichnungen & Hygieneschilder für die Lebensmittelindustrie | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Hygieneschilder für Produktion, Verarbeitung und Verpackung in der Lebensmittelindustrie. Robuste Identifikationslösungen für Sicherheit, Sauberkeit, HACCP-Konformität und effiziente Betriebsabläufe in Lebensmittelbetrieben in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/furniture-and-kitchen-manufacturing": {
-  "title": "Kennzeichnungen & Industrieschilder für Möbel- und Küchenfertigung | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Produktionsumgebungen in der Möbel- und Küchenfertigung. Robuste Identifikationslösungen für Komponenten, Materialien, Montagelinien und Produktrückverfolgbarkeit in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/warehouse-logistics-and-industrial-facilities": {
-  "title": "Kennzeichnungen für Lagerlogistik & Industrieanlagen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Lagerlogistik, Industrieanlagen, Lagerung, Distribution und Produktion. Robuste Identifikationslösungen für Regale, Warenfluss, Sicherheitszonen, Kommissionierbereiche und Logistikprozesse in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/medical-and-healthcare": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Medizin und Gesundheitswesen | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Krankenhäuser, Kliniken und Labore. Robuste Identifikationslösungen für Geräte, Räume, Sicherheitszonen, Hygienebereiche und Patientenversorgungsbereiche in Gesundheitseinrichtungen in Deutschland."
-},
-"industries/branding-industrial-labeling/oils-lubricants-and-industrial-fluids": {
-  "title": "Kennzeichnungen & Sicherheitsschilder für Öle, Schmierstoffe und Industrieflüssigkeiten | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Öle, Schmierstoffe und Industrieflüssigkeiten in Fertigungs- und Wartungsumgebungen. Robuste Identifikationslösungen für Öllagerung, Schmierstellen, Hydrauliksysteme und Flüssigkeitshandhabung in Industrieanlagen in Deutschland."
-},
-"industries/branding-industrial-labeling/branding-and-event-identity": {
-  "title": "Branding-, Event- & Orientierungsschilder | SignXpert",
-  "description": "Hochwertige Branding-, Event- und Beschilderungslösungen für Unternehmensräume, Messen und industrielle Umgebungen. Robuste visuelle Kommunikationslösungen für Markenpräsentation, Besucherführung, Aktionsflächen und Umgebungsgrafiken in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/packaging-industry": {
-  "title": "Kennzeichnungen für Verpackungsindustrie & industrielle Verpackungssysteme | SignXpert",
-  "description": "Hochwertige Kennzeichnungen und Industrieschilder für Verpackungsindustrie, Produktion, Logistik und Lieferketten. Robuste Identifikationslösungen für Kartons, Paletten, Versandverpackungen und Verpackungslinien zur Sicherstellung von Rückverfolgbarkeit, Effizienz und Konformität in ganz Deutschland."
-},
-"industries/branding-industrial-labeling/our-technologies-and-materials": {
-  "title": "Industrielle Kennzeichnungstechnologien & Materialien für Beschilderungssysteme | SignXpert",
-  "description": "Hochwertige industrielle Kennzeichnungstechnologien und Materialien für langlebige Beschilderungssysteme. Fortschrittliche Lösungen mit Metallen, Kunststoffen, Beschichtungen und Drucktechnologien für extreme Umgebungen und dauerhafte Identifikation in industriellen Anwendungen in Deutschland."
-},
-"industries/branding-industrial-labeling/packaging-systems-and-food-engineering": {
-  "title": "Kennzeichnungen für Verpackungssysteme & Lebensmitteltechnik | SignXpert",
-  "description": "Hochwertige Kennzeichnungen für Verpackungssysteme und Lebensmitteltechnik in industriellen Produktionsumgebungen. Robuste Identifikationslösungen für Verpackungslinien, Verarbeitungsanlagen, Lebensmittelsysteme und automatisierte Fertigung zur Sicherstellung von Rückverfolgbarkeit, Hygiene und Effizienz in ganz Deutschland."
-}
+      },
+      "login": {
+        "title": "Anmelden – SignXpert",
+        "description": "Melden Sie sich in Ihrem SignXpert-Konto an, um Bestellungen zu verwalten, Dateien herunterzuladen und Ihre individuellen Schilder zu verfolgen. Sicherer Zugang für Kunden in Deutschland."
+      },
+      "account": {
+        "title": "Mein Konto – Bestellungen, Einstellungen & Dashboard | SignXpert",
+        "description": "Greifen Sie auf Ihr SignXpert-Konto zu, um Bestellungen zu verwalten, Sendungen zu verfolgen und Ihre Daten zu aktualisieren. Sicherer Zugang für Industrie- und Geschäftskunden in Deutschland."
+      },
+      "online-sign-editor": {
+        "title": "Individuelle Schilder online gestalten – Sign-Editor | SignXpert",
+        "description": "Nutzen Sie den Online-Sign-Editor von SignXpert, um individuelle Schilder, Etiketten und gravierte Namensschilder in wenigen Minuten zu gestalten. Einfache Anpassung, Echtzeit-Vorschau und schnelle Lieferung in ganz Deutschland."
+      },
+      "products": {
+        "title": "Industrieschilder & Elektrokennzeichnungen in Deutschland | SignXpert",
+        "description": "Entdecken Sie individuelle Industrieschilder, gravierte Etiketten und Namensschilder für elektrische und technische Anwendungen. Robuste Materialien, präzise Gravuren und schnelle Lieferung in ganz Deutschland mit SignXpert."
+      },
+      "faq": {
+        "title": "FAQ – Individuelle Schilder & Industriekennzeichnungen | SignXpert",
+        "description": "Finden Sie Antworten zu individuellen Schildern, Industriekennzeichnungen, Gravuren und dem Bestellprozess bei SignXpert. Schnelle Hilfe und Support für Kunden in ganz Deutschland."
+      },
+      "quick-guide": {
+        "title": "So erstellen Sie individuelle Schilder online – Kurzanleitung | SignXpert",
+        "description": "Folgen Sie dieser Kurzanleitung, um individuelle Schilder, Etiketten und gravierte Namensschilder mit SignXpert zu gestalten. Einfache Schritte mit unserem Online-Editor und schneller Lieferung in Deutschland."
+      },
+      "contacts": {
+        "title": "Kontakt & Support – Industrieschilder | SignXpert",
+        "description": "Kontaktieren Sie SignXpert für individuelle Industrieschilder, gravierte Etiketten und technische Namensschilder. Unser Team unterstützt Sie bei Bestellungen, Designfragen und technischen Anliegen in ganz Deutschland."
+      },
+      "industries": {
+        "title": "Branchen – Lösungen für Industrie- & Elektrokennzeichnung | SignXpert",
+        "description": "Entdecken Sie die Branchen, die von SignXpert unterstützt werden – darunter Elektro-, Industrie- und Technikbereiche. Individuelle Schilder, gravierte Etiketten und Namensschilder für professionelle Anwendungen in Deutschland."
+      },
+      "industries/mep-building-services/electrical-installation": {
+        "title": "Kennzeichnungen & Schilder für Elektroinstallationen in MEP-Projekten | SignXpert",
+        "description": "Hochwertige Schilder, Etiketten und Namensschilder für Elektroinstallationen in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für industrielle Anwendungen in ganz Deutschland."
+      },
+      "industries/mep-building-services/sprinkler-installations": {
+        "title": "Kennzeichnungen für Sprinkleranlagen & Brandschutzsysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen, Brandschutzschilder und Identifikationsschilder für Sprinkleranlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Sicherheitssysteme in ganz Deutschland."
+      },
+      "industries/mep-building-services/fire-installation": {
+        "title": "Brandschutzkennzeichnungen & Sicherheitsschilder für MEP-Projekte | SignXpert",
+        "description": "Hochwertige Brandschutzkennzeichnungen, Sicherheitsschilder und Identifikationsschilder für MEP- und Gebäudetechnikprojekte. Robuste und normgerechte Lösungen für industrielle Brandschutzsysteme in ganz Deutschland."
+      },
+      "industries/mep-building-services/refrigeration-installations": {
+        "title": "Kennzeichnungen für Kälteanlagen & HVAC-Systeme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen, Schilder und Namensschilder für Kälte- und HVAC-Anlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Kühlsysteme in ganz Deutschland."
+      },
+      "industries/mep-building-services/ventilation-installations": {
+        "title": "Kennzeichnungen für Lüftungsanlagen & HVAC-Kanalsysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen, Kanalschilder und Luftstrommarkierungen für MEP- und HVAC-Systeme. Robuste und normgerechte Identifikationslösungen für industrielle Bauprojekte in ganz Deutschland."
+      },
+      "industries/mep-building-services/elevators-and-lift-systems": {
+        "title": "Kennzeichnungen für Aufzüge & Liftsysteme in MEP-Projekten | SignXpert",
+        "description": "Hochwertige Kennzeichnungen, Schilder und Identifikationsschilder für Aufzugs- und Liftsysteme in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für vertikale Transportsysteme in ganz Deutschland."
+      },
+      "industries/mep-building-services/electrical-and-control-cabinets": {
+        "title": "Kennzeichnungen für Schaltschränke & Steuerungssysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für elektrische Schaltschränke und industrielle Steuerungssysteme. Robuste Gravurschilder sowie Kabel- und Komponentenkennzeichnungen für einen sicheren und effizienten Betrieb in MEP-Projekten in Deutschland."
+      },
+      "industries/mep-building-services/electrical-in-control-and-building-automation": {
+        "title": "Kennzeichnungen für Elektro- & Gebäudeautomationssysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für Elektro- und Gebäudeautomationssysteme in MEP-Projekten. Robuste Identifikationslösungen für Steuerungen, Sensoren und automatisierte Gebäudesysteme in industriellen Projekten in Deutschland."
+      },
+      "industries/mep-building-services/plumbing-installations-across": {
+        "title": "Kennzeichnungen für Sanitärinstallationen & Rohrmarkierungen in MEP-Systemen | SignXpert",
+        "description": "Hochwertige Kennzeichnungen, Rohrmarkierungen und Identifikationsschilder für Sanitärinstallationen in MEP-Systemen. Robuste und normgerechte Lösungen für Wasser-, Heizungs- und Entwässerungssysteme in Industrie- und Bauprojekten in Deutschland."
+      },
+      "industries/security-automation/alarm-and-security-installations": {
+        "title": "Kennzeichnungen für Alarm- & Sicherheitssysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für Alarm- und Sicherheitssysteme in der Gebäudeautomation und Industrie. Robuste Identifikationslösungen für Zutrittskontrollen, Einbruchmeldeanlagen und Sicherheitssysteme in ganz Deutschland."
+      },
+      "industries/security-automation/robotics-industry": {
+        "title": "Kennzeichnungen & Beschilderungen für Robotik und Automation | SignXpert",
+        "description": "Hochwertige Kennzeichnungs- und Beschilderungslösungen für Robotik- und Industrieautomationssysteme. Robuste Identifikationen für robotergestützte Produktionslinien, Smart Factories und Industrie-4.0-Anwendungen in ganz Deutschland."
+      },
+      "industries/security-automation/production-lines": {
+        "title": "Kennzeichnungen für Produktionslinien & Industriemarkierungssysteme | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für Produktionslinien und industrielle Markierungssysteme in Fertigungsumgebungen. Robuste Identifikationslösungen für Maschinen, Arbeitsabläufe und Sicherheitsbereiche in automatisierten Fabriken in Deutschland."
+      },
+      "industries/security-automation/industrial-maintenance": {
+        "title": "Kennzeichnungen für industrielle Wartung & Geräteidentifikation | SignXpert",
+        "description": "Robuste Kennzeichnungen und Identifikationslösungen für die sichere Wartung, Inspektion und Reparatur von Industrie- und Gebäudesystemen. Zuverlässige Markierungen für Wartungsarbeiten in ganz Deutschland."
+      },
+      "industries/security-automation/hydraulic-systems-and-fluid-technology": {
+        "title": "Kennzeichnungen für Hydrauliksysteme & Fluidtechnik | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für Hydrauliksysteme und Fluidtechnik in industriellen Anlagen. Robuste Markierungen für Rohre, Ventile und Hydraulikkomponenten in Fertigungs- und Automatisierungssystemen in ganz Deutschland."
+      },
+      "industries/energy-environment/solar-energy-and-photovoltaics": {
+        "title": "Kennzeichnungen für Solarenergie- & Photovoltaikanlagen | SignXpert",
+        "description": "Hochwertige Kennzeichnungen für Solarenergie- und Photovoltaikanlagen. Robuste und wetterbeständige Identifikationslösungen für PV-Module, Wechselrichter und elektrische Komponenten in Projekten für erneuerbare Energien in Deutschland."
+      },
+      "industries/energy-environment/nuclear-power": {
+        "title": "Kennzeichnungen & Sicherheitsschilder für Kernkraftwerke | SignXpert",
+        "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Kernkraftwerke und Energieanlagen. Robuste und normgerechte Identifikationslösungen für Strahlungsbereiche, Gerätekennzeichnungen und kontrollierte Bereiche in kerntechnischen Anlagen in Deutschland."
+      },
+    "industries/energy-environment/hydropower": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Wasserkraftwerke | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Wasserkraftwerke und Anlagen der erneuerbaren Energie. Robuste Identifikationslösungen für Turbinen, Generatoren, Wassersysteme und elektrische Infrastruktur in Wasserkraftanlagen in ganz Deutschland."
+  },
+  "industries/energy-environment/combined-heat-and-power-plants": {
+    "title": "Kennzeichnungen & Schilder für Blockheizkraftwerke (BHKW) | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Schilder für Blockheizkraftwerke (BHKW) und industrielle Energiesysteme. Robuste Identifikationslösungen für Rohrleitungen, Anlagenkomponenten und Sicherheitsbereiche in Kraft-Wärme-Kopplungsanlagen in ganz Deutschland."
+  },
+  "industries/energy-environment/biogas": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Biogas- und Abfallenergieanlagen | SignXpert Germany",
+    "description": "Robuste Kennzeichnungen und Sicherheitsschilder für Biogasanlagen und erneuerbare Energiesysteme. Zuverlässige Identifikation für Fermenter, Gasleitungen, Ventile und Anlagenkomponenten in Biogas- und Abfallenergieanlagen in ganz Deutschland."
+  },
+  "industries/energy-environment/waste-stations": {
+    "title": "Kennzeichnungen für Entsorgungsstationen & Recycling-Beschilderung | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Entsorgungsstationen, Recyclingbereiche sowie Industrie- und Umweltanlagen. Robuste Identifikationslösungen für Sortierbereiche, Abfallströme und Recyclingstationen in ganz Deutschland."
+  },
+  "industries/energy-environment/wastewater-treatment-plants": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Kläranlagen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Kläranlagen und industrielle Wassersysteme. Robuste Identifikationslösungen für Rohre, Ventile, Tanks und Prozessanlagen in Aufbereitungsanlagen in ganz Deutschland."
+  },
+  "industries/energy-environment/power-grids": {
+    "title": "Kennzeichnungen für Stromnetze & elektrische Infrastruktur | SignXpert",
+    "description": "Hochwertige Kennzeichnungen für Stromnetze und elektrische Infrastruktur in Übertragungs- und Verteilungssystemen. Robuste Identifikationslösungen für Umspannwerke, Transformatoren, Kabel und Versorgungsnetze in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/rail-industry": {
+    "title": "Kennzeichnungen & Schilder für Bahninfrastruktur und Schienensysteme | SignXpert Germany",
+    "description": "Robuste Kennzeichnungen und Beschilderungssysteme für die Bahnindustrie und Verkehrsinfrastruktur. Zuverlässige Identifikationslösungen für Gleise, Bahnhöfe, Schienenfahrzeuge und Bahntechnik in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/railway-infrastructure": {
+    "title": "Kennzeichnungen & Beschilderungssysteme für Bahninfrastruktur | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Bahnnetze. Robuste Identifikationslösungen für Gleise, Signaltechnik, Weichen, Tunnel und Bahninfrastruktur in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/airports": {
+    "title": "Kennzeichnungen für Flughafeninfrastruktur & Luftfahrt-Beschilderung | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Flughafeninfrastruktur, Terminals, Start- und Landebahnen sowie Betriebsbereiche. Robuste Identifikationslösungen für Orientierung, Sicherheit und Bodenbetrieb an Flughäfen in Deutschland."
+  },
+  "industries/infrastructure-mobility/ports": {
+    "title": "Kennzeichnungen für Hafeninfrastruktur & maritime Anlagen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Häfen, Terminals und Logistikanlagen. Robuste Identifikationslösungen für Docks, Frachtbereiche, Lagerzonen und betriebliche Hafenumgebungen in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/tunnels-and-bridges": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Tunnel und Brücken | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Tunnel, Brücken und Verkehrsnetze. Robuste Identifikationslösungen für Bauteile, Sicherheitszonen, Wartungsbereiche und Betriebssteuerung in Tunneln und Brücken in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/ships-and-offshore-industry": {
+    "title": "Kennzeichnungen für Schiffe & Offshore-Industrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und maritime Beschilderungssysteme für Schiffe, Plattformen und Werften. Robuste Identifikationslösungen für Sicherheitszonen, Ausrüstung, Rohrleitungen und Betriebsbereiche in maritimen und Offshore-Umgebungen in Deutschland und internationalen Gewässern."
+  },
+  "industries/infrastructure-mobility/charging-infrastructure-for-electric-vehicles": {
+    "title": "Kennzeichnungen & Beschilderung für Ladeinfrastruktur von Elektrofahrzeugen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für öffentliche und private Ladestationen für Elektrofahrzeuge. Robuste Identifikationslösungen für Ladepunkte, Parkbereiche, Sicherheitshinweise und Orientierung in der Ladeinfrastruktur in ganz Deutschland."
+  },
+  "industries/infrastructure-mobility/construction-projects": {
+    "title": "Baustellenkennzeichnungen & industrielle Sicherheitsschilder | SignXpert",
+    "description": "Hochwertige Baustellenkennzeichnungen und Sicherheitsschilder für Bauprojekte und industrielle Umgebungen. Robuste Identifikationslösungen für Gefahrenbereiche, Ausrüstung, Materialien und Betriebszonen auf Baustellen in Deutschland."
+  },
+  "industries/infrastructure-mobility/architecture-and-construction": {
+    "title": "Kennzeichnungen & Beschilderung für Architektur und Bauwesen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Gebäude und Infrastrukturprojekte. Robuste Identifikationslösungen für Orientierung, Sicherheit, Normkonformität und Bauteile in Planungs- und Bauumgebungen in Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/automotive-industry-signage-and-labeling": {
+    "title": "Kennzeichnungen & Schilder für die Automobilindustrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Schilder für die Fahrzeugproduktion. Robuste Identifikationslösungen für Komponenten, Motorräume, Baugruppen und Produktionslinien in der Automobilbranche in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/aviation-industry": {
+    "title": "Kennzeichnungen & Schilder für die Luftfahrtindustrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Flugzeugbau, Wartung und Bodenbetrieb. Robuste Identifikationslösungen für Komponenten, Sicherheitszonen, Ausrüstung und Rückverfolgbarkeit in der Luftfahrtbranche in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/electronics-industry-signage-and-labeling": {
+    "title": "Kennzeichnungen für die Elektronikindustrie & Leiterplattenmarkierung | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Leiterplattenfertigung, Komponenten und elektronische Baugruppen. Robuste Identifikationslösungen für Leiterplatten, Kabel, Gehäuse und Rückverfolgbarkeitskennzeichnungen in der Elektronikfertigung in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/steel-and-metal-industry": {
+    "title": "Kennzeichnungen für Stahl- & Metallindustrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Markierungssysteme für Produktions- und Verarbeitungsumgebungen. Robuste Identifikationslösungen für Stahlkomponenten, Rohre, Coils, Maschinen und anspruchsvolle Industriebedingungen in der Metallindustrie in Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/mining-industry": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für den Bergbau | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Untertage- und Tagebaubetriebe. Robuste Identifikationslösungen für Gefahrenzonen, Maschinen, Tunnel, Ausrüstung und sicherheitskritische Bereiche in Bergbauanlagen in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/pulp-and-paper-industry": {
+    "title": "Kennzeichnungen für Zellstoff- & Papierindustrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Markierungssysteme für Produktions- und Verarbeitungsumgebungen. Robuste Identifikationslösungen für Papierfabriken, Zellstoffverarbeitung, Rollen, Rohre und Maschinen unter anspruchsvollen Industriebedingungen in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/machinery-industry": {
+    "title": "Kennzeichnungen für Maschinenbau & Industrieanlagen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und industrielle Markierungssysteme für Produktionsanlagen und Industriemaschinen. Robuste Identifikationslösungen für Komponenten, Sicherheitshinweise, Rückverfolgbarkeit und Wartungskennzeichnung in anspruchsvollen Fertigungsumgebungen in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/tool-manufacturing-and-fitness-equipment": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Werkzeugbau und Fitnessgeräte | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Werkzeugbau und Fitnessgeräte. Robuste Identifikationslösungen für Werkzeuge, Maschinen, Trainingsgeräte und Sicherheitshinweise in Industrie- und Sportumgebungen in ganz Deutschland."
+  },
+  "industries/manufacturing-heavy-industry/battery-factories": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Batteriefabriken | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Batteriefabriken, Energiespeicher- und EV-Produktionsanlagen. Robuste Identifikationslösungen für Produktionslinien, chemische Bereiche, elektrische Systeme und Gefahrenzonen in Batteriefertigungsanlagen in ganz Deutschland."
+  },
+  "industries/it-telecom/tele-and-data-installations": {
+    "title": "Kennzeichnungen für Telekommunikations- & Dateninstallationen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Netzwerk-Beschilderungssysteme für strukturierte Verkabelung und IT-Infrastruktur. Robuste Identifikationslösungen für Glasfasernetze, Serverräume, Datenkabel und Kommunikationssysteme in IT- und Telekommunikationsumgebungen in Deutschland."
+  },
+  "industries/it-telecom/telecom": {
+    "title": "Kennzeichnungen für Telekommunikation & Netzwerkinfrastruktur | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Kommunikationsnetze und Netzwerkinfrastruktur. Robuste Identifikationslösungen für Glasfaserkabel, Rechenzentren, Telekommunikationsanlagen, Masten und Kommunikationssysteme in ganz Deutschland."
+  },
+  "industries/it-telecom/it-infrastructure-and-data-centers": {
+    "title": "Kennzeichnungen für IT-Infrastruktur & Rechenzentren | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Netzwerk-Beschilderungssysteme für Serverräume, Rechenzentren und digitale Infrastrukturen. Robuste Identifikationslösungen für Kabel, Racks, Server, Patchpanels und kritische Rechenzentrumsausrüstung in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/food-industry-safety-hygiene-and-efficiency": {
+    "title": "Kennzeichnungen & Hygieneschilder für die Lebensmittelindustrie | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Hygieneschilder für Produktion, Verarbeitung und Verpackung in der Lebensmittelindustrie. Robuste Identifikationslösungen für Sicherheit, Sauberkeit, HACCP-Konformität und effiziente Betriebsabläufe in Lebensmittelbetrieben in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/furniture-and-kitchen-manufacturing": {
+    "title": "Kennzeichnungen & Industrieschilder für Möbel- und Küchenfertigung | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Produktionsumgebungen in der Möbel- und Küchenfertigung. Robuste Identifikationslösungen für Komponenten, Materialien, Montagelinien und Produktrückverfolgbarkeit in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/warehouse-logistics-and-industrial-facilities": {
+    "title": "Kennzeichnungen für Lagerlogistik & Industrieanlagen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Lagerlogistik, Industrieanlagen, Lagerung, Distribution und Produktion. Robuste Identifikationslösungen für Regale, Warenfluss, Sicherheitszonen, Kommissionierbereiche und Logistikprozesse in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/medical-and-healthcare": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Medizin und Gesundheitswesen | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Beschilderungssysteme für Krankenhäuser, Kliniken und Labore. Robuste Identifikationslösungen für Geräte, Räume, Sicherheitszonen, Hygienebereiche und Patientenversorgungsbereiche in Gesundheitseinrichtungen in Deutschland."
+  },
+  "industries/branding-industrial-labeling/oils-lubricants-and-industrial-fluids": {
+    "title": "Kennzeichnungen & Sicherheitsschilder für Öle, Schmierstoffe und Industrieflüssigkeiten | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Sicherheitsschilder für Öle, Schmierstoffe und Industrieflüssigkeiten in Fertigungs- und Wartungsumgebungen. Robuste Identifikationslösungen für Öllagerung, Schmierstellen, Hydrauliksysteme und Flüssigkeitshandhabung in Industrieanlagen in Deutschland."
+  },
+  "industries/branding-industrial-labeling/branding-and-event-identity": {
+    "title": "Branding-, Event- & Orientierungsschilder | SignXpert",
+    "description": "Hochwertige Branding-, Event- und Beschilderungslösungen für Unternehmensräume, Messen und industrielle Umgebungen. Robuste visuelle Kommunikationslösungen für Markenpräsentation, Besucherführung, Aktionsflächen und Umgebungsgrafiken in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/packaging-industry": {
+    "title": "Kennzeichnungen für Verpackungsindustrie & industrielle Verpackungssysteme | SignXpert",
+    "description": "Hochwertige Kennzeichnungen und Industrieschilder für Verpackungsindustrie, Produktion, Logistik und Lieferketten. Robuste Identifikationslösungen für Kartons, Paletten, Versandverpackungen und Verpackungslinien zur Sicherstellung von Rückverfolgbarkeit, Effizienz und Konformität in ganz Deutschland."
+  },
+  "industries/branding-industrial-labeling/our-technologies-and-materials": {
+    "title": "Industrielle Kennzeichnungstechnologien & Materialien für Beschilderungssysteme | SignXpert",
+    "description": "Hochwertige industrielle Kennzeichnungstechnologien und Materialien für langlebige Beschilderungssysteme. Fortschrittliche Lösungen mit Metallen, Kunststoffen, Beschichtungen und Drucktechnologien für extreme Umgebungen und dauerhafte Identifikation in industriellen Anwendungen in Deutschland."
+  },
+  "industries/branding-industrial-labeling/packaging-systems-and-food-engineering": {
+    "title": "Kennzeichnungen für Verpackungssysteme & Lebensmitteltechnik | SignXpert",
+    "description": "Hochwertige Kennzeichnungen für Verpackungssysteme und Lebensmitteltechnik in industriellen Produktionsumgebungen. Robuste Identifikationslösungen für Verpackungslinien, Verarbeitungsanlagen, Lebensmittelsysteme und automatisierte Fertigung zur Sicherstellung von Rückverfolgbarkeit, Hygiene und Effizienz in ganz Deutschland."
+  }
 },
 "TermsOfPurchasing": {
   "t_1": "Einkaufsbedingungen",
@@ -311,7 +311,7 @@
   "t_63": "10. Höhere Gewalt",
   "t_64": "SignXpert haftet nicht für Verzögerungen oder Schäden, die durch Umstände entstehen, die außerhalb unseres angemessenen Einflussbereichs liegen (z. B. Naturkatastrophen, Krieg, Streiks oder schwere Störungen der Verkehrsinfrastruktur)."
 },
- "Impressum": {
+"Impressum": {
   "i_1": "Impressum",
   "i_2": "Angaben gemäß § 5 TDDDG",
   "i_3": "Unternehmen / Inhaber:",
@@ -644,6 +644,7 @@
     "item_2": "Raumkennzeichnung",
     "item_3": "Arbeitsplatzkennzeichnung"
   }
+}
 },
  "toolbar": {
   "actions": {
@@ -2108,6 +2109,5 @@
       }
     }
   }
-}
 }
 }

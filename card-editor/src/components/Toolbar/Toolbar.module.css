@@ -436,6 +436,15 @@ input[type="number"]:focus {
   border: 1px solid #888;
 }
 
+.elementsSpanWrapperWideRight {
+  width: calc(100% + 22px);
+  margin-right: -22px;
+}
+
+.elementsElWideBalance {
+  transform: translateX(11px);
+}
+
 .elementsList> :nth-last-child(-n + 2) {
   flex: 0 0 105px;
   width: 105px;

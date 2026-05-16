@@ -10962,7 +10962,11 @@ export const Toolbar = ({ formData }) => {
             </span>
           </li>
           <li className={styles.elementsEl} onClick={addUploadImage}>
-            <span className={styles.elementsSpanWrapper}>
+            <span
+              className={[styles.elementsSpanWrapper, styles.elementsSpanWrapperWideRight].join(
+                ' '
+              )}
+            >
               {Upload}
               <span>{t('toolbar.elements.upload')}</span>
             </span>
@@ -10989,19 +10993,29 @@ export const Toolbar = ({ formData }) => {
           <li className={styles.elementsEl} onClick={cut}>
             <span
               title={t('toolbar.elements.cutTitle')}
-              className={[styles.elementsSpanWrapper, isCutOpen ? styles.active : ''].join(' ')}
+              className={[
+                styles.elementsSpanWrapper,
+                styles.elementsSpanWrapperWideRight,
+                isCutOpen ? styles.active : '',
+              ].join(' ')}
             >
               {Cut}
               <span>{t('toolbar.elements.cut')}</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={addQrCode}>
+          <li
+            className={[styles.elementsEl, styles.elementsElWideBalance].join(' ')}
+            onClick={addQrCode}
+          >
             <span className={[styles.elementsSpanWrapper, isQrOpen ? styles.active : ''].join(' ')}>
               {QrCode}
               <span>{t('toolbar.elements.qrCode')}</span>
             </span>
           </li>
-          <li className={styles.elementsEl} onClick={addBarCode}>
+          <li
+            className={[styles.elementsEl, styles.elementsElWideBalance].join(' ')}
+            onClick={addBarCode}
+          >
             <span
               className={[styles.elementsSpanWrapper, isBarCodeOpen ? styles.active : ''].join(' ')}
             >

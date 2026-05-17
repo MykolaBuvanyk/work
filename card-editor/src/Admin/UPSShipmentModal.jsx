@@ -64,9 +64,6 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     });
   };
 
-  const openInUPS = () => {
-    window.open('https://www.ups.com/ship/single-page?loc=en_DE', '_blank');
-  };
 
   const submit = async () => {
     setError('');
@@ -195,16 +192,8 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <div style={styles.actions}>
           <button style={styles.cancelBtn} onClick={onClose} disabled={loading}>Cancel</button>
-          <button
-            style={{...styles.cancelBtn, borderColor:'#f5a623', color:'#f5a623'}}
-            onClick={openInUPS}
-            disabled={loading}
-            title="Open UPS.com ship form with pre-filled data (no API call)"
-          >
-            Open in UPS.com →
-          </button>
           <button style={styles.submitBtn} onClick={submit} disabled={loading}>
-            {loading ? 'Creating...' : 'Create via API'}
+            {loading ? 'Creating...' : 'Create Shipment'}
           </button>
         </div>
       </div>

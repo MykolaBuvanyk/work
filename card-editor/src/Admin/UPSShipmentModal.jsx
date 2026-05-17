@@ -54,6 +54,8 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
+  const [labelBase64, setLabelBase64] = useState(null);
+  const [labelFormat, setLabelFormat] = useState('GIF');
   const [pickupConfirmation, setPickupConfirmation] = useState(null);
   const [voiding, setVoiding] = useState(false);
   const [rates, setRates] = useState(null);
@@ -114,12 +116,29 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
       });
       setCreatedTracking(res.data.trackingNumber);
       setPickupConfirmation(res.data.pickupConfirmation || null);
+      setLabelBase64(res.data.labelBase64 || null);
+      setLabelFormat(res.data.labelFormat || 'GIF');
       onSuccess(res.data.trackingNumber);
     } catch (err) {
       setError(err?.response?.data?.message || 'UPS shipment creation failed.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const printLabel = () => {
+    if (!labelBase64) return;
+    const mimeType = labelFormat === 'PDF' ? 'application/pdf' : `image/${labelFormat.toLowerCase()}`;
+    const dataUrl = `data:${mimeType};base64,${labelBase64}`;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>UPS Label - ${createdTracking}</title>
+      <style>body{margin:0;display:flex;justify-content:center;} img{max-width:100%;} @media print{body{margin:0;}}</style>
+      </head><body>
+      <img src="${dataUrl}" onload="window.print()" />
+      </body></html>
+    `);
+    win.document.close();
   };
 
   const voidAndEdit = async () => {
@@ -179,6 +198,14 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             To edit data — void this shipment and create a new one with corrected details.
           </p>
           <div style={{display:'flex', gap:'10px', flexDirection:'column'}}>
+            {labelBase64 && (
+              <button
+                style={{...styles.submitBtn, background:'#2e7d32'}}
+                onClick={printLabel}
+              >
+                🖨️ Print Label
+              </button>
+            )}
             <a
               href={`https://www.ups.com/track?tracknum=${createdTracking}`}
               target="_blank"

@@ -190,13 +190,18 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     const results = response.data?.ShipmentResponse?.ShipmentResults;
     const packageResults = results?.PackageResults;
+    const firstPackage = Array.isArray(packageResults) ? packageResults[0] : packageResults;
     const trackingNumber =
-      (Array.isArray(packageResults) ? packageResults[0] : packageResults)?.TrackingNumber ||
+      firstPackage?.TrackingNumber ||
       results?.ShipmentIdentificationNumber;
 
     if (!trackingNumber) {
       throw new Error('UPS did not return a tracking number');
     }
+
+    // Extract shipping label (base64 image)
+    const labelBase64 = firstPackage?.ShippingLabel?.GraphicImage || null;
+    const labelFormat = firstPackage?.ShippingLabel?.ImageFormat?.Code || 'GIF';
 
     await Order.update(
       { trackingNumber },
@@ -269,7 +274,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
       }
     }
 
-    return res.json({ success: true, trackingNumber, pickupConfirmation });
+    return res.json({ success: true, trackingNumber, pickupConfirmation, labelBase64, labelFormat });
   } catch (err) {
     const upsData = err?.response?.data;
     console.error('UPS shipment error:', JSON.stringify(upsData, null, 2) || err.message);

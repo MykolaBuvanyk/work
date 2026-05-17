@@ -56,6 +56,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     const isEnvelope = serviceCode === 'ENV';
     const isSaturday = serviceCode === 'SAT';
+    const upsPickupDate = pickupDate ? pickupDate.replace(/-/g, '') : null;
     const serviceMap = { 'ENV': '07', 'NDA': '07', 'E12': '54', 'SAT': '07' };
     const resolvedServiceCode = serviceMap[serviceCode] || serviceCode || '11';
     const packagingCode = isEnvelope ? '01' : '02';
@@ -94,13 +95,10 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
+          ...(upsPickupDate ? { PickupDate: upsPickupDate } : {}),
           ShipmentServiceOptions: {
             ...(isSaturday ? { SaturdayDeliveryIndicator: '' } : {}),
-            ...(schedulePickup && pickupDate ? {
-              PickupOptions: {
-                HoldForPickupIndicator: '',
-              },
-            } : {}),
+            ...(schedulePickup ? { OnCallAirPickupIndicator: '' } : {}),
             ...(email ? {
               Notification: {
                 NotificationCode: '6',

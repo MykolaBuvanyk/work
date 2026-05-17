@@ -80,7 +80,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         orderId: order.id,
         ...form,
         schedulePickup,
-        pickupDate: schedulePickup ? pickupDate : undefined,
+        pickupDate,
       });
       setCreatedTracking(res.data.trackingNumber);
       onSuccess(res.data.trackingNumber);
@@ -215,18 +215,16 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             />
             Schedule a new pickup.
           </label>
-          {schedulePickup && (
-            <div style={{marginTop:'10px'}}>
-              <label style={styles.label}>Pickup Date *</label>
-              <input
-                type="date"
-                style={styles.input}
-                value={pickupDate}
-                min={today}
-                onChange={e => setPickupDate(e.target.value)}
-              />
-            </div>
-          )}
+          <div style={{marginTop:'10px'}}>
+            <label style={styles.label}>Pickup Date *</label>
+            <input
+              type="date"
+              style={styles.input}
+              value={pickupDate}
+              min={today}
+              onChange={e => setPickupDate(e.target.value)}
+            />
+          </div>
         </div>
 
         {error && <div style={styles.error}>{error}</div>}

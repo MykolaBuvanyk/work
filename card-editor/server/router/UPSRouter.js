@@ -12,11 +12,25 @@ const UPS_SERVICES = {
   'NDA': 'UPS Next Day Package',
   'E12': 'UPS Express before 12 PM',
   'SAT': 'UPS Saturday Delivery',
-  '65': 'UPS Worldwide Saver',
+  '01': 'UPS Next Day Air',
+  '02': 'UPS 2nd Day Air',
+  '03': 'UPS Ground',
   '07': 'UPS Worldwide Express',
   '08': 'UPS Worldwide Expedited',
   '11': 'UPS Standard',
+  '12': 'UPS 3 Day Select',
+  '13': 'UPS Next Day Air Saver',
+  '14': 'UPS Next Day Air Early',
   '54': 'UPS Express Plus',
+  '59': 'UPS 2nd Day Air AM',
+  '65': 'UPS Worldwide Saver',
+  '70': 'UPS Access Point Economy',
+  '74': 'UPS Express 12:00',
+  '82': 'UPS Today Standard',
+  '83': 'UPS Today Dedicated Courier',
+  '84': 'UPS Today Intercity',
+  '85': 'UPS Today Express',
+  '86': 'UPS Today Express Saver',
 };
 
 async function getUpsToken() {
@@ -317,15 +331,21 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
     });
 
     const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
-    const rates = [].concat(ratedShipments).map(s => ({
-      serviceCode: s.Service?.Code,
-      serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
-      currency: s.TotalCharges?.CurrencyCode || 'EUR',
-      amount: s.TotalCharges?.MonetaryValue,
-      deliveryDate: s.GuaranteedDelivery?.BusinessDaysInTransit
-        ? `${s.GuaranteedDelivery.BusinessDaysInTransit} business day(s)`
-        : s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date || null,
-    })).filter(r => r.amount);
+    const rates = [].concat(ratedShipments).map(s => {
+      const negotiated = s.NegotiatedRateCharges?.TotalCharge;
+      const published = s.TotalCharges;
+      const charge = negotiated || published;
+      return {
+        serviceCode: s.Service?.Code,
+        serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
+        currency: charge?.CurrencyCode || 'EUR',
+        amount: charge?.MonetaryValue,
+        publishedAmount: negotiated ? published?.MonetaryValue : null,
+        deliveryDate: s.GuaranteedDelivery?.BusinessDaysInTransit
+          ? `${s.GuaranteedDelivery.BusinessDaysInTransit} business day(s)`
+          : s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date || null,
+      };
+    }).filter(r => r.amount);
 
     return res.json({ rates });
   } catch (err) {

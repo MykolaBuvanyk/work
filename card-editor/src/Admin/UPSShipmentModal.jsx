@@ -253,8 +253,15 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
                     <div style={{fontWeight:600, fontSize:'13px'}}>{r.serviceName || r.serviceCode}</div>
                     {r.deliveryDate && <div style={{fontSize:'12px', color:'#555'}}>{r.deliveryDate}</div>}
                   </div>
-                  <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
-                    {r.currency} {parseFloat(r.amount).toFixed(2)}
+                  <div style={{textAlign:'right'}}>
+                    <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
+                      {r.currency} {parseFloat(r.amount).toFixed(2)}
+                    </div>
+                    {r.publishedAmount && (
+                      <div style={{fontSize:'11px', color:'#999', textDecoration:'line-through'}}>
+                        {r.currency} {parseFloat(r.publishedAmount).toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

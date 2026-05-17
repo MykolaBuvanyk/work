@@ -35,6 +35,11 @@
   margin-top: 4px !important;
 }
 
+.fieldAdhesive {
+  justify-content: flex-start !important;
+  justify-self: start;
+}
+
 .icons {
   display: flex;
   gap: 3px;
@@ -302,13 +307,14 @@ input[type="number"]:focus {
   flex-wrap: nowrap;
   display: flex;
   width: 100%;
-  justify-content: center;
-  /* justify-content: space-between; */
+  justify-content: space-between;
 }
 
 .copyItem {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
   gap: 10px;
   border: 1px solid #2f2f2f;
   border-radius: 10px;
@@ -320,6 +326,7 @@ input[type="number"]:focus {
   display: flex;
   flex-direction: column;
   margin: 0;
+  white-space: nowrap;
   /* font-family: Inter; */
   font-weight: 700;
   font-style: Bold;
@@ -335,6 +342,7 @@ input[type="number"]:focus {
 }
 
 .copyField {
+  flex-shrink: 0;
   margin: 0;
 }
 

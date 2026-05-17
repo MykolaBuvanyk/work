@@ -9,6 +9,8 @@
   border: 1px solid rgba(158, 158, 158, 1);
   border-radius: 8px;
   list-style: none;
+  box-sizing: border-box;
+  width: calc(100% + 10px);
   margin: 0;
   padding: 10px;
   display: grid;
@@ -19,6 +21,7 @@
 .toolbarItem {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 10px;
   cursor: pointer;
   user-select: none;

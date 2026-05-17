@@ -50,10 +50,13 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     serviceCode: '11',
   });
 
+  const today = new Date().toISOString().split('T')[0];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
   const [voiding, setVoiding] = useState(false);
+  const [schedulePickup, setSchedulePickup] = useState(false);
+  const [pickupDate, setPickupDate] = useState(today);
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -76,6 +79,8 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
       const res = await $authHost.post('ups/create-shipment', {
         orderId: order.id,
         ...form,
+        schedulePickup,
+        pickupDate: schedulePickup ? pickupDate : undefined,
       });
       setCreatedTracking(res.data.trackingNumber);
       onSuccess(res.data.trackingNumber);
@@ -188,6 +193,42 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           </select>
         </div>
 
+        <div style={styles.fieldGroup}>
+          <label style={{...styles.label, fontWeight:600, marginBottom:'8px'}}>Do you need to schedule a pickup?</label>
+          <label style={styles.radioLabel}>
+            <input
+              type="radio"
+              name="pickup"
+              checked={!schedulePickup}
+              onChange={() => setSchedulePickup(false)}
+              style={{marginRight:'8px'}}
+            />
+            I'll drop off my shipment or include it in another pickup.
+          </label>
+          <label style={{...styles.radioLabel, marginTop:'6px'}}>
+            <input
+              type="radio"
+              name="pickup"
+              checked={schedulePickup}
+              onChange={() => setSchedulePickup(true)}
+              style={{marginRight:'8px'}}
+            />
+            Schedule a new pickup.
+          </label>
+          {schedulePickup && (
+            <div style={{marginTop:'10px'}}>
+              <label style={styles.label}>Pickup Date *</label>
+              <input
+                type="date"
+                style={styles.input}
+                value={pickupDate}
+                min={today}
+                onChange={e => setPickupDate(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
         {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.actions}>
@@ -242,6 +283,9 @@ const styles = {
   select: {
     width: '100%', height: '34px', border: '1px solid #ccc',
     borderRadius: '4px', padding: '0 8px', fontSize: '14px', background: '#fff',
+  },
+  radioLabel: {
+    display: 'flex', alignItems: 'center', fontSize: '13px', color: '#333', cursor: 'pointer',
   },
   error: {
     color: '#d00', fontSize: '13px', marginBottom: '10px',

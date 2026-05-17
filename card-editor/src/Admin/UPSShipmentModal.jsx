@@ -157,7 +157,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
               ℹ️ To schedule pickup for <strong>{pickupDate}</strong> — go to{' '}
               <a href="https://www.ups.com/ship/history" target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>
                 UPS.com → Shipping History
-              </a>{' '}→ find this shipment → Actions → Schedule Pickup.
+              </a>{' '}→ find this shipment → <strong>⋮ Actions → Pickups</strong>.
             </div>
           )}
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>

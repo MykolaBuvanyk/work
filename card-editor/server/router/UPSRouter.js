@@ -253,6 +253,89 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
+UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { address, city, postalCode, country, weight, length, width, height } = req.body;
+    if (!city || !postalCode || !country) return res.status(400).json({ message: 'City, PostalCode and Country are required' });
+
+    const isSandbox = process.env.UPS_SANDBOX === 'true';
+    const rateUrl = isSandbox
+      ? 'https://wwwcie.ups.com/api/rating/v2403/Shop'
+      : 'https://onlinetools.ups.com/api/rating/v2403/Shop';
+
+    const token = await getUpsToken();
+
+    const payload = {
+      RateRequest: {
+        Request: { RequestOption: 'Shop' },
+        Shipment: {
+          Shipper: {
+            Name: process.env.UPS_SHIPPER_NAME || 'SignXpert',
+            ShipperNumber: process.env.UPS_SHIPPER_NUMBER,
+            Address: {
+              AddressLine: [process.env.UPS_SHIPPER_ADDRESS || ''],
+              City: process.env.UPS_SHIPPER_CITY || '',
+              PostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+              CountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+            },
+          },
+          ShipTo: {
+            Address: {
+              AddressLine: [address || ''].filter(Boolean),
+              City: city,
+              PostalCode: postalCode,
+              CountryCode: country.toUpperCase(),
+            },
+          },
+          Package: {
+            PackagingType: { Code: '02' },
+            PackageWeight: {
+              UnitOfMeasurement: { Code: 'KGS' },
+              Weight: String(parseFloat(weight) || 1),
+            },
+            ...(length && width && height ? {
+              Dimensions: {
+                UnitOfMeasurement: { Code: 'CM' },
+                Length: String(length),
+                Width: String(width),
+                Height: String(height),
+              },
+            } : {}),
+          },
+        },
+      },
+    };
+
+    const response = await axios.post(rateUrl, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        transId: `rate-${Date.now()}`,
+        transactionSrc: 'SignXpert',
+      },
+      timeout: 10000,
+    });
+
+    const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
+    const rates = [].concat(ratedShipments).map(s => ({
+      serviceCode: s.Service?.Code,
+      serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
+      currency: s.TotalCharges?.CurrencyCode || 'EUR',
+      amount: s.TotalCharges?.MonetaryValue,
+      deliveryDate: s.GuaranteedDelivery?.BusinessDaysInTransit
+        ? `${s.GuaranteedDelivery.BusinessDaysInTransit} business day(s)`
+        : s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date || null,
+    })).filter(r => r.amount);
+
+    return res.json({ rates });
+  } catch (err) {
+    const upsData = err?.response?.data;
+    const upsMsg = upsData?.response?.errors?.[0]?.message || err.message;
+    console.error('UPS Rate error:', upsMsg);
+    return res.status(500).json({ message: upsMsg });
+  }
+});
+
 UPSRouter.post('/void-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { trackingNumber } = req.body;

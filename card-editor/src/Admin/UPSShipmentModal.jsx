@@ -56,10 +56,39 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [createdTracking, setCreatedTracking] = useState(null);
   const [pickupConfirmation, setPickupConfirmation] = useState(null);
   const [voiding, setVoiding] = useState(false);
+  const [rates, setRates] = useState(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
   const [schedulePickup, setSchedulePickup] = useState(false);
   const [pickupDate, setPickupDate] = useState(today);
 
-  const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const set = (field) => (e) => { setForm((prev) => ({ ...prev, [field]: e.target.value })); setRates(null); };
+
+  const getRates = async () => {
+    if (!form.city || !form.postalCode || !form.country) {
+      setError('Fill in City, Postal Code and Country to get rates.');
+      return;
+    }
+    setRatesLoading(true);
+    setRates(null);
+    setError('');
+    try {
+      const res = await $authHost.post('ups/get-rates', {
+        address: form.address,
+        city: form.city,
+        postalCode: form.postalCode,
+        country: form.country,
+        weight: form.weight,
+        length: form.length,
+        width: form.width,
+        height: form.height,
+      });
+      setRates(res.data.rates);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to get rates.');
+    } finally {
+      setRatesLoading(false);
+    }
+  };
 
   const adjustWeight = (delta) => {
     setForm((prev) => {
@@ -200,7 +229,41 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Service</label>
-          <select style={styles.select} value={form.serviceCode} onChange={set('serviceCode')}>
+          <button
+            style={{...styles.cancelBtn, borderColor:'#0073bc', color:'#0073bc', width:'100%', marginBottom:'8px'}}
+            onClick={getRates}
+            disabled={ratesLoading}
+          >
+            {ratesLoading ? 'Getting rates...' : '💰 Get Rates from UPS'}
+          </button>
+          {rates && rates.length > 0 && (
+            <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'8px'}}>
+              {rates.map(r => (
+                <div
+                  key={r.serviceCode}
+                  onClick={() => setForm(p => ({...p, serviceCode: r.serviceCode}))}
+                  style={{
+                    border: `2px solid ${form.serviceCode === r.serviceCode ? '#0073bc' : '#ddd'}`,
+                    borderRadius:'6px', padding:'8px 12px', cursor:'pointer',
+                    background: form.serviceCode === r.serviceCode ? '#f0f7ff' : '#fff',
+                    display:'flex', justifyContent:'space-between', alignItems:'center',
+                  }}
+                >
+                  <div>
+                    <div style={{fontWeight:600, fontSize:'13px'}}>{r.serviceName || r.serviceCode}</div>
+                    {r.deliveryDate && <div style={{fontSize:'12px', color:'#555'}}>{r.deliveryDate}</div>}
+                  </div>
+                  <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
+                    {r.currency} {parseFloat(r.amount).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {rates && rates.length === 0 && (
+            <div style={{fontSize:'13px', color:'#888', marginBottom:'8px'}}>No rates available for this destination.</div>
+          )}
+          <select style={styles.select} value={form.serviceCode} onChange={e => setForm(p => ({...p, serviceCode: e.target.value}))}>
             {UPS_SERVICES.map((s) => (
               <option key={s.code} value={s.code}>{s.label}</option>
             ))}

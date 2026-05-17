@@ -264,7 +264,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
         console.log('Pickup scheduled, PRN:', pickupConfirmation);
       } catch (pickupErr) {
         const pickupMsg = pickupErr?.response?.data?.response?.errors?.[0]?.message || pickupErr.message;
-        console.error('Pickup scheduling failed:', pickupMsg);
+        console.error('Pickup scheduling failed:', pickupMsg, 'Status:', pickupErr?.response?.status, 'URL:', pickupUrl);
         pickupConfirmation = null;
       }
     }

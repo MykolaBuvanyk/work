@@ -153,8 +153,11 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             </div>
           )}
           {schedulePickup && !pickupConfirmation && (
-            <div style={{background:'#fff8e1', border:'1px solid #ff9800', borderRadius:'6px', padding:'8px 12px', marginBottom:'12px', fontSize:'13px', color:'#7a4a00'}}>
-              ⚠️ Pickup scheduling failed or not available. Schedule manually on UPS.com.
+            <div style={{background:'#f5f5f5', border:'1px solid #ccc', borderRadius:'6px', padding:'8px 12px', marginBottom:'12px', fontSize:'13px', color:'#555'}}>
+              ℹ️ To schedule pickup for <strong>{pickupDate}</strong> — go to{' '}
+              <a href="https://www.ups.com/ship/history" target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>
+                UPS.com → Shipping History
+              </a>{' '}→ find this shipment → Actions → Schedule Pickup.
             </div>
           )}
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>

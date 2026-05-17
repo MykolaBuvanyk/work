@@ -1388,7 +1388,7 @@
     "d_1": "We provide",
     "d_2": "Easy",
     "d_3": "Design by",
-    "d_4": "your Self",
+    "d_4": "Your Self",
     "d_5": "Fast",
     "d_6": "Manufacturing",
     "d_7": "Within 8h",
@@ -1397,7 +1397,44 @@
     "d_10": "Yours in 24–48h",
     "d_11": "How to use the editor",
     "d_12": "New Project",
-    "d_13": "Contacts"
+    "d_13": "Contacts",
+    "start": {
+      "title": "How to start",
+      "register": "Register an account",
+      "create": "Create a project",
+      "save": "Save the project",
+      "cart": "Finalize your order"
+    },
+    "editor": {
+      "choose": "Step by step, choose:",
+      "imageAlt": "SignXpert editor",
+      "steps": {
+        "shape": "Shape – pick the one you want for your sign or label.",
+        "size": "Size – max 600mm × 295mm.",
+        "thickness": "Material thickness – many have adhesive backing for easy mounting on clean, dry surfaces.",
+        "color": "Color – most colors are available in different thicknesses.",
+        "elements": "You can add lots of elements and test everything. In ‘Shape’, you can create frames, cut-outs, or engraved designs.",
+        "holes": "Holes of any size are possible, or create your own with ‘Shape’."
+      },
+      "sideNotes": {
+        "duplicates": "Make exact duplicates. The number will be shown below the thumbnail.",
+        "copy": "Create an editable copy and customize it as needed.",
+        "manage": "Manage your created signs. Import text directly from Excel and use templates (pre-made or your saved ones).",
+        "accessories": "We have many accessories in stock – no need to search or buy them elsewhere.",
+        "navigate": "Easily navigate your created signs."
+      },
+      "topNotes": {
+        "plastic": "We use Engraved Plastic\nthat doesn’t fade or discolor.",
+        "templates": "Save your own template for future use.\nCreate a new project anytime or open\nan existing one.",
+        "price": "Your price includes taxes\nand discounts. We regularly offer\ndiscounts to our clients."
+      },
+      "bottomNotes": {
+        "requests": "Leave any special requests\nhere – we’ll read and consider\nthem.",
+        "thumbnails": "View thumbnails of\nyour created signs here.",
+        "elements": "Move, add, delete, copy,\nand edit elements easily.",
+        "properties": "Change text, size,\nand other properties here."
+      }
+    }
   },
   "Login": {
     "l_1": "Register a new account",

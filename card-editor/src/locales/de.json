@@ -1397,7 +1397,44 @@
   "d_10": "Bei Ihnen in 24–48h",
   "d_11": "So verwenden Sie den Editor",
   "d_12": "Neues Projekt",
-  "d_13": "Kontakt"
+  "d_13": "Kontakt",
+  "start": {
+    "title": "So starten Sie",
+    "register": "Konto registrieren",
+    "create": "Projekt erstellen",
+    "save": "Projekt speichern",
+    "cart": "Bestellung abschließen"
+  },
+  "editor": {
+    "choose": "Schritt für Schritt wählen:",
+    "imageAlt": "SignXpert Editor",
+    "steps": {
+      "shape": "Form – wählen Sie die gewünschte Form für Ihr Schild oder Etikett.",
+      "size": "Größe – max. 600mm × 295mm.",
+      "thickness": "Materialstärke – viele Materialien haben eine Kleberückseite zur einfachen Montage auf sauberen, trockenen Oberflächen.",
+      "color": "Farbe – die meisten Farben sind in verschiedenen Stärken verfügbar.",
+      "elements": "Sie können viele Elemente hinzufügen und alles testen. Unter „Form“ können Sie Rahmen, Ausschnitte oder Gravurdesigns erstellen.",
+      "holes": "Bohrungen in jeder Größe sind möglich, oder erstellen Sie eigene unter „Form“."
+    },
+    "sideNotes": {
+      "duplicates": "Erstellen Sie exakte Duplikate. Die Anzahl wird unter der Miniaturansicht angezeigt.",
+      "copy": "Erstellen Sie eine bearbeitbare Kopie und passen Sie sie nach Bedarf an.",
+      "manage": "Verwalten Sie Ihre erstellten Schilder. Importieren Sie Text direkt aus Excel und nutzen Sie Vorlagen (vorgefertigt oder eigene).",
+      "accessories": "Wir haben viele Zubehörteile auf Lager – Sie müssen sie nicht anderswo suchen oder kaufen.",
+      "navigate": "Navigieren Sie einfach durch Ihre erstellten Schilder."
+    },
+    "topNotes": {
+      "plastic": "Wir verwenden gravierten Kunststoff,\nder nicht verblasst oder sich verfärbt.",
+      "templates": "Speichern Sie eigene Vorlagen für später.\nErstellen Sie jederzeit ein neues Projekt\noder öffnen Sie ein bestehendes.",
+      "price": "Ihr Preis enthält Steuern\nund Rabatte. Wir bieten regelmäßig\nRabatte für unsere Kunden."
+    },
+    "bottomNotes": {
+      "requests": "Hinterlassen Sie hier besondere Wünsche –\nwir lesen und berücksichtigen sie.",
+      "thumbnails": "Hier sehen Sie Miniaturen\nIhrer erstellten Schilder.",
+      "elements": "Elemente einfach verschieben,\nhinzufügen, löschen, kopieren\nund bearbeiten.",
+      "properties": "Ändern Sie hier Text, Größe\nund weitere Eigenschaften."
+    }
+  }
 },
 "Login": {
   "l_1": "Neues Konto erstellen",

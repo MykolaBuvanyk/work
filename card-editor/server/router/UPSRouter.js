@@ -289,8 +289,8 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
 
     const isSandbox = process.env.UPS_SANDBOX === 'true';
     const rateUrl = isSandbox
-      ? 'https://wwwcie.ups.com/api/rating/v2409/Shoptimeintransit'
-      : 'https://onlinetools.ups.com/api/rating/v2409/Shoptimeintransit';
+      ? 'https://wwwcie.ups.com/api/rating/v2409/Shop'
+      : 'https://onlinetools.ups.com/api/rating/v2409/Shop';
 
     const token = await getUpsToken();
 
@@ -323,13 +323,6 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
           },
           ShipmentRatingOptions: {
             NegotiatedRatesIndicator: '',
-          },
-          DeliveryTimeInformation: {
-            PackageBillType: '03',
-            Pickup: {
-              Date: new Date().toISOString().slice(0,10).replace(/-/g,''),
-              Time: '1400',
-            },
           },
           Package: [{
             PackagingType: { Code: '02', Description: 'Customer Supplied Package' },

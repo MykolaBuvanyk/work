@@ -354,13 +354,13 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
     });
 
     const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
-    if (ratedShipments[0]?.NegotiatedRateCharges) {
-      console.log('NegotiatedRateCharges keys:', JSON.stringify(ratedShipments[0].NegotiatedRateCharges, null, 2));
-    }
+    const vatRate = parseFloat(process.env.UPS_VAT_RATE || '0.19');
     const rates = [].concat(ratedShipments).map(s => {
       const negotiated = s.NegotiatedRateCharges?.TotalCharge || s.NegotiatedRateCharges?.TotalCharges;
       const published = s.TotalCharges;
       const charge = negotiated || published;
+      const amountNet = parseFloat(charge?.MonetaryValue || 0);
+      const amountWithVat = amountNet > 0 ? (amountNet * (1 + vatRate)).toFixed(2) : null;
 
       // Delivery date from TimeInTransit (Shoptimeintransit endpoint)
       const arrivalDate = s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date;
@@ -382,6 +382,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
         serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
         currency: charge?.CurrencyCode || 'EUR',
         amount: charge?.MonetaryValue,
+        amountWithVat,
         publishedAmount: negotiated ? published?.MonetaryValue : null,
         deliveryDate,
       };

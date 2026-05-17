@@ -256,7 +256,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           </button>
           {rates && rates.length > 0 && (
             <div style={{fontSize:'11px', color:'#888', marginBottom:'4px'}}>
-              * Account rates (excl. fuel surcharges)
+              * Account rates incl. fuel surcharges + 19% VAT
             </div>
           )}
           {rates && rates.length > 0 && (
@@ -277,8 +277,13 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
                     {r.deliveryDate && <div style={{fontSize:'12px', color:'#555'}}>{r.deliveryDate}</div>}
                   </div>
                   <div style={{textAlign:'right'}}>
-                    <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
-                      {r.currency} {parseFloat(r.amount).toFixed(2)}
+                    {r.amountWithVat && (
+                      <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
+                        {r.currency} {r.amountWithVat}
+                      </div>
+                    )}
+                    <div style={{fontSize:'12px', color: r.amountWithVat ? '#666' : '#0073bc', fontWeight: r.amountWithVat ? 400 : 700}}>
+                      {r.amountWithVat ? `excl. VAT: ${r.currency} ${parseFloat(r.amount).toFixed(2)}` : `${r.currency} ${parseFloat(r.amount).toFixed(2)}`}
                     </div>
                     {r.publishedAmount && (
                       <div style={{fontSize:'11px', color:'#999', textDecoration:'line-through'}}>

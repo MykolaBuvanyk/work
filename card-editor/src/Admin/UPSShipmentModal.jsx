@@ -238,7 +238,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           </button>
           {rates && rates.length > 0 && (
             <div style={{fontSize:'11px', color:'#888', marginBottom:'4px'}}>
-              * Published rates. Your account price will be lower.
+              * Account rates (excl. fuel surcharges)
             </div>
           )}
           {rates && rates.length > 0 && (

@@ -237,6 +237,11 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
             {ratesLoading ? 'Getting rates...' : '💰 Get Rates from UPS'}
           </button>
           {rates && rates.length > 0 && (
+            <div style={{fontSize:'11px', color:'#888', marginBottom:'4px'}}>
+              * Published rates. Your account price will be lower.
+            </div>
+          )}
+          {rates && rates.length > 0 && (
             <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'8px'}}>
               {rates.map(r => (
                 <div

@@ -10,22 +10,27 @@
   border-radius: 8px;
   list-style: none;
   box-sizing: border-box;
-  width: calc(100% + 10px);
+  width: calc(100% + 18px);
   margin: 0;
   padding: 10px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+  gap: 10px 14px;
 }
 
 .toolbarItem {
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.toolbarItem svg {
+  flex: 0 0 auto;
 }
 
 .toolbarItem:hover {

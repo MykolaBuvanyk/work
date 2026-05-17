@@ -207,8 +207,8 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
     if (schedulePickup && upsPickupDate) {
       try {
         const pickupUrl = isSandbox
-          ? 'https://wwwcie.ups.com/api/pickup/v2203/pickupcreation'
-          : 'https://onlinetools.ups.com/api/pickup/v2203/pickupcreation';
+          ? 'https://wwwcie.ups.com/api/pickup/v2409/pickupcreation'
+          : 'https://onlinetools.ups.com/api/pickup/v2409/pickupcreation';
 
         const pickupPayload = {
           PickupCreationRequest: {

@@ -1814,15 +1814,15 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
             ? <a href={`https://www.ups.com/track?tracknum=${order.trackingNumber}`} target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>{order.trackingNumber}</a>
             : '---'}
         </span>
-        <div style={{display:'flex', gap:'8px', whiteSpace:'nowrap'}}>
+        <div style={{display:'flex', gap:'10px', whiteSpace:'nowrap', marginLeft:'8px'}}>
           {order.trackingNumber && (
             <span
-              style={{color:'#d00', textDecoration:'underline', cursor:'pointer'}}
+              style={{color:'#d00', textDecoration:'underline', cursor:'pointer', fontSize:'12px'}}
               onClick={voidTracking}
             >Void</span>
           )}
           <span
-            style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer'}}
+            style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer', fontSize:'12px'}}
             onClick={() => setUpsModalOpen(true)}
           >Create shipment</span>
         </div>

@@ -608,10 +608,6 @@ export const useUndoRedo = () => {
   const saveState = useCallback(async (description = 'State saved', options = {}) => {
     const { force = false } = options || {};
     const now = Date.now();
-
-    if (typeof description === "string" && /border/i.test(description)) {
-      return null;
-    }
     
     // Перевірка на період ігнорування saves
     if (!force && now < (ignoreSavesUntilRef.current || 0)) {
@@ -833,6 +829,7 @@ export const useUndoRedo = () => {
 
     const jsonState = state.json || state;
     const canvasProps = state.canvasProperties || state;
+    const toolbarStateForRestore = state?.toolbarState || canvasProps?.toolbarState || {};
 
     // QR codes потребують спеціальної обробки
     // Keep serialized QR objects intact so undo/redo restores the same object
@@ -854,7 +851,25 @@ export const useUndoRedo = () => {
 
         // Витягуємо QR об'єкти для перегенерації
         const objects = Array.isArray(jsonToLoad.objects) ? jsonToLoad.objects : null;
-        if (shouldRecreateQrObjects && objects && objects.length) {
+        if (objects && objects.length) {
+          jsonToLoad.objects = objects.map((obj) => {
+            if (!obj || typeof obj !== "object") return obj;
+            if (
+              obj.isBorderShape === true ||
+              obj.data?.isBorderShape === true ||
+              obj.cardBorderMode ||
+              obj.cardBorderThicknessPx !== undefined
+            ) {
+              const cleanBorder = { ...obj };
+              delete cleanBorder.clipPath;
+              return cleanBorder;
+            }
+            return obj;
+          });
+        }
+
+        const objectsForQr = Array.isArray(jsonToLoad.objects) ? jsonToLoad.objects : null;
+        if (shouldRecreateQrObjects && objectsForQr && objectsForQr.length) {
           const isUsableColor = (c) => {
             if (typeof c !== "string") return false;
             const v = c.trim().toLowerCase();
@@ -872,8 +887,8 @@ export const useUndoRedo = () => {
           };
 
           const kept = [];
-          for (let i = 0; i < objects.length; i++) {
-            const obj = objects[i];
+          for (let i = 0; i < objectsForQr.length; i++) {
+            const obj = objectsForQr[i];
             if (!looksLikeQrGroup(obj)) {
               kept.push(obj);
               continue;
@@ -1167,7 +1182,7 @@ export const useUndoRedo = () => {
             .then(() =>
               restoreElementProperties(
                 canvas,
-                state?.toolbarState || canvasProps?.toolbarState || null,
+                toolbarStateForRestore || null,
                 {
                   regenerateQrCodes: true,
                   preserveSerializedProperties: true,
@@ -1175,6 +1190,23 @@ export const useUndoRedo = () => {
               )
             )
             .catch(() => {});
+
+          const restoreBorderPromise = new Promise((resolve) => {
+            setTimeout(() => {
+              try {
+                if (typeof window?.recreateBorder === "function") {
+                  window.recreateBorder({
+                    ...toolbarStateForRestore,
+                    hasBorder: !!toolbarStateForRestore?.hasBorder,
+                  });
+                }
+              } catch (error) {
+                console.warn("recreateBorder after history restore failed:", error);
+              } finally {
+                resolve();
+              }
+            }, 140);
+          });
 
           // Перегенеровуємо QR коди
           const recreateQrPromise = Promise.resolve().then(async () => {
@@ -1301,7 +1333,13 @@ export const useUndoRedo = () => {
           });
 
           // Чекаємо всі promises
-          Promise.allSettled([bgImagePromise, bgTexturePromise, restoreElementsPromise, recreateQrPromise])
+          Promise.allSettled([
+            bgImagePromise,
+            bgTexturePromise,
+            restoreElementsPromise,
+            recreateQrPromise,
+            restoreBorderPromise,
+          ])
             .finally(() => {
               canvas.discardActiveObject();
               canvas.renderAll();

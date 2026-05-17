@@ -354,6 +354,9 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
     });
 
     const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
+    if (ratedShipments[0]?.NegotiatedRateCharges) {
+      console.log('NegotiatedRateCharges keys:', JSON.stringify(ratedShipments[0].NegotiatedRateCharges, null, 2));
+    }
     const rates = [].concat(ratedShipments).map(s => {
       const negotiated = s.NegotiatedRateCharges?.TotalCharge || s.NegotiatedRateCharges?.TotalCharges;
       const published = s.TotalCharges;

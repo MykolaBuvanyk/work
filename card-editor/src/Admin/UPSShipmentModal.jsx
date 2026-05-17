@@ -54,8 +54,6 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
   const [voiding, setVoiding] = useState(false);
-  const [validating, setValidating] = useState(false);
-  const [validation, setValidation] = useState(null);
 
   const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
@@ -68,40 +66,6 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
   const openInUPS = () => {
     window.open('https://www.ups.com/ship/single-page?loc=en_DE', '_blank');
-  };
-
-  const validateAddress = async () => {
-    if (!form.address || !form.city || !form.postalCode || !form.country) {
-      setError('Fill in Address, City, Postal Code and Country before validating.');
-      return;
-    }
-    setValidating(true);
-    setValidation(null);
-    setError('');
-    try {
-      const res = await $authHost.post('ups/validate-address', {
-        address: form.address,
-        city: form.city,
-        postalCode: form.postalCode,
-        country: form.country,
-      });
-      setValidation(res.data);
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Address validation failed.');
-    } finally {
-      setValidating(false);
-    }
-  };
-
-  const applyCandidate = (candidate) => {
-    setForm(prev => ({
-      ...prev,
-      address: candidate.address || prev.address,
-      city: candidate.city || prev.city,
-      postalCode: candidate.postalCode || prev.postalCode,
-      country: candidate.country || prev.country,
-    }));
-    setValidation(null);
   };
 
   const submit = async () => {
@@ -181,50 +145,12 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <Field label="Name" value={form.name} onChange={set('name')} required />
         <Field label="Company" value={form.company} onChange={set('company')} />
-        <Field label="Address Line 1" value={form.address} onChange={(e) => { set('address')(e); setValidation(null); }} required />
+        <Field label="Address Line 1" value={form.address} onChange={set('address')} required />
         <Field label="Address Line 2" value={form.address2} onChange={set('address2')} />
         <Field label="Address Line 3" value={form.address3} onChange={set('address3')} />
-        <Field label="City" value={form.city} onChange={(e) => { set('city')(e); setValidation(null); }} required />
-        <Field label="Postal Code" value={form.postalCode} onChange={(e) => { set('postalCode')(e); setValidation(null); }} required />
-        <Field label="Country (2-letter)" value={form.country} onChange={(e) => { set('country')(e); setValidation(null); }} required maxLength={2} />
-
-        <div style={{marginBottom:'12px'}}>
-          <button
-            style={{...styles.cancelBtn, borderColor:'#0073bc', color:'#0073bc', width:'100%'}}
-            onClick={validateAddress}
-            disabled={validating}
-          >
-            {validating ? 'Validating...' : '✓ Validate Address (UPS XAV)'}
-          </button>
-          {validation && (
-            <div style={{marginTop:'8px', padding:'10px', borderRadius:'6px',
-              background: validation.notSupported ? '#f5f5f5' : validation.isValid ? '#f0fff0' : validation.noCandidate ? '#fff0f0' : '#fff8e1',
-              border: `1px solid ${validation.notSupported ? '#ccc' : validation.isValid ? '#4caf50' : validation.noCandidate ? '#f44336' : '#ff9800'}`
-            }}>
-              {validation.notSupported && <div style={{color:'#666'}}>ℹ️ {validation.message}</div>}
-              {validation.isValid && <div style={{color:'#1a7a1a', fontWeight:600}}>✅ Address is valid</div>}
-              {validation.noCandidate && <div style={{color:'#d00', fontWeight:600}}>❌ Address not found by UPS. Check and correct.</div>}
-              {!validation.notSupported && !validation.isValid && !validation.noCandidate && !validation.isAmbiguous && (
-                <div style={{color:'#666'}}>ℹ️ UPS returned an ambiguous result. You can still create the shipment.</div>
-              )}
-              {validation.isAmbiguous && !validation.noCandidate && (
-                <div>
-                  <div style={{color:'#e65c00', fontWeight:600, marginBottom:'6px'}}>⚠️ Possible corrections:</div>
-                  {validation.candidates.map((c, i) => (
-                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center',
-                      background:'#fff', border:'1px solid #ddd', borderRadius:'4px', padding:'6px 10px', marginBottom:'4px'}}>
-                      <span style={{fontSize:'13px'}}>{c.address}, {c.city}, {c.postalCode}, {c.country}</span>
-                      <button
-                        style={{...styles.submitBtn, padding:'2px 10px', fontSize:'12px', marginLeft:'8px'}}
-                        onClick={() => applyCandidate(c)}
-                      >Use</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Field label="City" value={form.city} onChange={set('city')} required />
+        <Field label="Postal Code" value={form.postalCode} onChange={set('postalCode')} required />
+        <Field label="Country (2-letter)" value={form.country} onChange={set('country')} required maxLength={2} />
         <Field label="Phone" value={form.phone} onChange={set('phone')} />
         <Field label="Email" value={form.email} onChange={set('email')} />
 

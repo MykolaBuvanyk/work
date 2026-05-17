@@ -155,9 +155,24 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           {schedulePickup && !pickupConfirmation && (
             <div style={{background:'#f5f5f5', border:'1px solid #ccc', borderRadius:'6px', padding:'8px 12px', marginBottom:'12px', fontSize:'13px', color:'#555'}}>
               ℹ️ To schedule pickup for <strong>{pickupDate}</strong>:{' '}
-              <a href="https://www.ups.com/ipr/schedule-pickup" target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>
+              <a
+                href={`https://www.ups.com/ipr/schedule-pickup?loc=en_DE&trackingNumber=${createdTracking}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{color:'#0073bc'}}
+              >
                 Open UPS Schedule Pickup →
-              </a>{' '}enter tracking number from above, fill address and date.
+              </a>
+              <div style={{marginTop:'6px', fontSize:'12px', color:'#555'}}>
+                Tracking to copy:{' '}
+                <span
+                  style={{fontFamily:'monospace', background:'#f0f7ff', padding:'2px 6px', borderRadius:'3px', cursor:'pointer', userSelect:'all'}}
+                  onClick={() => navigator.clipboard?.writeText(createdTracking)}
+                  title="Click to copy"
+                >
+                  {createdTracking}
+                </span>
+              </div>
             </div>
           )}
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>

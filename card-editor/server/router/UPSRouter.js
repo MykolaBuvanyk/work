@@ -282,6 +282,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
     const payload = {
       RateRequest: {
         Request: { RequestOption: 'Shop' },
+        CustomerClassification: { Code: '00' },
         Shipment: {
           Shipper: {
             Name: process.env.UPS_SHIPPER_NAME || 'SignXpert',

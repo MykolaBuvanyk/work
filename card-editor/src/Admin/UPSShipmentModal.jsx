@@ -54,6 +54,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
+  const [pickupConfirmation, setPickupConfirmation] = useState(null);
   const [voiding, setVoiding] = useState(false);
   const [schedulePickup, setSchedulePickup] = useState(false);
   const [pickupDate, setPickupDate] = useState(today);
@@ -83,6 +84,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         pickupDate,
       });
       setCreatedTracking(res.data.trackingNumber);
+      setPickupConfirmation(res.data.pickupConfirmation || null);
       onSuccess(res.data.trackingNumber);
     } catch (err) {
       setError(err?.response?.data?.message || 'UPS shipment creation failed.');
@@ -114,6 +116,18 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           <div style={{background:'#f0f7ff', border:'1px solid #0073bc', borderRadius:'6px', padding:'12px 16px', marginBottom:'16px'}}>
             <span style={{fontSize:'18px', fontWeight:'700', color:'#0073bc', letterSpacing:'1px'}}>{createdTracking}</span>
           </div>
+          {pickupConfirmation && (
+            <div style={{background:'#f0fff0', border:'1px solid #4caf50', borderRadius:'6px', padding:'10px 14px', marginBottom:'12px'}}>
+              <div style={{fontSize:'13px', color:'#1a7a1a', fontWeight:600}}>✓ Pickup Scheduled</div>
+              <div style={{fontSize:'13px', color:'#333'}}>Confirmation (PRN): <strong>{pickupConfirmation}</strong></div>
+              <div style={{fontSize:'12px', color:'#555'}}>Date: {pickupDate}</div>
+            </div>
+          )}
+          {schedulePickup && !pickupConfirmation && (
+            <div style={{background:'#fff8e1', border:'1px solid #ff9800', borderRadius:'6px', padding:'8px 12px', marginBottom:'12px', fontSize:'13px', color:'#7a4a00'}}>
+              ⚠️ Pickup scheduling failed or not available. Schedule manually on UPS.com.
+            </div>
+          )}
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>
             To edit data — void this shipment and create a new one with corrected details.
           </p>

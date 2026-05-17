@@ -174,7 +174,73 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
       { where: { id: Number(orderId) } }
     );
 
-    return res.json({ success: true, trackingNumber });
+    let pickupConfirmation = null;
+    if (schedulePickup && upsPickupDate) {
+      try {
+        const pickupUrl = isSandbox
+          ? 'https://wwwcie.ups.com/api/pickup/v2203/pickupcreation'
+          : 'https://onlinetools.ups.com/api/pickup/v2203/pickupcreation';
+
+        const pickupPayload = {
+          PickupCreationRequest: {
+            RatePickupIndicator: 'N',
+            Shipper: {
+              Account: {
+                AccountNumber: process.env.UPS_SHIPPER_NUMBER,
+                AccountCountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+              },
+            },
+            PickupDateInfo: {
+              CloseTime: '1700',
+              ReadyTime: '0900',
+              PickupDate: upsPickupDate,
+            },
+            PickupAddress: {
+              CompanyName: process.env.UPS_SHIPPER_NAME || 'SignXpert',
+              ContactName: process.env.UPS_SHIPPER_ATTENTION || 'SignXpert',
+              AddressLine: process.env.UPS_SHIPPER_ADDRESS || '',
+              City: process.env.UPS_SHIPPER_CITY || '',
+              PostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+              CountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+              Phone: { Number: process.env.UPS_SHIPPER_PHONE || '' },
+              ResidentialIndicator: 'N',
+            },
+            AlternateAddressIndicator: 'N',
+            PickupPiece: [{
+              ServiceCode: resolvedServiceCode,
+              Quantity: '1',
+              DestinationCountryCode: country.toUpperCase(),
+              ContainerCode: '01',
+            }],
+            TotalWeight: {
+              Weight: String(parseFloat(weight) || 1),
+              UnitOfMeasurement: 'KGS',
+            },
+            OverweightIndicator: 'N',
+            PaymentMethod: '00',
+          },
+        };
+
+        const pickupResponse = await axios.post(pickupUrl, pickupPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            transId: `pickup-${orderId}-${Date.now()}`,
+            transactionSrc: 'SignXpert',
+          },
+          timeout: 10000,
+        });
+
+        pickupConfirmation = pickupResponse.data?.PickupCreationResponse?.PRN;
+        console.log('Pickup scheduled, PRN:', pickupConfirmation);
+      } catch (pickupErr) {
+        const pickupMsg = pickupErr?.response?.data?.response?.errors?.[0]?.message || pickupErr.message;
+        console.error('Pickup scheduling failed:', pickupMsg);
+        pickupConfirmation = null;
+      }
+    }
+
+    return res.json({ success: true, trackingNumber, pickupConfirmation });
   } catch (err) {
     const upsData = err?.response?.data;
     console.error('UPS shipment error:', JSON.stringify(upsData, null, 2) || err.message);

@@ -33,7 +33,15 @@ const UPS_SERVICES = {
   '86': 'UPS Today Express Saver',
 };
 
+// Token cache — refresh 5 min before expiry (ready for Q3 2026 1-hour limit)
+let _tokenCache = { token: null, expiresAt: 0 };
+
 async function getUpsToken() {
+  const now = Date.now();
+  if (_tokenCache.token && now < _tokenCache.expiresAt) {
+    return _tokenCache.token;
+  }
+
   const isSandbox = process.env.UPS_SANDBOX === 'true';
   const tokenUrl = isSandbox
     ? 'https://wwwcie.ups.com/security/v1/oauth/token'
@@ -50,7 +58,14 @@ async function getUpsToken() {
     },
     timeout: 8000,
   });
-  return response.data.access_token;
+
+  const expiresIn = Number(response.data.expires_in || 3600);
+  _tokenCache = {
+    token: response.data.access_token,
+    expiresAt: now + (expiresIn - 300) * 1000, // refresh 5 min early
+  };
+
+  return _tokenCache.token;
 }
 
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
@@ -274,14 +289,18 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
 
     const isSandbox = process.env.UPS_SANDBOX === 'true';
     const rateUrl = isSandbox
-      ? 'https://wwwcie.ups.com/api/rating/v2403/Shop'
-      : 'https://onlinetools.ups.com/api/rating/v2403/Shop';
+      ? 'https://wwwcie.ups.com/api/rating/v2409/Shoptimeintransit'
+      : 'https://onlinetools.ups.com/api/rating/v2409/Shoptimeintransit';
 
     const token = await getUpsToken();
 
     const payload = {
       RateRequest: {
-        Request: { RequestOption: 'Shop' },
+        Request: {
+          RequestOption: 'Shop',
+          TransactionReference: { CustomerContext: `rate-order-${Date.now()}` },
+        },
+        PickupType: { Code: '01', Description: 'Daily Pickup' },
         CustomerClassification: { Code: '00' },
         Shipment: {
           Shipper: {
@@ -302,8 +321,11 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
               CountryCode: country.toUpperCase(),
             },
           },
-          Package: {
-            PackagingType: { Code: '02' },
+          ShipmentRatingOptions: {
+            NegotiatedRatesIndicator: '',
+          },
+          Package: [{
+            PackagingType: { Code: '02', Description: 'Customer Supplied Package' },
             PackageWeight: {
               UnitOfMeasurement: { Code: 'KGS' },
               Weight: String(parseFloat(weight) || 1),
@@ -316,7 +338,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
                 Height: String(height),
               },
             } : {}),
-          },
+          }],
         },
       },
     };
@@ -336,15 +358,29 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
       const negotiated = s.NegotiatedRateCharges?.TotalCharge || s.NegotiatedRateCharges?.TotalCharges;
       const published = s.TotalCharges;
       const charge = negotiated || published;
+
+      // Delivery date from TimeInTransit (Shoptimeintransit endpoint)
+      const arrivalDate = s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date;
+      const arrivalTime = s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Time;
+      const businessDays = s.GuaranteedDelivery?.BusinessDaysInTransit
+        || s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.BusinessDaysInTransit;
+
+      let deliveryDate = null;
+      if (arrivalDate) {
+        // Format YYYYMMDD → readable
+        const d = arrivalDate.replace(/(\d{4})(\d{2})(\d{2})/, '$3.$2.$1');
+        deliveryDate = arrivalTime ? `${d} by ${arrivalTime.slice(0,5)}` : d;
+      } else if (businessDays) {
+        deliveryDate = `${businessDays} business day(s)`;
+      }
+
       return {
         serviceCode: s.Service?.Code,
         serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
         currency: charge?.CurrencyCode || 'EUR',
         amount: charge?.MonetaryValue,
         publishedAmount: negotiated ? published?.MonetaryValue : null,
-        deliveryDate: s.GuaranteedDelivery?.BusinessDaysInTransit
-          ? `${s.GuaranteedDelivery.BusinessDaysInTransit} business day(s)`
-          : s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date || null,
+        deliveryDate,
       };
     }).filter(r => r.amount);
 

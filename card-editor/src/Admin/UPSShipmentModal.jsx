@@ -50,14 +50,47 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     serviceCode: '11',
   });
 
+  const today = new Date().toISOString().split('T')[0];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdTracking, setCreatedTracking] = useState(null);
+  const [labelBase64, setLabelBase64] = useState(null);
+  const [labelFormat, setLabelFormat] = useState('GIF');
+  const [pickupConfirmation, setPickupConfirmation] = useState(null);
   const [voiding, setVoiding] = useState(false);
-  const [validating, setValidating] = useState(false);
-  const [validation, setValidation] = useState(null);
+  const [rates, setRates] = useState(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [schedulePickup, setSchedulePickup] = useState(false);
+  const [pickupDate, setPickupDate] = useState(today);
 
-  const set = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const set = (field) => (e) => { setForm((prev) => ({ ...prev, [field]: e.target.value })); setRates(null); };
+
+  const getRates = async () => {
+    if (!form.city || !form.postalCode || !form.country) {
+      setError('Fill in City, Postal Code and Country to get rates.');
+      return;
+    }
+    setRatesLoading(true);
+    setRates(null);
+    setError('');
+    try {
+      const res = await $authHost.post('ups/get-rates', {
+        address: form.address,
+        city: form.city,
+        postalCode: form.postalCode,
+        country: form.country,
+        weight: form.weight,
+        length: form.length,
+        width: form.width,
+        height: form.height,
+      });
+      setRates(res.data.rates);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to get rates.');
+    } finally {
+      setRatesLoading(false);
+    }
+  };
 
   const adjustWeight = (delta) => {
     setForm((prev) => {
@@ -66,43 +99,6 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
     });
   };
 
-  const openInUPS = () => {
-    window.open('https://www.ups.com/ship/single-page?loc=en_DE', '_blank');
-  };
-
-  const validateAddress = async () => {
-    if (!form.address || !form.city || !form.postalCode || !form.country) {
-      setError('Fill in Address, City, Postal Code and Country before validating.');
-      return;
-    }
-    setValidating(true);
-    setValidation(null);
-    setError('');
-    try {
-      const res = await $authHost.post('ups/validate-address', {
-        address: form.address,
-        city: form.city,
-        postalCode: form.postalCode,
-        country: form.country,
-      });
-      setValidation(res.data);
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Address validation failed.');
-    } finally {
-      setValidating(false);
-    }
-  };
-
-  const applyCandidate = (candidate) => {
-    setForm(prev => ({
-      ...prev,
-      address: candidate.address || prev.address,
-      city: candidate.city || prev.city,
-      postalCode: candidate.postalCode || prev.postalCode,
-      country: candidate.country || prev.country,
-    }));
-    setValidation(null);
-  };
 
   const submit = async () => {
     setError('');
@@ -115,14 +111,34 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
       const res = await $authHost.post('ups/create-shipment', {
         orderId: order.id,
         ...form,
+        schedulePickup,
+        pickupDate,
       });
       setCreatedTracking(res.data.trackingNumber);
+      setPickupConfirmation(res.data.pickupConfirmation || null);
+      setLabelBase64(res.data.labelBase64 || null);
+      setLabelFormat(res.data.labelFormat || 'GIF');
       onSuccess(res.data.trackingNumber);
     } catch (err) {
       setError(err?.response?.data?.message || 'UPS shipment creation failed.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const printLabel = () => {
+    if (!labelBase64) return;
+    const mimeType = labelFormat === 'PDF' ? 'application/pdf' : `image/${labelFormat.toLowerCase()}`;
+    const dataUrl = `data:${mimeType};base64,${labelBase64}`;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>UPS Label - ${createdTracking}</title>
+      <style>body{margin:0;display:flex;justify-content:center;} img{max-width:100%;} @media print{body{margin:0;}}</style>
+      </head><body>
+      <img src="${dataUrl}" onload="window.print()" />
+      </body></html>
+    `);
+    win.document.close();
   };
 
   const voidAndEdit = async () => {
@@ -148,10 +164,48 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
           <div style={{background:'#f0f7ff', border:'1px solid #0073bc', borderRadius:'6px', padding:'12px 16px', marginBottom:'16px'}}>
             <span style={{fontSize:'18px', fontWeight:'700', color:'#0073bc', letterSpacing:'1px'}}>{createdTracking}</span>
           </div>
+          {pickupConfirmation && (
+            <div style={{background:'#f0fff0', border:'1px solid #4caf50', borderRadius:'6px', padding:'10px 14px', marginBottom:'12px'}}>
+              <div style={{fontSize:'13px', color:'#1a7a1a', fontWeight:600}}>✓ Pickup Scheduled</div>
+              <div style={{fontSize:'13px', color:'#333'}}>Confirmation (PRN): <strong>{pickupConfirmation}</strong></div>
+              <div style={{fontSize:'12px', color:'#555'}}>Date: {pickupDate}</div>
+            </div>
+          )}
+          {schedulePickup && !pickupConfirmation && (
+            <div style={{background:'#f5f5f5', border:'1px solid #ccc', borderRadius:'6px', padding:'8px 12px', marginBottom:'12px', fontSize:'13px', color:'#555'}}>
+              ℹ️ To schedule pickup for <strong>{pickupDate}</strong>:{' '}
+              <a
+                href={`https://www.ups.com/ipr/schedule-pickup?loc=en_DE&trackingNumber=${createdTracking}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{color:'#0073bc'}}
+              >
+                Open UPS Schedule Pickup →
+              </a>
+              <div style={{marginTop:'6px', fontSize:'12px', color:'#555'}}>
+                Tracking to copy:{' '}
+                <span
+                  style={{fontFamily:'monospace', background:'#f0f7ff', padding:'2px 6px', borderRadius:'3px', cursor:'pointer', userSelect:'all'}}
+                  onClick={() => navigator.clipboard?.writeText(createdTracking)}
+                  title="Click to copy"
+                >
+                  {createdTracking}
+                </span>
+              </div>
+            </div>
+          )}
           <p style={{fontSize:'13px', color:'#555', marginBottom:'16px'}}>
             To edit data — void this shipment and create a new one with corrected details.
           </p>
           <div style={{display:'flex', gap:'10px', flexDirection:'column'}}>
+            {labelBase64 && (
+              <button
+                style={{...styles.submitBtn, background:'#2e7d32'}}
+                onClick={printLabel}
+              >
+                🖨️ Print Label
+              </button>
+            )}
             <a
               href={`https://www.ups.com/track?tracknum=${createdTracking}`}
               target="_blank"
@@ -181,50 +235,12 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <Field label="Name" value={form.name} onChange={set('name')} required />
         <Field label="Company" value={form.company} onChange={set('company')} />
-        <Field label="Address Line 1" value={form.address} onChange={(e) => { set('address')(e); setValidation(null); }} required />
+        <Field label="Address Line 1" value={form.address} onChange={set('address')} required />
         <Field label="Address Line 2" value={form.address2} onChange={set('address2')} />
         <Field label="Address Line 3" value={form.address3} onChange={set('address3')} />
-        <Field label="City" value={form.city} onChange={(e) => { set('city')(e); setValidation(null); }} required />
-        <Field label="Postal Code" value={form.postalCode} onChange={(e) => { set('postalCode')(e); setValidation(null); }} required />
-        <Field label="Country (2-letter)" value={form.country} onChange={(e) => { set('country')(e); setValidation(null); }} required maxLength={2} />
-
-        <div style={{marginBottom:'12px'}}>
-          <button
-            style={{...styles.cancelBtn, borderColor:'#0073bc', color:'#0073bc', width:'100%'}}
-            onClick={validateAddress}
-            disabled={validating}
-          >
-            {validating ? 'Validating...' : '✓ Validate Address (UPS XAV)'}
-          </button>
-          {validation && (
-            <div style={{marginTop:'8px', padding:'10px', borderRadius:'6px',
-              background: validation.notSupported ? '#f5f5f5' : validation.isValid ? '#f0fff0' : validation.noCandidate ? '#fff0f0' : '#fff8e1',
-              border: `1px solid ${validation.notSupported ? '#ccc' : validation.isValid ? '#4caf50' : validation.noCandidate ? '#f44336' : '#ff9800'}`
-            }}>
-              {validation.notSupported && <div style={{color:'#666'}}>ℹ️ {validation.message}</div>}
-              {validation.isValid && <div style={{color:'#1a7a1a', fontWeight:600}}>✅ Address is valid</div>}
-              {validation.noCandidate && <div style={{color:'#d00', fontWeight:600}}>❌ Address not found by UPS. Check and correct.</div>}
-              {!validation.notSupported && !validation.isValid && !validation.noCandidate && !validation.isAmbiguous && (
-                <div style={{color:'#666'}}>ℹ️ UPS returned an ambiguous result. You can still create the shipment.</div>
-              )}
-              {validation.isAmbiguous && !validation.noCandidate && (
-                <div>
-                  <div style={{color:'#e65c00', fontWeight:600, marginBottom:'6px'}}>⚠️ Possible corrections:</div>
-                  {validation.candidates.map((c, i) => (
-                    <div key={i} style={{display:'flex', justifyContent:'space-between', alignItems:'center',
-                      background:'#fff', border:'1px solid #ddd', borderRadius:'4px', padding:'6px 10px', marginBottom:'4px'}}>
-                      <span style={{fontSize:'13px'}}>{c.address}, {c.city}, {c.postalCode}, {c.country}</span>
-                      <button
-                        style={{...styles.submitBtn, padding:'2px 10px', fontSize:'12px', marginLeft:'8px'}}
-                        onClick={() => applyCandidate(c)}
-                      >Use</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Field label="City" value={form.city} onChange={set('city')} required />
+        <Field label="Postal Code" value={form.postalCode} onChange={set('postalCode')} required />
+        <Field label="Country (2-letter)" value={form.country} onChange={set('country')} required maxLength={2} />
         <Field label="Phone" value={form.phone} onChange={set('phone')} />
         <Field label="Email" value={form.email} onChange={set('email')} />
 
@@ -258,27 +274,104 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Service</label>
-          <select style={styles.select} value={form.serviceCode} onChange={set('serviceCode')}>
+          <button
+            style={{...styles.cancelBtn, borderColor:'#0073bc', color:'#0073bc', width:'100%', marginBottom:'8px'}}
+            onClick={getRates}
+            disabled={ratesLoading}
+          >
+            {ratesLoading ? 'Getting rates...' : '💰 Get Rates from UPS'}
+          </button>
+          {rates && rates.length > 0 && (
+            <div style={{fontSize:'11px', color:'#888', marginBottom:'4px'}}>
+              * Account rates incl. fuel surcharges + 19% VAT
+            </div>
+          )}
+          {rates && rates.length > 0 && (
+            <div style={{display:'flex', flexDirection:'column', gap:'6px', marginBottom:'8px'}}>
+              {rates.map(r => (
+                <div
+                  key={r.serviceCode}
+                  onClick={() => setForm(p => ({...p, serviceCode: r.serviceCode}))}
+                  style={{
+                    border: `2px solid ${form.serviceCode === r.serviceCode ? '#0073bc' : '#ddd'}`,
+                    borderRadius:'6px', padding:'8px 12px', cursor:'pointer',
+                    background: form.serviceCode === r.serviceCode ? '#f0f7ff' : '#fff',
+                    display:'flex', justifyContent:'space-between', alignItems:'center',
+                  }}
+                >
+                  <div>
+                    <div style={{fontWeight:600, fontSize:'13px'}}>{r.serviceName || r.serviceCode}</div>
+                    {r.deliveryDate && <div style={{fontSize:'12px', color:'#555'}}>{r.deliveryDate}</div>}
+                  </div>
+                  <div style={{textAlign:'right'}}>
+                    {r.amountWithVat && (
+                      <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
+                        {r.currency} {r.amountWithVat}
+                      </div>
+                    )}
+                    <div style={{fontSize:'12px', color: r.amountWithVat ? '#666' : '#0073bc', fontWeight: r.amountWithVat ? 400 : 700}}>
+                      {r.amountWithVat ? `excl. VAT: ${r.currency} ${parseFloat(r.amount).toFixed(2)}` : `${r.currency} ${parseFloat(r.amount).toFixed(2)}`}
+                    </div>
+                    {r.publishedAmount && (
+                      <div style={{fontSize:'11px', color:'#999', textDecoration:'line-through'}}>
+                        {r.currency} {parseFloat(r.publishedAmount).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {rates && rates.length === 0 && (
+            <div style={{fontSize:'13px', color:'#888', marginBottom:'8px'}}>No rates available for this destination.</div>
+          )}
+          <select style={styles.select} value={form.serviceCode} onChange={e => setForm(p => ({...p, serviceCode: e.target.value}))}>
             {UPS_SERVICES.map((s) => (
               <option key={s.code} value={s.code}>{s.label}</option>
             ))}
           </select>
         </div>
 
+        <div style={styles.fieldGroup}>
+          <label style={{...styles.label, fontWeight:600, marginBottom:'8px'}}>Do you need to schedule a pickup?</label>
+          <label style={styles.radioLabel}>
+            <input
+              type="radio"
+              name="pickup"
+              checked={!schedulePickup}
+              onChange={() => setSchedulePickup(false)}
+              style={{marginRight:'8px'}}
+            />
+            I'll drop off my shipment or include it in another pickup.
+          </label>
+          <label style={{...styles.radioLabel, marginTop:'6px'}}>
+            <input
+              type="radio"
+              name="pickup"
+              checked={schedulePickup}
+              onChange={() => setSchedulePickup(true)}
+              style={{marginRight:'8px'}}
+            />
+            Schedule a new pickup.
+          </label>
+          <div style={{marginTop:'10px'}}>
+            <label style={styles.label}>Pickup Date *</label>
+            <input
+              type="date"
+              style={styles.input}
+              value={pickupDate}
+              min={today}
+              onChange={e => setPickupDate(e.target.value)}
+            />
+          </div>
+        </div>
+
         {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.actions}>
           <button style={styles.cancelBtn} onClick={onClose} disabled={loading}>Cancel</button>
-          <button
-            style={{...styles.cancelBtn, borderColor:'#f5a623', color:'#f5a623'}}
-            onClick={openInUPS}
-            disabled={loading}
-            title="Open UPS.com ship form with pre-filled data (no API call)"
-          >
-            Open in UPS.com →
-          </button>
           <button style={styles.submitBtn} onClick={submit} disabled={loading}>
-            {loading ? 'Creating...' : 'Create via API'}
+            {loading ? 'Creating...' : 'Create Shipment'}
           </button>
         </div>
       </div>
@@ -327,6 +420,9 @@ const styles = {
   select: {
     width: '100%', height: '34px', border: '1px solid #ccc',
     borderRadius: '4px', padding: '0 8px', fontSize: '14px', background: '#fff',
+  },
+  radioLabel: {
+    display: 'flex', alignItems: 'center', fontSize: '13px', color: '#333', cursor: 'pointer',
   },
   error: {
     color: '#d00', fontSize: '13px', marginBottom: '10px',

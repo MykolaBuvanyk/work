@@ -1576,8 +1576,9 @@ CartRouter.delete('/customer/:userId', requireAuth, requireAdmin, async (req, re
 CartRouter.post('/saveTracking', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { orderId, trackingNumber } = req.body;
-    if (!orderId || !trackingNumber) return res.status(400).json({ message: 'orderId and trackingNumber required' });
-    await Order.update({ trackingNumber: String(trackingNumber).trim() }, { where: { id: Number(orderId) } });
+    if (!orderId) return res.status(400).json({ message: 'orderId required' });
+    const value = trackingNumber ? String(trackingNumber).trim() : null;
+    await Order.update({ trackingNumber: value }, { where: { id: Number(orderId) } });
     return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ message: err.message });

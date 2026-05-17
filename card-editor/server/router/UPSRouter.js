@@ -12,14 +12,36 @@ const UPS_SERVICES = {
   'NDA': 'UPS Next Day Package',
   'E12': 'UPS Express before 12 PM',
   'SAT': 'UPS Saturday Delivery',
-  '65': 'UPS Worldwide Saver',
+  '01': 'UPS Next Day Air',
+  '02': 'UPS 2nd Day Air',
+  '03': 'UPS Ground',
   '07': 'UPS Worldwide Express',
   '08': 'UPS Worldwide Expedited',
   '11': 'UPS Standard',
+  '12': 'UPS 3 Day Select',
+  '13': 'UPS Next Day Air Saver',
+  '14': 'UPS Next Day Air Early',
   '54': 'UPS Express Plus',
+  '59': 'UPS 2nd Day Air AM',
+  '65': 'UPS Worldwide Saver',
+  '70': 'UPS Access Point Economy',
+  '74': 'UPS Express 12:00',
+  '82': 'UPS Today Standard',
+  '83': 'UPS Today Dedicated Courier',
+  '84': 'UPS Today Intercity',
+  '85': 'UPS Today Express',
+  '86': 'UPS Today Express Saver',
 };
 
+// Token cache — refresh 5 min before expiry (ready for Q3 2026 1-hour limit)
+let _tokenCache = { token: null, expiresAt: 0 };
+
 async function getUpsToken() {
+  const now = Date.now();
+  if (_tokenCache.token && now < _tokenCache.expiresAt) {
+    return _tokenCache.token;
+  }
+
   const isSandbox = process.env.UPS_SANDBOX === 'true';
   const tokenUrl = isSandbox
     ? 'https://wwwcie.ups.com/security/v1/oauth/token'
@@ -36,12 +58,19 @@ async function getUpsToken() {
     },
     timeout: 8000,
   });
-  return response.data.access_token;
+
+  const expiresIn = Number(response.data.expires_in || 3600);
+  _tokenCache = {
+    token: response.data.access_token,
+    expiresAt: now + (expiresIn - 300) * 1000, // refresh 5 min early
+  };
+
+  return _tokenCache.token;
 }
 
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode } = req.body;
+    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode, schedulePickup, pickupDate } = req.body;
 
     if (!orderId || !name || !address || !city || !postalCode || !country) {
       return res.status(400).json({ message: 'Missing required shipment fields' });
@@ -56,6 +85,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     const isEnvelope = serviceCode === 'ENV';
     const isSaturday = serviceCode === 'SAT';
+    const upsPickupDate = pickupDate ? pickupDate.replace(/-/g, '') : null;
     const serviceMap = { 'ENV': '07', 'NDA': '07', 'E12': '54', 'SAT': '07' };
     const resolvedServiceCode = serviceMap[serviceCode] || serviceCode || '11';
     const packagingCode = isEnvelope ? '01' : '02';
@@ -94,8 +124,10 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
             Code: resolvedServiceCode,
             Description: UPS_SERVICES[serviceCode] || 'UPS Standard',
           },
+          ...(upsPickupDate ? { PickupDate: upsPickupDate } : {}),
           ShipmentServiceOptions: {
             ...(isSaturday ? { SaturdayDeliveryIndicator: '' } : {}),
+            ...(schedulePickup ? { OnCallAirPickupIndicator: '' } : {}),
             ...(email ? {
               Notification: {
                 NotificationCode: '6',
@@ -158,20 +190,91 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
     const results = response.data?.ShipmentResponse?.ShipmentResults;
     const packageResults = results?.PackageResults;
+    const firstPackage = Array.isArray(packageResults) ? packageResults[0] : packageResults;
     const trackingNumber =
-      (Array.isArray(packageResults) ? packageResults[0] : packageResults)?.TrackingNumber ||
+      firstPackage?.TrackingNumber ||
       results?.ShipmentIdentificationNumber;
 
     if (!trackingNumber) {
       throw new Error('UPS did not return a tracking number');
     }
 
+    // Extract shipping label (base64 image)
+    const labelBase64 = firstPackage?.ShippingLabel?.GraphicImage || null;
+    const labelFormat = firstPackage?.ShippingLabel?.ImageFormat?.Code || 'GIF';
+
     await Order.update(
       { trackingNumber },
       { where: { id: Number(orderId) } }
     );
 
-    return res.json({ success: true, trackingNumber });
+    let pickupConfirmation = null;
+    if (schedulePickup && upsPickupDate) {
+      const pickupUrl = isSandbox
+        ? 'https://wwwcie.ups.com/api/pickup/v2409/pickupcreation'
+        : 'https://onlinetools.ups.com/api/pickup/v2409/pickupcreation';
+      try {
+
+        const pickupPayload = {
+          PickupCreationRequest: {
+            RatePickupIndicator: 'N',
+            Shipper: {
+              Account: {
+                AccountNumber: process.env.UPS_SHIPPER_NUMBER,
+                AccountCountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+              },
+            },
+            PickupDateInfo: {
+              CloseTime: '1700',
+              ReadyTime: '0900',
+              PickupDate: upsPickupDate,
+            },
+            PickupAddress: {
+              CompanyName: process.env.UPS_SHIPPER_NAME || 'SignXpert',
+              ContactName: process.env.UPS_SHIPPER_ATTENTION || 'SignXpert',
+              AddressLine: process.env.UPS_SHIPPER_ADDRESS || '',
+              City: process.env.UPS_SHIPPER_CITY || '',
+              PostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+              CountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+              Phone: { Number: process.env.UPS_SHIPPER_PHONE || '' },
+              ResidentialIndicator: 'N',
+            },
+            AlternateAddressIndicator: 'N',
+            PickupPiece: [{
+              ServiceCode: resolvedServiceCode,
+              Quantity: '1',
+              DestinationCountryCode: country.toUpperCase(),
+              ContainerCode: '01',
+            }],
+            TotalWeight: {
+              Weight: String(parseFloat(weight) || 1),
+              UnitOfMeasurement: 'KGS',
+            },
+            OverweightIndicator: 'N',
+            PaymentMethod: '00',
+          },
+        };
+
+        const pickupResponse = await axios.post(pickupUrl, pickupPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            transId: `pickup-${orderId}-${Date.now()}`,
+            transactionSrc: 'SignXpert',
+          },
+          timeout: 10000,
+        });
+
+        pickupConfirmation = pickupResponse.data?.PickupCreationResponse?.PRN;
+        console.log('Pickup scheduled, PRN:', pickupConfirmation);
+      } catch (pickupErr) {
+        const pickupMsg = pickupErr?.response?.data?.response?.errors?.[0]?.message || pickupErr.message;
+        console.error('Pickup scheduling failed:', pickupMsg, 'Status:', pickupErr?.response?.status, 'URL:', pickupUrl);
+        pickupConfirmation = null;
+      }
+    }
+
+    return res.json({ success: true, trackingNumber, pickupConfirmation, labelBase64, labelFormat });
   } catch (err) {
     const upsData = err?.response?.data;
     console.error('UPS shipment error:', JSON.stringify(upsData, null, 2) || err.message);
@@ -184,77 +287,118 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
   }
 });
 
-const XAV_SUPPORTED_COUNTRIES = new Set([
-  'US', 'PR', // USA + Puerto Rico (street-level)
-  'CA', 'GB', // Canada, UK
-  'DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'PL', 'SE', 'NO', 'DK', 'CH', 'AT', 'CZ', 'PT', 'IE', // Europe
-  'AU', 'NZ', 'JP', 'KR', 'SG', // Asia-Pacific
-]);
-
-UPSRouter.post('/validate-address', requireAuth, requireAdmin, async (req, res) => {
-  const { address, city, postalCode, country } = req.body;
-
-  if (!XAV_SUPPORTED_COUNTRIES.has((country || '').toUpperCase())) {
-    return res.json({ isValid: null, notSupported: true, message: `UPS address validation is only available for US addresses. Country "${country}" — skip validation and create shipment directly.` });
-  }
-
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Request timeout')), 10000)
-  );
+UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const isSandbox = process.env.UPS_SANDBOX === 'true';
-    const url = isSandbox
-      ? 'https://wwwcie.ups.com/api/addressvalidation/v2/1'
-      : 'https://onlinetools.ups.com/api/addressvalidation/v2/1';
+    const { address, city, postalCode, country, weight, length, width, height } = req.body;
+    if (!city || !postalCode || !country) return res.status(400).json({ message: 'City, PostalCode and Country are required' });
 
-    const token = await Promise.race([getUpsToken(), timeout]);
+    const isSandbox = process.env.UPS_SANDBOX === 'true';
+    const rateUrl = isSandbox
+      ? 'https://wwwcie.ups.com/api/rating/v2409/Shop'
+      : 'https://onlinetools.ups.com/api/rating/v2409/Shop';
+
+    const token = await getUpsToken();
 
     const payload = {
-      XAVRequest: {
-        Request: { RequestOption: '1' },
-        AddressKeyFormat: {
-          AddressLine: [address].filter(Boolean),
-          PoliticalDivision2: city,
-          PostcodePrimaryLow: postalCode,
-          CountryCode: country.toUpperCase(),
+      RateRequest: {
+        Request: {
+          RequestOption: 'Shop',
+          TransactionReference: { CustomerContext: `rate-order-${Date.now()}` },
+        },
+        PickupType: { Code: '01', Description: 'Daily Pickup' },
+        CustomerClassification: { Code: '00' },
+        Shipment: {
+          Shipper: {
+            Name: process.env.UPS_SHIPPER_NAME || 'SignXpert',
+            ShipperNumber: process.env.UPS_SHIPPER_NUMBER,
+            Address: {
+              AddressLine: [process.env.UPS_SHIPPER_ADDRESS || ''],
+              City: process.env.UPS_SHIPPER_CITY || '',
+              PostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+              CountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+            },
+          },
+          ShipTo: {
+            Address: {
+              AddressLine: [address || ''].filter(Boolean),
+              City: city,
+              PostalCode: postalCode,
+              CountryCode: country.toUpperCase(),
+            },
+          },
+          ShipmentRatingOptions: {
+            NegotiatedRatesIndicator: '',
+          },
+          Package: [{
+            PackagingType: { Code: '02', Description: 'Customer Supplied Package' },
+            PackageWeight: {
+              UnitOfMeasurement: { Code: 'KGS' },
+              Weight: (parseFloat(weight) || 1).toFixed(1),
+            },
+            ...(length && width && height ? {
+              Dimensions: {
+                UnitOfMeasurement: { Code: 'CM' },
+                Length: String(parseFloat(length).toFixed(0)),
+                Width: String(parseFloat(width).toFixed(0)),
+                Height: String(parseFloat(height).toFixed(0)),
+              },
+            } : {}),
+          }],
         },
       },
     };
 
-    const response = await axios.post(url, payload, {
+    const response = await axios.post(rateUrl, payload, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-        transId: `xav-${Date.now()}`,
+        transId: `rate-${Date.now()}`,
         transactionSrc: 'SignXpert',
       },
-      timeout: 8000,
+      timeout: 10000,
     });
 
-    const xav = response.data?.XAVResponse;
-    console.log('XAV response keys:', xav ? Object.keys(xav) : null);
-    const isValid = xav != null && 'ValidAddressIndicator' in xav;
-    const isAmbiguous = xav != null && 'AmbiguousAddressIndicator' in xav;
-    const noCandidate = xav != null && 'NoCandidatesIndicator' in xav;
+    const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
+    const vatRate = parseFloat(process.env.UPS_VAT_RATE || '0.19');
+    const rates = [].concat(ratedShipments).map(s => {
+      const negotiated = s.NegotiatedRateCharges?.TotalCharge || s.NegotiatedRateCharges?.TotalCharges;
+      const published = s.TotalCharges;
+      const charge = negotiated || published;
+      const amountNet = parseFloat(charge?.MonetaryValue || 0);
+      const amountWithVat = amountNet > 0 ? (amountNet * (1 + vatRate)).toFixed(2) : null;
 
-    const candidates = (xav?.Candidate || []).map(c => ({
-      name: c.AddressKeyFormat?.ConsigneeName || '',
-      address: [].concat(c.AddressKeyFormat?.AddressLine || []).join(', '),
-      city: c.AddressKeyFormat?.PoliticalDivision2 || '',
-      postalCode: c.AddressKeyFormat?.PostcodePrimaryLow || '',
-      country: c.AddressKeyFormat?.CountryCode || '',
-    }));
+      // Delivery date from TimeInTransit (Shoptimeintransit endpoint)
+      const arrivalDate = s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Date;
+      const arrivalTime = s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.Arrival?.Time;
+      const businessDays = s.GuaranteedDelivery?.BusinessDaysInTransit
+        || s.TimeInTransit?.ServiceSummary?.EstimatedArrival?.BusinessDaysInTransit;
 
-    return res.json({ isValid, isAmbiguous, noCandidate, candidates });
+      let deliveryDate = null;
+      if (arrivalDate) {
+        // Format YYYYMMDD → readable
+        const d = arrivalDate.replace(/(\d{4})(\d{2})(\d{2})/, '$3.$2.$1');
+        deliveryDate = arrivalTime ? `${d} by ${arrivalTime.slice(0,5)}` : d;
+      } else if (businessDays) {
+        deliveryDate = `${businessDays} business day(s)`;
+      }
+
+      return {
+        serviceCode: s.Service?.Code,
+        serviceName: UPS_SERVICES[s.Service?.Code] || s.Service?.Code,
+        currency: charge?.CurrencyCode || 'EUR',
+        amount: charge?.MonetaryValue,
+        amountWithVat,
+        publishedAmount: negotiated ? published?.MonetaryValue : null,
+        deliveryDate,
+      };
+    }).filter(r => r.amount);
+
+    return res.json({ rates });
   } catch (err) {
     const upsData = err?.response?.data;
     const upsMsg = upsData?.response?.errors?.[0]?.message || err.message;
-    if (err.message === 'Request timeout') {
-      return res.json({ isValid: null, notSupported: true, message: 'UPS validation timed out. You can still create the shipment.' });
-    }
-    const lowerMsg = (upsMsg || '').toLowerCase();
-    console.error('XAV error:', upsMsg || err.message);
-    return res.json({ isValid: null, notSupported: true, message: `Address validation not available for this country. You can still create the shipment.` });
+    console.error('UPS Rate error:', upsMsg);
+    return res.status(500).json({ message: upsMsg });
   }
 });
 

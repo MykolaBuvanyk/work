@@ -1532,6 +1532,19 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
     }
   }
 
+  const voidTracking = async () => {
+    if (!order.trackingNumber) return;
+    if (!window.confirm(`Void shipment ${order.trackingNumber}?`)) return;
+    try {
+      await $authHost.post('ups/void-shipment', { trackingNumber: order.trackingNumber });
+      await $authHost.post('cart/saveTracking', { orderId, trackingNumber: '' });
+      getOrder();
+      alert('Shipment voided successfully.');
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to void shipment.');
+    }
+  };
+
   const saveManualTracking = async () => {
     const tracking = manualTracking.trim();
     if (!tracking) return;
@@ -1801,11 +1814,17 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
             ? <a href={`https://www.ups.com/track?tracknum=${order.trackingNumber}`} target="_blank" rel="noreferrer" style={{color:'#0073bc'}}>{order.trackingNumber}</a>
             : '---'}
         </span>
-        <div
-          style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer', whiteSpace:'nowrap'}}
-          onClick={() => setUpsModalOpen(true)}
-        >
-          Create shipment
+        <div style={{display:'flex', gap:'10px', whiteSpace:'nowrap', marginLeft:'8px'}}>
+          {order.trackingNumber && (
+            <span
+              style={{color:'#d00', textDecoration:'underline', cursor:'pointer', fontSize:'12px'}}
+              onClick={voidTracking}
+            >Void</span>
+          )}
+          <span
+            style={{color:'#0073bc', textDecoration:'underline', cursor:'pointer', fontSize:'12px'}}
+            onClick={() => setUpsModalOpen(true)}
+          >Create shipment</span>
         </div>
       </div>
       <div className="row">

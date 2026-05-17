@@ -335,14 +335,14 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
             PackagingType: { Code: '02', Description: 'Customer Supplied Package' },
             PackageWeight: {
               UnitOfMeasurement: { Code: 'KGS' },
-              Weight: String(parseFloat(weight) || 1),
+              Weight: (parseFloat(weight) || 1).toFixed(1),
             },
             ...(length && width && height ? {
               Dimensions: {
                 UnitOfMeasurement: { Code: 'CM' },
-                Length: String(length),
-                Width: String(width),
-                Height: String(height),
+                Length: String(parseFloat(length).toFixed(0)),
+                Width: String(parseFloat(width).toFixed(0)),
+                Height: String(parseFloat(height).toFixed(0)),
               },
             } : {}),
           }],

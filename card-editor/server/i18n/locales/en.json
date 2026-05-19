@@ -190,7 +190,7 @@
   "email.reminder.title": "Invoice Reminder",
   "email.reminder.heading": "Friendly Reminder - Your Invoice is Due",
   "email.reminder.enjoyingSigns": "We hope you are enjoying your custom signs!",
-  "email.reminder.outstandingNote": "This is just a friendly reminder that the invoice for your recent order (Invoice #005) is still outstanding. If you have already made the payment, please disregard this message. Please find your invoice attached to this email.",
+  "email.reminder.outstandingNote": "This is just a friendly reminder that the invoice for your recent order (Invoice #{orderNumber}) is still outstanding. If you have already made the payment, please disregard this message. Please find your invoice attached to this email.",
   "email.reminder.appreciateBusiness": "We truly appreciate your business and look forward to working with you again soon!",
 
   "email.contact.subjectPrefix": "Request from contact page:",

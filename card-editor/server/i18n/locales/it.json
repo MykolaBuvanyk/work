@@ -190,7 +190,7 @@
   "email.reminder.title": "Promemoria fattura",
   "email.reminder.heading": "Promemoria cordiale - La Sua fattura è in scadenza",
   "email.reminder.enjoyingSigns": "Speriamo che stia apprezzando le Sue insegne personalizzate!",
-  "email.reminder.outstandingNote": "Questo è solo un cordiale promemoria che la fattura per il Suo recente ordine (Fattura #005) è ancora in sospeso. Se ha già effettuato il pagamento, La preghiamo di ignorare questo messaggio. Troverà la Sua fattura in allegato a questa email.",
+  "email.reminder.outstandingNote": "Questo è solo un cordiale promemoria che la fattura per il Suo recente ordine (Fattura #{orderNumber}) è ancora in sospeso. Se ha già effettuato il pagamento, La preghiamo di ignorare questo messaggio. Troverà la Sua fattura in allegato a questa email.",
   "email.reminder.appreciateBusiness": "Apprezziamo davvero la Sua collaborazione e non vediamo l'ora di lavorare di nuovo con Lei al più presto!",
 
   "email.contact.subjectPrefix": "Richiesta dalla pagina contatti:",

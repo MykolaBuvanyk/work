@@ -190,7 +190,7 @@
   "email.reminder.title": "Fakturapåminnelse",
   "email.reminder.heading": "Vänlig påminnelse - Din faktura är förfallen",
   "email.reminder.enjoyingSigns": "Vi hoppas att du uppskattar dina specialtillverkade skyltar!",
-  "email.reminder.outstandingNote": "Detta är endast en vänlig påminnelse om att fakturan för din senaste beställning (Faktura #005) fortfarande är obetald. Om du redan har genomfört betalningen, vänligen bortse från detta meddelande. Du hittar din faktura bifogad till detta e-postmeddelande.",
+  "email.reminder.outstandingNote": "Detta är endast en vänlig påminnelse om att fakturan för din senaste beställning (Faktura #{orderNumber}) fortfarande är obetald. Om du redan har genomfört betalningen, vänligen bortse från detta meddelande. Du hittar din faktura bifogad till detta e-postmeddelande.",
   "email.reminder.appreciateBusiness": "Vi uppskattar verkligen ditt förtroende och ser fram emot att arbeta med dig igen snart!",
 
   "email.contact.subjectPrefix": "Förfrågan från kontaktsidan:",

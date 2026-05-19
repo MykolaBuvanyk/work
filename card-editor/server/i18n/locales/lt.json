@@ -190,7 +190,7 @@
   "email.reminder.title": "Sąskaitos faktūros priminimas",
   "email.reminder.heading": "Draugiškas priminimas – Jūsų sąskaitos faktūros apmokėjimo terminas",
   "email.reminder.enjoyingSigns": "Tikimės, kad mėgaujatės savo individualiais ženklais!",
-  "email.reminder.outstandingNote": "Tai tik draugiškas priminimas, kad sąskaita faktūra už Jūsų neseną užsakymą (Sąskaita faktūra Nr. 005) vis dar neapmokėta. Jeigu jau atlikote mokėjimą, prašome nepaisyti šio pranešimo. Sąskaitą faktūrą rasite prisegtą prie šio el. laiško.",
+  "email.reminder.outstandingNote": "Tai tik draugiškas priminimas, kad sąskaita faktūra už Jūsų neseną užsakymą (Sąskaita faktūra Nr. {orderNumber}) vis dar neapmokėta. Jeigu jau atlikote mokėjimą, prašome nepaisyti šio pranešimo. Sąskaitą faktūrą rasite prisegtą prie šio el. laiško.",
   "email.reminder.appreciateBusiness": "Nuoširdžiai vertiname Jūsų pasitikėjimą ir tikimės netrukus vėl bendradarbiauti su Jumis!",
 
   "email.contact.subjectPrefix": "Užklausa iš kontaktų puslapio:",

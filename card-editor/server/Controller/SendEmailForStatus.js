@@ -2,7 +2,7 @@ import ErrorApi from "../error/ErrorApi.js";
 import sendEmail from "./utils/sendEmail.js";
 import 'dotenv/config'; // для ES модулів
 import puppeteer from 'puppeteer';
-import { countryToLanguage, DEFAULT_LANGUAGE } from '../i18n/index.js';
+import { countryToLanguage, DEFAULT_LANGUAGE, t } from '../i18n/index.js';
 import { localize } from '../i18n/localize.js';
 
 // Derive UI language for a user (from saved language, fallback to country mapping, else default).
@@ -1709,6 +1709,8 @@ class SendEmailForStatus {
             const urlOrders=urlFrontend+'account';
             const contact=urlFrontend+'contacts'
             const payURL=urlFrontend+'account/pay/'+order.id;
+            const lang = userLang(order.user);
+            const outstandingNote = t('email.reminder.outstandingNote', lang, { orderNumber });
             
             const html=`
 <!DOCTYPE html>
@@ -1742,7 +1744,7 @@ class SendEmailForStatus {
                 <p>Hello, <span style="color: #0066cc;">${nameOrCompany}</span>!</p>
                 <p>We hope you are enjoying your custom signs!</p>
 
-                <p>This is just a friendly reminder that the invoice for your recent order (Invoice #005) is still outstanding. If you have already made the payment, please disregard this message. Please find your invoice attached to this email.</p>
+                <p>${outstandingNote}</p>
 
                 <p>You can also view and settle your invoice at any time via our website:<br>
                 <a href="https://www.sign-xpert.com" style="color: #0066cc; text-decoration: underline;">www.sign-xpert.com</a><br>

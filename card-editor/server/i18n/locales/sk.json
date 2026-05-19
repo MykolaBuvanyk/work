@@ -190,7 +190,7 @@
   "email.reminder.title": "Pripomienka faktúry",
   "email.reminder.heading": "Priateľská pripomienka - Vaša faktúra je splatná",
   "email.reminder.enjoyingSigns": "Dúfame, že si užívate svoje tabuľky na mieru!",
-  "email.reminder.outstandingNote": "Toto je len priateľská pripomienka, že faktúra za Vašu nedávnu objednávku (Faktúra #005) je stále neuhradená. Ak ste už platbu uhradili, prosíme, ignorujte túto správu. Vašu faktúru nájdete v prílohe tohto e-mailu.",
+  "email.reminder.outstandingNote": "Toto je len priateľská pripomienka, že faktúra za Vašu nedávnu objednávku (Faktúra #{orderNumber}) je stále neuhradená. Ak ste už platbu uhradili, prosíme, ignorujte túto správu. Vašu faktúru nájdete v prílohe tohto e-mailu.",
   "email.reminder.appreciateBusiness": "Skutočne si vážime Vašu spoluprácu a tešíme sa na ďalšiu spoluprácu s Vami čoskoro!",
 
   "email.contact.subjectPrefix": "Požiadavka z kontaktnej stránky:",

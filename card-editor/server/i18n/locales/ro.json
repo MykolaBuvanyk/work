@@ -190,7 +190,7 @@
   "email.reminder.title": "Reamintire factură",
   "email.reminder.heading": "Reamintire amiabilă - Factura dumneavoastră este scadentă",
   "email.reminder.enjoyingSigns": "Sperăm că vă bucurați de plăcuțele dumneavoastră personalizate!",
-  "email.reminder.outstandingNote": "Aceasta este doar o reamintire amiabilă că factura pentru comanda dumneavoastră recentă (Factura #005) este încă neachitată. Dacă ați efectuat deja plata, vă rugăm să ignorați acest mesaj. Vă rugăm să găsiți factura dumneavoastră atașată la acest email.",
+  "email.reminder.outstandingNote": "Aceasta este doar o reamintire amiabilă că factura pentru comanda dumneavoastră recentă (Factura #{orderNumber}) este încă neachitată. Dacă ați efectuat deja plata, vă rugăm să ignorați acest mesaj. Vă rugăm să găsiți factura dumneavoastră atașată la acest email.",
   "email.reminder.appreciateBusiness": "Apreciem cu adevărat colaborarea dumneavoastră și așteptăm cu nerăbdare să lucrăm din nou cu dumneavoastră în curând!",
 
   "email.contact.subjectPrefix": "Solicitare de pe pagina de contact:",

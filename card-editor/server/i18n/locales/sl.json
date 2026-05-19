@@ -190,7 +190,7 @@
   "email.reminder.title": "Opomnik za račun",
   "email.reminder.heading": "Prijazen opomnik - Vaš račun zapade v plačilo",
   "email.reminder.enjoyingSigns": "Upamo, da uživate v svojih napisih po meri!",
-  "email.reminder.outstandingNote": "To je le prijazen opomnik, da je račun za vaše nedavno naročilo (Račun #005) še vedno odprt. Če ste plačilo že opravili, prosimo, prezrite to sporočilo. V priponki te e-pošte boste našli svoj račun.",
+  "email.reminder.outstandingNote": "To je le prijazen opomnik, da je račun za vaše nedavno naročilo (Račun #{orderNumber}) še vedno odprt. Če ste plačilo že opravili, prosimo, prezrite to sporočilo. V priponki te e-pošte boste našli svoj račun.",
   "email.reminder.appreciateBusiness": "Resnično cenimo vaše poslovanje in se veselimo ponovnega sodelovanja z vami kmalu!",
 
   "email.contact.subjectPrefix": "Zahteva s kontaktne strani:",

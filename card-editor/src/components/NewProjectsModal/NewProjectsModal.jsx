@@ -1,4 +1,5 @@
 import React from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import {
   getProject,
@@ -19,6 +20,7 @@ const NewProjectsModal = ({
   onDiscard,
   message,
 }) => {
+  const { t } = useTranslation();
   const { canvas } = useCanvasContext();
 
   const handleSave = async () => {
@@ -34,7 +36,9 @@ const NewProjectsModal = ({
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
-    } catch {}
+    } catch {
+      // Ignore unavailable localStorage.
+    }
     if (!canvas) {
       onClose && onClose();
       return;
@@ -59,7 +63,9 @@ const NewProjectsModal = ({
             detail: { projectId: currentProjectId },
           })
         );
-      } catch {}
+      } catch {
+        // Best-effort reset after saving.
+      }
 
       // Скидаємо toolbar state до дефолтних значень
       if (window.restoreToolbarState) {
@@ -106,7 +112,9 @@ const NewProjectsModal = ({
       try {
         localStorage.removeItem("pendingOpenedProjectAccessories");
         sessionStorage.removeItem("pendingOpenedProjectAccessories");
-      } catch {}
+      } catch {
+        // Ignore unavailable storage.
+      }
 
       // Створюємо нове полотно за замовчуванням після збереження
       try {
@@ -123,7 +131,9 @@ const NewProjectsModal = ({
         // Встановлюємо новий sign як активний
         try {
           localStorage.setItem("currentUnsavedSignId", newSign.id);
-        } catch {}
+        } catch {
+          // Ignore unavailable localStorage.
+        }
 
         // Відправляємо подію про оновлення unsaved signs
         window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
@@ -164,15 +174,23 @@ const NewProjectsModal = ({
     let currentProjectId = null;
     try {
       currentProjectId = localStorage.getItem("currentProjectId");
-    } catch {}
+    } catch {
+      // Ignore unavailable localStorage.
+    }
 
     // Delete entire project if present
     if (currentProjectId) {
       getProject(currentProjectId)
         .then((p) => {
-          if (p) deleteProject(currentProjectId).catch(() => {});
+          if (p) {
+            deleteProject(currentProjectId).catch(() => {
+              // Ignore project deletion errors.
+            });
+          }
         })
-        .catch(() => {});
+        .catch(() => {
+          // Ignore project lookup errors.
+        });
     }
 
     // Очищаємо localStorage
@@ -183,13 +201,17 @@ const NewProjectsModal = ({
       localStorage.removeItem("currentProjectCanvasId");
       localStorage.removeItem("currentProjectCanvasIndex");
       localStorage.removeItem("currentUnsavedSignId");
-    } catch {}
+    } catch {
+      // Ignore unavailable localStorage.
+    }
     try {
       if (typeof window !== "undefined") {
         window.__currentProjectCanvasId = null;
         window.__currentProjectCanvasIndex = null;
       }
-    } catch {}
+    } catch {
+      // Ignore unavailable window state.
+    }
 
     // Очищаємо canvas
     if (canvas) {
@@ -198,7 +220,9 @@ const NewProjectsModal = ({
         canvas.clear();
         canvas.renderAll();
         canvas.__suspendUndoRedo = false;
-      } catch {}
+      } catch {
+        // Best-effort canvas cleanup.
+      }
     }
 
     // Скидаємо toolbar state до дефолтних значень
@@ -246,7 +270,9 @@ const NewProjectsModal = ({
     try {
       localStorage.removeItem("pendingOpenedProjectAccessories");
       sessionStorage.removeItem("pendingOpenedProjectAccessories");
-    } catch {}
+    } catch {
+      // Ignore unavailable storage.
+    }
 
     // Створюємо нове полотно за замовчуванням
     try {
@@ -262,13 +288,17 @@ const NewProjectsModal = ({
         localStorage.setItem("currentUnsavedSignId", newSign.id);
         localStorage.removeItem("currentProjectCanvasId");
         localStorage.removeItem("currentProjectCanvasIndex");
-      } catch {}
+      } catch {
+        // Ignore unavailable localStorage.
+      }
       try {
         if (typeof window !== "undefined") {
           window.__currentProjectCanvasId = null;
           window.__currentProjectCanvasIndex = null;
         }
-      } catch {}
+      } catch {
+        // Ignore unavailable window state.
+      }
 
       // Відправляємо подію про оновлення unsaved signs
       window.dispatchEvent(new CustomEvent("unsaved:signsUpdated"));
@@ -301,18 +331,18 @@ const NewProjectsModal = ({
     <div className={styles.newProjectsModal}>
       <p>
         {message || (
-          <>
-            Before creating a <strong>New Project</strong>, please <strong>Save</strong> or{' '}
-            <strong>Discard</strong> your current work.
-          </>
+          <Trans
+            i18nKey="NewProjectsModal.message"
+            components={{ strong: <strong /> }}
+          />
         )}
       </p>
       <div className={styles.buttonContainer}>
         <button className={styles.active} onClick={handleSave}>
-          Save
+          {t("NewProjectsModal.save")}
         </button>
-        <button onClick={handleDiscard}>Discard</button>
-        <button onClick={handleCancel}>Cancel</button>
+        <button onClick={handleDiscard}>{t("NewProjectsModal.discard")}</button>
+        <button onClick={handleCancel}>{t("NewProjectsModal.cancel")}</button>
       </div>
     </div>
   );

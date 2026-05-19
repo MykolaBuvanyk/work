@@ -190,7 +190,7 @@
   "email.reminder.title": "Arve meeldetuletus",
   "email.reminder.heading": "Sõbralik meeldetuletus - Teie arve on tasumisel",
   "email.reminder.enjoyingSigns": "Loodame, et naudite oma eritellimuse silte!",
-  "email.reminder.outstandingNote": "See on lihtsalt sõbralik meeldetuletus, et Teie hiljutise tellimuse arve (Arve #005) on endiselt tasumata. Kui olete makse juba sooritanud, palun ignoreerige seda teadet. Teie arve on lisatud sellele e-kirjale.",
+  "email.reminder.outstandingNote": "See on lihtsalt sõbralik meeldetuletus, et Teie hiljutise tellimuse arve (Arve #{orderNumber}) on endiselt tasumata. Kui olete makse juba sooritanud, palun ignoreerige seda teadet. Teie arve on lisatud sellele e-kirjale.",
   "email.reminder.appreciateBusiness": "Hindame siiralt Teie usaldust ja ootame peagi taas koostööd!",
 
   "email.contact.subjectPrefix": "Päring kontaktilehelt:",

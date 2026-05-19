@@ -190,7 +190,7 @@
   "email.reminder.title": "Számla emlékeztető",
   "email.reminder.heading": "Baráti emlékeztető - Számlája esedékes",
   "email.reminder.enjoyingSigns": "Reméljük, örömét leli egyedi tábláiban!",
-  "email.reminder.outstandingNote": "Ez csupán egy baráti emlékeztető arról, hogy a legutóbbi rendeléséhez tartozó számla (Számla #005) még rendezetlen. Ha a fizetést már teljesítette, kérjük, hagyja figyelmen kívül ezt az üzenetet. A számlát ezen e-mail mellékletében találja.",
+  "email.reminder.outstandingNote": "Ez csupán egy baráti emlékeztető arról, hogy a legutóbbi rendeléséhez tartozó számla (Számla #{orderNumber}) még rendezetlen. Ha a fizetést már teljesítette, kérjük, hagyja figyelmen kívül ezt az üzenetet. A számlát ezen e-mail mellékletében találja.",
   "email.reminder.appreciateBusiness": "Őszintén értékeljük együttműködését, és várjuk, hogy hamarosan ismét dolgozhassunk Önnel!",
 
   "email.contact.subjectPrefix": "Megkeresés a kapcsolati oldalról:",

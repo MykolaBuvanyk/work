@@ -190,7 +190,7 @@
   "email.reminder.title": "Upomínka faktury",
   "email.reminder.heading": "Přátelská upomínka – Vaše faktura je splatná",
   "email.reminder.enjoyingSigns": "Doufáme, že si své cedule na zakázku užíváte!",
-  "email.reminder.outstandingNote": "Toto je pouze přátelská upomínka, že faktura za Vaši nedávnou objednávku (Faktura č. 005) je stále neuhrazena. Pokud jste již platbu provedli, tuto zprávu prosím ignorujte. V příloze tohoto e-mailu naleznete Vaši fakturu.",
+  "email.reminder.outstandingNote": "Toto je pouze přátelská upomínka, že faktura za Vaši nedávnou objednávku (Faktura č. {orderNumber}) je stále neuhrazena. Pokud jste již platbu provedli, tuto zprávu prosím ignorujte. V příloze tohoto e-mailu naleznete Vaši fakturu.",
   "email.reminder.appreciateBusiness": "Velmi si vážíme Vaší spolupráce a těšíme se na další společnou práci již brzy!",
 
   "email.contact.subjectPrefix": "Žádost z kontaktní stránky:",

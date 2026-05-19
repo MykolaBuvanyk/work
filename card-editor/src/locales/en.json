@@ -1621,6 +1621,16 @@
       "register": "Register"
     }
   },
+  "NewProjectsModal": {
+    "message": "Before creating a <strong>New Project</strong>, please <strong>Save</strong> or <strong>Discard</strong> your current work.",
+    "save": "Save",
+    "discard": "Discard",
+    "cancel": "Cancel"
+  },
+  "TopSidebar": {
+    "material": "Material",
+    "engravedPlastic": "Engraved Plastic"
+  },
   "LoginForm": {
     "l_4": "Already Customer",
     "l_5": "E-Mail address or Customer number",

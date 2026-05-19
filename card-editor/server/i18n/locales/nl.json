@@ -190,7 +190,7 @@
   "email.reminder.title": "Factuurherinnering",
   "email.reminder.heading": "Vriendelijke Herinnering - Uw Factuur is Vervallen",
   "email.reminder.enjoyingSigns": "Wij hopen dat u veel plezier heeft van uw bordjes op maat!",
-  "email.reminder.outstandingNote": "Dit is slechts een vriendelijke herinnering dat de factuur voor uw recente bestelling (Factuur #005) nog openstaat. Indien u de betaling reeds heeft voldaan, kunt u dit bericht negeren. U vindt uw factuur als bijlage bij deze e-mail.",
+  "email.reminder.outstandingNote": "Dit is slechts een vriendelijke herinnering dat de factuur voor uw recente bestelling (Factuur #{orderNumber}) nog openstaat. Indien u de betaling reeds heeft voldaan, kunt u dit bericht negeren. U vindt uw factuur als bijlage bij deze e-mail.",
   "email.reminder.appreciateBusiness": "Wij waarderen uw samenwerking ten zeerste en kijken ernaar uit u binnenkort weer van dienst te zijn!",
 
   "email.contact.subjectPrefix": "Verzoek via contactpagina:",

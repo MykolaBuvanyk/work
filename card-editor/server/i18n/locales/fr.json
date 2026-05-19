@@ -190,7 +190,7 @@
   "email.reminder.title": "Rappel de facture",
   "email.reminder.heading": "Rappel amical - Votre facture est due",
   "email.reminder.enjoyingSigns": "Nous espérons que vous appréciez vos enseignes personnalisées !",
-  "email.reminder.outstandingNote": "Ceci est simplement un rappel amical indiquant que la facture de votre récente commande (Facture n°005) est toujours en attente. Si vous avez déjà effectué le paiement, veuillez ignorer ce message. Veuillez trouver votre facture en pièce jointe à cet e-mail.",
+  "email.reminder.outstandingNote": "Ceci est simplement un rappel amical indiquant que la facture de votre récente commande (Facture n°{orderNumber}) est toujours en attente. Si vous avez déjà effectué le paiement, veuillez ignorer ce message. Veuillez trouver votre facture en pièce jointe à cet e-mail.",
   "email.reminder.appreciateBusiness": "Nous apprécions sincèrement votre confiance et nous nous réjouissons de travailler à nouveau avec vous prochainement !",
 
   "email.contact.subjectPrefix": "Demande depuis la page de contact :",

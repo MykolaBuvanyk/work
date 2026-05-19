@@ -190,7 +190,7 @@
   "email.reminder.title": "Podsjetnik za račun",
   "email.reminder.heading": "Prijateljski podsjetnik - Vaš račun dospijeva",
   "email.reminder.enjoyingSigns": "Nadamo se da uživate u svojim prilagođenim natpisima!",
-  "email.reminder.outstandingNote": "Ovo je samo prijateljski podsjetnik da račun za Vašu nedavnu narudžbu (Račun #005) još uvijek nije podmiren. Ako ste već izvršili plaćanje, molimo zanemarite ovu poruku. Vaš račun je priložen ovom e-mailu.",
+  "email.reminder.outstandingNote": "Ovo je samo prijateljski podsjetnik da račun za Vašu nedavnu narudžbu (Račun #{orderNumber}) još uvijek nije podmiren. Ako ste već izvršili plaćanje, molimo zanemarite ovu poruku. Vaš račun je priložen ovom e-mailu.",
   "email.reminder.appreciateBusiness": "Iskreno cijenimo Vašu suradnju i veselimo se ponovnoj suradnji s Vama uskoro!",
 
   "email.contact.subjectPrefix": "Zahtjev s kontakt stranice:",

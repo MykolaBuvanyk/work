@@ -190,7 +190,7 @@
   "email.reminder.title": "Recordatorio de factura",
   "email.reminder.heading": "Recordatorio amistoso - Su factura está pendiente",
   "email.reminder.enjoyingSigns": "¡Esperamos que esté disfrutando de sus rótulos personalizados!",
-  "email.reminder.outstandingNote": "Este es simplemente un recordatorio amistoso de que la factura de su pedido reciente (Factura n.º 005) sigue pendiente. Si ya ha realizado el pago, por favor ignore este mensaje. Encontrará su factura adjunta a este correo.",
+  "email.reminder.outstandingNote": "Este es simplemente un recordatorio amistoso de que la factura de su pedido reciente (Factura n.º {orderNumber}) sigue pendiente. Si ya ha realizado el pago, por favor ignore este mensaje. Encontrará su factura adjunta a este correo.",
   "email.reminder.appreciateBusiness": "Valoramos sinceramente su confianza y esperamos volver a trabajar con usted muy pronto.",
 
   "email.contact.subjectPrefix": "Solicitud desde la página de contacto:",

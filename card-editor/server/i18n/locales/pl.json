@@ -190,7 +190,7 @@
   "email.reminder.title": "Przypomnienie o fakturze",
   "email.reminder.heading": "Przyjazne przypomnienie – Termin płatności faktury",
   "email.reminder.enjoyingSigns": "Mamy nadzieję, że jest Pan/Pani zadowolony(a) ze swoich indywidualnych szyldów!",
-  "email.reminder.outstandingNote": "Jest to jedynie przyjazne przypomnienie, że faktura za Pana/Pani ostatnie zamówienie (Faktura nr 005) jest nadal niezapłacona. Jeżeli płatność została już dokonana, prosimy zignorować tę wiadomość. W załączniku do tej wiadomości znajduje się Pana/Pani faktura.",
+  "email.reminder.outstandingNote": "Jest to jedynie przyjazne przypomnienie, że faktura za Pana/Pani ostatnie zamówienie (Faktura nr {orderNumber}) jest nadal niezapłacona. Jeżeli płatność została już dokonana, prosimy zignorować tę wiadomość. W załączniku do tej wiadomości znajduje się Pana/Pani faktura.",
   "email.reminder.appreciateBusiness": "Szczerze doceniamy Pana/Pani zaufanie i z niecierpliwością oczekujemy na kolejną współpracę!",
 
   "email.contact.subjectPrefix": "Zapytanie ze strony kontaktowej:",

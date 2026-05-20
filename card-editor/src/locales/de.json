@@ -1388,13 +1388,13 @@
 "d_1": "Wir bieten",
 "d_2": "Intuitive",
 "d_3": "Gestaltung",
-"d_4": "Ganz nach Ihren Wünschen",
+"d_4": "ganz nach Wunsch",
 "d_5": "Schnelle",
 "d_6": "Produktion",
 "d_7": "Innerhalb von 8 Std.",
 "d_8": "Express",
 "d_9": "Lieferung",
-"d_10": "In 24–48 Std. bei Ihnen",
+"d_10": "in 24–48 Std.",
 "d_11": "So verwenden Sie den Editor",
 "d_12": "Neues Projekt",
 "d_13": "Kontakt",
@@ -1548,16 +1548,6 @@
   "canvasPreviewAlt": "Arbeitsflächenvorschau",
   "noData": "Keine Daten"
 },
-"NewProjectsModal": {
-  "message": "Bevor Sie ein <strong>neues Projekt</strong> erstellen, speichern Sie bitte Ihre aktuelle Arbeit.",
-  "save": "Speichern",
-  "discard": "Verwerfen",
-  "cancel": "Abbrechen"
-},
-"TopSidebar": {
-  "material": "Material",
-  "engravedPlastic": "Gravurkunststoff"
-},
 "Header": {
   "nav": {
     "home": "Start",
@@ -1708,7 +1698,7 @@
   "h_1": "Vom Design bis zur Lieferung - Ihr Schild",
   "h_2": "in 24 Stunden!",
   "h_3": "- Expertenqualität",
-  "h_4": "Industrie-Beschilderung",
+  "h_4": "für Industrie-Beschilderung",
   "h_5": "Wir fertigen langlebige gravierte Schilder und Typenschilder aus hochwertigem Kunststoff für Industrie, Energie und Gewerbe.",
   "h_6": "Jetzt online gestalten",
   "h_7": "Bestellen Sie bis 16:00 Uhr für den Versand am selben Werktag.",
@@ -1767,7 +1757,7 @@
   "p_1": "Individuelle",
   "p_2": "gravierte Kunststoffschilder und Typenschilder",
   "p_3": "Bei",
-  "p_4": "fertigen wir hochwertige gravierte Kunststoffschilder, Typenschilder und Industrieetiketten aus langlebigem zweischichtigem Gravurkunststoff.",
+  "p_4": "fertigen wir hochwertige Kunststoffschilder, Typenschilder und Industrieetiketten aus robustem Gravurkunststoff.",
   "p_5": "Unsere gravierten Schilder bieten eine klare, dauerhafte und professionelle Kennzeichnung für Maschinen, Elektroinstallationen, Büros, Gebäude und Arbeitsplätze.",
   "p_6": "Durch präzise Lasergravur wird die obere Kunststoffschicht abgetragen, sodass die kontrastierende Farbschicht darunter sichtbar wird. Dadurch entstehen dauerhaft kontrastreiche Beschriftungen, die auch in anspruchsvollen industriellen Umgebungen über Jahre hinweg gut lesbar bleiben.",
   "p_7": "Unsere gravierten Kunststoffschilder werden häufig eingesetzt in:",

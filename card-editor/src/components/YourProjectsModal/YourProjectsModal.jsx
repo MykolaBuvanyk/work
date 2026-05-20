@@ -906,11 +906,10 @@ const YourProjectsModal = ({ onClose }) => {
       </div>
       <div className={styles.addInfoWrapper}>
         <span className={styles.infoText}>
-          {t("yourProjectsModal.info.chooseOrOrder")}
+          {t("yourProjectsModal.info.chooseOrOrder")} {t("yourProjectsModal.info.addSelected")}
         </span>
-        <span className={styles.infoTextSecondary}>
-          {t("yourProjectsModal.info.addSelected")}
-        </span>
+        {/* <span className={styles.infoTextSecondary}>
+        </span> */}
         <button
           type="button"
           disabled={isCartDisabled}

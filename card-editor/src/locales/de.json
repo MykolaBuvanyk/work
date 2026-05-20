@@ -764,7 +764,7 @@
   },
   "qr": {
     "title": "QR-Code",
-    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 20 x 20 mm",
+    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 15 x 15 mm",
     "defaults": {
       "message": "Standardnachricht"
     },

@@ -270,7 +270,7 @@
   "pdf.deliveryNote.noSignsForOrder": "Keine Schilddetails für diese Bestellung verfügbar.",
   "pdf.deliveryNote.noSignDetails": "Keine Schilddetails verfügbar",
   "pdf.deliveryNote.textLineLabel": "Text:",
-  "pdf.deliveryNote.signFallback": "Schild",
+  "pdf.deliveryNote.signFallback": "Sign",
   "pdf.deliveryNote.pcsSuffix": "Stk.",
   "pdf.deliveryNote.unitImages": "Bilder",
   "pdf.deliveryNote.unitShapes": "Formen",

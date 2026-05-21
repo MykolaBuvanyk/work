@@ -261,6 +261,10 @@ const Header = () => {
     '/admin': <LuUser size={18} />,
   };
   const currentLanguage = languageCountries.find(x => x.code.toLowerCase() === i18n.language) || languageCountries[0];
+  const activePathParts = pathname.split('/').filter(Boolean);
+  const activePathname = prefixedLngs.includes(activePathParts[0])
+    ? `/${activePathParts.slice(1).join('/')}` || '/'
+    : pathname;
 
   const realNavigate=UseRealNavigate();
 
@@ -385,7 +389,7 @@ const Header = () => {
                 <Link
                   key={x.url}
                   to={x.url}
-                  className={`${styles.drawerNavItem} ${pathname === x.url ? styles.drawerNavItemActive : ''}`}
+                  className={`${styles.drawerNavItem} ${activePathname === x.url ? styles.drawerNavItemActive : ''}`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <span className={styles.drawerNavIcon}>{menuIcons[x.url] || <LuHouse size={18} />}</span>
@@ -515,7 +519,7 @@ const Header = () => {
           {urls.map(x => (
             <li
               key={x.url}
-              className={`${styles.secondPartEl2} ${pathname == x.url ? styles.current : ''}`}
+              className={`${styles.secondPartEl2} ${activePathname === x.url ? styles.current : ''}`}
             >
               <Link to={`${x.url}`}>{t(x.labelKey || x.name)}</Link>
             </li>

@@ -3789,14 +3789,14 @@ const start = async () => {
 
 const CheckIsPay=async()=>{
   try{
-    const date21DaysAgo = new Date();
-    date21DaysAgo.setDate(date21DaysAgo.getDate() - 21);
+    const date14DaysAgo = new Date();
+    date14DaysAgo.setDate(date14DaysAgo.getDate() - 14);
 
     const orders = await Order.findAll({
       where: {
         isPaid: false,
         createdAt: {
-          [Op.lte]: date21DaysAgo
+          [Op.lte]: date14DaysAgo
         }
       },
       include:[{

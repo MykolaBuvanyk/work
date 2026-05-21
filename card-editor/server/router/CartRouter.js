@@ -30,6 +30,27 @@ const pdfText = (key, lang, vars) => escapeHtml(t(key, lang, vars));
 const secretKey = process.env.secretPayKey;
 const stripe=Stripe(secretKey);
 
+const scheduleTestReminderPay = (orderId) => {
+  // TEMP: send invoice reminder 1 minute after order creation for testing.
+  setTimeout(async () => {
+    try {
+      const order = await Order.findOne({
+        where: { id: orderId },
+        include: [{ model: User }],
+      });
+
+      if (!order) {
+        console.warn(`Skip test invoice reminder: order ${orderId} not found`);
+        return;
+      }
+
+      await SendEmailForStatus.ReminderPay(order);
+    } catch (err) {
+      console.error(`Test invoice reminder failed for order ${orderId}:`, err);
+    }
+  }, 60 * 1000);
+};
+
 function formatDate(dateStr) {
   const d = new Date(dateStr);
 
@@ -1252,6 +1273,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
         }
       ]
     })
+    scheduleTestReminderPay(order.id);
     let commentOrder='';
     return res.json({
       id: String(created._id),

@@ -193,6 +193,8 @@
   "email.reminder.outstandingNote": "Dies ist nur eine freundliche Erinnerung, dass die Rechnung für Ihre kürzliche Bestellung (Rechnung Nr. {orderNumber}) noch offen ist. Falls Sie die Zahlung bereits getätigt haben, ignorieren Sie diese Nachricht bitte. Ihre Rechnung finden Sie im Anhang dieser E-Mail.",
   "email.reminder.appreciateBusiness": "Wir schätzen Ihr Vertrauen sehr und freuen uns darauf, bald wieder mit Ihnen zusammenzuarbeiten!",
 
+  "email.reminder.paymentStatusNote": "Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
+
   "email.contact.subjectPrefix": "Anfrage über das Kontaktformular:",
   "email.contact.adminTitle": "Neue Kontaktanfrage – SignXpert",
   "email.contact.adminIntro": "Sie haben eine neue Nachricht über das Kontaktformular erhalten.",

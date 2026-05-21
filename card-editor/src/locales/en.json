@@ -1439,7 +1439,7 @@
   "Login": {
     "l_1": "Register a new account",
     "l_2": "To place an order with us, you first need to create an account. It’s quick and easy!",
-    "l_3": "Register a new account"
+    "l_3": "Fields marked with an asterisk (*) are required. Choose a password, and we’ll send you a confirmation email shortly."
   },
   "Enter": {
     "e_1": "Welcome to SignXpert - we're glad to have you with us!",

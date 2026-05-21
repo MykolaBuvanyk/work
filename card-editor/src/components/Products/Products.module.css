@@ -148,6 +148,7 @@ ul {
   color: #006ca4;
   text-decoration: none;
   cursor: pointer;
+  font-weight: bold;
 }
 
 .brandHomeLink:hover {
@@ -348,6 +349,7 @@ ul {
   color: #006ca4;
   text-decoration: underline;
   white-space: nowrap;
+  font-weight: bold;
 }
 
 .infoBlockWide .infoBlockBadge {

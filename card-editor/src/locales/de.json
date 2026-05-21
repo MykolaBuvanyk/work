@@ -1439,7 +1439,7 @@
 "Login": {
   "l_1": "Neues Konto erstellen",
   "l_2": "Um bei uns eine Bestellung aufzugeben, müssen Sie zunächst ein Konto erstellen. Das geht schnell und einfach!",
-  "l_3": "Neues Konto erstellen"
+  "l_3": "Mit einem Sternchen (*) gekennzeichnete Felder sind Pflichtfelder. Wählen Sie ein Passwort. Sie erhalten in Kürze eine Bestätigungs-E-Mail."
 },
 "Enter": {
   "e_1": "Willkommen bei SignXpert - wir freuen uns, Sie bei uns zu haben!",

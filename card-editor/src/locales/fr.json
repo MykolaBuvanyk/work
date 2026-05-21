@@ -1439,7 +1439,7 @@
   "Login": {
     "l_1": "Créer un nouveau compte",
     "l_2": "Pour passer une commande chez nous, vous devez d’abord créer un compte. C’est rapide et facile !",
-    "l_3": "Créer un nouveau compte"
+    "l_3": "Les champs marqués d'un astérisque (*) sont obligatoires. Choisissez un mot de passe ; nous vous enverrons un courriel de confirmation sous peu."
   },
   "Enter": {
     "e_1": "Bienvenue chez SignXpert - nous sommes heureux de vous compter parmi nous !",

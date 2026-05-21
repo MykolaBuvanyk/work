@@ -3,7 +3,8 @@ import { initReactI18next } from 'react-i18next';
 import ua from './locales/ua.json';
 import en from './locales/en.json';
 import de from './locales/de.json';
-import fr from './locales/fr.json'
+import fr from './locales/fr.json';
+import it from './locales/it.json';
 
 const languageCountries = [
   { flag: "🇩🇪", code: "DE", codeFlag: "DE" }, // вибрана
@@ -45,6 +46,10 @@ i18n.use(initReactI18next).init({
        lang.code.toLowerCase()=='fr'
        ? 
        fr 
+       :
+       lang.code.toLowerCase()=='it'
+       ?
+       it
        : 
        en,//тимчасово
     },

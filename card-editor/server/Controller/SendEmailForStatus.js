@@ -1711,6 +1711,8 @@ class SendEmailForStatus {
             const payURL=urlFrontend+'account/pay/'+order.id;
             const lang = userLang(order.user);
             const outstandingNote = t('email.reminder.outstandingNote', lang, { orderNumber });
+            const paymentStatusNote = t('email.reminder.paymentStatusNote', lang);
+            const myOrdersLabel = t('common.myOrders', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1751,7 +1753,7 @@ class SendEmailForStatus {
                 Simply log in and navigate to:</p>
 
                 <p style="font-weight: bold;">
-                    <a href="#" style="color: #0066cc; text-decoration: underline;">My Account</a> &rarr; <a href="#" style="color: #0066cc; text-decoration: underline;">My Orders</a>
+                    <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">My Orders</a>
                 </p>
 
                 <p>Select the relevant order and click <strong>"Pay"</strong></p>
@@ -1759,7 +1761,7 @@ class SendEmailForStatus {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                     <tr>
                         <td bgcolor="#006eb3" style="border-radius: 6px; text-align: center;">
-                            <a href="${payURL}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none; text-transform: uppercase;">Pay</a>
+                            <a href="${payURL}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff !important; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none !important; text-transform: uppercase;"><span style="color: #ffffff !important; text-decoration: none !important;">Pay</span></a>
                         </td>
                     </tr>
                 </table>
@@ -1779,7 +1781,7 @@ class SendEmailForStatus {
                     <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">My Details</a>
                 </p>
 
-                <p>You can check your payment status at any time in your account under <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">"My Orders"</a>.</p>
+                <p>${paymentStatusNote} <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">"${myOrdersLabel}"</a>.</p>
 
                 <p>Thank you again for choosing SignXpert.<br>
                 <strong>We truly appreciate your business and look forward to working with you again soon!</strong></p>

@@ -24,6 +24,19 @@ const loadDictionary = (lang) => {
 };
 
 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const startsWithWordChar = (str) => /^[A-Za-z0-9]/.test(str);
+const endsWithWordChar = (str) => /[A-Za-z0-9]$/.test(str);
+
+const buildPhraseRegex = (phrase) => {
+  let pattern = escapeRegex(phrase);
+  if (startsWithWordChar(phrase)) {
+    pattern = `(?<![A-Za-z0-9])${pattern}`;
+  }
+  if (endsWithWordChar(phrase)) {
+    pattern = `${pattern}(?![A-Za-z0-9])`;
+  }
+  return new RegExp(pattern, 'g');
+};
 
 /**
  * Compile entries to a sorted list (longest phrase first).
@@ -53,11 +66,19 @@ const compileEntries = (lang) => {
   const entries = phrases.map((key) => {
     const en = sourceDict[key];
     const tr = targetDict[key];
-    const regex = new RegExp(escapeRegex(en), 'g');
+    const regex = buildPhraseRegex(en);
     return { regex, replacement: tr };
   });
   compiledCache.set(lang, entries);
   return entries;
+};
+
+const localizeTextNode = (text, entries) => {
+  let out = text;
+  for (const { regex, replacement } of entries) {
+    out = out.replace(regex, replacement);
+  }
+  return out;
 };
 
 /**
@@ -77,11 +98,10 @@ export const localize = (input, lang) => {
   if (normalized === 'en') return text;
   const entries = compileEntries(normalized);
   if (!entries.length) return text;
-  let out = text;
-  for (const { regex, replacement } of entries) {
-    out = out.replace(regex, replacement);
-  }
-  return out;
+  return text
+    .split(/(<[^>]*>)/g)
+    .map((part) => (part.startsWith('<') ? part : localizeTextNode(part, entries)))
+    .join('');
 };
 
 export const clearLocalizeCache = () => {

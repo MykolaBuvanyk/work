@@ -170,6 +170,8 @@ input[type="checkbox"] {
   text-overflow: unset !important;
   word-break: break-word;
   line-height: 1.3;
+  padding-right: 0px !important;
+  width: 100% !important;
 }
 
 /* Link-style for project name */

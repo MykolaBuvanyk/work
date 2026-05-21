@@ -227,27 +227,53 @@ const persistCheckoutEmailsDraft = ({ invoiceEmail, invoiceAddressEmail, isInvoi
 	}
 }
 
-const COLOR_THEME_BY_INDEX = {
-	0: 'White / Black',
-	1: 'White / Blue',
-	2: 'White / Red',
-	3: 'Black / White',
-	4: 'Blue / White',
-	5: 'Red / White',
-	6: 'Green / White',
-	7: 'Yellow / Black',
-	8: 'Silver / Black',
-	9: 'Light blue / White',
-	10: 'Orange / White',
-	11: 'Gray / White',
-	12: 'Wood / Black',
-	13: 'Carbon / White',
+const COLOR_THEME_KEY_BY_INDEX = {
+	0: 'toolbar.colours.whiteBlack',
+	1: 'toolbar.colours.whiteBlue',
+	2: 'toolbar.colours.whiteRed',
+	3: 'toolbar.colours.blackWhite',
+	4: 'toolbar.colours.blueWhite',
+	5: 'toolbar.colours.redWhite',
+	6: 'toolbar.colours.greenWhite',
+	7: 'toolbar.colours.yellowBlack',
+	8: 'toolbar.colours.silverBlack',
+	9: 'toolbar.colours.lightBlueWhite',
+	10: 'toolbar.colours.orangeWhite',
+	11: 'toolbar.colours.grayWhite',
+	12: 'toolbar.colours.mapleWoodBlack',
+	13: 'toolbar.colours.carbonWhite',
 }
 
-const resolveCanvasTypeLabel = design => {
+const COLOR_THEME_KEY_BY_NORMALIZED_LABEL = {
+	'white/black': 'toolbar.colours.whiteBlack',
+	'white/blue': 'toolbar.colours.whiteBlue',
+	'white/red': 'toolbar.colours.whiteRed',
+	'black/white': 'toolbar.colours.blackWhite',
+	'blue/white': 'toolbar.colours.blueWhite',
+	'red/white': 'toolbar.colours.redWhite',
+	'green/white': 'toolbar.colours.greenWhite',
+	'yellow/black': 'toolbar.colours.yellowBlack',
+	'silver/black': 'toolbar.colours.silverBlack',
+	'lightblue/white': 'toolbar.colours.lightBlueWhite',
+	'orange/white': 'toolbar.colours.orangeWhite',
+	'gray/white': 'toolbar.colours.grayWhite',
+	'grey/white': 'toolbar.colours.grayWhite',
+	'wood/black': 'toolbar.colours.mapleWoodBlack',
+	'maplewood/black': 'toolbar.colours.mapleWoodBlack',
+	'maple/wood/black': 'toolbar.colours.mapleWoodBlack',
+	'carbon/white': 'toolbar.colours.carbonWhite',
+}
+
+const normalizeColorThemeLabel = value =>
+	String(value || '')
+		.replace(/[“”вЂњвЂќ"()]/g, '')
+		.replace(/\s+/g, '')
+		.toLowerCase()
+
+const resolveCanvasTypeLabel = (design, t) => {
 	const idx = Number(design?.toolbarState?.selectedColorIndex)
-	if (Number.isFinite(idx) && COLOR_THEME_BY_INDEX[idx]) {
-		return COLOR_THEME_BY_INDEX[idx]
+	if (Number.isFinite(idx) && COLOR_THEME_KEY_BY_INDEX[idx]) {
+		return t(COLOR_THEME_KEY_BY_INDEX[idx])
 	}
 
 	const raw =
@@ -256,6 +282,9 @@ const resolveCanvasTypeLabel = design => {
 		design?.toolbarState?.backgroundColor ||
 		design?.toolbarState?.globalColors?.backgroundColor ||
 		'Unknown'
+
+	const translationKey = COLOR_THEME_KEY_BY_NORMALIZED_LABEL[normalizeColorThemeLabel(raw)]
+	if (translationKey) return t(translationKey)
 
 	return String(raw)
 		.replace(/[“”]/g, '')
@@ -646,14 +675,14 @@ export default function Checkout({
 		const map = new Map()
 
 		for (const design of list) {
-			const label = resolveCanvasTypeLabel(design)
+			const label = resolveCanvasTypeLabel(design, t)
 			const rawQty = Number(design?.copiesCount ?? design?.toolbarState?.copiesCount ?? 1)
 			const qty = Number.isFinite(rawQty) && rawQty > 0 ? Math.floor(rawQty) : 1
 			map.set(label, (map.get(label) || 0) + qty)
 		}
 
 		return Array.from(map.entries()).map(([label, qty]) => ({ label, qty }))
-	}, [designs])
+	}, [designs, t])
 
 	const totalSignsFromDesigns = useMemo(() => {
 		if (!Array.isArray(designs) || designs.length === 0) return 0

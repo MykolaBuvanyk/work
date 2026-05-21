@@ -42,12 +42,21 @@
 
 .icons {
   display: flex;
-  gap: 3px;
+  column-gap: 2px;
+  row-gap: 3px;
   flex-wrap: wrap;
   color: #000;
   justify-content: flex-end;
   align-items: center;
-  width: fit-content;
+  width: 278px;
+}
+
+.icons h3 {
+  width: 52px;
+  min-width: 52px;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .icons span {

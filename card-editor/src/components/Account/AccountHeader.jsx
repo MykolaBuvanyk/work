@@ -2,9 +2,20 @@ import React from 'react'
 import './AccountHeader.scss'
 import Link from '../Localized/LocalizedLink'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
+
+const LANGUAGE_PREFIXES = new Set(['de', 'en', 'fr', 'ua'])
+
+const getAccountPath = pathname => {
+    const parts = String(pathname || '').split('/').filter(Boolean)
+    const pathParts = LANGUAGE_PREFIXES.has(parts[0]) ? parts.slice(1) : parts
+    return `/${pathParts.join('/')}`.replace(/\/$/, '') || '/'
+}
 
 const AccountHeader = () => {
     const { t } = useTranslation()
+    const location = useLocation()
+    const currentPath = getAccountPath(location.pathname)
     const urls=[
         {
             name:'MyAccount.header.orders',
@@ -25,7 +36,7 @@ const AccountHeader = () => {
             {urls.map(x=>(
                 <li key={x.url}>
                     <Link
-                      className={x.url==location.pathname?'active':""}
+                      className={x.url === currentPath || (x.url === '/account' && currentPath.startsWith('/account/pay/')) ? 'active' : ''}
                       to={x.url}
                     >
                         {t(x.name)}

@@ -136,13 +136,13 @@ table td:nth-child(1) {
 table td:nth-child(2) {
   width: 150px;
   padding-left: 0;
-  padding-right: 70px;
 }
 
 table td:nth-child(3) {
   width: 100px;
   padding-left: 0;
   padding-right: 50px;
+  white-space: nowrap;
 }
 
 table td:nth-child(4) {

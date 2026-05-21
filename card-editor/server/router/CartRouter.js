@@ -633,6 +633,34 @@ const normalizeMaterialColorLabel = (value) =>
 
 const normalizeMaterialThemeKey = (value) => normalizeMaterialColorLabel(value).toLowerCase();
 
+const MATERIAL_COLOR_TRANSLATION_KEYS = {
+  'white / black': 'pdf.materialColors.whiteBlack',
+  'white / blue': 'pdf.materialColors.whiteBlue',
+  'white / red': 'pdf.materialColors.whiteRed',
+  'black / white': 'pdf.materialColors.blackWhite',
+  'blue / white': 'pdf.materialColors.blueWhite',
+  'red / white': 'pdf.materialColors.redWhite',
+  'green / white': 'pdf.materialColors.greenWhite',
+  'yellow / black': 'pdf.materialColors.yellowBlack',
+  'silver / black': 'pdf.materialColors.silverBlack',
+  'light blue / white': 'pdf.materialColors.lightBlueWhite',
+  'orange / white': 'pdf.materialColors.orangeWhite',
+  'gray / white': 'pdf.materialColors.grayWhite',
+  'grey / white': 'pdf.materialColors.grayWhite',
+  'wood / black': 'pdf.materialColors.mapleWoodBlack',
+  'maple wood / black': 'pdf.materialColors.mapleWoodBlack',
+  'maple / wood / black': 'pdf.materialColors.mapleWoodBlack',
+  'carbon / white': 'pdf.materialColors.carbonWhite',
+};
+
+const translateMaterialColorLabel = (value, lang) => {
+  const normalized = normalizeMaterialThemeKey(value);
+  const key = MATERIAL_COLOR_TRANSLATION_KEYS[normalized];
+  if (!key) return normalizeMaterialColorLabel(value);
+  const translated = t(key, lang);
+  return translated === key ? normalizeMaterialColorLabel(value) : translated;
+};
+
 const MATERIAL_ICON_SVGS = {
   'white / black': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 26.3628H9.59659L15.8778 8.90825H18.9205L25.2017 26.3628H22.4062L17.4716 12.0787H17.3352L12.392 26.3628ZM12.8608 19.5276H21.929V21.7435H12.8608V19.5276Z" fill="black"/></svg>`,
   'white / blue': `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect y="0.343262" width="35.1323" height="35.1323" rx="4" fill="white"/><rect x="0.5" y="0.843262" width="34.1323" height="34.1323" rx="3.5" stroke="black" stroke-opacity="0.29" stroke-width="1"/><path d="M12.392 25.3433H9.59659L15.8778 7.88872H18.9205L25.2017 25.3433H22.4062L17.4716 11.0592H17.3352L12.392 25.3433ZM12.8608 18.508H21.929V20.7239H12.8608V18.508Z" fill="#00558b"/></svg>`,
@@ -1035,7 +1063,7 @@ const expandParsedSigns = (signs = []) => {
   return expanded;
 };
 
-const buildDeliveryNoteSummary = (order, orderMongo) => {
+const buildDeliveryNoteSummary = (order, orderMongo, lang = DEFAULT_LANGUAGE) => {
   const storedSummary = orderMongo?.checkout?.orderTestSummary;
   const projectSnapshot = normalizeProjectForCart(orderMongo?.project || {});
   const canvases = Array.isArray(projectSnapshot?.canvases) ? projectSnapshot.canvases : [];
@@ -1044,7 +1072,7 @@ const buildDeliveryNoteSummary = (order, orderMongo) => {
     const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
     const metaParts = [
       formatCanvasSizeMm(canvasSnap),
-      resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap),
+      translateMaterialColorLabel(resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap), lang),
       thickness ? `${thickness}` : null,
       resolveTapeLabel(canvasSnap),
     ].filter(Boolean);
@@ -1101,7 +1129,7 @@ const buildDeliveryNoteSummary = (order, orderMongo) => {
     const thickness = formatDisplayNumber(canvasSnap?.Thickness ?? canvasSnap?.toolbarState?.thickness);
     const metaParts = [
       formatCanvasSizeMm(canvasSnap),
-      resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap),
+      translateMaterialColorLabel(resolveColorThemeCaps(canvasSnap?.toolbarState, canvasSnap), lang),
       thickness ? `${thickness}` : null,
       resolveTapeLabel(canvasSnap),
     ].filter(Boolean);
@@ -1671,6 +1699,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       return res.status(403).json({ message: 'Forbidden' });
     }
 
+    const lang = pdfLang(order);
     const orderMongo = await findCartProjectForOrder(order);
     const project = normalizeProjectForCart(orderMongo?.project || {});
     const canvases = Array.isArray(project?.canvases) ? project.canvases : [];
@@ -1727,6 +1756,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
         materialGroupsMap.set(materialKey, {
           key: materialKey,
           colorTheme,
+          colorThemeLabel: translateMaterialColorLabel(colorTheme, lang),
           thickness: thicknessValue,
           tape: tapeLabel,
           count: copiesCount,
@@ -1804,7 +1834,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
     const materialRowBlocks = materialGroups.map((group) => {
       const thicknessSuffix = formatThicknessSuffix(group.thickness);
       const tapeSuffix = group.tape === 'TAPE' ? '' : ' NO TAPE';
-      const label = `${order.userId} ${group.colorTheme}${thicknessSuffix}${tapeSuffix} (${order.id}) (${group.count} signs)`;
+      const label = `${order.userId} ${group.colorThemeLabel || group.colorTheme}${thicknessSuffix}${tapeSuffix} (${order.id}) (${group.count} signs)`;
       const iconSvg = getMaterialIconSvg(group.colorTheme);
 
       return {
@@ -2496,7 +2526,7 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
     const lang = pdfLang(order);
     const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object' ? orderMongo.checkout : {};
     const deliveryAddress = hasAddressContent(checkout?.deliveryAddress) ? checkout.deliveryAddress : null;
-    const summary = buildDeliveryNoteSummary(order, orderMongo);
+    const summary = buildDeliveryNoteSummary(order, orderMongo, lang);
     const estimateDeliveryBlockUnits = (primaryText, secondaryText = '') => {
       const combined = `${String(primaryText || '')} ${String(secondaryText || '')}`.trim();
       const length = combined.length;

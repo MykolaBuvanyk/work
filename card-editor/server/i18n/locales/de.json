@@ -59,7 +59,6 @@
   "common.noVatSmallBusiness": "Gemäß der Kleinunternehmerregelung (§ 19 UStG) wird keine Umsatzsteuer berechnet.",
   "common.noVatAccording": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.",
   "common.germanVatLine": "DE461817538 Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/",
-
   "email.paid.adminSubject": "SignXpert Bestellung bezahlt",
   "email.paid.adminTitle": "Benachrichtigung über bezahlte Bestellung - SignXpert",
   "email.paid.adminHeading": "Bestellung bezahlt",
@@ -67,7 +66,6 @@
   "email.paid.adminFollowup": "Der Kunde hat die Zahlung über seine Seite „Meine Bestellungen“ abgeschlossen.",
   "email.paid.adminProceed": "Bitte fahren Sie mit der Bearbeitung der Bestellung fort.",
   "email.paid.adminOrderNumberLabel": "Bestellnummer:",
-
   "email.paymentReceived.userSubject": "SignXpert - Zahlung erhalten",
   "email.paymentReceived.userTitle": "Zahlung erhalten - SignXpert",
   "email.paymentReceived.userHeading": "Ihre Zahlung wurde erhalten",
@@ -75,7 +73,6 @@
   "email.paymentReceived.successfullyReceived": "Wir haben sie erfolgreich für die Bestellung erhalten",
   "email.paymentReceived.checkStatus": "Den detaillierten Status Ihrer Bestellung können Sie jederzeit in Ihrem Konto einsehen.",
   "email.paymentReceived.simplyLogIn": "Melden Sie sich einfach an unter",
-
   "email.password.subject": "SignXpert - Passwort-Wiederherstellung für",
   "email.password.title": "Passwort-Wiederherstellung für SignXpert",
   "email.password.heading": "Passwort-Wiederherstellung für SignXpert",
@@ -85,7 +82,6 @@
   "email.password.simplyLogIn": "Melden Sie sich einfach an unter",
   "email.password.inYourAccount": "in Ihrem Konto, um Ihr Passwort zu aktualisieren.",
   "email.password.ifNotRequest": "Falls Sie keine Passwort-Zurücksetzung angefordert haben, ignorieren Sie bitte diese E-Mail.",
-
   "email.welcome.subject": "Willkommen bei SignXpert. Ihr Konto ist bereit!",
   "email.welcome.heading": "Ihr Konto ist bereit! Willkommen bei SignXpert",
   "email.welcome.helloName": "Hallo",
@@ -95,7 +91,6 @@
   "email.welcome.readyToStart": "Bereit, loszulegen?",
   "email.welcome.editorPitch": "Unser Online-Editor steht Ihnen direkt im Browser zur Verfügung — der schnellste Weg, Ihre Ideen zum Leben zu erwecken.",
   "email.welcome.ctaCreateNow": "Jetzt erstellen",
-
   "email.adminRegister.subjectPrefix": "SignXpert | Kd.-Nr.",
   "email.adminRegister.subjectNew": "Neue Kundenregistrierung",
   "email.adminRegister.title": "Neue Kundenregistrierung",
@@ -103,14 +98,12 @@
   "email.adminRegister.intro": "Ein neuer Kunde hat sich auf der SignXpert-Website registriert.",
   "email.adminRegister.tellUsHeader": "Bitte teilen Sie uns mit, wie Sie auf uns aufmerksam geworden sind:",
   "email.adminRegister.fullProfileNote": "Das vollständige Kundenprofil können Sie im Adminbereich einsehen.",
-
   "email.adminNewOrder.subjectNewOrder": "SignXpert | Neue Bestellung",
   "email.adminNewOrder.titleTag": "Neue Bestellung eingegangen",
   "email.adminNewOrder.heading": "Neue Bestellung eingegangen",
   "email.adminNewOrder.intro": "Eine neue Bestellung wurde auf der SignXpert-Website aufgegeben.",
   "email.adminNewOrder.ratingLabel": "Bewertung:",
   "email.adminNewOrder.commentLabel": "Kommentar:",
-
   "email.created.subject": "SignXpert - Bestellung eingegangen",
   "email.created.title": "SignXpert Bestellbestätigung",
   "email.created.heading": "Ihre Bestellung ist eingegangen – SignXpert",
@@ -124,7 +117,6 @@
   "email.created.listProjectDetails": "Projektdetails",
   "email.created.listDeliveryInformation": "Lieferinformationen",
   "email.created.contactCorrection": "Sollten Ihnen Fehler oder Korrekturbedarf auffallen, kontaktieren Sie uns bitte so schnell wie möglich.",
-
   "email.printed.subject": "SignXpert - Bestellbestätigung",
   "email.printed.title": "Bestellbestätigung - SignXpert",
   "email.printed.heading": "Ihre Bestellung wurde bestätigt – SignXpert",
@@ -132,7 +124,6 @@
   "email.printed.reviewIntro": "Wir haben Ihre Bestellung erfolgreich erhalten und unser Team prüft nun sorgfältig alle Projektdetails, um sicherzustellen, dass alles exakt Ihren Anforderungen entspricht. Sobald die Prüfung abgeschlossen ist, wird Ihre Bestellung direkt in die Produktion überführt.",
   "email.printed.shipmentReady": "Sobald Ihre Bestellung fertiggestellt, verpackt und versandbereit ist, erhalten Sie eine weitere E-Mail mit Ihrer Sendungsverfolgungsnummer.",
   "email.printed.anyQuestions": "Falls Sie Fragen haben oder Unterstützung benötigen, helfen wir Ihnen jederzeit gerne weiter.",
-
   "email.shipped.subject": "SignXpert - Bestellung versendet",
   "email.shipped.title": "Ihre Bestellung wurde versendet - SignXpert",
   "email.shipped.heading": "Ihre Bestellung wurde versendet – Sendungsverfolgung verfügbar",
@@ -146,7 +137,6 @@
   "email.shipped.simplyLogIn": "Melden Sie sich einfach an unter",
   "email.shipped.thankYouEnjoy": "Vielen Dank, dass Sie sich für SignXpert entschieden haben — wir hoffen, Sie haben viel Freude an Ihren individuellen Schildern!",
   "email.shipped.dontHesitate": "Falls Sie Fragen haben oder Unterstützung benötigen, zögern Sie bitte nicht, uns zu kontaktieren.",
-
   "email.invoice.subject": "SignXpert – Rechnung",
   "email.invoice.subjectFor": ":",
   "email.invoice.title": "Ihre Rechnung ist bereit - SignXpert",
@@ -162,7 +152,6 @@
   "email.invoice.updateBilling": "Falls Sie Ihre Rechnungsadresse oder die für den Rechnungsempfang verwendete E-Mail-Adresse aktualisieren möchten, können Sie dies hier tun:",
   "email.invoice.alreadyPaidDisregard": "Falls Sie die Zahlung bereits abgeschlossen haben, ignorieren Sie bitte diese Nachricht. Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
   "email.invoice.appreciate": "Wir schätzen Ihr Vertrauen sehr und freuen uns auf die weitere Zusammenarbeit mit Ihnen.",
-
   "email.delivered.subject": "SignXpert - Bestellung zugestellt",
   "email.delivered.title": "Ihre Bestellung wurde zugestellt - SignXpert",
   "email.delivered.heading": "Ihre Bestellung wurde zugestellt",
@@ -174,7 +163,6 @@
   "email.delivered.contactWord": "Kontakt",
   "email.delivered.usHelp": "mit uns aufzunehmen — wir helfen Ihnen jederzeit gerne weiter.",
   "email.delivered.welcomeBack": "Wir freuen uns darauf, Sie bald wieder begrüßen zu dürfen und Ihr nächstes individuelles Projekt gemeinsam umzusetzen.",
-
   "email.errorDelivery.subject": "SignXpert - Problem bei der Lieferung",
   "email.errorDelivery.title": "Benachrichtigung über ein Lieferproblem",
   "email.errorDelivery.heading": "Problem mit Ihrer Lieferung — Aktion erforderlich",
@@ -185,16 +173,12 @@
   "email.errorDelivery.reasonReturned": "An Absender zurückgesendet",
   "email.errorDelivery.contactConfirm": "Bitte kontaktieren Sie uns so schnell wie möglich, um die korrekten Lieferdaten zu bestätigen oder das Problem zu lösen.",
   "email.errorDelivery.updateCarrier": "Wir werden den Versanddienstleister umgehend informieren, damit Ihre Bestellung ohne weitere Verzögerung zugestellt werden kann.",
-
   "email.reminder.subject": "SignXpert – Freundliche Zahlungserinnerung: Rechnung",
   "email.reminder.title": "Zahlungserinnerung",
   "email.reminder.heading": "Freundliche Erinnerung - Ihre Rechnung ist fällig",
   "email.reminder.enjoyingSigns": "Wir hoffen, dass Sie viel Freude an Ihren individuellen Schildern haben!",
-  "email.reminder.outstandingNote": "Dies ist nur eine freundliche Erinnerung, dass die Rechnung für Ihre kürzliche Bestellung (Rechnung Nr. {orderNumber}) noch offen ist. Falls Sie die Zahlung bereits getätigt haben, ignorieren Sie diese Nachricht bitte. Ihre Rechnung finden Sie im Anhang dieser E-Mail.",
+  "email.reminder.outstandingNote": "Dies ist lediglich eine freundliche Erinnerung daran, dass die Rechnung für Ihre letzte Bestellung (Rechnung Nr. 005) noch offen ist. Falls Sie die Zahlung bereits vorgenommen haben, ignorieren Sie bitte diese Nachricht. Ihre Rechnung finden Sie im Anhang dieser E-Mail.",
   "email.reminder.appreciateBusiness": "Wir schätzen Ihr Vertrauen sehr und freuen uns darauf, bald wieder mit Ihnen zusammenzuarbeiten!",
-
-  "email.reminder.paymentStatusNote": "Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
-
   "email.contact.subjectPrefix": "Anfrage über das Kontaktformular:",
   "email.contact.adminTitle": "Neue Kontaktanfrage – SignXpert",
   "email.contact.adminIntro": "Sie haben eine neue Nachricht über das Kontaktformular erhalten.",
@@ -206,7 +190,6 @@
   "email.contact.copyHeading": "Hier ist eine Kopie Ihrer Nachricht:",
   "email.contact.yourMessageLabel": "Ihre Nachricht:",
   "email.contact.urgentNote": "Falls Ihre Anfrage dringend ist, können Sie uns gerne direkt kontaktieren.",
-
   "pdf.invoice.documentTitle": "Rechnung - SignXpert",
   "pdf.invoice.title": "RECHNUNG",
   "pdf.invoice.logoTextSign": "SIGN",
@@ -243,7 +226,6 @@
   "pdf.invoice.footerUstIdLabel": "USt-IdNr.:",
   "pdf.invoice.footerAddressValue1": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
   "pdf.invoice.footerAddressValue2": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
-
   "pdf.order.documentTitle": "CSA Germany Bestellung",
   "pdf.order.headerTitle": "CSA",
   "pdf.order.headerCountry": "Deutschland",
@@ -255,7 +237,6 @@
   "pdf.order.ourNoticeLabel": "Unser Hinweis:",
   "pdf.order.deliveryInlineLabel": "Lieferung:",
   "pdf.order.orderSumInlineLabel": "Bestellsumme:",
-
   "pdf.deliveryNote.documentTitle": "Lieferschein - SignXpert",
   "pdf.deliveryNote.title": "Lieferschein",
   "pdf.deliveryNote.orderDateLabel": "Bestelldatum:",
@@ -284,7 +265,6 @@
   "pdf.deliveryNote.footerCheck": "Bitte überprüfen Sie die Lieferung nach Erhalt.",
   "pdf.deliveryNote.footerIfIssues": "Falls Artikel fehlen, beschädigt oder falsch sind, informieren Sie uns bitte per E-Mail an die oben angegebene Adresse.",
   "pdf.deliveryNote.footerThanks": "Vielen Dank, dass Sie sich für SignXpert entschieden haben!",
-
   "pdf.materialColors.whiteBlack": "Weiß / Schwarz",
   "pdf.materialColors.whiteBlue": "Weiß / Blau",
   "pdf.materialColors.whiteRed": "Weiß / Rot",
@@ -299,10 +279,10 @@
   "pdf.materialColors.grayWhite": "Grau / Weiß",
   "pdf.materialColors.mapleWoodBlack": "Ahorn (\"Holz\") / Schwarz",
   "pdf.materialColors.carbonWhite": "Carbon / Weiß",
-
   "errors.missingFields": "Erforderliche Felder fehlen",
   "errors.adminEmailNotConfigured": "Admin-E-Mail ist nicht konfiguriert",
   "errors.orderNotFound": "Bestellung nicht gefunden",
   "errors.forbidden": "Zugriff verweigert",
+  "email.reminder.paymentStatusNote": "Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
   "errors.failedPasswordRecovery": "E-Mail zur Passwort-Wiederherstellung konnte nicht gesendet werden"
 }

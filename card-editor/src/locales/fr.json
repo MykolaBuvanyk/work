@@ -347,7 +347,7 @@
     "description_6": "Nom :",
     "description_7": "Kostyantyn Utvenko",
     "description_8": "E-mail :",
-    "description_9": "Kostyantyn Utvenko, SignXpert Baumwiesen 2 72401 Haigerloch Germany",
+    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Germany",
     "description_10": "Formulaire de contact :",
     "description_11": "2. Collecte, traitement et utilisation des données personnelles",
     "description_12": "Nous sommes personnellement responsables des informations que vous partagez avec nous. Les données personnelles désignent toute information pouvant être rattachée à une personne identifiable. Nous collectons et traitons vos informations afin de gérer vos commandes. Les données ne sont transmises à des tiers que lorsque la loi l’autorise (par exemple, pour la logistique ou le traitement des paiements).",
@@ -514,9 +514,9 @@
     "hero": {
       "title": "Panneaux et plaques signalétiques en plastique gravé <accent>personnalisés</accent>",
       "imageAlt": "Panneaux et étiquettes en plastique gravé",
-      "intro": "Chez <home>SignXpert</home>, nous fabriquons des panneaux en plastique gravé, plaques signalétiques et étiquettes industrielles de haute qualité à partir de plastique de gravure bicouche durable.",
+      "intro": "Chez <home>SignXpert</home>, nous fabriquons des plaques en plastique gravé, des plaques signalétiques et de la signalétique industrielle à partir d’un plastique de gravure bicouche robuste.",
       "description": "Nos panneaux gravés offrent une identification claire, permanente et professionnelle pour les machines, installations électriques, bureaux, bâtiments et postes de travail.",
-      "details": "Grâce à la gravure laser de précision, la couche supérieure du plastique est gravée afin de révéler la couche de couleur contrastée située en dessous. Cela crée des marquages à fort contraste qui restent lisibles pendant des années, même dans des environnements industriels exigeants."
+      "details": "La gravure laser de précision révèle la couche contrastée du plastique et crée un marquage net, durable et lisible pendant des années, même en environnement industriel exigeant."
     },
     "uses": {
       "title": "Nos panneaux en plastique gravé sont largement utilisés dans :",
@@ -618,7 +618,7 @@
         "item_4": "étiquetage des équipements"
       },
       "warningSafety": {
-        "title": "Panneaux d’avertissement et de sécurité",
+        "title": "Signalisation de sécurité",
         "item_1": "avertissements de sécurité",
         "item_2": "identification des dangers",
         "item_3": "étiquettes de sécurité machine",
@@ -696,7 +696,7 @@
     "size": {
       "width": "Largeur",
       "height": "Hauteur",
-      "cornerRadius": "Rayon des angles"
+      "cornerRadius": "Arrondi"
     },
     "units": {
       "mm": "(mm)",
@@ -732,7 +732,7 @@
       "cut": "Découpe",
       "cutTitle": "Différentes formes",
       "qrCode": "QR Code",
-      "barCode": "Code-barres"
+      "barCode": "Barcode"
     },
     "holes": {
       "title": "Trous",
@@ -747,7 +747,7 @@
     },
     "copies": {
       "exact": "Exact",
-      "editable": "Modifiable",
+      "editable": "Modif.",
       "copies": "Copies"
     },
     "footer": {
@@ -1039,8 +1039,8 @@
     "table": {
       "number": "N°",
       "name": "Nom",
-      "lastDateSaved": "Dernière date d’enregistrement",
-      "lastOrderDate": "Dernière date de commande",
+      "lastDateSaved": "Dernier enregistrement",
+      "lastOrderDate": "Dernière commande",
       "image": "Image"
     },
     "alerts": {
@@ -1065,14 +1065,14 @@
     "sharedProjectFallback": "Projet partagé",
     "actions": {
       "importViaExcel": "Importer via Excel",
-      "saveAsTemplate": "Enregistrer comme modèle",
+      "saveAsTemplate": "Enregistrer modèle",
       "templates": "Modèles",
       "preview": "Aperçu",
-      "newProject": "Nouveau projet",
-      "yourProject": "Votre projet",
+      "newProject": "Projet",
+      "yourProject": "Projets",
       "saving": "Enregistrement...",
       "saveProject": "Enregistrer le projet",
-      "saveProjectAs": "Enregistrer le projet sous",
+      "saveProjectAs": "Enregistrer sous…",
       "undo": "Annuler",
       "redo": "Rétablir"
     },
@@ -1116,7 +1116,7 @@
   },
   "cartAccessoriesModal": {
     "processing": "Traitement...",
-    "continueToCheckout": "Continuer vers le paiement",
+    "continueToCheckout": "Passer au paiement",
     "close": "Fermer",
     "exampleUse": "Exemple d’utilisation"
   },
@@ -1125,9 +1125,9 @@
     "moreAccessories": "Plus d’accessoires",
     "accessoryIconAlt": "Icône {{name}}",
     "toolbar": {
-      "newSign": "Nouveau panneau",
-      "deleteSign": "Supprimer le panneau",
-      "importViaExcel": "Importer via Excel",
+      "newSign": "Plaque",
+      "deleteSign": "Supprimer",
+      "importViaExcel": "Import Excel",
       "templates": "Modèles"
     },
     "tooltips": {
@@ -1425,14 +1425,14 @@
       },
       "topNotes": {
         "plastic": "Nous utilisons du plastique gravé\nqui ne se décolore pas et ne jaunit pas.",
-        "templates": "Enregistrez votre propre modèle pour une utilisation future.\nCréez un nouveau projet à tout moment ou ouvrez\nun projet existant.",
-        "price": "Votre prix inclut les taxes\net les remises. Nous proposons régulièrement\ndes remises à nos clients."
+        "templates": "Enregistrez votre modèle pour plus tard.\nCréez ou ouvrez un projet.",
+        "price": "Votre prix inclut les taxes \net les remises disponibles."
       },
       "bottomNotes": {
         "requests": "Laissez ici vos demandes spéciales\n– nous les lirons et les prendrons en compte.",
         "thumbnails": "Consultez ici les miniatures\ndes panneaux que vous avez créés.",
-        "elements": "Déplacez, ajoutez, supprimez, copiez\net modifiez facilement les éléments.",
-        "properties": "Modifiez le texte, la taille\net d’autres propriétés ici."
+        "elements": "Ajoutez, déplacez et modifiez \nfacilement les éléments.",
+        "properties": "Modifiez le texte, \nla taille et les propriétés."
       }
     }
   },
@@ -1453,7 +1453,7 @@
   "MyAccount": {
     "common": {
       "loading": "Chargement...",
-      "saveChanges": "Enregistrer les modifications",
+      "saveChanges": "Enregistrer",
       "send": "Envoyer",
       "sending": "Envoi..."
     },
@@ -1470,15 +1470,15 @@
       "downloadFileFailed": "Erreur lors du téléchargement du fichier",
       "noTrackingYet": "Aucun numéro de suivi pour le moment",
       "opening": "Ouverture...",
-      "openProject": "Ouvrir le projet",
+      "openProject": "Projet",
       "sumInclVatDelivery": "Total (TVA et livr. incl.)",
       "table": {
         "no": "N°",
         "orderDate": "Date de commande",
         "orderNo": "N° comm.",
         "projectName": "Nom du projet",
-        "orderSum": "Montant de la commande",
-        "sumDelivery": "Total + livr.",
+        "orderSum": "Montant",
+        "sumDelivery": "Mont. + livr.",
         "status": "Statut",
         "deliveryNote": "Bon de livr.",
         "tracking": "Suivi",
@@ -1495,7 +1495,7 @@
     },
    "details": {
       "invoiceDeliveryNotice": "*La facture et le bon de livraison seront inclus dans l’envoi et envoyés à la même adresse.",
-      "updateText": "Si vous souhaitez mettre à jour vos informations d’inscription, faites-le ici puis cliquez sur \"Enregistrer les modifications\".",
+      "updateText": "Si vous souhaitez mettre à jour vos informations d’inscription, faites-le ici puis cliquez sur \"Enregistrer\".",
       "addressTitle": "Adresse",
       "invoiceAddressTitle": "Adresse de facturation (si différente de celle de gauche)",
       "invoiceEmailText": "Nous enverrons la facture à l’e-mail que vous avez fourni.",
@@ -1520,7 +1520,7 @@
     },
     "settings": {
       "title": "Vous pouvez écrire ici des informations supplémentaires qui seront incluses avec chacune de vos commandes.",
-      "additionalInformation": "Informations supplémentaires",
+      "additionalInformation": "Infos supplémentaires",
       "errorLoadingMessage": "Erreur lors du chargement de votre message",
       "messageSaved": "Message enregistré avec succès !",
       "saveMessageFailed": "Impossible d’enregistrer le message"
@@ -1562,12 +1562,12 @@
       "admin": "Admin"
     },
     "features": {
-      "easy": "Facile",
-      "design": "Conception",
-      "fast": "Rapide",
-      "manufacturing": "Fabrication",
-      "quick": "Rapide",
-      "delivery": "Livraison"
+      "easy": "Conception",
+      "design": "intuitive",
+      "fast": "Fabrication",
+      "manufacturing": "rapide",
+      "quick": "Livraison",
+      "delivery": "express"
     },
     "sections": {
       "menu": "Menu",
@@ -1707,11 +1707,11 @@
   "HomePlaceholder": {
     "h_1": "De la conception à la livraison - votre panneau",
     "h_2": "en 24 heures !",
-    "h_3": "- Qualité expert",
-    "h_4": "Marquage industriel",
+    "h_3": "- marquage industriel",
+    "h_4": "de qualité professionnelle",
     "h_5": "Nous fabriquons des panneaux et plaques signalétiques gravés durables en plastique de haute qualité pour les secteurs de l’industrie, de l’énergie et des entreprises.",
     "h_6": "Concevoir votre panneau",
-    "h_7": "Commandez avant 16:00 pour une expédition le jour même",
+    "h_7": "Commandez avant 16h00 pour une expédition le jour même",
     "h_8": "Pourquoi choisir",
     "h_9": "Prix équitables. Qualité industrielle.",
     "h_10": "Sur le marché actuel, nous savons que le budget compte.",
@@ -1735,7 +1735,7 @@
     "h_28": "Panneaux gravés",
     "h_29": "personnalisés",
     "h_30": "en toute simplicité",
-    "h_31": "Concevez en quelques minutes des panneaux, étiquettes et plaques signalétiques en plastique gravé professionnels avec",
+    "h_31": "Créez en quelques minutes des plaques gravées, plaques industrielles et marquages avec",
     "h_32": "Grâce à notre éditeur",
     "h_33": "de panneaux en ligne simple,",
     "h_34": "vous pouvez créer des panneaux entièrement personnalisés pour :",
@@ -1748,11 +1748,11 @@
     "h_41": "Production",
     "h_42": "et livraison rapides",
     "h_43": "Chez SignXpert,",
-    "h_44": "nous combinons une technologie de production moderne avec un système de commande en ligne efficace afin d’assurer une livraison rapide.",
+    "h_44": "nous combinons une technologie de pointe avec un système de commande efficace pour garantir une fabrication rapide et une expédition le jour même.",
     "h_45": "Commandez avant 16:00 pour une expédition le jour même",
     "h_46": "livraison fiable en France et en Europe",
     "h_47": "réponse rapide et support client",
-    "h_48": "Cela permet aux entreprises et aux professionnels de recevoir leurs panneaux gravés personnalisés rapidement et en toute fiabilité.",
+    "h_48": "Cela permet aux entreprises de recevoir leurs plaques gravées personnalisées de manière rapide et fiable.",
     "h_49": "Panneaux en plastique gravé",
     "h_50": "durables",
     "h_51": "Tous les produits SignXpert sont fabriqués à partir de plastique de gravure bicouche de haute qualité.",
@@ -1760,16 +1760,16 @@
     "h_53": "Vos avantages avec",
     "h_54": "Production personnalisée à partir de 1 pièce",
     "h_55": "Solutions professionnelles pour l’industrie et les entreprises",
-    "h_56": "Panneaux gravés au laser avec précision",
+    "h_56": "Gravure laser de haute précision",
     "h_57": "Panneaux autocollants"
   },
   "Products": {
     "p_1": "Personnalisés",
     "p_2": "Panneaux et plaques signalétiques en plastique gravé",
     "p_3": "Chez",
-    "p_4": "nous fabriquons des panneaux en plastique gravé, plaques signalétiques et étiquettes industrielles de haute qualité à partir de plastique de gravure bicouche durable.",
+    "p_4": "nous fabriquons des plaques en plastique gravé, plaques signalétiques et marquages industriels en plastique de gravure bicouche durable.",
     "p_5": "Nos panneaux gravés offrent une identification claire, permanente et professionnelle pour les machines, installations électriques, bureaux, bâtiments et postes de travail.",
-    "p_6": "Grâce à la gravure laser de précision, la couche supérieure du plastique est gravée afin de révéler la couche de couleur contrastée située en dessous. Cela crée des marquages à fort contraste qui restent lisibles pendant des années, même dans des environnements industriels exigeants.",
+    "p_6": "La gravure laser de précision révèle la couche contrastée du plastique pour un marquage net, durable et lisible pendant des années, même en environnement industriel exigeant.",
     "p_7": "Nos panneaux en plastique gravé sont largement utilisés dans :",
     "p_8": "11Industrie et fabrication",
     "p_9": "Installations électriques",
@@ -1821,12 +1821,12 @@
     "p_55": "plaques fabricant",
     "p_56": "plaques de spécifications techniques",
     "p_57": "étiquetage des équipements",
-    "p_58": "Panneaux d’avertissement et de sécurité",
+    "p_58": "Signalisation de sécurité",
     "p_59": "avertissements de sécurité",
     "p_60": "identification des dangers",
     "p_61": "étiquettes de sécurité machine",
     "p_62": "instructions d’utilisation",
-    "p_63": "Étiquettes pour panneaux de commande",
+    "p_63": "Plaques de commande",
     "p_64": "étiquettes de boutons",
     "p_65": "étiquettes d’interrupteurs",
     "p_66": "panneaux de commande de machines",

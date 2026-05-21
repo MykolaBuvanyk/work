@@ -347,7 +347,7 @@
   "description_6": "Name:",
   "description_7": "Kostyantyn Utvenko",
   "description_8": "E-Mail:",
-  "description_9": "Kostyantyn Utvenko, SignXpert Baumwiesen 2 72401 Haigerloch Deutschland",
+  "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Deutschland",
   "description_10": "Kontaktformular:",
   "description_11": "2. Erhebung, Verarbeitung und Nutzung personenbezogener Daten",
   "description_12": "Wir sind persönlich für die Informationen verantwortlich, die Sie uns mitteilen. Personenbezogene Daten sind alle Informationen, die einer identifizierbaren Person zugeordnet werden können. Wir erheben und verarbeiten Ihre Daten, um Ihre Bestellungen abzuwickeln. Daten werden nur dann an Dritte weitergegeben, wenn dies gesetzlich erlaubt ist (z. B. für Logistik oder Zahlungsabwicklung).",
@@ -514,9 +514,9 @@
   "hero": {
     "title": "<accent>Individuelle</accent> gravierte Kunststoffschilder und Typenschilder",
     "imageAlt": "Gravierte Kunststoffschilder und Etiketten",
-    "intro": "Bei <home>SignXpert</home> fertigen wir hochwertige Kunststoffschilder, Typenschilder und Industrieetiketten aus langlebigem Gravurkunststoff.",
+    "intro": "Bei <home>SignXpert</home> fertigen wir gravierte Kunststoffschilder, Typenschilder und Industrie-Beschilderung aus robustem Gravurkunststoff.",
     "description": "Unsere gravierten Schilder bieten eine klare, dauerhafte und professionelle Kennzeichnung für Maschinen, Elektroinstallationen, Büros, Gebäude und Arbeitsplätze.",
-    "details": "Durch präzise Lasergravur wird die obere Kunststoffschicht abgetragen, sodass die kontrastierende Farbschicht darunter sichtbar wird. Dadurch entstehen kontrastreiche Markierungen, die auch in anspruchsvollen industriellen Umgebungen über Jahre hinweg gut lesbar bleiben."
+    "details": "Die präzise Lasergravur legt die kontrastierende Schicht des Kunststoffs frei und sorgt für eine klare, langlebige und über Jahre gut lesbare Beschriftung – auch in anspruchsvollen Industrieumgebungen."
   },
   "uses": {
     "title": "Unsere gravierten Kunststoffschilder werden häufig eingesetzt in:",
@@ -764,7 +764,7 @@
   },
   "qr": {
     "title": "QR-Code",
-    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 15 x 15 mm",
+    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 20 x 20 mm",
     "defaults": {
       "message": "Standardnachricht"
     },
@@ -1621,6 +1621,16 @@
     "register": "Registrieren"
   }
 },
+  "NewProjectsModal": {
+    "message": "Bevor Sie ein <strong>neues Projekt</strong> erstellen, <strong>speichern</strong> oder <strong>verwerfen</strong> Sie bitte Ihre aktuelle Arbeit.",
+    "save": "Speichern",
+    "discard": "Verwerfen",
+    "cancel": "Abbrechen"
+  },
+  "TopSidebar": {
+    "material": "Material",
+    "engravedPlastic": "Gravurkunststoff"
+  },
 "LoginForm": {
   "l_4": "Bereits Kunde",
   "l_5": "E-Mail-Adresse oder Kundennummer",
@@ -1701,7 +1711,7 @@
   "h_4": "für Industrie-Beschilderung",
   "h_5": "Wir fertigen langlebige gravierte Schilder und Typenschilder aus hochwertigem Kunststoff für Industrie, Energie und Gewerbe.",
   "h_6": "Jetzt online gestalten",
-  "h_7": "Bestellen Sie bis 16:00 Uhr für den Versand am selben Werktag.",
+  "h_7": "Bestellung bis 16:00 Uhr — Versand am selben Werktag",
   "h_8": "Warum",
   "h_9": "Faire Preise. Industriequalität.",
   "h_10": "Wir wissen, dass das Budget heute eine wichtige Rolle spielt.",
@@ -1725,24 +1735,24 @@
   "h_28": "Individuell gravierte",
   "h_29": "Schilder",
   "h_30": "einfach gemacht",
-  "h_31": "Gestalten Sie professionell gravierte Schilder und Typenschilder in wenigen Minuten mit SignXpert.",
+  "h_31": "Gestalten Sie in wenigen Minuten individuelle Gravurschilder und Industrie-Beschilderung mit",
   "h_32": "Mit unserem einfachen",
   "h_33": "Online-Schildereditor",
   "h_34": "können Sie individuelle Schilder ganz nach Ihren Anforderungen erstellen:",
-  "h_35": "Maschinen",
+  "h_35": "Maschinen und Anlagen",
   "h_36": "Schaltschränke",
   "h_37": "Technische Anlagen",
   "h_38": "Büros",
   "h_39": "— genau so, wie Sie sie benötigen.",
-  "h_40": "Ob Sie ein einzelnes Schild oder eine große Serie benötigen, SignXpert liefert zuverlässige Qualität und schnelle Fertigung.",
+  "h_40": "Ob Einzelstück oder Serie – SignXpert liefert zuverlässige Qualität und schnelle Fertigung.",
   "h_41": "Schnelle",
   "h_42": "Produktion und Lieferung",
   "h_43": "Bei SignXpert",
-  "h_44": "kombinieren wir moderne Fertigungstechnologie mit einem effizienten Online-Bestellsystem, um schnelle Lieferung zu ermöglichen.",
+  "h_44": "verbinden wir moderne Fertigungstechnologie mit einem effizienten Online-Bestellsystem — für schnelle Fertigung und zügigen Versand.",
   "h_45": "Bestellen Sie vor 16:00 Uhr für Versand am selben Tag",
   "h_46": "zuverlässiger Versand in Deutschland und Europa",
   "h_47": "schnelle Reaktionszeiten und persönlicher Kundensupport",
-  "h_48": "So erhalten Unternehmen und Fachleute ihre individuell gravierten Schilder schnell und zuverlässig.",
+  "h_48": "So erhalten Unternehmen ihre individuell gravierten Schilder schnell und zuverlässig.",
   "h_49": "Langlebige",
   "h_50": "gravierte Kunststoffschilder",
   "h_51": "Alle SignXpert-Produkte werden aus hochwertigem, zweischichtigem Gravurkunststoff gefertigt.",
@@ -1750,7 +1760,7 @@
   "h_53": "Ihre Vorteile mit",
   "h_54": "Individuelle Fertigung ab 1 Stück",
   "h_55": "Professionelle Lösungen für Industrie und Gewerbe",
-  "h_56": "Präzise lasergravierte Schilder",
+  "h_56": "Hochpräzise Lasergravur",
   "h_57": "Selbstklebende Schilder"
 },
 "Products": {

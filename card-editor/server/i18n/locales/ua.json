@@ -1,4 +1,5 @@
-{  "common.helloComma": "Вітаємо,",
+{
+  "common.helloComma": "Вітаємо,",
   "common.bestRegards": "З повагою,",
   "common.signxpertTeam": "Команда SignXpert",
   "common.systemNotification": "Системне сповіщення SignXpert",
@@ -58,7 +59,6 @@
   "common.noVatSmallBusiness": "ПДВ не нараховується відповідно до звільнення для малих підприємств (§ 19 UStG).",
   "common.noVatAccording": "ПДВ не нараховується відповідно до § 19 UStG.",
   "common.germanVatLine": "DE461817538 Відповідно до § 19 UStG податок на додану вартість не нараховується/",
-
   "email.paid.adminSubject": "Замовлення SignXpert оплачено",
   "email.paid.adminTitle": "Сповіщення про оплату замовлення - SignXpert",
   "email.paid.adminHeading": "Замовлення оплачено",
@@ -66,7 +66,6 @@
   "email.paid.adminFollowup": "Клієнт завершив оплату на сторінці «Мої замовлення».",
   "email.paid.adminProceed": "Будь ласка, перейдіть до обробки замовлення.",
   "email.paid.adminOrderNumberLabel": "Номер замовлення:",
-
   "email.paymentReceived.userSubject": "SignXpert - Оплату отримано",
   "email.paymentReceived.userTitle": "Оплату отримано - SignXpert",
   "email.paymentReceived.userHeading": "Оплату отримано",
@@ -74,7 +73,6 @@
   "email.paymentReceived.successfullyReceived": "Ми успішно отримали її за замовлення",
   "email.paymentReceived.checkStatus": "Ви можете будь-коли перевірити детальний статус свого замовлення у своєму акаунті.",
   "email.paymentReceived.simplyLogIn": "Просто увійдіть до",
-
   "email.password.subject": "SignXpert - Відновлення пароля для",
   "email.password.title": "Відновлення пароля для SignXpert",
   "email.password.heading": "Відновлення пароля для SignXpert",
@@ -84,7 +82,6 @@
   "email.password.simplyLogIn": "Просто увійдіть до",
   "email.password.inYourAccount": "у своєму акаунті, щоб оновити пароль.",
   "email.password.ifNotRequest": "Якщо ви не запитували скидання пароля, просто проігноруйте цей лист.",
-
   "email.welcome.subject": "Ласкаво просимо до SignXpert. Ваш акаунт готовий!",
   "email.welcome.heading": "Ваш акаунт готовий! Ласкаво просимо до SignXpert",
   "email.welcome.helloName": "Вітаємо,",
@@ -94,7 +91,6 @@
   "email.welcome.readyToStart": "Готові почати створювати?",
   "email.welcome.editorPitch": "Наш онлайн-редактор доступний прямо у вашому браузері — це найшвидший спосіб втілити ваші ідеї в життя.",
   "email.welcome.ctaCreateNow": "Створити зараз",
-
   "email.adminRegister.subjectPrefix": "SignXpert | ID клієнта",
   "email.adminRegister.subjectNew": "Нова реєстрація клієнта",
   "email.adminRegister.title": "Нова реєстрація клієнта",
@@ -102,14 +98,12 @@
   "email.adminRegister.intro": "На сайті SignXpert зареєструвався новий клієнт.",
   "email.adminRegister.tellUsHeader": "Будь ласка, вкажіть, звідки ви дізналися про нас:",
   "email.adminRegister.fullProfileNote": "Повний профіль клієнта можна переглянути в адмін-панелі.",
-
   "email.adminNewOrder.subjectNewOrder": "SignXpert | Нове замовлення",
   "email.adminNewOrder.titleTag": "Отримано нове замовлення",
   "email.adminNewOrder.heading": "Отримано нове замовлення",
   "email.adminNewOrder.intro": "На сайті SignXpert було оформлено нове замовлення.",
   "email.adminNewOrder.ratingLabel": "Оцінка:",
   "email.adminNewOrder.commentLabel": "Коментар:",
-
   "email.created.subject": "SignXpert - Замовлення отримано",
   "email.created.title": "Підтвердження замовлення SignXpert",
   "email.created.heading": "Ваше замовлення отримано – SignXpert",
@@ -123,7 +117,6 @@
   "email.created.listProjectDetails": "Деталі проєкту",
   "email.created.listDeliveryInformation": "Інформацію про доставку",
   "email.created.contactCorrection": "Якщо ви помітите щось, що потрібно виправити, будь ласка, зв’яжіться з нами якомога швидше.",
-
   "email.printed.subject": "SignXpert - Підтвердження замовлення",
   "email.printed.title": "Підтвердження замовлення - SignXpert",
   "email.printed.heading": "Ваше замовлення підтверджено – SignXpert",
@@ -131,7 +124,6 @@
   "email.printed.reviewIntro": "Ми успішно отримали ваше замовлення, і наша команда зараз уважно перевіряє всі деталі проєкту, щоб переконатися, що все точно відповідає вашим побажанням. Після завершення перевірки ваше замовлення одразу буде передано у виробництво.",
   "email.printed.shipmentReady": "Щойно ваше замовлення буде виконано, запаковано та готове до відправлення, ви отримаєте ще один лист із номером для відстеження.",
   "email.printed.anyQuestions": "Якщо у вас є будь-які запитання або вам потрібна допомога, ми завжди раді допомогти.",
-
   "email.shipped.subject": "SignXpert - Замовлення відправлено",
   "email.shipped.title": "Ваше замовлення відправлено - SignXpert",
   "email.shipped.heading": "Ваше замовлення відправлено – доступне відстеження",
@@ -145,7 +137,6 @@
   "email.shipped.simplyLogIn": "Просто увійдіть до",
   "email.shipped.thankYouEnjoy": "Дякуємо, що обрали SignXpert — сподіваємося, вам сподобаються ваші індивідуальні таблички!",
   "email.shipped.dontHesitate": "Якщо у вас є будь-які запитання або вам потрібна допомога, не вагайтеся звертатися до нас.",
-
   "email.invoice.subject": "SignXpert – Рахунок",
   "email.invoice.subjectFor": "для",
   "email.invoice.title": "Ваш рахунок готовий - SignXpert",
@@ -161,8 +152,7 @@
   "email.invoice.updateBilling": "Якщо ви бажаєте оновити адресу для виставлення рахунків або email-адресу для отримання рахунків, ви можете зробити це в розділі:",
   "email.invoice.alreadyPaidDisregard": "Якщо ви вже здійснили оплату, будь ласка, проігноруйте це повідомлення. Ви можете будь-коли перевірити статус оплати у своєму акаунті в розділі",
   "email.invoice.appreciate": "Ми щиро цінуємо вашу співпрацю та будемо раді працювати з вами знову.",
-
-    "email.delivered.subject": "SignXpert - Замовлення доставлено",
+  "email.delivered.subject": "SignXpert - Замовлення доставлено",
   "email.delivered.title": "Ваше замовлення доставлено - SignXpert",
   "email.delivered.heading": "Ваше замовлення доставлено",
   "email.delivered.goodNewsDelivered": "Ваше замовлення успішно доставлено.",
@@ -173,7 +163,6 @@
   "email.delivered.contactWord": "зв’язатися",
   "email.delivered.usHelp": "з нами — ми завжди раді допомогти.",
   "email.delivered.welcomeBack": "Будемо раді знову вітати вас і допомогти втілити в життя ваш наступний індивідуальний проєкт.",
-
   "email.errorDelivery.subject": "SignXpert - Проблема з доставкою",
   "email.errorDelivery.title": "Сповіщення про проблему з доставкою",
   "email.errorDelivery.heading": "Проблема з доставкою — потрібна дія",
@@ -184,14 +173,12 @@
   "email.errorDelivery.reasonReturned": "Повернення відправнику",
   "email.errorDelivery.contactConfirm": "Будь ласка, зв’яжіться з нами якомога швидше, щоб підтвердити правильні дані для доставки або вирішити проблему.",
   "email.errorDelivery.updateCarrier": "Ми негайно оновимо інформацію для перевізника, щоб ваше замовлення було доставлено без подальших затримок.",
-
   "email.reminder.subject": "SignXpert – Дружнє нагадування: рахунок",
   "email.reminder.title": "Нагадування про рахунок",
   "email.reminder.heading": "Дружнє нагадування - строк оплати рахунку настав",
   "email.reminder.enjoyingSigns": "Сподіваємося, ви задоволені своїми індивідуальними табличками!",
   "email.reminder.outstandingNote": "Це лише дружнє нагадування про те, що рахунок за ваше нещодавнє замовлення (рахунок №{orderNumber}) досі не оплачено. Якщо ви вже здійснили оплату, будь ласка, проігноруйте це повідомлення. Рахунок прикріплено до цього листа.",
   "email.reminder.appreciateBusiness": "Ми щиро цінуємо вашу співпрацю та будемо раді знову працювати з вами найближчим часом!",
-
   "email.contact.subjectPrefix": "Запит зі сторінки контактів:",
   "email.contact.adminTitle": "Новий контактний запит – SignXpert",
   "email.contact.adminIntro": "Ви отримали нове повідомлення через контактну форму.",
@@ -203,7 +190,6 @@
   "email.contact.copyHeading": "Ось копія вашого повідомлення:",
   "email.contact.yourMessageLabel": "Ваше повідомлення:",
   "email.contact.urgentNote": "Якщо ваш запит терміновий, ви можете зв’язатися з нами напряму.",
-
   "pdf.invoice.documentTitle": "Рахунок - SignXpert",
   "pdf.invoice.title": "РАХУНОК",
   "pdf.invoice.logoTextSign": "SIGN",
@@ -240,7 +226,6 @@
   "pdf.invoice.footerUstIdLabel": "USt-IdNr.:",
   "pdf.invoice.footerAddressValue1": "Baumwiesen 2, Haigerloch 72401, Germany",
   "pdf.invoice.footerAddressValue2": "Baumwiesen 2, 72401 Haigerloch, Germany",
-
   "pdf.order.documentTitle": "Замовлення CSA Germany",
   "pdf.order.headerTitle": "CSA",
   "pdf.order.headerCountry": "Germany",
@@ -252,7 +237,6 @@
   "pdf.order.ourNoticeLabel": "Наша примітка:",
   "pdf.order.deliveryInlineLabel": "Доставка:",
   "pdf.order.orderSumInlineLabel": "Сума замовлення:",
-
   "pdf.deliveryNote.documentTitle": "Накладна доставки - SignXpert",
   "pdf.deliveryNote.title": "Накладна доставки",
   "pdf.deliveryNote.orderDateLabel": "Дата замовлення:",
@@ -269,7 +253,7 @@
   "pdf.deliveryNote.noSignsForOrder": "Для цього замовлення немає доступних деталей табличок.",
   "pdf.deliveryNote.noSignDetails": "Деталі таблички недоступні",
   "pdf.deliveryNote.textLineLabel": "Текст:",
-  "pdf.deliveryNote.signFallback": "Табличка",
+  "pdf.deliveryNote.signFallback": "Sign",
   "pdf.deliveryNote.pcsSuffix": "шт.",
   "pdf.deliveryNote.unitImages": "Зображення",
   "pdf.deliveryNote.unitShapes": "Фігури",
@@ -281,7 +265,6 @@
   "pdf.deliveryNote.footerCheck": "Будь ласка, перевірте доставку після отримання.",
   "pdf.deliveryNote.footerIfIssues": "Якщо будь-які позиції відсутні, пошкоджені або неправильні, будь ласка, повідомте нас електронною поштою на адресу, зазначену вище.",
   "pdf.deliveryNote.footerThanks": "Дякуємо, що обрали SignXpert!",
-
   "pdf.materialColors.whiteBlack": "Білий / Чорний",
   "pdf.materialColors.whiteBlue": "Білий / Синій",
   "pdf.materialColors.whiteRed": "Білий / Червоний",
@@ -296,7 +279,6 @@
   "pdf.materialColors.grayWhite": "Сірий / Білий",
   "pdf.materialColors.mapleWoodBlack": "Клен (\"Дерево\") / Чорний",
   "pdf.materialColors.carbonWhite": "Карбон / Білий",
-
   "errors.missingFields": "Відсутні обов’язкові поля",
   "errors.adminEmailNotConfigured": "Email адміністратора не налаштовано",
   "errors.orderNotFound": "Замовлення не знайдено",

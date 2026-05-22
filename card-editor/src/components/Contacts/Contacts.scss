@@ -1,31 +1,30 @@
 .contacts-container {
-  max-width: 1250px;
+  max-width: 1088px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 34px 56px 48px;
   min-height: 60.5vh;
-  text-align: left; // Скидаємо загальне центрування для внутрішніх блоків
+  text-align: left;
 
   h1 {
-    font-weight: 600;
+    margin: 0 0 50px;
+    color: #000;
     font-size: 24px;
-    line-height: 100%;
+    font-weight: 700;
+    line-height: 1;
     text-align: center;
-    color: #000000;
-    margin-top: 50px;
-    margin-bottom: 50px;
   }
 
   .contact-grid {
-    display: flex;
-    justify-content: space-between;
-    gap: 60px;
+    display: grid;
+    grid-template-columns: minmax(260px, 1fr) 414px;
+    column-gap: 120px;
+    align-items: start;
   }
 
   .info-column {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 35px;
+    gap: 30px;
 
     section {
       display: flex;
@@ -35,104 +34,124 @@
   }
 
   .section-title2 {
-    font-weight: 600;
-    font-size: 16px;
-    line-height: 121%;
-    text-decoration: underline;
-    color: #000;
     margin-bottom: 10px;
+    color: #000;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: underline;
   }
 
   .whatsapp-link {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 600;
+    margin-top: 21px;
     font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
     text-decoration: underline;
-    margin-top: 5px;
 
     svg {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
+      flex: 0 0 24px;
     }
   }
 
   .contact-text {
-    font-weight: 400;
+    margin-top: 11px;
+    color: #000;
     font-size: 16px;
-    line-height: 121%;
-    color: #000000;
-    margin-top: 5px;
+    font-weight: 400;
+    line-height: 1.2;
 
     &.address-box {
-      line-height: 1.5;
+      line-height: 1.25;
     }
   }
 
   .email-link {
-    font-weight: 400;
+    margin-top: 0;
+    color: #1900ff;
     font-size: 16px;
-    color: #1900FF;
+    font-weight: 400;
     text-decoration: underline;
-    margin-top: 5px;
   }
 
   .form-column {
-    flex: 1;
+    width: 414px;
 
     .form-title2 {
-      font-weight: 600;
+      margin-bottom: 28px;
       font-size: 16px;
-      line-height: 100%;
+      font-weight: 700;
+      line-height: 1.2;
       text-decoration: underline;
-      margin-bottom: 25px;
     }
 
     form {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 26px;
 
       .input-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
 
         label {
-          font-weight: 400;
-          font-size: 16px;
           color: #000;
+          font-size: 16px;
+          font-weight: 400;
         }
 
-        input, textarea {
+        input,
+        textarea {
           width: 100%;
-          border: 1px solid #7D7D7D;
-          border-radius: 4px; // Зменшив радіус для точності
-          padding: 8px 12px;
+          box-sizing: border-box;
+          border: 1px solid #7d7d7d;
+          border-radius: 8px;
+          padding: 4px 8px;
           background: transparent;
           font-size: 16px;
 
           &:focus {
             outline: 1px solid #000;
           }
+
+          &.input-error {
+            border-color: #dc2626;
+          }
         }
 
         input {
-          height: 35px;
+          height: 31px;
+        }
+
+        textarea {
+          height: 151px;
+          resize: vertical;
+        }
+
+        .field-error {
+          color: #dc2626;
+          font-size: 13px;
+          font-weight: 400;
+          line-height: 1.25;
         }
       }
 
       .send-btn {
         align-self: flex-start;
         margin-top: 10px;
-        background: #0076a8; // Колір з кнопки SEND на макеті
-        color: white;
-        border: none;
         padding: 8px 35px;
+        border: none;
         border-radius: 4px;
-        font-weight: 600;
+        background: #0076a8;
+        color: #fff;
         font-size: 14px;
+        font-weight: 600;
         cursor: pointer;
         transition: opacity 0.2s;
 
@@ -144,10 +163,17 @@
   }
 }
 
-// Адаптивність (опціонально)
 @media (max-width: 768px) {
-  .contacts-container .contact-grid {
-    flex-direction: column;
-    gap: 40px;
+  .contacts-container {
+    padding: 24px 16px 40px;
+
+    .contact-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .form-column {
+      width: 100%;
+    }
   }
 }

@@ -1382,7 +1382,12 @@
   "description_95": "Oppure usa questo modulo per contattarci",
   "description_96": "Nome",
   "description_97": "*Domanda",
-  "description_98": "INVIA"
+  "description_98": "INVIA",
+  "description_99": "Inserisci il tuo indirizzo e-mail.",
+  "description_100": "Inserisci un indirizzo e-mail valido.",
+  "description_101": "Inserisci la tua domanda.",
+  "description_102": "Grazie per aver contattato SignXpert. Abbiamo ricevuto il tuo messaggio e ti risponderemo il prima possibile.",
+  "description_103": "Errore durante l’invio del messaggio. Riprova."
 },
 "QuickGuide": {
 "d_1": "Offriamo",

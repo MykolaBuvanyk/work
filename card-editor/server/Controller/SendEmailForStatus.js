@@ -1780,9 +1780,11 @@ class SendEmailForStatus {
     }
     static Contact = async (req, res, next) => {
         try {
-            const { name, email, question } = req.body;
+            const name = String(req.body?.name || '').trim();
+            const email = String(req.body?.email || '').trim();
+            const question = String(req.body?.question || '').trim();
 
-            if (!name || !email || !question) {
+            if (!email || !question) {
                 throw ErrorApi.badRequest('Missing required fields');
             }
 
@@ -1793,7 +1795,10 @@ class SendEmailForStatus {
                 throw ErrorApi.badRequest('Admin email is not configured');
             }
 
-            const subject = `Request from contact page: ${name} (${email})`;
+            const safeName = escapeHtml(name || 'Not provided');
+            const safeEmail = escapeHtml(email);
+            const safeQuestion = escapeHtml(question);
+            const subject = `Request from contact page: ${name || email} (${email})`;
 
             const messageHTML = `
     <!DOCTYPE html>
@@ -1841,11 +1846,11 @@ class SendEmailForStatus {
             </tr>
 
             <tr>
-            <td style="font-size:14px;">Name: ${name}</td>
+            <td style="font-size:14px;">Name: ${safeName}</td>
             </tr>
 
             <tr>
-            <td style="font-size:14px; padding-bottom:10px;">Email: ${email}</td>
+            <td style="font-size:14px; padding-bottom:10px;">Email: ${safeEmail}</td>
             </tr>
 
             <!-- DATE -->
@@ -1864,7 +1869,7 @@ class SendEmailForStatus {
 
             <tr>
             <td style="font-size:14px; background:#f7f7f7; padding:12px; border-radius:6px;">
-                ${question}
+                ${safeQuestion}
             </td>
             </tr>
 
@@ -1933,7 +1938,7 @@ class SendEmailForStatus {
         <!-- TEXT -->
         <tr>
           <td style="font-size:14px; padding-bottom:10px;">
-            Hello ${name},
+            Hello${name ? ` ${safeName}` : ''},
           </td>
         </tr>
 
@@ -1959,7 +1964,7 @@ class SendEmailForStatus {
 
         <tr>
           <td style="font-size:14px; background:#f7f7f7; padding:12px; border-radius:6px;">
-            ${question}
+            ${safeQuestion}
           </td>
         </tr>
 

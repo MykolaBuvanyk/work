@@ -549,7 +549,18 @@ class SendEmailForStatus {
                 : 0;
             const discountAmount = toNumber(orderMongo?.discountAmount, 0);
             const discountPercent = toNumber(orderMongo?.discountPercent, 0);
-            const subtotal = round2(netAmount + discountAmount);
+            const subtotal = Number.isFinite(Number(checkout?.canvasSubtotal)) && Number(checkout.canvasSubtotal) > 0
+                ? round2(Number(checkout.canvasSubtotal))
+                : round2(netAmount + discountAmount);
+            const checkoutBaseDiscountPercent = toNumber(checkout?.baseDiscountPercent, 0);
+            const checkoutCouponDiscountPercent = toNumber(checkout?.coupon?.discount, 0);
+            const checkoutCouponDiscountAmount = toNumber(checkout?.coupon?.discountAmount, 0);
+            const derivedBaseDiscountPercent = subtotal > 0
+                ? Math.round((Math.max(0, discountAmount - checkoutCouponDiscountAmount) / subtotal) * 100)
+                : 0;
+            const displayDiscountPercent = checkoutCouponDiscountPercent > 0
+                ? (checkoutBaseDiscountPercent > 0 ? checkoutBaseDiscountPercent : derivedBaseDiscountPercent) + checkoutCouponDiscountPercent
+                : discountPercent;
             const shippingCost = Number.isFinite(Number(checkout?.deliveryPrice))
                 ? Number(checkout.deliveryPrice)
                 : 0;
@@ -870,7 +881,7 @@ class SendEmailForStatus {
             <div class="calc-section">
                 <table class="calc-table">
                 <tr><td>Subtotal</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
-                <tr><td>Discount (${discountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
+                <tr><td>Discount (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
                 <tr><td>Shipping & Packaging cost${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
                     <tr class="total-row">
                     <td style="padding-top: 15px; padding-bottom: 6px;"><u>Total amount</u></td>

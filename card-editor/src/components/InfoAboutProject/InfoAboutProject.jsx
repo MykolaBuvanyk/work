@@ -523,6 +523,9 @@ const InfoAboutProject = () => {
 
       const normalizedSum = Number(checkoutTotals?.sum);
       const normalizedTotalSum = Number(checkoutTotals?.totalSum);
+      const normalizedDiscountPercent = Number(checkoutTotals?.discountPercent);
+      const normalizedBaseDiscountPercent = Number(checkoutTotals?.baseDiscountPercent);
+      const normalizedDiscountAmount = Number(checkoutTotals?.discountAmount);
       const sum = Number.isFinite(normalizedSum) ? normalizedSum : fallbackSum;
       const totalSum = Number.isFinite(normalizedTotalSum)
         ? normalizedTotalSum
@@ -542,19 +545,23 @@ const InfoAboutProject = () => {
         projectName: project?.name || "Untitled",
         price: Number(sum || 0),
         netAfterDiscount: Number(sum || 0),
-        discountPercent: Number(discountPercent || 0),
-        discountAmount: Number(discountAmount || 0),
+        discountPercent: Number.isFinite(normalizedDiscountPercent) ? normalizedDiscountPercent : Number(discountPercent || 0),
+        baseDiscountPercent: Number.isFinite(normalizedBaseDiscountPercent) ? normalizedBaseDiscountPercent : Number(discountPercent || 0),
+        discountAmount: Number.isFinite(normalizedDiscountAmount) ? normalizedDiscountAmount : Number(discountAmount || 0),
         totalPrice: Number(totalSum || 0),
         project: projectWithCanvasMeta,
         accessories: accessoriesSelected,
         lang,
         checkout: {
+          baseDiscountPercent: Number.isFinite(normalizedBaseDiscountPercent) ? normalizedBaseDiscountPercent : Number(discountPercent || 0),
           deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
           phoneOk: Boolean(checkoutTotals?.phoneOk),
           vatPercent: Number(checkoutTotals?.vatPercent || 0),
           vatAmount: Number(checkoutTotals?.vatAmount || 0),
           vatNumber: String(checkoutTotals?.vatNumber || ""),
+          canvasSubtotal: Number(checkoutTotals?.canvasSubtotal || 0),
+          coupon: checkoutTotals?.coupon || null,
           deliveryAddress: checkoutTotals?.deliveryAddress || null,
           invoiceAddress: checkoutTotals?.invoiceAddress || null,
           invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),

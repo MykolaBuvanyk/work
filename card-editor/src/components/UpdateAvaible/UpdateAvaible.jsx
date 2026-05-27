@@ -47,6 +47,8 @@ const UpdateAvaible = () => {
   const [langInputCons, setLangInputCons] = useState('');
   const [langSelect, setLangSelect]=useState('BE');
   const [langSelectCons, setLangSelectCons] = useState('BE');
+  const [isCouponOpen, setIsCouponOpen] = useState(false);
+  const [coupons, setCoupons] = useState([]);
 
 
   const [formData, setFormData] = useState({
@@ -66,8 +68,26 @@ const UpdateAvaible = () => {
     }
   };
 
+  const fetchCoupons = async () => {
+    try {
+      const response = await $authHost.get('cart/coupons');
+      const uniqueCoupons = [];
+      const seen = new Set();
+      (Array.isArray(response.data) ? response.data : []).forEach(coupon => {
+        const key = coupon?.id ? `id:${coupon.id}` : `code:${String(coupon?.code || '').trim().toUpperCase()}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        uniqueCoupons.push(coupon);
+      });
+      setCoupons(uniqueCoupons);
+    } catch (error) {
+      console.error('Помилка при завантаженні промокодів:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
+    fetchCoupons();
   }, []);
 
   // Обробник для кольорів, аксесуарів та знижок (масиви)
@@ -142,6 +162,53 @@ const UpdateAvaible = () => {
     }
   };
 
+  const addCoupon = () => {
+    setCoupons(prev => prev.some(coupon => !coupon.id)
+      ? prev
+      : [...prev, { code: '', discount: '', isNew: true }]);
+    setIsCouponOpen(true);
+  };
+
+  const updateCouponField = (index, field, value) => {
+    setCoupons(prev => {
+      const updated = [...prev];
+      updated[index] = { ...(updated[index] || {}), [field]: value };
+      return updated;
+    });
+  };
+
+  const saveCoupon = async coupon => {
+    try {
+      const payload = {
+        code: String(coupon.code || '').trim(),
+        discount: Number(coupon.discount || 0),
+      };
+      if (coupon.id) {
+        await $authHost.put(`cart/coupons/${coupon.id}`, payload);
+      } else {
+        await $authHost.post('cart/coupons', payload);
+        setCoupons(prev => prev.filter(item => item.id));
+      }
+      await fetchCoupons();
+      alert('coupon saved');
+    } catch (err) {
+      alert(err?.response?.data?.message || 'coupon error');
+    }
+  };
+
+  const deleteCoupon = async coupon => {
+    try {
+      if (coupon.id) {
+        await $authHost.delete(`cart/coupons/${coupon.id}`);
+        await fetchCoupons();
+      } else {
+        setCoupons(prev => prev.filter(x => x !== coupon));
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || 'coupon delete error');
+    }
+  };
+
   // Компонент для списку кольорів, щоб не дублювати код
   const ColorGrid = ({ listName,isA }) => (
     <div className="list-colors">
@@ -196,6 +263,40 @@ const UpdateAvaible = () => {
   return (
     <div className="update-avaible-container">
       <div className="button">
+        <div className="coupon-control">
+          <button type="button" onClick={() => setIsCouponOpen(prev => !prev)}>Promo code</button>
+          {isCouponOpen && (
+            <div className="coupon-dropdown">
+              <button type="button" className="coupon-close" onClick={() => setIsCouponOpen(false)}>×</button>
+              <div className="coupon-header">
+                <span>Promo code</span>
+                <span>Discount</span>
+                <span>Actions</span>
+              </div>
+              <div className="coupon-list">
+                {coupons.map((coupon, index) => (
+                  <div className="coupon-row" key={coupon.id || index}>
+                    <input
+                      type="text"
+                      value={coupon.code || ''}
+                      onChange={e => updateCouponField(index, 'code', e.target.value)}
+                    />
+                    <input
+                      type="number"
+                      value={coupon.discount || ''}
+                      onChange={e => updateCouponField(index, 'discount', e.target.value)}
+                    />
+                    <div className="coupon-actions">
+                      <button type="button" onClick={() => saveCoupon(coupon)}>Save</button>
+                      <button type="button" onClick={() => deleteCoupon(coupon)}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button type="button" className="coupon-add" onClick={addCoupon}>Add</button>
+            </div>
+          )}
+        </div>
         <button onClick={saveToDatabase}>Save</button>
       </div>
 

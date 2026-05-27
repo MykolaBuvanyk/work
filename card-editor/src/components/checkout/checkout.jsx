@@ -329,6 +329,10 @@ export default function Checkout({
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 	const [profileUserType, setProfileUserType] = useState('')
 	const [profileBusinessHint, setProfileBusinessHint] = useState(false)
+	const [couponCode, setCouponCode] = useState('')
+	const [appliedCoupon, setAppliedCoupon] = useState(null)
+	const [couponMessage, setCouponMessage] = useState('')
+	const [couponMessageType, setCouponMessageType] = useState('')
 	const touchedDeliveryFieldsRef = useRef({})
 	const touchedInvoiceFieldsRef = useRef({})
 	const touchedInvoiceEmailRef = useRef(false)
@@ -596,6 +600,10 @@ export default function Checkout({
 				await Promise.resolve(onPlaceOrder({
 					sum: Number(sumForOrder || 0),
 					totalSum: Number(totalAmount || 0),
+					discountPercent: Number(totalCanvasDiscountPercent || 0),
+					baseDiscountPercent: Number(discountPercent || 0),
+					discountAmount: Number(totalCanvasDiscountAmount || 0),
+					canvasSubtotal: Number(orderSubtotal || 0),
 					deliveryPrice: Number(deliveryPrice || 0),
 					deliveryLabel: String(delivery || ''),
 					isInvoiceDifferent: Boolean(shouldIncludeInvoiceAddress),
@@ -603,6 +611,14 @@ export default function Checkout({
 					vatPercent: Number(vatPercentForCheckout || 0),
 					vatAmount: Number(vatAmountForCheckout || 0),
 					vatNumber: String(reduxUser?.vatNumber || '').trim(),
+					coupon: appliedCoupon
+						? {
+							id: appliedCoupon.id,
+							code: appliedCoupon.code,
+							discount: Number(appliedCoupon.discount || 0),
+							discountAmount: Number(couponDiscountAmount || 0),
+						}
+						: null,
 					deliveryAddress,
 					invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
 					invoiceEmail: String(invoiceEmail || ''),
@@ -639,6 +655,28 @@ export default function Checkout({
 	const handleInvoiceEmailChange = e => {
 		touchedInvoiceEmailRef.current = true
 		setInvoiceEmail(e.target.value)
+	}
+
+	const handleApplyCoupon = async () => {
+		const code = String(couponCode || '').trim()
+		if (!code) {
+			setCouponMessage('Enter your promo code')
+			setCouponMessageType('error')
+			return
+		}
+		try {
+			const { data } = await $authHost.post('cart/coupons/apply', {
+				code,
+				amount: Number(priceExclVat || 0),
+			})
+			setAppliedCoupon(data)
+			setCouponMessage('')
+			setCouponMessageType('')
+		} catch (err) {
+			setAppliedCoupon(null)
+			setCouponMessage('Invalid promo code')
+			setCouponMessageType('error')
+		}
 	}
 
 	const deliveryOptions = useMemo(() => {
@@ -727,7 +765,16 @@ export default function Checkout({
 	const accessoriesTypesCount = selectedAccessoriesNormalized.length
 	const priceExclVat = round2(Number(orderSubtotal || 0) - Number(discountAmount || 0))
 	const sumForOrder = round2(priceExclVat + Number(accessoriesPrice || 0))
-	const subtotalExclVat = round2(sumForOrder + Number(deliveryPrice || 0))
+	const subtotalBeforeCoupon = round2(sumForOrder + Number(deliveryPrice || 0))
+	const couponDiscountAmount = appliedCoupon
+		? Math.min(priceExclVat, round2(priceExclVat * (Number(appliedCoupon.discount || 0) / 100)))
+		: 0
+	const canvasPriceAfterCoupon = round2(priceExclVat - couponDiscountAmount)
+	const totalCanvasDiscountAmount = round2(Number(discountAmount || 0) + Number(couponDiscountAmount || 0))
+	const totalCanvasDiscountPercent = round2(
+		Number(discountPercent || 0) + (appliedCoupon ? Number(appliedCoupon.discount || 0) : 0)
+	)
+	const subtotalExclVat = round2(subtotalBeforeCoupon - couponDiscountAmount)
 
 	const vatPercentForCheckout = useMemo(() => {
 		const rawCode = String(deliveryAddress.region || '').toUpperCase()
@@ -1164,12 +1211,54 @@ export default function Checkout({
 															{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%): {Number(discountAmount || 0).toFixed(2)} €
 														</td>
 													</tr>
+													{appliedCoupon && (
+														<tr>
+															<td className='summary-table__blank'></td>
+															<td>
+																Promo discount ({Number(appliedCoupon.discount || 0).toFixed(0)}%): {Number(couponDiscountAmount || 0).toFixed(2)} €
+															</td>
+														</tr>
+													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.price')}: {Number(priceExclVat || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {Number(canvasPriceAfterCoupon || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
+										</div>
+
+										<div className='promo-code-block'>
+											{!appliedCoupon && (
+												<label className='promo-code-block__label' htmlFor='couponCode'>
+													Promo code
+												</label>
+											)}
+											{!appliedCoupon && (
+												<div className='promo-code-block__controls'>
+													<input
+														id='couponCode'
+														name='couponCode'
+														type='text'
+														placeholder='Enter your promo code'
+														className='delivery-comment__input promo-code-block__input'
+														value={couponCode}
+														onChange={e => {
+															setCouponCode(e.target.value)
+															setAppliedCoupon(null)
+															setCouponMessage('')
+															setCouponMessageType('')
+														}}
+													/>
+													<button type='button' className='action-btn' onClick={handleApplyCoupon}>
+														Apply code
+													</button>
+												</div>
+											)}
+											{couponMessage && (
+												<div className={`delivery-comment__hint promo-code-block__hint ${couponMessageType === 'error' ? 'delivery-comment__hint--error' : ''}`}>
+													{couponMessage}
+												</div>
+											)}
 										</div>
 
 										<div className='summary-subtitle'>

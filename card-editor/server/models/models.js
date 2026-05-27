@@ -64,7 +64,31 @@ const Order=sequelize.define('orders',{
   language: { type: DataTypes.STRING(5), allowNull: false, defaultValue: 'de' }
 })
 
+const Coupon = sequelize.define('coupons', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  code: { type: DataTypes.STRING, allowNull: false, unique: true },
+  discount: { type: DataTypes.FLOAT, allowNull: false, defaultValue: 0 },
+});
+
+const CouponUsage = sequelize.define('coupon_usages', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+}, {
+  indexes: [
+    {
+      unique: true,
+      fields: ['userId', 'couponId'],
+    },
+  ],
+});
+
 User.hasMany(Order);
 Order.belongsTo(User);
 
-export { User, Order };
+Coupon.hasMany(CouponUsage);
+CouponUsage.belongsTo(Coupon);
+User.hasMany(CouponUsage);
+CouponUsage.belongsTo(User);
+Order.hasOne(CouponUsage);
+CouponUsage.belongsTo(Order);
+
+export { User, Order, Coupon, CouponUsage };

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/authMiddleware.js';
 import CartProject from '../models/CartProject.js';
-import { Order, User } from '../models/models.js';
+import { Coupon, CouponUsage, Order, User } from '../models/models.js';
 import sequelize from '../db.js';
 import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
@@ -144,6 +144,14 @@ export const toNumber = (value, fallback = 0) => {
 };
 
 export const round2 = (value) => Math.round((toNumber(value, 0) + Number.EPSILON) * 100) / 100;
+
+const normalizeCouponCode = (value) => String(value || '').trim().toUpperCase();
+
+const calculateCouponDiscount = (amount, discount) => {
+  const base = Math.max(0, toNumber(amount, 0));
+  const percent = Math.min(100, Math.max(0, toNumber(discount, 0)));
+  return round2(base * (percent / 100));
+};
 
 const resolvePdfFontPath = (fileName) =>
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/fonts', fileName);
@@ -1174,6 +1182,79 @@ const countProjectSigns = (project) => {
 
 const countTotalSignsFromProject = (project) => countProjectSigns(project);
 
+CartRouter.get('/coupons', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const coupons = await Coupon.findAll({ order: [['createdAt', 'DESC']] });
+    return res.json(coupons);
+  } catch (e) {
+    return next(e);
+  }
+});
+
+CartRouter.post('/coupons', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const code = normalizeCouponCode(req.body?.code);
+    const discount = toNumber(req.body?.discount, NaN);
+    if (!code) return res.status(400).json({ message: 'Coupon code is required' });
+    if (!Number.isFinite(discount) || discount <= 0 || discount > 100) {
+      return res.status(400).json({ message: 'Discount must be from 1 to 100' });
+    }
+    const [coupon] = await Coupon.upsert({ code, discount });
+    return res.json(coupon);
+  } catch (e) {
+    return next(e);
+  }
+});
+
+CartRouter.put('/coupons/:id', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const coupon = await Coupon.findByPk(req.params.id);
+    if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
+    const code = normalizeCouponCode(req.body?.code);
+    const discount = toNumber(req.body?.discount, NaN);
+    if (!code) return res.status(400).json({ message: 'Coupon code is required' });
+    if (!Number.isFinite(discount) || discount <= 0 || discount > 100) {
+      return res.status(400).json({ message: 'Discount must be from 1 to 100' });
+    }
+    await coupon.update({ code, discount });
+    return res.json(coupon);
+  } catch (e) {
+    return next(e);
+  }
+});
+
+CartRouter.delete('/coupons/:id', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const coupon = await Coupon.findByPk(req.params.id);
+    if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
+    await coupon.destroy();
+    return res.json({ success: true });
+  } catch (e) {
+    return next(e);
+  }
+});
+
+CartRouter.post('/coupons/apply', requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const code = normalizeCouponCode(req.body?.code);
+    const amount = toNumber(req.body?.amount, 0);
+    if (!code) return res.status(400).json({ message: 'Coupon code is required' });
+    const coupon = await Coupon.findOne({ where: { code } });
+    if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
+    const usage = await CouponUsage.findOne({ where: { userId, couponId: coupon.id } });
+    if (usage) return res.status(409).json({ message: 'Coupon already used' });
+    return res.json({
+      id: coupon.id,
+      code: coupon.code,
+      discount: coupon.discount,
+      discountAmount: calculateCouponDiscount(amount, coupon.discount),
+    });
+  } catch (e) {
+    return next(e);
+  }
+});
+
 // Auth: add current project to cart
 CartRouter.post('/', requireAuth, async (req, res, next) => {
   try {
@@ -1199,17 +1280,33 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
     const checkoutSnapshot = body?.checkout && typeof body.checkout === 'object' ? body.checkout : null;
+    const couponDiscountAmount = toNumber(body?.checkout?.coupon?.discountAmount, 0);
+    const requestDiscountAmount = toNumber(body.discountAmount, 0);
+    const totalDiscountAmount = requestDiscountAmount > 0 ? requestDiscountAmount : couponDiscountAmount;
+    const baseDiscountPercent = toNumber(body.baseDiscountPercent, toNumber(body.discountPercent, 0));
+    const couponDiscountPercent = toNumber(body?.checkout?.coupon?.discount, 0);
+    const totalDiscountPercent = couponDiscountPercent > 0
+      ? baseDiscountPercent + couponDiscountPercent
+      : toNumber(body.discountPercent, baseDiscountPercent);
     const checkoutDeliveryLabel = String(body?.checkout?.deliveryLabel || body?.deliveryType || '').trim();
     const checkoutCountryRegion = String(body?.checkout?.deliveryAddress?.region || '').trim().toUpperCase();
     const checkoutCountryName = String(body?.checkout?.deliveryAddress?.country || '').trim();
+    const couponCode = normalizeCouponCode(body?.checkout?.coupon?.code || body?.couponCode);
+    let coupon = null;
+    if (couponCode) {
+      coupon = await Coupon.findOne({ where: { code: couponCode } });
+      if (!coupon) return res.status(404).json({ message: 'Coupon not found' });
+      const usage = await CouponUsage.findOne({ where: { userId: req.user.id, couponId: coupon.id } });
+      if (usage) return res.status(409).json({ message: 'Coupon already used' });
+    }
 
     const created = await CartProject.create({
       userId,
       projectId: body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null,
       projectName,
       price: netAfterDiscount,
-      discountPercent: toNumber(body.discountPercent, 0),
-      discountAmount: toNumber(body.discountAmount, 0),
+      discountPercent: totalDiscountPercent,
+      discountAmount: totalDiscountAmount,
       totalPrice: totalPriceInclVat,
       project,
       accessories: normalizedAccessories,
@@ -1266,6 +1363,14 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       isPaid: user.type == 'Admin' ? null : false,
       language: user?.language || countryToLanguage(orderCountry),
     })
+
+    if (coupon) {
+      await CouponUsage.create({
+        userId: req.user.id,
+        couponId: coupon.id,
+        orderId: order.id,
+      });
+    }
 
     const userOrders = await Order.findOne({ where: { userId: req.user.id, status: 'Deleted' } });
     if (userOrders) {
@@ -3049,7 +3154,18 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         : 0;
     const discountAmount = toNumber(orderMongo?.discountAmount, 0);
     const discountPercent = toNumber(orderMongo?.discountPercent, 0);
-    const subtotal = round2(netAmount + discountAmount);
+    const subtotal = Number.isFinite(Number(checkout?.canvasSubtotal)) && Number(checkout.canvasSubtotal) > 0
+      ? round2(Number(checkout.canvasSubtotal))
+      : round2(netAmount + discountAmount);
+    const checkoutBaseDiscountPercent = toNumber(checkout?.baseDiscountPercent, 0);
+    const checkoutCouponDiscountPercent = toNumber(checkout?.coupon?.discount, 0);
+    const checkoutCouponDiscountAmount = toNumber(checkout?.coupon?.discountAmount, 0);
+    const derivedBaseDiscountPercent = subtotal > 0
+      ? Math.round((Math.max(0, discountAmount - checkoutCouponDiscountAmount) / subtotal) * 100)
+      : 0;
+    const displayDiscountPercent = checkoutCouponDiscountPercent > 0
+      ? (checkoutBaseDiscountPercent > 0 ? checkoutBaseDiscountPercent : derivedBaseDiscountPercent) + checkoutCouponDiscountPercent
+      : discountPercent;
     const shippingCost = Number.isFinite(Number(checkout?.deliveryPrice))
       ? Number(checkout.deliveryPrice)
       : 0;
@@ -3370,7 +3486,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
     <div class="calc-section">
       <table class="calc-table">
         <tr><td>${pdfText('pdf.invoice.subtotalLabel', lang)}</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
-        <tr><td>${pdfText('pdf.invoice.discountLabel', lang)} (${discountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.discountLabel', lang)} (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
         <tr><td>${pdfText('pdf.invoice.shippingAndPackaging', lang)}${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
             <tr class="total-row">
           <td style="padding-top: 15px; padding-bottom: 6px;"><u>${pdfText('pdf.invoice.totalAmount', lang)}</u></td>

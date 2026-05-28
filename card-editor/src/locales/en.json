@@ -985,6 +985,13 @@
         "weekdays": "Delivery from Monday to Friday."
       }
     },
+    "promoCode": {
+      "label": "Promo code",
+      "placeholder": "Enter your promo code",
+      "apply": "Apply code",
+      "invalid": "Invalid promo code",
+      "discount": "Promo discount"
+    },
     "shippingNotes": {
       "title": "Shipping notes",
       "sameDay": "Orders placed before 4:00 PM are usually shipped the same day.",

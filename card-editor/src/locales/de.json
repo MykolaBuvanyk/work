@@ -985,6 +985,13 @@
       "weekdays": "Lieferung von Montag bis Freitag."
     }
   },
+  "promoCode": {
+    "label": "Promo-Code",
+    "placeholder": "Promo-Code eingeben",
+    "apply": "Code anwenden",
+    "invalid": "Ungültiger Promo-Code",
+    "discount": "Promo-Rabatt"
+  },
   "shippingNotes": {
     "title": "Versandhinweise",
     "sameDay": "Bestellungen, die vor 16:00 Uhr eingehen, werden in der Regel noch am selben Tag versendet.",

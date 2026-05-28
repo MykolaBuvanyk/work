@@ -660,7 +660,7 @@ export default function Checkout({
 	const handleApplyCoupon = async () => {
 		const code = String(couponCode || '').trim()
 		if (!code) {
-			setCouponMessage('Enter your promo code')
+			setCouponMessage(t('checkout.promoCode.placeholder'))
 			setCouponMessageType('error')
 			return
 		}
@@ -674,7 +674,7 @@ export default function Checkout({
 			setCouponMessageType('')
 		} catch (err) {
 			setAppliedCoupon(null)
-			setCouponMessage('Invalid promo code')
+			setCouponMessage(t('checkout.promoCode.invalid'))
 			setCouponMessageType('error')
 		}
 	}
@@ -1215,7 +1215,7 @@ export default function Checkout({
 														<tr>
 															<td className='summary-table__blank'></td>
 															<td>
-																Promo discount ({Number(appliedCoupon.discount || 0).toFixed(0)}%): {Number(couponDiscountAmount || 0).toFixed(2)} €
+																{t('checkout.promoCode.discount')} ({Number(appliedCoupon.discount || 0).toFixed(0)}%): {Number(couponDiscountAmount || 0).toFixed(2)} €
 															</td>
 														</tr>
 													)}
@@ -1230,7 +1230,7 @@ export default function Checkout({
 										<div className='promo-code-block'>
 											{!appliedCoupon && (
 												<label className='promo-code-block__label' htmlFor='couponCode'>
-													Promo code
+													{t('checkout.promoCode.label')}
 												</label>
 											)}
 											{!appliedCoupon && (
@@ -1239,7 +1239,7 @@ export default function Checkout({
 														id='couponCode'
 														name='couponCode'
 														type='text'
-														placeholder='Enter your promo code'
+														placeholder={t('checkout.promoCode.placeholder')}
 														className='delivery-comment__input promo-code-block__input'
 														value={couponCode}
 														onChange={e => {
@@ -1250,7 +1250,7 @@ export default function Checkout({
 														}}
 													/>
 													<button type='button' className='action-btn' onClick={handleApplyCoupon}>
-														Apply code
+														{t('checkout.promoCode.apply')}
 													</button>
 												</div>
 											)}

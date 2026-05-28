@@ -1389,7 +1389,12 @@
     "description_95": "Ou utilisez ce formulaire pour nous contacter",
     "description_96": "Nom",
     "description_97": "*Question",
-    "description_98": "ENVOYER"
+    "description_98": "ENVOYER",
+    "description_99": "Veuillez saisir votre adresse e-mail.",
+    "description_100": "Veuillez saisir une adresse e-mail valide.",
+    "description_101": "Veuillez saisir votre question.",
+    "description_102": "Merci d’avoir contacté SignXpert. Nous avons reçu votre message et vous répondrons dès que possible.",
+    "description_103": "Erreur lors de l’envoi du message. Veuillez réessayer."
   },
   "QuickGuide": {
     "d_1": "Nous proposons",

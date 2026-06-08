@@ -2774,11 +2774,15 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
         display: flex;
         align-items: flex-start;
       }
-      .logo-wrap svg {
-        width: 279px;
-        height: 71px;
-        display: block;
-      }
+      .svg-logo {
+        display: inline-block;
+        width: 78mm;
+        max-width: 95mm;
+        height: auto;
+        }
+      .svg-logo img { width: 100%; height: auto; display:block; }
+
+      .header .logo, .header .logo-sub { display: none; }
       .header-contacts {
         margin-left: 20px;
         font-size: 12px;
@@ -2879,6 +2883,8 @@ CartRouter.get('/getPdfs2/:idOrder', requireAuth, async (req, res, next) => {
       <div class="logo-section">
         <div>
             <div class="svg-logo"><img src="${process.env.VITE_LAYOUT_SERVER || ''}images/images/logo.png" alt="SignXpert"></div>
+            <div class="logo">SIGN<span>X</span>PERT</div>
+            <div class="logo-sub">Smart <span>Sign & Label</span> Solution</div>
         </div>
         <div class="header-contacts">
           <a href="https://sign-xpert.com" target="_blank" rel="noopener noreferrer">sign-xpert.com</a><br>
@@ -3319,7 +3325,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
 
       .svg-logo {
         display: inline-block;
-        width: 78mm;
+        width: 83mm;
         max-width: 95mm;
         height: auto;
         }

@@ -753,7 +753,7 @@ class SendEmailForStatus {
         
                 .svg-logo {
                 display: inline-block;
-                width: 78mm;
+                width: 83mm;
                 max-width: 95mm;
                 height: auto;
                 }

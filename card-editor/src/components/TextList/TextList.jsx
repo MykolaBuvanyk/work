@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useTranslation } from 'react-i18next';
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
 import { CUSTOM_FONT_FILES } from "../../constants/fonts";
@@ -718,79 +719,79 @@ const TextList = () => {
 
   // Спеціальні символи
   const specialSymbols = [
-    { symbol: "∞", name: "Безкінечність" },
-    { symbol: "→", name: "Стрілка вправо" },
-    { symbol: "←", name: "Стрілка вліво" },
-    { symbol: "↑", name: "Стрілка вгору" },
-    { symbol: "↓", name: "Стрілка вниз" },
-    { symbol: "↔", name: "Стрілка в обидва боки" },
-    { symbol: "⇒", name: "Подвійна стрілка вправо" },
-    { symbol: "⇐", name: "Подвійна стрілка вліво" },
-    { symbol: "⇔", name: "Подвійна стрілка в обидва боки" },
-    { symbol: "≠", name: "Не дорівнює" },
-    { symbol: "≤", name: "Менше або дорівнює" },
-    { symbol: "≥", name: "Більше або дорівнює" },
-    { symbol: "±", name: "Плюс мінус" },
-    { symbol: "×", name: "Множення" },
-    { symbol: "÷", name: "Ділення" },
-    { symbol: "√", name: "Квадратний корінь" },
-    { symbol: "∑", name: "Сума" },
-    { symbol: "∏", name: "Добуток" },
-    { symbol: "∫", name: "Інтеграл" },
-    { symbol: "∂", name: "Частинна похідна" },
-    { symbol: "∇", name: "Набла" },
-    { symbol: "α", name: "Альфа" },
-    { symbol: "β", name: "Бета" },
-    { symbol: "γ", name: "Гамма" },
-    { symbol: "δ", name: "Дельта" },
-    { symbol: "ε", name: "Епсилон" },
-    { symbol: "θ", name: "Тета" },
-    { symbol: "λ", name: "Лямбда" },
-    { symbol: "μ", name: "Мю" },
-    { symbol: "π", name: "Пі" },
-    { symbol: "σ", name: "Сигма" },
-    { symbol: "φ", name: "Фі" },
-    { symbol: "ψ", name: "Псі" },
-    { symbol: "ω", name: "Омега мала" },
-    { symbol: "Α", name: "Альфа велика" },
-    { symbol: "Β", name: "Бета велика" },
-    { symbol: "Γ", name: "Гамма велика" },
-    { symbol: "Δ", name: "Дельта велика" },
-    { symbol: "Θ", name: "Тета велика" },
-    { symbol: "Λ", name: "Лямбда велика" },
-    { symbol: "Π", name: "Пі велика" },
-    { symbol: "Σ", name: "Сигма велика" },
-    { symbol: "Φ", name: "Фі велика" },
-    { symbol: "Ψ", name: "Псі велика" },
-    { symbol: "Ω", name: "Омега велика" },
-    { symbol: "♠", name: "Піки" },
-    { symbol: "♣", name: "Хрести" },
-    { symbol: "♥", name: "Червоні" },
-    { symbol: "♦", name: "Буби" },
-    { symbol: "★", name: "Зірка" },
-    { symbol: "☆", name: "Зірка порожня" },
-    { symbol: "♪", name: "Нота" },
-    { symbol: "♫", name: "Ноти" },
-    { symbol: "©", name: "Копірайт" },
-    { symbol: "®", name: "Зареєстровано" },
-    { symbol: "™", name: "Торгова марка" },
-    { symbol: "°", name: "Градус" },
-    { symbol: "§", name: "Параграф" },
-    { symbol: "¶", name: "Абзац" },
-    { symbol: "•", name: "Маркер" },
-    { symbol: "◦", name: "Білий маркер" },
-    { symbol: "▪", name: "Чорний квадрат" },
-    { symbol: "▫", name: "Білий квадрат" },
-    { symbol: "▲", name: "Чорний трикутник" },
-    { symbol: "△", name: "Білий трикутник" },
-    { symbol: "▼", name: "Чорний трикутник вниз" },
-    { symbol: "▽", name: "Білий трикутник вниз" },
-    { symbol: "◆", name: "Чорний ромб" },
-    { symbol: "◇", name: "Білий ромб" },
-    { symbol: "●", name: "Чорне коло" },
-    { symbol: "○", name: "Біле коло" },
-    { symbol: "■", name: "Чорний квадрат великий" },
-    { symbol: "□", name: "Білий квадрат великий" },
+    { symbol: "∞", name: "Безкінечність", i18nKey: "infinity" },
+    { symbol: "→", name: "Стрілка вправо", i18nKey: "arrow.right" },
+    { symbol: "←", name: "Стрілка вліво", i18nKey: "arrow.left" },
+    { symbol: "↑", name: "Стрілка вгору", i18nKey: "arrow.up" },
+    { symbol: "↓", name: "Стрілка вниз", i18nKey: "arrow.down" },
+    { symbol: "↔", name: "Стрілка в обидва боки", i18nKey: "arrow.both" },
+    { symbol: "⇒", name: "Подвійна стрілка вправо", i18nKey: "arrow.dbl.right" },
+    { symbol: "⇐", name: "Подвійна стрілка вліво", i18nKey: "arrow.dbl.left" },
+    { symbol: "⇔", name: "Подвійна стрілка в обидва боки", i18nKey: "arrow.dbl.both" },
+    { symbol: "≠", name: "Не дорівнює", i18nKey: "not.equal" },
+    { symbol: "≤", name: "Менше або дорівнює", i18nKey: "le" },
+    { symbol: "≥", name: "Більше або дорівнює", i18nKey: "ge" },
+    { symbol: "±", name: "Плюс мінус", i18nKey: "plus.minus" },
+    { symbol: "×", name: "Множення", i18nKey: "multiply" },
+    { symbol: "÷", name: "Ділення", i18nKey: "divide" },
+    { symbol: "√", name: "Квадратний корінь", i18nKey: "sqrt" },
+    { symbol: "∑", name: "Сума", i18nKey: "sum" },
+    { symbol: "∏", name: "Добуток", i18nKey: "product" },
+    { symbol: "∫", name: "Інтеграл", i18nKey: "integral" },
+    { symbol: "∂", name: "Частинна похідна", i18nKey: "partial" },
+    { symbol: "∇", name: "Набла", i18nKey: "nabla" },
+    { symbol: "α", name: "Альфа", i18nKey: "alpha" },
+    { symbol: "β", name: "Бета", i18nKey: "beta" },
+    { symbol: "γ", name: "Гамма", i18nKey: "gamma" },
+    { symbol: "δ", name: "Дельта", i18nKey: "delta" },
+    { symbol: "ε", name: "Епсилон", i18nKey: "epsilon" },
+    { symbol: "θ", name: "Тета", i18nKey: "theta" },
+    { symbol: "λ", name: "Лямбда", i18nKey: "lambda" },
+    { symbol: "μ", name: "Мю", i18nKey: "mu" },
+    { symbol: "π", name: "Пі", i18nKey: "pi" },
+    { symbol: "σ", name: "Сигма", i18nKey: "sigma" },
+    { symbol: "φ", name: "Фі", i18nKey: "phi" },
+    { symbol: "ψ", name: "Псі", i18nKey: "psi" },
+    { symbol: "ω", name: "Омега мала", i18nKey: "omega.small" },
+    { symbol: "Α", name: "Альфа велика", i18nKey: "alpha.cap" },
+    { symbol: "Β", name: "Бета велика", i18nKey: "beta.cap" },
+    { symbol: "Γ", name: "Гамма велика", i18nKey: "gamma.cap" },
+    { symbol: "Δ", name: "Дельта велика", i18nKey: "delta.cap" },
+    { symbol: "Θ", name: "Тета велика", i18nKey: "theta.cap" },
+    { symbol: "Λ", name: "Лямбда велика", i18nKey: "lambda.cap" },
+    { symbol: "Π", name: "Пі велика", i18nKey: "pi.cap" },
+    { symbol: "Σ", name: "Сигма велика", i18nKey: "sigma.cap" },
+    { symbol: "Φ", name: "Фі велика", i18nKey: "phi.cap" },
+    { symbol: "Ψ", name: "Псі велика", i18nKey: "psi.cap" },
+    { symbol: "Ω", name: "Омега велика", i18nKey: "omega.cap" },
+    { symbol: "♠", name: "Піки", i18nKey: "suit.spade" },
+    { symbol: "♣", name: "Хрести", i18nKey: "suit.club" },
+    { symbol: "♥", name: "Червоні", i18nKey: "suit.heart" },
+    { symbol: "♦", name: "Буби", i18nKey: "suit.diamond" },
+    { symbol: "★", name: "Зірка", i18nKey: "star" },
+    { symbol: "☆", name: "Зірка порожня", i18nKey: "star.outline" },
+    { symbol: "♪", name: "Нота", i18nKey: "note.single" },
+    { symbol: "♫", name: "Ноти", i18nKey: "note.multiple" },
+    { symbol: "©", name: "Копірайт", i18nKey: "copyright" },
+    { symbol: "®", name: "Зареєстровано", i18nKey: "registered" },
+    { symbol: "™", name: "Торгова марка", i18nKey: "tm" },
+    { symbol: "°", name: "Градус", i18nKey: "degree" },
+    { symbol: "§", name: "Параграф", i18nKey: "section" },
+    { symbol: "¶", name: "Абзац", i18nKey: "paragraph" },
+    { symbol: "•", name: "Маркер", i18nKey: "bullet" },
+    { symbol: "◦", name: "Білий маркер", i18nKey: "white.bullet" },
+    { symbol: "▪", name: "Чорний квадрат", i18nKey: "square.small.black" },
+    { symbol: "▫", name: "Білий квадрат", i18nKey: "square.small.white" },
+    { symbol: "▲", name: "Чорний трикутник", i18nKey: "triangle.up.black" },
+    { symbol: "△", name: "Білий трикутник", i18nKey: "triangle.up.white" },
+    { symbol: "▼", name: "Чорний трикутник вниз", i18nKey: "triangle.down.black" },
+    { symbol: "▽", name: "Білий трикутник вниз", i18nKey: "triangle.down.white" },
+    { symbol: "◆", name: "Чорний ромб", i18nKey: "diamond.black" },
+    { symbol: "◇", name: "Білий ромб", i18nKey: "diamond.white" },
+    { symbol: "●", name: "Чорне коло", i18nKey: "circle.black" },
+    { symbol: "○", name: "Біле коло", i18nKey: "circle.white" },
+    { symbol: "■", name: "Чорний квадрат великий", i18nKey: "square.black.large" },
+    { symbol: "□", name: "Білий квадрат великий", i18nKey: "square.white.large" },
   ];
 
   // Додавання спеціального символу до тексту
@@ -836,6 +837,7 @@ const TextList = () => {
   const currentUnderline = activeText?.underline || false;
   const currentTextAlign = activeText?.textAlign || "left";
   const currentColor = activeText?.fill || "#000000";
+  const { t } = useTranslation();
 
   return (
     <div className={styles.textListContainer}>
@@ -1227,7 +1229,7 @@ const TextList = () => {
                     setShowSymbolModal(true);
                   }}
                   className={styles.symbolButton}
-                  title="Додати спеціальний символ"
+                  title={t('textList.specialSymbols.addButton', 'Додати спеціальний символ')}
                 >
                   <svg
                     width="15"
@@ -1362,7 +1364,7 @@ const TextList = () => {
         <div className={styles.modal}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3>Спеціальні символи</h3>
+              <h3>{t('textList.specialSymbols.title', 'Спеціальні символи')}</h3>
               <button
                 onClick={() => setShowSymbolModal(false)}
                 className={styles.closeButton}
@@ -1379,7 +1381,11 @@ const TextList = () => {
                     setShowSymbolModal(false);
                   }}
                   className={styles.symbolItem}
-                  title={item.name}
+                  title={
+                    item.i18nKey
+                      ? t(`textList.specialSymbols.names.${item.i18nKey}`, item.name)
+                      : t(`textList.specialSymbols.names.${index}`, item.name)
+                  }
                 >
                   {item.symbol}
                 </button>

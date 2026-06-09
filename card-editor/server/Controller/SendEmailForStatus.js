@@ -1003,6 +1003,8 @@ class SendEmailForStatus {
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const urlAccount=urlFrontend+'account/detail';
             const urlOrders=urlFrontend+'account';
+            const lang = userLang(order.user);
+            const orLabel = t('email.common.or', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1406,7 +1408,7 @@ class SendEmailForStatus {
 
                             <p style="margin: 15px 0;">
                                 <strong>Order number: ${orderNumber}</strong><br>
-                                or<br>
+                                ${orLabel}<br>
                                 <strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong>
                             </p>
 
@@ -1685,6 +1687,7 @@ class SendEmailForStatus {
             const outstandingNote = t('email.reminder.outstandingNote', lang, { orderNumber });
             const paymentStatusNote = t('email.reminder.paymentStatusNote', lang);
             const myOrdersLabel = t('common.myOrders', lang);
+            const orLabel = t('email.common.or', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1743,7 +1746,7 @@ class SendEmailForStatus {
                 <p>If you prefer to pay by bank transfer, please use the bank details provided on the invoice and make sure to quote:</p>
 
                 <p style="margin: 0;"><strong>Order number: ${orderNumber}</strong></p>
-                <p style="margin: 5px 0;">or</p>
+                <p style="margin: 5px 0;">${orLabel}</p>
                 <p style="margin: 0;"><strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong></p>
 
                 <p>This helps us allocate your payment correctly.</p>

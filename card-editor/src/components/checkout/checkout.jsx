@@ -753,9 +753,10 @@ export default function Checkout({
 			.map(item => {
 				const qtyNum = Number(item?.qty)
 				const qty = Number.isFinite(qtyNum) && qtyNum > 0 ? Math.floor(qtyNum) : 0
+				const name = item?.nameKey ? t(item.nameKey) : String(item?.name || '—')
 				return {
 					id: item?.id,
-					name: String(item?.name || '—'),
+					name,
 					qty,
 				}
 			})
@@ -1207,6 +1208,10 @@ export default function Checkout({
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
+														<td>{t('checkout.summary.signsSubtotal')}: {Number(orderSubtotal || 0).toFixed(2)} €</td>
+													</tr>
+													<tr>
+														<td className='summary-table__blank'></td>
 														<td>
 															{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%): {Number(discountAmount || 0).toFixed(2)} €
 														</td>
@@ -1221,7 +1226,7 @@ export default function Checkout({
 													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.price')}: {Number(canvasPriceAfterCoupon || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.signsTotal')}: {Number(canvasPriceAfterCoupon || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>

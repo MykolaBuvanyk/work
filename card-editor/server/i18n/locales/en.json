@@ -162,6 +162,7 @@
   "email.invoice.updateBilling": "Should you wish to update your billing address or the email address used for receiving invoices, you can do so in:",
   "email.invoice.alreadyPaidDisregard": "If you have already completed the payment, please disregard this message. You can check your payment status at any time in your account under",
   "email.invoice.appreciate": "We truly appreciate your business and look forward to working with you again.",
+  "email.common.or": "or",
 
   "email.delivered.subject": "SignXpert -  Order Delivered",
   "email.delivered.title": "Your order has been delivered - SignXpert",

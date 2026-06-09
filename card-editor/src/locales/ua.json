@@ -1066,6 +1066,7 @@
     },
     "cart": "Кошик",
     "currentSign": "Поточна табличка",
+    "totalForAllSigns": "Разом по всіх табличках",
     "discount": "Знижка",
     "totalPrice": "Загальна ціна",
     "accessoriesSelected": "Обрані вами аксесуари:",
@@ -1118,8 +1119,10 @@
       "description": "Опис",
       "quantity": "Кількість",
       "totalSigns": "Загальна кількість табличок",
+      "signsSubtotal": "Проміжна сума табличок",
       "discount": "Знижка",
       "price": "Ціна",
+      "signsTotal": "Загальна сума табличок",
       "accessories": "Аксесуари",
       "types": "Типи",
       "totalAmount": "Загальна сума"
@@ -1656,7 +1659,14 @@
       "status": {
         "received": "Отримано",
         "paid": "Оплачено",
-        "unpaid": "Не оплачено"
+        "unpaid": "Не оплачено",
+        "printed": "Друковано",
+        "manufact": "У виробництві",
+        "delivered": "Доставлено",
+        "shipped": "Відправлено",
+        "returned": "Повернено",
+        "waiting": "Очікує",
+        "deleted": "Видалено"
       }
     },
     "details": {

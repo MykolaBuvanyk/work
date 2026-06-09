@@ -152,6 +152,7 @@
   "email.invoice.updateBilling": "Si vous souhaitez mettre à jour votre adresse de facturation ou l’adresse e-mail utilisée pour recevoir les factures, vous pouvez le faire dans :",
   "email.invoice.alreadyPaidDisregard": "Si vous avez déjà effectué le paiement, veuillez ne pas tenir compte de ce message. Vous pouvez vérifier le statut de votre paiement à tout moment dans votre compte sous",
   "email.invoice.appreciate": "Nous apprécions sincèrement votre confiance et serons ravis de travailler à nouveau avec vous.",
+  "email.common.or": "ou",
   "email.delivered.subject": "SignXpert -  Commande livrée",
   "email.delivered.title": "Votre commande a été livrée - SignXpert",
   "email.delivered.heading": "Votre commande a été livrée",

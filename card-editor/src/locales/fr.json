@@ -1066,6 +1066,7 @@
     },
     "cart": "Panier",
     "currentSign": "Panneau actuel",
+    "totalForAllSigns": "Total pour tous les panneaux",
     "discount": "Remise",
     "totalPrice": "Prix total",
     "accessoriesSelected": "Les accessoires que vous avez sélectionnés :",
@@ -1118,8 +1119,10 @@
       "description": "Description",
       "quantity": "Quantité",
       "totalSigns": "Nombre total de panneaux",
+      "signsSubtotal": "Sous-total des panneaux",
       "discount": "Remise",
       "price": "Prix",
+      "signsTotal": "Prix total des panneaux",
       "accessories": "Accessoires",
       "types": "Types",
       "totalAmount": "Montant total"
@@ -1657,6 +1660,13 @@
         "received": "Reçue",
         "paid": "Payée",
         "unpaid": "Non payée"
+        ,"printed": "Imprimé",
+        "manufact": "En production",
+        "delivered": "Livré",
+        "shipped": "Expédié",
+        "returned": "Retourné",
+        "waiting": "En attente",
+        "deleted": "Supprimé"
       }
     },
    "details": {

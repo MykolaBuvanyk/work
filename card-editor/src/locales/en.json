@@ -1066,6 +1066,7 @@
     },
     "cart": "Cart",
     "currentSign": "Current sign",
+    "totalForAllSigns": "Total for All Signs",
     "discount": "Discount",
     "totalPrice": "Total Price",
     "accessoriesSelected": "The Accessories you selected:",
@@ -1118,8 +1119,10 @@
       "description": "Description",
       "quantity": "Quantity",
       "totalSigns": "Total Signs",
+      "signsSubtotal": "Signs subtotal",
       "discount": "Discount",
       "price": "Price",
+      "signsTotal": "Signs total",
       "accessories": "Accessories",
       "types": "Types",
       "totalAmount": "Total amount"
@@ -1656,7 +1659,14 @@
       "status": {
         "received": "Received",
         "paid": "Paid",
-        "unpaid": "Unpaid"
+        "unpaid": "Unpaid",
+        "printed": "Printed",
+        "manufact": "Manufacturing",
+        "delivered": "Delivered",
+        "shipped": "Shipped",
+        "returned": "Returned",
+        "waiting": "Waiting",
+        "deleted": "Deleted"
       }
     },
     "details": {

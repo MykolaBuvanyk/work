@@ -1066,6 +1066,7 @@
   },
   "cart": "Carrello",
   "currentSign": "Cartello attuale",
+  "totalForAllSigns": "Totale per tutti i cartelli",
   "discount": "Sconto",
   "totalPrice": "Prezzo totale",
   "accessoriesSelected": "Gli accessori da te selezionati:",
@@ -1118,8 +1119,10 @@
     "description": "Descrizione",
     "quantity": "Quantità",
     "totalSigns": "Numero totale di cartelli",
+    "signsSubtotal": "Subtotale cartelli",
     "discount": "Sconto",
     "price": "Prezzo",
+    "signsTotal": "Prezzo totale cartelli",
     "accessories": "Accessori",
     "types": "Tipi",
     "totalAmount": "Importo totale"
@@ -1657,6 +1660,13 @@
       "received": "Ricevuto",
       "paid": "Pagato",
       "unpaid": "Non pagato"
+      ,"printed": "Stampato",
+      "manufact": "In produzione",
+      "delivered": "Consegnato",
+      "shipped": "Spedito",
+      "returned": "Reso",
+      "waiting": "In attesa",
+      "deleted": "Eliminato"
     }
   },
   "details": {

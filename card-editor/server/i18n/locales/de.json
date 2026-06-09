@@ -152,6 +152,7 @@
   "email.invoice.updateBilling": "Falls Sie Ihre Rechnungsadresse oder die für den Rechnungsempfang verwendete E-Mail-Adresse aktualisieren möchten, können Sie dies hier tun:",
   "email.invoice.alreadyPaidDisregard": "Falls Sie die Zahlung bereits abgeschlossen haben, ignorieren Sie bitte diese Nachricht. Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
   "email.invoice.appreciate": "Wir schätzen Ihr Vertrauen sehr und freuen uns auf die weitere Zusammenarbeit mit Ihnen.",
+  "email.common.or": "oder",
   "email.delivered.subject": "SignXpert - Bestellung zugestellt",
   "email.delivered.title": "Ihre Bestellung wurde zugestellt - SignXpert",
   "email.delivered.heading": "Ihre Bestellung wurde zugestellt",

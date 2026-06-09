@@ -13,6 +13,11 @@ const OpenProjectIcon = () => <span className="icon-folder">📂</span>;
 
 const Account = () => {
     const { t } = useTranslation();
+    const translateStatus = (status) => {
+        if (!status) return t('MyAccount.orders.status.received');
+        const key = String(status).toLowerCase();
+        return t(`MyAccount.orders.status.${key}`, { defaultValue: status });
+    };
     const [myOrders, setMyOrders] = useState([]);
     const [openingOrderId, setOpeningOrderId] = useState(null);
     const [page,setPage]=useState(1);
@@ -189,7 +194,7 @@ const Account = () => {
                                 <td>{order.orderName || 'Water sifgns 23'}</td>
                                 <td>{order.netAfterDiscount?.toFixed(2)}</td>
                                 <td>{order.sum?.toFixed(2)}</td>
-                                <td>{order.status || t('MyAccount.orders.status.received')}</td>
+                                <td>{translateStatus(order.status)}</td>
                                 <td onClick={() => downloadPdf(order.id, '2')} className="clickable"><DelNoteIcon /></td>
                                 <td
                                     className="clickable"
@@ -260,7 +265,7 @@ const Account = () => {
                                 <div className="order-card__status">
                                     <span className="order-card__label">{t('MyAccount.orders.table.status')}</span>
                                     <span className="order-card__pill order-card__pill--neutral">
-                                        {order.status || t('MyAccount.orders.status.received')}
+                                        {translateStatus(order.status)}
                                     </span>
                                 </div>
                                 <div className="order-card__status">

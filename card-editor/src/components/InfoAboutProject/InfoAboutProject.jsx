@@ -808,6 +808,10 @@ const InfoAboutProject = () => {
         <span className={styles.price}>{isLoading ? "…" : formatted}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
+        <p className={styles.para}>{t('infoAboutProject.totalForAllSigns')}</p>
+        <span className={styles.price}>{isLoading ? "…" : `€ ${Number(orderSubtotal || 0).toFixed(2)}`}</span>
+      </div>
+      <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>
           {t("infoAboutProject.discount")} <span>({Number(discountPercent || 0).toFixed(0)}%)</span>
         </p>

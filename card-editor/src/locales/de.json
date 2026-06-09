@@ -1066,6 +1066,7 @@
   },
   "cart": "Korb",
   "currentSign": "Aktuelles Schild",
+  "totalForAllSigns": "Schilder gesamt",
   "discount": "Rabatt",
   "totalPrice": "Gesamtpreis",
   "accessoriesSelected": "Die von Ihnen ausgewählten Zubehörartikel:",
@@ -1118,8 +1119,10 @@
     "description": "Beschreibung",
     "quantity": "Menge",
     "totalSigns": "Gesamtanzahl Schilder",
+    "signsSubtotal": "Zwichensumme",
     "discount": "Rabatt",
     "price": "Preis",
+    "signsTotal": "Gesamtpreis Schilder",
     "accessories": "Zubehör",
     "types": "Typen",
     "totalAmount": "Gesamtbetrag"
@@ -1657,6 +1660,13 @@
       "received": "Erhalten",
       "paid": "Bezahlt",
       "unpaid": "Unbezahlt"
+      ,"printed": "Gedruckt",
+      "manufact": "In Produktion",
+      "delivered": "Geliefert",
+      "shipped": "Versendet",
+      "returned": "Zurückgesendet",
+      "waiting": "Ausstehend",
+      "deleted": "Gelöscht"
     }
   },
   "details": {

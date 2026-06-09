@@ -677,12 +677,23 @@ const TopToolbar = ({ className, formData }) => {
 
       const getListItemForAccessory = (accessory) => {
         const accessoryName = normalize(accessory?.name);
+        const localizedName = accessory?.nameKey ? normalize(t(accessory.nameKey)) : null;
 
         // derive base name by stripping size/measurement tokens (e.g. "9,5 mm", "13 mm", "2.9 x 9.5")
-        const accessoryBaseName = accessoryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
+        const stripSize = (s) => String(s || "").replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
+        const accessoryBaseName = stripSize(accessoryName);
+        const localizedBase = localizedName ? stripSize(localizedName) : null;
 
         // try exact match first (entry text may include size or not)
-        const direct = listAccessories.find((entry) => normalize(entry?.text) === accessoryName || normalize(entry?.text) === accessoryBaseName);
+        const direct = listAccessories.find((entry) => {
+          const entryNorm = normalize(entry?.text);
+          return (
+            entryNorm === accessoryName ||
+            entryNorm === accessoryBaseName ||
+            (localizedName && entryNorm === localizedName) ||
+            (localizedBase && entryNorm === localizedBase)
+          );
+        });
         if (direct) return direct;
 
         const accessorySize = extractInfoSize(accessory?.desc);
@@ -693,8 +704,8 @@ const TopToolbar = ({ className, formData }) => {
             const entryName = normalize(entry?.text);
             if (!entryName) return false;
             // match if names align (either entry is base or equals accessoryName without size)
-            const entryBase = entryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
-            if (entryBase !== accessoryBaseName) return false;
+            const entryBase = stripSize(entryName);
+            if (entryBase !== accessoryBaseName && entryBase !== localizedBase) return false;
             // ensure sizes match
             return extractInfoSize(entry?.info) === accessorySize;
           });
@@ -705,8 +716,8 @@ const TopToolbar = ({ className, formData }) => {
         return listAccessories.find((entry) => {
           const entryName = normalize(entry?.text || "");
           if (!entryName) return false;
-          const entryBase = entryName.replace(/\b\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)?\s*(mm)?\b/gi, "").replace(/\s+/g, " ").trim();
-          return entryBase === accessoryBaseName;
+          const entryBase = stripSize(entryName);
+          return entryBase === accessoryBaseName || entryBase === localizedBase;
         });
       };
 

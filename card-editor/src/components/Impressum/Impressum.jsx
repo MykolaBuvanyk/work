@@ -5,6 +5,40 @@ import { useTranslation } from 'react-i18next';
 
 const Impressum = () => {
     const {t}=useTranslation()
+
+  const legalSections = [
+    {
+      title: t('Impressum.legal_1_title'),
+      paragraphs: [
+        t('Impressum.legal_1_p1'),
+        t('Impressum.legal_1_p2'),
+        t('Impressum.legal_1_p3'),
+        t('Impressum.legal_1_p4'),
+      ],
+    },
+    {
+      title: t('Impressum.legal_2_title'),
+      paragraphs: [
+        t('Impressum.legal_2_p1'),
+        t('Impressum.legal_2_p2'),
+        t('Impressum.legal_2_p3'),
+      ],
+    },
+    {
+      title: t('Impressum.legal_3_title'),
+      paragraphs: [
+        t('Impressum.legal_3_p1'),
+        t('Impressum.legal_3_p2'),
+        t('Impressum.legal_3_p3'),
+        t('Impressum.legal_3_p4'),
+        t('Impressum.legal_3_p5'),
+      ],
+    },
+    {
+      title: t('Impressum.legal_4_title'),
+      paragraphs: [t('Impressum.legal_4_p1')],
+    },
+  ];
   return (
     <div className="impressum max-w-4xl mx-auto px-4 py-12 text-gray-800 font-sans leading-relaxed">
       {/* Заголовок */}
@@ -84,6 +118,21 @@ const Impressum = () => {
         <p className="text-sm text-gray-700 leading-normal">
           {t("Impressum.i_19")}
         </p>
+      </section>
+
+      <section className="mb-12 space-y-8">
+        {legalSections.map((section) => (
+          <div key={section.title}>
+            <h2 className="text-xl font-semibold mb-3 text-gray-900">
+              {section.title}
+            </h2>
+            <div className="space-y-3 text-sm text-gray-700 leading-normal">
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
     </div>
   );

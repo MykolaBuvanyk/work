@@ -3389,7 +3389,8 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
             ? `<tr><td>${pdfText('pdf.invoice.invoiceDueDateLabel', lang)}</td><td>${invoiceDueDate}</td></tr>
           <tr><td>${pdfText('pdf.invoice.paymentTermsLabel', lang)}</td><td>${pdfText('common.thirtyDaysNet', lang)}</td></tr>`
             : `<tr><td>${pdfText('pdf.invoice.paymentStatusLabel', lang)}</td><td>${paymentStatus}</td></tr>`}
-          <tr><td>${pdfText('pdf.invoice.referenceLabel', lang)}</td><td>${pdfText('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumber}</td></tr>
+          <tr><td>${pdfText('pdf.invoice.paymentReferenceLabel', lang)}</td><td>${pdfText('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumber}</td></tr>
+          ${checkout?.customerReference ? `<tr><td>${pdfText('pdf.invoice.customerReferenceLabel', lang)}</td><td>${escapeHtml(checkout.customerReference)}</td></tr>` : ''}
             </table>
         </div>
     </div>
@@ -3515,8 +3516,10 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
       customerCountryCode: customerCountryRaw,
       customerCountrySubdivision: customerCountrySubdivisionRaw,
       customerVatNumber: customerVatNumberRaw,
-      buyerReference: String(order.user?.reference || order.userId || order.id || ''),
-      remittanceInformation: `${t('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumberRaw}`,
+      buyerReference: String(checkout?.customerReference || order.user?.reference || order.userId || order.id || ''),
+      remittanceInformation: checkout?.customerReference
+        ? `${t('pdf.invoice.customerReferenceLabel', lang)} ${checkout.customerReference}`
+        : `${t('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumberRaw}`,
       paymentDueDate: invoiceDueDateDate,
       signsCount: signsCountRaw,
       projectName: projectNameRaw,

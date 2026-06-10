@@ -1111,10 +1111,14 @@
       "postalCode": "Поштовий індекс",
       "country": "Країна",
       "region": "Регіон",
+      "customerReference": "Референс клієнта",
       "invoiceRegion": "Регіон для рахунку",
       "emailAddress": "E-Mail адреса",
       "mobilePhone": "Мобільний телефон"
     },
+      "customerReference": {
+        "placeholder": "наприклад: номер замовлення (PO) або номер проєкту — відображається в рахунку"
+      },
     "summary": {
       "description": "Опис",
       "quantity": "Кількість",

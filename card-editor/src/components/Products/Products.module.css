@@ -38,10 +38,16 @@ h3 {
 
 h1 {
   font-size: clamp(2rem, 2.8vw, 2.55rem);
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.15;
   text-decoration: none;
 }
+
+.page h2 {
+  font-weight: 800;
+  font-size: 40px;
+}
+
 p,
 ul {
   margin: 0;
@@ -70,6 +76,8 @@ ul {
 .sectionTitle {
   font-size: 36px;
   line-height: 1.18;
+  font-weight: 800;
+  font-family: Inter, Arial, sans-serif;
 }
 
 .sectionTitleRegular {
@@ -124,6 +132,7 @@ ul {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  padding-bottom: 100px;
 }
 
 .heroContent {
@@ -135,9 +144,10 @@ ul {
   margin: 0 auto;
   width: 80%;
 }
+
 .heroAddTitle {
-  font-weight: bold;
-  font-size: 32px;
+  font-weight: 800;
+  font-size: 40px;
   line-height: 120%;
   color: black;
   margin-bottom: 24px;
@@ -161,19 +171,23 @@ ul {
   font-size: 18px;
   margin-bottom: 30px;
 }
+
 .heroAddPara {
   font-size: 18px;
   color: #000000c9;
   font-weight: 400;
 }
+
 .heroIntro {
   font-size: 1.16rem;
   color: var(--products-text);
   font-weight: 700;
 }
+
 .uses {
   margin-bottom: 30px;
 }
+
 .usesGrid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -258,6 +272,13 @@ ul {
 
 .featuresTitleAccent {
   color: #006ca4;
+  flex-wrap: wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
 }
 
 .features .sectionHeadingDescription {
@@ -340,6 +361,7 @@ ul {
   justify-content: center;
   margin: 0 auto;
 }
+
 .infoBlockWide .infoBlockContent * {
   margin-top: 0;
 }
@@ -404,12 +426,15 @@ ul {
 .infoBlockGridReversed .infoBlockContent {
   order: 2;
 }
+
 .infoBlockPrimary {
   padding-bottom: 0;
 }
+
 .infoBlockSecondary {
   padding-top: 0;
 }
+
 .infoBlockSecondaryTitle {
   margin-bottom: 22px;
   line-height: 1.15;
@@ -421,14 +446,15 @@ ul {
   color: var(--products-muted);
 }
 
-.infoBlockContent p + p,
-.infoBlockContent ul + p,
-.infoBlockContent p + ul {
+.infoBlockContent p+p,
+.infoBlockContent ul+p,
+.infoBlockContent p+ul {
   margin-top: 10px;
 }
 
 .infoBlockContent strong {
   color: var(--products-text);
+  font-size: 40px;
 }
 
 .bulletList {
@@ -471,10 +497,19 @@ ul {
   gap: 18px;
   margin-top: 26px;
 }
+
 .infoBlockContentTitle {
   font-size: 28px;
-  max-width: 75%;
+  /* max-width: 75%; */
+  font-family: system-ui, sans-serif !important;
 }
+
+.page h1,
+.page h2,
+.infoBlockContentTitle h3 {
+  font-family: system-ui, sans-serif !important;
+}
+
 .plateCard {
   position: relative;
   padding: 15px 50px;
@@ -633,6 +668,7 @@ ul {
 }
 
 @media (max-width: 560px) {
+
   .sectionHeadingLead,
   .sectionHeadingDescription,
   .heroContent,
@@ -890,9 +926,9 @@ ul {
   }
 
   .infoBlockContent p,
-  .infoBlockContent p + p,
-  .infoBlockContent ul + p,
-  .infoBlockContent p + ul {
+  .infoBlockContent p+p,
+  .infoBlockContent ul+p,
+  .infoBlockContent p+ul {
     font-size: 14px;
     margin-top: 10px;
   }

@@ -12,7 +12,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
   const dropdownRef = useRef(null);
   const autoCreateOnOpenRef = useRef(false);
   const [formData, setFormData] = useState({
-    text: t("toolbar.barcode.defaultText"),
+    text: "",
     codeType: "CODE128",
   });
 
@@ -41,7 +41,8 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
     replace = false,
     createNew = false,
   } = {}) => {
-    if (!canvas || !formData.text.trim()) {
+    const barcodeText = formData.text.trim() || t("toolbar.barcode.defaultText");
+    if (!canvas || !barcodeText) {
       alert(t("toolbar.barcode.alerts.enterText"));
       return;
     }
@@ -53,7 +54,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         "http://www.w3.org/2000/svg",
         "svg"
       );
-      JsBarcode(svgEl, formData.text, {
+      JsBarcode(svgEl, barcodeText, {
         format: formData.codeType,
         width: 2,
         height: 100,
@@ -156,7 +157,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
         hasControls: true,
         hasBorders: true,
         isBarCode: true,
-        barCodeText: formData.text,
+        barCodeText: barcodeText,
         barCodeType: formData.codeType,
         suppressBarText: true,
         fill: globalColors?.textColor || "#000000",
@@ -325,7 +326,10 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Якщо немає жодного bar-коду – автогенеруємо його з поточного значення інпута.
+    setFormData({
+      text: "",
+      codeType: "CODE128",
+    });
     const existing = canvas.getObjects().some((o) => o.isBarCode);
     if (!existing && !autoCreateOnOpenRef.current) {
       autoCreateOnOpenRef.current = true;
@@ -421,7 +425,7 @@ const BarCodeGenerator = ({ isOpen, onClose }) => {
               <div className={styles.inputGroup}>
                 <input
                   type="text"
-                  placeholder=""
+                  placeholder={t("toolbar.barcode.defaultText")}
                   value={formData.text}
                   onChange={(e) => handleInputChange("text", e.target.value)}
                   className={styles.input}

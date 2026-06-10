@@ -46,7 +46,9 @@ const StepNumber = ({ number }) => (
 );
 
 const QuickGuide = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const editorImageLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0].toLowerCase();
+  const editorImageSrc = `/images/quick-guide/editor-image/${editorImageLanguage}.png`;
 
   return (
     <main className="quick-guide-container">
@@ -95,12 +97,14 @@ const QuickGuide = () => {
               </div>
             ))}
 
-            {sideNotes.map((note, index) => (
-              <div className={`quick-guide-side-note quick-guide-side-note-${index + 1}`} key={note}>
-                <p>{t(`QuickGuide.editor.sideNotes.${note}`)}</p>
-                <span />
-              </div>
-            ))}
+            <div className="quick-guide-side-notes-container">
+              {sideNotes.map((note, index) => (
+                <div className={`quick-guide-side-note quick-guide-side-note-${index + 1}`} key={note}>
+                  <p>{t(`QuickGuide.editor.sideNotes.${note}`)}</p>
+                  <span />
+                </div>
+              ))}
+            </div>
           </aside>
 
           <div className="quick-guide-editor-wrap">
@@ -113,7 +117,17 @@ const QuickGuide = () => {
 
             <img
               className="quick-guide-editor-image"
-              src="/images/quick-guide/editor-image.svg"
+              src={editorImageSrc}
+              onError={(event) => {
+                const { currentTarget } = event;
+
+                if (!currentTarget.src.endsWith('/en.png')) {
+                  currentTarget.src = '/images/quick-guide/editor-image/en.png';
+                  return;
+                }
+
+                currentTarget.src = '/images/quick-guide/editor-image.svg';
+              }}
               alt={t('QuickGuide.editor.imageAlt')}
             />
 

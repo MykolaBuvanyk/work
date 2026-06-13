@@ -69,7 +69,7 @@ const RegisterConsumer = () => {
   
   const [formData, setFormData] = useState({
     firstName: '', address: '', address2: '', address3: '',
-    city: '', postcode: '', country: 'BE', state: '', email: '',
+    city: '', postcode: '', country: 'DE', state: '', email: '',
     phone: '', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false, firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',

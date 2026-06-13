@@ -76,7 +76,7 @@ const RegisterBussines = () => {
   
   const [formData, setFormData] = useState({
     firstName: '',company:'', address: '', address2: '', address3: '',
-    town: '', postcode: '', country: 'BE', state: '', email: '',
+    town: '', postcode: '', country: 'DE', state: '', email: '',
     phone: '',vatNumber:'', password: '', confirmPassword: '', additional: '',
     isDifferent: false, isSubscribe: false,firstName2: '', surname2: '',
     phone2: '', postcode2: '', city2: '',

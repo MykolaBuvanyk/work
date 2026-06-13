@@ -15,6 +15,13 @@ const __dirname = path.dirname(__filename);
 
 const secretKey = process.env.secretKey;
 
+const localizedUrl = (baseUrl, path = '', lang) => {
+  const cleanBaseUrl = String(baseUrl || '').replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (lang === 'de') return `${cleanBaseUrl}${cleanPath}`;
+  return `${cleanBaseUrl}/${lang}${cleanPath}`;
+};
+
 const generateJwt = async (id, phone, firstName, surname, type, isRemember = true, company) => {
   return jwt.sign({ id, phone, firstName, surname, type, company }, secretKey, {
     expiresIn: isRemember ? '1y' : '1h',
@@ -142,6 +149,9 @@ class AuthController {
 
 
       const subject = `Welcome to SignXpert. Your account is ready!`;
+      const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
+      const editorUrl = localizedUrl(urlFrontend, 'online-sign-editor', userLanguage);
+      const homeUrl = localizedUrl(urlFrontend, '', userLanguage);
       const messageHtml = `
 <div style="background-color: #f4f4f4; padding: 40px 20px; font-family: Arial, sans-serif;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #333333;">
@@ -170,14 +180,14 @@ class AuthController {
             <p style="margin: 0 0 30px 0;">Our online editor is available right in your browser — the fastest way to bring your ideas to life.</p>
 
             <div style="text-align: center; margin-bottom: 40px;">
-                <a href="https://sign-xpert.com/online-sign-editor" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
+                <a href="${editorUrl}" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
             </div>
 
             <p style="margin: 0;">Best regards,</p>
             <p style="margin: 0 0 40px 0;">SignXpert Team</p>
 
             <div style="text-align: right; font-size: 14px; line-height: 1.4;">
-                <p style="margin: 0;"><a href="https://sign-xpert.com" style="color: #337ab7; text-decoration: underline;">sign-xpert.com</a></p>
+                <p style="margin: 0;"><a href="${homeUrl}" style="color: #337ab7; text-decoration: underline;">sign-xpert.com</a></p>
                 <p style="margin: 0;"><a href="mailto:info@sign-xpert.com" style="color: #337ab7; text-decoration: underline;">info@sign-xpert.com</a></p>
                 <p style="margin: 0; color: #666666;">+49 157 766 25 125</p>
             </div>

@@ -164,7 +164,10 @@ class SendEmailForStatus {
         const urlAccount = localizedUrl(urlFrontend, 'account', lang);
         const urlOrders = localizedUrl(urlFrontend, 'account/detail', lang);
         const urlHome = localizedUrl(urlFrontend, '', lang);
-      
+        const orderInMongo=await findCartProjectForOrder(order);
+        
+        if(orderInMongo.checkout.paymentMethod!='invoice')return;
+
         const messageHtml=`<!DOCTYPE html>
 <html lang="en">
 <head>

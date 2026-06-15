@@ -127,6 +127,114 @@ const getEntryJson = (entry) => {
 // Round to 2 decimal places (cents), using EPSILON to handle floating-point drift
 const round2 = (v) => Math.round((safeNumber(v) + Number.EPSILON) * 100) / 100;
 
+const PRICE_CACHE_STORAGE_KEY = "currentSignPriceByCanvasId";
+
+const getPriceCache = () => {
+  try {
+    if (typeof window !== "undefined") {
+      if (!window.__currentSignPriceCache) {
+        window.__currentSignPriceCache = {};
+      }
+      return window.__currentSignPriceCache;
+    }
+  } catch {
+    // no-op
+  }
+
+  return {};
+};
+
+const readStoredPriceCache = () => {
+  try {
+    if (typeof window === "undefined" || !window.sessionStorage) return {};
+    const parsed = JSON.parse(window.sessionStorage.getItem(PRICE_CACHE_STORAGE_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeStoredPriceCache = (cache) => {
+  try {
+    if (typeof window === "undefined" || !window.sessionStorage) return;
+    window.sessionStorage.setItem(PRICE_CACHE_STORAGE_KEY, JSON.stringify(cache || {}));
+  } catch {
+    // no-op
+  }
+};
+
+const getCachedCanvasPrice = (canvasId) => {
+  if (!canvasId) return null;
+  const key = String(canvasId);
+  const memoryValue = getPriceCache()[key];
+  if (Number.isFinite(Number(memoryValue))) return round2(Number(memoryValue));
+
+  const storedValue = readStoredPriceCache()[key];
+  if (Number.isFinite(Number(storedValue))) {
+    const cache = getPriceCache();
+    cache[key] = round2(Number(storedValue));
+    return cache[key];
+  }
+
+  return null;
+};
+
+const setCachedCanvasPrice = (canvasId, value) => {
+  if (!canvasId || !Number.isFinite(Number(value))) return;
+  const key = String(canvasId);
+  const rounded = round2(Number(value));
+  const cache = getPriceCache();
+  cache[key] = rounded;
+  writeStoredPriceCache({ ...readStoredPriceCache(), [key]: rounded });
+};
+
+const resolveActiveCanvasId = (detail) => {
+  const detailId = detail?.canvasId || detail?.designId || detail?.id;
+  if (detailId) return String(detailId);
+
+  try {
+    if (typeof window !== "undefined" && window.__currentProjectCanvasId) {
+      return String(window.__currentProjectCanvasId);
+    }
+  } catch {
+    // no-op
+  }
+
+  try {
+    const currentCanvasId = localStorage.getItem("currentCanvasId");
+    const currentUnsavedSignId = localStorage.getItem("currentUnsavedSignId");
+    const currentProjectCanvasId = localStorage.getItem("currentProjectCanvasId");
+    return currentCanvasId || currentUnsavedSignId || currentProjectCanvasId || null;
+  } catch {
+    return null;
+  }
+};
+
+const findStoredCanvasEntry = async (canvasId) => {
+  if (!canvasId) return null;
+
+  try {
+    const unsaved = await getAllUnsavedSigns().catch(() => []);
+    const unsavedEntry = Array.isArray(unsaved)
+      ? unsaved.find((entry) => String(entry?.id) === String(canvasId))
+      : null;
+    if (unsavedEntry) return unsavedEntry;
+  } catch {
+    // no-op
+  }
+
+  try {
+    const projectId = localStorage.getItem("currentProjectId");
+    if (!projectId) return null;
+    const project = await getProject(projectId).catch(() => null);
+    return Array.isArray(project?.canvases)
+      ? project.canvases.find((entry) => String(entry?.id) === String(canvasId)) || null
+      : null;
+  } catch {
+    return null;
+  }
+};
+
 const hasCustomBorderEnabled = (toolbarState, objects) => {
   // Prefer objects presence as source-of-truth; toolbarState can be stale during
   // fast resize/toggle sequences.
@@ -252,10 +360,54 @@ export const useCurrentSignPrice = () => {
 
   const debounceRef = useRef(null);
   const inFlightRef = useRef(false);
+  const activeCanvasIdRef = useRef(null);
+  const dirtyCanvasIdsRef = useRef(new Set());
+  const lastCanvasLoadedAtRef = useRef(0);
+  const hasComputedTotalsRef = useRef(false);
 
-  const computeNow = useCallback(async () => {
+  const applyCachedOrStoredCanvasPrice = useCallback(async (canvasId) => {
+    if (!canvasId) return false;
+    const targetCanvasId = String(canvasId);
+    const isStillActiveCanvas = () =>
+      !activeCanvasIdRef.current || String(activeCanvasIdRef.current) === targetCanvasId;
+
+    const cached = getCachedCanvasPrice(canvasId);
+    if (cached !== null) {
+      if (!isStillActiveCanvas()) return false;
+      setPrice(cached);
+      return true;
+    }
+
+    try {
+      const entry = await findStoredCanvasEntry(canvasId);
+      if (!entry) return false;
+
+      const { data: formData } = await $host.get("auth/getDate");
+      const storedPrice = computeEntrySubtotal(entry, formData);
+      if (!Number.isFinite(storedPrice)) return false;
+
+      setCachedCanvasPrice(canvasId, storedPrice);
+      if (!isStillActiveCanvas()) return false;
+      setPrice(storedPrice);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const computeNow = useCallback(async ({ force = false, canvasId = null } = {}) => {
     if (!canvas) return;
     if (inFlightRef.current) return;
+
+    const activeCanvasId = canvasId || activeCanvasIdRef.current || resolveActiveCanvasId();
+    if (activeCanvasId) {
+      activeCanvasIdRef.current = activeCanvasId;
+    }
+
+    if (!force && activeCanvasId && !dirtyCanvasIdsRef.current.has(activeCanvasId)) {
+      const applied = await applyCachedOrStoredCanvasPrice(activeCanvasId);
+      if (applied && hasComputedTotalsRef.current) return;
+    }
 
     inFlightRef.current = true;
     setIsLoading(true);
@@ -325,6 +477,11 @@ export const useCurrentSignPrice = () => {
       // Current sign: active canvas price shown in the per-canvas banner only
       const currentCanvasSubtotal = round2(basePrice + elementsPrice + borderPrice);
       const currentSignSubtotal = currentCanvasSubtotal;
+
+      if (activeCanvasId) {
+        setCachedCanvasPrice(activeCanvasId, currentSignSubtotal);
+        dirtyCanvasIdsRef.current.delete(activeCanvasId);
+      }
 
       // Order subtotal: sum of all canvases (project + unsaved) + accessories once
       // Always computed from saved entry JSON so it never changes when switching canvases
@@ -478,36 +635,55 @@ export const useCurrentSignPrice = () => {
       setVatPercent(vatP);
       setVatAmount(Number.isFinite(vat) ? vat : 0);
       setTotalPrice(Number.isFinite(totalInclVat) ? totalInclVat : 0);
+      hasComputedTotalsRef.current = true;
     } catch (e) {
       setError(e);
     } finally {
       inFlightRef.current = false;
       setIsLoading(false);
     }
-  }, [canvas, userType]);
+  }, [canvas, userType, applyCachedOrStoredCanvasPrice]);
 
-  const scheduleDebounced = useCallback(() => {
+  const scheduleDebounced = useCallback(({ force = true } = {}) => {
     if (!canvas) return;
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
+    const activeCanvasId = activeCanvasIdRef.current || resolveActiveCanvasId();
+    if (activeCanvasId && force) {
+      dirtyCanvasIdsRef.current.add(activeCanvasId);
+    }
     debounceRef.current = setTimeout(() => {
-      computeNow();
+      computeNow({ force, canvasId: activeCanvasId });
     }, 2000);
   }, [canvas, computeNow]);
 
-  const computeImmediate = useCallback(() => {
+  const computeImmediate = useCallback(({ force = true, canvasId = null } = {}) => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
-    computeNow();
+    const activeCanvasId = canvasId || activeCanvasIdRef.current || resolveActiveCanvasId();
+    if (activeCanvasId && force) {
+      dirtyCanvasIdsRef.current.add(activeCanvasId);
+    }
+    computeNow({ force, canvasId: activeCanvasId });
   }, [computeNow]);
 
   useEffect(() => {
     if (!canvas) return;
 
-    const onAnyCanvasChange = () => scheduleDebounced();
-    const onCanvasLoaded = () => computeImmediate();
+    const onAnyCanvasChange = () => {
+      if (canvas.__switching || canvas.__suspendUndoRedo) return;
+      scheduleDebounced({ force: true });
+    };
+    const onCanvasLoaded = (event) => {
+      const canvasId = resolveActiveCanvasId(event);
+      if (canvasId) {
+        activeCanvasIdRef.current = canvasId;
+      }
+      lastCanvasLoadedAtRef.current = Date.now();
+      applyCachedOrStoredCanvasPrice(canvasId);
+    };
 
     canvas.on?.("object:added", onAnyCanvasChange);
     canvas.on?.("object:removed", onAnyCanvasChange);
@@ -517,16 +693,28 @@ export const useCurrentSignPrice = () => {
     canvas.on?.("canvas:resized", onAnyCanvasChange);
     canvas.on?.("canvas:loaded", onCanvasLoaded);
 
-    const onAccessoriesChanged = () => scheduleDebounced();
-    const onToolbarChanged = () => scheduleDebounced();
-    const onWindowCanvasLoaded = () => computeImmediate();
+    const onAccessoriesChanged = () => scheduleDebounced({ force: true });
+    const onToolbarChanged = () => {
+      if (canvas.__switching || canvas.__suspendUndoRedo) return;
+      if (Date.now() - lastCanvasLoadedAtRef.current < 250) return;
+      scheduleDebounced({ force: true });
+    };
+    const onWindowCanvasLoaded = (event) => onCanvasLoaded(event?.detail);
 
     window.addEventListener?.("accessories:changed", onAccessoriesChanged);
     window.addEventListener?.("toolbar:changed", onToolbarChanged);
     window.addEventListener?.("canvas:loaded", onWindowCanvasLoaded);
 
-    // Initial compute once canvas exists
-    computeImmediate();
+    // Initial value comes from cache/storage when available; otherwise calculate once.
+    const initialCanvasId = resolveActiveCanvasId();
+    if (initialCanvasId) {
+      activeCanvasIdRef.current = initialCanvasId;
+    }
+    applyCachedOrStoredCanvasPrice(initialCanvasId).then((applied) => {
+      if (!applied || !hasComputedTotalsRef.current) {
+        computeImmediate({ force: true, canvasId: initialCanvasId });
+      }
+    });
 
     return () => {
       if (debounceRef.current) {
@@ -546,7 +734,7 @@ export const useCurrentSignPrice = () => {
       window.removeEventListener?.("toolbar:changed", onToolbarChanged);
       window.removeEventListener?.("canvas:loaded", onWindowCanvasLoaded);
     };
-  }, [canvas, scheduleDebounced, computeImmediate]);
+  }, [canvas, scheduleDebounced, computeImmediate, applyCachedOrStoredCanvasPrice]);
 
   return {
     price,

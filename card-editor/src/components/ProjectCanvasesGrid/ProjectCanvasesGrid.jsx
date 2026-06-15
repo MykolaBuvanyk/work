@@ -101,6 +101,7 @@ const ProjectCanvasesGrid = () => {
   const paginationReadyRef = useRef(false);
   const projectLoadSeqRef = useRef(0);
   const unsavedLoadSeqRef = useRef(0);
+  const gridClickLockedUntilRef = useRef(0);
   // ВИДАЛЕНО: livePreview state - тепер використовуємо тільки збережені preview
 
   useEffect(() => {
@@ -1351,6 +1352,14 @@ const ProjectCanvasesGrid = () => {
     }
   };
 
+  const handleCanvasGridItemClick = canvasEntry => {
+    const now = Date.now();
+    if (now < gridClickLockedUntilRef.current) return;
+
+    gridClickLockedUntilRef.current = now + 500;
+    openCanvas(canvasEntry);
+  };
+
   openCanvasRef.current = openCanvas;
 
   // Expose navigation helpers for ToolbarFooter
@@ -1921,7 +1930,7 @@ const ProjectCanvasesGrid = () => {
                 <div
                   key={c.id}
                   className={`${styles.item} ${selectedId === c.id ? styles.selected : ''}`}
-                  onClick={() => openCanvas(c)}
+                  onClick={() => handleCanvasGridItemClick(c)}
                 >
                   {/* Нумерація слайду */}
                   <div

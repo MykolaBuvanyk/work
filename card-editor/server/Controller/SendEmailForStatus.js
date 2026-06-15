@@ -9,6 +9,14 @@ import { localize } from '../i18n/localize.js';
 const userLang = (user) => user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
 // Admin emails are operational notifications and must always stay in English.
 const ADMIN_LANG = 'en';
+
+// Build localized frontend URL (de has no prefix, others get /lang prefix).
+const localizedUrl = (baseUrl, path = '', lang) => {
+  const cleanBaseUrl = String(baseUrl || '').replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (lang === 'de') return `${cleanBaseUrl}${cleanPath}`;
+  return `${cleanBaseUrl}/${lang}${cleanPath}`;
+};
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import { 
@@ -74,6 +82,7 @@ class SendEmailForStatus {
       
         const subject=`SignXpert Order Paid – #${String(order.id).padStart(3, '0')} ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
+        const urlHome=localizedUrl(urlFrontend, '', ADMIN_LANG);
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
 
         const messageHtml=`<!DOCTYPE html>
@@ -130,7 +139,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="padding: 0 60px 40px 60px;">
-                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
                         </td>
@@ -151,7 +160,14 @@ class SendEmailForStatus {
         const user=order.user;
         const subject=`SignXpert - Payment Received  #${String(order.id).padStart(3, '0')} (${nameOrCompany})`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-      
+        const lang = userLang(order.user);
+        const urlAccount = localizedUrl(urlFrontend, 'account', lang);
+        const urlOrders = localizedUrl(urlFrontend, 'account/detail', lang);
+        const urlHome = localizedUrl(urlFrontend, '', lang);
+        const orderInMongo=await findCartProjectForOrder(order);
+        
+        if(orderInMongo.checkout.paymentMethod!='invoice')return;
+
         const messageHtml=`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -189,7 +205,7 @@ class SendEmailForStatus {
                         
                             <p style="margin: 0 0 25px 0;">
                                 You can check the detailed status of your order anytime in your account.<br>
-                                Simply log in to <a href="${urlFrontend+'account'}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlFrontend+'account/detail'}" style="color: #0073bc; text-decoration: underline;">My Orders</a>
+                                Simply log in to <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0073bc; text-decoration: underline;">My Orders</a>
                             </p>
                             
                             <p style="margin: 40px 0 5px 0;">Best regards,</p>
@@ -199,7 +215,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="padding: 0 60px 40px 60px;">
-                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
                         </td>
@@ -211,7 +227,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        sendEmail(order.user.email, messageHtml, subject, null, userLang(order.user))
+        sendEmail(order.user.email, messageHtml, subject, null, lang)
     }
 
     static SendUserNewPassword=async(user,newPassword)=>{
@@ -219,6 +235,10 @@ class SendEmailForStatus {
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const subjectAdmin=`SignXpert - Password Recovery for ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
+        const lang = userLang(user);
+        const urlAccount = localizedUrl(urlFrontend, 'account', lang);
+        const urlDetails = localizedUrl(urlFrontend, 'account/detail', lang);
+        const urlHome = localizedUrl(urlFrontend, '', lang);
         const messageHtml=`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -260,7 +280,7 @@ class SendEmailForStatus {
 
                             <p style="margin: 0 0 25px 0;">
                                 For security, we recommend changing it to a new password immediately after logging in.<br>
-                                Simply log in to <a href="${urlFrontend+'account'}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlFrontend+'account/detail'}" style="color: #0073bc; text-decoration: underline;">My Details</a> in your account to update your password.
+                                Simply log in to <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlDetails}" style="color: #0073bc; text-decoration: underline;">My Details</a> in your account to update your password.
                             </p>
                             
                             <p style="margin: 0 0 25px 0;">If you didn't request a password reset, please ignore this email.</p>
@@ -274,7 +294,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="padding: 0 60px 40px 60px;">
-                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
                         </td>
@@ -286,7 +306,7 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`
-        const result = await sendEmail(user.email, messageHtml, subjectAdmin, null, userLang(user));
+        const result = await sendEmail(user.email, messageHtml, subjectAdmin, null, lang);
         if (!result || result.status !== 200) {
             throw new Error(result?.message || 'Failed to send password recovery email');
         }
@@ -296,6 +316,7 @@ class SendEmailForStatus {
         const nameOrCompany=user.company?user.company:user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const ADMIN_EMAIL=process.env.ADMIN_EMAIL;
+        const urlHome=localizedUrl(process.env.VITE_LAYOUT_FRONTEND_URL, '', ADMIN_LANG);
         const subjectAdmin=`SignXpert | Cust. ID #${String(user.id).padStart(3, '0')} | New Cust. Reg. ${nameOrCompany}`;
         const currentDate = new Date().toLocaleDateString('en-GB', {
   day: '2-digit',
@@ -360,7 +381,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="padding: 0 60px 40px 60px;">
-                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
                         </td>
@@ -436,6 +457,7 @@ class SendEmailForStatus {
     }
 
     static SendEmailWithFile = async (newOrder, textHTML, subject, to) => {
+        return;
         let browser;
         let outputPdfBuffer = null;
         const order = newOrder; // Для сумісності з логікою з getPdfs3
@@ -584,6 +606,9 @@ class SendEmailForStatus {
         
             const vatIdMarkup = vatNumber ? `<tr><td>VAT ID:</td><td>${vatNumber}</td></tr>` : '';
         
+            const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
+
+
             const htmlContent = `
         <!DOCTYPE html>
         <html lang="uk">
@@ -971,7 +996,7 @@ class SendEmailForStatus {
             });
             outputPdfBuffer = Buffer.from(zugferdPdf);
 
-            //await sendEmail(to, textHTML, subject, outputPdfBuffer)
+            await sendEmail(to, textHTML, subject, outputPdfBuffer)
 
         } catch (err) {
             console.error("PDF Generation Error in SendToAdminNewOrder:", err);
@@ -1001,9 +1026,10 @@ class SendEmailForStatus {
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
             const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const urlHome=localizedUrl(urlFrontend, '', lang);
             const orLabel = t('email.common.or', lang);
             
             const html=`
@@ -1047,7 +1073,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 25px;">
-                            We have successfully received your order. Our team will soon begin reviewing all project details to ensure everything is exactly as requested. You will receive a separate email once we start this review.
+                            We have received your order and will check that everything looks correct with your project. If we have any questions, we will contact you.
                         </td>
                     </tr>
 
@@ -1073,8 +1099,20 @@ class SendEmailForStatus {
                     </tr>
 
                     <tr>
-                        <td style="font-size: 16px; line-height: 1.6; padding-bottom: 30px;">
+                        <td style="font-size: 16px; line-height: 1.6;">
                             If you notice anything that needs correction, please contact us as soon as possible.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-size: 16px; line-height: 1.6;">
+                            As soon as your order has been produced, packed, and shipped, you will receive a separate email with your tracking number. The invoice will be attached to that email.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-size: 16px; line-height: 1.6; padding-bottom: 40px;">
+                            If you have any questions or need any assistance, we are always happy to help.
                         </td>
                     </tr>
 
@@ -1087,7 +1125,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="font-size: 14px; border-top: 1px solid #eeeeee; padding-top: 20px;">
-                            <a href="https://sign-xpert.com" style="color: #0056b3; text-decoration: underline;">sign-xpert.com</a><br>
+                            <a href="${urlHome}" style="color: #0056b3; text-decoration: underline;">sign-xpert.com</a><br>
                             <a href="mailto:info@sign-xpert.com" style="color: #0056b3; text-decoration: underline;">info@sign-xpert.com</a><br>
                             <span style="color: #666666;">+49 157 766 25 125</span>
                         </td>
@@ -1111,14 +1149,17 @@ class SendEmailForStatus {
     }
     static StatusPrinted=async(order)=>{
         try{
+            return;
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
             const subject=`SignXpert - Order Confirmation #${orderNumber} ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
+            const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const urlHome=localizedUrl(urlFrontend, '', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1197,7 +1238,7 @@ class SendEmailForStatus {
                     <tr>
                         <td align="right" style="padding: 0 40px 40px 40px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 20px 0 5px 0; font-size: 14px;">
-                                <a href="https://sign-xpert.com" style="color: #0056b3; text-decoration: none;">sign-xpert.com</a>
+                                <a href="${urlHome}" style="color: #0056b3; text-decoration: none;">sign-xpert.com</a>
                             </p>
                             <p style="margin: 0 0 5px 0; font-size: 14px;">
                                 <a href="mailto:info@sign-xpert.com" style="color: #0056b3; text-decoration: none;">info@sign-xpert.com</a>
@@ -1217,7 +1258,7 @@ class SendEmailForStatus {
 </html>
 `
             const to=order.user.email;
-            await sendEmail(to,html,subject, null, userLang(order.user));
+            await sendEmail(to,html,subject, null, lang);
         }catch(err){
             console.error('error send email where status printed.'+err);
             return false
@@ -1226,6 +1267,7 @@ class SendEmailForStatus {
 
    static StatusShipped = async (order) => {
     try {
+        return;
         const orderNumber = String(order.id).padStart(3, '0');
         const nameOrCompany = order.user.company ? order.user.company : order.user.firstName;
         const fullName = [order.user.firstName, order.user.surname].filter(Boolean).join(' ');
@@ -1234,8 +1276,10 @@ class SendEmailForStatus {
         const subject = `SignXpert - Order Shipped #${orderNumber} ${nameOrCompany}`;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
-        const urlAccount = urlFrontend + 'account/detail';
-        const urlOrders = urlFrontend + 'account';
+        const lang = userLang(order.user);
+        const urlAccount = localizedUrl(urlFrontend, 'account/detail', lang);
+        const urlOrders = localizedUrl(urlFrontend, 'account', lang);
+        const urlHome = localizedUrl(urlFrontend, '', lang);
         
         const trackingNumber = order.trackingNumber || '';
         const trackingUrl = trackingNumber
@@ -1305,7 +1349,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="right" style="padding: 0 60px 40px 60px;">
-                            <a href="https://sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="display: block; color: #0073bc; text-decoration: underline; font-size: 14px; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; font-size: 14px; color: #000000;">+49 157 766 25 125</p>
                         </td>
@@ -1319,7 +1363,7 @@ class SendEmailForStatus {
 </html>`;
 
         const to = order.user.email;
-        await sendEmail(to, html, subject, null, userLang(order.user));
+        await sendEmail(to, html, subject, null, lang);
 
         return true;
     } catch (err) {
@@ -1339,13 +1383,16 @@ class SendEmailForStatus {
             const subject=`${t('email.invoice.subject', lang)} #${orderNumber} ${t('email.invoice.subjectFor', lang)} ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
-            const payment_url=urlFrontend+`account/pay/${order.id}`
             const trackingNumber=String(order.trackingNumber || '').trim();
             const trackingUrl=trackingNumber
                 ? `https://www.ups.com/track?tracknum=${encodeURIComponent(trackingNumber)}`
                 : 'https://www.ups.com/track';
+            const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const payment_url=localizedUrl(urlFrontend, `account/pay/${order.id}`, lang)
+            const urlHome=localizedUrl(urlFrontend, '', lang);
+            const orLabel = t('email.common.or', lang);
             const html=`
 <!DOCTYPE html>
 <html lang="${lang}">
@@ -1454,9 +1501,11 @@ class SendEmailForStatus {
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
-            const contact=urlFrontend+'contacts'
+            const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const contact=localizedUrl(urlFrontend, 'contacts', lang)
+            const urlHome=localizedUrl(urlFrontend, '', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1534,7 +1583,7 @@ class SendEmailForStatus {
                     <tr>
                         <td align="right" style="padding: 0 40px 40px 40px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 20px 0 5px 0; font-size: 14px;">
-                                <a href="https://sign-xpert.com" style="color: #006DA5; text-decoration: none;">sign-xpert.com</a>
+                                <a href="${urlHome}" style="color: #006DA5; text-decoration: none;">sign-xpert.com</a>
                             </p>
                             <p style="margin: 0 0 5px 0; font-size: 14px;">
                                 <a href="mailto:info@sign-xpert.com" style="color: #006DA5; text-decoration: none;">info@sign-xpert.com</a>
@@ -1559,7 +1608,7 @@ class SendEmailForStatus {
                 return true;
             }
 
-            await Promise.all(recipients.map((to) => sendEmail(to, html, subject, null, userLang(order.user))));
+            await Promise.all(recipients.map((to) => sendEmail(to, html, subject, null, lang)));
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);
@@ -1576,9 +1625,11 @@ class SendEmailForStatus {
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
-            const contact=urlFrontend+'contacts'
+            const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const contact=localizedUrl(urlFrontend, 'contacts', lang)
+            const urlHome=localizedUrl(urlFrontend, '', lang);
             
             const html=`
 <!DOCTYPE html>
@@ -1634,7 +1685,7 @@ class SendEmailForStatus {
 
         <tr>
             <td style="padding: 0 40px 40px 40px; text-align: right; font-size: 14px;">
-                <a href="https://sign-xpert.com" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 5px;">sign-xpert.com</a>
+                <a href="${urlHome}" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 5px;">sign-xpert.com</a>
                 <a href="mailto:info@sign-xpert.com" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 5px;">info@sign-xpert.com</a>
                 <p style="margin: 0; color: #333333;">+49 157 766 25 125</p>
             </td>
@@ -1643,7 +1694,7 @@ class SendEmailForStatus {
 </body>
 </html>`
             const to=order.user.email;
-            await sendEmail(to,html,subject, null, userLang(order.user));
+            await sendEmail(to,html,subject, null, lang);
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);
@@ -1660,11 +1711,12 @@ class SendEmailForStatus {
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
-            const urlAccount=urlFrontend+'account/detail';
-            const urlOrders=urlFrontend+'account';
-            const contact=urlFrontend+'contacts'
-            const payURL=urlFrontend+'account/pay/'+order.id;
             const lang = userLang(order.user);
+            const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
+            const urlOrders=localizedUrl(urlFrontend, 'account', lang);
+            const contact=localizedUrl(urlFrontend, 'contacts', lang)
+            const payURL=localizedUrl(urlFrontend, `account/pay/${order.id}`, lang);
+            const urlHome=localizedUrl(urlFrontend, '', lang);
             const outstandingNote = t('email.reminder.outstandingNote', lang, { orderNumber });
             const paymentStatusNote = t('email.reminder.paymentStatusNote', lang);
             const myOrdersLabel = t('common.myOrders', lang);
@@ -1705,7 +1757,7 @@ class SendEmailForStatus {
                 <p>${outstandingNote}</p>
 
                 <p>You can also view and settle your invoice at any time via our website:<br>
-                <a href="https://www.sign-xpert.com" style="color: #0066cc; text-decoration: underline;">www.sign-xpert.com</a><br>
+                <a href="${urlHome}" style="color: #0066cc; text-decoration: underline;">www.sign-xpert.com</a><br>
                 Simply log in and navigate to:</p>
 
                 <p style="font-weight: bold;">
@@ -1753,7 +1805,7 @@ class SendEmailForStatus {
                             <p style="margin: 5px 0 0 0; font-weight: bold;">SignXpert Team</p>
                         </td>
                         <td style="text-align: right; font-size: 13px;">
-                            <a href="https://sign-xpert.com" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">sign-xpert.com</a>
+                            <a href="${urlHome}" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">info@sign-xpert.com</a>
                             <p style="margin: 0; color: #333333;">+49 157 766 25 125</p>
                         </td>
@@ -1785,6 +1837,9 @@ class SendEmailForStatus {
 
             const logo = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
             const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+            const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
+            const adminUrlHome = localizedUrl(urlFrontend, '', ADMIN_LANG);
+            const userUrlHome = localizedUrl(urlFrontend, '', DEFAULT_LANGUAGE);
 
             if (!ADMIN_EMAIL) {
                 throw ErrorApi.badRequest('Admin email is not configured');
@@ -1888,7 +1943,7 @@ class SendEmailForStatus {
             <!-- CONTACT -->
             <tr>
             <td align="right" style="font-size:13px;">
-                <a href="https://sign-xpert.com" style="color:#0a58ff;">sign-xpert.com</a><br/>
+                <a href="${adminUrlHome}" style="color:#0a58ff;">sign-xpert.com</a><br/>
                 <a href="mailto:info@sign-xpert.com" style="color:#0a58ff;">info@sign-xpert.com</a><br/>
                 +49 157 766 25 125
             </td>
@@ -1986,7 +2041,7 @@ class SendEmailForStatus {
         <!-- CONTACT -->
         <tr>
           <td align="right" style="font-size:13px;">
-            <a href="https://sign-xpert.com" style="color:#0a58ff;">sign-xpert.com</a><br/>
+            <a href="${userUrlHome}" style="color:#0a58ff;">sign-xpert.com</a><br/>
             <a href="mailto:info@sign-xpert.com" style="color:#0a58ff;">info@sign-xpert.com</a><br/>
             +49 157 766 25 125
           </td>

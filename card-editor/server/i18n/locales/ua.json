@@ -218,6 +218,7 @@
   "pdf.invoice.ibanLabel": "IBAN:",
   "pdf.invoice.bicSwiftLabel": "BIC / SWIFT:",
   "pdf.invoice.paymentReferenceLabel": "Призначення платежу:",
+  "pdf.invoice.customerReferenceLabel": "Посилання клієнта:",
   "pdf.invoice.onlinePaymentLine1": "Якщо ви хочете оплатити карткою або скористатися будь-яким іншим доступним онлайн-способом оплати, будь ласка, перейдіть за посиланням:",
   "pdf.invoice.onlinePaymentLine2": "Увійдіть до свого акаунта та перейдіть до розділу:",
   "pdf.invoice.onlinePaymentLine3": "Виберіть відповідний рахунок і натисніть «Оплатити», щоб безпечно завершити оплату.",

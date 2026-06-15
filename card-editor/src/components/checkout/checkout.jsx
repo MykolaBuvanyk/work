@@ -325,6 +325,7 @@ export default function Checkout({
 	const [isInvoiceDifferent, setIsInvoiceDifferent] = useState(Boolean(emailDraft.isInvoiceDifferent))
 	const [invoiceEmail, setInvoiceEmail] = useState(String(emailDraft.invoiceEmail || ''))
 	const [deliveryComment, setDeliveryComment] = useState('')
+	const [customerReference, setCustomerReference] = useState('')
 	const [productionComment, setProductionComment] = useState('')
 	const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 	const [profileUserType, setProfileUserType] = useState('')
@@ -594,10 +595,10 @@ export default function Checkout({
 		}
 		const shouldIncludeInvoiceAddress =
 			isInvoiceDifferent && hasInvoiceAddressContent(invoiceAddress)
-		if (typeof onPlaceOrder === 'function') {
-			setIsPlacingOrder(true)
-			try {
-				await Promise.resolve(onPlaceOrder({
+							if (typeof onPlaceOrder === 'function') {
+								setIsPlacingOrder(true)
+								try {
+									await Promise.resolve(onPlaceOrder({
 					sum: Number(sumForOrder || 0),
 					totalSum: Number(totalAmount || 0),
 					discountPercent: Number(totalCanvasDiscountPercent || 0),
@@ -620,7 +621,8 @@ export default function Checkout({
 						}
 						: null,
 					deliveryAddress,
-					invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
+												invoiceAddress: shouldIncludeInvoiceAddress ? invoiceAddress : null,
+												customerReference: String(customerReference || '').trim(),
 					invoiceEmail: String(invoiceEmail || ''),
 					invoiceAddressEmail: String(invoiceAddress?.email || '').trim(),
 					deliveryComment: String(deliveryComment || '').trim(),
@@ -829,7 +831,9 @@ export default function Checkout({
 										</h2>
 
 										<ActionButton text={t('checkout.actions.change')} onClick={() => {}} />
-									</div>
+																																										</div>
+
+																																										/** expose customerReference to parent onPlaceOrder via checkoutTotals */
 
 									<fieldset className='address-card'>
 										<legend className='address-card__legend'>
@@ -979,6 +983,8 @@ export default function Checkout({
 													onChange={e => updateDeliveryField('mobile', e.target.value)}
 												/>
 											</FieldRow>
+
+
 										</div>
 									</fieldset>
 
@@ -998,6 +1004,20 @@ export default function Checkout({
 												onChange={e => setIsPhoneOk(e.target.checked)}
 												label={t('checkout.yes')}
 											/>
+										</div>
+
+										{/* Customer Reference - placed below delivery address and above address-extra as requested */}
+										<div className='field-row-wrap customer-reference-wrap'>
+											<FieldRow id='customerReference' label={t('checkout.fields.customerReference')}>
+												<input
+													id='customerReference'
+													name='customerReference'
+													type='text'
+													placeholder={t('checkout.customerReference.placeholder')}
+													value={customerReference}
+													onChange={e => setCustomerReference(e.target.value)}
+												/>
+											</FieldRow>
 										</div>
 
 										<div className='address-extra__row address-extra__row--invoice'>
@@ -1230,6 +1250,8 @@ export default function Checkout({
 													</tr>
 												</tbody>
 											</table>
+
+
 										</div>
 
 										<div className='promo-code-block'>

@@ -567,6 +567,7 @@ const InfoAboutProject = () => {
           invoiceEmail: String(checkoutTotals?.invoiceEmail || ""),
           invoiceAddressEmail: String(checkoutTotals?.invoiceAddressEmail || ""),
           deliveryComment: String(checkoutTotals?.deliveryComment || ""),
+          customerReference: String(checkoutTotals?.customerReference || ""),
           orderTestSummary: persistedOrderTestSummary,
         },
         manufacturerNote:

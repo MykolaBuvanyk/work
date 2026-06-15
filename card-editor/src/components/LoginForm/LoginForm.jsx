@@ -76,19 +76,24 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
           </div>
         </div>
 
+      <br/>
+        <button type="submit" className="sign-in-btn">
+          {t("LoginForm.l_11")}
+        </button>
+
         <div className="forgot-password-link">
           <div style={{cursor:'pointer'}} onClick={()=>setIsForgot(!isForgot)}>{t("LoginForm.l_7")}</div>
         </div>
         {isForgot &&
           <>
-            <p style={{marginBottom:'10px'}}>{t("LoginForm.l_8")}</p>
+            <p style={{margin:'10px 0'}}>{t("LoginForm.l_8")}</p>
             <div style={{marginBottom:'15px'}} className="login-table">
               <div className="table-row top-row">
                 <div className="table-label">
                   <label>{t("LoginForm.l_9")}</label>
                 </div>
                 <div className="table-input">
-                  <MyTextInput value={forgotEmail} setValue={setForgotEmail} required />
+                  <MyTextInput value={forgotEmail} setValue={setForgotEmail} />
                 </div>
               </div>
             </div>
@@ -96,11 +101,6 @@ const LoginForm = ({toRegister=false, onSuccess}) => {
               {t("LoginForm.l_10")}
             </button>
           </>
-        }
-        {!isForgot&&
-          <button type="submit" className="sign-in-btn">
-            {t("LoginForm.l_11")}
-          </button>
         }
         {toRegister&&
         <div className="toReg">

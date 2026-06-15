@@ -4,6 +4,7 @@ import AccountHeader from './AccountHeader';
 import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedPath } from '../../utils/localizedPath';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -213,7 +214,7 @@ const Account = () => {
                                 <td style={{color:order.isPaid?'green':'red'}} className={order.paid ? 'status-paid' : 'status-unpaid'}>
                                     {order.isPaid ? t('MyAccount.orders.status.paid') : t('MyAccount.orders.status.unpaid')}
                                 </td>
-                                <td>{!order.isPaid && <span onClick={()=>window.open('/account/pay/' + order.id, '_blank')} className="to-pay-icon">💳</span>}</td>
+                                <td>{!order.isPaid && <span onClick={()=>window.open(getLocalizedPath('/account/pay/' + order.id), '_blank')} className="to-pay-icon">💳</span>}</td>
                                 <td
                                     className="clickable"
                                     onClick={openingOrderId ? undefined : () => openProjectFromOrder(order)}
@@ -297,7 +298,7 @@ const Account = () => {
                                 <button
                                     type="button"
                                     className="order-card__action"
-                                    onClick={() => !isPaid && window.open('/account/pay/' + order.id, '_blank')}
+                                    onClick={() => !isPaid && window.open(getLocalizedPath('/account/pay/' + order.id), '_blank')}
                                     disabled={isPaid}
                                 >
                                     <span className="order-card__action-icon to-pay-icon">💳</span>

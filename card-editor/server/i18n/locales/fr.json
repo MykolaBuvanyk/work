@@ -218,6 +218,7 @@
   "pdf.invoice.ibanLabel": "IBAN :",
   "pdf.invoice.bicSwiftLabel": "BIC / SWIFT :",
   "pdf.invoice.paymentReferenceLabel": "Référence de paiement :",
+  "pdf.invoice.customerReferenceLabel": "Référence client :",
   "pdf.invoice.onlinePaymentLine1": "Si vous souhaitez payer par carte ou utiliser l’un des autres modes de paiement en ligne disponibles, veuillez consulter :",
   "pdf.invoice.onlinePaymentLine2": "Connectez-vous à votre compte et allez dans :",
   "pdf.invoice.onlinePaymentLine3": "Sélectionnez la facture concernée et cliquez sur « Payer » pour effectuer votre paiement en toute sécurité.",

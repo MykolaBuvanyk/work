@@ -1111,9 +1111,13 @@
       "postalCode": "Code postal",
       "country": "Pays",
       "region": "Région",
+      "customerReference": "Référence client",
       "invoiceRegion": "Région de facturation",
       "emailAddress": "Adresse e-mail",
       "mobilePhone": "Téléphone portable"
+    },
+    "customerReference": {
+      "placeholder": "p.ex. n° de commande ou n° de projet - affiché sur la facture"
     },
     "summary": {
       "description": "Description",

@@ -15,6 +15,7 @@ import { fitObjectToCanvas } from "../../utils/canvasFit";
 
 const QRCodeGenerator = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
+  const DEFAULT_QR_URL = "https://example.com";
   // Закриття по клику вне модального окна
   const dropdownRef = useRef(null);
   useEffect(() => {
@@ -129,7 +130,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       setFormData((prev) => ({
         ...prev,
         wifiSSID: ssidMatch?.[1] || "",
-        wifiPassword: passMatch?.[1] || "",
+        wifiPassword: "",
         wifiSecurity: secMatch?.[1] || "WPA",
       }));
       return;
@@ -155,10 +156,21 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
     }
 
     setSelectedType("url");
+    setFormData({
+      url: "",
+      email: "",
+      phone: "",
+      wifiSSID: "",
+      wifiPassword: "",
+      wifiSecurity: "WPA",
+      message: "",
+    });
     if (canvas) {
       const existing = canvas.getObjects()?.find((o) => o.isQRCode);
       if (!existing) {
-        generateQRCode({ auto: true, keepSelection: true, mode: "new" });
+        requestAnimationFrame(() => {
+          generateQRCode({ auto: true, keepSelection: true, mode: "new" });
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,9 +180,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
   const generateQRData = () => {
     switch (selectedType) {
       case "url":
-        return formData.url
-          ? normalizeUrl(formData.url)
-          : "https://example.com";
+        return formData.url ? normalizeUrl(formData.url) : DEFAULT_QR_URL;
       case "email":
         return `mailto:${formData.email}`;
       case "phone":
@@ -185,7 +195,7 @@ const QRCodeGenerator = ({ isOpen, onClose }) => {
       case "message":
         return formData.message || t("toolbar.qr.defaults.message");
       default:
-        return "https://example.com";
+        return DEFAULT_QR_URL;
     }
   };
 

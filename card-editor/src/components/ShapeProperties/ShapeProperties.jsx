@@ -1773,7 +1773,7 @@ const ShapeProperties = ({
         updateProperty(property, value);
       } catch {}
       delete pendingInputTimersRef.current[property];
-    }, DEBOUNCE_INPUT_MS);
+    }, 2000);
   };
 
   // Flush pending debounce for a property (call immediately)
@@ -2003,20 +2003,25 @@ const ShapeProperties = ({
                     setProperties((prev) => ({ ...prev, width: "" }));
                     return;
                   }
+                  if (values.formattedValue !== undefined) {
+                    setProperties((prev) => ({ ...prev, width: values.formattedValue }));
+                  }
                   if (typeof values.floatValue === "number") {
-                    setProperties((prev) => ({ ...prev, width: values.floatValue }));
                     scheduleUpdateProperty("width", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={(e) => {
+                  const rawValue = String(e?.target?.value ?? "");
                   setProperties((prev) => {
                     if (prev.width === "") {
                       return { ...prev, width: getFreshPropertyValue("width") };
                     }
                     return prev;
                   });
-                  commitInputNow("width", e?.target?.value, { allowNegative: false, integer: false });
+                  if (!/[.,]$/.test(rawValue)) {
+                    commitInputNow("width", rawValue, { allowNegative: false, integer: false });
+                  }
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
                 onKeyDown={(e) => {
@@ -2116,13 +2121,16 @@ const ShapeProperties = ({
                     setProperties((prev) => ({ ...prev, height: "" }));
                     return;
                   }
+                  if (values.formattedValue !== undefined) {
+                    setProperties((prev) => ({ ...prev, height: values.formattedValue }));
+                  }
                   if (typeof values.floatValue === "number") {
-                    setProperties((prev) => ({ ...prev, height: values.floatValue }));
                     scheduleUpdateProperty("height", values.floatValue);
                   }
                 }}
                 onFocus={() => setIsManuallyEditing(true)}
                 onBlur={(e) => {
+                  const rawValue = String(e?.target?.value ?? "");
                   setProperties((prev) => {
                     if (prev.height === "") {
                       return {
@@ -2132,7 +2140,9 @@ const ShapeProperties = ({
                     }
                     return prev;
                   });
-                  commitInputNow("height", e?.target?.value, { allowNegative: false, integer: false });
+                  if (!/[.,]$/.test(rawValue)) {
+                    commitInputNow("height", rawValue, { allowNegative: false, integer: false });
+                  }
                   setTimeout(() => setIsManuallyEditing(false), 100);
                 }}
                 onKeyDown={(e) => {
@@ -2356,12 +2366,11 @@ const ShapeProperties = ({
                         setProperties((prev) => ({ ...prev, thickness: "" }));
                         return;
                       }
+                      if (values.formattedValue !== undefined) {
+                        setProperties((prev) => ({ ...prev, thickness: values.formattedValue }));
+                      }
                       if (typeof values.floatValue === "number") {
-                        setProperties((prev) => ({
-                          ...prev,
-                          thickness: values.floatValue,
-                        }));
-                          scheduleUpdateProperty("thickness", values.floatValue);
+                        scheduleUpdateProperty("thickness", values.floatValue);
                       }
                     }}
                     onFocus={() => {
@@ -2375,13 +2384,16 @@ const ShapeProperties = ({
                       const freshThickness = getFreshPropertyValue("thickness");
                       const freshWidth = getFreshPropertyValue("width");
                       const freshHeight = getFreshPropertyValue("height");
+                      const rawValue = String(e?.target?.value ?? "");
                       setProperties((prev) => ({
                         ...prev,
                         thickness: freshThickness,
                         width: freshWidth,
                         height: freshHeight,
                       }));
-                      commitInputNow("thickness", e?.target?.value, { allowNegative: false, integer: false });
+                      if (!/[.,]$/.test(rawValue)) {
+                        commitInputNow("thickness", rawValue, { allowNegative: false, integer: false });
+                      }
                       setTimeout(() => setIsManuallyEditing(false), 100);
                     }}
                     onKeyDown={(e) => {

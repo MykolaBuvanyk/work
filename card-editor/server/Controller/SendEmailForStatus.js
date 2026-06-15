@@ -398,6 +398,7 @@ class SendEmailForStatus {
 
     static SendToAdminNewOrder = async (newOrder, comment, countStar, typeDelivery) => {
         try {
+            const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
             const order=newOrder;
             const orderNumber=String(order.id || '').padStart(3, '0');
             const nameOrCompany = order.user?.company || order.user?.firstName || 'Customer';

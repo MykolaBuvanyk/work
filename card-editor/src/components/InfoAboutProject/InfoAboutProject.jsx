@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./InfoAboutProject.module.css";
 import { useCurrentSignPrice } from "../../hooks/useCurrentSignPrice";
@@ -351,8 +351,10 @@ const InfoAboutProject = () => {
   const [isOrderSuccessOpen, setIsOrderSuccessOpen] = useState(false);
   const [isPayOpen,setIsPayOpen]=useState(false);
   const [checkoutTotalsDraft, setCheckoutTotalsDraft] = useState(null);
+  const [pendingSuccessOrderMethod, setPendingSuccessOrderMethod] = useState(null);
   const { canvas } = useCanvasContext();
   const onCartClickRef = useRef(null);
+  const creatingSuccessOrderRef = useRef(false);
 
   const user=useSelector((state)=>state.user);
   const normalizedUserType = String(user?.user?.type || "").trim().toLowerCase();
@@ -554,6 +556,7 @@ const InfoAboutProject = () => {
         lang,
         checkout: {
           baseDiscountPercent: Number.isFinite(normalizedBaseDiscountPercent) ? normalizedBaseDiscountPercent : Number(discountPercent || 0),
+          paymentMethod: String(checkoutTotals?.paymentMethod || "invoice"),
           deliveryPrice: Number(checkoutTotals?.deliveryPrice || 0),
           deliveryLabel: String(checkoutTotals?.deliveryLabel || ""),
           phoneOk: Boolean(checkoutTotals?.phoneOk),
@@ -717,8 +720,8 @@ const InfoAboutProject = () => {
   };
 
   const PayClose=()=>{
+    setPendingSuccessOrderMethod("online");
     setIsPayOpen(false);
-    //setCheckoutTotalsDraft(null);
     setIsOrderSuccessOpen(true);
   }
 
@@ -737,14 +740,37 @@ const InfoAboutProject = () => {
     console.log(4234234,checkoutTotals);
     setCheckoutTotalsDraft(checkoutTotals || null);
     setIsCheckoutOpen(false);
-    await addCurrentProjectToCart(checkoutTotals);
-    
     setIsPayOpen(true)
   };
 
   const handlePayModalPlaceOrder = async () => {
+    setPendingSuccessOrderMethod("invoice");
     return true;
   };
+
+  const handlePayModalInvoiceSuccess = () => {
+    setIsPayOpen(false);
+    setIsOrderSuccessOpen(true);
+  };
+
+  const handleOrderSuccessLoad = useCallback(async () => {
+    if (!pendingSuccessOrderMethod || creatingSuccessOrderRef.current) return;
+
+    creatingSuccessOrderRef.current = true;
+    try {
+      const placed = await addCurrentProjectToCart({
+        ...(checkoutTotalsDraft || {}),
+        paymentMethod: pendingSuccessOrderMethod,
+      });
+
+      if (placed) {
+        setCheckoutTotalsDraft(null);
+        setPendingSuccessOrderMethod(null);
+      }
+    } finally {
+      creatingSuccessOrderRef.current = false;
+    }
+  }, [checkoutTotalsDraft, pendingSuccessOrderMethod]);
 
   const handleOrderSuccessClose = () => {
     setIsOrderSuccessOpen(false);
@@ -872,8 +898,9 @@ const InfoAboutProject = () => {
           onClose={PayClose}
           isPayOpen={isPayOpen}
           backToPayment={backToPayment}
-          orderId={Number(localStorage.getItem('MySqlOrderId'))}
+          amount={Number(checkoutTotalsDraft?.totalSum || 0)}
           onPlaceOrder={handlePayModalPlaceOrder}
+          onInvoiceSuccess={handlePayModalInvoiceSuccess}
         />
       )}
 
@@ -921,6 +948,7 @@ const InfoAboutProject = () => {
       {isOrderSuccessOpen && (
         <ThankYou
           setData={setReviews}
+          onLoad={handleOrderSuccessLoad}
           onClose={handleOrderSuccessClose}
           onSend={handleOrderSuccessSend}
         />

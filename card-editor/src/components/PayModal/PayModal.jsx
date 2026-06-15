@@ -9,7 +9,7 @@ import './PayModal.scss'
 
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);
 
-const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
+const PayModal = ({isPayOpen,onClose,backToPayment,orderId,amount,onPlaceOrder,onInvoiceSuccess}) => {
     const { t } = useTranslation();
     const [clientSecret, setClientSecret] = useState('');
     const [paymentOption, setPaymentOption] = useState('invoice');
@@ -18,15 +18,17 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
     useEffect(() => {
         const getClientSecret = async () => {
         try {
-            const res = await $authHost.post('cart/create-payment-intent/' + orderId);
+            const res = orderId
+              ? await $authHost.post('cart/create-payment-intent/' + orderId)
+              : await $authHost.post('cart/create-payment-intent', { amount });
             setClientSecret(res.data.clientSecret);
         } catch (err) {
             console.error(err);
             alert(t('payModal.alerts.paymentDataFailed'));
         }
         };
-        if (orderId) getClientSecret();
-    }, [orderId, t]);
+        if (orderId || Number(amount) > 0) getClientSecret();
+    }, [amount, orderId, t]);
 
     const savePaymentMethod = async (paymentMethod) => {
       if (!orderId) return;
@@ -46,7 +48,7 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
     };
     const payTrue=async()=>{
         await savePaymentMethod('online');
-        onClose();
+        await Promise.resolve(onClose());
     }
 
     const handlePlaceOrderClick = async () => {
@@ -61,7 +63,9 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,onPlaceOrder}) => {
           setIsSubmittingOrder(false);
         }
       }
-      onClose();
+      if (typeof onInvoiceSuccess === 'function') {
+        onInvoiceSuccess();
+      }
     };
 
     if(!isPayOpen)return null;

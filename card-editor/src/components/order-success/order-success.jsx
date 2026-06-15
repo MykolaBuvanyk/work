@@ -53,14 +53,22 @@ const SelectedStar = ({ className = '', onClick, gradientId }) => (
 	</svg>
 )
 
-export default function ThankYou({ onClose, onSend, setData }) {
+export default function ThankYou({ onClose, onSend, setData, onLoad }) {
 	const { t } = useTranslation()
 	const [rating, setRating] = useState(0)
 	const [comment,setComment]=useState('')
 	const [isSending, setIsSending] = useState(false)
 	useEffect(()=>{
-		setData({rating,comment});
-	},[rating, comment]);
+		if (typeof setData === 'function') {
+			setData({rating,comment});
+		}
+	},[rating, comment, setData]);
+
+	useEffect(() => {
+		if (typeof onLoad === 'function') {
+			onLoad()
+		}
+	}, [onLoad])
 
 	const handleSend = async () => {
 		if (isSending) return

@@ -1280,6 +1280,8 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
     const checkoutSnapshot = body?.checkout && typeof body.checkout === 'object' ? body.checkout : null;
+    const selectedPaymentMethod = String(body?.checkout?.paymentMethod || 'invoice').trim().toLowerCase();
+    const isOnlinePaidOrder = selectedPaymentMethod === 'online';
     const couponDiscountAmount = toNumber(body?.checkout?.coupon?.discountAmount, 0);
     const requestDiscountAmount = toNumber(body.discountAmount, 0);
     const totalDiscountAmount = requestDiscountAmount > 0 ? requestDiscountAmount : couponDiscountAmount;
@@ -1360,7 +1362,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       deliveryType: checkoutDeliveryLabel,
       accessories: JSON.stringify(normalizedAccessories),
       idMongo: String(created._id),
-      isPaid: user.type == 'Admin' ? null : false,
+      isPaid: user.type == 'Admin' ? null : isOnlinePaidOrder,
       language: user?.language || countryToLanguage(orderCountry),
     })
 
@@ -3696,6 +3698,33 @@ CartRouter.post('/set-payment-method/:orderId', requireAuth, async (req, res, ne
   } catch (err) {
     console.error('ERROR SET PAYMENT METHOD:', err);
     return res.status(500).json({ message: 'Failed to update payment method' });
+  }
+});
+
+CartRouter.post('/create-payment-intent', requireAuth, async (req, res, next) => {
+  try {
+    const amount = Number(req.body?.amount);
+    const amountInCents = Math.round(amount * 100);
+
+    if (!Number.isFinite(amountInCents) || amountInCents <= 0) {
+      return res.status(400).json({ message: 'Invalid payment amount' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: 'eur',
+      metadata: { source: 'checkout-modal' },
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (err) {
+    console.error('Stripe Error:', err);
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 

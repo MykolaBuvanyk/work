@@ -1387,7 +1387,6 @@ class SendEmailForStatus {
             const trackingUrl=trackingNumber
                 ? `https://www.ups.com/track?tracknum=${encodeURIComponent(trackingNumber)}`
                 : 'https://www.ups.com/track';
-            const lang = userLang(order.user);
             const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
             const urlOrders=localizedUrl(urlFrontend, 'account', lang);
             const payment_url=localizedUrl(urlFrontend, `account/pay/${order.id}`, lang)

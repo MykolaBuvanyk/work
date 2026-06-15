@@ -1069,7 +1069,7 @@ class SendEmailForStatus {
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 25px;">
-                            We have successfully received your order. Our team will soon begin reviewing all project details to ensure everything is exactly as requested. You will receive a separate email once we start this review.
+                            We have received your order and will check that everything looks correct with your project. If we have any questions, we will contact you.
                         </td>
                     </tr>
 

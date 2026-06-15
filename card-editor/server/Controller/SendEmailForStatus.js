@@ -457,7 +457,7 @@ class SendEmailForStatus {
     }
 
     static SendEmailWithFile = async (newOrder, textHTML, subject, to) => {
-        return;
+        // return;
         let browser;
         let outputPdfBuffer = null;
         const order = newOrder; // Для сумісності з логікою з getPdfs3

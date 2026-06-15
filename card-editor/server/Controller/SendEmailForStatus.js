@@ -992,7 +992,7 @@ class SendEmailForStatus {
             });
             outputPdfBuffer = Buffer.from(zugferdPdf);
 
-            //await sendEmail(to, textHTML, subject, outputPdfBuffer)
+            await sendEmail(to, textHTML, subject, outputPdfBuffer)
 
         } catch (err) {
             console.error("PDF Generation Error in SendToAdminNewOrder:", err);

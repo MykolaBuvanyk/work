@@ -1095,8 +1095,20 @@ class SendEmailForStatus {
                     </tr>
 
                     <tr>
-                        <td style="font-size: 16px; line-height: 1.6; padding-bottom: 30px;">
+                        <td style="font-size: 16px; line-height: 1.6;">
                             If you notice anything that needs correction, please contact us as soon as possible.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-size: 16px; line-height: 1.6;">
+                            As soon as your order has been produced, packed, and shipped, you will receive a separate email with your tracking number. The invoice will be attached to that email.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-size: 16px; line-height: 1.6; padding-bottom: 40px;">
+                            If you have any questions or need any assistance, we are always happy to help.
                         </td>
                     </tr>
 
@@ -1133,6 +1145,7 @@ class SendEmailForStatus {
     }
     static StatusPrinted=async(order)=>{
         try{
+            return;
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
             const subject=`SignXpert - Order Confirmation #${orderNumber} ${nameOrCompany}`;
@@ -1250,6 +1263,7 @@ class SendEmailForStatus {
 
    static StatusShipped = async (order) => {
     try {
+        return;
         const orderNumber = String(order.id).padStart(3, '0');
         const nameOrCompany = order.user.company ? order.user.company : order.user.firstName;
         const fullName = [order.user.firstName, order.user.surname].filter(Boolean).join(' ');

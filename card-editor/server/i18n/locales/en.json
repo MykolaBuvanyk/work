@@ -115,7 +115,7 @@
   "email.created.title": "SignXpert Order Confirmation",
   "email.created.heading": "Your order has been received – SignXpert",
   "email.created.thankYou": "Thank you very much for your order — we truly appreciate your trust in SignXpert.",
-  "email.created.body1": "We have successfully received your order. Our team will soon begin reviewing all project details to ensure everything is exactly as requested. You will receive a separate email once we start this review.",
+  "email.created.body1": "We have received your order and will check that everything looks correct with your project. If we have any questions, we will contact you.",
   "email.created.followStatus": "You can follow the status of your order at any time in your account.",
   "email.created.simplyLogInWhereView": "Simply log in to",
   "email.created.whereYouCanView": "where you can view:",
@@ -130,7 +130,7 @@
   "email.printed.heading": "Your order has been confirmed – SignXpert",
   "email.printed.thankYouOrder": "Thank you for your order!",
   "email.printed.reviewIntro": "We have successfully received your order and our team is now carefully reviewing all project details to ensure everything is exactly as requested. Once the review is complete, your order will move straight into production.",
-  "email.printed.shipmentReady": "As soon as your order is completed, packed, and ready for shipment, you will receive another email with your tracking number.",
+  "email.printed.shipmentReady": "As soon as your order has been produced, packed, and shipped, you will receive a separate email with your tracking number. The invoice will be attached to that email.",
   "email.printed.anyQuestions": "If you have any questions or need any assistance, we are always happy to help.",
 
   "email.shipped.subject": "SignXpert - Order Shipped",

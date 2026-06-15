@@ -831,9 +831,9 @@ export default function Checkout({
 										</h2>
 
 										<ActionButton text={t('checkout.actions.change')} onClick={() => {}} />
-																																										</div>
+									</div>
 
-																																										/** expose customerReference to parent onPlaceOrder via checkoutTotals */
+																																										
 
 									<fieldset className='address-card'>
 										<legend className='address-card__legend'>

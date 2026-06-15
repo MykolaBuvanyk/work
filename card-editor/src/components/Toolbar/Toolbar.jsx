@@ -20,6 +20,7 @@ import UploadPreview from '../UploadPreview/UploadPreview';
 import ShapeProperties from '../ShapeProperties/ShapeProperties';
 import { ensureShapeSvgId } from '../../utils/shapeSvgId';
 import { fitObjectToCanvas } from '../../utils/canvasFit';
+import { getToolbarCanvasChangeTypes } from '../../utils/toolbarHistoryChanges';
 import {
   applyStrokeOnlyToSVG,
   convertSvgToThemeMonochrome,
@@ -1540,6 +1541,7 @@ export const Toolbar = ({ formData }) => {
   }, [currentShapeType, setCanvasShapeType]);
   const toolbarStateRef = useRef(null);
   const prevToolbarStateSerializedRef = useRef('');
+  const prevToolbarSnapshotRef = useRef(null);
 
   const cloneToolbarState = useCallback(state => {
     if (!state) return null;
@@ -1813,12 +1815,20 @@ export const Toolbar = ({ formData }) => {
 
     const serialized = JSON.stringify(snapshot);
     if (serialized !== prevToolbarStateSerializedRef.current) {
+      const previousSnapshot = prevToolbarSnapshotRef.current;
+      const changedFields = getToolbarCanvasChangeTypes(previousSnapshot, snapshot);
+      const clonedSnapshot = cloneToolbarState(snapshot);
+
       prevToolbarStateSerializedRef.current = serialized;
+      prevToolbarSnapshotRef.current = clonedSnapshot;
       if (typeof window !== 'undefined') {
         try {
           window.dispatchEvent(
             new CustomEvent('toolbar:changed', {
-              detail: cloneToolbarState(snapshot),
+              detail: {
+                ...clonedSnapshot,
+                changedFields,
+              },
             })
           );
         } catch (error) {

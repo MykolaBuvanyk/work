@@ -8,6 +8,10 @@ import "../utils/CircleWithCut";
 import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
 import { sanitizeFabricJsonForLoad } from "../utils/sanitizeFabricJsonForLoad";
 import {
+  getToolbarCanvasChangeTypes,
+  normalizeToolbarCanvasChangeTypes,
+} from "../utils/toolbarHistoryChanges";
+import {
   buildQrSvgMarkup,
   computeQrVectorData,
   decorateQrGroup,
@@ -44,6 +48,8 @@ const CONFIG = {
   
   // Час ігнорування saves після restore (зменшено для швидшої реакції)
   IGNORE_SAVES_AFTER_RESTORE: 500,
+
+  TOOLBAR_CANVAS_SAVE_DELAY: 250,
   
   // Timeout для автоматичного розблокування (захист від deadlock)
   AUTO_UNLOCK_TIMEOUT: 5000,
@@ -303,6 +309,12 @@ export const useUndoRedo = () => {
   const ignoreSavesUntilRef = useRef(0);
   const pendingChangesRef = useRef(false);
   const batchStartTimeRef = useRef(null);
+  const toolbarCanvasChangeTimeoutRef = useRef(null);
+  const toolbarCanvasSnapshotRef = useRef(null);
+  const pendingToolbarCanvasSaveRef = useRef(false);
+  const toolbarCanvasSaveModeRef = useRef("append");
+  const toolbarCanvasSaveStartRef = useRef({ historyLength: 0, historyIndex: -1 });
+  const toolbarCanvasCoalesceUntilRef = useRef(0);
 
   const isBorderObject = useCallback((obj) => {
     if (!obj || typeof obj !== "object") return false;
@@ -730,6 +742,145 @@ export const useUndoRedo = () => {
     [saveState]
   );
 
+  const replaceCurrentHistoryState = useCallback(async (description = 'State replaced', options = {}) => {
+    const { force = false } = options || {};
+    const now = Date.now();
+
+    if (!force && now < (ignoreSavesUntilRef.current || 0)) {
+      return null;
+    }
+
+    if (
+      !canvas ||
+      (sharedUndoRedoStore.ownerId && sharedUndoRedoStore.ownerId !== instanceIdRef.current) ||
+      isSavingRef.current ||
+      isRestoringRef.current ||
+      canvas.__suspendUndoRedo
+    ) {
+      return null;
+    }
+
+    try {
+      isSavingRef.current = true;
+      console.log(`💾 Replacing history state: ${description}`);
+
+      let toolbarState = {};
+      if (window.getCurrentToolbarState) {
+        toolbarState = window.getCurrentToolbarState() || {};
+      }
+
+      const newState = await createLightweightState(canvas, toolbarState);
+      if (!newState) {
+        console.error('❌ Failed to create replacement state');
+        return null;
+      }
+
+      const newHash = JSON.stringify(normalizeForComparison(newState));
+      if (lastStateHashRef.current && newHash === lastStateHashRef.current) {
+        return newState;
+      }
+
+      lastStateHashRef.current = newHash;
+      lastSaveTimeRef.current = now;
+      pendingChangesRef.current = false;
+
+      const compressedState = compressState(newState);
+
+      setHistory(prevHistory => {
+        const currentIndex = historyIndexRef.current;
+        if (currentIndex < 0) {
+          return [compressedState];
+        }
+
+        const nextHistory = [...prevHistory];
+        nextHistory[currentIndex] = compressedState;
+        return nextHistory;
+      });
+
+      return newState;
+    } catch (error) {
+      console.error('❌ Error replacing history state:', error);
+      return null;
+    } finally {
+      setTimeout(() => {
+        isSavingRef.current = false;
+      }, 50);
+    }
+  }, [canvas]);
+
+  const replaceStateWhenReady = useCallback(
+    async (description, options = {}, attempts = 8) => {
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (!isSavingRef.current && !isRestoringRef.current) {
+          const replaced = await replaceCurrentHistoryState(description, options);
+          if (replaced) return replaced;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 75));
+      }
+
+      return null;
+    },
+    [replaceCurrentHistoryState]
+  );
+
+  const scheduleToolbarCanvasSave = useCallback((description, options = {}) => {
+    const requestedMode =
+      options?.mode === "replace" || options?.mode === "coalesce" ? options.mode : "append";
+
+    if (!pendingToolbarCanvasSaveRef.current) {
+      toolbarCanvasSaveStartRef.current = {
+        historyLength: sharedUndoRedoStore.history.length,
+        historyIndex: sharedUndoRedoStore.historyIndex,
+      };
+    }
+
+    if (
+      requestedMode === "replace" ||
+      (requestedMode === "coalesce" && toolbarCanvasSaveModeRef.current !== "replace") ||
+      !pendingToolbarCanvasSaveRef.current
+    ) {
+      toolbarCanvasSaveModeRef.current = requestedMode;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    if (batchTimeoutRef.current) {
+      clearTimeout(batchTimeoutRef.current);
+      batchTimeoutRef.current = null;
+    }
+    if (toolbarCanvasChangeTimeoutRef.current) {
+      clearTimeout(toolbarCanvasChangeTimeoutRef.current);
+    }
+
+    batchStartTimeRef.current = null;
+    pendingChangesRef.current = true;
+    pendingToolbarCanvasSaveRef.current = true;
+
+    toolbarCanvasChangeTimeoutRef.current = setTimeout(() => {
+      toolbarCanvasChangeTimeoutRef.current = null;
+      const mode = toolbarCanvasSaveModeRef.current;
+      const start = toolbarCanvasSaveStartRef.current;
+      const hasIntermediateHistoryState =
+        sharedUndoRedoStore.history.length !== start.historyLength ||
+        sharedUndoRedoStore.historyIndex !== start.historyIndex;
+      const resolvedMode =
+        mode === "coalesce" ? (hasIntermediateHistoryState ? "replace" : "append") : mode;
+      pendingToolbarCanvasSaveRef.current = false;
+      toolbarCanvasSaveModeRef.current = "append";
+      if (!isRestoringRef.current && !canvas?.__suspendUndoRedo) {
+        const saveStrategy = resolvedMode === "replace" ? replaceStateWhenReady : saveStateWhenReady;
+        saveStrategy(description, { force: true }).then((savedState) => {
+          if (savedState) {
+            toolbarCanvasCoalesceUntilRef.current = Date.now() + CONFIG.IGNORE_SAVES_AFTER_RESTORE;
+          }
+        });
+      }
+    }, CONFIG.TOOLBAR_CANVAS_SAVE_DELAY);
+  }, [canvas, saveStateWhenReady, replaceStateWhenReady]);
+
   /**
    * Batch збереження - групує швидкі послідовні зміни в одну операцію
    * Оптимізовано для швидшого збереження кроків
@@ -773,6 +924,13 @@ export const useUndoRedo = () => {
       clearTimeout(batchTimeoutRef.current);
       batchTimeoutRef.current = null;
     }
+    if (toolbarCanvasChangeTimeoutRef.current) {
+      clearTimeout(toolbarCanvasChangeTimeoutRef.current);
+      toolbarCanvasChangeTimeoutRef.current = null;
+    }
+    pendingToolbarCanvasSaveRef.current = false;
+    toolbarCanvasSaveModeRef.current = "append";
+    toolbarCanvasCoalesceUntilRef.current = 0;
     batchStartTimeRef.current = null;
     
     // Зберігаємо негайно
@@ -783,7 +941,9 @@ export const useUndoRedo = () => {
     const hasPendingTimers =
       !!saveTimeoutRef.current ||
       !!batchTimeoutRef.current ||
-      pendingChangesRef.current === true;
+      !!toolbarCanvasChangeTimeoutRef.current ||
+      pendingChangesRef.current === true ||
+      pendingToolbarCanvasSaveRef.current === true;
 
     if (!hasPendingTimers || !canvas || isRestoringRef.current) {
       return false;
@@ -797,18 +957,47 @@ export const useUndoRedo = () => {
       clearTimeout(batchTimeoutRef.current);
       batchTimeoutRef.current = null;
     }
+    if (toolbarCanvasChangeTimeoutRef.current) {
+      clearTimeout(toolbarCanvasChangeTimeoutRef.current);
+      toolbarCanvasChangeTimeoutRef.current = null;
+    }
+    const shouldFlushToolbarCanvasSave = pendingToolbarCanvasSaveRef.current === true;
+    const toolbarCanvasSaveMode = toolbarCanvasSaveModeRef.current;
+    const toolbarCanvasSaveStart = toolbarCanvasSaveStartRef.current;
+    const hasIntermediateHistoryState =
+      sharedUndoRedoStore.history.length !== toolbarCanvasSaveStart.historyLength ||
+      sharedUndoRedoStore.historyIndex !== toolbarCanvasSaveStart.historyIndex;
+    const resolvedToolbarCanvasSaveMode =
+      toolbarCanvasSaveMode === "coalesce"
+        ? (hasIntermediateHistoryState ? "replace" : "append")
+        : toolbarCanvasSaveMode;
     batchStartTimeRef.current = null;
+    pendingToolbarCanvasSaveRef.current = false;
+    toolbarCanvasSaveModeRef.current = "append";
 
     const beforeLength = sharedUndoRedoStore.history.length;
     const beforeIndex = sharedUndoRedoStore.historyIndex;
-    const savedState = await saveStateWhenReady(description, { force: true });
+    const saveStrategy =
+      shouldFlushToolbarCanvasSave && resolvedToolbarCanvasSaveMode === "replace"
+        ? replaceStateWhenReady
+        : saveStateWhenReady;
+    const savedState = await saveStrategy(
+      shouldFlushToolbarCanvasSave
+        ? `${description} (toolbar canvas ${resolvedToolbarCanvasSaveMode})`
+        : description,
+      { force: true }
+    );
+
+    if (shouldFlushToolbarCanvasSave && savedState) {
+      toolbarCanvasCoalesceUntilRef.current = Date.now() + CONFIG.IGNORE_SAVES_AFTER_RESTORE;
+    }
 
     return (
       !!savedState &&
       (sharedUndoRedoStore.history.length !== beforeLength ||
         sharedUndoRedoStore.historyIndex !== beforeIndex)
     );
-  }, [canvas, saveStateWhenReady]);
+  }, [canvas, saveStateWhenReady, replaceStateWhenReady]);
 
   // ============================================================================
   // ВІДНОВЛЕННЯ СТАНУ
@@ -1473,16 +1662,26 @@ export const useUndoRedo = () => {
   const saveCanvasPropertiesState = useCallback(async (description = 'Canvas properties changed') => {
     if (!canvas) return;
     console.log('🎨 Saving canvas properties:', description);
+
+    const isToolbarCanvasGeometryChange =
+      /^Canvas resized/.test(description) ||
+      /^Canvas shape changed/.test(description);
+    const isToolbarCanvasColorChange = /^Color theme changed/.test(description);
+
+    if (isToolbarCanvasGeometryChange || isToolbarCanvasColorChange) {
+      scheduleToolbarCanvasSave(description, { mode: "coalesce" });
+      return;
+    }
     
     try {
       const newState = await saveState(description);
       if (newState) {
-        canvas.fire('canvas:changed', { state: newState });
+        canvas.fire('canvas:changed', { state: newState, fromHistorySave: true });
       }
     } catch (error) {
       console.error('Error saving canvas properties:', error);
     }
-  }, [canvas, saveState]);
+  }, [canvas, saveState, scheduleToolbarCanvasSave]);
 
   const goToHistoryState = useCallback((targetIndex) => {
     const currentHistory = historyRef.current;
@@ -1578,9 +1777,16 @@ export const useUndoRedo = () => {
         clearTimeout(batchTimeoutRef.current);
         batchTimeoutRef.current = null;
       }
+      if (toolbarCanvasChangeTimeoutRef.current) {
+        clearTimeout(toolbarCanvasChangeTimeoutRef.current);
+        toolbarCanvasChangeTimeoutRef.current = null;
+      }
 
       batchStartTimeRef.current = null;
       pendingChangesRef.current = false;
+      pendingToolbarCanvasSaveRef.current = false;
+      toolbarCanvasSaveModeRef.current = "append";
+      toolbarCanvasCoalesceUntilRef.current = 0;
       lastStateHashRef.current = null;
       updateSharedHistory([]);
       updateSharedHistoryIndex(-1);
@@ -1757,7 +1963,7 @@ export const useUndoRedo = () => {
     const handleCanvasEvent = (event) => {
       // Fabric.js може передавати тип події різними способами
       const eventType = event?.type || event?.e?.type || event?.action || 'unknown';
-      if (event?.fromUndoRedo || event?.detail?.fromUndoRedo) {
+      if (event?.fromUndoRedo || event?.detail?.fromUndoRedo || event?.fromHistorySave) {
         return;
       }
 
@@ -1782,6 +1988,16 @@ export const useUndoRedo = () => {
         return;
       }
 
+      if (pendingToolbarCanvasSaveRef.current || toolbarCanvasChangeTimeoutRef.current) {
+        scheduleToolbarCanvasSave(`Toolbar canvas change: ${eventType}`);
+        return;
+      }
+
+      if (Date.now() < toolbarCanvasCoalesceUntilRef.current) {
+        scheduleToolbarCanvasSave(`Toolbar canvas follow-up: ${eventType}`, { mode: "replace" });
+        return;
+      }
+
       // Отримуємо інформацію про об'єкт для кращого логування
       const target = event?.target;
       const objectInfo = target ? (target.type || target.shapeType || 'object') : '';
@@ -1790,10 +2006,19 @@ export const useUndoRedo = () => {
       
       // Критичні події - негайно (окремий крок історії)
       if (criticalEvents.has(eventType)) {
+        if (eventType === 'canvas:resized' || eventType === 'background:changed') {
+          scheduleToolbarCanvasSave(`${eventType}: ${objectInfo || 'canvas'}`, { mode: "coalesce" });
+          return;
+        }
+
         // Скидаємо batch timer для критичних подій
         if (batchTimeoutRef.current) {
           clearTimeout(batchTimeoutRef.current);
           batchTimeoutRef.current = null;
+        }
+        if (toolbarCanvasChangeTimeoutRef.current) {
+          clearTimeout(toolbarCanvasChangeTimeoutRef.current);
+          toolbarCanvasChangeTimeoutRef.current = null;
         }
         batchStartTimeRef.current = null;
         
@@ -1831,12 +2056,13 @@ export const useUndoRedo = () => {
       
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
+      if (toolbarCanvasChangeTimeoutRef.current) clearTimeout(toolbarCanvasChangeTimeoutRef.current);
       if (sharedUndoRedoStore.ownerId === instanceId) {
         sharedUndoRedoStore.ownerId = null;
       }
       isHistoryOwnerRef.current = false;
     };
-  }, [canvas, saveStateWhenReady, debouncedSaveState, batchSaveState, isBorderObject]);
+  }, [canvas, saveStateWhenReady, debouncedSaveState, batchSaveState, scheduleToolbarCanvasSave, isBorderObject]);
 
   // ============================================================================
   // TOOLBAR CHANGE LISTENER - відстеження змін розміру та кольорів
@@ -1857,35 +2083,20 @@ export const useUndoRedo = () => {
       }
 
       const detail = event?.detail || {};
-      const changeType = [];
-      
-      // Визначаємо тип зміни
-      if (detail.sizeValues) {
-        changeType.push('size');
-      }
-      if (detail.globalColors) {
-        changeType.push('colors');
-      }
-      if (detail.currentShapeType) {
-        changeType.push('shape');
+      const previousToolbarSnapshot = toolbarCanvasSnapshotRef.current;
+      const hasExplicitChangeTypes = Array.isArray(detail.changedFields);
+      const explicitChangeTypes = normalizeToolbarCanvasChangeTypes(detail.changedFields);
+      const changeType = hasExplicitChangeTypes
+        ? explicitChangeTypes
+        : getToolbarCanvasChangeTypes(previousToolbarSnapshot, detail);
+
+      if (Object.keys(detail).length > 0) {
+        toolbarCanvasSnapshotRef.current = detail;
       }
 
       if (changeType.length > 0) {
         console.log(`🎨 Toolbar changed: ${changeType.join(', ')}`);
-        // Використовуємо batch save щоб групувати швидкі зміни
-        const isCanvasGeometryChange =
-          changeType.includes("size") || changeType.includes("shape");
-
-        if (isCanvasGeometryChange) {
-          if (batchTimeoutRef.current) {
-            clearTimeout(batchTimeoutRef.current);
-            batchTimeoutRef.current = null;
-          }
-          batchStartTimeRef.current = null;
-          saveStateWhenReady(`Toolbar: ${changeType.join(', ')}`, { force: true });
-        } else {
-          batchSaveState(`Toolbar: ${changeType.join(', ')}`);
-        }
+        scheduleToolbarCanvasSave(`Toolbar: ${changeType.join(', ')}`, { mode: "coalesce" });
       }
     };
 
@@ -1899,13 +2110,14 @@ export const useUndoRedo = () => {
       window.removeEventListener('toolbar:changed', handleToolbarChange);
       toolbarChangeHandlerRef.current = null;
     };
-  }, [canvas, batchSaveState, saveStateWhenReady]);
+  }, [canvas, scheduleToolbarCanvasSave]);
 
   // Cleanup при демонтажі
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
+      if (toolbarCanvasChangeTimeoutRef.current) clearTimeout(toolbarCanvasChangeTimeoutRef.current);
     };
   }, []);
 

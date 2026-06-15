@@ -1330,141 +1330,122 @@ class SendEmailForStatus {
     
     static StatusShipped2=async(order)=>{
         try{
+            const lang = userLang(order.user);
             const orderNumber=String(order.id).padStart(3, '0')
+            const customerNumber=String(order.user.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert – Invoice #${orderNumber} for ${nameOrCompany}`;
+            const registeredName=[order.user.firstName, order.user.surname].filter(Boolean).join(' ') || nameOrCompany;
+            const companyName=order.user.company || '';
+            const subject=`${t('email.invoice.subject', lang)} #${orderNumber} ${t('email.invoice.subjectFor', lang)} ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
-            const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const urlAccount=urlFrontend+'account/detail';
             const urlOrders=urlFrontend+'account';
             const payment_url=urlFrontend+`account/pay/${order.id}`
+            const trackingNumber=String(order.trackingNumber || '').trim();
+            const trackingUrl=trackingNumber
+                ? `https://www.ups.com/track?tracknum=${encodeURIComponent(trackingNumber)}`
+                : 'https://www.ups.com/track';
             const html=`
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your invoice is ready - SignXpert</title>
-    <style>
-        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        table { border-collapse: collapse; }
-        img { display: block; border: 0; }
-        a { color: #006DA5; text-decoration: underline; }
+<html lang="${lang}">
+<body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #ffffff;">
 
-        @media screen and (max-width: 600px) {
-            .container { width: 100% !important; border-radius: 0 !important; }
-            .content { padding: 20px !important; }
-        }
-    </style>
-</head>
-<body style="background-color: #f4f4f4; padding: 20px 0;">
-
-    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="width: 600px; margin: 0 auto; padding: 20px;">
         <tr>
-            <td align="center">
-                <table class="container" width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden;">
+            <td align="center" style="padding-bottom: 30px;">
+                <img src="${logoPng}" alt="SignXpert" width="275" style="display: block; border: 0; max-width: 275px; height: auto;">
+            </td>
+        </tr>
 
-                    <tr>
-                        <td align="center" style="padding: 30px 40px 10px 40px;">
-                            <img src="${logoPng}" alt="SignXpert" width="200" style="max-width: 200px; height: auto;">
-                        </td>
-                    </tr>
+        <tr>
+            <td align="center" style="font-size: 20px; font-weight: 450; color: #000000; padding-bottom: 20px; text-decoration: underline;">
+                ${t('email.invoice.headingAttached', lang)}
+            </td>
+        </tr>
 
-                    <tr>
-                        <td align="center" style="padding: 10px 40px 20px 40px;">
-                            <h1 style="font-size: 22px; color: #000000; margin: 0; font-weight: bold;">Your invoice is ready – SignXpert</h1>
-                        </td>
-                    </tr>
+        <tr>
+            <td style="font-size: 16px; color: #000000; line-height: 1.5; padding-bottom: 20px;">
+                ${t('email.invoice.helloComma', lang)} <span style="color: #006CA4; font-weight: 400;">${escapeHtml(registeredName)}</span>${companyName ? `, <span style="color: #006CA4; font-weight: 400;">${escapeHtml(companyName)}</span>` : ''},<br><br>
+                ${t('email.invoice.attached', lang)}<br>
+                ${t('email.invoice.viewSettleIntro', lang)} <a href="https://sign-xpert.com" style="color: #006CA4; text-decoration: none;">${t('common.wwwSignXpertCom', lang)}</a><br>
+                ${t('email.invoice.simplyLogInGoTo', lang)}<br>
+                <a href="${urlAccount}" style="color: #006CA4; text-decoration: none;">${t('email.invoice.myAccount', lang)}</a>
+                &rarr; <a href="${urlOrders}" style="color: #006CA4; text-decoration: none;">${t('email.invoice.myOrders', lang)}</a>
+                &rarr; <a href="${payment_url}" style="color: #006CA4; text-decoration: none;">${t('email.invoice.payButton', lang)}</a><br>
+                ${t('email.invoice.multiplePaymentMethods', lang)}<br>
+                ${t('email.invoice.bankTransferQuote', lang)}<br><br>
+                ${t('email.invoice.orderNumberLabel', lang)} ${orderNumber}<br>
+                ${t('email.invoice.or', lang)}<br>
+                ${t('email.invoice.customerNumberLabel', lang)} ${customerNumber}<br><br>
+                ${t('email.invoice.helpAllocate', lang)}<br><br>
+                <b>${t('email.invoice.alreadyPaidDisregardPaymentInfo', lang)}</b>
+            </td>
+        </tr>
 
-                    <tr>
-                        <td class="content" align="left" style="padding: 0 40px 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
-                            <p>Hello, <strong>${nameOrCompany}</strong>!</p>
-                            <p>Thank you for your order and for choosing <strong>SignXpert</strong>.</p>
+        <tr>
+            <td align="center" style="padding: 20px 0 30px 0;">
+                <a href="${payment_url}" style="background-color: #006CA4; color: #ffffff; padding: 12px 40px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">${t('email.invoice.payButtonUpper', lang)}</a>
+            </td>
+        </tr>
 
-                            <p>Please find your invoice attached to this email.</p>
+        <tr>
+            <td align="center" style="font-size: 20px; font-weight: 450; color: #000000; padding: 10px 0 20px 0;">
+                <span style="border-bottom: 1px solid #000000;">${t('email.invoice.shippedHeadingLine1', lang)}</span><br>
+                <span style="border-bottom: 1px solid #000000;">${t('email.invoice.shippedHeadingLine2', lang)}</span>
+            </td>
+        </tr>
 
-                            <p>You can also view and settle your invoice at any time via our website:<br>
-                            <a href="https://www.sign-xpert.com" style="color: #006DA5;">www.sign-xpert.com</a><br>
-                            Simply log in and navigate to:</p>
+        <tr>
+            <td style="font-size: 16px; color: #000000; line-height: 1.5; padding-top: 20px; padding-bottom: 20px;">
+                ${t('email.invoice.trackingNumberLabel', lang)} ${trackingNumber ? escapeHtml(trackingNumber) : ''}<br>
+                ${t('email.invoice.trackBelow', lang)}
+            </td>
+        </tr>
 
-                            <p><a href="${urlAccount}" style="color: #006DA5;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #006DA5;">My Orders</a></p>
+        <tr>
+            <td align="center" style="padding: 20px 0 30px 0;">
+                <a href="${trackingUrl}" style="background-color: #006CA4; color: #ffffff; padding: 12px 20px; text-decoration: none; font-weight: bold; border-radius: 4px; display: inline-block;">${t('email.invoice.ctaTrack', lang)}</a>
+            </td>
+        </tr>
 
-                            <p>Select the relevant order and click <strong>“Pay”</strong></p>
+        <tr>
+            <td style="font-size: 16px; color: #000000; line-height: 1.5; padding-bottom: 30px;">
+                ${t('email.invoice.upsActiveNote', lang)}<br><br>
+                ${t('email.invoice.checkDetailedStatus', lang)}<br><br>
+                ${t('email.invoice.thankYouEnjoy', lang)}<br><br>
+                ${t('email.invoice.questionsAssistance', lang)}
+            </td>
+        </tr>
 
-                            <table border="0" cellspacing="0" cellpadding="0" style="margin: 25px auto;">
-                                <tr>
-                                    <td align="center" bgcolor="#006DA5" style="border-radius: 8px;">
-                                        <a href="${payment_url}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 10px 60px; border-radius: 8px; border: 1px solid #006DA5; display: inline-block; font-weight: bold; text-transform: uppercase;">
-                                            PAY
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
+        <tr>
+            <td style="font-size: 16px; color: #000000; padding-bottom: 30px;">
+                ${t('email.invoice.bestRegards', lang)}<br>
+                ${t('email.invoice.signxpertTeam', lang)}
+            </td>
+        </tr>
 
-                            <p>Multiple secure payment methods are available directly in your account.</p>
-
-                            <p>If you prefer to pay by bank transfer, please use the bank details provided on the invoice and make sure to quote:</p>
-
-                            <p style="margin: 15px 0;">
-                                <strong>Order number: ${orderNumber}</strong><br>
-                                ${orLabel}<br>
-                                <strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong>
-                            </p>
-
-                            <p>This helps us allocate your payment correctly.</p>
-
-                            <p>Should you wish to update your billing address or the email address used for receiving invoices, you can do so in:</p>
-
-                            <p><a href="${urlAccount}" style="color: #006DA5;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #006DA5;">My Details</a></p>
-
-                            <p>If you have already completed the payment, please disregard this message. You can check your payment status at any time in your account under <a href="${urlOrders}" style="color: #006DA5;">“My Orders”</a>.</p>
-
-                            <p style="margin-top: 25px;"><strong>We truly appreciate your business and look forward to working with you again.</strong></p>
-
-                            <p style="margin-top: 30px;">
-                                Best regards,<br>
-                                <strong>SignXpert Team</strong>
-                            </p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td align="right" style="padding: 0 40px 40px 40px; border-top: 1px solid #f0f0f0;">
-                            <p style="margin: 20px 0 5px 0; font-size: 14px;">
-                                <a href="https://sign-xpert.com" style="color: #006DA5; text-decoration: none;">sign-xpert.com</a>
-                            </p>
-                            <p style="margin: 0 0 5px 0; font-size: 14px;">
-                                <a href="mailto:info@sign-xpert.com" style="color: #006DA5; text-decoration: none;">info@sign-xpert.com</a>
-                            </p>
-                            <p style="margin: 0; font-size: 14px; color: #333333;">
-                                +49 157 766 25 125
-                            </p>
-                        </td>
-                    </tr>
-
-                </table>
+        <tr>
+            <td style="border-top: 1px solid #eeeeee; padding-top: 20px; text-align: right; font-size: 14px; color: #001CD3;">
+                <a href="https://sign-xpert.com" style="color: #001CD3; text-decoration: none;">sign-xpert.com</a><br>
+                <a href="mailto:info@sign-xpert.com" style="color: #001CD3; text-decoration: none;">info@sign-xpert.com</a><br>
+                <a href="tel:+4915776625125" style="color: #001CD3; text-decoration: none;">+49 157 766 25 125</a>
             </td>
         </tr>
     </table>
-
 </body>
 </html>
-`       
-            const to=order.user.email;
+`
             const key = String(order?.idMongo || '').trim();
-            const mongoRes=await CartProject.findById(key,'checkout.invoiceEmail');
-            const emails=mongoRes.checkout.invoiceEmail;
-            console.log(4234,emails);
-            console.log(emails.split(','));
-            emails.split(',').forEach(x=>SendEmailForStatus.SendEmailWithFile(order,html,subject,x))
-            //await sendEmail(to,html,subject);
+            const mongoRes=key ? await CartProject.findById(key,'checkout.invoiceEmail') : null;
+            const recipients=parseEmailList(mongoRes?.checkout?.invoiceEmail || order.user.email);
+            await Promise.all(recipients.map((to)=>SendEmailForStatus.SendEmailWithFile(order,html,subject,to)));
+            return true;
         }catch(err){
             console.error('error send email where status shipped2.'+err);
             return false
         }
     }
-
     static StatusDelivered = async (order) => {
         try{
             const orderNumber=String(order.id).padStart(3, '0')

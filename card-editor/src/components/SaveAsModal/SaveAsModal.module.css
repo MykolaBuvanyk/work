@@ -127,33 +127,33 @@
    Name: 150px width + 70px right padding = 220px
    Date: 100px width + 50px right padding = 150px
    Rest allocated to image column */
-table td:nth-child(1) {
+.table td:nth-child(1) {
   width: 10px;
   padding-left: 0;
   padding-right: 70px;
 }
 
-table td:nth-child(2) {
+.table td:nth-child(2) {
   width: 150px;
   padding-left: 0;
 }
 
-table td:nth-child(3) {
+.table td:nth-child(3) {
   width: 100px;
   padding-left: 0;
   padding-right: 50px;
   white-space: nowrap;
 }
 
-table td:nth-child(4) {
+.table td:nth-child(4) {
   /* remaining space for images and arrows */
   padding-left: 0;
   padding-right: 0;
 }
-table td:nth-child(4) img {
+.table td:nth-child(4) img {
   max-height: 54px;
 }
-table td {
+.table td {
   padding-left: 0;
 }
 /* Slider */

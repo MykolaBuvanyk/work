@@ -770,7 +770,7 @@ export default function Checkout({
 	const sumForOrder = round2(priceExclVat + Number(accessoriesPrice || 0))
 	const subtotalBeforeCoupon = round2(sumForOrder + Number(deliveryPrice || 0))
 	const couponDiscountAmount = appliedCoupon
-		? Math.min(priceExclVat, round2(priceExclVat * (Number(appliedCoupon.discount || 0) / 100)))
+		? Math.min(priceExclVat, round2(orderSubtotal * (Number(appliedCoupon.discount || 0) / 100)))
 		: 0
 	const canvasPriceAfterCoupon = round2(priceExclVat - couponDiscountAmount)
 	const totalCanvasDiscountAmount = round2(Number(discountAmount || 0) + Number(couponDiscountAmount || 0))

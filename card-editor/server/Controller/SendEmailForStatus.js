@@ -2,11 +2,11 @@ import ErrorApi from "../error/ErrorApi.js";
 import sendEmail from "./utils/sendEmail.js";
 import 'dotenv/config'; // для ES модулів
 import puppeteer from 'puppeteer';
-import { countryToLanguage, DEFAULT_LANGUAGE, t } from '../i18n/index.js';
+import { countryToLanguage, DEFAULT_LANGUAGE, normalizeLanguage, t } from '../i18n/index.js';
 import { localize } from '../i18n/localize.js';
 
 // Derive UI language for a user (from saved language, fallback to country mapping, else default).
-const userLang = (user) => user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE;
+const userLang = (user) => normalizeLanguage(user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE);
 // Admin emails are operational notifications and must always stay in English.
 const ADMIN_LANG = 'en';
 
@@ -456,7 +456,7 @@ class SendEmailForStatus {
         }
     }
 
-    static SendEmailWithFile = async (newOrder, textHTML, subject, to) => {
+    static SendEmailWithFile = async (newOrder, textHTML, subject, to, lang = userLang(newOrder?.user)) => {
         // return;
         let browser;
         let outputPdfBuffer = null;
@@ -596,6 +596,8 @@ class SendEmailForStatus {
             const vatAmount = Number.isFinite(Number(checkout?.vatAmount))
                 ? Number(checkout.vatAmount)
                 : Math.max(0, round2(totalAmount - netAmount - shippingCost));
+            const pdfText = (key) => t(key, lang);
+            const invoiceReferenceLabel = `${pdfText('pdf.invoice.referenceOrderNo')} ${invoiceNumber}`;
         
             const taxNoteMarkup = vatPercent > 0
                 ? ''
@@ -611,11 +613,11 @@ class SendEmailForStatus {
 
             const htmlContent = `
         <!DOCTYPE html>
-        <html lang="uk">
+        <html lang="${lang}">
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Invoice - SignXpert</title>
+            <title>${pdfText('pdf.invoice.documentTitle')}</title>
             <style>
                 ${INTER_FONT_FACE_CSS}
                 * {
@@ -819,7 +821,7 @@ class SendEmailForStatus {
                     <div class="logo">SIGN<span>X</span>PERT</div>
                     <div class="logo-sub">Smart <span>Sign & Label</span> Solution</div>
                 </div>
-                <div class="invoice-title">INVOICE</div>
+                <div class="invoice-title">${pdfText('pdf.invoice.title')}</div>
             </div>
         
             <div class="info-section">
@@ -834,15 +836,15 @@ class SendEmailForStatus {
                 </div>
                 <div class="details-block">
                 <table class="details-table">
-                    <tr><td><strong>Invoice No:</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
-                    <tr><td>Customer No:</td><td>${customerNumber}</td></tr>
+                    <tr><td><strong>${pdfText('pdf.invoice.invoiceNoLabel')}</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
+                    <tr><td>${pdfText('pdf.invoice.customerNoLabel')}</td><td>${customerNumber}</td></tr>
                     ${vatIdMarkup}
-                    <tr><td>Date:</td><td>${invoiceDate}</td></tr>
+                    <tr><td>${pdfText('pdf.invoice.dateLabel')}</td><td>${invoiceDate}</td></tr>
                     ${isInvoiceUnpaidCase
-                    ? `<tr><td>Invoice due date:</td><td>${invoiceDueDate}</td></tr>
-                    <tr><td>Payment Terms:</td><td>30 days net</td></tr>`
-                    : `<tr><td>Payment status:</td><td>${paymentStatus}</td></tr>`}
-                    <tr><td>Reference:</td><td>Order No: ${invoiceNumber}</td></tr>
+                    ? `<tr><td>${pdfText('pdf.invoice.invoiceDueDateLabel')}</td><td>${invoiceDueDate}</td></tr>
+                    <tr><td>${pdfText('pdf.invoice.paymentTermsLabel')}</td><td>${t('common.thirtyDaysNet', lang)}</td></tr>`
+                    : `<tr><td>${pdfText('pdf.invoice.paymentStatusLabel')}</td><td>${paymentStatus}</td></tr>`}
+                    <tr><td>${pdfText('pdf.invoice.paymentReferenceLabel')}</td><td>${invoiceReferenceLabel}</td></tr>
                     </table>
                 </div>
             </div>
@@ -850,15 +852,15 @@ class SendEmailForStatus {
             <table class="items-table">
                 <thead>
                     <tr>
-                    <th class="col-order nowrap">Order No</th>
-                    <th class="col-desc">Description</th>
-                    <th class="col-total">Net total</th>
+                    <th class="col-order nowrap">${pdfText('pdf.invoice.colOrderNo')}</th>
+                    <th class="col-desc">${pdfText('pdf.invoice.colDescription')}</th>
+                    <th class="col-total">${pdfText('pdf.invoice.colNetTotal')}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                     <td>${invoiceNumber}</td>
-                    <td>Count Signs:${signsCount} (${projectName})</td>
+                    <td>${pdfText('pdf.invoice.countSigns')}${signsCount} (${projectName})</td>
                     <td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td>
                     </tr>
                 </tbody>
@@ -866,11 +868,11 @@ class SendEmailForStatus {
         
             <div class="calc-section">
                 <table class="calc-table">
-                <tr><td>Subtotal</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
-                <tr><td>Discount (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
-                <tr><td>Shipping & Packaging cost${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
+                <tr><td>${pdfText('pdf.invoice.subtotalLabel')}</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
+                <tr><td>${pdfText('pdf.invoice.discountLabel')} (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
+                <tr><td>${pdfText('pdf.invoice.shippingAndPackaging')}${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
                     <tr class="total-row">
-                    <td style="padding-top: 15px; padding-bottom: 6px;"><u>Total amount</u></td>
+                    <td style="padding-top: 15px; padding-bottom: 6px;"><u>${pdfText('pdf.invoice.totalAmount')}</u></td>
                     <td class="money-cell" style="padding-top: 12px; padding-bottom: 6px;">€&nbsp;${totalAmountFormatted}</td>
                     </tr>
                 </table>
@@ -878,25 +880,25 @@ class SendEmailForStatus {
         
             ${shouldRenderPaymentInformation ? `
             <div class="payment-info">
-                <h3><u>Payment information:</u></h3>
+                <h3><u>${pdfText('pdf.invoice.paymentInformationHeading')}</u></h3>
                 <div class="payment-grid">
-                <div>Amount due:</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
-                <div>Account holder:</div><div>Kostyantyn Utvenko</div>
-                <div>IBAN:</div><div>DE78 6535 1260 0134 0819 40</div>
-                <div>BIC / SWIFT:</div><div>SOLADES1BAL</div>
-                <div>Payment reference:</div><div>Order No: ${invoiceNumber}</div>
+                <div>${pdfText('pdf.invoice.amountDue')}</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
+                <div>${pdfText('pdf.invoice.accountHolder')}</div><div>Kostyantyn Utvenko</div>
+                <div>${pdfText('pdf.invoice.ibanLabel')}</div><div>DE78 6535 1260 0134 0819 40</div>
+                <div>${pdfText('pdf.invoice.bicSwiftLabel')}</div><div>SOLADES1BAL</div>
+                <div>${pdfText('pdf.invoice.paymentReferenceLabel')}</div><div>${invoiceReferenceLabel}</div>
                 </div>
             </div>
         
             <div class="online-payment-note">
-                <span class="first-line">If you would like to pay by card or use any of the other online payment methods available, please visit: <span class="nowrap">sign-xpert.com</span></span><br>
-                Log in to your account and go to: <span class="nowrap">My Account → My Orders</span><br>
-                Select the relevant invoice and click “Pay” to complete your payment securely.
+                <span class="first-line">${pdfText('pdf.invoice.onlinePaymentLine1')} <span class="nowrap">sign-xpert.com</span></span><br>
+                ${pdfText('pdf.invoice.onlinePaymentLine2')} <span class="nowrap">${t('common.myAccountArrowMyOrders', lang)}</span><br>
+                ${pdfText('pdf.invoice.onlinePaymentLine3')}
             </div>
             ` : ''}
         
             <div class="footer-wrapper">
-                <div class="footer-thanks" style="text-align:center;margin-bottom:10px;font-weight:700;"><strong>Thank you for choosing SignXpert!</strong></div>
+                <div class="footer-thanks" style="text-align:center;margin-bottom:10px;font-weight:700;"><strong>${pdfText('pdf.invoice.footerThanks')}</strong></div>
                 <div class="footer-box" style="border:0.5pt solid #000;padding:6px 10px;display:flex;justify-content:space-between;font-size:8pt;line-height:1.05;">
                 <div class="footer-col-left">
                     <table class="footer-info-table">
@@ -905,12 +907,12 @@ class SendEmailForStatus {
                         <td class="footer-value-cell"></td>
                     </tr>
                     <tr>
-                        <td>Owner:</td>
+                        <td>${pdfText('pdf.invoice.footerOwnerLabel')}</td>
                         <td class="footer-value-cell">Kostyantyn Utvenko</td>
                     </tr>
                     <tr>
-                        <td>Address:</td>
-                        <td class="footer-value-cell">Baumwiesen 2, Haigerloch 72401, Germany</td>
+                        <td>${pdfText('pdf.invoice.footerAddressLabel')}</td>
+                        <td class="footer-value-cell">${pdfText('pdf.invoice.footerAddressValue1')}</td>
                     </tr>
                     <tr>
                         <td>IBAN:</td>
@@ -921,7 +923,7 @@ class SendEmailForStatus {
                         <td class="footer-value-cell">SOLADES1BAL</td>
                     </tr>
                     <tr>
-                        <td>USt-IdNr.:</td>
+                        <td>${pdfText('pdf.invoice.footerUstIdLabel')}</td>
                         <td class="footer-value-cell">DE461817538 Gemäß § 19 UStG wird keine Umsatzsteuer berechnet/</td>
                     </tr>
                     <tr>
@@ -985,32 +987,34 @@ class SendEmailForStatus {
                 
             const zugferdPdf = await invoice.embedInPdf(pdfBuffer, {
                 metadata: {
-                title: `Invoice ${invoiceNumber}`,
-                subject: `Invoice ${invoiceNumber}`,
+                title: `${pdfText('pdf.invoice.title')} ${invoiceNumber}`,
+                subject: `${pdfText('pdf.invoice.title')} ${invoiceNumber}`,
                 author: 'SignXpert',
                 creator: 'SignXpert backend',
                 producer: 'SignXpert backend',
                 keywords: ['ZUGFeRD', 'Factur-X', 'Invoice'],
-                language: 'en',
+                language: lang,
                 },
             });
             outputPdfBuffer = Buffer.from(zugferdPdf);
-
-            await sendEmail(to, textHTML, subject, outputPdfBuffer)
 
         } catch (err) {
             console.error("PDF Generation Error in SendToAdminNewOrder:", err);
         } finally {
             if (browser) await browser.close();
         }
+        if (!outputPdfBuffer) {
+            return false;
+        }
         try{
             const fileAttachment = outputPdfBuffer ? {
-                filename: `Invoice-${orderNumber}.pdf`,
+                filename: `invoice-${orderNumber}.pdf`,
                 content: outputPdfBuffer,
                 contentType: 'application/pdf'
             } : null;
 
-            sendEmail(to, textHTML, subject, fileAttachment, userLang(newOrder?.user))
+            await sendEmail(to, textHTML, subject, fileAttachment, lang);
+            return true;
 
         } catch (err) {
             console.error('Error in SendToAdminNewOrder Final Step:', err);
@@ -1484,8 +1488,17 @@ class SendEmailForStatus {
 `
             const key = String(order?.idMongo || '').trim();
             const mongoRes=key ? await CartProject.findById(key,'checkout.invoiceEmail') : null;
-            const recipients=parseEmailList(mongoRes?.checkout?.invoiceEmail || order.user.email);
-            await Promise.all(recipients.map((to)=>SendEmailForStatus.SendEmailWithFile(order,html,subject,to)));
+            const invoiceRecipients = parseEmailList(mongoRes?.checkout?.invoiceEmail);
+            const recipientSource = invoiceRecipients.length ? invoiceRecipients : parseEmailList(order.user.email);
+            const seenRecipients = new Set();
+            const recipients=recipientSource
+                .filter((email) => {
+                    const normalized = normalizeEmail(email);
+                    if (!normalized || seenRecipients.has(normalized)) return false;
+                    seenRecipients.add(normalized);
+                    return true;
+                });
+            await Promise.all(recipients.map((to)=>SendEmailForStatus.SendEmailWithFile(order,html,subject,to,lang)));
             return true;
         }catch(err){
             console.error('error send email where status shipped2.'+err);

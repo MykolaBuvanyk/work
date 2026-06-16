@@ -437,8 +437,8 @@ ul {
 
 .infoBlockSecondaryTitle {
   margin-bottom: 22px;
-  line-height: 1.15;
-  font-weight: 700;
+  line-height: 1.2;
+  font-weight: 800;
 }
 
 .infoBlockContent {
@@ -455,6 +455,8 @@ ul {
 .infoBlockContent strong {
   color: var(--products-text);
   font-size: 40px;
+  line-height: 120%;
+  font-weight: 800;
 }
 
 .bulletList {

@@ -3246,6 +3246,7 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         }
 
       .details-table {
+        width: 100%;
             border-collapse: collapse;
         }
       .details-table td {
@@ -3254,6 +3255,11 @@ CartRouter.get('/getPdfs3/:idOrder', requireAuth, async (req, res, next) => {
         font-weight: 400;
         }
       .details-table td:first-child { width: 140px; }
+      .details-table td:last-child {
+        width: 95px;
+        text-align: right;
+        white-space: nowrap;
+      }
       .details-table tr:first-child td { font-weight: 700; }
 
       .items-table {

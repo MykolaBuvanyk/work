@@ -132,6 +132,8 @@ const categoryItems = [
       'products.categories.doorOffice.item_1',
       'products.categories.doorOffice.item_2',
       'products.categories.doorOffice.item_3',
+      'products.categories.doorOffice.item_4',
+      'products.categories.doorOffice.item_5',
     ],
   },
 ];

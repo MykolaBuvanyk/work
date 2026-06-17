@@ -642,7 +642,9 @@
         "title": "Plaques de porte et plaques de bureau",
         "item_1": "panneaux de porte de bureau",
         "item_2": "identification des pièces",
-        "item_3": "étiquettes de poste de travail"
+        "item_3": "étiquettes de poste de travail",
+        "item_4": "plaque nominative",
+        "item_5": "panneaux de stationnement"
       }
     }
   },
@@ -1727,6 +1729,15 @@
     "reset": "Réinitialiser",
     "canvasPreviewAlt": "Aperçu du canevas",
     "noData": "Aucune donnée"
+  },
+  "cookieConsent": {
+    "title": "Les données améliorent votre expérience",
+    "descriptionBeforeLink": "Afin d'améliorer votre expérience sur nos plateformes et de vous montrer des informations plus pertinentes, nous utilisons des cookies et des technologies similaires, appartenant à SignXpert et à des tiers, ainsi que des données envoyées directement depuis nos serveurs. Vous pouvez gérer vos préférences à tout moment dans",
+    "privacyLink": "Confidentialité et paramètres des cookies",
+    "necessaryTitle": "Strictement nécessaires (toujours actifs)",
+    "necessaryDescription": "Permettent les fonctionnalités essentielles liées à vos préférences de langue, de région et d'achat.",
+    "acceptAll": "Tout accepter",
+    "declineAll": "Tout refuser"
   },
   "Header": {
     "nav": {

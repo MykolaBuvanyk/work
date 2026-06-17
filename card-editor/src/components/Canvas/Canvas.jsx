@@ -143,8 +143,8 @@ export const editTextHandler = async (evt, transform) => enableTextEditing(trans
 const OUTLINE_COLOR = 'rgba(0, 108, 164, 1)'; // #006CA4
 const OUTLINE_WIDTH_CSS = 2;
 const CUT_VISUAL_STROKE_WIDTH_CSS = 1.5;
-const CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER = 2;
-const FRAME_VISUAL_STROKE_MULTIPLIER = 2;
+const CANVAS_ELEMENT_STROKE_VISUAL_MULTIPLIER = 1;
+const FRAME_VISUAL_STROKE_MULTIPLIER = 1;
 
 const hasObjectFlag = (object, flagName) => {
   let current = object;

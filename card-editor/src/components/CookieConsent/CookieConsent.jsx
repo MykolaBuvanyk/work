@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import Link from '../Localized/LocalizedLink';
 import styles from './CookieConsent.module.css';
 
 const CookieConsent = () => {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -27,29 +30,25 @@ const CookieConsent = () => {
     <div className={styles.cookie_overlay}>
       <div className={styles.cookie_container}>
         <div className={styles.cookie_content}>
-          <h3 className={styles.cookie_title}>Data improves your experience</h3>
+          <h3 className={styles.cookie_title}>{t('cookieConsent.title')}</h3>
           <p className={styles.cookie_text}>
-            In order to enhance your experience across our platforms and show you more relevant
-            information, we use cookies and similar technologies, both SignXpert owned and third
-            party owned, as well as data sent directly from our servers. You can manage your
-            preferences anytime in{' '}
-            <a href="/privacy-policy" className={styles.cookie_link}>
-              {' '}
-              Privacy & Cookie Settings
-            </a>
+            {t('cookieConsent.descriptionBeforeLink')}{' '}
+            <Link to="/privacy-policy" className={styles.cookie_link}>
+              {t('cookieConsent.privacyLink')}
+            </Link>
             .
           </p>
-          <p className={styles.cookie_text_strong}>Strictly necessary (always on)</p>
+          <p className={styles.cookie_text_strong}>{t('cookieConsent.necessaryTitle')}</p>
           <p className={styles.cookie_text_gray}>
-            Enables core functionality to power your language, region, and shopping preferences.
+            {t('cookieConsent.necessaryDescription')}
           </p>
         </div>
         <div className={styles.cookie_buttons}>
           <button className={styles.cookie_button_accept} onClick={handleAccept}>
-            Accept all
+            {t('cookieConsent.acceptAll')}
           </button>
           <button className={styles.cookie_button_decline} onClick={handleDecline}>
-            Decline all
+            {t('cookieConsent.declineAll')}
           </button>
         </div>
       </div>

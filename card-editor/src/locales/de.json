@@ -647,21 +647,23 @@
   "item_2": "Schalter-Beschriftungen",
   "item_3": "Maschinenbedienfelder",
   "item_4": "Bedienoberflächen"
-}
-  },
- "serialNumber": {
-  "title": "Serien- und Inventarschilder",
-  "item_1": "Barcode-Schilder",
-  "item_2": "Inventarschilder",
-  "item_3": "Geräteschilder",
-  "item_4": "Anlagenschilder"
-}
+},
+  "serialNumber": {
+    "title": "Seriennummernschilder",
+    "item_1": "Seriennummernschilder",
+    "item_2": "Inventarschilder",
+    "item_3": "Gerätekennzeichnungsschilder",
+    "item_4": "Inventaretiketten"
   },
   "doorOffice": {
-  "title": "Tür- und Büroschilder",
-  "item_1": "Bürotürschilder",
-  "item_2": "Raumkennzeichnung",
-  "item_3": "Arbeitsplatzkennzeichnung"
+    "title": "Tür- und Büroschilder",
+    "item_1": "Bürotürschilder",
+    "item_2": "Raumkennzeichnung",
+    "item_3": "Arbeitsplatzkennzeichnung",
+    "item_4": "Namensschilder",
+    "item_5": "Parkplatzschilder"
+  }
+  }
   },
  "toolbar": {
   "actions": {
@@ -2036,7 +2038,9 @@
   "p_73": "Tür- und Büroschilder",
   "p_74": "Bürotürschilder",
   "p_75": "Raumkennzeichnung",
-  "p_76": "Arbeitsplatzkennzeichnung"
+  "p_76": "Arbeitsplatzkennzeichnung",
+  "p_77": "Namensschilder",
+  "p_78": "Parkplatzschilder"
 },
   "industries": {
   "title": "Branchen",

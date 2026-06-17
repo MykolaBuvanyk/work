@@ -659,7 +659,9 @@
         "title": "Door and Office Nameplates",
         "item_1": "office door signs",
         "item_2": "room identification",
-        "item_3": "workplace labels"
+        "item_3": "workplace labels",
+        "item_4": "nameplates",
+        "item_5": "parking signs"
       }
     }
   },
@@ -1745,6 +1747,15 @@
     "canvasPreviewAlt": "Canvas preview",
     "noData": "No data"
   },
+  "cookieConsent": {
+    "title": "Data improves your experience",
+    "descriptionBeforeLink": "In order to enhance your experience across our platforms and show you more relevant information, we use cookies and similar technologies, both SignXpert owned and third party owned, as well as data sent directly from our servers. You can manage your preferences anytime in",
+    "privacyLink": "Privacy & Cookie Settings",
+    "necessaryTitle": "Strictly necessary (always on)",
+    "necessaryDescription": "Enables core functionality to power your language, region, and shopping preferences.",
+    "acceptAll": "Accept all",
+    "declineAll": "Decline all"
+  },
   "Header": {
     "nav": {
       "home": "Home",
@@ -2036,7 +2047,9 @@
     "p_73": "Door and Office Nameplates",
     "p_74": "office door signs",
     "p_75": "room identification",
-    "p_76": "workplace labels"
+    "p_76": "workplace labels",
+    "p_77": "nameplates",
+    "p_78": "parking signs"
   },
   "industries": {
     "title": "Industries",

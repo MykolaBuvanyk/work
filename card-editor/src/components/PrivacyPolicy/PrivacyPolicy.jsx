@@ -238,7 +238,7 @@ const PrivacyPolicy = () => {
         </div>
 
         <button id="cookie" type="button" className={styles.cookieBtn} onClick={openCookie}>
-          Cookie settings
+          {t("Footer.info.cookieSettings")}
         </button>
       </div>
     </div>

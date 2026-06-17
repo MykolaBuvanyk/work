@@ -560,8 +560,8 @@
   },
    "features": {
   "title": "<accent>Produktdetails</accent>",
-  "descriptionStrong": "Unsere gravierten Kunststoffschilder werden aus hochwertigem zweischichtigem Kunststoff gefertigt, der speziell für technische und industrielle Anwendungen entwickelt wurde.",
-  "description": "Da die Beschriftung direkt in das Material eingraviert wird, verblasst sie nicht, löst sich nicht ab und nutzt sich nicht wie gedruckte Etiketten ab.",
+  "descriptionStrong": "Unsere gravierten Kunststoffschilder bestehen aus hochwertigem zweischichtigem Kunststoff für technische und industrielle Anwendungen.",
+  "description": "Direkt eingraviert bleibt die Beschriftung dauerhaft scharf, farbstabil und abriebfest – ein klarer Vorteil gegenüber Etiketten.",
   "selfAdhesive": {
     "title": "Selbstklebende Ausführung mit\nstarker 3M-Klebeschicht",
     "alt": "Selbstklebende Ausführung  mit starker 3M-Klebeschicht"
@@ -597,15 +597,15 @@
 },
 "design": {
   "title": "Gestalten Sie Ihr graviertes <accent>Schild online</accent>",
-  "intro": "Mit dem SignXpert <editor>Online-Editor</editor> können Sie individuelle gravierte Schilder schnell und einfach erstellen. Gestalten Sie Ihr Schild direkt im Browser und sehen Sie jede Änderung sofort in der Vorschau.",
- 
+  "intro": "Mit dem SignXpert <editor>Online-Editor</editor> können Sie individuelle gravierte Schilder schnell und einfach erstellen.",
+  "highlight": "Gestalten Sie Ihr Schild direkt im Browser und sehen Sie jede Änderung sofort in der Vorschau.",
   "listTitle": "Funktionen unseres Online‑Editors – Schritt für Schritt",
   "item_1": "Größe und Layout wählen — Wählen Sie die gewünschte Größe und das passende Layout Ihres Schildes",
   "item_2": "Design anpassen — Passen Sie Text, Symbole und Farben individuell an",
   "item_3": "Befestigung hinzufügen — Fügen Sie Bohrungen oder eine selbstklebende Rückseite hinzu",
-  "item_4": "Echtzeit Vorschau_nutzen — Nutzen Sie die Echtzeit‑Vorschau, um jede Änderung sofort zu sehen",
+  "item_4": "Echtzeit Vorschau nutzen — Nutzen Sie die Echtzeit‑Vorschau, um jede Änderung sofort zu sehen",
   "summary": "So erstellen Sie professionelle gravierte Etiketten, Maschinenschilder und technische Schilder in nur wenigen Minuten.",
-  "support": "Persönliche Unterstützung. Schilder können auch telefonisch oder per E‑Mail bestellt werden. Unser Team unterstützt Sie bei Bedarf gerne bei der Gestaltung.",
+  "support": "Schilder können auch telefonisch oder per E‑Mail bestellt werden. Unser Team unterstützt Sie bei Bedarf gerne bei der Gestaltung.",
   "imageAlt": "Jetzt Ihr individuelles Schild mit SignXpert gestalten",
   "cta": "Jetzt online gestalten"
 },
@@ -660,12 +660,9 @@
   "doorOffice": {
   "title": "Tür- und Büroschilder",
   "item_1": "Bürotürschilder",
-  "item_2": "Raumschilder",
-  "item_3": "Arbeitsplatzschilder",
-  "item_4": "Namenschilder",
-  "item_5": "Parkplatzschilder"
-}
-,
+  "item_2": "Raumkennzeichnung",
+  "item_3": "Arbeitsplatzkennzeichnung"
+  },
  "toolbar": {
   "actions": {
     "update": "Aktualisieren",
@@ -1114,7 +1111,7 @@
   "orderSummary": "Bestellübersicht",
   "myOrder": "Meine Bestellung",
   "selectCountry": "Land auswählen",
-  "phoneQuestionNote": "Rückfragen unter dieser Mobilfunknummer möglich.",
+  "phoneQuestionNote": "Rückfragen per Mobilnummer erlauben.",
   "yes": "JA",
   "invoiceEmailNote": "Diese E-Mail-Adresse wird für den Versand Ihrer Rechnung verwendet",
   "invoiceDifferent": "Rechnungsadresse (falls abweichend)",
@@ -1134,7 +1131,7 @@
     "customerReference": "Kundenreferenz",
     "invoiceRegion": "Rechnungsregion",
     "emailAddress": "E-Mail-Adresse",
-    "mobilePhone": "Mobiltelefon"
+    "mobilePhone": "Mobilnummer"
   },
   "customerReference": {
     "placeholder": "z. B. Bestellnr., Projektnr. - erscheint auf Rechnung"
@@ -1567,7 +1564,7 @@
   "description_92": "Geschäftsanschrift",
   "description_93": "Öffnungszeiten",
   "description_94": "Montag - Freitag, 08:00 - 19:00",
-  "description_95": "Oder nutzen Sie dieses Formular, um uns zu kontaktieren",
+  "description_95": "Oder schreiben Sie uns über das Formular.",
   "description_96": "Firma / Unternehmen",
   "description_97": "*Frage",
   "description_98": "SENDEN",
@@ -1805,8 +1802,8 @@
     "privacyPolicy": "Datenschutzerklärung",
     "termsOfPurchasing": "Einkaufsbedingungen",
     "cookieSettings": "Cookie-Einstellungen",
-    "company": "Unternehmen",
-    "consumer": "Verbraucher",
+    "company": "Firma / Unternehmen",
+    "consumer": "Privatperson",
     "impressum": "Impressum",
     "euOnlineDisputeResolution": "EU-Online-Streitbeilegung"
   },
@@ -1848,8 +1845,8 @@
 },
 "LoginRegister": {
   "r_1": "Neues Konto erstellen",
-  "r_2": "Verbraucher",
-  "r_3": "Unternehmen"
+  "r_2": "Privatperson",
+  "r_3": "Firma / Unternehmen"
 },
 "RegisterConsumer": {
   "rr_1": "*Vorname und Nachname",
@@ -1952,7 +1949,7 @@
   "h_45": "Bestellen Sie vor 16:00 Uhr für Versand am selben Tag",
   "h_46": "zuverlässiger Versand in Deutschland und Europa",
   "h_47": "schnelle Reaktionszeiten und persönlicher Kundensupport",
-  "h_48": "So erhalten Unternehmen ihre individuell gravierten Schilder schnell und zuverlässig.",
+  "h_48": "So erhalten Sie individuell gravierte Schilder schnell und zuverlässig.",
   "h_49": "Langlebige",
   "h_50": "gravierte Kunststoffschilder",
   "h_51": "Alle SignXpert‑Produkte werden aus hochwertigem, zweischichtigem Gravurkunststoff gefertigt und sind in verschiedenen Farbkombinationen erhältlich.",
@@ -2358,4 +2355,3 @@
     }
   }
 }
-

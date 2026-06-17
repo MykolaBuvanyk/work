@@ -1,24 +1,24 @@
 {
   "meta": {
     "home":{
-      "title":"Individuelle Schilder & Gravurschilder in Deutschland | SignXpert",
-      "description":"Gestalten Sie individuelle Schilder, Etiketten und Typenschilder mit SignXpert. Hochwertige Gravuren und Drucke mit schneller Lieferung in ganz Deutschland. Ideal für Unternehmen und Privatkunden."
+      "title":"Individuelle Industrie-Schilder online gestalten | SignXpert",
+      "description":"Gestalten Sie individuelle Industrie-Schilder und Typenschilder direkt online mit SignXpert. Hochwertige Lasergravur, präzise Fertigung und schnelle Lieferung."
     },
     "login": {
-      "title": "Anmelden – SignXpert",
-      "description": "Melden Sie sich in Ihrem SignXpert-Konto an, um Bestellungen zu verwalten, Dateien herunterzuladen und Ihre individuellen Schilder zu verfolgen. Sicherer Zugang für Kunden in Deutschland."
+      "title": "Einloggen – SignXpert",
+      "description": "Einloggen in Ihr SignXpert-Konto: Bestellungen verwalten, Dateien herunterladen und Lieferung verfolgen. Sicherer Zugang für Kunden in Deutschland."
     },
     "account": {
       "title": "Mein Konto – Bestellungen, Einstellungen & Dashboard | SignXpert",
       "description": "Greifen Sie auf Ihr SignXpert-Konto zu, um Bestellungen zu verwalten, Sendungen zu verfolgen und Ihre Daten zu aktualisieren. Sicherer Zugang für Industrie- und Geschäftskunden in Deutschland."
     },
     "online-sign-editor": {
-      "title": "Individuelle Schilder online gestalten – Sign-Editor | SignXpert",
-      "description": "Nutzen Sie den Online-Sign-Editor von SignXpert, um individuelle Schilder, Etiketten und gravierte Typenschilder in wenigen Minuten zu gestalten. Einfache Anpassung, Echtzeit-Vorschau und schnelle Lieferung in ganz Deutschland."
+      "title": "Schilder online gestalten – Online-Editor | SignXpert",
+      "description": "Gestalten Sie individuelle Schilder und Typenschilder direkt online mit SignXpert. Präzise Lasergravur, Echtzeit-Vorschau und schnelle Lieferung in ganz Deutschland."
     },
     "products": {
-      "title": "Industrieschilder & Elektrokennzeichnungen in Deutschland | SignXpert",
-      "description": "Entdecken Sie individuelle Industrieschilder, gravierte Etiketten und Typenschilder für elektrische und technische Anwendungen. Robuste Materialien, präzise Gravuren und schnelle Lieferung in ganz Deutschland mit SignXpert."
+      "title": "Schilder für Elektrotechnik & Industrie | SignXpert",
+      "description": "Individuelle Industrieschilder und Typenschilder für Maschinen, Anlagen, Schaltschränke und Elektrotechnik. Präzise Lasergravur, robuste Materialien und schnelle Lieferung in ganz Deutschland."
     },
     "faq": {
       "title": "FAQ – Individuelle Schilder & Industrie-Beschilderung | SignXpert",
@@ -37,39 +37,39 @@
       "description": "Entdecken Sie die Branchen, die von SignXpert unterstützt werden – darunter Elektro-, Industrie- und Technikbereiche. Individuelle Schilder, gravierte Etiketten und Typenschilder für professionelle Anwendungen in Deutschland."
     },
     "industries/mep-building-services/electrical-installation": {
-      "title": "Kennzeichnungen & Schilder für Elektroinstallationen in MEP-Projekten | SignXpert",
+      "title": "Beschilderung für Elektroinstallationen & MEP-Projekte | SignXpert",
       "description": "Hochwertige Schilder, Etiketten und Typenschilder für Elektroinstallationen in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für industrielle Anwendungen in ganz Deutschland."
     },
     "industries/mep-building-services/sprinkler-installations": {
-      "title": "Kennzeichnungen für Sprinkleranlagen & Brandschutzsysteme | SignXpert",
+      "title": "Beschilderung für Sprinkleranlagen & Brandschutzsysteme | SignXpert",
       "description": "Hochwertige Kennzeichnungen, Brandschutzschilder und Identifikationsschilder für Sprinkleranlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Sicherheitssysteme in ganz Deutschland."
     },
     "industries/mep-building-services/fire-installation": {
-      "title": "Brandschutzkennzeichnungen & Sicherheitsschilder für MEP-Projekte | SignXpert",
+      "title": "Brandschutz-Beschilderung & Sicherheitsschilder für MEP-Projekte | SignXpert",
       "description": "Hochwertige Brandschutzkennzeichnungen, Sicherheitsschilder und Identifikationsschilder für MEP- und Gebäudetechnikprojekte. Robuste und normgerechte Lösungen für industrielle Brandschutzsysteme in ganz Deutschland."
     },
     "industries/mep-building-services/refrigeration-installations": {
-      "title": "Kennzeichnungen für Kälteanlagen & HVAC-Systeme | SignXpert",
+      "title": "Beschilderung für Kälte-, Klima- & HVAC-Systeme | SignXpert",
       "description": "Hochwertige Kennzeichnungen, Schilder und Typenschilder für Kälte- und HVAC-Anlagen in MEP- und Gebäudetechnikprojekten. Robuste und normgerechte Lösungen für industrielle Kühlsysteme in ganz Deutschland."
     },
     "industries/mep-building-services/ventilation-installations": {
-      "title": "Kennzeichnungen für Lüftungsanlagen & HVAC-Kanalsysteme | SignXpert",
+      "title": "Beschilderung für Lüftungs- und HVAC-Kanalsysteme | SignXpert",
       "description": "Hochwertige Kennzeichnungen, Kanalschilder und Luftstrommarkierungen für MEP- und HVAC-Systeme. Robuste und normgerechte Identifikationslösungen für industrielle Bauprojekte in ganz Deutschland."
     },
     "industries/mep-building-services/elevators-and-lift-systems": {
-      "title": "Kennzeichnungen für Aufzüge & Liftsysteme in MEP-Projekten | SignXpert",
+      "title": "Beschilderung für Aufzüge & Liftsysteme | SignXpert",
       "description": "Hochwertige Kennzeichnungen, Schilder und Identifikationsschilder für Aufzugs- und Liftsysteme in MEP- und Gebäudetechnikprojekten. Robuste, präzise und normgerechte Lösungen für vertikale Transportsysteme in ganz Deutschland."
     },
     "industries/mep-building-services/electrical-and-control-cabinets": {
-      "title": "Kennzeichnungen für Schaltschränke & Steuerungssysteme | SignXpert",
+      "title": "Beschilderung für Schaltschränke & Steuerungssysteme | SignXpert",
       "description": "Hochwertige Kennzeichnungen für elektrische Schaltschränke und industrielle Steuerungssysteme. Robuste Gravurschilder sowie Kabel- und Komponentenkennzeichnungen für einen sicheren und effizienten Betrieb in MEP-Projekten in Deutschland."
     },
     "industries/mep-building-services/electrical-in-control-and-building-automation": {
-      "title": "Kennzeichnungen für Elektro- & Gebäudeautomationssysteme | SignXpert",
+      "title": "Beschilderung für Elektro- und Gebäudeautomation | SignXpert",
       "description": "Hochwertige Kennzeichnungen für Elektro- und Gebäudeautomationssysteme in MEP-Projekten. Robuste Identifikationslösungen für Steuerungen, Sensoren und automatisierte Gebäudesysteme in industriellen Projekten in Deutschland."
     },
     "industries/mep-building-services/plumbing-installations-across": {
-      "title": "Kennzeichnungen für Sanitärinstallationen & Rohrmarkierungen in MEP-Systemen | SignXpert",
+      "title": "Beschilderung für Sanitärinstallationen & Rohrmarkierungen | SignXpert",
       "description": "Hochwertige Kennzeichnungen, Rohrmarkierungen und Identifikationsschilder für Sanitärinstallationen in MEP-Systemen. Robuste und normgerechte Lösungen für Wasser-, Heizungs- und Entwässerungssysteme in Industrie- und Bauprojekten in Deutschland."
     },
     "industries/security-automation/alarm-and-security-installations": {
@@ -233,7 +233,7 @@
   "description": "Hochwertige Branding-, Event- und Beschilderungslösungen für Unternehmensräume, Messen und industrielle Umgebungen. Robuste visuelle Kommunikationslösungen für Markenpräsentation, Besucherführung, Aktionsflächen und Umgebungsgrafiken in ganz Deutschland."
 },
 "industries/branding-industrial-labeling/packaging-industry": {
-  "title": "Kennzeichnungen für Verpackungsindustrie & industrielle Verpackungssysteme | SignXpert",
+  "title": "Beschilderung für Verpackungsmaschinen & Verpackungssysteme | SignXpert",
   "description": "Hochwertige Kennzeichnungen und Industrieschilder für Verpackungsindustrie, Produktion, Logistik und Lieferketten. Robuste Identifikationslösungen für Kartons, Paletten, Versandverpackungen und Verpackungslinien zur Sicherstellung von Rückverfolgbarkeit, Effizienz und Konformität in ganz Deutschland."
 },
 "industries/branding-industrial-labeling/our-technologies-and-materials": {
@@ -476,7 +476,7 @@
   "answer_4_list_6": "Überprüfen Sie Ihre Bestellbestätigung noch einmal, um sicherzustellen, dass alles korrekt ist.",
   "answer_4_4": "Wenn Sie dennoch nicht zufrieden sind:",
   "answer_4_list_7": "<contacts>Kontaktieren Sie uns</contacts> so schnell wie möglich, damit wir Ihnen zeitnah helfen können.",
-  "answer_4_list_8": "Die Garantie gilt 30 Tage ab Lieferung. Bitte melden Sie sich daher innerhalb dieses Zeitraums bei uns.",
+  "answer_4_list_8": "Die Garantie gilt 30 Tage ab Lieferung. Bitte kontaktieren Sie uns innerhalb dieses Zeitraums.",
   "answer_4_5": "Mit <home>SignXpert</home> ist die Erstellung eines individuellen Produkts einfach, sicher und angenehm, und wir sind jederzeit bereit zu helfen, falls etwas nicht stimmt.",
   "question_5": "Wie hoch sind die Versandkosten und welche Lieferoptionen mit welchen Lieferzeiten gibt es?",
   "answer_5_1": "Die Versandkosten bei <home>SignXpert</home> hängen von Größe, Gewicht und Wert Ihrer Bestellung sowie vom Zielland ab.",
@@ -486,7 +486,7 @@
   "answer_5_list_3": "Samstagszustellung - in einigen Regionen verfügbar, wenn Sie Ihre Bestellung am Wochenende benötigen.",
   "answer_5_3": "Alle Optionen und Kosten werden während des Bestellvorgangs klar angezeigt, sodass Sie die passende Versandart auswählen können. Jedes Paket wird mit einer Sendungsnummer verschickt, die Sie jederzeit in Ihrem <account>Mein Konto</account>-Dashboard prüfen können, um den Lieferstatus zu verfolgen.",
   "question_6": "Wo finde ich Informationen zu meinen Bestellungen und Zahlungen?",
-  "answer_6_1": "Wenn Sie bereits ein Konto haben, <login>melden Sie sich zuerst an</login> und gehen Sie anschließend zum Bereich <account>Mein Konto</account>, um alle Bestellungen anzuzeigen, die Sie jemals bei <home>SignXpert</home> aufgegeben haben.",
+  "answer_6_1": "Wenn Sie bereits ein Konto haben, <login>loggen Sie sich zuerst ein</login> und öffnen Sie anschließend <account>Mein Konto</account>, um alle Ihre bisherigen Bestellungen bei <home>SignXpert</home> anzuzeigen.",
   "answer_6_2": "In diesem Bereich können Sie wichtige Details zu Ihren Bestellungen finden und verwalten:",
   "answer_6_list_1": "Bestelldatum und Bestellnummer",
   "answer_6_list_2": "Projektname",
@@ -559,7 +559,7 @@
     }
   },
    "features": {
-  "title": "<accent>Produkteigenschaften</accent>",
+  "title": "<accent>Produktdetails</accent>",
   "descriptionStrong": "Unsere gravierten Kunststoffschilder werden aus hochwertigem zweischichtigem Kunststoff gefertigt, der speziell für technische und industrielle Anwendungen entwickelt wurde.",
   "description": "Da die Beschriftung direkt in das Material eingraviert wird, verblasst sie nicht, löst sich nicht ab und nutzt sich nicht wie gedruckte Etiketten ab.",
   "selfAdhesive": {
@@ -597,35 +597,35 @@
 },
 "design": {
   "title": "Gestalten Sie Ihr graviertes <accent>Schild online</accent>",
-  "intro": "Mit dem SignXpert <editor>Online-Editor</editor> können Sie individuelle gravierte Schilder schnell und einfach erstellen.",
-  "highlight": "Gestalten Sie Ihr Schild direkt im Browser und sehen Sie jede Änderung sofort in der Vorschau.",
-  "listTitle": "Funktionen unseres Online-Editors:",
-  "item_1": "Größe und Layout Ihres Schildes auswählen",
-  "item_2": "Text, Symbole und Farben individuell anpassen",
-  "item_3": "Bohrungen oder selbstklebende Rückseite hinzufügen",
-  "item_4": "Ihr Schild in Echtzeit ansehen",
-  "summary": "So lassen sich professionelle gravierte Etiketten, Maschinenschilder und technische Schilder in nur wenigen Minuten erstellen.",
-  "support": "Schilder können auch telefonisch oder per E-Mail bestellt werden. Unser Team unterstützt Sie bei Bedarf gerne bei der Gestaltung.",
+  "intro": "Mit dem SignXpert <editor>Online-Editor</editor> können Sie individuelle gravierte Schilder schnell und einfach erstellen. Gestalten Sie Ihr Schild direkt im Browser und sehen Sie jede Änderung sofort in der Vorschau.",
+ 
+  "listTitle": "Funktionen unseres Online‑Editors – Schritt für Schritt",
+  "item_1": "Größe und Layout wählen — Wählen Sie die gewünschte Größe und das passende Layout Ihres Schildes",
+  "item_2": "Design anpassen — Passen Sie Text, Symbole und Farben individuell an",
+  "item_3": "Befestigung hinzufügen — Fügen Sie Bohrungen oder eine selbstklebende Rückseite hinzu",
+  "item_4": "Echtzeit Vorschau_nutzen — Nutzen Sie die Echtzeit‑Vorschau, um jede Änderung sofort zu sehen",
+  "summary": "So erstellen Sie professionelle gravierte Etiketten, Maschinenschilder und technische Schilder in nur wenigen Minuten.",
+  "support": "Persönliche Unterstützung. Schilder können auch telefonisch oder per E‑Mail bestellt werden. Unser Team unterstützt Sie bei Bedarf gerne bei der Gestaltung.",
   "imageAlt": "Jetzt Ihr individuelles Schild mit SignXpert gestalten",
   "cta": "Jetzt online gestalten"
 },
 "production": {
   "titleLine_1": "Individuelle Fertigung",
   "titleLine_2": "mit <accent>SignXpert</accent>",
-  "lead": "Bei SignXpert wird jedes gravierte Schild individuell nach Ihren Anforderungen gefertigt.",
-  "description_1": "Ganz gleich, ob Sie ein einzelnes Schild oder große Produktionsserien benötigen - wir liefern zuverlässige Qualität und präzise Gravuren.",
-  "description_2": "Sie können Ihr Schild direkt in unserem Online-Editor gestalten, eigene Dateien hochladen oder uns Ihre Anforderungen senden.",
-  "description_3": "Unser Ziel ist es, langlebige, professionelle und einfach bestellbare gravierte Kunststoffschilder für Industrie und Unternehmen anzubieten.",
+  "lead": "Bei SignXpert wird jedes gravierte Schild individuell nach Ihren Anforderungen gefertigt – vom Einzelstück bis zur großen Serienproduktion.",
+  "description_1": "Sie können Ihr Schild direkt in unserem Online‑Editor gestalten, eigene Dateien hochladen oder uns Ihre technischen Anforderungen und Layoutwünsche einfach zusenden.",
+  "description_2": "Flexibel – von Einzelstücken bis Großserien.",
+  "description_3": "Ganz gleich, ob Sie ein einzelnes Schild, unterschiedliche Varianten oder eine große Stückzahl identischer Schilder benötigen – wir fertigen zuverlässig, präzise und in gleichbleibend hoher Qualität.",
   "imageAlt": "Individuelle Fertigung mit SignXpert"
 },
 "categories": {
   "title": "Unsere <accent>Produktkategorien</accent> und typische Anwendungen",
-  "electricalPanel": {
-    "title": "Kennzeichnungen für Schaltschränke",
-    "item_1": "Elektroschränke",
-    "item_2": "Schaltanlagen",
-    "item_3": "Steuerschränke",
-    "item_4": "Stromkreiskennzeichnung"
+"electricalPanel": {
+  "title": "Beschilderung für Schaltschränke",
+  "item_1": "Elektroschränke",
+  "item_2": "Schaltanlagen",
+  "item_3": "Steuerschränke",
+  "item_4": "Stromkreis-Schilder"
   },
   "machineNameplates": {
     "title": "Maschinenschilder",
@@ -642,27 +642,30 @@
     "item_4": "Betriebshinweise"
   },
   "controlPanel": {
-    "title": "Kennzeichnungen für Bedienfelder",
-    "item_1": "Tasterbeschriftungen",
-    "item_2": "Schalterbeschriftungen",
-    "item_3": "Maschinenbedienfelder",
-    "item_4": "Beschriftungen für Bedienoberflächen"
+  "title": "Beschilderung für Bedienfelder",
+  "item_1": "Taster-Beschriftungen",
+  "item_2": "Schalter-Beschriftungen",
+  "item_3": "Maschinenbedienfelder",
+  "item_4": "Bedienoberflächen"
+}
   },
-  "serialNumber": {
-    "title": "Seriennummernschilder",
-    "item_1": "Barcode-Schilder",
-    "item_2": "Inventarschilder",
-    "item_3": "Gerätekennzeichnungen",
-    "item_4": "Inventarkennzeichnung"
+ "serialNumber": {
+  "title": "Serien- und Inventarschilder",
+  "item_1": "Barcode-Schilder",
+  "item_2": "Inventarschilder",
+  "item_3": "Geräteschilder",
+  "item_4": "Anlagenschilder"
+}
   },
   "doorOffice": {
-    "title": "Tür- und Büroschilder",
-    "item_1": "Bürotürschilder",
-    "item_2": "Raumkennzeichnung",
-    "item_3": "Arbeitsplatzkennzeichnung"
-  }
+  "title": "Tür- und Büroschilder",
+  "item_1": "Bürotürschilder",
+  "item_2": "Raumschilder",
+  "item_3": "Arbeitsplatzschilder",
+  "item_4": "Namenschilder",
+  "item_5": "Parkplatzschilder"
 }
-},
+,
  "toolbar": {
   "actions": {
     "update": "Aktualisieren",
@@ -744,7 +747,7 @@
     "image": "Bild",
     "upload":"Hochladen",
     "shape": "Form",
-    "shapeTitle": "Füllung + Schnitt + Rahmen",
+    "shapeTitle": "Flächengravur + Schnitt + Rahmen",
     "border": "Rahmen",
     "cut":"Ausschnitt",
     "cutTitle": "Verschiedene Formen",
@@ -915,7 +918,7 @@
     "rotate": "Drehen:",
     "height": "Höhe:",
     "cornerRadius": "Eckenradius:",
-    "fill": "Füllung",
+    "fill": "Flächengravur",
     "cut": "Ausschnitt",
     "thickness": "Stärke",
     "frame": "Rahmen"
@@ -1111,7 +1114,7 @@
   "orderSummary": "Bestellübersicht",
   "myOrder": "Meine Bestellung",
   "selectCountry": "Land auswählen",
-  "phoneQuestionNote": "Diese Telefonnummer kann bei Rückfragen verwendet werden",
+  "phoneQuestionNote": "Rückfragen unter dieser Mobilfunknummer möglich.",
   "yes": "JA",
   "invoiceEmailNote": "Diese E-Mail-Adresse wird für den Versand Ihrer Rechnung verwendet",
   "invoiceDifferent": "Rechnungsadresse (falls abweichend)",
@@ -1153,7 +1156,7 @@
     "price": "Versandkosten",
     "comment": "Versandhinweis",
     "options": {
-      "upsEnvelope": "UPS Umschlag",
+      "upsEnvelope": "UPS Standard",
       "upsNextDayPackage": "UPS Next Day Paket",
       "upsExpressBeforeNoon": "UPS Express vor 12 Uhr",
       "upsSaturdayDelivery": "UPS Samstagszustellung"
@@ -1172,8 +1175,8 @@
   },
   "shippingNotes": {
     "title": "Versandhinweise",
-    "sameDay": "Bestellungen, die vor 16:00 Uhr eingehen, werden in der Regel noch am selben Tag versendet.",
-    "nextDay": "Für eine Lieferung am nächsten Tag wählen Sie bitte UPS Next Day Paket.",
+    "sameDay": "Bestellungen, die vor 16:00 Uhr eingehen, werden noch am selben Tag versendet.",
+    "nextDay": "Für eine Zustellung am nächsten Werktag wählen Sie bitte UPS Next Day Paket.",
     "euros": "Alle Preise sind in Euro angegeben."
   },
   "countries": {
@@ -1205,8 +1208,8 @@
 "yourProjectsModal": {
   "title": "Meine Projekte",
   "info": {
-    "chooseOrOrder": "Sie können gespeicherte Projekte auswählen,",
-    "addSelected": "Bestellungen aufgeben oder Projekte zum aktuellen Projekt hinzufügen."
+    "chooseOrOrder": "Sie können gespeicherte Projekte aufrufen,",
+    "addSelected": "Bestellungen aufgeben, frühere Projekte direkt in Ihr aktuelles Projekt einfügen und es per Link teilen."
   },
   "cart": "Korb",
   "confirmMerge": "Das erste ausgewählte Projekt wird als Basis verwendet und alle weiteren werden hinzugefügt. Fortfahren?",
@@ -1370,7 +1373,7 @@
     "placeOrder": "Geben Sie Ihre Bestellung auf und bezahlen Sie die Rechnung innerhalb von 30 Tagen.",
     "shipped": "Sobald Ihre Bestellung versendet wurde, wird die Rechnung an Ihre E-Mail-Adresse gesendet und liegt Ihrer Lieferung ebenfalls bei.",
     "optionsIntro": "Sie können die Rechnung mit einer der folgenden Optionen bezahlen:",
-    "onlinePrefix": "• Online in Ihrem Konto - melden Sie sich an unter",
+    "onlinePrefix": "• Online in Ihrem Kundenkonto: Loggen Sie sich ein, öffnen Sie",
     "myAccount": "Mein Konto",
     "myOrders": "Meine Bestellungen",
     "onlineSuffix": ", finden Sie Ihre Bestellung und klicken Sie auf",
@@ -1565,7 +1568,7 @@
   "description_93": "Öffnungszeiten",
   "description_94": "Montag - Freitag, 08:00 - 19:00",
   "description_95": "Oder nutzen Sie dieses Formular, um uns zu kontaktieren",
-  "description_96": "Name",
+  "description_96": "Firma / Unternehmen",
   "description_97": "*Frage",
   "description_98": "SENDEN",
   "description_99": "Bitte geben Sie Ihre E-Mail-Adresse ein.",
@@ -1578,13 +1581,13 @@
 "d_1": "Wir bieten",
 "d_2": "Intuitive",
 "d_3": "Gestaltung",
-"d_4": "ganz nach Wunsch",
+"d_4": "ganz einfach",
 "d_5": "Schnelle",
 "d_6": "Produktion",
-"d_7": "Innerhalb von 8 Std.",
+"d_7": "Innerhalb von 1 Tag",
 "d_8": "Express",
 "d_9": "Lieferung",
-"d_10": "in 24–48 Std.",
+"d_10": "24–48 Std.",
 "d_11": "So verwenden Sie den Editor",
 "d_12": "Neues Projekt",
 "d_13": "Kontakt",
@@ -1601,10 +1604,10 @@
   "steps": {
     "shape": "Form – wählen Sie die gewünschte Form für Ihr Schild oder Etikett.",
     "size": "Größe – maximal 600 mm × 295 mm.",
-    "thickness": "Materialstärke – viele Materialien verfügen über eine Klebeschicht für eine einfache Montage auf sauberen und trockenen Oberflächen.",
-    "color": "Farbe – die meisten Farben sind in verschiedenen Materialstärken erhältlich.",
-    "elements": "Sie können zahlreiche Elemente hinzufügen und alles flexibel testen. Unter „Form“ lassen sich Rahmen, Ausschnitte oder Gravurdesigns erstellen.",
-    "holes": "Bohrungen in jeder Größe sind möglich oder erstellen Sie eigene Ausschnitte über „Form“."
+    "thickness": "Materialstärke: 0,8 / 1,6 / 3,2 mm – wahlweise mit oder ohne Klebeschicht.",
+    "color": "Farbe – je nach Materialstärke sind verschiedene Farben erhältlich.",
+    "elements": "Sie können zahlreiche Elemente hinzufügen und alles flexibel testen. Unter der Schaltfläche „Form“ lassen sich Rahmen, Ausschnitte oder Gravurdesigns erstellen.",
+    "holes": "Bohrungen in jeder Größe sind möglich oder erstellen Sie eigene Ausschnitte über die Schaltfläche „Form“."
   },
   "sideNotes": {
     "duplicates": "Erstellen Sie exakte Duplikate. Die Anzahl wird unter der Vorschau angezeigt.",
@@ -1635,7 +1638,7 @@
   "e_1": "Willkommen bei SignXpert - wir freuen uns, Sie bei uns zu haben!",
   "e_2": "Ihre persönliche Kundennummer lautet: <strong>{{customerNumber}}</strong>",
   "e_3": "Damit es für Sie einfacher ist, haben wir Ihre Kundennummer zusätzlich direkt an Ihre E-Mail-Adresse gesendet.",
-  "e_4": "Sie können sich jetzt unten <strong>anmelden</strong>, um Projekte zu erstellen und Bestellungen aufzugeben.",
+  "e_4": "Sie können sich jetzt unten <strong>einloggen</strong>, um Projekte zu erstellen und Bestellungen aufzugeben.",
   "e_7": "Wenn Sie Unterstützung benötigen, hilft Ihnen unser Team jederzeit gerne weiter.",
   "e_8": "Mit freundlichen Grüßen,",
   "e_9": "SignXpert"
@@ -1716,7 +1719,7 @@
     }
   },
   "settings": {
-    "title": "Hier können Sie zusätzliche Informationen hinterlegen, die jeder Ihrer Bestellungen beigefügt werden.",
+    "title": "Hier können Sie zusätzliche Informationen hinterlegen, die automatisch an jede Ihrer Bestellungen angehängt werden.",
     "additionalInformation": "Zusatzinfos",
     "errorLoadingMessage": "Fehler beim Laden Ihrer Nachricht",
     "messageSaved": "Nachricht erfolgreich gespeichert!",
@@ -1771,14 +1774,14 @@
     "account": "Konto"
   },
   "auth": {
-    "logout": "Abmelden",
-    "loginOr": "Anmelden oder",
+    "logout": "Ausloggen",
+    "loginOr": "Einloggen oder",
     "register": "Registrieren",
-    "loginRegisterSlash": "Anmelden / Registrieren"
+    "loginRegisterSlash": "Einloggen / Registrieren"
   }
 },
 "Footer": {
-  "slogan": "Gravur - Druck - Schilder",
+  "slogan": "Gravur · Industrie-Schilder",
   "address": {
     "country": "Deutschland"
   },
@@ -1813,8 +1816,8 @@
     "plusShipping": "Zuzüglich Versandkosten."
   },
   "auth": {
-    "logout": "Abmelden",
-    "loginOr": "Anmelden oder",
+    "logout": "Ausloggen",
+    "loginOr": "Einloggen oder",
     "register": "Registrieren"
   }
 },
@@ -1836,7 +1839,7 @@
   "l_8": "Sie erhalten eine E-Mail mit einem neuen Passwort.",
   "l_9": "E-Mail-Adresse",
   "l_10": "Senden",
-  "l_11": "Anmelden",
+  "l_11": "Einloggen",
   "l_12": "Noch kein Konto? Jetzt registrieren",
   "error": "Fehler",
   "enterEmail": "Bitte geben Sie Ihre E-Mail-Adresse ein.",
@@ -1906,9 +1909,9 @@
   "h_2": "in 24 Stunden!",
   "h_3": "- Expertenqualität",
   "h_4": "für Industrie-Beschilderung",
-  "h_5": "Wir fertigen langlebige gravierte Schilder und Typenschilder aus hochwertigem Kunststoff für Industrie, Energie und Gewerbe.",
+  "h_5": "Wir liefern langlebige, gravierte Kunststoffschilder in Premiumqualität – perfekt für Industrie, Energieanlagen und gewerbliche Anwendungen.",
   "h_6": "Jetzt online gestalten",
-  "h_7": "Bestellung bis 16:00 Uhr — Versand am selben Werktag",
+  "h_7": "Bestellungen, die bis 16:00 Uhr eingehen, versenden wir am gleichen Werktag.",
   "h_8": "Warum",
   "h_9": "Faire Preise. Industriequalität.",
   "h_10": "Wir wissen, dass das Budget heute eine wichtige Rolle spielt.",
@@ -1952,8 +1955,8 @@
   "h_48": "So erhalten Unternehmen ihre individuell gravierten Schilder schnell und zuverlässig.",
   "h_49": "Langlebige",
   "h_50": "gravierte Kunststoffschilder",
-  "h_51": "Alle SignXpert-Produkte werden aus hochwertigem, zweischichtigem Gravurkunststoff gefertigt.",
-  "h_52": "Bei der Lasergravur wird die obere Schicht abgetragen, sodass die darunterliegende Kontrastfarbe sichtbar wird. So entstehen dauerhafte, kontrastreiche Kennzeichnungen, die über Jahre gut lesbar bleiben.",
+  "h_51": "Alle SignXpert‑Produkte werden aus hochwertigem, zweischichtigem Gravurkunststoff gefertigt und sind in verschiedenen Farbkombinationen erhältlich.",
+  "h_52": "Bei der Lasergravur wird die obere Schicht abgetragen, sodass die darunterliegende Kontrastfarbe sichtbar wird. So entstehen dauerhafte, kontrastreiche Beschriftungen, die über Jahre gut lesbar bleiben.",
   "h_53": "Ihre Vorteile mit",
   "h_54": "Individuelle Fertigung ab 1 Stück",
   "h_55": "Professionelle Lösungen für Industrie und Gewerbe",
@@ -1976,7 +1979,7 @@
   "p_13": "Produkt",
   "p_14": "Eigenschaften",
   "p_15": "Unsere gravierten Kunststoffschilder werden aus hochwertigem zweischichtigem Kunststoff gefertigt, der speziell für technische und industrielle Anwendungen entwickelt wurde.",
-  "p_16": "Da die Beschriftung direkt in das Material eingraviert wird, verblasst sie nicht, löst sich nicht ab und nutzt sich nicht wie gedruckte Etiketten ab.",
+  "p_16": "Direkt ins Material eingraviert: dauerhaft scharf, farbstabil und abriebfest – der klare Vorteil gegenüber herkömmlichen Etiketten.",
   "p_17": "Selbstklebende Ausführung mit starker 3M-Klebeschicht",
   "p_18": "Vielseitig einsetzbar in Industrie- und Büroumgebungen",
   "p_19": "Brandverhalten Klasse B2 (DIN 4102)",
@@ -2008,7 +2011,7 @@
   "p_45": "Unsere",
   "p_46": "Produktkategorien",
   "p_47": "und typische Anwendungen",
-  "p_48": "Kennzeichnungen für Schaltschränke",
+  "p_48": "Beschilderung für Schaltschränke",
   "p_49": "Elektroschränke",
   "p_50": "Schaltanlagen",
   "p_51": "Steuerschränke",
@@ -2023,7 +2026,7 @@
   "p_60": "Gefahrenkennzeichnung",
   "p_61": "Sicherheitsschilder für Maschinen",
   "p_62": "Betriebshinweise",
-  "p_63": "Kennzeichnungen für Bedienfelder",
+  "p_63": "Beschilderung für Bedienfelder",
   "p_64": "Tasterbeschriftungen",
   "p_65": "Schalterbeschriftungen",
   "p_66": "Maschinenbedienfelder",
@@ -2031,7 +2034,7 @@
   "p_68": "Seriennummernschilder",
   "p_69": "Seriennummernschilder",
   "p_70": "Inventarschilder",
-  "p_71": "Gerätekennzeichnungen",
+  "p_71": "Geräteschilder",
   "p_72": "Inventarkennzeichnung",
   "p_73": "Tür- und Büroschilder",
   "p_74": "Bürotürschilder",

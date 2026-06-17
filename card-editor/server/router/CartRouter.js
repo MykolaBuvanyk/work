@@ -153,6 +153,35 @@ const calculateCouponDiscount = (amount, discount) => {
   return round2(base * (percent / 100));
 };
 
+const resolveOrderPricing = (order, orderMongo) => {
+  const checkout = orderMongo?.checkout && typeof orderMongo.checkout === 'object'
+    ? orderMongo.checkout
+    : {};
+  const totalPrice = toNumber(orderMongo?.totalPrice, NaN);
+  const sum = Number.isFinite(totalPrice)
+    ? round2(totalPrice)
+    : round2(toNumber(order?.sum, 0));
+
+  const deliveryPrice = toNumber(checkout?.deliveryPrice, 0);
+  const vatAmount = toNumber(checkout?.vatAmount, 0);
+  const netFromTotal = Number.isFinite(sum)
+    ? round2(Math.max(0, sum - deliveryPrice - vatAmount))
+    : NaN;
+  const mongoNet = toNumber(orderMongo?.price, NaN);
+  const orderNet = toNumber(order?.netAfterDiscount, 0);
+  const netAfterDiscount = Number.isFinite(netFromTotal)
+    ? netFromTotal
+    : Number.isFinite(mongoNet)
+      ? round2(mongoNet)
+      : round2(orderNet);
+
+  return {
+    sum,
+    totalPrice: sum,
+    netAfterDiscount,
+  };
+};
+
 const resolvePdfFontPath = (fileName) =>
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../public/fonts', fileName);
 
@@ -1280,6 +1309,11 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const netAfterDiscount = toNumber(body.netAfterDiscount, toNumber(body.price, 0));
     const totalPriceInclVat = toNumber(body.totalPrice, 0);
     const checkoutSnapshot = body?.checkout && typeof body.checkout === 'object' ? body.checkout : null;
+    const checkoutDeliveryPrice = toNumber(checkoutSnapshot?.deliveryPrice, 0);
+    const checkoutVatAmount = toNumber(checkoutSnapshot?.vatAmount, 0);
+    const payableNetAfterDiscount = totalPriceInclVat > 0
+      ? round2(Math.max(0, totalPriceInclVat - checkoutDeliveryPrice - checkoutVatAmount))
+      : netAfterDiscount;
     const selectedPaymentMethod = String(body?.checkout?.paymentMethod || 'invoice').trim().toLowerCase();
     const isOnlinePaidOrder = selectedPaymentMethod === 'online';
     const couponDiscountAmount = toNumber(body?.checkout?.coupon?.discountAmount, 0);
@@ -1306,7 +1340,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       userId,
       projectId: body.projectId ? String(body.projectId) : project?.id ? String(project.id) : null,
       projectName,
-      price: netAfterDiscount,
+      price: payableNetAfterDiscount,
       discountPercent: totalDiscountPercent,
       discountAmount: totalDiscountAmount,
       totalPrice: totalPriceInclVat,
@@ -1352,7 +1386,7 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
     const orderCountry = checkoutCountryRegion || checkoutCountryName || fallbackCountry;
     const order = await Order.create({
       sum: user.type == 'Admin' ? 0 : totalPriceInclVat,
-      netAfterDiscount: user.type == ' Admin' ? 0 : netAfterDiscount,
+      netAfterDiscount: user.type == 'Admin' ? 0 : payableNetAfterDiscount,
       signs: orderSigns > 0 ? orderSigns : 1,
       userId,
       country: orderCountry,
@@ -1408,7 +1442,8 @@ CartRouter.get('/admin', requireAuth, requireAdmin, async (req, res, next) => {
       userId: it.userId,
       projectId: it.projectId,
       projectName: it.projectName,
-      totalPrice: it.totalPrice,
+      totalPrice: resolveOrderPricing(null, it).totalPrice,
+      netAfterDiscount: resolveOrderPricing(null, it).netAfterDiscount,
       status: it.status,
       createdAt: it.createdAt,
       updatedAt: it.updatedAt,
@@ -1429,15 +1464,17 @@ CartRouter.get('/admin/:id', requireAuth, requireAdmin, async (req, res, next) =
       return res.status(404).json({ status: 404, message: 'Cart entry not found' });
     }
 
+    const pricing = resolveOrderPricing(null, item);
+
     return res.json({
       id: String(item._id),
       userId: item.userId,
       projectId: item.projectId,
       projectName: item.projectName,
-      price: item.price,
+      price: pricing.netAfterDiscount,
       discountPercent: item.discountPercent,
       discountAmount: item.discountAmount,
-      totalPrice: item.totalPrice,
+      totalPrice: pricing.totalPrice,
       project: item.project,
       accessories: item.accessories,
       status: item.status,
@@ -1515,22 +1552,28 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
     let ordersForSum = await Order.findAll({
       where,
       order: [['createdAt', 'DESC']],
-      attributes: ['sum']
+      attributes: ['id', 'sum', 'netAfterDiscount', 'idMongo']
     });
 
     let totalSum = 0;
-    ordersForSum.forEach(x => totalSum += x.sum);
+    for (const orderForSum of ordersForSum) {
+      const orderMongo = await findCartProjectForOrder(orderForSum);
+      totalSum += resolveOrderPricing(orderForSum, orderMongo).sum;
+    }
 
     const mappedOrders = await Promise.all(
       (orders.rows || []).map(async (order) => {
         const orderMongo = await findCartProjectForOrder(order);
         const totalPrice = Number(orderMongo?.totalPrice);
+        const pricing = resolveOrderPricing(order, orderMongo);
         const computedSigns = countTotalSignsFromProject(orderMongo?.project);
         return {
           ...(typeof order?.toJSON === 'function' ? order.toJSON() : order),
           orderMongo,
           signs: computedSigns > 0 ? computedSigns : Number(order?.signs || 0),
-          totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+          sum: pricing.sum,
+          netAfterDiscount: pricing.netAfterDiscount,
+          totalPrice: Number.isFinite(totalPrice) ? pricing.totalPrice : null,
         };
       })
     );
@@ -1565,10 +1608,13 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
 
           const fullOrder = orderMongo;
           const totalPrice = Number(orderMongo?.totalPrice);
+          const pricing = resolveOrderPricing(order, orderMongo);
           return {
             ...order.toJSON(),
             orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
-            totalPrice: Number.isFinite(totalPrice) ? totalPrice : null,
+            sum: pricing.sum,
+            netAfterDiscount: pricing.netAfterDiscount,
+            totalPrice: Number.isFinite(totalPrice) ? pricing.totalPrice : null,
             signs: resolveOrderSigns({
               ...order.toJSON(),
               orderMongo: fullOrder?.orderMongo || order?.orderMongo || null,
@@ -1577,6 +1623,8 @@ CartRouter.get('/filter', requireAuth, requireAdmin, async (req, res, next) => {
         } catch {
           return {
             ...order.toJSON(),
+            sum: resolveOrderPricing(order, null).sum,
+            netAfterDiscount: resolveOrderPricing(order, null).netAfterDiscount,
             totalPrice: Number.isFinite(Number(order?.totalPrice)) ? Number(order.totalPrice) : null,
             signs: resolveOrderSigns(order),
           };

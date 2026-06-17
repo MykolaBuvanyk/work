@@ -767,12 +767,12 @@ export default function Checkout({
 
 	const accessoriesTypesCount = selectedAccessoriesNormalized.length
 	const priceExclVat = round2(Number(orderSubtotal || 0) - Number(discountAmount || 0))
-	const sumForOrder = round2(priceExclVat + Number(accessoriesPrice || 0))
-	const subtotalBeforeCoupon = round2(sumForOrder + Number(deliveryPrice || 0))
 	const couponDiscountAmount = appliedCoupon
 		? Math.min(priceExclVat, round2(orderSubtotal * (Number(appliedCoupon.discount || 0) / 100)))
 		: 0
 	const canvasPriceAfterCoupon = round2(priceExclVat - couponDiscountAmount)
+	const sumForOrder = round2(canvasPriceAfterCoupon + Number(accessoriesPrice || 0))
+	const subtotalBeforeCoupon = round2(priceExclVat + Number(accessoriesPrice || 0) + Number(deliveryPrice || 0))
 	const totalCanvasDiscountAmount = round2(Number(discountAmount || 0) + Number(couponDiscountAmount || 0))
 	const totalCanvasDiscountPercent = round2(
 		Number(discountPercent || 0) + (appliedCoupon ? Number(appliedCoupon.discount || 0) : 0)

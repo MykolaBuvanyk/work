@@ -305,6 +305,7 @@ export default function Checkout({
 	discountAmount = 0,
 	netAfterDiscount = 0,
 	orderSubtotal = 0,
+	orderCanvasesSubtotal = 0,
 	accessoriesPrice = 0,
 	selectedAccessories = [],
 }) {
@@ -604,7 +605,7 @@ export default function Checkout({
 					discountPercent: Number(totalCanvasDiscountPercent || 0),
 					baseDiscountPercent: Number(discountPercent || 0),
 					discountAmount: Number(totalCanvasDiscountAmount || 0),
-					canvasSubtotal: Number(orderSubtotal || 0),
+					canvasSubtotal: Number(signsSubtotal || 0),
 					deliveryPrice: Number(deliveryPrice || 0),
 					deliveryLabel: String(delivery || ''),
 					isInvoiceDifferent: Boolean(shouldIncludeInvoiceAddress),
@@ -669,7 +670,7 @@ export default function Checkout({
 		try {
 			const { data } = await $authHost.post('cart/coupons/apply', {
 				code,
-				amount: Number(priceExclVat || 0),
+				amount: Number(orderPriceExclVat || 0),
 			})
 			setAppliedCoupon(data)
 			setCouponMessage('')
@@ -766,13 +767,18 @@ export default function Checkout({
 	}, [selectedAccessories])
 
 	const accessoriesTypesCount = selectedAccessoriesNormalized.length
-	const priceExclVat = round2(Number(orderSubtotal || 0) - Number(discountAmount || 0))
+	const signsSubtotal = round2(
+		Number(orderCanvasesSubtotal || 0) > 0
+			? Number(orderCanvasesSubtotal || 0)
+			: Math.max(0, Number(orderSubtotal || 0) - Number(accessoriesPrice || 0))
+	)
+	const orderSubtotalWithAccessories = round2(Number(orderSubtotal || 0))
+	const orderPriceExclVat = round2(orderSubtotalWithAccessories - Number(discountAmount || 0))
 	const couponDiscountAmount = appliedCoupon
-		? Math.min(priceExclVat, round2(orderSubtotal * (Number(appliedCoupon.discount || 0) / 100)))
+		? Math.min(orderPriceExclVat, round2(orderSubtotalWithAccessories * (Number(appliedCoupon.discount || 0) / 100)))
 		: 0
-	const canvasPriceAfterCoupon = round2(priceExclVat - couponDiscountAmount)
-	const sumForOrder = round2(canvasPriceAfterCoupon + Number(accessoriesPrice || 0))
-	const subtotalBeforeCoupon = round2(priceExclVat + Number(accessoriesPrice || 0) + Number(deliveryPrice || 0))
+	const sumForOrder = round2(orderPriceExclVat - couponDiscountAmount)
+	const subtotalBeforeCoupon = round2(orderPriceExclVat + Number(deliveryPrice || 0))
 	const totalCanvasDiscountAmount = round2(Number(discountAmount || 0) + Number(couponDiscountAmount || 0))
 	const totalCanvasDiscountPercent = round2(
 		Number(discountPercent || 0) + (appliedCoupon ? Number(appliedCoupon.discount || 0) : 0)
@@ -1228,30 +1234,40 @@ export default function Checkout({
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.signsSubtotal')}: {Number(orderSubtotal || 0).toFixed(2)} €</td>
-													</tr>
-													<tr>
-														<td className='summary-table__blank'></td>
-														<td>
-															{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%): {Number(discountAmount || 0).toFixed(2)} €
-														</td>
-													</tr>
-													{appliedCoupon && (
-														<tr>
-															<td className='summary-table__blank'></td>
-															<td>
-																{t('checkout.promoCode.discount')} ({Number(appliedCoupon.discount || 0).toFixed(0)}%): {Number(couponDiscountAmount || 0).toFixed(2)} €
-															</td>
-														</tr>
-													)}
-													<tr>
-														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.signsTotal')}: {Number(canvasPriceAfterCoupon || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {Number(signsSubtotal || 0).toFixed(2)} €</td>
 													</tr>
 												</tbody>
 											</table>
 
 
+										</div>
+
+										<div className='summary-subtitle'>
+											{t('checkout.summary.accessories')}: {accessoriesTypesCount} {t('checkout.summary.types')}:
+										</div>
+
+										<div className='summary-row'>
+											<table className='summary-table' aria-label={t('checkout.summary.accessories')}>
+												<tbody>
+													{selectedAccessoriesNormalized.length > 0 ? (
+														selectedAccessoriesNormalized.map(item => (
+															<tr key={item.id ?? item.name}>
+																<td>{item.name}</td>
+																<td>{item.qty}</td>
+															</tr>
+														))
+													) : (
+														<tr>
+															<td>—</td>
+															<td>0</td>
+														</tr>
+													)}
+													<tr>
+														<td className='summary-table__blank'></td>
+														<td>{t('checkout.summary.price')}: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
+													</tr>
+												</tbody>
+											</table>
 										</div>
 
 										<div className='promo-code-block'>
@@ -1288,33 +1304,16 @@ export default function Checkout({
 											)}
 										</div>
 
-										<div className='summary-subtitle'>
-											{t('checkout.summary.accessories')}: {accessoriesTypesCount} {t('checkout.summary.types')}:
-										</div>
-
-										<div className='summary-row'>
-											<table className='summary-table' aria-label={t('checkout.summary.accessories')}>
-												<tbody>
-													{selectedAccessoriesNormalized.length > 0 ? (
-														selectedAccessoriesNormalized.map(item => (
-															<tr key={item.id ?? item.name}>
-																<td>{item.name}</td>
-																<td>{item.qty}</td>
-															</tr>
-														))
-													) : (
-														<tr>
-															<td>—</td>
-															<td>0</td>
-														</tr>
-													)}
-													<tr>
-														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.price')}: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
-													</tr>
-												</tbody>
-											</table>
-										</div>
+										<table className='summary-table summary-table__discount' aria-label={t('checkout.summary.discount')}>
+											<tbody>
+												<tr>
+													<td>
+														{t('checkout.summary.discount')} ({Number(totalCanvasDiscountPercent || 0).toFixed(0)}%)
+													</td>
+													<td>{Number(totalCanvasDiscountAmount || 0).toFixed(2)} €</td>
+												</tr>
+											</tbody>
+										</table>
 
 										<table
 											className='summary-table summary-table__delivery'

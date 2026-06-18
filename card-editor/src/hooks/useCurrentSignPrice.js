@@ -351,6 +351,7 @@ export const useCurrentSignPrice = () => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [orderSubtotal, setOrderSubtotal] = useState(0);
+  const [orderCanvasesSubtotal, setOrderCanvasesSubtotal] = useState(0);
   const [accessoriesPrice, setAccessoriesPrice] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [vatPercent, setVatPercent] = useState(0);
@@ -554,7 +555,7 @@ export const useCurrentSignPrice = () => {
       const isSingleCanvasNoAccessories =
         entriesCount === 1 && totalCopiesCount === 1 && !(accessoriesPrice > 0);
 
-      const orderSubtotal = orderCanvasesSubtotal;
+      const orderSubtotal = orderCanvasesSubtotal + accessoriesPrice;
 
       const rules = Array.isArray(formData?.discount) ? formData.discount : [];
       const pickDiscountPercent = (amount) => {
@@ -602,7 +603,7 @@ export const useCurrentSignPrice = () => {
 
       const percent = pickDiscountPercent(orderSubtotal);
       const discAmount = round2(orderSubtotal * (percent / 100));
-      const netAfterDiscount = round2(orderSubtotal - discAmount + accessoriesPrice);
+      const netAfterDiscount = round2(orderSubtotal - discAmount);
 
       const vatCountryCode = resolveVatCountryCode();
       const vatP = resolveVatPercent({
@@ -619,6 +620,7 @@ export const useCurrentSignPrice = () => {
         totalCopiesCount,
         isSingleCanvasNoAccessories,
         orderSubtotal,
+        orderCanvasesSubtotal,
         percent,
         discAmount,
         netAfterDiscount,
@@ -631,6 +633,7 @@ export const useCurrentSignPrice = () => {
       setDiscountPercent(Number.isFinite(percent) ? percent : 0);
       setDiscountAmount(Number.isFinite(discAmount) ? discAmount : 0);
       setOrderSubtotal(Number.isFinite(orderSubtotal) ? orderSubtotal : 0);
+      setOrderCanvasesSubtotal(Number.isFinite(orderCanvasesSubtotal) ? orderCanvasesSubtotal : 0);
       setAccessoriesPrice(Number.isFinite(accessoriesPrice) ? accessoriesPrice : 0);
       setVatPercent(vatP);
       setVatAmount(Number.isFinite(vat) ? vat : 0);
@@ -742,6 +745,7 @@ export const useCurrentSignPrice = () => {
     discountPercent,
     discountAmount,
     orderSubtotal,
+    orderCanvasesSubtotal,
     accessoriesPrice,
     totalPrice,
     vatPercent,

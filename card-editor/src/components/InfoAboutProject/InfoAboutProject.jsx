@@ -360,7 +360,7 @@ const InfoAboutProject = () => {
   const normalizedUserType = String(user?.user?.type || "").trim().toLowerCase();
   const isAdminUser = normalizedUserType === "admin";
 
-  const { price, netAfterDiscount, discountPercent, discountAmount, orderSubtotal, accessoriesPrice, totalPrice, isLoading } =
+  const { price, netAfterDiscount, discountPercent, discountAmount, orderSubtotal, orderCanvasesSubtotal, accessoriesPrice, totalPrice, isLoading } =
     useCurrentSignPrice();
 
   const formatted = `€ ${Number(price || 0).toFixed(2)}`;
@@ -940,6 +940,7 @@ const InfoAboutProject = () => {
           discountAmount={Number(discountAmount || 0)}
           netAfterDiscount={Number(netAfterDiscount || 0)}
           orderSubtotal={Number(orderSubtotal || 0)}
+          orderCanvasesSubtotal={Number(orderCanvasesSubtotal || 0)}
           accessoriesPrice={Number(accessoriesPrice || 0)}
           selectedAccessories={Array.isArray(cartAccessories) ? cartAccessories.filter(x => x?.checked) : []}
         />

@@ -466,9 +466,16 @@ ul {
 
 .bulletList li {
   margin: 6px 0;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--products-text);
 }
+
+.bulletList li span {
+  margin: 6px 0;
+  font-weight: 300;
+  color: var(--products-text);
+}
+
 
 .infoBlockBadge {
   display: flex;

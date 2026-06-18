@@ -571,9 +571,7 @@ class SendEmailForStatus {
                 : 0;
             const discountAmount = toNumber(orderMongo?.discountAmount, 0);
             const discountPercent = toNumber(orderMongo?.discountPercent, 0);
-            const subtotal = Number.isFinite(Number(checkout?.canvasSubtotal)) && Number(checkout.canvasSubtotal) > 0
-                ? round2(Number(checkout.canvasSubtotal))
-                : round2(netAmount + discountAmount);
+            const subtotal = round2(netAmount + discountAmount);
             const checkoutBaseDiscountPercent = toNumber(checkout?.baseDiscountPercent, 0);
             const checkoutCouponDiscountPercent = toNumber(checkout?.coupon?.discount, 0);
             const checkoutCouponDiscountAmount = toNumber(checkout?.coupon?.discountAmount, 0);

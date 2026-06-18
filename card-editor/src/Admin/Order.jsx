@@ -478,6 +478,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
   const getOrder=async()=>{
     try{
       const res=await $authHost.get('cart/get/'+orderId);
+
       setOrder(res.data.order);
     }catch(err){
       console.log(err);
@@ -1981,6 +1982,11 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       <div className="row">
         <p>E-Mail:</p>
         <span>{deliverySectionData.email || order.user.email}</span>
+        <div />
+      </div>
+      <div className="row">
+        <p>Additional e-mails:</p>
+        <span>{order.user.weWill || order.user.email}</span>
         <div />
       </div>
       <div className="row">

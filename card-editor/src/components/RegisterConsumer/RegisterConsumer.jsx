@@ -335,7 +335,7 @@ const RegisterConsumer = () => {
         </div>
         <div style={{marginTop:'7.5px'}} className="we-will-container we-will-container2">
           <div className="text-content">
-            <p style={{fontWeight:600,fontSize:'16px',color:'#006CA4',marginTop:0}}>{t("RegisterConsumer.rr_17")}</p>
+            <p>{t("RegisterConsumer.rr_17")}</p>
           </div>
           {tellAboutSelection === 'Other' ? (
             <div className="tell-about-combo">

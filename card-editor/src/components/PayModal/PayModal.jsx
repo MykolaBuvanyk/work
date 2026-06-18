@@ -5,14 +5,17 @@ import CheckoutForm from '../Account/CheckoutForm';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import './PayModal.scss'
+import { useSelector } from 'react-redux';
 
 
 const stripePromise = loadStripe(import.meta.env.VITE_LAYOUT_PUBLICH_KEY);
 
 const PayModal = ({isPayOpen,onClose,backToPayment,orderId,amount,onPlaceOrder,onInvoiceSuccess}) => {
-    const { t } = useTranslation();
-    const [clientSecret, setClientSecret] = useState('');
-    const [paymentOption, setPaymentOption] = useState('invoice');
+  const user=useSelector((state)=>state.user);
+  const isConsumer=user.user.type=='Consumer';
+  const { t } = useTranslation();
+  const [clientSecret, setClientSecret] = useState('');
+  const [paymentOption, setPaymentOption] = useState('invoice');
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
     useEffect(() => {
@@ -82,9 +85,9 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,amount,onPlaceOrder,o
 
         <div className="divider"></div>
 
-        <div className="grid">
+        <div className={!isConsumer?'grid':'no-grid'}>
 
-          <div className="column">
+          {!isConsumer&&<div className="column">
 
             <label className="radio">
               <input
@@ -129,7 +132,7 @@ const PayModal = ({isPayOpen,onClose,backToPayment,orderId,amount,onPlaceOrder,o
               {t('payModal.placeOrder')}
             </button>
 
-          </div>
+          </div>}
 
           <div className="column">
 

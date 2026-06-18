@@ -302,11 +302,29 @@ const Products = () => {
               <p>{t('products.design.listTitle')}</p>
 
               <ul className={styles.bulletList}>
-                <li>{t('products.design.item_1')}</li>
-                <li>{t('products.design.item_2')}</li>
-                <li>{t('products.design.item_3')}</li>
-                <li>{t('products.design.item_4')}</li>
-              </ul>
+              {[
+                'products.design.item_1',
+                'products.design.item_2',
+                'products.design.item_3',
+                'products.design.item_4',
+              ].map((key) => {
+                const text = t(key);
+                const [title, ...rest] = text.split(' — ');
+
+                return (
+                  <li key={key}>
+                    {title}
+
+                    {rest.length > 0 && (
+                      <>
+                        {' - '}
+                        <span>{rest.join(' - ')}</span>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
 
               <p>{t('products.design.summary')}</p>
               <p>{t('products.design.support')}</p>

@@ -1747,6 +1747,15 @@
   "canvasPreviewAlt": "Arbeitsflächenvorschau",
   "noData": "Keine Daten"
 },
+"cookieConsent": {
+  "title": "Daten verbessern Ihr Erlebnis",
+  "descriptionBeforeLink": "Um Ihr Erlebnis auf unseren Plattformen zu verbessern und Ihnen relevantere Informationen anzuzeigen, verwenden wir Cookies und ähnliche Technologien, sowohl von SignXpert als auch von Drittanbietern, sowie Daten, die direkt von unseren Servern gesendet werden. Sie können Ihre Einstellungen jederzeit unter",
+  "privacyLink": "Datenschutz- & Cookie-Einstellungen",
+  "necessaryTitle": "Unbedingt erforderlich (immer aktiv)",
+  "necessaryDescription": "Ermöglicht zentrale Funktionen für Ihre Sprach-, Regions- und Einkaufseinstellungen.",
+  "acceptAll": "Alle akzeptieren",
+  "declineAll": "Alle ablehnen"
+},
 "Header": {
   "nav": {
     "home": "Start",

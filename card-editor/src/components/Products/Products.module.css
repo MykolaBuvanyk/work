@@ -41,11 +41,12 @@ h1 {
   font-weight: 800;
   line-height: 1.15;
   text-decoration: none;
+  
 }
 
 .page h2 {
   font-weight: 800;
-  font-size: 40px;
+  font-size: 33px;
 }
 
 p,
@@ -147,7 +148,7 @@ ul {
 
 .heroAddTitle {
   font-weight: 800;
-  font-size: 40px;
+  font-size: 33px;
   line-height: 120%;
   color: black;
   margin-bottom: 24px;
@@ -454,7 +455,7 @@ ul {
 
 .infoBlockContent strong {
   color: var(--products-text);
-  font-size: 40px;
+  font-size: 33px;
   line-height: 120%;
   font-weight: 800;
 }
@@ -465,7 +466,7 @@ ul {
 
 .bulletList li {
   margin: 6px 0;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--products-text);
 }
 

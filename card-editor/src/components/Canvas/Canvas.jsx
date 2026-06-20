@@ -30,6 +30,34 @@ const PANEL_BUTTON_DIAMETER = 24; // діаметр кнопки
 const PANEL_BUTTON_GAP = 8; // проміжок між кнопками
 const PANEL_BG_WIDTH = 163; // ширина фону меню (CSS px)
 const PANEL_BG_HEIGHT = 33; // висота фону меню (CSS px)
+const ACTION_PANEL_BUTTONS = [
+  {
+    key: 'edit',
+    label: 'Edit',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"><g stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" clip-path="url(#a)"><path d="M7 7H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0-2.97-2.97L9 12v3h3l8.385-8.415v0ZM16 5l3 3"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h24v24H0z"/></clipPath></defs></svg>`,
+  },
+  {
+    key: 'centerHorizontal',
+    label: 'Center horizontally',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"><path fill="#000" d="M12 22.5a.75.75 0 0 1-.75-.75V2.25a.75.75 0 1 1 1.5 0v19.5a.75.75 0 0 1-.75.75ZM0 12a.75.75 0 0 1 .75-.75h5.69L4.718 9.531a.751.751 0 1 1 1.062-1.062l3 3a.75.75 0 0 1 0 1.062l-3 3A.752.752 0 0 1 4.499 15a.751.751 0 0 1 .22-.531l1.72-1.719H.75A.75.75 0 0 1 0 12Zm17.56.75 1.721 1.719a.75.75 0 0 1-1.062 1.062l-3-3a.75.75 0 0 1 0-1.062l3-3a.75.75 0 1 1 1.062 1.062l-1.72 1.719h5.689a.75.75 0 1 1 0 1.5h-5.69Z"/></svg>`,
+  },
+  {
+    key: 'centerVertical',
+    label: 'Center vertically',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="21" height="24" fill="none"><path fill="#000" fill-rule="evenodd" d="M0 12a.75.75 0 0 1 .75-.75h19.5a.75.75 0 1 1 0 1.5H.75A.75.75 0 0 1 0 12ZM10.5 0a.75.75 0 0 1 .75.75v5.69l1.719-1.721a.75.75 0 1 1 1.062 1.062l-3 3a.75.75 0 0 1-1.062 0l-3-3a.751.751 0 1 1 1.062-1.062l1.719 1.72V.75A.75.75 0 0 1 10.5 0Zm-.75 17.56-1.719 1.721a.751.751 0 0 1-1.062-1.062l3-3a.751.751 0 0 1 1.062 0l3 3a.75.75 0 0 1-1.062 1.062l-1.719-1.72v5.689a.75.75 0 1 1-1.5 0v-5.69Z" clip-rule="evenodd"/></svg>`,
+  },
+  {
+    key: 'duplicate',
+    label: 'Duplicate',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"><g stroke="#000" stroke-width="2" clip-path="url(#a)"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/><path d="M10 10v8M6 14h8"/></g><defs><clipPath id="a"><path fill="#fff" d="M24 24H0V0h24z"/></clipPath></defs></svg>`,
+  },
+  {
+    key: 'delete',
+    label: 'Delete',
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="22" fill="none"><path fill="#FF3B30" d="m15.517 11.78.743.103-.743-.103Zm-.262 1.885.743.103-.743-.104Zm-12.51 0 .743-.104-.743.104Zm-.262-1.885-.743.103.743-.103Zm3.7 8.957-.29.69.29-.69ZM3.476 17.56l.704-.258-.704.258Zm11.05 0 .704.259-.704-.259Zm-2.709 3.177-.291-.691.291.69ZM2.746 7.929a.75.75 0 1 0-1.493.142L2 8l.747-.07Zm14 .142a.75.75 0 1 0-1.493-.142L16 8l.747.07ZM17 6.75a.75.75 0 0 0 0-1.5v1.5ZM1 5.25a.75.75 0 0 0 0 1.5v-1.5ZM6.25 17a.75.75 0 0 0 1.5 0h-1.5Zm1.5-8a.75.75 0 0 0-1.5 0h1.5Zm2.5 8a.75.75 0 0 0 1.5 0h-1.5Zm1.5-8a.75.75 0 0 0-1.5 0h1.5ZM13 6v.75h.75V6H13ZM5 6h-.75v.75H5V6Zm10.517 5.78-.743-.104-.262 1.885.743.104.743.103.262-1.885-.743-.103ZM2.745 13.665l.743-.104-.262-1.885-.743.104-.743.103.262 1.885.743-.104ZM9 21v-.75c-1.53 0-2.075-.014-2.525-.204l-.291.69-.292.692c.797.336 1.714.322 3.108.322V21Zm-6.255-7.335-.743.103c.28 2.01.432 3.134.77 4.051l.703-.259.704-.258c-.267-.728-.4-1.653-.691-3.74l-.743.103Zm3.439 7.072.291-.691c-.922-.39-1.78-1.34-2.296-2.744l-.704.258-.704.259c.615 1.673 1.711 3.014 3.121 3.609l.292-.691Zm9.07-7.072-.742-.104c-.29 2.088-.424 3.013-.691 3.74l.704.26.704.258c.337-.917.489-2.041.769-4.051l-.743-.104ZM9 21v.75c1.394 0 2.31.014 3.108-.322l-.292-.691-.291-.691c-.45.19-.996.204-2.525.204V21Zm5.525-3.44-.704-.258c-.516 1.404-1.374 2.355-2.296 2.744l.291.69.292.692c1.41-.595 2.506-1.936 3.12-3.609l-.703-.259ZM2.483 11.78l.743-.104c-.222-1.596-.388-2.789-.48-3.747L2 8l-.747.07c.095.999.267 2.23.487 3.813l.743-.103Zm13.034 0 .743.103c.22-1.583.392-2.814.487-3.812L16 8l-.747-.07c-.09.957-.257 2.15-.479 3.746l.743.104ZM17 6v-.75H1v1.5h16V6ZM7 17h.75V9h-1.5v8H7Zm4 0h.75V9h-1.5v8H11Zm2-12h-.75v1h1.5V5H13Zm0 1v-.75H5v1.5h8V6ZM5 6h.75V5h-1.5v1H5Zm4-5v.75A3.25 3.25 0 0 1 12.25 5h1.5A4.75 4.75 0 0 0 9 .25V1Zm0 0V.25A4.75 4.75 0 0 0 4.25 5h1.5A3.25 3.25 0 0 1 9 1.75V1Z"/></svg>`,
+  },
+];
+const ROTATE_HANDLE_SVG = `<?xml version="1.0" encoding="UTF-8"?><svg width="37" height="37" viewBox="0 0 37 37" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="18.5" cy="18.5" r="18.5" fill="#159DFF"/><path d="M7 17C7 17 10.6963 23 18.4061 23C26.116 23 30 17 30 17M7 17L12.7497 18.875M7 17L8.64279 22.625M30 17L24.2492 18.875M30 17L27.9455 22.625" stroke="white" stroke-width="2"/></svg>`;
 
 // Стиль рамки: використовуємо акцентний синій як в інших компонентах
 const TEXT_OBJECT_TYPES = ['i-text', 'text', 'textbox'];
@@ -251,10 +279,13 @@ const Canvas = ({ className }) => {
   const [displayHeight, setDisplayHeight] = useState(DEFAULT_DESIGN.height);
   const [cssHeight, setCssHeight] = useState(DEFAULT_DESIGN.height);
   const [scale, setScale] = useState(1);
+  const [actionPanel, setActionPanel] = useState({ visible: false, x: 0, y: 0 });
+  const [rotateHandle, setRotateHandle] = useState({ visible: false, x: 0, y: 0 });
   const scaleRef = useRef(1);
   const resizingRef = useRef(false);
   const outlineColorRef = useRef(OUTLINE_COLOR);
   const themeTextColorRef = useRef(globalColors?.textColor || '#000000');
+  const actionPanelHandlersRef = useRef({});
 
   useEffect(() => {
     themeTextColorRef.current = globalColors?.textColor || '#000000';
@@ -829,42 +860,67 @@ const Canvas = ({ className }) => {
 
     const getActionPanelCenterY = (minY, maxY) => {
       const s = scaleRef.current || 1;
-      const panelHalf = PANEL_BG_HEIGHT / 2 / s;
-      const preferredTop = minY - TOP_PANEL_GAP / s;
-      const preferredBottom = maxY + TOP_PANEL_GAP / s;
-      const canvasH =
-        (designRef.current && designRef.current.height) ||
-        (typeof fCanvas.getHeight === 'function' ? fCanvas.getHeight() : 0);
-
-      let cy = preferredTop;
-      if (preferredTop - panelHalf < 0) {
-        cy = preferredBottom;
-      }
-
-      if (canvasH > 0) {
-        const minCy = panelHalf;
-        const maxCy = Math.max(panelHalf, canvasH - panelHalf);
-        cy = Math.max(minCy, Math.min(maxCy, cy));
-      }
-
-      return cy;
+      return minY - TOP_PANEL_GAP / s;
     };
 
     const getActionPanelCenterX = (minX, maxX) => {
-      const s = scaleRef.current || 1;
-      const panelHalf = PANEL_BG_WIDTH / 2 / s;
-      const preferred = (minX + maxX) / 2;
-      const canvasW =
-        (designRef.current && designRef.current.width) ||
-        (typeof fCanvas.getWidth === 'function' ? fCanvas.getWidth() : 0);
+      return (minX + maxX) / 2;
+    };
 
-      let cx = preferred;
-      if (canvasW > 0) {
-        const minCx = panelHalf;
-        const maxCx = Math.max(panelHalf, canvasW - panelHalf);
-        cx = Math.max(minCx, Math.min(maxCx, cx));
+    const hideDomActionPanel = () => {
+      setActionPanel(prev => (prev.visible ? { ...prev, visible: false } : prev));
+      setRotateHandle(prev => (prev.visible ? { ...prev, visible: false } : prev));
+    };
+
+    const syncDomActionPanel = () => {
+      try {
+        const active = fCanvas.getActiveObject?.();
+        const viewportEl = viewportRef.current;
+        const canvasEl = fCanvas.lowerCanvasEl || canvasRef.current;
+
+        if (!active || isHole(active) || !viewportEl || !canvasEl) {
+          hideDomActionPanel();
+          return;
+        }
+
+        active.setCoords?.();
+        const b = getAABB(active);
+        if (!b) {
+          hideDomActionPanel();
+          return;
+        }
+
+        const panelCx = getActionPanelCenterX(b.minX, b.maxX);
+        const panelCy = getActionPanelCenterY(b.minY, b.maxY);
+        const viewportRect = viewportEl.getBoundingClientRect();
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const displayScale = scaleRef.current || 1;
+        const rawX = canvasRect.left - viewportRect.left + panelCx * displayScale;
+        const rawY = canvasRect.top - viewportRect.top + panelCy * displayScale;
+        const halfW = PANEL_BG_WIDTH / 2;
+        const x = Math.max(halfW, Math.min(viewportRect.width - halfW, rawX));
+        const y = rawY;
+        const rotateRawX = canvasRect.left - viewportRect.left + ((b.minX + b.maxX) / 2) * displayScale;
+        const rotateRawY = canvasRect.top - viewportRect.top + (b.maxY + BOTTOM_ROTATE_GAP / displayScale) * displayScale;
+        const rotateHalf = ROTATE_BUTTON_DIAMETER / 2;
+        const rotateX = Math.max(rotateHalf, Math.min(viewportRect.width - rotateHalf, rotateRawX));
+        const rotateY = rotateRawY;
+
+        setActionPanel(prev => {
+          const nextX = Number(x.toFixed(2));
+          const nextY = Number(y.toFixed(2));
+          if (prev.visible && prev.x === nextX && prev.y === nextY) return prev;
+          return { visible: true, x: nextX, y: nextY };
+        });
+        setRotateHandle(prev => {
+          const nextX = Number(rotateX.toFixed(2));
+          const nextY = Number(rotateY.toFixed(2));
+          if (prev.visible && prev.x === nextX && prev.y === nextY) return prev;
+          return { visible: true, x: nextX, y: nextY };
+        });
+      } catch {
+        hideDomActionPanel();
       }
-      return cx;
     };
 
     // Snapping (auto-alignment) while dragging: snap to other objects' edges/centers + show blue guide lines
@@ -1202,6 +1258,7 @@ const Canvas = ({ className }) => {
     fCanvas.on('selection:cleared', () => {
       setActiveObject(null);
       setShapePropertiesOpen(false);
+      hideDomActionPanel();
     });
 
     // Deselect active object when clicking/tapping outside the canvas or its controls
@@ -1220,6 +1277,9 @@ const Canvas = ({ className }) => {
         try {
           if (el && typeof el.closest === 'function' && el.closest('[data-shape-properties]')) return;
         } catch { }
+        try {
+          if (el && typeof el.closest === 'function' && el.closest('[data-canvas-action-panel]')) return;
+        } catch { }
 
         if (clickedInside) return;
 
@@ -1236,6 +1296,7 @@ const Canvas = ({ className }) => {
 
         setActiveObject(null);
         setShapePropertiesOpen(false);
+        hideDomActionPanel();
       } catch { }
     };
     document.addEventListener('pointerdown', outsideClickHandler, true);
@@ -2576,8 +2637,21 @@ const Canvas = ({ className }) => {
       } catch { }
       return true;
     };
+    actionPanelHandlersRef.current = {
+      edit: target => copyHandler(null, { target }),
+      centerHorizontal: target => centerHorizontallyHandler(null, { target }),
+      centerVertical: target => centerVerticallyHandler(null, { target }),
+      duplicate: target => duplicateHandler(null, { target }),
+      delete: target => deleteHandler(null, { target }),
+    };
+
     const ensureActionControls = obj => {
       if (!obj || !obj.controls) return;
+      try {
+        Object.keys(obj.controls || {}).forEach(key => {
+          if (key === 'panel___bg' || key.startsWith('panel_')) delete obj.controls[key];
+        });
+      } catch {}
       // Ensure coordinates exist (text objects can lack aCoords right after creation)
       if (typeof obj.setCoords === 'function') {
         try {
@@ -2601,6 +2675,12 @@ const Canvas = ({ className }) => {
       // Always allow drawing controls (we will hide resize handles below as needed)
       obj.hasControls = true;
       obj.hasBorders = false;
+      obj.transparentCorners = false;
+      obj.cornerStyle = 'circle';
+      obj.cornerColor = 'rgba(21,157,255,1)';
+      obj.cornerStrokeColor = '#fff';
+      obj.cornerSize = 8;
+      obj.touchCornerSize = 28;
       if (obj.setControlsVisibility)
         obj.setControlsVisibility({
           tl: true,
@@ -2640,57 +2720,7 @@ const Canvas = ({ className }) => {
         const b = getAABB(o);
         if (!b) return new fabric.Point(0, 0);
         const s = scaleRef.current || 1;
-        const panelX = getActionPanelCenterX(b.minX, b.maxX);
-        const panelY = getActionPanelCenterY(b.minY, b.maxY);
-        const preferredBottomY = b.maxY + BOTTOM_ROTATE_GAP / s;
-        const rotateHalf = ROTATE_BUTTON_DIAMETER / 2 / s;
-        const canvasH =
-          (designRef.current && designRef.current.height) ||
-          (typeof fCanvas.getHeight === 'function' ? fCanvas.getHeight() : 0);
-
-        // Default: under the selected object
-        let rotateY = preferredBottomY;
-        let rotateX = (b.minX + b.maxX) / 2;
-
-        // Clamp rotateX to stay within canvas bounds (like menu)
-        if (canvasH > 0) {
-          const s = scaleRef.current || 1;
-          const canvasW =
-            (designRef.current && designRef.current.width) ||
-            (typeof fCanvas.getWidth === 'function' ? fCanvas.getWidth() : 0);
-          const rotateHalf = ROTATE_BUTTON_DIAMETER / 2 / s;
-          if (canvasW > 0) {
-            const minX = rotateHalf;
-            const maxX = Math.max(rotateHalf, canvasW - rotateHalf);
-            rotateX = Math.max(minX, Math.min(maxX, rotateX));
-          }
-        }
-
-        // If action panel has jumped below the object (near top edge),
-        // place rotate control below the panel to avoid overlap with the object.
-        const panelIsBelowObject = panelY >= b.maxY;
-        if (panelIsBelowObject) {
-          const stackedOffset =
-            (PANEL_BG_HEIGHT / 2 + ROTATE_BUTTON_DIAMETER / 2 + PANEL_BUTTON_GAP) / s;
-          rotateX = panelX;
-          rotateY = panelY + stackedOffset;
-        }
-
-        // If control falls below canvas, mirror it above the action panel
-        if (canvasH > 0 && preferredBottomY + rotateHalf > canvasH) {
-          const stackedOffset =
-            (PANEL_BG_HEIGHT / 2 + ROTATE_BUTTON_DIAMETER / 2 + PANEL_BUTTON_GAP) / s;
-          rotateX = panelX;
-          rotateY = panelY - stackedOffset;
-        }
-
-        if (canvasH > 0) {
-          const minY = rotateHalf;
-          const maxY = Math.max(rotateHalf, canvasH - rotateHalf);
-          rotateY = Math.max(minY, Math.min(maxY, rotateY));
-        }
-
-        return new fabric.Point(rotateX, rotateY);
+        return new fabric.Point((b.minX + b.maxX) / 2, b.maxY + BOTTOM_ROTATE_GAP / s);
       };
 
       // Helper: detect circle-like objects (must keep 1:1 aspect)
@@ -2707,28 +2737,20 @@ const Canvas = ({ className }) => {
       const applyDotVisualToControl = key => {
         try {
           const base =
+            (fabric?.Object?.prototype?.controls ? fabric.Object.prototype.controls[key] : null) ||
             (obj.controls && obj.controls[key]) ||
             (fabric?.Object?.prototype?.controls ? fabric.Object.prototype.controls[key] : null);
           if (!base) return;
 
           const control = new fabric.Control({
             ...base,
-            render: (ctx, left, top) => {
-              const s = scaleRef.current || 1;
-              const r = 4 / s;
-              ctx.save();
-              ctx.beginPath();
-              ctx.arc(left, top, r, 0, Math.PI * 2);
-              ctx.fillStyle = 'rgba(21,157,255,1)';
-              ctx.fill();
-              ctx.lineWidth = 1 / s;
-              ctx.strokeStyle = '#fff';
-              ctx.stroke();
-              ctx.restore();
-            },
+            render: () => {},
           });
 
           Object.defineProperties(control, {
+            __sxDotControl: {
+              value: true,
+            },
             sizeX: {
               get() {
                 return 16 / (scaleRef.current || 1);
@@ -2790,42 +2812,16 @@ const Canvas = ({ className }) => {
       }
 
       // Декоративний фон панелі як окремий control під іншими
+      if (false) {
       const panelBgKey = 'panel___bg';
       obj.controls[panelBgKey] = new fabric.Control({
         positionHandler: topCenterPos,
-        render: (ctx, left, top) => {
-          const s = scaleRef.current || 1;
-          const wCss = 163,
-            hCss = 33;
-          const w = wCss / s,
-            h = hCss / s;
-          const x = left - w / 2,
-            y = top - h / 2;
-          const r = 4 / s;
-          ctx.save();
-          ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          ctx.strokeStyle = 'rgba(0,0,0,1)';
-          ctx.lineWidth = 1 / s;
-          ctx.beginPath();
-          ctx.moveTo(x + r, y);
-          ctx.lineTo(x + w - r, y);
-          ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-          ctx.lineTo(x + w, y + h - r);
-          ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-          ctx.lineTo(x + r, y + h);
-          ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-          ctx.lineTo(x, y + r);
-          ctx.quadraticCurveTo(x, y, x + r, y);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          ctx.restore();
-        },
+        render: () => {},
         cursorStyle: 'default',
-        sizeX: 1,
-        sizeY: 1,
-        touchSizeX: 1,
-        touchSizeY: 1,
+        sizeX: 0,
+        sizeY: 0,
+        touchSizeX: 0,
+        touchSizeY: 0,
         actionHandler: () => false,
       });
 
@@ -2885,12 +2881,13 @@ const Canvas = ({ className }) => {
           positionHandler,
           cursorStyle: btn.cursor || 'pointer',
           mouseUpHandler: (evt, transform) => {
-            btn.handler(evt, transform);
-            return true;
+            return false;
           },
-          render: btn.render,
-          sizeX: (btn.w || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
-          sizeY: (btn.h || PANEL_BUTTON_DIAMETER) / (scaleRef.current || 1),
+          render: () => {},
+          sizeX: 0,
+          sizeY: 0,
+          touchSizeX: 0,
+          touchSizeY: 0,
         });
         if (btn.key === 'edit') {
           // Динамический курсор: 'text' для редактируемого текста, иначе 'default'
@@ -2904,14 +2901,17 @@ const Canvas = ({ className }) => {
       });
 
       // Кнопка обертання
+      }
       obj.controls.rotatec = new fabric.Control({
         positionHandler: bottomCenterPos,
         cursorStyle: 'crosshair',
         actionName: 'rotate',
         actionHandler: fabric.controlsUtils.rotationWithSnapping,
-        render: renderRotateIcon,
-        sizeX: ROTATE_BUTTON_DIAMETER / (scaleRef.current || 1),
-        sizeY: ROTATE_BUTTON_DIAMETER / (scaleRef.current || 1),
+        render: () => {},
+        sizeX: 0,
+        sizeY: 0,
+        touchSizeX: 0,
+        touchSizeY: 0,
       });
     };
 
@@ -2928,6 +2928,7 @@ const Canvas = ({ className }) => {
         }
         disableTextDirectEditing(o);
         ensureActionControls(o);
+        syncDomActionPanel();
         fCanvas.requestRenderAll();
       }
     });
@@ -2944,6 +2945,7 @@ const Canvas = ({ className }) => {
         }
         disableTextDirectEditing(o);
         ensureActionControls(o);
+        syncDomActionPanel();
         fCanvas.requestRenderAll();
       }
     });
@@ -3486,6 +3488,35 @@ const Canvas = ({ className }) => {
 
       // Blue snap guides (drag snapping) — across whole artboard
       try {
+        if (!isHole(active) && !isStaticCutShape(active)) {
+          const mid = (p1, p2) => ({ x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 });
+          const points = [
+            ac.tl,
+            mid(ac.tl, ac.tr),
+            ac.tr,
+            mid(ac.tr, ac.br),
+            ac.br,
+            mid(ac.br, ac.bl),
+            ac.bl,
+            mid(ac.bl, ac.tl),
+          ];
+          const dotRadius = 4 / s;
+          ctx.save();
+          ctx.setLineDash([]);
+          points.forEach(point => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, dotRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(21,157,255,1)';
+            ctx.fill();
+            ctx.lineWidth = 1 / s;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+          });
+          ctx.restore();
+        }
+      } catch {}
+
+      try {
         const guides = active.__snapGuides;
         if (guides && (guides.x != null || guides.y != null)) {
           const W = (designRef.current && designRef.current.width) || fCanvas.getWidth();
@@ -3622,7 +3653,8 @@ const Canvas = ({ className }) => {
       try {
         const isText = active && ['i-text', 'text', 'textbox'].includes(active.type);
         const isEditing = !!active.isEditing; // fabric.IText флаг редактирования
-        if (isText && isEditing) {
+        const shouldDrawCanvasActionPanel = false;
+        if (shouldDrawCanvasActionPanel && isText && isEditing) {
           // Фон панели
           const panelWcss = 163,
             panelHcss = 33;
@@ -3695,6 +3727,9 @@ const Canvas = ({ className }) => {
     fCanvas.on('after:render', () => {
       try {
         syncShadowHost();
+      } catch { }
+      try {
+        syncDomActionPanel();
       } catch { }
     });
     fCanvas.on('after:render', drawFrame);
@@ -4333,9 +4368,114 @@ const Canvas = ({ className }) => {
     const adjusted = isLockShape ? rawMm - LOCK_ARCH_HEIGHT_MM : rawMm;
     return Math.max(0, adjusted);
   })();
+  const handleActionPanelButton = key => event => {
+    try {
+      event.preventDefault();
+      event.stopPropagation();
+      const target = canvas?.getActiveObject?.();
+      const handler = actionPanelHandlersRef.current?.[key];
+      if (!target || typeof handler !== 'function') return;
+      handler(target);
+      if (key === 'delete') {
+        setActionPanel(prev => ({ ...prev, visible: false }));
+        setRotateHandle(prev => ({ ...prev, visible: false }));
+      } else {
+        requestAnimationFrame(() => {
+          try {
+            canvas?.requestRenderAll?.();
+          } catch {}
+        });
+      }
+    } catch {}
+  };
+  const handleRotatePointerDown = event => {
+    try {
+      event.preventDefault();
+      event.stopPropagation();
+      const target = canvas?.getActiveObject?.();
+      const canvasEl = canvas?.lowerCanvasEl || canvasRef.current;
+      if (!target || !canvasEl) return;
+      target.setCoords?.();
+      const center = target.getCenterPoint?.();
+      if (!center) return;
+
+      const rect = canvasEl.getBoundingClientRect();
+      const displayScale = scaleRef.current || 1;
+      const toCanvasPoint = evt => ({
+        x: (evt.clientX - rect.left) / displayScale,
+        y: (evt.clientY - rect.top) / displayScale,
+      });
+      const angleTo = point => (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI;
+      const startPointerAngle = angleTo(toCanvasPoint(event));
+      const startObjectAngle = Number(target.angle) || 0;
+
+      const onMove = moveEvent => {
+        try {
+          moveEvent.preventDefault();
+          const nextPointerAngle = angleTo(toCanvasPoint(moveEvent));
+          target.set('angle', startObjectAngle + nextPointerAngle - startPointerAngle);
+          target.setCoords?.();
+          canvas.requestRenderAll?.();
+        } catch {}
+      };
+      const onUp = () => {
+        try {
+          document.removeEventListener('pointermove', onMove, true);
+          document.removeEventListener('pointerup', onUp, true);
+          target.setCoords?.();
+          canvas.fire?.('object:modified', { target });
+          canvas.requestRenderAll?.();
+        } catch {}
+      };
+
+      document.addEventListener('pointermove', onMove, true);
+      document.addEventListener('pointerup', onUp, true);
+    } catch {}
+  };
 
   return (
     <div className={`${styles.viewport} ${className || ''}`} ref={viewportRef}>
+      {actionPanel.visible && (
+        <div
+          className={styles.actionPanel}
+          data-canvas-action-panel="true"
+          style={{
+            left: `${actionPanel.x}px`,
+            top: `${actionPanel.y}px`,
+          }}
+          onPointerDown={event => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          {ACTION_PANEL_BUTTONS.map(button => (
+            <button
+              key={button.key}
+              type="button"
+              className={styles.actionPanelButton}
+              aria-label={button.label}
+              title={button.label}
+              onClick={handleActionPanelButton(button.key)}
+              dangerouslySetInnerHTML={{ __html: button.svg }}
+            />
+          ))}
+        </div>
+      )}
+      {rotateHandle.visible && (
+        <button
+          type="button"
+          className={styles.rotateHandle}
+          data-canvas-action-panel="true"
+          aria-label="Rotate"
+          title="Rotate"
+          style={{
+            left: `${rotateHandle.x}px`,
+            top: `${rotateHandle.y}px`,
+          }}
+          onPointerDown={handleRotatePointerDown}
+          dangerouslySetInnerHTML={{ __html: ROTATE_HANDLE_SVG }}
+        />
+      )}
       <div className={styles.canvasWrapper}>
         <div ref={shadowHostRef} className={styles.shadowHost} />
         <canvas ref={canvasRef} className={styles.canvas} />

@@ -1270,6 +1270,25 @@ export default function Checkout({
 											</table>
 										</div>
 
+										<table className='summary-table summary-table__discount' aria-label={t('checkout.summary.discount')}>
+											<tbody>
+												<tr>
+													<td>
+														{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%)
+													</td>
+													<td>{Number(discountAmount || 0).toFixed(2)} €</td>
+												</tr>
+												{appliedCoupon && (
+													<tr>
+														<td>
+															{t('checkout.promoCode.discount')} ({Number(appliedCoupon.discount || 0).toFixed(0)}%)
+														</td>
+														<td>{Number(couponDiscountAmount || 0).toFixed(2)} €</td>
+													</tr>
+												)}
+											</tbody>
+										</table>
+
 										<div className='promo-code-block'>
 											{!appliedCoupon && (
 												<label className='promo-code-block__label' htmlFor='couponCode'>
@@ -1303,17 +1322,6 @@ export default function Checkout({
 												</div>
 											)}
 										</div>
-
-										<table className='summary-table summary-table__discount' aria-label={t('checkout.summary.discount')}>
-											<tbody>
-												<tr>
-													<td>
-														{t('checkout.summary.discount')} ({Number(totalCanvasDiscountPercent || 0).toFixed(0)}%)
-													</td>
-													<td>{Number(totalCanvasDiscountAmount || 0).toFixed(2)} €</td>
-												</tr>
-											</tbody>
-										</table>
 
 										<table
 											className='summary-table summary-table__delivery'

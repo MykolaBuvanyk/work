@@ -11,6 +11,69 @@
     align-items: center;
 }
 
+.actionPanel {
+    position: absolute;
+    width: 163px;
+    height: 33px;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 6px;
+    border: 1px solid #000;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.85);
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+.actionPanelButton {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #000;
+    cursor: pointer;
+    flex: 0 0 24px;
+}
+
+.actionPanelButton svg {
+    display: block;
+    max-width: 24px;
+    max-height: 24px;
+    pointer-events: none;
+}
+
+.rotateHandle {
+    position: absolute;
+    width: 37px;
+    height: 37px;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: crosshair;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+.rotateHandle svg {
+    display: block;
+    width: 37px;
+    height: 37px;
+    pointer-events: none;
+}
+
 .canvasWrapper {
     position: relative;
     display: grid;

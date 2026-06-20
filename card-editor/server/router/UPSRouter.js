@@ -68,6 +68,88 @@ async function getUpsToken() {
   return _tokenCache.token;
 }
 
+// Map UPS Time-in-Transit serviceLevelDescription -> Rating API Service.Code.
+// Order matters: more specific Express variants must be checked before plain Express.
+const TIT_SERVICE_MAP = [
+  [/express\s*plus/i, '54'],
+  [/express.{0,3}12:?00|express\s*12/i, '74'],
+  [/saver/i, '65'],
+  [/expedited/i, '08'],
+  [/express/i, '07'],
+  [/standard/i, '11'],
+];
+
+function titToRateCode(desc) {
+  for (const [re, code] of TIT_SERVICE_MAP) if (re.test(desc || '')) return code;
+  return null;
+}
+
+// "2026-06-23 09:00:00" / "2026-06-23" + optional time -> "23.06.2026 by 09:00"
+function formatTransitDate(dateStr, timeStr) {
+  if (!dateStr) return null;
+  const m = String(dateStr).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  let out = `${m[3]}.${m[2]}.${m[1]}`;
+  const t = String(timeStr || String(dateStr).split(' ')[1] || '').slice(0, 5);
+  if (/^\d{2}:\d{2}$/.test(t)) {
+    const hh = parseInt(t.slice(0, 2), 10);
+    out += hh >= 21 ? ' (End of Day)' : ` by ${t}`;
+  }
+  return out;
+}
+
+// Roll a YYYY-MM-DD (or today) forward off Sat/Sun to the next weekday (UPS pickup day).
+function nextBusinessDay(dateStr) {
+  const base = dateStr ? new Date(`${dateStr}T12:00:00`) : new Date();
+  if (isNaN(base.getTime())) return nextBusinessDay(null);
+  const day = base.getDay();
+  if (day === 6) base.setDate(base.getDate() + 2);
+  else if (day === 0) base.setDate(base.getDate() + 1);
+  return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, '0')}-${String(base.getDate()).padStart(2, '0')}`;
+}
+
+// Returns a map of Rating Service.Code -> formatted delivery date string (or {} on failure).
+async function getTransitDates({ token, isSandbox, destCity, destPostal, destCountry, weight, shipDate }) {
+  try {
+    const url = isSandbox
+      ? 'https://wwwcie.ups.com/api/shipments/v1/transittimes'
+      : 'https://onlinetools.ups.com/api/shipments/v1/transittimes';
+    const body = {
+      originCountryCode: process.env.UPS_SHIPPER_COUNTRY || 'DE',
+      originCityName: process.env.UPS_SHIPPER_CITY || '',
+      originPostalCode: process.env.UPS_SHIPPER_POSTAL || '',
+      destinationCountryCode: destCountry,
+      destinationCityName: destCity || '',
+      destinationPostalCode: destPostal,
+      weight: String(parseFloat(weight) || 1),
+      weightUnitOfMeasure: 'KGS',
+      shipmentContentsValue: '10',
+      shipmentContentsCurrencyCode: 'EUR',
+      billType: '03',
+      shipDate,
+      numberOfPackages: '1',
+    };
+    const r = await axios.post(url, body, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        transId: `tit-${Date.now()}`,
+        transactionSrc: 'SignXpert',
+      },
+      timeout: 10000,
+    });
+    const map = {};
+    (r.data?.emsResponse?.services || []).forEach(s => {
+      const code = titToRateCode(s.serviceLevelDescription);
+      if (code && !map[code]) map[code] = formatTransitDate(s.deliveryDate, s.deliveryTime);
+    });
+    return map;
+  } catch (e) {
+    console.error('UPS Time in Transit error:', e?.response?.status, e?.response?.data?.response?.errors?.[0]?.message || e.message);
+    return {};
+  }
+}
+
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode, schedulePickup, pickupDate, saturdayDelivery } = req.body;
@@ -289,7 +371,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
 UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { address, city, postalCode, country, weight, length, width, height, saturdayDelivery } = req.body;
+    const { address, city, postalCode, country, weight, length, width, height, saturdayDelivery, pickupDate } = req.body;
     if (!city || !postalCode || !country) return res.status(400).json({ message: 'City, PostalCode and Country are required' });
 
     const isSandbox = process.env.UPS_SANDBOX === 'true';
@@ -349,15 +431,27 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
       },
     };
 
-    const response = await axios.post(rateUrl, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        transId: `rate-${Date.now()}`,
-        transactionSrc: 'SignXpert',
-      },
-      timeout: 10000,
-    });
+    const shipDate = nextBusinessDay(pickupDate);
+    const [response, transitDates] = await Promise.all([
+      axios.post(rateUrl, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          transId: `rate-${Date.now()}`,
+          transactionSrc: 'SignXpert',
+        },
+        timeout: 10000,
+      }),
+      getTransitDates({
+        token,
+        isSandbox,
+        destCity: city,
+        destPostal: postalCode,
+        destCountry: country.toUpperCase(),
+        weight,
+        shipDate,
+      }),
+    ]);
 
     const ratedShipments = response.data?.RateResponse?.RatedShipment || [];
     const vatRate = parseFloat(process.env.UPS_VAT_RATE || '0.19');
@@ -390,7 +484,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
         amount: charge?.MonetaryValue,
         amountWithVat,
         publishedAmount: negotiated ? published?.MonetaryValue : null,
-        deliveryDate,
+        deliveryDate: transitDates[s.Service?.Code] || deliveryDate,
         saturdayDelivery: !!saturdayDelivery,
       };
     }).filter(r => r.amount);

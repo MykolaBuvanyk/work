@@ -89,6 +89,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         width: form.width,
         height: form.height,
         saturdayDelivery,
+        pickupDate,
       });
       setRates(res.data.rates);
     } catch (err) {

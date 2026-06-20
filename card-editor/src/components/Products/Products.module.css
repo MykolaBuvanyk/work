@@ -41,6 +41,7 @@ h1 {
   font-weight: 800;
   line-height: 1.15;
   text-decoration: none;
+  margin: 30px;
   
 }
 
@@ -62,13 +63,15 @@ ul {
   padding-top: 50px;
 }
 
+.hero {
+  padding-top: 0;
+}
+
 .sectionHeading {
   text-align: center;
-  margin-bottom: 28px;
 }
 
 .sectionHeadingHero {
-  margin-bottom: 55px;
   font-size: 36px;
   font-weight: bold;
   font-family: Inter, Arial, sans-serif;

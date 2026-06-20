@@ -45,7 +45,7 @@ const HomePlaceholder = () => {
 
   return (
     <main className={styles.page}>
-      <section className={styles.topTitleSection}>
+      <section style={{padding:0}} className={styles.topTitleSection}>
         <div className={styles.container}>
           <h1 className={styles.topTitle}>
             {t("HomePlaceholder.h_1")} <span> {t("HomePlaceholder.h_2")}</span>

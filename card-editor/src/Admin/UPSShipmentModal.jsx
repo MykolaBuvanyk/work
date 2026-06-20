@@ -62,6 +62,12 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
   const [ratesLoading, setRatesLoading] = useState(false);
   const [schedulePickup, setSchedulePickup] = useState(false);
   const [pickupDate, setPickupDate] = useState(today);
+  const [saturdayDelivery, setSaturdayDelivery] = useState(false);
+
+  const toggleSaturday = (checked) => {
+    setSaturdayDelivery(checked);
+    setRates(null);
+  };
 
   const set = (field) => (e) => { setForm((prev) => ({ ...prev, [field]: e.target.value })); setRates(null); };
 
@@ -83,6 +89,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         length: form.length,
         width: form.width,
         height: form.height,
+        saturdayDelivery,
       });
       setRates(res.data.rates);
     } catch (err) {
@@ -113,6 +120,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         ...form,
         schedulePickup,
         pickupDate,
+        saturdayDelivery,
       });
       setCreatedTracking(res.data.trackingNumber);
       setPickupConfirmation(res.data.pickupConfirmation || null);
@@ -274,6 +282,15 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
 
         <div style={styles.fieldGroup}>
           <label style={styles.label}>Service</label>
+          <label style={{...styles.radioLabel, marginBottom:'8px'}}>
+            <input
+              type="checkbox"
+              checked={saturdayDelivery}
+              onChange={(e) => toggleSaturday(e.target.checked)}
+              style={{marginRight:'8px'}}
+            />
+            Saturday Delivery
+          </label>
           <button
             style={{...styles.cancelBtn, borderColor:'#0073bc', color:'#0073bc', width:'100%', marginBottom:'8px'}}
             onClick={getRates}
@@ -300,7 +317,14 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
                   }}
                 >
                   <div>
-                    <div style={{fontWeight:600, fontSize:'13px'}}>{r.serviceName || r.serviceCode}</div>
+                    <div style={{fontWeight:600, fontSize:'13px'}}>
+                      {r.serviceName || r.serviceCode}
+                      {r.saturdayDelivery && (
+                        <span style={{marginLeft:'6px', fontSize:'10px', fontWeight:700, color:'#fff', background:'#e67e22', borderRadius:'3px', padding:'1px 5px', verticalAlign:'middle'}}>
+                          SAT
+                        </span>
+                      )}
+                    </div>
                     {r.deliveryDate && <div style={{fontSize:'12px', color:'#555'}}>{r.deliveryDate}</div>}
                   </div>
                   <div style={{textAlign:'right'}}>

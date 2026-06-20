@@ -70,7 +70,7 @@ async function getUpsToken() {
 
 UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode, schedulePickup, pickupDate } = req.body;
+    const { orderId, name, company, address, address2, address3, city, postalCode, country, phone, email, weight, length, width, height, declaredValue, serviceCode, schedulePickup, pickupDate, saturdayDelivery } = req.body;
 
     if (!orderId || !name || !address || !city || !postalCode || !country) {
       return res.status(400).json({ message: 'Missing required shipment fields' });
@@ -84,7 +84,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
     const token = await getUpsToken();
 
     const isEnvelope = serviceCode === 'ENV';
-    const isSaturday = serviceCode === 'SAT';
+    const isSaturday = serviceCode === 'SAT' || saturdayDelivery === true;
     const upsPickupDate = pickupDate ? pickupDate.replace(/-/g, '') : null;
     const serviceMap = { 'ENV': '07', 'NDA': '07', 'E12': '54', 'SAT': '07' };
     const resolvedServiceCode = serviceMap[serviceCode] || serviceCode || '11';
@@ -289,7 +289,7 @@ UPSRouter.post('/create-shipment', requireAuth, requireAdmin, async (req, res) =
 
 UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { address, city, postalCode, country, weight, length, width, height } = req.body;
+    const { address, city, postalCode, country, weight, length, width, height, saturdayDelivery } = req.body;
     if (!city || !postalCode || !country) return res.status(400).json({ message: 'City, PostalCode and Country are required' });
 
     const isSandbox = process.env.UPS_SANDBOX === 'true';
@@ -329,6 +329,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
           ShipmentRatingOptions: {
             NegotiatedRatesIndicator: '',
           },
+          ...(saturdayDelivery ? { ShipmentServiceOptions: { SaturdayDeliveryIndicator: '' } } : {}),
           Package: [{
             PackagingType: { Code: '02', Description: 'Customer Supplied Package' },
             PackageWeight: {
@@ -390,6 +391,7 @@ UPSRouter.post('/get-rates', requireAuth, requireAdmin, async (req, res) => {
         amountWithVat,
         publishedAmount: negotiated ? published?.MonetaryValue : null,
         deliveryDate,
+        saturdayDelivery: !!saturdayDelivery,
       };
     }).filter(r => r.amount);
 

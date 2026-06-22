@@ -508,7 +508,7 @@ class SendEmailForStatus {
                     : deliveryAddress;
         
             const customerCompany = escapeHtml(
-                customerAddress?.companyName || order.user?.company || 'Water Design Solution GmbH'
+                customerAddress?.companyName || order.user?.company || ''
             );
             const customerIdentifierRaw = String(order.user?.reference || order.userId || '').trim();
             const customerStreetLine1Raw = String(
@@ -558,7 +558,7 @@ class SendEmailForStatus {
             const isInvoiceUnpaidCase = selectedPaymentMethod === 'invoice' && paymentStatusRaw === 'Unpaid';
             const shouldRenderPaymentInformation = !isPayOnline && paymentStatusRaw === 'Unpaid';
             const paymentStatus = escapeHtml(paymentStatusRaw);
-            const projectNameRaw = String(order.orderName || orderMongo?.projectName || 'Water Sings 23');
+            const projectNameRaw = String(order.orderName || orderMongo?.projectName || '');
             const projectName = escapeHtml(projectNameRaw);
             const signsCountRaw = Math.max(0, Number(order.signs || 0));
             const signsCount = escapeHtml(signsCountRaw);

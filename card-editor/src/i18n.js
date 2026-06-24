@@ -12,6 +12,13 @@ import es from './locales/es.json';
 import et from './locales/et.json';
 import hr from './locales/hr.json';
 
+
+import hu from './locales/hu.json';
+import lt from './locales/lt.json';
+import nl from './locales/nl.json';
+import pl from './locales/pl.json';
+import ro from './locales/ro.json';
+
 // словники, які реально існують
 const dictionaries = {
   de,
@@ -24,6 +31,11 @@ const dictionaries = {
   es,
   et,
   hr,
+  hu,
+  lt,
+  nl,
+  pl,
+  ro,
 };
 
 const languageCountries = [

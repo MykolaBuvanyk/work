@@ -131,9 +131,9 @@ const TextList = () => {
       for (const font of fontFiles) {
         try {
           // Використовуємо шлях до public
-          const path = `/fonts/${font.file}`;
+          const path = encodeURI(`/fonts/${font.file}`);
 
-          const fontFace = new FontFace(font.name, `url(${path})`);
+          const fontFace = new FontFace(font.name, `url("${path}")`);
           await fontFace.load();
           document.fonts.add(fontFace);
           loadedFonts.push({

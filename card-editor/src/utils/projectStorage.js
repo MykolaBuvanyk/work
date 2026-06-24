@@ -152,9 +152,9 @@ export async function ensureFontsLoaded(fontFamilies = []) {
 
       const fontFile = getFontFileByName(plain);
       if (canUseFontFace && fontFile) {
-        const srcUrl = `${FONT_PUBLIC_PATH}/${fontFile}`;
+        const srcUrl = encodeURI(`${FONT_PUBLIC_PATH}/${fontFile}`);
         try {
-          const ff = new FontFace(plain, `url(${srcUrl})`);
+          const ff = new FontFace(plain, `url("${srcUrl}")`);
           const loaded = await ff.load();
           if (hasDocumentFonts) {
             try {
@@ -267,7 +267,7 @@ const loadFontDataUri = async (fontName) => {
     return null;
   }
   try {
-    const response = await fetch(`${FONT_PUBLIC_PATH}/${fontFile}`);
+    const response = await fetch(encodeURI(`${FONT_PUBLIC_PATH}/${fontFile}`));
     if (!response.ok) {
       console.warn("Failed to fetch font file", fontFile, response.status);
       return null;

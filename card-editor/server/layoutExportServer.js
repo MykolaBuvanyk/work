@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import PDFDocument from 'pdfkit';
 import svgToPdf from 'svg-to-pdfkit';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
@@ -20,6 +21,7 @@ import SendEmailForStatus from './Controller/SendEmailForStatus.js';
 import cron from 'node-cron';
 import Stripe from 'stripe'; // або const Stripe = require('stripe');
 import { Resvg } from '@resvg/resvg-js';
+import { CUSTOM_FONT_FILES } from '../src/constants/fonts.js';
 const stripe = new Stripe(process.env.secretPayKey);
 dotenv.config();
 
@@ -132,6 +134,7 @@ const splitSheetByMaterial = sheet => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const FONT_DIR = path.resolve(__dirname, '../src/assets/fonts');
+const PUBLIC_FONT_DIR = path.resolve(__dirname, '../public/fonts');
 
 const FONT_DEFINITIONS = [
   {
@@ -450,8 +453,76 @@ const FONT_DEFINITIONS = [
   },
 ];
 
+const normalizeFontAlias = value =>
+  String(value || '')
+    .replace(/["']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+const compactFontAlias = value => normalizeFontAlias(value).replace(/[\s_.-]+/g, '');
+
+const getFontNameFromFile = fileName => {
+  const baseName = path.basename(String(fileName || ''), path.extname(String(fileName || '')));
+  return baseName
+    .replace(/VariableFont_wght/g, 'Variable')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/[-_.]+/g, ' ')
+    .replace(/\bRegular\b/gi, '')
+    .replace(/\bBoldIt\b/gi, 'Bold Italic')
+    .replace(/\bSemiBold\b/gi, 'Semi Bold')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const buildCustomFontAliases = (name, file) => {
+  const baseName = getFontNameFromFile(file);
+  const aliases = new Set([
+    name,
+    baseName,
+    String(name || '').replace(/\bRegular\b/gi, '').trim(),
+    String(baseName || '').replace(/\bRegular\b/gi, '').trim(),
+  ]);
+
+  Array.from(aliases).forEach(alias => {
+    if (!alias) return;
+    aliases.add(alias.replace(/[-_.]+/g, ' '));
+    aliases.add(compactFontAlias(alias));
+  });
+
+  return Array.from(aliases)
+    .map(normalizeFontAlias)
+    .filter(Boolean);
+};
+
+const CUSTOM_PUBLIC_FONT_DEFINITIONS = CUSTOM_FONT_FILES.map((font, index) => {
+  if (!font?.file || !font?.name) return null;
+  const fontPath = path.resolve(PUBLIC_FONT_DIR, font.file);
+  if (!fontPath.startsWith(PUBLIC_FONT_DIR) || !fs.existsSync(fontPath)) {
+    return null;
+  }
+
+  const idBase = String(font.file)
+    .replace(/\.[^.]+$/, '')
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return {
+    id: `CustomFont-${idBase || index}`,
+    file: font.file,
+    path: fontPath,
+    aliases: buildCustomFontAliases(font.name, font.file),
+  };
+}).filter(Boolean);
+
+const PDF_FONT_DEFINITIONS = [
+  ...FONT_DEFINITIONS,
+  ...CUSTOM_PUBLIC_FONT_DEFINITIONS,
+];
+
 const fontkit = fontkitModule?.default || fontkitModule;
-const FONT_DEFINITION_MAP = new Map(FONT_DEFINITIONS.map(def => [def.id, def]));
+const FONT_DEFINITION_MAP = new Map(PDF_FONT_DEFINITIONS.map(def => [def.id, def]));
 const FONTKIT_CACHE = new Map();
 const TEXT_TO_SVG_CACHE = new Map();
 const TEXT_TO_SVG_ANCHOR = 'left top';
@@ -476,11 +547,11 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
-const FONT_ALIAS_LOOKUP = FONT_DEFINITIONS.reduce((map, def) => {
+const FONT_ALIAS_LOOKUP = PDF_FONT_DEFINITIONS.reduce((map, def) => {
   def.aliases.forEach(alias => {
-    map.set(alias.toLowerCase(), def.id);
+    map.set(normalizeFontAlias(alias), def.id);
   });
-  map.set(def.id.toLowerCase(), def.id);
+  map.set(normalizeFontAlias(def.id), def.id);
   return map;
 }, new Map());
 
@@ -768,7 +839,7 @@ const splitTextIntoFontRuns = (text = '', preferredFontId = DEFAULT_FONT_ID) => 
 };
 
 const registerDocumentFonts = doc => {
-  FONT_DEFINITIONS.forEach(def => {
+  PDF_FONT_DEFINITIONS.forEach(def => {
     try {
       const fontPath = resolveFontPath(def.id);
       if (fontPath) {

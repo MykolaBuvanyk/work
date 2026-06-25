@@ -38,6 +38,7 @@ import {
   saveCurrentProject,
   uuid,
 } from '../../utils/projectStorage';
+import { DEFAULT_CUSTOM_FONT_FAMILY } from '../../constants/fonts';
 import {
   buildQrSvgMarkup,
   computeQrVectorData,
@@ -7348,7 +7349,7 @@ export const Toolbar = ({ formData }) => {
         top: canvas.height / 2,
         originX: 'center',
         originY: 'center',
-        fontFamily: 'Arial',
+        fontFamily: DEFAULT_CUSTOM_FONT_FAMILY,
         fill: globalColors.textColor,
         fontSize: mmToPx(defaultFontSizeMm),
       });
@@ -8287,7 +8288,7 @@ export const Toolbar = ({ formData }) => {
         if (obj.type === "i-text" || obj.type === "text") {
           objData.text = obj.text || "";
           objData.fontSize = obj.fontSize || 20;
-          objData.fontFamily = obj.fontFamily || "Arial";
+          objData.fontFamily = obj.fontFamily || DEFAULT_CUSTOM_FONT_FAMILY;
           objData.fontWeight = obj.fontWeight || "normal";
           objData.fontStyle = obj.fontStyle || "normal";
           objData.textAlign = obj.textAlign || "left";
@@ -8512,7 +8513,7 @@ export const Toolbar = ({ formData }) => {
                     left: objData.left || 0,
                     top: objData.top || 0,
                     fontSize: objData.fontSize || 20,
-                    fontFamily: objData.fontFamily || "Arial",
+                    fontFamily: objData.fontFamily || DEFAULT_CUSTOM_FONT_FAMILY,
                     fill: objData.fill || "#000000",
                     fontWeight: objData.fontWeight || "normal",
                     fontStyle: objData.fontStyle || "normal",
@@ -9055,7 +9056,7 @@ export const Toolbar = ({ formData }) => {
       const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
       const commonText = {
         fontSize: mmToPx(5),
-        fontFamily: 'Arial',
+        fontFamily: DEFAULT_CUSTOM_FONT_FAMILY,
         fill: globalColors?.textColor || '#000',
         originX: 'center',
         originY: 'center',
@@ -9197,7 +9198,7 @@ export const Toolbar = ({ formData }) => {
       const bottomY = mmToPx(100) / 2 + mmToPx(gapMm);
       const commonTextbox = {
         fontSize: mmToPx(5), // 5 мм по стандарту
-        fontFamily: 'Arial',
+        fontFamily: DEFAULT_CUSTOM_FONT_FAMILY,
         fill: globalColors?.textColor || '#000',
         originY: 'center',
         selectable: true,

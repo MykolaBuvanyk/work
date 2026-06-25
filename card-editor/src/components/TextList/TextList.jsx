@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { useCanvasContext } from "../../contexts/CanvasContext";
 import * as fabric from "fabric";
-import { CUSTOM_FONT_FILES } from "../../constants/fonts";
+import {
+  CUSTOM_FONT_FILES,
+  CUSTOM_FONT_OPTIONS,
+  DEFAULT_CUSTOM_FONT_FAMILY,
+} from "../../constants/fonts";
 import styles from "./TextList.module.css";
 
 const TextList = () => {
@@ -12,7 +16,7 @@ const TextList = () => {
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [editingTextId, setEditingTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState(DEFAULT_TEXT_LABEL);
-  const [availableFonts, setAvailableFonts] = useState([]);
+  const [availableFonts, setAvailableFonts] = useState(CUSTOM_FONT_OPTIONS);
   const [fontSizeDrafts, setFontSizeDrafts] = useState({});
   const [editingFontSizeId, setEditingFontSizeId] = useState(null);
   const isUpdatingRef = useRef(false);
@@ -23,8 +27,10 @@ const TextList = () => {
   const mmToPx = (mm) => (typeof mm === "number" ? mm * PX_PER_MM : 0);
   const pxToMm = (px) => (typeof px === "number" ? px / PX_PER_MM : 0);
   const getFontOptionStyle = (fontFamily) => ({
-    fontFamily: `"${String(fontFamily || "Arial").replace(/"/g, "")}\", Arial, sans-serif`,
+    fontFamily: `"${String(fontFamily || DEFAULT_CUSTOM_FONT_FAMILY).replace(/"/g, "")}\", Arial, sans-serif`,
   });
+  const getDefaultFontFamily = () =>
+    DEFAULT_CUSTOM_FONT_FAMILY || availableFonts[0]?.value || "";
   const MIN_FONT_MM = 3;
   const MAX_FONT_MM = pxToMm(256); // preserve previous 256px cap (~67.7 mm)
   const MAX_FONT_MM_INT = Math.max(MIN_FONT_MM, Math.round(MAX_FONT_MM));
@@ -86,7 +92,10 @@ const TextList = () => {
 
     if (waitForFont && typeof document !== "undefined" && document.fonts) {
       try {
-        const family = String(obj.fontFamily || "Arial").replace(/"/g, "").trim() || "Arial";
+        const family =
+          String(obj.fontFamily || getDefaultFontFamily())
+            .replace(/"/g, "")
+            .trim() || getDefaultFontFamily();
         await Promise.allSettled([
           document.fonts.ready,
           document.fonts.load(`16px "${family}"`),
@@ -115,16 +124,9 @@ const TextList = () => {
     try {
       // Список файлів шрифтів з папки fonts
       const fontFiles = CUSTOM_FONT_FILES;
+      setAvailableFonts(CUSTOM_FONT_OPTIONS);
 
-      // Базові системні шрифти
-      const systemFonts = [
-        { name: "Arial", value: "Arial" },
-        { name: "Helvetica", value: "Helvetica" },
-        { name: "Georgia", value: "Georgia" },
-        { name: "Verdana", value: "Verdana" },
-        { name: "Courier New", value: "Courier New" },
-      ];
-
+      // Keep the dropdown populated while FontFace registrations finish.
       // Завантажуємо кастомні шрифти
       const loadedFonts = [];
 
@@ -146,8 +148,8 @@ const TextList = () => {
         }
       }
 
-      // Об'єднуємо системні та завантажені шрифти, видаляючи дублікати
-      const allFonts = [...systemFonts, ...loadedFonts];
+      // Show only custom fonts declared in fonts.js.
+      const allFonts = loadedFonts.length > 0 ? loadedFonts : CUSTOM_FONT_OPTIONS;
 
       // Видаляємо дублікати за значенням value (назвою шрифту)
       const uniqueFonts = allFonts.reduce((acc, font) => {
@@ -163,15 +165,8 @@ const TextList = () => {
       );
     } catch (error) {
       console.error("Помилка завантаження шрифтів:", error);
-      // Fallback до базових шрифтів
-      setAvailableFonts([
-        { name: "Arial", value: "Arial" },
-        { name: "Times New Roman", value: "Times New Roman" },
-        { name: "Courier New", value: "Courier New" },
-        { name: "Helvetica", value: "Helvetica" },
-        { name: "Georgia", value: "Georgia" },
-        { name: "Verdana", value: "Verdana" },
-      ]);
+      // Keep the custom list visible even if browser font registration fails.
+      setAvailableFonts(CUSTOM_FONT_OPTIONS);
     }
   };
 
@@ -194,7 +189,7 @@ const TextList = () => {
         content: typeof obj.text === "string" ? obj.text : "",
         object: obj,
         fontSize: obj.fontSize || 20,
-        fontFamily: obj.fontFamily || "Arial",
+        fontFamily: obj.fontFamily || getDefaultFontFamily(),
         fontWeight: obj.fontWeight || "normal",
         textAlign: obj.textAlign || "left",
         fill: obj.fill || "#000000",
@@ -291,7 +286,7 @@ const TextList = () => {
         originX: "center",
         originY: "center",
         fontSize: mmToPx(getDefaultTextSizeMmForCanvas(canvas)),
-        fontFamily: "Arial",
+        fontFamily: getDefaultFontFamily(),
         fontWeight: "normal",
         textAlign: "left",
         selectable: true,
@@ -469,17 +464,19 @@ const TextList = () => {
   };
 
   const getFamilyBaseName = (family) =>
-    String(family || "Arial")
+    String(family || getDefaultFontFamily())
       .replace(/\s+/g, " ")
       .trim()
       .replace(
         /\s+(Extra Bold Italic|Bold Italic|BoldIt|Black Italic|Medium Italic|Semi\s*Bold|Bold|Italic|Black|Medium)$/i,
         ""
       )
-      .trim() || "Arial";
+      .trim() || getDefaultFontFamily();
 
   const findFamilyByTraits = (currentFamily, wantBold, wantItalic) => {
-    const current = String(currentFamily || "Arial").trim() || "Arial";
+    const current =
+      String(currentFamily || getDefaultFontFamily()).trim() ||
+      getDefaultFontFamily();
     const base = getFamilyBaseName(current);
     const candidates = [];
 
@@ -518,12 +515,16 @@ const TextList = () => {
   };
 
   const pickFamilyByTraits = (currentFamily, wantBold, wantItalic) => {
-    const current = String(currentFamily || "Arial").trim() || "Arial";
+    const current =
+      String(currentFamily || getDefaultFontFamily()).trim() ||
+      getDefaultFontFamily();
     return findFamilyByTraits(current, wantBold, wantItalic) || current;
   };
 
   const resolveClosestFamilyTraits = (baseFamily, wantBold, wantItalic) => {
-    const base = String(baseFamily || "Arial").trim() || "Arial";
+    const base =
+      String(baseFamily || getDefaultFontFamily()).trim() ||
+      getDefaultFontFamily();
 
     if (wantBold && wantItalic) {
       const bi = findFamilyByTraits(base, true, true);
@@ -830,7 +831,8 @@ const TextList = () => {
   const currentFontSize = activeText
     ? getFontSizeMmInt(activeText)
     : pxToMm(20);
-  const currentFontFamily = activeText?.fontFamily || "Arial";
+  const currentFontFamily =
+    findAvailableFamily(activeText?.fontFamily) || getDefaultFontFamily();
   const activeTraits = getEffectiveFontTraits(activeText);
   const currentFontWeight = activeTraits.bold ? "bold" : "normal";
   const currentFontStyle = activeTraits.italic ? "italic" : "normal";
@@ -961,7 +963,10 @@ const TextList = () => {
                   </button>
                 </div>
                 <select
-                  value={text.object?.fontFamily || "Arial"}
+                  value={
+                    findAvailableFamily(text.object?.fontFamily) ||
+                    getDefaultFontFamily()
+                  }
                   onChange={async (e) => {
                     if (text.object) {
                       const applied = await applyFontFamilyChange(

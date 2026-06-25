@@ -112,6 +112,13 @@ export const CUSTOM_FONT_FILES = [
   { file: "New Fonts/Tinos-Regular.ttf", name: "Tinos" },
 ];
 
+export const CUSTOM_FONT_OPTIONS = CUSTOM_FONT_FILES.map((font) => ({
+  name: font.name,
+  value: font.name,
+}));
+
+export const DEFAULT_CUSTOM_FONT_FAMILY = CUSTOM_FONT_OPTIONS[0]?.value || "";
+
 /*
 export const CUSTOM_FONT_FILES = [
   { file: "AbrilFatface-Regular.ttf", name: "Abril Fatface" },

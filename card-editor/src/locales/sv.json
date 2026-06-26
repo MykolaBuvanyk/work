@@ -261,7 +261,7 @@
     "t_13": "2. Priser och moms",
     "t_14": "Alla priser på vår webbplats anges i euro (€).",
     "t_15": "Viktig skatteinformation:",
-    "t_16": "SignXpert är ett i Tyskland registrerat företag som omfattas av §19 UStG (tysk undantagsregel för småföretagare). Därför debiterar vi inte moms och anger det inte på våra fakturor. För kunder i Sverige gäller den gällande svenska momssatsen (25%), om detta krävs enligt lag.",
+    "t_16": "SignXpert är ett i Tyskland registrerat företag som omfattas av §19 UStG (den tyska småföretagarregeln). Därför debiterar vi ingen moms och visar ingen moms på våra fakturor. Detta gäller både privatkunder och företagskunder.",
     "t_17": "„Alla priser är slutpriser exklusive fraktkostnader. Enligt §19 UStG debiteras ingen moms.“",
     "t_18": "Fraktkostnaderna visas tydligt i varukorgen och i det sista steget i beställningsprocessen. Vi förbehåller oss rätten att ändra priser för framtida beställningar utan föregående meddelande.",
     "t_19": "3. Leverans",
@@ -304,10 +304,10 @@
     "t_56": "kontaktsidan.",
     "t_57": "11. Privata köpare",
     "t_58": "Privata köpare kan köpa utan att ange ett momsregistreringsnummer.",
-    "t_59": "I detta fall gäller momssatsen i ditt land.",
+    "t_59": "I detta fall debiteras ingen moms enligt §19 UStG.",
     "t_60": "12. Företagskunder",
     "t_61": "Företagskunder (företag) kan registrera sig med ett giltigt EU-momsregistreringsnummer.",
-    "t_62": "Om ditt momsregistreringsnummer bekräftas, debiteras ingen moms för transaktioner inom EU (utanför Tyskland).",
+    "t_62": "Även för företagskunder debiteras ingen moms enligt §19 UStG. Ett giltigt EU-momsregistreringsnummer kan anges för företagsuppgifter och fakturering.",
     "t_63": "Mer information finns i vår",
     "t_64": "Läs mer"
   },
@@ -317,7 +317,7 @@
     "i_3": "Företag / Ägare:",
     "i_4": "Kostyantyn Utvenko, SignXpert",
     "i_5": "Adress:",
-    "i_6": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "i_6": "Baumwiesen 2, 72401 Haigerloch, Tyskland",
     "i_7": "Kontakt",
     "i_8": "Telefon:",
     "i_9": "Kontaktformulär:",
@@ -364,7 +364,7 @@
     "description_6": "Namn:",
     "description_7": "Kostyantyn Utvenko",
     "description_8": "E-post:",
-    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Tyskland",
     "description_10": "Kontaktformulär:",
     "description_11": "2. Insamling, behandling och användning av personuppgifter",
     "description_12": "Vi är personligen ansvariga för den information du lämnar till oss. Personuppgifter är all information som kan tillskrivas en identifierbar person. Vi samlar in och behandlar dina uppgifter för att utföra dina beställningar. Uppgifter lämnas till tredje part endast i den utsträckning som lagen tillåter (t.ex. för logistik eller betalningshantering).",
@@ -423,7 +423,7 @@
     "description_65": "Enligt art. 77 GDPR har du rätt att klaga till den behöriga dataskyddstillsynsmyndigheten om du anser att behandlingen av dina personuppgifter strider mot GDPR.",
     "description_66": "Delstatens dataskydds- och informationsfrihetkommissarie Baden-Württemberg",
     "description_67": "Adress:",
-    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Deutschland",
+    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Tyskland",
     "description_69": "6. Loggfiler",
     "description_70": "När du besöker",
     "description_71": "sidor skickar din webbläsare automatiskt data som lagras i serverns loggfiler:",
@@ -458,12 +458,12 @@
     "answer_2_1": "Du kan bekvämt betala din beställning med de olika betalningsmetoderna som är tillgängliga på vår webbplats. Vi accepterar Visa, MasterCard, PayPal och andra betalningsalternativ.",
     "answer_2_2": "Du kan betala direkt under beställningsprocessen eller välja betalning mot faktura. Om du väljer fakturaalternativet ställer vi ut en faktura som ska betalas inom 30 dagar.",
     "answer_2_3": "Alla betalningar behandlas säkert och du får en bekräftelse när betalningen är slutförd. På så sätt bekräftas din beställning snabbt och förbereds för produktion.",
-    "question_3": "Hur kan jag få min beställning utan moms?",
-    "answer_3_1": "Om du beställer på uppdrag av ett företag kan du under vissa förutsättningar beställa utan moms. Ange ditt momsregistreringsnummer i det aktuella fältet på registreringssidan och klicka på knappen „Kontrollera“. Systemet kontrollerar ditt nummer och informerar dig om verifieringen lyckades.",
-    "answer_3_list_1": "Om ditt momsregistreringsnummer är giltigt debiteras ingen moms för transaktioner inom EU (utanför Tyskland).",
-    "answer_3_list_2": "Om verifieringen misslyckas, kontrollera först att numret är korrekt angivet. Ibland hjälper det att vänta en stund och försöka igen.",
-    "answer_3_2": "Om inget momsregistreringsnummer anges eller verifieringen misslyckas, tillämpas momssatsen i ditt land. För konsumenter och företag med säte i Sverige gäller den ordinarie momssatsen på 25%, oavsett giltigt momsregistreringsnummer. Om du befinner dig utanför Europeiska unionen, t.ex. i Schweiz, Storbritannien eller andra länder, gäller momssatsen 0% för exporterade varor.",
-    "answer_3_3": "Om du har ytterligare frågor eller problem uppstår, kontakta oss. Vårt team hjälper dig gärna.",
+    "question_3": "Varför debiteras ingen moms på min beställning?",
+    "answer_3_1": "SignXpert är ett i Tyskland registrerat företag som omfattas av §19 UStG (den tyska småföretagarregeln). Därför debiterar vi ingen moms och visar ingen moms på våra fakturor.",
+    "answer_3_list_1": "Detta gäller både privatkunder och företagskunder.",
+    "answer_3_list_2": "Om du beställer som företag kan du ändå ange ditt EU-momsregistreringsnummer för företagsuppgifter och fakturering.",
+    "answer_3_2": "Om inget momsregistreringsnummer anges kan du ändå slutföra beställningen. Ingen moms debiteras enligt §19 UStG.",
+    "answer_3_3": "Om du har ytterligare frågor om faktura, företagsuppgifter eller betalning, kontakta oss. Vårt team hjälper dig gärna.",
     "question_4": "Kan jag returnera min beställning och vad ingår i er nöjdhetsgaranti?",
     "answer_4_1": "På <home>SignXpert</home> är vi övertygade om att varje kund ska vara helt nöjd med sin beställning. Om din produkt av någon anledning inte uppfyller dina förväntningar, ser vi till en lämplig lösning – det är vår fullständiga nöjdhetsgaranti.",
     "answer_4_2": "Vad garantin omfattar:",
@@ -803,8 +803,8 @@
       "descriptions": {
         "url": "* Skanna för att öppna webbplatsen",
         "email": "* Skanna för att skicka e-post",
-        "phone": "* Skanna för att ringa direkt",
-        "whatsapp": "* Skanna för att skicka meddelande",
+        "phone": "* Skanna för att ringa",
+        "whatsapp": "* Skanna för att skicka ett WhatsApp-meddelande",
         "wifi": "* Skanna för att ansluta till nätverket",
         "message": "* Skanna för att läsa meddelandet"
       },
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com eller https://example.com",
         "email": "example@domain.com",
-        "phone": "+46700000000",
+        "phone": "+490123456789",
         "networkName": "Wi-Fi-nätverkets namn",
         "password": "Wi-Fi-lösenord",
         "message": "Ange ditt meddelande här..."
@@ -1085,7 +1085,7 @@
     },
     "cart": "Varukorg",
     "currentSign": "Aktuell skylt",
-    "totalForAllSigns": "Skyltar totalt",
+    "totalForAllSigns": "Projektbelopp",
     "discount": "Rabatt",
     "totalPrice": "Totalpris",
     "accessoriesSelected": "Dina valda tillbehör:",
@@ -1113,12 +1113,12 @@
     "orderSummary": "Ordersammanfattning",
     "myOrder": "Min beställning",
     "selectCountry": "Välj land",
-    "phoneQuestionNote": "Tillåt frågor via mobiltelefon.",
+    "phoneQuestionNote": "Vi kan kontakta dig på detta mobilnummer om vi har frågor om din beställning.",
     "yes": "JA",
     "invoiceEmailNote": "Denna e-postadress används för att skicka fakturan",
     "invoiceDifferent": "Fakturaadress (om annan)",
-    "vatAndTotal": "Moms och totalbelopp",
-    "vatNote": "Gällande momssats tillämpas på beställningen.",
+    "vatAndTotal": "Totalbelopp",
+    "vatNote": "Ingen moms debiteras enligt §19 UStG.",
     "productionComment": "Lämna en kommentar för produktion här:",
     "fields": {
       "fullName": "För- och efternamn",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Delsumma",
       "discount": "Rabatt",
       "price": "Pris",
-      "signsTotal": "Totalpris skyltar",
+      "signsTotal": "Projektbelopp",
       "accessories": "Tillbehör",
       "types": "Typer",
       "totalAmount": "Totalbelopp"
@@ -1156,8 +1156,8 @@
       "comment": "Fraktkommentar",
       "options": {
         "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS Next Day-paket",
-        "upsExpressBeforeNoon": "UPS Express innan kl. 12:00",
+        "upsNextDayPackage": "UPS nästa dag",
+        "upsExpressBeforeNoon": "UPS Express före 12:00",
         "upsSaturdayDelivery": "UPS lördagsleverans"
       },
       "hints": {
@@ -1175,7 +1175,7 @@
     "shippingNotes": {
       "title": "Fraktkommentarer",
       "sameDay": "Beställningar mottagna före kl. 16:00 skickas samma dag.",
-      "nextDay": "Välj UPS Next Day-paket för leverans nästa arbetsdag.",
+      "nextDay": "Välj UPS nästa dag för leverans nästa arbetsdag.",
       "euros": "Alla priser är i euro."
     },
     "countries": {
@@ -1332,12 +1332,12 @@
         "desc": "Svarta buntband av plast, storlek 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Skruvar 9,5 mm",
-        "desc": "Storlek 2,9 × 9,5 mm"
+        "name": "Självgängande 9,5 mm",
+        "desc": "Självgängande skruvar, storlek 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Skruvar 13 mm",
-        "desc": "Storlek 2,9 × 13 mm"
+        "name": "Självgängande 13 mm",
+        "desc": "Självgängande skruvar, storlek 2,9 × 13 mm"
       },
       "carabiner": {
         "name": "Karbinhake",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Spårningsnummer finns inte tillgängligt ännu",
       "opening": "Öppnar...",
       "openProject": "Öppna projekt",
-      "sumInclVatDelivery": "Summa (inkl. moms och frakt)",
+      "sumInclVatDelivery": "Summa (inkl. frakt)",
       "table": {
         "no": "Nr.",
-        "orderDate": "Beställningsdatum",
-        "orderNo": "Bestnr.",
-        "projectName": "Projektnamn",
-        "orderSum": "Beställningssumma",
-        "sumDelivery": "Summa + frakt",
+        "orderDate": "Datum",
+        "orderNo": "Ordernr.",
+        "projectName": "Namn",
+        "orderSum": "Belopp",
+        "sumDelivery": "Belopp + frakt",
         "status": "Status",
         "deliveryNote": "Följesedel",
-        "tracking": "Spårning",
+        "tracking": "Spåra",
         "invoice": "Faktura",
-        "invoiceStatus": "Fakturastatus",
-        "toPay": "Att betala",
+        "invoiceStatus": "Betalning",
+        "toPay": "Betala",
         "openProject": "Projekt"
       },
       "status": {
@@ -1791,7 +1791,7 @@
   "Footer": {
     "slogan": "Gravyr · Industriskyltar",
     "address": {
-      "country": "Deutschland"
+      "country": "Tyskland"
     },
     "menuTitle": "Meny:",
     "infoTitle": "Information:",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Alla priser är slutpriser.",
-      "noVat": "Priserna inkluderar gällande momssats.",
+      "noVat": "Ingen moms debiteras enligt §19 UStG.",
       "plusShipping": "Exklusive fraktkostnader."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Företagsnamn",
     "rr_23": "Momsregistreringsnummer",
     "rr_24": "Inget momsregistreringsnummer? Fortsätt utan.",
-    "rr_25": "*För närvarande gäller den svenska momssatsen (25% moms).",
+    "rr_25": "*Ingen moms debiteras enligt §19 UStG.",
     "passwordMustMatch": "Lösenorden måste stämma överens",
     "registrationFailed": "Registreringen misslyckades",
     "pleaseSpecify": "Vänligen ange",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Hur kan jag få min beställning utan moms?",
-    "description": "Om du beställer på uppdrag av ett företag kan du under vissa förutsättningar beställa utan moms. Ange ditt momsregistreringsnummer i det aktuella fältet på registreringssidan och klicka på knappen „Kontrollera“. Systemet kontrollerar ditt nummer och informerar dig om verifieringen lyckades.",
-    "validVat": "Om ditt momsregistreringsnummer är giltigt debiteras ingen moms för transaktioner inom EU (utanför Tyskland).",
-    "invalidVat": "Om verifieringen misslyckas, kontrollera först att numret är korrekt angivet. Ibland hjälper det att vänta en stund och försöka igen.",
-    "noVatNumber": "Om inget momsregistreringsnummer anges eller verifieringen misslyckas, tillämpas momssatsen i ditt land.",
-    "germanyVat": "För konsumenter och företag med säte i Sverige gäller den ordinarie momssatsen på 25%.",
-    "outsideEu": "Om du befinner dig utanför Europeiska unionen, t.ex. i Schweiz, Storbritannien eller andra länder, gäller momssatsen 0% för exporterade varor.",
+    "title": "Varför debiteras ingen moms?",
+    "description": "SignXpert är ett i Tyskland registrerat företag som omfattas av §19 UStG (den tyska småföretagarregeln). Därför debiterar vi ingen moms och visar ingen moms på våra fakturor.",
+    "validVat": "Detta gäller både privatkunder och företagskunder.",
+    "invalidVat": "Om du anger ett EU-momsregistreringsnummer och verifieringen misslyckas kan du kontrollera numret och försöka igen. Beställningen kan ändå slutföras.",
+    "noVatNumber": "Om inget momsregistreringsnummer anges debiteras ändå ingen moms enligt §19 UStG.",
+    "germanyVat": "För kunder i Sverige visas ingen moms på fakturan enligt §19 UStG.",
+    "outsideEu": "För leveranser utanför EU kan ytterligare importavgifter eller lokala skatter tillkomma enligt reglerna i mottagarlandet.",
     "contactUs": "Om du har ytterligare frågor eller problem uppstår, kontakta oss. Vårt team hjälper dig gärna."
   },
   "HomePlaceholder": {
@@ -1919,7 +1919,7 @@
     "h_4": "för industriskyltning",
     "h_5": "Vi levererar hållbara, graverade plastskyltar av premiumkvalitet – perfekta för industri, energianläggningar och kommersiella tillämpningar.",
     "h_6": "Designa online nu",
-    "h_7": "Beställningar mottagna före kl. 16:00 skickar vi samma arbetsdag.",
+    "h_7": "Beställningar mottagna före kl. 16:00 skickas samma arbetsdag.",
     "h_8": "Varför",
     "h_9": "Rättvisa priser. Industriell kvalitet.",
     "h_10": "Vi vet att budgeten spelar en viktig roll idag.",
@@ -1932,14 +1932,14 @@
     "h_17": "Volymrabatter",
     "h_18": "Vi strävar efter att erbjuda dig de bästa priserna. Därför har vi infört ett volymrabattsystem:",
     "h_19": "Ju högre ordervärde, desto lägre pris.",
-    "h_20": "Rabatten gäller bara för det aktuella projektet (ej kumulativ) och beräknas automatiskt:",
+    "h_20": "Rabatten beräknas automatiskt:",
     "h_21": "Ordervärde:",
     "h_22": "från 30 € till 50 € — 5%",
     "h_23": "från 50 € till 100 € — 10%",
     "h_24": "från 100 € till 200 € — 15%",
     "h_25": "från 200 € till 500 € — 20%",
     "h_26": "från 500 € till 10000 € — 25%",
-    "h_27": "Rabatten gäller bara för det aktuella projektet och inkluderar inte tillbehör.",
+    "h_27": "Rabatten gäller för hela det aktuella projektet, men inte för frakten.",
     "h_28": "Individuellt graverade",
     "h_29": "skyltar",
     "h_30": "enkelt skapade",

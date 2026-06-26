@@ -1,7 +1,7 @@
 {
   "meta": {
     "home": {
-      "title": "Individualios pramoninės lentelės internetu | SignXpert",
+      "title": "Kurkite individualias pramonines lenteles internetu | SignXpert",
       "description": "Kurkite individualias pramonines lenteles ir identifikacines plokšteles tiesiogiai internetu su SignXpert. Aukštos kokybės lazerinis graviravimas, tiksli gamyba ir greitas pristatymas visoje Lietuvoje."
     },
     "login": {
@@ -13,12 +13,12 @@
       "description": "Prisijunkite prie SignXpert paskyros, kad galėtumėte valdyti užsakymus, sekti siuntas ir atnaujinti duomenis. Saugi prieiga pramonės ir verslo klientams Lietuvoje."
     },
     "online-sign-editor": {
-      "title": "Kurkite lenteles internetu – internetinis redaktorius | SignXpert",
+      "title": "Lentelių kūrimas internetu – internetinis redaktorius | SignXpert",
       "description": "Kurkite individualias lenteles ir identifikacines plokšteles tiesiogiai internetu su SignXpert. Tikslus lazerinis graviravimas, peržiūra realiuoju laiku ir greitas pristatymas visoje Lietuvoje."
     },
     "products": {
-      "title": "Lentelės elektrotechnikai ir pramonei | SignXpert",
-      "description": "Individualios pramoninės lentelės ir identifikacinės plokštelės mašinoms, įrenginiams, valdymo spintelėms ir elektrotechnikai. Tikslus lazerinis graviravimas, tvirtos medžiagos ir greitas pristatymas visoje Lietuvoje."
+      "title": "Gaminiai elektrotechnikai ir pramonei | SignXpert",
+      "description": "Individualios pramoninės lentelės ir identifikacinės plokštelės mašinoms, įrenginiams, valdymo spintoms ir elektrotechnikai. Tikslus lazerinis graviravimas, tvirtos medžiagos ir greitas pristatymas visoje Lietuvoje."
     },
     "faq": {
       "title": "DUK – individualios lentelės ir pramoninis ženklinimas | SignXpert",
@@ -26,7 +26,7 @@
     },
     "quick-guide": {
       "title": "Kaip sukurti individualias lenteles internetu – trumpas vadovas | SignXpert",
-      "description": "Vadovaukitės šiuo trumpu vadovu, kad sukurtumėte individualias lenteles, etiketes ir graviruotas identifikacines plokšteles su SignXpert. Paprasti žingsniai su mūsų internetiniu redaktoriumi ir greitas pristatymas Lietuvoje."
+      "description": "Vadovaukitės šiuo trumpu vadovu, kad sukurtumėte individualias lenteles, graviruotas etiketes ir identifikacines plokšteles su SignXpert. Paprasti žingsniai su mūsų internetiniu redaktoriumi ir greitas pristatymas Lietuvoje."
     },
     "contacts": {
       "title": "Kontaktai ir pagalba – pramoninės lentelės | SignXpert",
@@ -261,8 +261,8 @@
     "t_13": "2. Kainos ir PVM",
     "t_14": "Visos kainos mūsų svetainėje nurodomos eurais (€).",
     "t_15": "Svarbi mokesčių informacija:",
-    "t_16": "SignXpert yra Vokietijoje registruota įmonė, kuriai taikomas §19 UStG (Vokietijos smulkaus verslo atleidimo nuo PVM taisyklė). Todėl PVM neskaičiuojame ir nerodome sąskaitose. Lietuvos klientams taikomas galiojantis Lietuvos PVM tarifas (21%), jei tai reikalaujama teisiškai.",
-    "t_17": "Visos kainos yra galutinės, be pristatymo išlaidų. Pagal §19 UStG PVM neskaičiuojamas.",
+    "t_16": "SignXpert yra Vokietijoje registruota įmonė, kuriai taikomas § 19 UStG (Vokietijos smulkiojo verslo reglamentavimas). Todėl PVM neskaičiuojame ir jo neišskiriame sąskaitose faktūrose. Tai taikoma tiek privatiems, tiek verslo klientams.",
+    "t_17": "Visos kainos yra galutinės, pristatymo išlaidos į jas neįskaičiuotos. Pagal § 19 UStG PVM neskaičiuojamas.",
     "t_18": "Pristatymo išlaidos aiškiai rodomos krepšelyje ir paskutiniame užsakymo proceso žingsnyje. Pasiliekame teisę keisti būsimų užsakymų kainas be išankstinio įspėjimo.",
     "t_19": "3. Pristatymas",
     "t_20": "SignXpert užsakymus siunčia su ",
@@ -303,11 +303,11 @@
     "t_55": "Dėl bet kokių klausimų susisiekite su mumis per",
     "t_56": "Kontaktų puslapį.",
     "t_57": "11. Privatūs pirkėjai",
-    "t_58": "Privatūs pirkėjai gali pirkti nesuteikdami PVM mokėtojo kodo.",
-    "t_59": "Šiuo atveju taikomas jūsų šalies PVM tarifas.",
+    "t_58": "Privatūs pirkėjai gali pirkti be PVM mokėtojo kodo.",
+    "t_59": "Pagal § 19 UStG PVM neskaičiuojamas ir sąskaitoje faktūroje neišskiriamas.",
     "t_60": "12. Verslo klientai",
-    "t_61": "Verslo klientai (įmonės) gali registruotis su galiojančiu ES PVM mokėtojo kodu.",
-    "t_62": "Jei jūsų PVM mokėtojo kodas patvirtinamas, ES vidaus sandoriams (išskyrus Vokietiją) PVM nebus taikomas.",
+    "t_61": "Verslo klientai gali registruotis su galiojančiu ES PVM mokėtojo kodu.",
+    "t_62": "PVM mokėtojo kodas gali būti naudojamas įmonės duomenims ir dokumentacijai, tačiau pagal § 19 UStG PVM vis tiek neskaičiuojamas.",
     "t_63": "Daugiau informacijos rasite mūsų",
     "t_64": "Skaityti daugiau"
   },
@@ -458,11 +458,11 @@
     "answer_2_1": "Užsakymą galite patogiai apmokėti įvairiais mūsų svetainėje prieinamais mokėjimo būdais. Priimame Visa, MasterCard, PayPal ir kitas mokėjimo parinktis.",
     "answer_2_2": "Galite mokėti tiesiogiai užsakymo proceso metu arba pasirinkti apmokėjimą pagal sąskaitą faktūrą. Pasirinkus sąskaitos parinktį, išrašome sąskaitą, kurią reikia apmokėti per 30 dienų.",
     "answer_2_3": "Visi mokėjimai apdorojami saugiai ir gausite patvirtinimą, kai mokėjimas bus baigtas. Taip jūsų užsakymas bus greitai patvirtintas ir paruoštas gamybai.",
-    "question_3": "Kaip gauti užsakymą be PVM?",
-    "answer_3_1": "Jei užsakote įmonės vardu, tam tikromis sąlygomis galite užsisakyti be PVM. Registracijos puslapyje esančiame laukelyje įveskite savo ES PVM mokėtojo kodą ir spustelėkite mygtuką „Patikrinti“. Sistema patikrins jūsų numerį ir informuos, ar patikrinimas sėkmingas.",
-    "answer_3_list_1": "Jei jūsų PVM mokėtojo kodas galiojantis, ES vidaus sandoriams (išskyrus Vokietiją) PVM nebus taikomas.",
-    "answer_3_list_2": "Jei patikrinimas nepavyksta, pirmiausia įsitikinkite, kad numeris įvestas teisingai. Kartais padeda trumpai palaukti ir bandyti dar kartą.",
-    "answer_3_2": "Jei PVM mokėtojo kodo nepateikiate arba patikrinimas nepavyksta, bus taikomas jūsų šalyje galiojantis PVM tarifas. Lietuvos vartotojams ir įmonėms be patvirtinto ES PVM mokėtojo kodo taikomas 21% PVM. Jei esate už ES ribų, pvz., Šveicarijoje, Jungtinėje Karalystėje ar kitose šalyse, eksportuojamoms prekėms taikomas 0% PVM.",
+    "question_3": "Kodėl sąskaitoje faktūroje nėra PVM?",
+    "answer_3_1": "SignXpert yra Vokietijoje registruota įmonė, kuriai taikomas § 19 UStG (Vokietijos smulkiojo verslo reglamentavimas). Todėl PVM neskaičiuojame ir jo neišskiriame sąskaitose faktūrose.",
+    "answer_3_list_1": "Tai taikoma tiek privatiems, tiek verslo klientams.",
+    "answer_3_list_2": "Jei turite ES PVM mokėtojo kodą, galite jį nurodyti registracijos metu įmonės duomenims ir dokumentacijai.",
+    "answer_3_2": "PVM mokėtojo kodo patikrinimas nekeičia galutinės sumos, nes pagal § 19 UStG SignXpert PVM neskaičiuoja.",
     "answer_3_3": "Jei turite daugiau klausimų ar iškilo problemų, prašome susisiekti su mumis. Mūsų komanda mielai padės.",
     "question_4": "Ar galiu grąžinti užsakymą ir ką apima jūsų pasitenkinimo garantija?",
     "answer_4_1": "SignXpert esame įsitikinę, kad kiekvienas klientas turėtų būti visiškai patenkintas savo užsakymu. Jei jūsų produktas dėl kokios nors priežasties neatitinka lūkesčių, pasirūpinsime tinkamu sprendimu – tai mūsų visiška pasitenkinimo garantija.",
@@ -603,7 +603,7 @@
       "item_1": "Pasirinkite dydį ir išdėstymą – pasirinkite pageidaujamą lentelės dydį ir tinkamą išdėstymą",
       "item_2": "Pritaikykite dizainą – individualiai pritaikykite tekstą, simbolius ir spalvas",
       "item_3": "Pridėkite tvirtinimą – skyles arba lipnų pagrindą",
-      "item_4": "Naudokite realiojo laiko peržiūrą – matykite kiekvieną pakeitimą realiuoju laiku",
+      "item_4": "Naudokite peržiūrą realiuoju laiku — iškart matykite visus pakeitimus",
       "summary": "Taip vos per kelias minutes sukursite profesionaliai graviruotas etiketes, mašinų lenteles ir technines lenteles.",
       "support": "Lenteles taip pat galima užsakyti telefonu arba el. paštu. Prireikus mūsų komanda mielai padės su dizainu.",
       "imageAlt": "Kurkite savo individualią lentelę su SignXpert dabar",
@@ -614,12 +614,12 @@
       "titleLine_2": "su <accent>SignXpert</accent>",
       "lead": "SignXpert kiekviena graviruota lentelė gaminama individualiai pagal jūsų poreikius – nuo vieno gaminio iki didelės serijos.",
       "description_1": "Galite kurti lentelę tiesiogiai mūsų internetiniame redaktoriuje, įkelti savo failus arba paprasčiausiai atsiųsti mums savo techninius reikalavimus ir išdėstymo pageidavimus.",
-      "description_2": "Lankstus – nuo pavienių gaminių iki didelių serijų.",
+      "description_2": "Lanksčiai – nuo pavienių gaminių iki didelių serijų.",
       "description_3": "Nesvarbu, ar jums reikia vienos lentelės, skirtingų variantų ar didelio kiekio identiškų lentelių – gaminame patikimai, tiksliai ir nuolat aukšta kokybe.",
       "imageAlt": "Individuali gamyba su SignXpert"
     },
     "categories": {
-      "title": "Mūsų <accent>gaminių kategorijos</accent> ir tipiški taikymai",
+      "title": "Mūsų <accent>gaminių kategorijos</accent> ir tipiški pritaikymai",
       "electricalPanel": {
         "title": "Valdymo spintelių ženklinimas",
         "item_1": "Elektros spintelės",
@@ -772,7 +772,7 @@
     "footer": {
       "yourSigns": "Jūsų lentelės:",
       "uniqueTypes": "Unikalūs tipai:",
-      "totalSigns": "Iš viso ženklų:",
+      "totalSigns": "Lentelių iš viso:",
       "manufacturerNote": "Pastaba gamintojui",
       "notePlaceholder": "Tekstas"
     },
@@ -801,9 +801,9 @@
         "message": "Žinutė"
       },
       "descriptions": {
-        "url": "* Nuskaitykite, kad atidarytumėte svetainę",
+        "url": "* Nuskaitykite, kad pereitumėte į svetainę",
         "email": "* Nuskaitykite, kad išsiųstumėte el. laišką",
-        "phone": "* Nuskaitykite, kad paskambintumėte tiesiogiai",
+        "phone": "* Nuskaitykite, kad paskambintumėte",
         "whatsapp": "* Nuskaitykite, kad išsiųstumėte žinutę",
         "wifi": "* Nuskaitykite, kad prisijungtumėte prie tinklo",
         "message": "* Nuskaitykite, kad perskaitytumėte žinutę"
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com arba https://example.com",
         "email": "example@domain.com",
-        "phone": "+37060000000",
+        "phone": "+490123456789",
         "networkName": "Wi-Fi tinklo pavadinimas",
         "password": "Wi-Fi slaptažodis",
         "message": "Įveskite savo žinutę čia..."
@@ -1085,9 +1085,9 @@
     },
     "cart": "Krepšelis",
     "currentSign": "Dabartinė lentelė",
-    "totalForAllSigns": "Lentelės iš viso",
+    "totalForAllSigns": "Projekto suma",
     "discount": "Nuolaida",
-    "totalPrice": "Bendra kaina",
+    "totalPrice": "Galutinė suma",
     "accessoriesSelected": "Jūsų pasirinkti priedai:",
     "alerts": {
       "addToCartFailed": "Nepavyko pridėti projekto į krepšelį. Bandykite dar kartą.",
@@ -1117,8 +1117,8 @@
     "yes": "TAIP",
     "invoiceEmailNote": "Šis el. pašto adresas bus naudojamas sąskaitai faktūrai siųsti",
     "invoiceDifferent": "Sąskaitos faktūros adresas (jei skiriasi)",
-    "vatAndTotal": "PVM ir bendra suma",
-    "vatNote": "Užsakymui taikomas galiojantis PVM tarifas.",
+    "vatAndTotal": "Galutinė suma",
+    "vatNote": "Pagal § 19 UStG PVM neskaičiuojamas ir sąskaitoje faktūroje neišskiriamas.",
     "productionComment": "Palikite komentarą gamybai:",
     "fields": {
       "fullName": "Vardas ir pavardė",
@@ -1141,23 +1141,23 @@
     "summary": {
       "description": "Aprašymas",
       "quantity": "Kiekis",
-      "totalSigns": "Lentelių iš viso",
-      "signsSubtotal": "Tarpinė suma",
+      "totalSigns": "Lentelių skaičius",
+      "signsSubtotal": "Lentelių tarpinė suma",
       "discount": "Nuolaida",
       "price": "Kaina",
-      "signsTotal": "Bendra lentelių kaina",
+      "signsTotal": "Projekto suma",
       "accessories": "Priedai",
       "types": "Tipai",
-      "totalAmount": "Bendra suma"
+      "totalAmount": "Galutinė suma"
     },
     "delivery": {
       "title": "Siuntimas",
       "price": "Siuntimo išlaidos",
       "comment": "Siuntimo pastaba",
       "options": {
-        "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS pristatymas kitą dieną",
-        "upsExpressBeforeNoon": "UPS Express iki 12 val.",
+        "upsEnvelope": "UPS standartinis",
+        "upsNextDayPackage": "UPS kitą dieną",
+        "upsExpressBeforeNoon": "UPS Express iki 12:00",
         "upsSaturdayDelivery": "UPS pristatymas šeštadienį"
       },
       "hints": {
@@ -1175,7 +1175,7 @@
     "shippingNotes": {
       "title": "Siuntimo pastabos",
       "sameDay": "Užsakymai, pateikti iki 16:00, siunčiami tą pačią dieną.",
-      "nextDay": "Pristatymui kitą darbo dieną pasirinkite „UPS pristatymas kitą dieną“.",
+      "nextDay": "Pristatymui kitą darbo dieną pasirinkite „UPS kitą dieną“.",
       "euros": "Visos kainos nurodytos eurais."
     },
     "countries": {
@@ -1332,11 +1332,11 @@
         "desc": "Juodi plastikiniai kabelių rišikliai, dydis 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Varžtai 9,5 mm",
+        "name": "Savisriegiai 9,5 mm",
         "desc": "Dydis 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Varžtai 13 mm",
+        "name": "Savisriegiai 13 mm",
         "desc": "Dydis 2,9 × 13 mm"
       },
       "carabiner": {
@@ -1618,7 +1618,7 @@
       "topNotes": {
         "plastic": "Naudojame graviruojamą plastiką,\nkuris neblunka ir nekeičia spalvos.",
         "templates": "Išsaugokite savo šabloną būsimam naudojimui.\nBet kada sukurkite naują projektą arba atidarykite\nesamą.",
-        "price": "Jūsų kainos jau apima mokesčius\nir nuolaidas. Reguliariai siūlome klientams\npatrauklias nuolaidas."
+        "price": "Jūsų kainos jau apima nuolaidas.\nPagal § 19 UStG PVM neskaičiuojamas.\nReguliariai siūlome klientams\npatrauklias nuolaidas."
       },
       "bottomNotes": {
         "requests": "Palikite čia ypatingus pageidavimus\n– skaitome ir atsižvelgiame\nį kiekvieną užklausą.",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Sekimo numerio dar nėra",
       "opening": "Atidaroma...",
       "openProject": "Atidaryti projektą",
-      "sumInclVatDelivery": "Suma (su PVM ir pristatymu)",
+      "sumInclVatDelivery": "Suma su pristatymu",
       "table": {
         "no": "Nr.",
-        "orderDate": "Užsakymo data",
+        "orderDate": "Užsakyta",
         "orderNo": "Užsak. Nr.",
-        "projectName": "Projekto pavadinimas",
-        "orderSum": "Užsakymo suma",
-        "sumDelivery": "Suma + pristatymas",
+        "projectName": "Pavadinimas",
+        "orderSum": "Suma",
+        "sumDelivery": "Suma + prist.",
         "status": "Būsena",
-        "deliveryNote": "Pristatymo pažyma",
-        "tracking": "Sekimas",
-        "invoice": "Sąskaita faktūra",
-        "invoiceStatus": "Sąsk. būsena",
-        "toPay": "Mokėtina suma",
+        "deliveryNote": "Važtaraštis",
+        "tracking": "Sekti",
+        "invoice": "Sąskaita",
+        "invoiceStatus": "Apmokėjimas",
+        "toPay": "Mokėti",
         "openProject": "Projektas"
       },
       "status": {
@@ -1762,7 +1762,7 @@
       "registration": "Registracija",
       "myAccount": "Mano paskyra",
       "newProject": "Naujas projektas",
-      "products": "Produktai",
+      "products": "Gaminiai",
       "industries": "Sektoriai",
       "faq": "DUK",
       "quickGuide": "Trumpas vadovas",
@@ -1803,7 +1803,7 @@
       "myAccount": "Mano paskyra",
       "newProject": "Naujas projektas",
       "templates": "Šablonai",
-      "products": "Produktai",
+      "products": "Gaminiai",
       "industries": "Sektoriai",
       "faq": "DUK",
       "quickGuide": "Trumpas vadovas",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Visos kainos yra galutinės.",
-      "noVat": "Kainos nurodytos su galiojančiu PVM.",
+      "noVat": "Pagal § 19 UStG PVM neskaičiuojamas.",
       "plusShipping": "Be pristatymo išlaidų."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Įmonės pavadinimas",
     "rr_23": "PVM mokėtojo kodas",
     "rr_24": "Neturite PVM mokėtojo kodo? Tęskite be jo.",
-    "rr_25": "*Šiuo metu taikomas galiojantis Lietuvos PVM tarifas (21% PVM).",
+    "rr_25": "*Pagal § 19 UStG PVM neskaičiuojamas.",
     "passwordMustMatch": "Slaptažodžiai turi sutapti",
     "registrationFailed": "Registracija nepavyko",
     "pleaseSpecify": "Prašome nurodyti",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Kaip gauti užsakymą be PVM?",
-    "description": "Jei užsakote įmonės vardu, tam tikromis sąlygomis galite užsisakyti be PVM. Registracijos puslapyje esančiame laukelyje įveskite savo ES PVM mokėtojo kodą ir spustelėkite mygtuką „Patikrinti“. Sistema patikrins jūsų numerį ir informuos, ar patikrinimas sėkmingas.",
-    "validVat": "Jei jūsų PVM mokėtojo kodas galiojantis, ES vidaus sandoriams (išskyrus Vokietiją) PVM nebus taikomas.",
-    "invalidVat": "Jei patikrinimas nepavyksta, pirmiausia įsitikinkite, kad numeris įvestas teisingai. Kartais padeda palaukti trumpai ir bandyti dar kartą.",
-    "noVatNumber": "Jei nepateikiate PVM mokėtojo kodo arba patikrinimas nepavyksta, bus taikomas jūsų šalyje galiojantis PVM tarifas.",
-    "germanyVat": "Lietuvos vartotojams ir įmonėms be patvirtinto ES PVM mokėtojo kodo taikomas 21% PVM (pridėtinės vertės mokestis).",
-    "outsideEu": "Jei esate už Europos Sąjungos ribų, pvz., Šveicarijoje, Jungtinėje Karalystėje ar kitose šalyse, eksportuojamoms prekėms taikomas 0% PVM tarifas.",
+    "title": "Kodėl sąskaitoje faktūroje nėra PVM?",
+    "description": "SignXpert yra Vokietijoje registruota įmonė, kuriai taikomas § 19 UStG (Vokietijos smulkiojo verslo reglamentavimas). Todėl PVM neskaičiuojame ir jo neišskiriame sąskaitose faktūrose.",
+    "validVat": "Tai taikoma tiek privatiems, tiek verslo klientams.",
+    "invalidVat": "Jei turite ES PVM mokėtojo kodą, galite jį nurodyti registracijos metu įmonės duomenims ir dokumentacijai.",
+    "noVatNumber": "Jei PVM mokėtojo kodo neturite, galite tęsti be jo.",
+    "germanyVat": "Pagal § 19 UStG PVM neskaičiuojamas ir sąskaitoje faktūroje neišskiriamas.",
+    "outsideEu": "Eksporto ir tarpvalstybinės situacijos vertinamos pagal galiojančius teisės aktus, tačiau SignXpert sąskaitose PVM pagal § 19 UStG neišskiriamas.",
     "contactUs": "Jei turite daugiau klausimų ar iškilo problemų, prašome susisiekti su mumis. Mūsų komanda mielai padės."
   },
   "HomePlaceholder": {
@@ -1919,7 +1919,7 @@
     "h_4": "pramoniniam ženklinimui",
     "h_5": "Tiekiame aukščiausios kokybės ilgaamžes graviruotas plastikines lenteles – puikiai tinkančias pramonei, energetikos įrenginiams ir komercinėms reikmėms.",
     "h_6": "Kurkite internetu dabar",
-    "h_7": "Užsakymai, pateikti iki 16:00, siunčiami tą pačią darbo dieną.",
+    "h_7": "Užsakymai, pateikti iki 16:00, siunčiami tą pačią dieną.",
     "h_8": "Kodėl",
     "h_9": "Sąžiningos kainos. Pramoninė kokybė.",
     "h_10": "Žinome, kad biudžetas šiandien yra svarbus.",
@@ -1932,14 +1932,14 @@
     "h_17": "Kiekio nuolaidos",
     "h_18": "Stengiamės siūlyti geriausias kainas. Todėl įvedėme kiekio nuolaidų sistemą:",
     "h_19": "Kuo didesnis užsakymo kiekis, tuo mažesnė kaina.",
-    "h_20": "Nuolaida taikoma tik dabartiniam projektui (nekumuliacinė) ir skaičiuojama automatiškai:",
+    "h_20": "Nuolaida taikoma visam dabartiniam projektui, tačiau pristatymui netaikoma:",
     "h_21": "Užsakymo vertė:",
     "h_22": "nuo 30 € iki 50 € — 5 %",
     "h_23": "nuo 50 € iki 100 € — 10 %",
     "h_24": "nuo 100 € iki 200 € — 15 %",
     "h_25": "nuo 200 € iki 500 € — 20 %",
     "h_26": "nuo 500 € iki 10000 € — 25 %",
-    "h_27": "Nuolaida taikoma tik dabartiniam projektui ir neapima priedų.",
+    "h_27": "Nuolaida taikoma visam dabartiniam projektui, tačiau pristatymui netaikoma.",
     "h_28": "Individualiai graviruoti",
     "h_29": "lentelės",
     "h_30": "sukurtos paprastai",
@@ -1957,7 +1957,7 @@
     "h_42": "gamyba ir pristatymas",
     "h_43": "SignXpert",
     "h_44": "derina modernias gamybos technologijas su efektyvia internetinio užsakymo sistema – kad gamyba būtų greita, o siuntimas operatyvus.",
-    "h_45": "Užsakykite iki 16:00 siuntimui tą pačią dieną",
+    "h_45": "Užsakymai iki 16:00 siunčiami tą pačią dieną",
     "h_46": "patikimas pristatymas Lietuvoje ir Europoje",
     "h_47": "greiti atsakymo laikai ir asmeninis klientų aptarnavimas",
     "h_48": "Taip gausite individualiai graviruotus ženklus greitai ir patikimai.",
@@ -1972,7 +1972,7 @@
     "h_57": "Lipnios lentelės"
   },
   "Products": {
-    "p_1": "Individualūs",
+    "p_1": "Individualios",
     "p_2": "graviruotos plastikinės lentelės ir identifikacinės plokštelės",
     "p_3": "Pas",
     "p_4": "gaminame aukštos kokybės plastikines lenteles, identifikacines plokšteles ir pramonines etiketes iš tvirto graviruojamo plastiko.",

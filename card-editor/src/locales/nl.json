@@ -261,8 +261,8 @@
     "t_13": "2. Prijzen en btw",
     "t_14": "Alle prijzen op onze website worden vermeld in euro (€).",
     "t_15": "Belangrijke belastinginformatie:",
-    "t_16": "SignXpert is een in Duitsland geregistreerd bedrijf waarop §19 UStG (de Duitse vrijstellingsregeling voor kleine ondernemingen) van toepassing is. Daarom berekenen wij geen btw en vermelden deze niet op onze facturen. Voor klanten in Nederland is het geldende Nederlandse btw-tarief (21%) van toepassing indien dit wettelijk vereist is.",
-    "t_17": "„Alle prijzen zijn eindprijzen exclusief verzendkosten. Conform §19 UStG wordt geen btw berekend.“",
+    "t_16": "SignXpert is een in Duitsland geregistreerde onderneming waarop §19 UStG (de Duitse kleineondernemersregeling) van toepassing is. Daarom berekenen wij momenteel geen btw en vermelden wij geen btw op onze facturen.",
+    "t_17": "Alle prijzen zijn eindprijzen exclusief verzendkosten. Volgens §19 UStG wordt geen btw berekend.",
     "t_18": "De verzendkosten worden duidelijk weergegeven in het winkelwagentje en in de laatste stap van het bestelproces. Wij behouden ons het recht voor om prijzen voor toekomstige bestellingen zonder voorafgaande kennisgeving aan te passen.",
     "t_19": "3. Levering",
     "t_20": "SignXpert verstuurt bestellingen met ",
@@ -303,11 +303,11 @@
     "t_55": "Neem voor eventuele vragen contact met ons op via de",
     "t_56": "Contactpagina.",
     "t_57": "11. Particuliere kopers",
-    "t_58": "Particuliere kopers kunnen aankopen doen zonder btw-nummer op te geven.",
-    "t_59": "In dit geval is het btw-tarief van uw land van toepassing.",
+    "t_58": "Particuliere kopers kunnen zonder btw-nummer bestellen.",
+    "t_59": "Volgens §19 UStG wordt momenteel geen btw berekend.",
     "t_60": "12. Zakelijke klanten",
-    "t_61": "Zakelijke klanten (bedrijven) kunnen zich registreren met een geldig EU-btw-nummer.",
-    "t_62": "Als uw btw-nummer wordt bevestigd, is er geen btw van toepassing op intra-EU-transacties (buiten Duitsland).",
+    "t_61": "Zakelijke klanten (bedrijven) kunnen een geldig EU-btw-nummer opgeven voor correcte bedrijfs- en factuurgegevens.",
+    "t_62": "Ook zonder btw-nummer kunt u doorgaan. Volgens §19 UStG wordt momenteel geen btw berekend.",
     "t_63": "Meer informatie vindt u in onze",
     "t_64": "Meer lezen"
   },
@@ -458,11 +458,11 @@
     "answer_2_1": "U kunt uw bestelling gemakkelijk betalen met de verschillende betaalmethoden die beschikbaar zijn op onze website. Wij accepteren Visa, MasterCard, PayPal en andere betaalopties.",
     "answer_2_2": "U kunt direct tijdens het bestelproces betalen of betaling op factuur kiezen. Als u de factuuroptie kiest, stellen wij een factuur op die binnen 30 dagen moet worden betaald.",
     "answer_2_3": "Alle betalingen worden veilig verwerkt en u ontvangt een bevestiging zodra uw betaling is voltooid. Zo wordt uw bestelling snel bevestigd en voorbereid voor productie.",
-    "question_3": "Hoe kan ik mijn bestelling btw-vrij ontvangen?",
-    "answer_3_1": "Als u namens een bedrijf bestelt, kunt u onder bepaalde voorwaarden btw-vrij bestellen. Voer hiervoor uw btw-identificatienummer in het daarvoor bestemde veld op de registratiepagina in en klik op de knop „Controleren“. Het systeem verifieert uw nummer en informeert u of de verificatie is geslaagd.",
-    "answer_3_list_1": "Als uw btw-nummer geldig is, wordt er geen btw berekend voor intra-EU-transacties (buiten Duitsland).",
-    "answer_3_list_2": "Als de verificatie mislukt, controleer dan eerst of het nummer correct is ingevoerd. Soms helpt het even te wachten en het opnieuw te proberen.",
-    "answer_3_2": "Als er geen btw-nummer wordt opgegeven of de verificatie mislukt, wordt het btw-tarief van uw land toegepast. Voor consumenten en bedrijven in Nederland geldt het reguliere btw-tarief van 21% ongeacht een geldig btw-nummer. Als u zich buiten de Europese Unie bevindt, bijv. in Zwitserland, het Verenigd Koninkrijk of andere landen, geldt een btw-tarief van 0% voor geëxporteerde goederen.",
+    "question_3": "Waarom wordt er geen btw berekend?",
+    "answer_3_1": "SignXpert is een in Duitsland geregistreerde onderneming waarop §19 UStG (de Duitse kleineondernemersregeling) van toepassing is. Daarom berekenen wij momenteel geen btw en vermelden wij geen btw op onze facturen.",
+    "answer_3_list_1": "Dit geldt voor particuliere en zakelijke bestellingen.",
+    "answer_3_list_2": "Zakelijke klanten kunnen hun EU-btw-nummer opgeven voor correcte bedrijfs- en factuurgegevens.",
+    "answer_3_2": "Als u geen btw-nummer opgeeft of de controle niet lukt, kunt u de bestelling toch voortzetten. Volgens §19 UStG wordt momenteel geen btw berekend.",
     "answer_3_3": "Als u nog vragen heeft of er problemen optreden, neem dan contact met ons op. Ons team helpt u graag verder.",
     "question_4": "Kan ik mijn bestelling retourneren en wat houdt uw tevredenheidsgarantie in?",
     "answer_4_1": "Bij <home>SignXpert</home> zijn wij ervan overtuigd dat elke klant volledig tevreden moet zijn met zijn bestelling. Als uw product om welke reden dan ook niet aan uw verwachtingen voldoet, zorgen wij voor een passende oplossing – dat is onze volledige tevredenheidsgarantie.",
@@ -801,12 +801,12 @@
         "message": "Bericht"
       },
       "descriptions": {
-        "url": "* Scannen om de website te openen",
-        "email": "* Scannen om een e-mail te sturen",
-        "phone": "* Scannen om direct te bellen",
-        "whatsapp": "* Scannen om een bericht te sturen",
-        "wifi": "* Scannen om verbinding te maken met het netwerk",
-        "message": "* Scannen om het bericht te lezen"
+        "url": "* Scan om naar de website te gaan",
+        "email": "* Scan om een e-mail te sturen",
+        "phone": "* Scan om direct te bellen",
+        "whatsapp": "* Scan om een bericht te sturen",
+        "wifi": "* Scan om verbinding te maken met het netwerk",
+        "message": "* Scan om het bericht te lezen"
       },
       "fields": {
         "websiteLink": "Websitelink",
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com of https://example.com",
         "email": "example@domain.com",
-        "phone": "+31600000000",
+        "phone": "+490123456789",
         "networkName": "Naam van het wifi-netwerk",
         "password": "Wifi-wachtwoord",
         "message": "Voer hier uw bericht in..."
@@ -1085,7 +1085,7 @@
     },
     "cart": "Winkelwagen",
     "currentSign": "Huidig bordje",
-    "totalForAllSigns": "Bordjes totaal",
+    "totalForAllSigns": "Projectbedrag",
     "discount": "Korting",
     "totalPrice": "Totaalprijs",
     "accessoriesSelected": "De door u geselecteerde accessoires:",
@@ -1113,12 +1113,12 @@
     "orderSummary": "Besteloverzicht",
     "myOrder": "Mijn bestelling",
     "selectCountry": "Land selecteren",
-    "phoneQuestionNote": "Vragen via mobiel nummer toestaan.",
+    "phoneQuestionNote": "Ik ben via dit mobiele nummer bereikbaar voor vragen over mijn bestelling.",
     "yes": "JA",
     "invoiceEmailNote": "Dit e-mailadres wordt gebruikt voor het verzenden van uw factuur",
     "invoiceDifferent": "Factuuradres (indien afwijkend)",
-    "vatAndTotal": "btw en totaalbedrag",
-    "vatNote": "Het geldende btw-tarief wordt toegepast op de bestelling.",
+    "vatAndTotal": "Totaalbedrag",
+    "vatNote": "Volgens §19 UStG wordt momenteel geen btw berekend.",
     "productionComment": "Laat hier een opmerking achter voor de productie:",
     "fields": {
       "fullName": "Voor- en achternaam",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Subtotaal",
       "discount": "Korting",
       "price": "Prijs",
-      "signsTotal": "Totaalprijs bordjes",
+      "signsTotal": "Projectbedrag",
       "accessories": "Accessoires",
       "types": "Typen",
       "totalAmount": "Totaalbedrag"
@@ -1155,9 +1155,9 @@
       "price": "Verzendkosten",
       "comment": "Verzendopmerking",
       "options": {
-        "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS Next Day pakket",
-        "upsExpressBeforeNoon": "UPS Express vóór 12:00 uur",
+        "upsEnvelope": "UPS Standaard",
+        "upsNextDayPackage": "UPS volgende dag",
+        "upsExpressBeforeNoon": "UPS Express vóór 12:00",
         "upsSaturdayDelivery": "UPS zaterdaglevering"
       },
       "hints": {
@@ -1175,7 +1175,7 @@
     "shippingNotes": {
       "title": "Verzendopmerkingen",
       "sameDay": "Bestellingen ontvangen vóór 16:00 uur worden dezelfde dag verstuurd.",
-      "nextDay": "Kies UPS Next Day pakket voor levering op de volgende werkdag.",
+      "nextDay": "Kies UPS volgende dag voor levering op de volgende werkdag.",
       "euros": "Alle prijzen zijn in euro."
     },
     "countries": {
@@ -1332,11 +1332,11 @@
         "desc": "Zwarte kunststof kabelbinders, maat 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Schroeven 9,5 mm",
+        "name": "Zelftappers 9,5 mm",
         "desc": "Maat 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Schroeven 13 mm",
+        "name": "Zelftappers 13 mm",
         "desc": "Maat 2,9 × 13 mm"
       },
       "carabiner": {
@@ -1579,13 +1579,13 @@
   "QuickGuide": {
     "d_1": "Wij maken",
     "d_2": "Intuïtief",
-    "d_3": "ontwerpen",
+    "d_3": "ontwerp",
     "d_4": "eenvoudig",
-    "d_5": "Snel",
-    "d_6": "geproduceerd",
+    "d_5": "Snelle",
+    "d_6": "productie",
     "d_7": "Binnen 1 dag",
     "d_8": "Express",
-    "d_9": "geleverd",
+    "d_9": "levering",
     "d_10": "24–48 uur",
     "d_11": "Zo gebruikt u de editor",
     "d_12": "Nieuw project",
@@ -1618,7 +1618,7 @@
       "topNotes": {
         "plastic": "Wij gebruiken graveerkunststof,\ndat niet vervaagt en niet verkleurt.",
         "templates": "Sla uw eigen sjabloon op voor toekomstig gebruik.\nMaak altijd een nieuw project aan of open\neen bestaand.",
-        "price": "Uw prijzen bevatten al belastingen\nen kortingen. Wij bieden onze klanten regelmatig\naantrekkelijke kortingen aan."
+        "price": "Uw prijzen tonen het totaalbedrag\nen de toepasselijke kortingen. Wij bieden onze klanten regelmatig\naantrekkelijke kortingen aan."
       },
       "bottomNotes": {
         "requests": "Laat hier speciale wensen achter\n– wij lezen en houden rekening met\nelke aanvraag.",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Nog geen trackingnummer beschikbaar",
       "opening": "Wordt geopend...",
       "openProject": "Project openen",
-      "sumInclVatDelivery": "Totaal (incl. btw & verzending)",
+      "sumInclVatDelivery": "Totaal (incl. verzending)",
       "table": {
         "no": "Nr.",
-        "orderDate": "Besteldatum",
-        "orderNo": "Best.-nr.",
-        "projectName": "Projectnaam",
-        "orderSum": "Bestelbedrag",
-        "sumDelivery": "Totaal + verzending",
+        "orderDate": "Besteld",
+        "orderNo": "Bestelnr.",
+        "projectName": "Naam",
+        "orderSum": "Bedrag",
+        "sumDelivery": "Bedrag + levering",
         "status": "Status",
         "deliveryNote": "Pakbon",
-        "tracking": "Tracking",
+        "tracking": "Volgen",
         "invoice": "Factuur",
-        "invoiceStatus": "Factuurstatus",
-        "toPay": "Te betalen",
+        "invoiceStatus": "Betaling",
+        "toPay": "Betalen",
         "openProject": "Project"
       },
       "status": {
@@ -1771,11 +1771,11 @@
     },
     "features": {
       "easy": "Intuïtief",
-      "design": "ontwerpen",
-      "fast": "Snel",
-      "manufacturing": "geproduceerd",
+      "design": "ontwerp",
+      "fast": "Snelle",
+      "manufacturing": "productie",
       "quick": "Express",
-      "delivery": "geleverd"
+      "delivery": "levering"
     },
     "sections": {
       "menu": "Menu",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Alle prijzen zijn eindprijzen.",
-      "noVat": "Prijzen zijn inclusief het geldende btw-tarief.",
+      "noVat": "Geen btw-berekening volgens §19 UStG.",
       "plusShipping": "Exclusief verzendkosten."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Bedrijfsnaam",
     "rr_23": "btw-nummer",
     "rr_24": "Geen btw-nummer? Doorgaan zonder.",
-    "rr_25": "*Momenteel is het geldende Nederlandse btw-tarief (21% btw) van toepassing.",
+    "rr_25": "*Volgens §19 UStG wordt momenteel geen btw berekend.",
     "passwordMustMatch": "De wachtwoorden moeten overeenkomen",
     "registrationFailed": "Registratie mislukt",
     "pleaseSpecify": "Vul alstublieft in",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Hoe kan ik mijn bestelling btw-vrij ontvangen?",
-    "description": "Als u namens een bedrijf bestelt, kunt u onder bepaalde voorwaarden btw-vrij bestellen. Voer hiervoor uw btw-identificatienummer in het daarvoor bestemde veld op de registratiepagina in en klik op de knop „Controleren“. Het systeem verifieert uw nummer en informeert u of de verificatie is geslaagd.",
-    "validVat": "Als uw btw-nummer geldig is, wordt er geen btw berekend voor intra-EU-transacties (buiten Duitsland).",
-    "invalidVat": "Als de verificatie mislukt, controleer dan eerst of het nummer correct is ingevoerd. Soms helpt het even te wachten en het opnieuw te proberen.",
-    "noVatNumber": "Als er geen btw-nummer wordt opgegeven of de verificatie mislukt, wordt het btw-tarief van uw land toegepast.",
-    "germanyVat": "Voor consumenten en bedrijven in Nederland geldt het reguliere btw-tarief van 21%.",
-    "outsideEu": "Als u zich buiten de Europese Unie bevindt, bijv. in Zwitserland, het Verenigd Koninkrijk of andere landen, geldt een btw-tarief van 0% voor geëxporteerde goederen.",
+    "title": "Waarom wordt er geen btw berekend?",
+    "description": "SignXpert is een in Duitsland geregistreerde onderneming waarop §19 UStG (de Duitse kleineondernemersregeling) van toepassing is. Daarom berekenen wij momenteel geen btw en vermelden wij geen btw op onze facturen.",
+    "validVat": "U kunt uw EU-btw-nummer voor zakelijke bestellingen opgeven; het wordt gebruikt voor correcte bedrijfs- en factuurgegevens.",
+    "invalidVat": "Als de controle mislukt, controleer dan eerst of het nummer correct is ingevoerd. U kunt de bestelling ook zonder btw-nummer voortzetten.",
+    "noVatNumber": "Ook zonder btw-nummer kunt u doorgaan. Volgens §19 UStG wordt momenteel geen btw berekend.",
+    "germanyVat": "Voor klanten in Nederland wordt momenteel geen btw berekend volgens §19 UStG.",
+    "outsideEu": "Voor leveringen buiten de Europese Unie kunnen invoerrechten, belastingen of kosten van het bestemmingsland van toepassing zijn.",
     "contactUs": "Als u nog vragen heeft of er problemen optreden, neem dan contact met ons op. Ons team helpt u graag verder."
   },
   "HomePlaceholder": {
@@ -1919,7 +1919,7 @@
     "h_4": "voor industriële markering",
     "h_5": "Wij leveren duurzame, gegraveerde kunststof bordjes van premiumkwaliteit – perfect voor industrie, energiecentrales en commerciële toepassingen.",
     "h_6": "Nu online ontwerpen",
-    "h_7": "Bestellingen ontvangen vóór 16:00 uur verzenden wij dezelfde werkdag.",
+    "h_7": "Bestellingen ontvangen vóór 16:00 uur worden dezelfde dag verzonden.",
     "h_8": "Waarom",
     "h_9": "Eerlijke prijzen. Industriekwaliteit.",
     "h_10": "Wij weten dat het budget vandaag een belangrijke rol speelt.",
@@ -1932,14 +1932,14 @@
     "h_17": "Volumekortingen",
     "h_18": "Wij streven ernaar u de beste prijzen te bieden. Daarom hebben wij een volumekortingssysteem ingevoerd:",
     "h_19": "Hoe hoger uw bestelwaarde, hoe lager de prijs.",
-    "h_20": "De korting geldt alleen voor het huidige project (niet cumulatief) en wordt automatisch berekend:",
+    "h_20": "De korting geldt voor het huidige project en wordt automatisch berekend:",
     "h_21": "Bestelwaarde:",
     "h_22": "van €30 tot €50 — 5%",
     "h_23": "van €50 tot €100 — 10%",
     "h_24": "van €100 tot €200 — 15%",
     "h_25": "van €200 tot €500 — 20%",
     "h_26": "van €500 tot €10000 — 25%",
-    "h_27": "De korting geldt alleen voor het huidige project en omvat geen accessoires.",
+    "h_27": "De korting geldt voor het volledige huidige project, maar niet voor de verzending.",
     "h_28": "Individueel gegraveerde",
     "h_29": "bordjes",
     "h_30": "eenvoudig gemaakt",
@@ -1957,7 +1957,7 @@
     "h_42": "productie en levering",
     "h_43": "Bij SignXpert",
     "h_44": "combineren wij moderne productietechnologie met een efficiënt online bestelsysteem – voor snelle productie en vlotte verzending.",
-    "h_45": "Bestellen vóór 16:00 uur voor verzending dezelfde dag",
+    "h_45": "Bestellen vóór 16:00 uur: verzending dezelfde dag",
     "h_46": "betrouwbare levering in Nederland en Europa",
     "h_47": "snelle reactietijden en persoonlijke klantenservice",
     "h_48": "Zo ontvangt u individueel gegraveerde bordjes snel en betrouwbaar.",

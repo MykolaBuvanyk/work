@@ -1,40 +1,40 @@
 {
   "meta": {
     "home": {
-      "title": "Cartelli personalizzati e targhe incise in Italia | SignXpert",
-      "description": "Crea cartelli personalizzati, etichette e targhe identificative con SignXpert. Incisioni e stampe di alta qualità con consegna rapida in tutta Italia. Ideale per aziende e clienti privati."
+      "title": "Targhe industriali personalizzate online | SignXpert",
+      "description": "Crea targhe industriali personalizzate, etichette incise e targhette identificative direttamente online con SignXpert. Incisione laser di alta qualità, produzione precisa e consegna rapida in tutta Italia."
     },
     "login": {
       "title": "Accedi – SignXpert",
-      "description": "Accedi al tuo account SignXpert per gestire gli ordini, scaricare file e seguire i tuoi cartelli personalizzati. Accesso sicuro per clienti in Italia."
+      "description": "Accedi al tuo account SignXpert per gestire gli ordini, scaricare file e seguire le tue targhe personalizzate. Accesso sicuro per clienti in Italia."
     },
     "account": {
-      "title": "Il mio account – Ordini, impostazioni e dashboard | SignXpert",
+      "title": "Il mio account – Ordini, impostazioni e panoramica | SignXpert",
       "description": "Accedi al tuo account SignXpert per gestire gli ordini, seguire le spedizioni e aggiornare i tuoi dati. Accesso sicuro per clienti industriali e aziendali in Italia."
     },
     "online-sign-editor": {
-      "title": "Creare cartelli personalizzati online – Editor per cartelli | SignXpert",
-      "description": "Utilizza l’editor online di SignXpert per creare in pochi minuti cartelli personalizzati, etichette e targhe incise. Personalizzazione semplice, anteprima in tempo reale e consegna rapida in tutta Italia."
+      "title": "Creare targhe personalizzate online – Editor per targhe | SignXpert",
+      "description": "Utilizza l’editor online di SignXpert per creare in pochi minuti targhe personalizzate, etichette e targhette incise. Personalizzazione semplice, anteprima in tempo reale e consegna rapida in tutta Italia."
     },
     "products": {
-      "title": "Cartelli industriali e marcature elettriche in Italia | SignXpert",
-      "description": "Scopri cartelli industriali personalizzati, etichette incise e targhe identificative per applicazioni elettriche e tecniche. Materiali robusti, incisioni precise e consegna rapida in tutta Italia con SignXpert."
+      "title": "Targhe industriali e marcature elettriche in Italia | SignXpert",
+      "description": "Scopri targhe industriali personalizzate, etichette incise e targhette identificative per applicazioni elettriche e tecniche. Materiali robusti, incisione precisa e consegna rapida in tutta Italia con SignXpert."
     },
     "faq": {
-      "title": "FAQ – Cartelli personalizzati e segnaletica industriale | SignXpert",
-      "description": "Trova risposte su cartelli personalizzati, segnaletica industriale, incisioni e processo d’ordine con SignXpert. Aiuto rapido e supporto per clienti in tutta Italia."
+      "title": "FAQ – Targhe personalizzate e segnaletica industriale | SignXpert",
+      "description": "Trova risposte su targhe personalizzate, segnaletica industriale, incisione e processo d’ordine con SignXpert. Aiuto rapido e supporto per clienti in tutta Italia."
     },
     "quick-guide": {
-      "title": "Come creare cartelli personalizzati online – Guida rapida | SignXpert",
-      "description": "Segui questa guida rapida per creare cartelli personalizzati, etichette e targhe incise con SignXpert. Passaggi semplici con il nostro editor online e consegna rapida in Italia."
+      "title": "Come creare targhe personalizzate online – Guida rapida | SignXpert",
+      "description": "Segui questa guida rapida per creare targhe personalizzate, etichette e targhette incise con SignXpert. Passaggi semplici con il nostro editor online e consegna rapida in Italia."
     },
     "contacts": {
-      "title": "Contatto e supporto – Cartelli industriali | SignXpert",
-      "description": "Contatta SignXpert per cartelli industriali personalizzati, etichette incise e targhe tecniche. Il nostro team ti supporta per ordini, domande sul design e richieste tecniche in tutta Italia."
+      "title": "Contatti e supporto – Targhe industriali | SignXpert",
+      "description": "Contatta SignXpert per targhe industriali personalizzate, etichette incise e targhette tecniche. Il nostro team ti supporta per ordini, domande sul design e richieste tecniche in tutta Italia."
     },
     "industries": {
       "title": "Settori – Soluzioni per marcatura industriale ed elettrica | SignXpert",
-      "description": "Scopri i settori supportati da SignXpert, tra cui ambiti elettrici, industriali e tecnici. Cartelli personalizzati, etichette incise e targhe identificative per applicazioni professionali in Italia."
+      "description": "Scopri i settori supportati da SignXpert, tra cui ambiti elettrici, industriali e tecnici. Targhe personalizzate, etichette incise e targhette identificative per applicazioni professionali in Italia."
     },
     "industries/mep-building-services/electrical-installation": {
       "title": "Marcature e cartelli per impianti elettrici nei progetti MEP | SignXpert",
@@ -317,11 +317,11 @@
     "i_3": "Azienda / titolare:",
     "i_4": "Kostyantyn Utvenko, SignXpert",
     "i_5": "Indirizzo:",
-    "i_6": "Baumwiesen 2, 72401 Haigerloch, Germania",
+    "i_6": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
     "i_7": "Contatto",
     "i_8": "Telefono:",
     "i_9": "Modulo di contatto:",
-    "i_10": "Numero di identificazione IVA (USt-IdNr.)",
+    "i_10": "Partita IVA / numero di identificazione IVA",
     "i_11": "Ai sensi del § 27 a della legge tedesca sull’IVA:",
     "i_12": "Responsabile del contenuto editoriale",
     "i_13": "Ai sensi del § 18 comma 2 MStV:",
@@ -359,12 +359,12 @@
     "description_1": "La tua fiducia è importante per noi. Affinché tu possa sentirti sicuro durante la visita del nostro sito web, rispettiamo tutti i requisiti di legge in Germania e nell’UE per il trattamento dei dati personali (GDPR, BDSG, TDDDG). Di seguito ti informiamo su come raccogliamo, gestiamo e utilizziamo i tuoi dati.",
     "description_2": "1. Titolare del trattamento",
     "description_3": "Informativa sulla privacy",
-    "description_4": "Responsabile della raccolta, del trattamento e dell’utilizzo dei dati personali è il titolare del",
+    "description_4": "Responsabile della raccolta, del trattamento e dell’utilizzo dei dati personali è il titolare del marchio",
     "description_5": "marchio:",
     "description_6": "Nome:",
     "description_7": "Kostyantyn Utvenko",
     "description_8": "E-mail:",
-    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Germania",
+    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Deutschland",
     "description_10": "Modulo di contatto:",
     "description_11": "2. Raccolta, trattamento e utilizzo dei dati personali",
     "description_12": "Siamo personalmente responsabili delle informazioni che ci comunichi. I dati personali sono tutte le informazioni che possono essere associate a una persona identificabile. Raccogliamo e trattiamo i tuoi dati per elaborare i tuoi ordini. I dati vengono trasmessi a terzi solo quando ciò è consentito dalla legge (ad es. per logistica o gestione dei pagamenti).",
@@ -385,7 +385,7 @@
     "description_27": "Il tuo numero di telefono (utilizzato solo per notifiche di consegna e coordinamento logistico)",
     "description_28": "La tua password (memorizzata in forma crittografata)",
     "description_29": "2.2 Creazione di cartelli",
-    "description_30": "Quando crei un cartello, memorizziamo i contenuti che hai aggiunto per elaborare il tuo ordine. Non trasmettiamo mai i contenuti dei cartelli a terzi per finalità di marketing.",
+    "description_30": "Quando crei una targa, memorizziamo i contenuti che hai aggiunto per elaborare il tuo ordine. Non trasmettiamo mai a terzi i contenuti delle targhe per finalità di marketing.",
     "description_31": "2.3 Elaborazione dei pagamenti",
     "description_32": "Utilizziamo moderni standard di crittografia per garantire la sicurezza delle tue transazioni.",
     "description_33": "Stripe:",
@@ -398,7 +398,7 @@
     "description_40": "PayPal:",
     "description_41": "I pagamenti tramite PayPal sono soggetti alla propria informativa sulla privacy di PayPal. Riceviamo solo le informazioni necessarie per associare il pagamento.",
     "description_42": "2.4 Newsletter",
-    "description_43": "Il tuo indirizzo e-mail viene utilizzato per l’invio di novità e offerte solo se hai fornito il tuo consenso esplicito. Puoi annullare l’iscrizione in qualsiasi momento tramite il link nell’e-mail o nelle impostazioni del tuo account.",
+    "description_43": "Il tuo indirizzo e-mail viene utilizzato per l’invio di novità e offerte solo con il tuo consenso esplicito. Puoi annullare l’iscrizione in qualsiasi momento tramite il link nell’e-mail o dalle impostazioni del tuo account.",
     "description_44": "3. Verifica della solvibilità",
     "description_45": "Ci riserviamo il diritto di effettuare una verifica della solvibilità prima della produzione o della consegna del tuo ordine. A tale scopo, i dati necessari possono essere trasmessi ad agenzie di informazioni creditizie (ad es. SCHUFA).",
     "description_46": "4. Trasferimento di dati verso paesi terzi",
@@ -423,7 +423,7 @@
     "description_65": "Ai sensi dell’art. 77 GDPR, hai il diritto di presentare reclamo a un’autorità di controllo competente per la protezione dei dati se ritieni che il trattamento dei tuoi dati personali violi il GDPR.",
     "description_66": "Il Commissario regionale per la protezione dei dati e la libertà d’informazione del Baden-Württemberg",
     "description_67": "Indirizzo:",
-    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Germania",
+    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Deutschland",
     "description_69": "6. File di log",
     "description_70": "Quando visiti",
     "description_71": "le pagine, il tuo browser trasmette automaticamente dati che vengono memorizzati nei file di log del server:",
@@ -447,13 +447,13 @@
   },
   "faq": {
     "title": "Domande frequenti",
-    "question_1": "È facile creare online un cartello personalizzato?",
+    "question_1": "È facile creare online una targa personalizzata?",
     "answer_1_1": "Sì - il processo è semplice, intuitivo e strutturato passo dopo passo.",
-    "answer_1_2": "Nel nostro editor online scegli prima la forma del tuo cartello. Poi definisci dimensioni, spessore del materiale e colore del materiale. Successivamente puoi aggiungere testo, immagini, codici QR e codici a barre, creare fori, indicare la quantità desiderata e personalizzare tutte le altre proprietà - davvero tutto ciò di cui hai bisogno.",
+    "answer_1_2": "Nel nostro editor online scegli prima la forma della tua targa. Poi definisci dimensioni, spessore del materiale e colore del materiale. Successivamente puoi aggiungere testo, immagini, codici QR e codici a barre, creare fori, indicare la quantità desiderata e personalizzare tutte le altre proprietà — davvero tutto ciò di cui hai bisogno.",
     "answer_1_3": "Ogni passaggio viene mostrato con un’anteprima live, quindi non sono richieste competenze particolari né esperienza di design.",
     "answer_1_4": "Se hai bisogno di ulteriore aiuto, puoi utilizzare la nostra <quickGuide>guida rapida</quickGuide>, che spiega l’intero processo passo dopo passo.",
     "answer_1_5": "Se dopo hai ancora domande, visita la pagina <contacts>Contatto</contacts> e rivolgiti al nostro team - saremo lieti di aiutarti.",
-    "answer_1_6": "Con <home>SignXpert</home>, creare online cartelli professionali è semplice, comodo ed efficiente.",
+    "answer_1_6": "Con <home>SignXpert</home>, creare online targhe professionali è semplice, comodo ed efficiente.",
     "question_2": "Come posso pagare il mio ordine?",
     "answer_2_1": "Puoi pagare comodamente il tuo ordine con diversi metodi di pagamento disponibili sul nostro sito web. Accettiamo Visa, MasterCard, PayPal e altre opzioni di pagamento.",
     "answer_2_2": "Puoi pagare direttamente durante il processo d’ordine oppure scegliere il pagamento su fattura. Se selezioni l’opzione fattura, emetteremo una fattura che dovrà essere pagata entro 30 giorni.",
@@ -484,7 +484,7 @@
     "answer_5_list_1": "Spedizione standard - di solito richiede 1-3 giorni.",
     "answer_5_list_2": "Spedizione express - disponibile per ordini particolarmente urgenti (consegna il giorno lavorativo successivo).",
     "answer_5_list_3": "Consegna il sabato - disponibile in alcune regioni se hai bisogno del tuo ordine nel fine settimana.",
-    "answer_5_3": "Tutte le opzioni e i costi vengono mostrati chiaramente durante il processo d’ordine, così puoi scegliere il metodo di spedizione più adatto. Ogni pacco viene spedito con un numero di tracciamento, che puoi controllare in qualsiasi momento nella dashboard del tuo <account>Il mio account</account> per seguire lo stato della consegna.",
+    "answer_5_3": "Tutte le opzioni e i costi vengono mostrati chiaramente durante il processo d’ordine, così puoi scegliere il metodo di spedizione più adatto. Ogni spedizione viene inviata con un numero di tracking, che puoi controllare in qualsiasi momento nel tuo <account>Il mio account</account> per seguire lo stato della consegna.",
     "question_6": "Dove trovo informazioni sui miei ordini e pagamenti?",
     "answer_6_1": "Se hai già un account, <login>accedi prima</login> e poi vai alla sezione <account>Il mio account</account> per visualizzare tutti gli ordini che hai effettuato da <home>SignXpert</home>.",
     "answer_6_2": "In questa sezione puoi trovare e gestire dettagli importanti sui tuoi ordini:",
@@ -529,9 +529,9 @@
   },
   "products": {
     "hero": {
-      "title": "<accent>Personalizzati</accent> cartelli in plastica incisa e targhe identificative",
+      "title": "<accent>Cartelli personalizzati</accent> in plastica incisa e targhe identificative",
       "imageAlt": "Cartelli in plastica incisa ed etichette",
-      "intro": "Da <home>SignXpert</home> produciamo cartelli in plastica incisa, targhe identificative e segnaletica industriale in robusto materiale plastico per incisione.",
+      "intro": "Da <home>SignXpert</home> produciamo cartelli in plastica incisa, targhe identificative e marcature industriali in robusto materiale plastico per incisione.",
       "description": "I nostri cartelli incisi offrono una marcatura chiara, durevole e professionale per macchine, impianti elettrici, uffici, edifici e ambienti di lavoro.",
       "details": "La precisa incisione laser rimuove lo strato superiore del materiale plastico e mette in evidenza lo strato a contrasto, creando una scritta chiara, durevole e ben leggibile per anni – anche in ambienti industriali impegnativi."
     },
@@ -598,25 +598,25 @@
     "design": {
       "title": "Crea online il tuo <accent>cartello inciso</accent>",
       "intro": "Con l’<editor>editor online</editor> di SignXpert puoi creare cartelli incisi personalizzati in modo rapido e semplice.",
-      "highlight": "Crea il tuo cartello direttamente nel browser e visualizza subito ogni modifica nell’anteprima.",
-      "listTitle": "Funzioni del nostro editor online:",
-      "item_1": "Selezionare dimensioni e layout del tuo cartello",
-      "item_2": "Personalizzare testo, simboli e colori",
-      "item_3": "Aggiungere fori o retro autoadesivo",
-      "item_4": "Visualizzare il tuo cartello in tempo reale",
+      "highlight": "Crea il tuo cartello direttamente nel browser e visualizza subito ogni modifica nell’anteprima in tempo reale.",
+      "listTitle": "Cosa offre il nostro editor online — passo dopo passo",
+      "item_1": "Seleziona dimensioni e layout — scegli la dimensione desiderata e il layout adatto per il tuo cartello",
+      "item_2": "Personalizza il design — modifica individualmente testo, simboli e colori",
+      "item_3": "Aggiungi il fissaggio — inserisci fori o un retro autoadesivo",
+      "item_4": "Anteprima in tempo reale — usa la visualizzazione live per vedere subito ogni modifica",
       "summary": "Così puoi creare etichette incise professionali, targhe per macchine e cartelli tecnici in pochi minuti.",
       "support": "I cartelli possono essere ordinati anche telefonicamente o via e-mail. Il nostro team ti supporta volentieri nella progettazione, se necessario.",
       "imageAlt": "Crea ora il tuo cartello personalizzato con SignXpert",
       "cta": "Crea ora online"
     },
     "production": {
-      "titleLine_1": "Produzione personalizzata",
+      "titleLine_1": "Produzione su misura",
       "titleLine_2": "con <accent>SignXpert</accent>",
-      "lead": "Da SignXpert ogni cartello inciso viene realizzato su misura secondo le tue esigenze.",
-      "description_1": "Che tu abbia bisogno di un singolo cartello o di grandi serie di produzione - forniamo qualità affidabile e incisioni precise.",
-      "description_2": "Puoi creare il tuo cartello direttamente nel nostro editor online, caricare i tuoi file o inviarci le tue richieste.",
-      "description_3": "Il nostro obiettivo è offrire cartelli in plastica incisa durevoli, professionali e facili da ordinare per industria e aziende.",
-      "imageAlt": "Produzione personalizzata con SignXpert"
+      "lead": "Da SignXpert ogni cartello inciso viene realizzato individualmente secondo le tue specifiche — dal singolo pezzo alla produzione in serie.",
+      "description_1": "Puoi creare il tuo cartello direttamente nel nostro editor online, caricare i tuoi file o inviarci semplicemente i requisiti tecnici e le preferenze di layout.",
+      "description_2": "Flessibilità — dal pezzo singolo alle grandi quantità.",
+      "description_3": "Che tu abbia bisogno di un solo cartello, di più varianti diverse o di una grande quantità di cartelli identici — produciamo in modo affidabile, preciso e con qualità costantemente elevata.",
+      "imageAlt": "Produzione su misura con SignXpert"
     },
     "categories": {
       "title": "Le nostre <accent>categorie di prodotti</accent> e applicazioni tipiche",
@@ -723,7 +723,7 @@
     },
     "thickness": {
       "title": "Spessore:",
-      "adhesiveTape": "Adesivo"
+      "adhesiveTape": "Con adesivo"
     },
     "colours": {
       "whiteBlack": "Bianco / Nero",
@@ -746,7 +746,7 @@
       "image": "Immagine",
       "upload": "Carica",
       "shape": "Forma",
-      "shapeTitle": "Riempimento + taglio + bordo",
+      "shapeTitle": "Incisione superficiale + ritaglio + bordo",
       "border": "Bordo",
       "cut": "Ritaglio",
       "cutTitle": "Forme diverse",
@@ -794,7 +794,7 @@
       },
       "types": {
         "url": "URL (sito web)",
-        "email": "E-MAIL",
+        "email": "E-mail",
         "phone": "Chiamata (telefono)",
         "whatsapp": "WhatsApp",
         "wifi": "Wi-Fi",
@@ -803,9 +803,9 @@
       "descriptions": {
         "url": "* Scansiona per aprire il sito web",
         "email": "* Scansiona per inviare un’e-mail",
-        "phone": "* Scansiona per chiamare direttamente",
-        "whatsapp": "* Scansiona per inviare un messaggio",
-        "wifi": "* Scansiona per connettersi alla rete",
+        "phone": "* Scansiona per chiamare",
+        "whatsapp": "* Scansiona per inviare un messaggio WhatsApp",
+        "wifi": "* Scansiona per connetterti alla rete",
         "message": "* Scansiona per leggere il messaggio"
       },
       "fields": {
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com o https://example.com",
         "email": "example@domain.com",
-        "phone": "+49123456789",
+        "phone": "+490123456789",
         "networkName": "Nome della rete Wi-Fi",
         "password": "Password Wi-Fi",
         "message": "Inserisci qui il tuo messaggio..."
@@ -917,7 +917,7 @@
       "rotate": "Ruota:",
       "height": "Altezza:",
       "cornerRadius": "Raggio angoli:",
-      "fill": "Riempimento",
+      "fill": "Incisione superficiale",
       "cut": "Ritaglio",
       "thickness": "Spessore",
       "frame": "Bordo"
@@ -1086,7 +1086,7 @@
     "cart": "Carrello",
     "currentSign": "Cartello attuale",
     "discount": "Sconto",
-    "totalPrice": "Prezzo totale",
+    "totalPrice": "Importo totale",
     "accessoriesSelected": "Gli accessori da te selezionati:",
     "alerts": {
       "addToCartFailed": "Impossibile aggiungere il progetto al carrello. Riprova.",
@@ -1094,7 +1094,7 @@
       "enterProjectName": "Inserisci un nome per il progetto",
       "saveProjectFailed": "Impossibile salvare il progetto. Riprova."
     },
-    "totalForAllSigns": "Totale targhe"
+    "totalForAllSigns": "Importo progetto"
   },
   "checkout": {
     "actions": {
@@ -1113,7 +1113,7 @@
     "orderSummary": "Riepilogo ordine",
     "myOrder": "Il mio ordine",
     "selectCountry": "Seleziona Paese",
-    "phoneQuestionNote": "Questo numero di telefono può essere utilizzato in caso di domande",
+    "phoneQuestionNote": "Numero di cellulare per eventuali domande sull’ordine.",
     "yes": "SÌ",
     "invoiceEmailNote": "Questo indirizzo e-mail verrà utilizzato per l’invio della fattura",
     "invoiceDifferent": "Indirizzo di fatturazione (se diverso)",
@@ -1144,18 +1144,18 @@
       "accessories": "Accessori",
       "types": "Tipi",
       "totalAmount": "Importo totale",
-      "signsSubtotal": "Subtotale",
-      "signsTotal": "Totale targhe"
+      "signsSubtotal": "Subtotale targhe",
+      "signsTotal": "Importo progetto"
     },
     "delivery": {
       "title": "Spedizione",
       "price": "Spese di spedizione",
       "comment": "Nota di spedizione",
       "options": {
-        "upsEnvelope": "Busta UPS",
-        "upsNextDayPackage": "Pacco UPS Next Day",
-        "upsExpressBeforeNoon": "UPS Express entro le 12",
-        "upsSaturdayDelivery": "Consegna UPS il sabato"
+        "upsEnvelope": "UPS Standard",
+        "upsNextDayPackage": "UPS giorno successivo",
+        "upsExpressBeforeNoon": "UPS Express entro le 12:00",
+        "upsSaturdayDelivery": "UPS consegna sabato"
       },
       "hints": {
         "saturday": "Disponibile solo il venerdì.",
@@ -1167,12 +1167,12 @@
       "placeholder": "Inserisci il codice promo",
       "apply": "Applica codice",
       "invalid": "Codice promo non valido",
-      "discount": "Sconto promo"
+      "discount": "Sconto codice promo"
     },
     "shippingNotes": {
       "title": "Note sulla spedizione",
-      "sameDay": "Gli ordini ricevuti prima delle 16:00 vengono generalmente spediti il giorno stesso.",
-      "nextDay": "Per una consegna il giorno successivo, seleziona Pacco UPS Next Day.",
+      "sameDay": "Gli ordini ricevuti entro le 16:00 vengono spediti il giorno stesso.",
+      "nextDay": "Per la consegna il giorno lavorativo successivo, seleziona UPS giorno successivo.",
       "euros": "Tutti i prezzi sono indicati in euro."
     },
     "countries": {
@@ -1208,7 +1208,7 @@
     "title": "I miei progetti",
     "info": {
       "chooseOrOrder": "Puoi selezionare progetti salvati,",
-      "addSelected": "effettuare ordini o aggiungere progetti al progetto attuale."
+      "addSelected": "effettuare ordini, aggiungere progetti precedenti direttamente al progetto attuale e condividerli tramite link."
     },
     "cart": "Carrello",
     "confirmMerge": "Il primo progetto selezionato verrà utilizzato come base e tutti gli altri verranno aggiunti. Continuare?",
@@ -1332,12 +1332,12 @@
         "desc": "Fascette nere in plastica, dimensioni 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Viti 9,5 mm",
-        "desc": "Dimensioni 2,9 × 9,5 mm"
+        "name": "Viti autofilettanti 9,5 mm",
+        "desc": "Viti autofilettanti, misura 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Viti 13 mm",
-        "desc": "Dimensioni 2,9 × 13 mm"
+        "name": "Viti autofilettanti 13 mm",
+        "desc": "Viti autofilettanti, misura 2,9 × 13 mm"
       },
       "carabiner": {
         "name": "Moschettone",
@@ -1368,16 +1368,16 @@
       "paymentDataFailed": "Impossibile caricare i dati di pagamento."
     },
     "invoice": {
-      "title": "Acquisto su fattura",
+      "title": "Pagamento su fattura",
       "placeOrder": "Effettua il tuo ordine e paga la fattura entro 30 giorni.",
       "shipped": "Non appena il tuo ordine sarà spedito, la fattura verrà inviata al tuo indirizzo e-mail e sarà inclusa anche nella consegna.",
       "optionsIntro": "Puoi pagare la fattura con una delle seguenti opzioni:",
-      "onlinePrefix": "• Online nel tuo account - accedi a",
+      "onlinePrefix": "• Online nel tuo account: accedi, apri",
       "myAccount": "Il mio account",
       "myOrders": "I miei ordini",
       "onlineSuffix": ", trova il tuo ordine e clicca su",
       "pay": "Paga",
-      "bankTransfer": "• Bonifico bancario - puoi pagare anche manualmente utilizzando i dati bancari indicati.",
+      "bankTransfer": "• Bonifico bancario — puoi pagare anche manualmente utilizzando i dati bancari indicati.",
       "received": "Non appena il pagamento sarà ricevuto, l’ordine verrà contrassegnato come pagato.",
       "preferred": "(Preferito da molti dei nostri clienti aziendali.)"
     },
@@ -1400,7 +1400,7 @@
     "accountStatus": "Puoi seguire lo stato del tuo ordine in qualsiasi momento nel tuo account.",
     "ratingTitle": "Com’è stata la tua esperienza con SignXpert?",
     "rateAria": "Valuta {{value}} su 5",
-    "commentLabel": "Lasciaci volentieri un commento - apprezziamo molto il tuo feedback!",
+    "commentLabel": "Lasciaci un commento — apprezziamo molto il tuo feedback!",
     "sending": "Invio in corso...",
     "send": "Invia",
     "kindRegards": "Cordiali saluti,"
@@ -1561,13 +1561,13 @@
     }
   },
   "contacts": {
-    "description_90": "Contatto",
+    "description_90": "Contatti",
     "description_91": "Servizio clienti",
-    "description_92": "Indirizzo aziendale",
+    "description_92": "Indirizzo registrato",
     "description_93": "Orari di apertura",
     "description_94": "Lunedì - venerdì, 08:00 - 19:00",
-    "description_95": "Oppure usa questo modulo per contattarci",
-    "description_96": "Nome",
+    "description_95": "Oppure scrivici tramite il modulo.",
+    "description_96": "Azienda / Organizzazione",
     "description_97": "*Domanda",
     "description_98": "INVIA",
     "description_99": "Inserisci il tuo indirizzo e-mail.",
@@ -1578,24 +1578,24 @@
   },
   "QuickGuide": {
     "d_1": "Offriamo",
-    "d_2": "Design",
-    "d_3": "intuitivo",
-    "d_4": "su misura",
+    "d_2": "Creazione",
+    "d_3": "intuitiva",
+    "d_4": "semplice",
     "d_5": "Produzione",
     "d_6": "rapida",
-    "d_7": "Entro 8 ore",
+    "d_7": "Entro 1 giorno",
     "d_8": "Consegna",
     "d_9": "express",
-    "d_10": "in 24–48 ore",
+    "d_10": "24–48 h",
     "d_11": "Come usare l’editor",
     "d_12": "Nuovo progetto",
     "d_13": "Contatto",
     "start": {
       "title": "Come iniziare",
-      "register": "Registrare un account",
-      "create": "Creare un progetto",
-      "save": "Salvare il progetto",
-      "cart": "Completare l’ordine"
+      "register": "Crea un account",
+      "create": "Crea un progetto",
+      "save": "Salva il progetto",
+      "cart": "Completa l’ordine"
     },
     "editor": {
       "choose": "Scegli passo dopo passo:",
@@ -1603,7 +1603,7 @@
       "steps": {
         "shape": "Forma – scegli la forma desiderata per il tuo cartello o la tua etichetta.",
         "size": "Dimensione – massimo 600 mm × 295 mm.",
-        "thickness": "Spessore del materiale – molti materiali dispongono di uno strato adesivo per un montaggio semplice su superfici pulite e asciutte.",
+        "thickness": "Spessore del materiale: 0,8 / 1,6 / 3,2 mm — disponibile con o senza adesivo.",
         "color": "Colore – la maggior parte dei colori è disponibile in diversi spessori di materiale.",
         "elements": "Puoi aggiungere numerosi elementi e testare tutto in modo flessibile. In “Forma” puoi creare bordi, ritagli o design per incisione.",
         "holes": "Sono possibili fori di qualsiasi dimensione oppure puoi creare i tuoi ritagli tramite “Forma”."
@@ -1618,7 +1618,7 @@
       "topNotes": {
         "plastic": "Utilizziamo plastica incidibile,\nche non sbiadisce né cambia colore.",
         "templates": "Salva il tuo modello per utilizzi futuri.\nCrea un nuovo progetto in qualsiasi momento oppure apri\nun progetto esistente.",
-        "price": "I tuoi prezzi includono già tasse\ne sconti. Offriamo regolarmente ai nostri clienti\ninteressanti riduzioni di prezzo."
+        "price": "I tuoi prezzi includono già tasse\ne sconti. Offriamo regolarmente ai nostri clienti\nsconti interessanti."
       },
       "bottomNotes": {
         "requests": "Lascia qui richieste speciali\n– leggiamo e consideriamo\nogni richiesta.",
@@ -1631,7 +1631,7 @@
   "Login": {
     "l_1": "Crea nuovo account",
     "l_2": "Per effettuare un ordine da noi, devi prima creare un account. È rapido e semplice!",
-    "l_3": "Crea nuovo account"
+    "l_3": "I campi contrassegnati con asterisco (*) sono obbligatori. Scegli una password. Riceverai a breve un’e-mail di conferma."
   },
   "Enter": {
     "e_1": "Benvenuto su SignXpert - siamo lieti di averti con noi!",
@@ -1658,25 +1658,25 @@
       "loadingNote": "Il caricamento dei tuoi ordini può richiedere un po’ di tempo. Attendi finché non vengono visualizzati qui.",
       "noProjectSnapshot": "Nessuna istantanea del progetto in questo ordine",
       "projectSnapshotNoId": "L’istantanea del progetto non ha un ID",
-      "openProjectFailed": "Impossibile aprire il progetto ordinato",
+      "openProjectFailed": "Impossibile aprire il progetto",
       "downloadFileFailed": "Errore durante il download del file",
       "noTrackingYet": "Nessun numero di tracciamento ancora disponibile",
       "opening": "Apertura in corso...",
       "openProject": "Apri progetto",
-      "sumInclVatDelivery": "Totale (IVA e spedizione incl.)",
+      "sumInclVatDelivery": "Importo + spedizione",
       "table": {
         "no": "N.",
-        "orderDate": "Data ordine",
+        "orderDate": "Data",
         "orderNo": "N. ordine",
-        "projectName": "Nome progetto",
-        "orderSum": "Totale ordine",
-        "sumDelivery": "Totale + spedizione",
+        "projectName": "Nome",
+        "orderSum": "Importo",
+        "sumDelivery": "Importo + sped.",
         "status": "Stato",
-        "deliveryNote": "Bolla di consegna",
-        "tracking": "Tracking",
+        "deliveryNote": "DDT",
+        "tracking": "Traccia",
         "invoice": "Fattura",
-        "invoiceStatus": "Stato fattura",
-        "toPay": "Da pagare",
+        "invoiceStatus": "Pagamento",
+        "toPay": "Paga",
         "openProject": "Progetto"
       },
       "status": {
@@ -1714,7 +1714,7 @@
         "requiredCountry": "*Paese",
         "email": "Indirizzo e-mail",
         "mobilePhone": "Cellulare",
-        "vatNumber": "N. IVA"
+        "vatNumber": "Partita IVA / N. IVA"
       }
     },
     "settings": {
@@ -1766,16 +1766,16 @@
       "industries": "Settori",
       "faq": "FAQ",
       "quickGuide": "Guida rapida",
-      "contacts": "Contatto",
+      "contacts": "Contatti",
       "admin": "Admin"
     },
     "features": {
-      "easy": "Intuitivo",
-      "design": "da creare",
-      "fast": "Rapidissimo",
-      "manufacturing": "da produrre",
-      "quick": "Express",
-      "delivery": "da consegnare"
+      "easy": "Creazione",
+      "design": "intuitiva",
+      "fast": "Produzione",
+      "manufacturing": "rapida",
+      "quick": "Consegna",
+      "delivery": "express"
     },
     "sections": {
       "menu": "Menu",
@@ -1789,9 +1789,9 @@
     }
   },
   "Footer": {
-    "slogan": "Incisione - Stampa - Cartelli",
+    "slogan": "Incisione laser · Targhe industriali",
     "address": {
-      "country": "Germania"
+      "country": "Deutschland"
     },
     "menuTitle": "Menu:",
     "infoTitle": "Informazioni:",
@@ -1807,14 +1807,14 @@
       "industries": "Settori",
       "faq": "FAQ",
       "quickGuide": "Guida rapida",
-      "contacts": "Contatto"
+      "contacts": "Contatti"
     },
     "info": {
       "privacyPolicy": "Informativa sulla privacy",
       "termsOfPurchasing": "Condizioni di acquisto",
       "cookieSettings": "Impostazioni cookie",
-      "company": "Azienda",
-      "consumer": "Consumatore",
+      "company": "Azienda / Organizzazione",
+      "consumer": "Privato",
       "impressum": "Note legali",
       "euOnlineDisputeResolution": "Risoluzione online delle controversie UE"
     },
@@ -1857,7 +1857,7 @@
   "LoginRegister": {
     "r_1": "Crea nuovo account",
     "r_2": "Consumatore",
-    "r_3": "Azienda"
+    "r_3": "Azienda / Organizzazione"
   },
   "RegisterConsumer": {
     "rr_1": "*Nome e cognome",
@@ -1879,11 +1879,11 @@
     "rr_17": "Ti preghiamo di indicarci come hai saputo di noi — questo ci aiuta a migliorare!",
     "rr_18": "Seleziona risposta",
     "rr_19": "Registrati",
-    "rr_20": "SignXpert raccoglie i tuoi dati personali quando crei un account e li utilizza per finalità pubblicitarie, nonché per elaborare e gestire ordini futuri. Puoi saperne di più nella nostra",
+    "rr_20": "SignXpert raccoglie i tuoi dati personali durante la creazione dell’account e li utilizza per elaborare e gestire gli ordini futuri, nonché — solo con il tuo consenso — per finalità di marketing. Maggiori informazioni sono disponibili nella nostra",
     "rr_21": "informativa sulla privacy.",
     "rr_22": "*Nome azienda",
-    "rr_23": "N. IVA",
-    "rr_24": "Nessun N. IVA? Continua senza.",
+    "rr_23": "Partita IVA / N. IVA",
+    "rr_24": "Nessuna partita IVA? Continua senza.",
     "rr_25": "*Attualmente, ai sensi del § 19 UStG (regime di piccolo imprenditore), non viene addebitata l’IVA.",
     "passwordMustMatch": "Le password devono coincidere",
     "registrationFailed": "Registrazione non riuscita",
@@ -1924,22 +1924,22 @@
     "h_9": "Prezzi equi. Qualità industriale.",
     "h_10": "Sappiamo che oggi il budget svolge un ruolo importante.",
     "h_11": "SignXpert offre cartelli di alta qualità e produzione rapida a prezzi competitivi – risultati professionali senza costi inutili.",
-    "h_12": "Sconti quantità",
+    "h_12": "Sconti per quantità",
     "h_13": "Più ordini, più basso è il prezzo.",
     "h_14": "Il nostro sistema di sconti trasparente riduce automaticamente i costi quando aumenta la quantità ordinata - un modo intelligente per risparmiare.",
     "h_15": "*Leggi di più",
     "h_16": "qui",
-    "h_17": "Sconti quantità",
+    "h_17": "Sconti per quantità",
     "h_18": "Ci impegniamo a offrirti i migliori prezzi. Per questo abbiamo introdotto un sistema di sconti quantità:",
     "h_19": "Più alto è il valore dell’ordine, più basso è il prezzo.",
-    "h_20": "Lo sconto si applica solo al progetto attuale (non è cumulabile) e viene calcolato automaticamente:",
-    "h_21": "Valore dell’ordine:",
+    "h_20": "Lo sconto viene calcolato automaticamente sull’intero progetto attuale:",
+    "h_21": "Importo del progetto:",
     "h_22": "da 30 € a 50 € — 5 %",
     "h_23": "da 50 € a 100 € — 10 %",
     "h_24": "da 100 € a 200 € — 15 %",
     "h_25": "da 200 € a 500 € — 20 %",
     "h_26": "da 500 € a 10000 € — 25 %",
-    "h_27": "Lo sconto si applica solo al progetto attuale e non include gli accessori.",
+    "h_27": "Lo sconto si applica all’intero progetto attuale, ma non alla spedizione.",
     "h_28": "Cartelli incisi",
     "h_29": "personalizzati",
     "h_30": "resi semplici",
@@ -1958,7 +1958,7 @@
     "h_43": "Da SignXpert",
     "h_44": "combiniamo moderne tecnologie di produzione con un efficiente sistema di ordine online — per una produzione rapida e una spedizione veloce.",
     "h_45": "Ordina prima delle 16:00 per la spedizione nello stesso giorno",
-    "h_46": "spedizione affidabile in Germania e in Europa",
+    "h_46": "spedizione affidabile in Italia e in Europa",
     "h_47": "tempi di risposta rapidi e supporto clienti personale",
     "h_48": "Così le aziende ricevono i loro cartelli incisi personalizzati in modo rapido e affidabile.",
     "h_49": "Cartelli in plastica",
@@ -1966,14 +1966,14 @@
     "h_51": "Tutti i prodotti SignXpert sono realizzati in plastica per incisione bicomponente di alta qualità.",
     "h_52": "Durante l’incisione laser, lo strato superiore viene rimosso, rendendo visibile il colore di contrasto sottostante. Nascono così marcature permanenti ad alto contrasto, che rimangono ben leggibili per anni.",
     "h_53": "I tuoi vantaggi con",
-    "h_54": "Produzione personalizzata a partire da 1 pezzo",
+    "h_54": "Produzione su misura a partire da 1 pezzo",
     "h_55": "Soluzioni professionali per industria e aziende",
     "h_56": "Incisione laser ad alta precisione",
     "h_57": "Cartelli autoadesivi"
   },
   "Products": {
-    "p_1": "Personalizzati",
-    "p_2": "cartelli in plastica incisa e targhe identificative",
+    "p_1": "Cartelli personalizzati",
+    "p_2": "in plastica incisa e targhe identificative",
     "p_3": "Da",
     "p_4": "produciamo cartelli in plastica, targhe identificative ed etichette industriali di alta qualità in robusto materiale plastico per incisione.",
     "p_5": "I nostri cartelli incisi offrono una marcatura chiara, durevole e professionale per macchine, impianti elettrici, uffici, edifici e ambienti di lavoro.",
@@ -2011,7 +2011,7 @@
     "p_37": "Con il",
     "p_38": "I cartelli possono essere ordinati anche telefonicamente o via e-mail. Il nostro team ti supporta volentieri nella progettazione, se necessario.",
     "p_39": "Crea cartello",
-    "p_40": "Produzione personalizzata con",
+    "p_40": "Produzione su misura con",
     "p_41": "Da SignXpert ogni cartello inciso viene realizzato su misura secondo le tue esigenze.",
     "p_42": "Che tu abbia bisogno di un singolo cartello o di grandi serie di produzione - forniamo qualità affidabile e incisioni precise.",
     "p_43": "Puoi creare il tuo cartello direttamente nel nostro editor online, caricare i tuoi file o inviarci le tue richieste.",

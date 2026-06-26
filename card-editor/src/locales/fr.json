@@ -2,7 +2,7 @@
   "meta": {
     "home": {
       "title": "Panneaux personnalisés et plaques gravées en France | SignXpert",
-      "description": "Concevez des panneaux, étiquettes et plaques signalétiques personnalisés avec SignXpert. Gravure et impression de haute qualité avec livraison rapide dans toute la France. Idéal pour les entreprises et les particuliers."
+      "description": "Concevez des panneaux, étiquettes et plaques signalétiques personnalisés avec SignXpert. Gravure laser de haute qualité, fabrication précise et livraison rapide dans toute la France. Idéal pour les entreprises et les particuliers."
     },
     "login": {
       "title": "Connexion – SignXpert",
@@ -257,7 +257,7 @@
     "t_9": "(ci-après « nous » ou « notre »).",
     "t_10": "Une fois votre commande reçue, une confirmation automatique sera envoyée à l’adresse e-mail fournie. Veuillez vous assurer que l’adresse e-mail est correcte. Nous ne concluons pas d’accords contraignants avec des personnes ne disposant pas de la capacité juridique (mineurs) sans le consentement de leurs représentants légaux.",
     "t_11": "Nous nous réservons le droit de refuser ou d’annuler les commandes contenant un contenu inapproprié, notamment un contenu pornographique, raciste ou extrémiste.",
-    "t_12": "Le client est responsable de s’assurer que ses designs ne violent aucune loi applicable ni aucun droit de tiers (par exemple, des marques déposées).",
+    "t_12": "Le client est responsable de s’assurer que ses conceptions ne violent aucune loi applicable ni aucun droit de tiers (par exemple, des marques déposées).",
     "t_13": "2. Prix et statut de petite entreprise (TVA)",
     "t_14": "Tous les prix affichés sur notre site web sont indiqués en euros (€).",
     "t_15": "Information fiscale importante :",
@@ -312,7 +312,7 @@
     "t_64": "SignXpert n’est pas responsable des retards ou dommages causés par des circonstances échappant à notre contrôle raisonnable (par exemple, catastrophes naturelles, guerre, grèves ou perturbations majeures des infrastructures de transport)."
   },
   "Impressum": {
-    "i_1": "Impressum (mentions légales)",
+    "i_1": "Mentions légales",
     "i_2": "Informations conformément au § 5 TDDDG",
     "i_3": "Entreprise / Propriétaire :",
     "i_4": "Kostyantyn Utvenko, SignXpert",
@@ -449,10 +449,10 @@
     "title": "Questions fréquentes",
     "question_1": "Est-il facile de concevoir un panneau personnalisé en ligne ?",
     "answer_1_1": "Oui - le processus est conçu pour être simple, intuitif et guidé étape par étape.",
-    "answer_1_2": "Dans notre éditeur en ligne, vous choisissez d’abord la forme de votre panneau. Ensuite, vous définissez les dimensions, l’épaisseur du matériau et la couleur du matériau. Après cela, vous pouvez ajouter du texte, des images, des QR codes, des codes-barres, créer des trous, générer le nombre de copies nécessaire et personnaliser toutes les autres options - littéralement tout ce dont vous avez besoin.",
+    "answer_1_2": "Dans notre éditeur en ligne, vous choisissez d’abord la forme de votre panneau. Ensuite, vous définissez les dimensions, l’épaisseur et la couleur du matériau. Vous pouvez ensuite ajouter du texte, des images, des QR codes et des codes-barres, créer des trous, définir la quantité souhaitée et personnaliser les autres options selon vos besoins.",
     "answer_1_3": "Chaque étape s’accompagne d’un aperçu en direct, aucune compétence particulière ni expérience en design n’est donc nécessaire.",
     "answer_1_4": "Si vous avez besoin d’aide supplémentaire, vous pouvez utiliser notre <quickGuide>Guide rapide</quickGuide>, qui explique tout le processus étape par étape.",
-    "answer_1_5": "Si vous avez encore des questions après cela, rendez-vous sur la page <contacts>Contacts</contacts> et contactez nos responsables - ils se feront un plaisir de vous aider.",
+    "answer_1_5": "Si vous avez encore des questions après cela, rendez-vous sur la page <contacts>Contact</contacts> et contactez notre équipe — elle se fera un plaisir de vous aider.",
     "answer_1_6": "Avec <home>SignXpert</home>, créer un panneau professionnel en ligne est simple, pratique et efficace.",
     "question_2": "Comment puis-je payer ma commande ?",
     "answer_2_1": "Vous pouvez facilement payer votre commande à l’aide de différents modes de paiement disponibles sur notre site web. Nous acceptons Visa, MasterCard, PayPal ainsi que plusieurs autres options.",
@@ -481,8 +481,8 @@
     "question_5": "Combien coûte la livraison, quelles sont les options disponibles et quels sont les délais de livraison ?",
     "answer_5_1": "Les frais de livraison chez <home>SignXpert</home> dépendent de la taille, du poids et de la valeur de votre commande, ainsi que du pays de destination.",
     "answer_5_2": "Nous expédions principalement via UPS, avec plusieurs options de livraison disponibles lors du passage en caisse :",
-    "answer_5_list_1": "Livraison standard - prend généralement 1 à 3 jours.",
-    "answer_5_list_2": "Livraison express - disponible pour les commandes plus urgentes (livraison le jour ouvrable suivant).",
+    "answer_5_list_1": "Livraison standard — délai indicatif de 1 à 3 jours.",
+    "answer_5_list_2": "Livraison express — disponible pour les commandes urgentes (livraison le jour ouvrable suivant).",
     "answer_5_list_3": "Livraison le samedi - disponible dans certaines zones si vous avez besoin de recevoir votre commande pendant le week-end.",
     "answer_5_3": "Toutes les options et leurs coûts sont clairement affichés lors du passage en caisse, afin que vous puissiez choisir le mode de livraison qui vous convient le mieux. Chaque colis est expédié avec un numéro de suivi, que vous pouvez toujours consulter dans votre tableau de bord <account>Mon compte</account> pour suivre l’état de la livraison.",
     "question_6": "Où puis-je trouver les informations concernant mes commandes et mes paiements ?",
@@ -603,20 +603,20 @@
       "item_1": "choisir la taille et la mise en page de votre panneau",
       "item_2": "personnaliser le texte, les symboles et les couleurs",
       "item_3": "ajouter des trous de fixation ou un dos adhésif",
-      "item_4": "prévisualiser votre panneau en temps réel",
+      "item_4": "voir l’aperçu de votre panneau en temps réel",
       "summary": "Cela permet de créer facilement des étiquettes gravées professionnelles, des plaques signalétiques de machines et des panneaux techniques en seulement quelques minutes.",
-      "support": "Les panneaux peuvent également être commandés par téléphone ou par e-mail, et notre équipe vous aidera à préparer le design si nécessaire.",
-      "imageAlt": "Concevoir votre panneau avec SignXpert",
+      "support": "Les panneaux peuvent également être commandés par téléphone ou par e-mail ; notre équipe vous aide volontiers à préparer le design si nécessaire.",
+      "imageAlt": "Concevez votre panneau personnalisé avec SignXpert",
       "cta": "Concevoir votre panneau"
     },
     "production": {
-      "titleLine_1": "Production personnalisée",
+      "titleLine_1": "Fabrication personnalisée",
       "titleLine_2": "avec <accent>SignXpert</accent>",
-      "lead": "Chez SignXpert, chaque panneau gravé peut être personnalisé selon vos besoins.",
-      "description_1": "Que vous ayez besoin d’un seul panneau ou de grandes séries de production, nous fournissons une qualité fiable et une gravure précise.",
-      "description_2": "Vous pouvez concevoir votre panneau directement dans notre éditeur de panneaux en ligne, télécharger vos propres fichiers ou nous contacter avec vos exigences.",
+      "lead": "Chez SignXpert, chaque panneau gravé est fabriqué selon vos spécifications.",
+      "description_1": "Que vous ayez besoin d’un seul panneau ou d’une grande série, nous garantissons une qualité fiable et une gravure précise.",
+      "description_2": "Vous pouvez concevoir votre panneau directement dans notre éditeur en ligne, télécharger vos propres fichiers ou nous transmettre vos exigences techniques.",
       "description_3": "Notre objectif est de fournir des panneaux en plastique gravé durables, professionnels et faciles à commander pour l’industrie et les entreprises.",
-      "imageAlt": "Production personnalisée par SignXpert"
+      "imageAlt": "Fabrication personnalisée avec SignXpert"
     },
     "categories": {
       "title": "Nos <accent>catégories de produits</accent> et applications typiques",
@@ -696,7 +696,7 @@
       "round": "Rond",
       "oval": "Ovale",
       "lockTitle": "Rectangle avec boucle (panneau suspendu)",
-      "lockAlt": "Verrou",
+      "lockAlt": "Boucle",
       "circleWithLineTitle": "Rond avec ligne",
       "circleWithLineAlt": "Cercle avec ligne",
       "circleWithTTitle": "Rond avec ligne en T",
@@ -746,12 +746,12 @@
       "image": "Image",
       "upload": "Importer",
       "shape": "Forme",
-      "shapeTitle": "Remplissage + Découpe + Cadre",
+      "shapeTitle": "Gravure de surface + découpe + cadre",
       "border": "Bordure",
       "cut": "Découpe",
       "cutTitle": "Différentes formes",
-      "qrCode": "QR Code",
-      "barCode": "Barcode"
+      "qrCode": "QR code",
+      "barCode": "Code-barres"
     },
     "holes": {
       "title": "Trous",
@@ -782,8 +782,8 @@
       "confirm": "Oui"
     },
     "qr": {
-      "title": "QR Code",
-      "minimumSize": "La taille minimale du QR Code est de 15 x 15 mm",
+      "title": "QR code",
+      "minimumSize": "La taille minimale du QR code est de 15 x 15 mm",
       "defaults": {
         "message": "Message par défaut"
       },
@@ -794,19 +794,19 @@
       },
       "types": {
         "url": "URL (site web)",
-        "email": "E-MAIL",
+        "email": "E-mail",
         "phone": "Appel (téléphone)",
         "whatsapp": "WhatsApp",
         "wifi": "Wi-Fi",
         "message": "Message"
       },
       "descriptions": {
-        "url": "* Scanner pour visiter le site web",
-        "email": "* Scanner pour envoyer un e-mail",
-        "phone": "* Scanner pour appeler directement",
-        "whatsapp": "* Scanner pour envoyer un message",
-        "wifi": "* Scanner pour se connecter au réseau",
-        "message": "* Scanner pour lire un message personnalisé"
+        "url": "* Scannez pour accéder au site web",
+        "email": "* Scannez pour envoyer un e-mail",
+        "phone": "* Scannez pour appeler directement",
+        "whatsapp": "* Scannez pour envoyer un message",
+        "wifi": "* Scannez pour vous connecter au réseau",
+        "message": "* Scannez pour lire un message"
       },
       "fields": {
         "websiteLink": "Site web - Lien",
@@ -819,9 +819,9 @@
         "customMessage": "Message personnalisé"
       },
       "placeholders": {
-        "website": "example.com ou https://example.com",
-        "email": "example@domain.com",
-        "phone": "+380123456789",
+        "website": "exemple.fr ou https://exemple.fr",
+        "email": "exemple@domaine.fr",
+        "phone": "+490123456789",
         "networkName": "Nom du réseau Wi-Fi",
         "password": "Mot de passe Wi-Fi",
         "message": "Saisissez votre message ici..."
@@ -836,7 +836,7 @@
       "alerts": {
         "generateFailed": "Impossible de générer le QR code.",
         "selectToUpdate": "Sélectionnez un QR code sur le canevas pour le mettre à jour.",
-        "createFailed": "La création du QR code a échoué."
+        "createFailed": "Impossible de créer le QR code."
       },
       "actions": {
         "delete": "Supprimer le QR",
@@ -846,7 +846,7 @@
     },
     "barcode": {
       "title": "Code-barres",
-      "description": "Saisissez du texte ou des chiffres à encoder",
+      "description": "Saisissez le texte ou les chiffres à encoder",
       "defaultText": "ABC-abc-1234",
       "types": {
         "code128": "Code 128",
@@ -917,7 +917,7 @@
       "rotate": "Rotation :",
       "height": "Hauteur :",
       "cornerRadius": "Rayon des angles :",
-      "fill": "Remplissage",
+      "fill": "Gravure de surface",
       "cut": "Découpe",
       "thickness": "Épaisseur",
       "frame": "Cadre"
@@ -1094,14 +1094,14 @@
       "enterProjectName": "Veuillez saisir un nom de projet",
       "saveProjectFailed": "Impossible d’enregistrer le projet. Veuillez réessayer."
     },
-    "totalForAllSigns": "Total des panneaux"
+    "totalForAllSigns": "Montant du projet"
   },
   "checkout": {
     "actions": {
       "backToAccessories": "Retour aux accessoires",
       "proceedToPayment": "Passer au paiement",
       "change": "Modifier",
-      "close": "fermer"
+      "close": "Fermer"
     },
     "alerts": {
       "selectCountry": "Veuillez sélectionner un pays"
@@ -1113,9 +1113,9 @@
     "orderSummary": "Récapitulatif de commande",
     "myOrder": "Ma commande",
     "selectCountry": "Sélectionner un pays",
-    "phoneQuestionNote": "Ce numéro de téléphone peut être utilisé pour toute question",
-    "yes": "OUI",
-    "invoiceEmailNote": "Cet e-mail sera utilisé pour vous envoyer la facture",
+    "phoneQuestionNote": "Ce numéro de téléphone peut être utilisé pour toute question concernant votre commande.",
+    "yes": "Oui",
+    "invoiceEmailNote": "Cette adresse e-mail sera utilisée pour l’envoi de votre facture.",
     "invoiceDifferent": "Adresse de facturation (si différente de celle ci-dessus)",
     "vatAndTotal": "TVA et total",
     "vatNote": "Aucune TVA n’est facturée conformément au § 19 UStG.",
@@ -1138,24 +1138,24 @@
     "summary": {
       "description": "Description",
       "quantity": "Quantité",
-      "totalSigns": "Nombre total de panneaux",
+      "totalSigns": "Total panneaux",
       "discount": "Remise",
       "price": "Prix",
       "accessories": "Accessoires",
       "types": "Types",
       "totalAmount": "Montant total",
-      "signsSubtotal": "Sous-total",
-      "signsTotal": "Total des panneaux"
+      "signsSubtotal": "Sous-total panneaux",
+      "signsTotal": "Montant du projet"
     },
     "delivery": {
       "title": "Livraison",
-      "price": "Prix livr.",
+      "price": "Livraison",
       "comment": "Commentaire de livraison",
       "options": {
-        "upsEnvelope": "Enveloppe UPS",
-        "upsNextDayPackage": "Colis UPS livraison le jour ouvrable suivant",
+        "upsEnvelope": "UPS Standard",
+        "upsNextDayPackage": "UPS le lendemain",
         "upsExpressBeforeNoon": "UPS Express avant 12 h",
-        "upsSaturdayDelivery": "Livraison UPS le samedi"
+        "upsSaturdayDelivery": "UPS Livraison samedi"
       },
       "hints": {
         "saturday": "Disponible uniquement le vendredi.",
@@ -1171,8 +1171,8 @@
     },
     "shippingNotes": {
       "title": "Notes de livraison",
-      "sameDay": "Les commandes passées avant 16 h sont généralement expédiées le jour même.",
-      "nextDay": "Pour une livraison le jour ouvrable suivant, veuillez sélectionner Colis UPS livraison le jour ouvrable suivant.",
+      "sameDay": "Les commandes reçues avant 16 h sont expédiées le jour même.",
+      "nextDay": "Pour une livraison le jour ouvrable suivant, sélectionnez UPS le lendemain.",
       "euros": "Tous les prix sont en euros."
     },
     "countries": {
@@ -1207,8 +1207,8 @@
   "yourProjectsModal": {
     "title": "Mes projets",
     "info": {
-      "chooseOrOrder": "Vous pouvez choisir parmi vos projets enregistrés ou passer une COMMANDE.",
-      "addSelected": "Vous pouvez également ajouter les projets sélectionnés au projet actuel."
+      "chooseOrOrder": "Vous pouvez ouvrir vos projets enregistrés,",
+      "addSelected": "passer commande, ajouter d’anciens projets au projet actuel et partager le projet via un lien."
     },
     "cart": "Panier",
     "confirmMerge": "Le premier projet sélectionné sera utilisé comme base, et tous les autres y seront ajoutés. Continuer ?",
@@ -1252,10 +1252,10 @@
     "sharedProjectFallback": "Projet partagé",
     "actions": {
       "importViaExcel": "Importer via Excel",
-      "saveAsTemplate": "Enregistrer modèle",
+      "saveAsTemplate": "Enregistrer comme modèle",
       "templates": "Modèles",
       "preview": "Aperçu",
-      "newProject": "Projet",
+      "newProject": "Nouveau projet",
       "yourProject": "Projets",
       "saving": "Enregistrement...",
       "saveProject": "Enregistrer le projet",
@@ -1271,11 +1271,11 @@
     },
     "shareImport": {
       "before": "Avant d’ouvrir un",
-      "sharedProject": "Projet partagé",
+      "sharedProject": "projet partagé",
       "middle": ", veuillez",
-      "save": "Enregistrer",
+      "save": "enregistrez",
       "or": "ou",
-      "discard": "Ignorer",
+      "discard": "ignorez",
       "after": "votre travail actuel."
     }
   },
@@ -1303,7 +1303,7 @@
   },
   "cartAccessoriesModal": {
     "processing": "Traitement...",
-    "continueToCheckout": "Passer au paiement",
+    "continueToCheckout": "Continuer vers la commande",
     "close": "Fermer",
     "exampleUse": "Exemple d’utilisation"
   },
@@ -1332,12 +1332,12 @@
         "desc": "Colliers de serrage en plastique noir, taille 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Vis 9,5 mm",
-        "desc": "Taille 2,9 × 9,5 mm"
+        "name": "Vis à tôle 9,5 mm",
+        "desc": "Vis autotaraudeuses 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Vis 13 mm",
-        "desc": "Taille 2,9 × 13 mm"
+        "name": "Vis à tôle 13 mm",
+        "desc": "Vis autotaraudeuses 2,9 × 13 mm"
       },
       "carabiner": {
         "name": "Mousqueton",
@@ -1360,8 +1360,8 @@
     "itemExtraAlt": "Supplément {{name}}"
   },
   "payModal": {
-    "backToPayment": "Retour à Passer au paiement",
-    "title": "Choisissez votre option de paiement",
+    "backToPayment": "Retour au paiement",
+    "title": "Choisissez votre mode de paiement",
     "description": "Vous pouvez finaliser votre commande avec l’un des modes de paiement suivants :",
     "placeOrder": "PASSER COMMANDE",
     "alerts": {
@@ -1372,12 +1372,12 @@
       "placeOrder": "Passez votre commande et réglez la facture dans un délai de 30 jours.",
       "shipped": "Une fois votre commande expédiée, la facture sera envoyée à votre adresse e-mail et sera également incluse dans votre colis.",
       "optionsIntro": "Vous pouvez régler la facture en utilisant l’une des options suivantes :",
-      "onlinePrefix": "• En ligne dans votre compte - connectez-vous à",
+      "onlinePrefix": "• En ligne dans votre compte : connectez-vous, ouvrez",
       "myAccount": "Mon compte",
       "myOrders": "Mes commandes",
       "onlineSuffix": ", trouvez votre commande et cliquez sur",
       "pay": "Payer",
-      "bankTransfer": "• Virement bancaire - vous pouvez également payer manuellement en utilisant les coordonnées bancaires fournies.",
+      "bankTransfer": "• Virement bancaire — vous pouvez aussi payer manuellement avec les coordonnées bancaires fournies.",
       "received": "Une fois le paiement reçu, la commande sera marquée comme payée.",
       "preferred": "(Option privilégiée par de nombreux clients professionnels.)"
     },
@@ -1394,15 +1394,15 @@
     "backToHome": "Retour à l’accueil"
   },
   "orderSuccess": {
-    "close": "fermer",
+    "close": "Fermer",
     "title": "Merci pour votre commande !",
     "processing": "Nous la traitons actuellement. Dès que votre commande sera enregistrée, vous recevrez une confirmation de commande par e-mail.",
     "accountStatus": "Vous pourrez ensuite consulter le statut de votre commande à tout moment dans votre compte.",
     "ratingTitle": "Comment s’est passée votre expérience avec SignXpert ?",
     "rateAria": "Noter {{value}} sur 5",
     "commentLabel": "Veuillez nous laisser un commentaire - nous serions ravis d’avoir votre avis !",
-    "sending": "envoi...",
-    "send": "envoyer",
+    "sending": "Envoi...",
+    "send": "Envoyer",
     "kindRegards": "Cordialement,"
   },
   "projectCanvasesGrid": {
@@ -1410,7 +1410,7 @@
     "empty": "Aucun canevas dans le projet actuel.",
     "preview": "Aperçu",
     "previewAlt": "aperçu",
-    "createNewSign": "Créer le nouveau panneau",
+    "createNewSign": "Créer un nouveau panneau",
     "units": {
       "mm": "(mm)",
       "pcs": "pcs"
@@ -1561,13 +1561,13 @@
     }
   },
   "contacts": {
-    "description_90": "Contacts",
+    "description_90": "Contact",
     "description_91": "Service client",
     "description_92": "Adresse enregistrée",
     "description_93": "Horaires d’ouverture",
     "description_94": "Lundi - vendredi, 08:00 - 19:00",
-    "description_95": "Ou utilisez ce formulaire pour nous contacter",
-    "description_96": "Nom",
+    "description_95": "Ou contactez-nous via ce formulaire.",
+    "description_96": "Entreprise / Organisation",
     "description_97": "*Question",
     "description_98": "ENVOYER",
     "description_99": "Veuillez saisir votre adresse e-mail.",
@@ -1578,15 +1578,15 @@
   },
   "QuickGuide": {
     "d_1": "Nous proposons",
-    "d_2": "Design",
-    "d_3": "intuitif",
-    "d_4": "par vous-même",
+    "d_2": "Création",
+    "d_3": "intuitive",
+    "d_4": "simplement",
     "d_5": "Fabrication",
     "d_6": "rapide",
-    "d_7": "sous 8 h",
+    "d_7": "en 1 jour",
     "d_8": "Livraison",
     "d_9": "express",
-    "d_10": "chez vous en 24–48 h",
+    "d_10": "24–48 h",
     "d_11": "Comment utiliser l’éditeur",
     "d_12": "Nouveau projet",
     "d_13": "Contacts",
@@ -1663,21 +1663,21 @@
       "noTrackingYet": "Aucun numéro de suivi pour le moment",
       "opening": "Ouverture...",
       "openProject": "Projet",
-      "sumInclVatDelivery": "Total (TVA et livr. incl.)",
+      "sumInclVatDelivery": "Total (TVA + livr.)",
       "table": {
         "no": "N°",
-        "orderDate": "Date de commande",
-        "orderNo": "N° comm.",
-        "projectName": "Nom du projet",
+        "orderDate": "Date",
+        "orderNo": "N° commande",
+        "projectName": "Nom",
         "orderSum": "Montant",
         "sumDelivery": "Mont. + livr.",
         "status": "Statut",
-        "deliveryNote": "Bon de livr.",
+        "deliveryNote": "Bon livr.",
         "tracking": "Suivi",
         "invoice": "Facture",
-        "invoiceStatus": "Statut fact.",
-        "toPay": "À payer",
-        "openProject": "Ouvrir le projet"
+        "invoiceStatus": "Paiement",
+        "toPay": "Payer",
+        "openProject": "Projet"
       },
       "status": {
         "received": "Reçue",
@@ -1729,7 +1729,7 @@
       "existingPassword": "Mot de passe actuel",
       "newPassword": "Nouveau mot de passe",
       "confirmNewPassword": "Confirmer le nouveau mot de passe",
-      "forgotPasswordText": "* Mot de passe oublié ? Cliquez sur envoyer et nous vous enverrons un nouveau mot de passe temporaire par e-mail.",
+      "forgotPasswordText": "* Mot de passe oublié ? Cliquez sur « Envoyer » et nous vous enverrons un nouveau mot de passe temporaire par e-mail.",
       "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
       "passwordUpdated": "Mot de passe mis à jour",
       "incorrectPassword": "Mot de passe incorrect",
@@ -1766,11 +1766,11 @@
       "industries": "Secteurs",
       "faq": "FAQ",
       "quickGuide": "Guide rapide",
-      "contacts": "Contacts",
+      "contacts": "Contact",
       "admin": "Admin"
     },
     "features": {
-      "easy": "Conception",
+      "easy": "Création",
       "design": "intuitive",
       "fast": "Fabrication",
       "manufacturing": "rapide",
@@ -1789,7 +1789,7 @@
     }
   },
   "Footer": {
-    "slogan": "Gravure - Impression - Panneaux",
+    "slogan": "Gravure · Panneaux industriels",
     "address": {
       "country": "Allemagne"
     },
@@ -1807,15 +1807,15 @@
       "industries": "Secteurs",
       "faq": "FAQ",
       "quickGuide": "Guide rapide",
-      "contacts": "Contacts"
+      "contacts": "Contact"
     },
     "info": {
       "privacyPolicy": "Politique de confidentialité",
       "termsOfPurchasing": "Conditions d’achat",
       "cookieSettings": "Paramètres des cookies",
-      "company": "entreprise",
-      "consumer": "Consommateur",
-      "impressum": "Impressum",
+      "company": "Entreprise",
+      "consumer": "Particulier",
+      "impressum": "Mentions légales",
       "euOnlineDisputeResolution": "Règlement en ligne des litiges dans l’UE"
     },
     "note": {
@@ -1846,7 +1846,7 @@
     "l_7": "Avez-vous oublié votre mot de passe ?",
     "l_8": "Vous recevrez un e-mail avec un nouveau mot de passe.",
     "l_9": "Adresse e-mail",
-    "l_10": "envoyer",
+    "l_10": "Envoyer",
     "l_11": "Se connecter",
     "l_12": "Vous n’avez pas de compte ? Inscrivez-vous maintenant",
     "error": "Erreur",
@@ -1856,7 +1856,7 @@
   },
   "LoginRegister": {
     "r_1": "Créer un nouveau compte",
-    "r_2": "Consommateur",
+    "r_2": "Particulier",
     "r_3": "Entreprise"
   },
   "RegisterConsumer": {
@@ -1883,13 +1883,13 @@
     "rr_21": "politique de confidentialité.",
     "rr_22": "*Nom de l’entreprise",
     "rr_23": "Numéro de TVA",
-    "rr_24": "Pas de TVA ? Continuer sans.",
-    "rr_25": "*Actuellement aucune TVA n’est facturée conformément au § 19 UStG (petite entreprise).",
+    "rr_24": "Pas de numéro de TVA ? Continuer sans.",
+    "rr_25": "*Actuellement, aucune TVA n’est facturée conformément au § 19 UStG (régime de la petite entreprise).",
     "passwordMustMatch": "Les mots de passe doivent correspondre",
     "registrationFailed": "Échec de l’inscription",
     "pleaseSpecify": "Veuillez préciser",
-    "vatConfirmed": "TVA confirmée. Merci !",
-    "vatNotConfirmed": "TVA non confirmée. Vérifiez le numéro et réessayez.",
+    "vatConfirmed": "Numéro de TVA confirmé. Merci !",
+    "vatNotConfirmed": "Numéro de TVA non confirmé. Vérifiez le numéro et réessayez.",
     "tellAbout": {
       "onlineInternet": "En ligne / Internet",
       "throughSamples": "Par des échantillons",
@@ -1919,7 +1919,7 @@
     "h_4": "de qualité professionnelle",
     "h_5": "Nous fabriquons des panneaux et plaques signalétiques gravés durables en plastique de haute qualité pour les secteurs de l’industrie, de l’énergie et des entreprises.",
     "h_6": "Concevoir votre panneau",
-    "h_7": "Commandez avant 16h00 pour une expédition le jour même",
+    "h_7": "Les commandes reçues avant 16 h sont expédiées le jour même.",
     "h_8": "Pourquoi choisir",
     "h_9": "Prix équitables. Qualité industrielle.",
     "h_10": "Sur le marché actuel, nous savons que le budget compte.",
@@ -1932,14 +1932,14 @@
     "h_17": "Remises sur volume",
     "h_18": "Nous nous efforçons de vous offrir les meilleurs prix, c’est pourquoi nous avons mis en place un système de remises sur volume :",
     "h_19": "plus le montant de votre commande est élevé, plus le prix baisse.",
-    "h_20": "La remise s’applique uniquement au projet en cours (non cumulable) et est calculée automatiquement :",
+    "h_20": "La remise s’applique au projet en cours et est calculée automatiquement :",
     "h_21": "Montant de la commande :",
     "h_22": "de 30 € à 50 € — 5 %",
     "h_23": "de 50 € à 100 € — 10 %",
     "h_24": "de 100 € à 200 € — 15 %",
     "h_25": "de 200 € à 500 € — 20 %",
     "h_26": "de 500 € à 10000 € — 25 %",
-    "h_27": "La remise s’applique uniquement au projet en cours et n’inclut pas les accessoires.",
+    "h_27": "La remise s’applique à l’ensemble du projet en cours, mais ne s’applique pas à la livraison.",
     "h_28": "Panneaux gravés",
     "h_29": "personnalisés",
     "h_30": "en toute simplicité",
@@ -1956,8 +1956,8 @@
     "h_41": "Production",
     "h_42": "et livraison rapides",
     "h_43": "Chez SignXpert,",
-    "h_44": "nous combinons une technologie de pointe avec un système de commande efficace pour garantir une fabrication rapide et une expédition le jour même.",
-    "h_45": "Commandez avant 16:00 pour une expédition le jour même",
+    "h_44": "nous combinons une technologie de production moderne avec un système de commande en ligne efficace — pour une fabrication rapide et une expédition le jour même.",
+    "h_45": "Les commandes reçues avant 16 h sont expédiées le jour même.",
     "h_46": "livraison fiable en France et en Europe",
     "h_47": "réponse rapide et support client",
     "h_48": "Cela permet aux entreprises de recevoir leurs plaques gravées personnalisées de manière rapide et fiable.",
@@ -1972,14 +1972,14 @@
     "h_57": "Panneaux autocollants"
   },
   "Products": {
-    "p_1": "Personnalisés",
-    "p_2": "Panneaux et plaques signalétiques en plastique gravé",
+    "p_1": "Panneaux gravés",
+    "p_2": "personnalisés et plaques signalétiques",
     "p_3": "Chez",
     "p_4": "nous fabriquons des plaques en plastique gravé, plaques signalétiques et marquages industriels en plastique de gravure bicouche durable.",
     "p_5": "Nos panneaux gravés offrent une identification claire, permanente et professionnelle pour les machines, installations électriques, bureaux, bâtiments et postes de travail.",
     "p_6": "La gravure laser de précision révèle la couche contrastée du plastique pour un marquage net, durable et lisible pendant des années, même en environnement industriel exigeant.",
     "p_7": "Nos panneaux en plastique gravé sont largement utilisés dans :",
-    "p_8": "11Industrie et fabrication",
+    "p_8": "Industrie et fabrication",
     "p_9": "Installations électriques",
     "p_10": "Étiquetage des machines et équipements",
     "p_11": "Bureaux et bâtiments",
@@ -2006,15 +2006,15 @@
     "p_32": "choisir la taille et la mise en page de votre panneau",
     "p_33": "personnaliser le texte, les symboles et les couleurs",
     "p_34": "ajouter des trous de fixation ou un dos adhésif",
-    "p_35": "prévisualiser votre panneau en temps réel",
+    "p_35": "voir l’aperçu de votre panneau en temps réel",
     "p_36": "Cela permet de créer facilement des étiquettes gravées professionnelles, des plaques signalétiques de machines et des panneaux techniques en seulement quelques minutes.",
     "p_37": "Avec SignXpert",
-    "p_38": "les panneaux peuvent également être commandés par téléphone ou par e-mail, et notre équipe vous aidera à préparer le design si nécessaire.",
+    "p_38": "les panneaux peuvent également être commandés par téléphone ou par e-mail ; notre équipe vous aide volontiers à préparer le design si nécessaire.",
     "p_39": "Concevoir votre panneau",
-    "p_40": "Production personnalisée avec",
-    "p_41": "Chez SignXpert, chaque panneau gravé peut être personnalisé selon vos besoins.",
+    "p_40": "Fabrication personnalisée avec",
+    "p_41": "Chez SignXpert, chaque panneau gravé est fabriqué selon vos spécifications.",
     "p_42": "Que vous ayez besoin d’un seul panneau ou de grandes séries de production, nous fournissons une qualité fiable et une gravure précise.",
-    "p_43": "Vous pouvez concevoir votre panneau directement dans notre éditeur de panneaux en ligne, télécharger vos propres fichiers ou nous contacter avec vos exigences.",
+    "p_43": "Vous pouvez concevoir votre panneau directement dans notre éditeur en ligne, télécharger vos propres fichiers ou nous transmettre vos exigences techniques.",
     "p_44": "Notre objectif est de fournir des panneaux en plastique gravé durables, professionnels et faciles à commander pour l’industrie et les entreprises.",
     "p_45": "Nos",
     "p_46": "catégories de produits",

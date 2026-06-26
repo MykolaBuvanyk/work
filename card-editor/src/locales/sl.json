@@ -261,7 +261,7 @@
     "t_13": "2. Cene in DDV",
     "t_14": "Vse cene na naši spletni strani so navedene v evrih (€).",
     "t_15": "Pomembne davčne informacije:",
-    "t_16": "SignXpert je podjetje, registrirano v Nemčiji, za katerega velja §19 UStG (nemška oprostitev za mala podjetja). Zato DDV ne zaračunavamo in ga ne navajamo na računih. Za stranke iz Slovenije velja veljavna slovenska stopnja DDV (22%), če to zahteva zakon.",
+    "t_16": "SignXpert je podjetje, registrirano v Nemčiji, za katero velja §19 UStG (nemška ureditev za male podjetnike). Zato DDV ne zaračunavamo in ga ne izkazujemo na naših računih.",
     "t_17": "„Vse cene so končne cene brez stroškov dostave. V skladu z §19 UStG DDV ni zaračunan.“",
     "t_18": "Stroški dostave so jasno prikazani v košarici in v zadnjem koraku postopka naročanja. Pridržujemo si pravico do spremembe cen prihodnjih naročil brez predhodnega obvestila.",
     "t_19": "3. Dostava",
@@ -303,11 +303,11 @@
     "t_55": "Za morebitna vprašanja nas kontaktirajte prek",
     "t_56": "strani Kontakt.",
     "t_57": "11. Zasebni kupci",
-    "t_58": "Zasebni kupci lahko kupujejo brez navedbe številke DDV.",
-    "t_59": "V tem primeru se uporablja stopnja DDV vaše države.",
+    "t_58": "Zasebni kupci lahko kupujejo brez navedbe identifikacijske številke za DDV.",
+    "t_59": "V skladu z §19 UStG se DDV ne zaračuna in ni prikazan na računu.",
     "t_60": "12. Poslovne stranke",
-    "t_61": "Poslovne stranke (podjetja) se lahko registrirajo z veljavno številko DDV EU.",
-    "t_62": "Če bo vaša številka DDV potrjena, DDV ne bo zaračunan za transakcije znotraj EU (razen Nemčije).",
+    "t_61": "Poslovne stranke (podjetja) se lahko registrirajo z veljavno identifikacijsko številko za DDV EU, če jo imajo.",
+    "t_62": "Tudi za poslovne stranke se v skladu z §19 UStG DDV ne zaračuna in ni prikazan na računu.",
     "t_63": "Več informacij najdete v naši",
     "t_64": "Preberi več"
   },
@@ -317,7 +317,7 @@
     "i_3": "Podjetje / Lastnik:",
     "i_4": "Kostyantyn Utvenko, SignXpert",
     "i_5": "Naslov:",
-    "i_6": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "i_6": "Baumwiesen 2, 72401 Haigerloch, Nemčija",
     "i_7": "Kontakt",
     "i_8": "Telefon:",
     "i_9": "Kontaktni obrazec:",
@@ -364,7 +364,7 @@
     "description_6": "Ime:",
     "description_7": "Kostyantyn Utvenko",
     "description_8": "E-pošta:",
-    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Nemčija",
     "description_10": "Kontaktni obrazec:",
     "description_11": "2. Zbiranje, obdelava in uporaba osebnih podatkov",
     "description_12": "Osebno smo odgovorni za informacije, ki nam jih posredujete. Osebni podatki so vse informacije, ki jih je mogoče pripisati identifikabilni osebi. Vaše podatke zbiramo in obdelujemo za izvedbo vaših naročil. Podatki se posredujejo tretjim osebam le v obsegu, ki ga dovoljuje zakon (npr. za logistiko ali obdelavo plačil).",
@@ -458,12 +458,12 @@
     "answer_2_1": "Naročilo lahko udobno plačate z različnimi načini plačila, ki so na voljo na naši spletni strani. Sprejemamo Visa, MasterCard, PayPal in druge možnosti plačila.",
     "answer_2_2": "Plačate lahko neposredno med postopkom naročanja ali izberete plačilo po računu. Če izberete možnost računa, izstavimo račun, ki ga je treba plačati v 30 dneh.",
     "answer_2_3": "Vsa plačila se obdelajo varno in prejeli boste potrdilo, ko bo plačilo dokončano. Tako bo vaše naročilo hitro potrjeno in pripravljeno za proizvodnjo.",
-    "question_3": "Kako lahko naročilo prejmem brez DDV?",
-    "answer_3_1": "Če naročate v imenu podjetja, lahko pod določenimi pogoji naročate brez DDV. V ustrezno polje na strani za registracijo vnesite svojo identifikacijsko številko za DDV in kliknite gumb „Preverite“. Sistem bo preveril vašo številko in vas obvestil, ali je preverjanje uspelo.",
-    "answer_3_list_1": "Če je vaša številka DDV veljavna, DDV ne bo zaračunan za transakcije znotraj EU (razen Nemčije).",
-    "answer_3_list_2": "Če preverjanje ne uspe, najprej preverite, ali je bila številka pravilno vnesena. Včasih pomaga, če malo počakate in poskusite znova.",
-    "answer_3_2": "Če ni navedena nobena številka DDV ali preverjanje ne uspe, se bo uveljavila stopnja DDV, ki velja v vaši državi. Za potrošnike in podjetja s sedežem v Sloveniji velja redna stopnja DDV v višini 22%, ne glede na veljavno številko DDV. Če se nahajate zunaj Evropske unije, npr. v Švici, Združenem kraljestvu ali drugih državah, velja stopnja DDV 0% za izvoženo blago.",
-    "answer_3_3": "Če imate dodatna vprašanja ali se pojavijo težave, nas kontaktirajte. Naša ekipa vam bo z veseljem pomagala.",
+    "question_3": "Zakaj na računu ni prikazan DDV?",
+    "answer_3_1": "SignXpert trenutno posluje v skladu z nemško ureditvijo za male podjetnike po §19 UStG. Zato DDV ne zaračunavamo in ga ne izkazujemo na računih.",
+    "answer_3_list_1": "To velja za zasebne in poslovne stranke.",
+    "answer_3_list_2": "Identifikacijsko številko za DDV lahko kljub temu vnesete za podatke podjetja, če je to potrebno.",
+    "answer_3_2": "Vse cene so končne cene brez stroškov dostave. V skladu z §19 UStG DDV ni zaračunan.",
+    "answer_3_3": "Če imate dodatna vprašanja, nas kontaktirajte. Naša ekipa vam bo z veseljem pomagala.",
     "question_4": "Ali lahko vrnem naročilo in kaj vključuje vaša garancija zadovoljstva?",
     "answer_4_1": "Pri <home>SignXpert</home> smo prepričani, da bi moral biti vsak kupec popolnoma zadovoljen s svojim naročilom. Če vaš izdelek iz kakršnega koli razloga ne izpolnjuje vaših pričakovanj, bomo zagotovili ustrezno rešitev – to je naša popolna garancija zadovoljstva.",
     "answer_4_2": "Kaj vključuje garancija:",
@@ -801,12 +801,12 @@
         "message": "Sporočilo"
       },
       "descriptions": {
-        "url": "* Skenirajte za odpiranje spletne strani",
-        "email": "* Skenirajte za pošiljanje e-pošte",
-        "phone": "* Skenirajte za neposreden klic",
-        "whatsapp": "* Skenirajte za pošiljanje sporočila",
-        "wifi": "* Skenirajte za povezavo z omrežjem",
-        "message": "* Skenirajte za branje sporočila"
+        "url": "* Skenirajte, da odprete spletno stran",
+        "email": "* Skenirajte, da pošljete e-pošto",
+        "phone": "* Skenirajte, da pokličete",
+        "whatsapp": "* Skenirajte, da pošljete sporočilo",
+        "wifi": "* Skenirajte, da se povežete z omrežjem",
+        "message": "* Skenirajte, da preberete sporočilo"
       },
       "fields": {
         "websiteLink": "Povezava do spletne strani",
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com ali https://example.com",
         "email": "example@domain.com",
-        "phone": "+38640000000",
+        "phone": "+490123456789",
         "networkName": "Ime Wi-Fi omrežja",
         "password": "Geslo za Wi-Fi",
         "message": "Sem vnesite svoje sporočilo..."
@@ -1085,7 +1085,7 @@
     },
     "cart": "Košarica",
     "currentSign": "Trenutna ploščica",
-    "totalForAllSigns": "Ploščice skupaj",
+    "totalForAllSigns": "Znesek projekta",
     "discount": "Popust",
     "totalPrice": "Skupna cena",
     "accessoriesSelected": "Izbrani dodatki:",
@@ -1113,12 +1113,12 @@
     "orderSummary": "Povzetek naročila",
     "myOrder": "Moje naročilo",
     "selectCountry": "Izberite državo",
-    "phoneQuestionNote": "Dovolite vprašanja prek mobilnega telefona.",
+    "phoneQuestionNote": "Na to mobilno številko vas lahko kontaktiramo, če imamo vprašanja glede naročila.",
     "yes": "DA",
     "invoiceEmailNote": "Ta e-poštni naslov bo uporabljen za pošiljanje računa",
     "invoiceDifferent": "Naslov za fakturiranje (če je drugačen)",
-    "vatAndTotal": "DDV in skupni znesek",
-    "vatNote": "Za naročilo bo uveljavljena veljavna stopnja DDV.",
+    "vatAndTotal": "Skupni znesek",
+    "vatNote": "V skladu z §19 UStG DDV ni zaračunan.",
     "productionComment": "Tu pustite komentar za proizvodnjo:",
     "fields": {
       "fullName": "Ime in priimek",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Vmesni seštevek",
       "discount": "Popust",
       "price": "Cena",
-      "signsTotal": "Skupna cena ploščic",
+      "signsTotal": "Znesek projekta",
       "accessories": "Dodatki",
       "types": "Vrste",
       "totalAmount": "Skupni znesek"
@@ -1156,9 +1156,9 @@
       "comment": "Opomba k pošiljanju",
       "options": {
         "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "Paket UPS Next Day",
-        "upsExpressBeforeNoon": "UPS Express pred 12:00",
-        "upsSaturdayDelivery": "Sobotna dostava UPS"
+        "upsNextDayPackage": "UPS naslednji dan",
+        "upsExpressBeforeNoon": "UPS Express do 12:00",
+        "upsSaturdayDelivery": "UPS dostava v soboto"
       },
       "hints": {
         "saturday": "Na voljo samo v petek.",
@@ -1175,7 +1175,7 @@
     "shippingNotes": {
       "title": "Opombe k pošiljanju",
       "sameDay": "Naročila, prejeta pred 16:00, se pošljejo isti dan.",
-      "nextDay": "Izberite paket UPS Next Day za dostavo naslednji delovni dan.",
+      "nextDay": "Izberite UPS naslednji dan za dostavo naslednji delovni dan.",
       "euros": "Vse cene so v evrih."
     },
     "countries": {
@@ -1332,11 +1332,11 @@
         "desc": "Črne plastične kabelske vezice, velikost 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Vijaki 9,5 mm",
+        "name": "Samorezni 9,5 mm",
         "desc": "Velikost 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Vijaki 13 mm",
+        "name": "Samorezni 13 mm",
         "desc": "Velikost 2,9 × 13 mm"
       },
       "carabiner": {
@@ -1618,7 +1618,7 @@
       "topNotes": {
         "plastic": "Uporabljamo gravirno plastiko,\nki ne bledi in ne spreminja barve.",
         "templates": "Shranite lastno predlogo za prihodnjo uporabo.\nKadar koli ustvarite nov projekt ali odprite\nobstoječega.",
-        "price": "Vaše cene že vključujejo davke\nin popuste. Strankam redno ponujamo\nprivlačne popuste."
+        "price": "Vaše cene jasno prikazujejo\nznesek projekta in popuste.\nStrankam redno ponujamo\nprivlačne popuste."
       },
       "bottomNotes": {
         "requests": "Tu pustite posebne zahteve\n– beremo in upoštevamo\nvsako zahtevo.",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Številka za sledenje še ni na voljo",
       "opening": "Odpiranje...",
       "openProject": "Odpri projekt",
-      "sumInclVatDelivery": "Skupaj (vključno z DDV in dostavo)",
+      "sumInclVatDelivery": "Skupaj z dostavo",
       "table": {
         "no": "Št.",
-        "orderDate": "Datum naročila",
+        "orderDate": "Naročeno",
         "orderNo": "Št. nar.",
-        "projectName": "Ime projekta",
-        "orderSum": "Znesek naročila",
+        "projectName": "Ime",
+        "orderSum": "Znesek",
         "sumDelivery": "Znesek + dostava",
         "status": "Status",
         "deliveryNote": "Dobavnica",
-        "tracking": "Sledenje",
+        "tracking": "Sledi",
         "invoice": "Račun",
-        "invoiceStatus": "Status računa",
-        "toPay": "Za plačilo",
+        "invoiceStatus": "Status plačila",
+        "toPay": "Plačaj",
         "openProject": "Projekt"
       },
       "status": {
@@ -1791,7 +1791,7 @@
   "Footer": {
     "slogan": "Graviranje · Industrijske ploščice",
     "address": {
-      "country": "Deutschland"
+      "country": "Nemčija"
     },
     "menuTitle": "Meni:",
     "infoTitle": "Informacije:",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Vse cene so končne cene.",
-      "noVat": "Cene vključujejo veljavno stopnjo DDV.",
+      "noVat": "V skladu z §19 UStG DDV ni zaračunan.",
       "plusShipping": "Brez stroškov dostave."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Naziv podjetja",
     "rr_23": "ID za DDV EU",
     "rr_24": "Nimate ID-ja za DDV? Nadaljujte brez njega.",
-    "rr_25": "*Trenutno velja slovenska stopnja DDV (22% DDV).",
+    "rr_25": "*V skladu z §19 UStG DDV ni zaračunan.",
     "passwordMustMatch": "Gesli se morata ujemati",
     "registrationFailed": "Registracija ni uspela",
     "pleaseSpecify": "Prosimo navedite",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Kako lahko naročilo prejmem brez DDV?",
-    "description": "Če naročate v imenu podjetja, lahko pod določenimi pogoji naročate brez DDV. V ustrezno polje na strani za registracijo vnesite svojo identifikacijsko številko za DDV in kliknite gumb „Preveri“. Sistem bo preveril vašo številko in vas obvestil, ali je preverjanje uspelo.",
-    "validVat": "Če je vaša številka DDV veljavna, DDV ne bo zaračunan za transakcije znotraj EU (razen Nemčije).",
-    "invalidVat": "Če preverjanje ne uspe, najprej preverite, ali je bila številka pravilno vnesena. Včasih pomaga, če malo počakate in poskusite znova.",
-    "noVatNumber": "Če ni navedena nobena številka DDV ali preverjanje ne uspe, se bo uveljavila stopnja DDV, ki velja v vaši državi.",
-    "germanyVat": "Za potrošnike in podjetja s sedežem v Sloveniji velja redna stopnja DDV v višini 22%.",
-    "outsideEu": "Če se nahajate zunaj Evropske unije, npr. v Švici, Združenem kraljestvu ali drugih državah, velja stopnja DDV 0% za izvoženo blago.",
+    "title": "Zakaj na računu ni prikazan DDV?",
+    "description": "SignXpert trenutno posluje v skladu z nemško ureditvijo za male podjetnike po §19 UStG. Zato DDV ne zaračunavamo in ga ne izkazujemo na računih.",
+    "validVat": "To velja za zasebne in poslovne stranke.",
+    "invalidVat": "Če vnesete identifikacijsko številko za DDV in preverjanje ne uspe, najprej preverite, ali je številka pravilno vnesena.",
+    "noVatNumber": "Če identifikacijske številke za DDV ne vnesete, lahko naročilo še vedno oddate.",
+    "germanyVat": "V skladu z §19 UStG DDV ni zaračunan in ni prikazan na računu.",
+    "outsideEu": "Za vprašanja glede podjetniških podatkov ali izvoza nas kontaktirajte.",
     "contactUs": "Če imate dodatna vprašanja ali se pojavijo težave, nas kontaktirajte. Naša ekipa vam bo z veseljem pomagala."
   },
   "HomePlaceholder": {
@@ -1932,14 +1932,14 @@
     "h_17": "Količinski popusti",
     "h_18": "Trudimo se vam ponuditi najboljše cene. Zato smo uvedli sistem količinskih popustov:",
     "h_19": "Večja je vrednost naročila, nižja je cena.",
-    "h_20": "Popust velja samo za trenutni projekt (nekumulativen) in se izračuna samodejno:",
+    "h_20": "Popust velja za celoten trenutni projekt in se izračuna samodejno:",
     "h_21": "Vrednost naročila:",
     "h_22": "od 30 € do 50 € — 5%",
     "h_23": "od 50 € do 100 € — 10%",
     "h_24": "od 100 € do 200 € — 15%",
     "h_25": "od 200 € do 500 € — 20%",
     "h_26": "od 500 € do 10000 € — 25%",
-    "h_27": "Popust velja samo za trenutni projekt in ne vključuje dodatkov.",
+    "h_27": "Popust velja za celoten trenutni projekt, vendar ne velja za dostavo.",
     "h_28": "Individualno gravirane",
     "h_29": "ploščice",
     "h_30": "enostavno ustvarjene",

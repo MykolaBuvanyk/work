@@ -261,8 +261,8 @@
     "t_13": "2. Ceny a DPH",
     "t_14": "Všetky ceny na našej webovej stránke sú uvedené v eurách (€).",
     "t_15": "Dôležitá daňová informácia:",
-    "t_16": "SignXpert je spoločnosť registrovaná v Nemecku, na ktorú sa vzťahuje §19 UStG (nemecká úprava pre malé podniky). Preto neuplatňujeme DPH a neuvádzame ju na našich faktúrach. Pre zákazníkov zo Slovenska sa uplatňuje aktuálna slovenská sadzba DPH (23 %), ak to vyžadujú právne predpisy.",
-    "t_17": "„Všetky ceny sú konečné ceny bez nákladov na dopravu. V súlade s §19 UStG sa DPH neuplatňuje.“",
+    "t_16": "SignXpert je spoločnosť registrovaná v Nemecku, na ktorú sa vzťahuje §19 UStG (nemecký režim pre malé podniky). Preto neúčtujeme DPH a neuvádzame ju na našich faktúrach.",
+    "t_17": "„Všetky ceny sú konečné ceny bez nákladov na dopravu. V súlade s §19 UStG sa DPH neúčtuje.“",
     "t_18": "Náklady na dopravu sú jasne zobrazené v košíku a v poslednom kroku procesu objednávania. Vyhradzujeme si právo meniť ceny budúcich objednávok bez predchádzajúceho upozornenia.",
     "t_19": "3. Doručenie",
     "t_20": "SignXpert odosiela objednávky prostredníctvom ",
@@ -303,11 +303,11 @@
     "t_55": "V prípade akýchkoľvek otázok nás kontaktujte prostredníctvom",
     "t_56": "stránky Kontakt.",
     "t_57": "11. Súkromní kupujúci",
-    "t_58": "Súkromní kupujúci môžu nakupovať bez uvedenia čísla DPH.",
-    "t_59": "V takom prípade sa uplatňuje sadzba DPH platná vo vašej krajine.",
+    "t_58": "Súkromní kupujúci môžu nakupovať bez uvedenia IČ DPH.",
+    "t_59": "V súlade s §19 UStG sa DPH neúčtuje ani neuvádza na faktúre.",
     "t_60": "12. Firemní zákazníci",
     "t_61": "Firemní zákazníci (spoločnosti) sa môžu registrovať s platným číslom DPH EÚ.",
-    "t_62": "Ak bude vaše číslo DPH potvrdené, DPH sa nebude uplatňovať na transakcie v rámci EÚ (okrem Nemecka).",
+    "t_62": "Keďže SignXpert uplatňuje §19 UStG, DPH sa na faktúrach neúčtuje ani neuvádza.",
     "t_63": "Viac informácií nájdete v našich",
     "t_64": "Čítať viac"
   },
@@ -317,7 +317,7 @@
     "i_3": "Spoločnosť / Vlastník:",
     "i_4": "Kostyantyn Utvenko, SignXpert",
     "i_5": "Adresa:",
-    "i_6": "Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "i_6": "Baumwiesen 2, 72401 Haigerloch, Nemecko",
     "i_7": "Kontakt",
     "i_8": "Telefón:",
     "i_9": "Kontaktný formulár:",
@@ -364,7 +364,7 @@
     "description_6": "Meno:",
     "description_7": "Kostyantyn Utvenko",
     "description_8": "E-mail:",
-    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Deutschland",
+    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Nemecko",
     "description_10": "Kontaktný formulár:",
     "description_11": "2. Zber, spracovanie a využitie osobných údajov",
     "description_12": "Osobne zodpovedáme za informácie, ktoré nám poskytujete. Osobné údaje sú všetky informácie, ktoré možno priradiť identifikovateľnej osobe. Vaše údaje zbierame a spracúvame na účely vybavenia objednávok. Údaje odovzdávame tretím stranám len v rozsahu povolenom zákonom (napr. pre logistiku alebo spracovanie platieb).",
@@ -423,7 +423,7 @@
     "description_65": "Podľa čl. 77 GDPR máte právo podať sťažnosť príslušnému dozornému orgánu pre ochranu údajov, ak sa domnievate, že spracovanie vašich osobných údajov porušuje GDPR.",
     "description_66": "Komisár pre ochranu údajov a slobodu informácií Bádensko-Württembersko",
     "description_67": "Adresa:",
-    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Deutschland",
+    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Nemecko",
     "description_69": "6. Súbory protokolov",
     "description_70": "Keď navštívite",
     "description_71": "stránky, váš prehliadač automaticky odosiela údaje, ktoré sú uložené v súboroch protokolov servera:",
@@ -458,11 +458,11 @@
     "answer_2_1": "Za objednávku môžete pohodlne zaplatiť rôznymi platobnými metódami dostupnými na našej stránke. Akceptujeme Visa, MasterCard, PayPal a ďalšie platobné možnosti.",
     "answer_2_2": "Môžete platiť priamo počas procesu objednávania alebo zvoliť platbu na faktúru. Ak zvolíte možnosť faktúry, vystavíme faktúru, ktorú treba uhradiť do 30 dní.",
     "answer_2_3": "Všetky platby sú spracovávané bezpečne a dostanete potvrdenie, keď bude platba dokončená. Tak bude vaša objednávka rýchlo potvrdená a pripravená na výrobu.",
-    "question_3": "Ako môžem získať objednávku bez DPH?",
-    "answer_3_1": "Ak objednávate v mene firmy, môžete za určitých podmienok objednávať bez DPH. Zadajte svoje identifikačné číslo DPH do príslušného poľa na registračnej stránke a kliknite na tlačidlo „Overiť“. Systém overí vaše číslo a informuje vás, či bolo overenie úspešné.",
-    "answer_3_list_1": "Ak je vaše číslo DPH platné, DPH sa nebude uplatňovať na transakcie v rámci EÚ (okrem Nemecka).",
+    "question_3": "Ako funguje objednávka bez DPH?",
+    "answer_3_1": "Ak objednávate v mene firmy, môžete zadať svoje IČ DPH EÚ do príslušného poľa na registračnej stránke a kliknúť na tlačidlo „Overiť“. Systém overí vaše číslo a informuje vás, či bolo overenie úspešné.",
+    "answer_3_list_1": "V súlade s §19 UStG sa DPH na faktúre neúčtuje ani neuvádza.",
     "answer_3_list_2": "Ak overenie zlyhá, najprv skontrolujte, či bolo číslo zadané správne. Niekedy pomôže chvíľu počkať a skúsiť znova.",
-    "answer_3_2": "Ak nie je zadané žiadne číslo DPH alebo overenie zlyhá, uplatní sa sadzba DPH platná vo vašej krajine. Pre spotrebiteľov a firmy so sídlom na Slovensku platí bežná sadzba DPH vo výške 23%, bez ohľadu na platné číslo DPH. Ak sa nachádzate mimo Európskej únie, napr. vo Švajčiarsku, Veľkej Británii alebo iných krajinách, na exportovaný tovar sa uplatňuje sadzba DPH 0%.",
+    "answer_3_2": "Ak nie je zadané žiadne IČ DPH alebo overenie zlyhá, môžete v objednávke pokračovať. Keďže SignXpert uplatňuje §19 UStG, DPH sa na faktúrach neúčtuje ani neuvádza. Ak sa nachádzate mimo Európskej únie, napríklad vo Švajčiarsku, Veľkej Británii alebo iných krajinách, môžu sa uplatniť miestne dovozné pravidlá.",
     "answer_3_3": "Ak máte ďalšie otázky alebo nastanú problémy, kontaktujte nás. Náš tím vám rád pomôže.",
     "question_4": "Môžem vrátiť objednávku a čo zahŕňa vaša záruka spokojnosti?",
     "answer_4_1": "V <home>SignXpert</home> sme presvedčení, že každý zákazník by mal byť plne spokojný so svojou objednávkou. Ak váš výrobok z akéhokoľvek dôvodu nespĺňa vaše očakávania, postaráme sa o vhodné riešenie – to je naša plná záruka spokojnosti.",
@@ -559,7 +559,7 @@
       }
     },
     "features": {
-      "title": "<accent>Detaily produktu</accent>",
+      "title": "<accent>Detaily výrobku</accent>",
       "descriptionStrong": "Naše gravírované plastové štítky sú vyrobené z vysokokvalitného dvojvrstvového plastu pre technické a priemyselné aplikácie.",
       "description": "Priamo gravírovaný nápis zostáva trvalo ostrý, farebne stabilný a odolný voči opotrebeniu – jasná výhoda oproti etiketám.",
       "selfAdhesive": {
@@ -619,7 +619,7 @@
       "imageAlt": "Individuálna výroba so SignXpert"
     },
     "categories": {
-      "title": "Naše <accent>kategórie produktov</accent> a typické aplikácie",
+      "title": "Naše <accent>kategórie výrobkov</accent> a typické aplikácie",
       "electricalPanel": {
         "title": "Označovanie rozvádzačov",
         "item_1": "Elektrické skrine",
@@ -801,12 +801,12 @@
         "message": "Správa"
       },
       "descriptions": {
-        "url": "* Naskenujte na otvorenie webovej stránky",
-        "email": "* Naskenujte na odoslanie e-mailu",
-        "phone": "* Naskenujte na priame zavolanie",
-        "whatsapp": "* Naskenujte na odoslanie správy",
-        "wifi": "* Naskenujte na pripojenie k sieti",
-        "message": "* Naskenujte na prečítanie správy"
+        "url": "* Naskenujte, aby ste prešli na webovú stránku",
+        "email": "* Naskenujte, aby ste odoslali e-mail",
+        "phone": "* Naskenujte, aby ste zavolali",
+        "whatsapp": "* Naskenujte, aby ste odoslali správu",
+        "wifi": "* Naskenujte, aby ste sa pripojili k sieti",
+        "message": "* Naskenujte, aby ste si prečítali správu"
       },
       "fields": {
         "websiteLink": "Odkaz na webovú stránku",
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com alebo https://example.com",
         "email": "example@domain.com",
-        "phone": "+421900000000",
+        "phone": "+490123456789",
         "networkName": "Názov Wi-Fi siete",
         "password": "Heslo Wi-Fi",
         "message": "Zadajte tu svoju správu..."
@@ -1085,7 +1085,7 @@
     },
     "cart": "Košík",
     "currentSign": "Aktuálny štítok",
-    "totalForAllSigns": "Štítky celkom",
+    "totalForAllSigns": "Suma projektu",
     "discount": "Zľava",
     "totalPrice": "Celková cena",
     "accessoriesSelected": "Vami vybrané príslušenstvo:",
@@ -1118,7 +1118,7 @@
     "invoiceEmailNote": "Táto e-mailová adresa sa použije na zasielanie faktúry",
     "invoiceDifferent": "Fakturačná adresa (ak je iná)",
     "vatAndTotal": "DPH a celková suma",
-    "vatNote": "Na objednávku sa uplatní platná sadzba DPH.",
+    "vatNote": "V súlade s §19 UStG sa DPH neúčtuje ani neuvádza na faktúre.",
     "productionComment": "Zanechajte tu komentár pre výrobu:",
     "fields": {
       "fullName": "Meno a priezvisko",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Medzisúčet štítkov",
       "discount": "Zľava",
       "price": "Cena",
-      "signsTotal": "Celková cena štítkov",
+      "signsTotal": "Suma projektu",
       "accessories": "Príslušenstvo",
       "types": "Typy",
       "totalAmount": "Celková suma"
@@ -1156,9 +1156,9 @@
       "comment": "Poznámka k doprave",
       "options": {
         "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS doručenie nasledujúci deň – balík",
-        "upsExpressBeforeNoon": "UPS Express pred 12:00",
-        "upsSaturdayDelivery": "Sobotňajšie doručenie UPS"
+        "upsNextDayPackage": "UPS nasledujúci deň",
+        "upsExpressBeforeNoon": "UPS Express do 12:00",
+        "upsSaturdayDelivery": "UPS sobotné doručenie"
       },
       "hints": {
         "saturday": "Dostupné len v piatok.",
@@ -1174,8 +1174,8 @@
     },
     "shippingNotes": {
       "title": "Poznámky k doprave",
-      "sameDay": "Objednávky prijaté pred 16:00 sú odoslané v ten istý deň.",
-      "nextDay": "Vyberte UPS doručenie nasledujúci deň pre doručenie v nasledujúci pracovný deň.",
+      "sameDay": "Objednávky prijaté pred 16:00 odosielame v ten istý deň.",
+      "nextDay": "Vyberte UPS nasledujúci deň pre doručenie v nasledujúci pracovný deň.",
       "euros": "Všetky ceny sú v eurách."
     },
     "countries": {
@@ -1332,11 +1332,11 @@
         "desc": "Čierne plastové sťahovacie pásky, veľkosť 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Skrutky 9,5 mm",
+        "name": "Samorezy 9,5 mm",
         "desc": "Veľkosť 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Skrutky 13 mm",
+        "name": "Samorezy 13 mm",
         "desc": "Veľkosť 2,9 × 13 mm"
       },
       "carabiner": {
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Číslo sledovania ešte nie je k dispozícii",
       "opening": "Otvára sa...",
       "openProject": "Otvoriť projekt",
-      "sumInclVatDelivery": "Suma (vrátane DPH a doručenia)",
+      "sumInclVatDelivery": "Suma + doprava",
       "table": {
         "no": "Č.",
-        "orderDate": "Dátum objednávky",
-        "orderNo": "Č. obj.",
-        "projectName": "Názov projektu",
-        "orderSum": "Suma objednávky",
-        "sumDelivery": "Suma + doručenie",
+        "orderDate": "Objednané",
+        "orderNo": "Č. objednávky",
+        "projectName": "Názov",
+        "orderSum": "Suma",
+        "sumDelivery": "Suma + doprava",
         "status": "Stav",
         "deliveryNote": "Dodací list",
-        "tracking": "Sledovanie",
+        "tracking": "Sledovať",
         "invoice": "Faktúra",
-        "invoiceStatus": "Stav faktúry",
-        "toPay": "Na zaplatenie",
+        "invoiceStatus": "Stav platby",
+        "toPay": "Zaplatiť",
         "openProject": "Projekt"
       },
       "status": {
@@ -1762,7 +1762,7 @@
       "registration": "Registrácia",
       "myAccount": "Môj účet",
       "newProject": "Nový projekt",
-      "products": "Produkty",
+      "products": "Výrobky",
       "industries": "Odvetvia",
       "faq": "FAQ",
       "quickGuide": "Stručný návod",
@@ -1791,7 +1791,7 @@
   "Footer": {
     "slogan": "Gravírovanie · Priemyselné štítky",
     "address": {
-      "country": "Deutschland"
+      "country": "Nemecko"
     },
     "menuTitle": "Menu:",
     "infoTitle": "Informácie:",
@@ -1803,7 +1803,7 @@
       "myAccount": "Môj účet",
       "newProject": "Nový projekt",
       "templates": "Šablóny",
-      "products": "Produkty",
+      "products": "Výrobky",
       "industries": "Odvetvia",
       "faq": "FAQ",
       "quickGuide": "Stručný návod",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Všetky ceny sú konečné ceny.",
-      "noVat": "Ceny obsahujú platnú sadzbu DPH.",
+      "noVat": "V súlade s §19 UStG sa DPH neúčtuje.",
       "plusShipping": "Bez nákladov na dopravu."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Názov spoločnosti",
     "rr_23": "IČ DPH EÚ",
     "rr_24": "Nemáte IČ DPH? Pokračujte bez neho.",
-    "rr_25": "*V súčasnosti platí slovenská sadzba DPH (23 % DPH).",
+    "rr_25": "*V súlade s §19 UStG sa DPH neúčtuje ani neuvádza na faktúre.",
     "passwordMustMatch": "Heslá sa musia zhodovať",
     "registrationFailed": "Registrácia sa nepodarila",
     "pleaseSpecify": "Prosím uveďte",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Ako môžem získať objednávku bez DPH?",
-    "description": "Ak objednávate v mene firmy, môžete za určitých podmienok objednávať bez DPH. Zadajte svoje identifikačné číslo DPH do príslušného poľa na registračnej stránke a kliknite na tlačidlo „Overiť“. Systém overí vaše číslo a informuje vás, či bolo overenie úspešné.",
-    "validVat": "Ak je vaše IČ DPH platné, DPH sa nebude uplatňovať na transakcie v rámci EÚ (okrem Nemecka).",
+    "title": "Ako funguje objednávka bez DPH?",
+    "description": "Ak objednávate v mene firmy, môžete zadať svoje IČ DPH EÚ do príslušného poľa na registračnej stránke a kliknúť na tlačidlo „Overiť“. Systém overí vaše číslo a informuje vás, či bolo overenie úspešné.",
+    "validVat": "V súlade s §19 UStG sa DPH na faktúre neúčtuje ani neuvádza.",
     "invalidVat": "Ak overenie zlyhá, najprv skontrolujte, či bolo číslo zadané správne. Niekedy pomôže chvíľu počkať a skúsiť znova.",
-    "noVatNumber": "Ak nie je zadané žiadne IČ DPH alebo overenie zlyhá, uplatní sa sadzba DPH platná vo vašej krajine.",
-    "germanyVat": "Pre spotrebiteľov a firmy so sídlom na Slovensku platí bežná sadzba DPH vo výške 23 %.",
-    "outsideEu": "Ak sa nachádzate mimo Európskej únie, napr. vo Švajčiarsku, Veľkej Británii alebo iných krajinách, na exportovaný tovar sa uplatňuje sadzba DPH 0%.",
+    "noVatNumber": "Ak nie je zadané žiadne IČ DPH alebo overenie zlyhá, môžete v objednávke pokračovať.",
+    "germanyVat": "Keďže SignXpert uplatňuje §19 UStG, DPH sa neúčtuje ani pri objednávkach zo Slovenska.",
+    "outsideEu": "Ak sa nachádzate mimo Európskej únie, napríklad vo Švajčiarsku, Veľkej Británii alebo iných krajinách, môžu sa uplatniť miestne dovozné pravidlá.",
     "contactUs": "Ak máte ďalšie otázky alebo nastanú problémy, kontaktujte nás. Náš tím vám rád pomôže."
   },
   "HomePlaceholder": {
@@ -1919,7 +1919,7 @@
     "h_4": "pre priemyselné označovanie",
     "h_5": "Dodávame trvalé, gravírované plastové štítky v prémiovej kvalite – ideálne pre priemysel, energetické zariadenia a komerčné aplikácie.",
     "h_6": "Navrhnúť online teraz",
-    "h_7": "Objednávky prijaté pred 16:00 odosielame v ten istý pracovný deň.",
+    "h_7": "Objednávky prijaté pred 16:00 odosielame v ten istý deň.",
     "h_8": "Prečo",
     "h_9": "Férové ceny. Priemyselná kvalita.",
     "h_10": "Vieme, že rozpočet hrá dnes dôležitú úlohu.",
@@ -1932,14 +1932,14 @@
     "h_17": "Množstevné zľavy",
     "h_18": "Snažíme sa ponúkať vám najlepšie ceny. Preto sme zaviedli systém množstevných zliav:",
     "h_19": "Čím vyššia hodnota objednávky, tým nižšia cena.",
-    "h_20": "Zľava platí len pre aktuálny projekt (nekumulatívna) a počíta sa automaticky:",
+    "h_20": "Zľava platí pre celý aktuálny projekt a počíta sa automaticky:",
     "h_21": "Hodnota objednávky:",
     "h_22": "od 30 € do 50 € — 5%",
     "h_23": "od 50 € do 100 € — 10%",
     "h_24": "od 100 € do 200 € — 15%",
     "h_25": "od 200 € do 500 € — 20%",
     "h_26": "od 500 € do 10000 € — 25%",
-    "h_27": "Zľava platí len pre aktuálny projekt a nezahŕňa príslušenstvo.",
+    "h_27": "Zľava platí pre celý aktuálny projekt, nevzťahuje sa však na dopravu.",
     "h_28": "Individuálne gravírované",
     "h_29": "štítky",
     "h_30": "jednoducho vytvorené",
@@ -1984,7 +1984,7 @@
     "p_10": "Označovanie strojov a zariadení",
     "p_11": "Kancelárie a budovy",
     "p_12": "Technické inštalácie",
-    "p_13": "Produkt",
+    "p_13": "Výrobok",
     "p_14": "vlastnosti",
     "p_15": "Naše gravírované plastové štítky sú vyrobené z vysokokvalitného dvojvrstvového plastu špeciálne navrhnutého pre technické a priemyselné aplikácie.",
     "p_16": "Priamo gravírovaný do materiálu: trvalo ostrý, farebne stabilný a odolný voči opotrebeniu – jasná výhoda oproti bežným etiketám.",
@@ -2017,7 +2017,7 @@
     "p_43": "Štítok môžete navrhnúť priamo v našom online editore, nahrať vlastné súbory alebo nám zaslať vaše požiadavky.",
     "p_44": "Naším cieľom je dodávať trvalé, profesionálne a ľahko objednateľné gravírované plastové štítky pre priemysel a podnikanie.",
     "p_45": "Naše",
-    "p_46": "kategórie produktov",
+    "p_46": "kategórie výrobkov",
     "p_47": "a typické aplikácie",
     "p_48": "Označovanie rozvádzačov",
     "p_49": "Elektrické skrine",

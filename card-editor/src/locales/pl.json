@@ -261,7 +261,7 @@
     "t_13": "2. Ceny i VAT",
     "t_14": "Wszystkie ceny na naszej stronie internetowej są podane w euro (€).",
     "t_15": "Ważna informacja podatkowa:",
-    "t_16": "SignXpert jest firmą zarejestrowaną w Niemczech, do której ma zastosowanie §19 UStG (niemieckie zwolnienie podatkowe dla małych przedsiębiorców). Dlatego nie naliczamy VAT i nie wykazujemy go na naszych fakturach. Dla klientów z Polski obowiązuje aktualnie obowiązująca polska stawka VAT (23%), jeśli jest to wymagane prawnie.",
+    "t_16": "SignXpert jest firmą zarejestrowaną w Niemczech i korzysta ze zwolnienia dla małych przedsiębiorców zgodnie z §19 UStG. Dlatego nie naliczamy VAT i nie wykazujemy go na fakturach.",
     "t_17": "„Wszystkie ceny są cenami ostatecznymi, bez kosztów wysyłki. Zgodnie z §19 UStG VAT nie jest naliczany.”",
     "t_18": "Koszty wysyłki są wyraźnie wyświetlane w koszyku i w ostatnim kroku procesu zamówienia. Zastrzegamy sobie prawo do zmiany cen przyszłych zamówień bez wcześniejszego powiadomienia.",
     "t_19": "3. Dostawa",
@@ -304,10 +304,10 @@
     "t_56": "stronę kontaktową.",
     "t_57": "11. Kupujący prywatni",
     "t_58": "Kupujący prywatni mogą dokonywać zakupów bez podawania numeru VAT.",
-    "t_59": "W takim przypadku obowiązuje stawka VAT Twojego kraju.",
+    "t_59": "Zgodnie z §19 UStG VAT nie jest naliczany.",
     "t_60": "12. Klienci biznesowi",
-    "t_61": "Klienci biznesowi (firmy) mogą rejestrować się z ważnym numerem VAT UE.",
-    "t_62": "Jeśli Twój numer VAT zostanie został potwierdzony, VAT nie będzie naliczany dla transakcji wewnątrzunijnych (poza Niemcami).",
+    "t_61": "Klienci biznesowi (firmy) mogą podać ważny numer VAT UE do dokumentacji.",
+    "t_62": "Potwierdzenie numeru VAT UE nie zmienia ceny zamówienia; zgodnie z §19 UStG VAT nie jest naliczany.",
     "t_63": "Więcej informacji znajdziesz w naszym",
     "t_64": "Czytaj więcej"
   },
@@ -458,11 +458,11 @@
     "answer_2_1": "Możesz wygodnie zapłacić za zamówienie różnymi metodami płatności dostępnymi na naszej stronie. Akceptujemy Visa, MasterCard, PayPal i inne opcje płatności.",
     "answer_2_2": "Możesz płacić bezpośrednio podczas procesu zamawiania lub wybrać płatność na fakturę. Jeśli wybierzesz opcję faktury, wystawiamy fakturę, którą należy opłacić w ciągu 30 dni.",
     "answer_2_3": "Wszystkie płatności są przetwarzane bezpiecznie i otrzymasz potwierdzenie, gdy płatność zostanie zakończona. W ten sposób Twoje zamówienie zostanie szybko potwierdzone i przygotowane do produkcji.",
-    "question_3": "Jak mogę otrzymać zamówienie bez VAT?",
-    "answer_3_1": "Jeśli zamawiasz w imieniu firmy, możesz zamówić bez VAT pod pewnymi warunkami. Wprowadź swój numer identyfikacji podatkowej VAT w odpowiednim polu na stronie rejestracji i kliknij przycisk „Sprawdź”. System zweryfikuje Twój numer i poinformuje Cię, czy weryfikacja się powiodła.",
-    "answer_3_list_1": "Jeśli Twój numer VAT jest ważny, VAT nie będzie naliczany dla transakcji wewnątrzunijnych (poza Niemcami).",
-    "answer_3_list_2": "Jeśli weryfikacja się nie powiedzie, upewnij się najpierw, że numer został wprowadzony prawidłowo. Czasami pomaga odczekać chwilę i spróbować ponownie.",
-    "answer_3_2": "Jeśli nie zostanie podany numer VAT lub weryfikacja się nie powiedzie, zostanie zastosowana stawka VAT obowiązująca w Twoim kraju. Dla konsumentów i firm z siedzibą w Polsce obowiązuje regularna stawka VAT wynosząca 23%, niezależnie od ważnego numeru VAT. Jeśli przebywasz poza Unią Europejską, np. w Szwajcarii, Wielkiej Brytanii lub innych krajach, eksportowane towary mają stawkę VAT 0%.",
+    "question_3": "Dlaczego na fakturze nie ma VAT?",
+    "answer_3_1": "SignXpert korzysta ze zwolnienia dla małych przedsiębiorców zgodnie z §19 UStG. Dlatego nie naliczamy VAT i nie wykazujemy go na fakturach – niezależnie od tego, czy zamawia osoba prywatna, czy firma.",
+    "answer_3_list_1": "Numer VAT UE możesz podać przy rejestracji do dokumentacji firmowej.",
+    "answer_3_list_2": "Jeśli weryfikacja numeru VAT UE się nie powiedzie, sprawdź wpisany numer i spróbuj ponownie.",
+    "answer_3_2": "Brak numeru VAT UE nie blokuje zamówienia. Cena pozostaje ceną końcową bez wykazanego VAT zgodnie z §19 UStG.",
     "answer_3_3": "Jeśli masz dalsze pytania lub pojawią się problemy, skontaktuj się z nami. Nasz zespół chętnie pomoże.",
     "question_4": "Czy mogę zwrócić zamówienie i co obejmuje gwarancja satysfakcji?",
     "answer_4_1": "W <home>SignXpert</home> jesteśmy przekonani, że każdy klient powinien być w pełni zadowolony ze swojego zamówienia. Jeśli Twój produkt z jakiegokolwiek powodu nie spełnia Twoich oczekiwań, zadbamy o odpowiednie rozwiązanie – to nasza pełna gwarancja satysfakcji.",
@@ -715,7 +715,7 @@
     "size": {
       "width": "Szerokość",
       "height": "Wysokość",
-      "cornerRadius": "Promień narożnika"
+      "cornerRadius": "Promień nar."
     },
     "units": {
       "mm": "(mm)",
@@ -751,7 +751,7 @@
       "cut": "Wycięcie",
       "cutTitle": "Różne kształty",
       "qrCode": "Kod QR",
-      "barCode": "Kod kreskowy"
+      "barCode": "Kod kresk."
     },
     "holes": {
       "title": "Otwory",
@@ -765,8 +765,8 @@
       "rightCentered": "Otwór po prawej pośrodku"
     },
     "copies": {
-      "exact": "Dokładna kopia",
-      "editable": "Edytowalna kopia",
+      "exact": "Dokł. kopia",
+      "editable": "Kopia edyt.",
       "copies": "szt."
     },
     "footer": {
@@ -801,12 +801,12 @@
         "message": "Wiadomość"
       },
       "descriptions": {
-        "url": "* Zeskanuj, aby otworzyć stronę",
+        "url": "* Zeskanuj, aby przejść na stronę internetową",
         "email": "* Zeskanuj, aby wysłać e-mail",
-        "phone": "* Zeskanuj, aby zadzwonić bezpośrednio",
+        "phone": "* Zeskanuj, aby zadzwonić",
         "whatsapp": "* Zeskanuj, aby wysłać wiadomość",
         "wifi": "* Zeskanuj, aby połączyć się z siecią",
-        "message": "* Zeskanuj, aby przeczytać wiadomość"
+        "message": "* Zeskanuj, aby wyświetlić wiadomość"
       },
       "fields": {
         "websiteLink": "Link do strony",
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com lub https://example.com",
         "email": "example@domain.com",
-        "phone": "+48600000000",
+        "phone": "+490123456789",
         "networkName": "Nazwa sieci Wi-Fi",
         "password": "Hasło Wi-Fi",
         "message": "Wpisz tutaj swoją wiadomość..."
@@ -916,7 +916,7 @@
       "width": "Szerokość:",
       "rotate": "Obróć:",
       "height": "Wysokość:",
-      "cornerRadius": "Promień narożnika:",
+      "cornerRadius": "Promień nar.:",
       "fill": "Grawerowanie powierzchniowe",
       "cut": "Wycięcie",
       "thickness": "Grubość",
@@ -1085,7 +1085,7 @@
     },
     "cart": "Koszyk",
     "currentSign": "Bieżąca tabliczka",
-    "totalForAllSigns": "Tabliczki łącznie",
+    "totalForAllSigns": "Kwota projektu",
     "discount": "Rabat",
     "totalPrice": "Cena łączna",
     "accessoriesSelected": "Wybrane przez Ciebie akcesoria:",
@@ -1113,12 +1113,12 @@
     "orderSummary": "Podsumowanie zamówienia",
     "myOrder": "Moje zamówienie",
     "selectCountry": "Wybierz kraj",
-    "phoneQuestionNote": "Możemy kontaktować się z Tobą w sprawie zamówienia pod tym numerem telefonu komórkowego.",
+    "phoneQuestionNote": "Kontakt w sprawie Państwa zamówienia.",
     "yes": "TAK",
     "invoiceEmailNote": "Ten adres e-mail zostanie użyty do wysłania faktury",
     "invoiceDifferent": "Adres do faktury (jeśli inny)",
-    "vatAndTotal": "VAT i łączna kwota",
-    "vatNote": "Do zamówienia zostanie zastosowana obowiązująca stawka VAT.",
+    "vatAndTotal": "Kwota zamówienia",
+    "vatNote": "Zgodnie z §19 UStG VAT nie jest naliczany.",
     "productionComment": "Zostaw tutaj komentarz dla produkcji:",
     "fields": {
       "fullName": "Imię i nazwisko",
@@ -1136,7 +1136,7 @@
       "mobilePhone": "Telefon komórkowy"
     },
     "customerReference": {
-      "placeholder": "np. nr nr zam., nr projektu – widoczny na fakturze"
+      "placeholder": "np. nr zamówienia, nr projektu – widoczne na fakturze"
     },
     "summary": {
       "description": "Opis",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Suma częściowa",
       "discount": "Rabat",
       "price": "Cena",
-      "signsTotal": "Łączna cena tabliczek",
+      "signsTotal": "Kwota projektu",
       "accessories": "Akcesoria",
       "types": "Typy",
       "totalAmount": "Łączna kwota"
@@ -1156,9 +1156,9 @@
       "comment": "Uwaga do wysyłki",
       "options": {
         "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS Next Day",
-        "upsExpressBeforeNoon": "UPS Express przed godziną 12:00",
-        "upsSaturdayDelivery": "Dostawa UPS w sobotę"
+        "upsNextDayPackage": "UPS następnego dnia",
+        "upsExpressBeforeNoon": "UPS Express do 12:00",
+        "upsSaturdayDelivery": "UPS dostawa w sobotę"
       },
       "hints": {
         "saturday": "Dostępne tylko w piątki.",
@@ -1175,7 +1175,7 @@
     "shippingNotes": {
       "title": "Uwagi do wysyłki",
       "sameDay": "Zamówienia złożone przed godziną 16:00 są wysyłane tego samego dnia.",
-      "nextDay": "Wybierz UPS Next Day dla dostawy następnego dnia roboczego.",
+      "nextDay": "Wybierz UPS następnego dnia, aby otrzymać dostawę w następnym dniu roboczym.",
       "euros": "Wszystkie ceny są podane w euro."
     },
     "countries": {
@@ -1303,7 +1303,7 @@
   },
   "cartAccessoriesModal": {
     "processing": "Przetwarzanie...",
-    "continueToCheckout": "Przejdź do finalizacji zamówienia",
+    "continueToCheckout": "Do kasy",
     "close": "Zamknij",
     "exampleUse": "Przykład użycia"
   },
@@ -1360,7 +1360,7 @@
     "itemExtraAlt": "Dodatkowy obraz {{name}}"
   },
   "payModal": {
-    "backToPayment": "Wróć do płatności",
+    "backToPayment": "Wróć do kasy",
     "title": "Wybierz metodę płatności",
     "description": "Możesz sfinalizować zamówienie za pomocą jednej z następujących metod płatności:",
     "placeOrder": "ZŁÓŻ ZAMÓWIENIE",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Numer śledzenia nie jest jeszcze dostępny",
       "opening": "Otwieranie...",
       "openProject": "Otwórz projekt",
-      "sumInclVatDelivery": "Suma (z VAT i dostawą)",
+      "sumInclVatDelivery": "Kwota + dostawa",
       "table": {
         "no": "Nr",
-        "orderDate": "Data zamówienia",
-        "orderNo": "Nr zam.",
-        "projectName": "Nazwa projektu",
-        "orderSum": "Suma zamówienia",
-        "sumDelivery": "Suma + dostawa",
+        "orderDate": "Zamówiono",
+        "orderNo": "Nr zamówienia",
+        "projectName": "Nazwa",
+        "orderSum": "Kwota",
+        "sumDelivery": "Kwota + dostawa",
         "status": "Status",
-        "deliveryNote": "List przewozowy",
-        "tracking": "Śledzenie",
+        "deliveryNote": "WZ",
+        "tracking": "Śledź",
         "invoice": "Faktura",
-        "invoiceStatus": "Status faktury",
-        "toPay": "Do zapłaty",
+        "invoiceStatus": "Płatność",
+        "toPay": "Zapłać",
         "openProject": "Projekt"
       },
       "status": {
@@ -1762,7 +1762,7 @@
       "registration": "Rejestracja",
       "myAccount": "Moje konto",
       "newProject": "Nowy projekt",
-      "products": "Produkty",
+      "products": "Wyroby",
       "industries": "Branże",
       "faq": "FAQ",
       "quickGuide": "Skrócona instrukcja",
@@ -1771,11 +1771,11 @@
     },
     "features": {
       "easy": "Intuicyjne",
-      "design": "projektowanie",
+      "design": "Projektowanie",
       "fast": "Szybka",
-      "manufacturing": "produkcja",
+      "manufacturing": "Produkcja",
       "quick": "Ekspresowa",
-      "delivery": "dostawa"
+      "delivery": "Dostawa"
     },
     "sections": {
       "menu": "Menu",
@@ -1803,7 +1803,7 @@
       "myAccount": "Moje konto",
       "newProject": "Nowy projekt",
       "templates": "Szablony",
-      "products": "Produkty",
+      "products": "Wyroby",
       "industries": "Branże",
       "faq": "FAQ",
       "quickGuide": "Skrócona instrukcja",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Wszystkie ceny są cenami ostatecznymi.",
-      "noVat": "Ceny zawierają obowiązującą stawkę VAT.",
+      "noVat": "Zgodnie z §19 UStG VAT nie jest naliczany.",
       "plusShipping": "Bez kosztów wysyłki."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Nazwa firmy",
     "rr_23": "NIP / Nr VAT UE",
     "rr_24": "Brak numeru VAT? Kontynuuj bez niego.",
-    "rr_25": "*Aktualnie obowiązuje polska stawka VAT (23% VAT).",
+    "rr_25": "*Zgodnie z §19 UStG VAT nie jest naliczany.",
     "passwordMustMatch": "Hasła muszą być zgodne",
     "registrationFailed": "Rejestracja nie powiodła się",
     "pleaseSpecify": "Podaj",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Jak mogę otrzymać zamówienie bez VAT?",
-    "description": "Jeśli zamawiasz w imieniu firmy, możesz zamówić bez VAT pod pewnymi warunkami. Wprowadź swój numer identyfikacji podatkowej VAT w odpowiednim polu na stronie rejestracji i kliknij przycisk „Sprawdź”. System zweryfikuje Twój numer i poinformuje Cię, czy weryfikacja się powiodła.",
-    "validVat": "Jeśli Twój numer VAT jest ważny, VAT nie będzie naliczany dla transakcji wewnątrzunijnych (poza Niemcami).",
-    "invalidVat": "Jeśli weryfikacja się nie powiedzie, upewnij się najpierw, że numer został wprowadzony prawidłowo. Czasami pomaga odczekać chwilę i spróbować ponownie.",
-    "noVatNumber": "Jeśli nie zostanie podany numer VAT lub weryfikacja się nie powiedzie, zostanie zastosowana stawka VAT obowiązująca w Twoim kraju.",
-    "germanyVat": "Dla konsumentów i firm z siedzibą w Polsce obowiązuje regularna stawka VAT wynosząca 23%.",
-    "outsideEu": "Jeśli przebywasz poza Unią Europejską, np. w Szwajcarii, Wielkiej Brytanii lub innych krajach, eksportowane towary mają stawkę VAT 0%.",
+    "title": "Dlaczego na fakturze nie ma VAT?",
+    "description": "SignXpert korzysta ze zwolnienia dla małych przedsiębiorców zgodnie z §19 UStG. Dlatego nie naliczamy VAT i nie wykazujemy go na fakturach – niezależnie od tego, czy zamawia osoba prywatna, czy firma.",
+    "validVat": "Numer VAT UE możesz podać przy rejestracji do dokumentacji firmowej.",
+    "invalidVat": "Jeśli weryfikacja numeru VAT UE się nie powiedzie, sprawdź wpisany numer i spróbuj ponownie.",
+    "noVatNumber": "Brak numeru VAT UE nie blokuje zamówienia.",
+    "germanyVat": "Cena pozostaje ceną końcową bez wykazanego VAT zgodnie z §19 UStG.",
+    "outsideEu": "W przypadku wysyłki poza Unię Europejską obowiązują zasady eksportowe i celne właściwe dla danego kraju.",
     "contactUs": "Jeśli masz dalsze pytania lub pojawią się problemy, skontaktuj się z nami. Nasz zespół chętnie pomoże."
   },
   "HomePlaceholder": {
@@ -1919,7 +1919,7 @@
     "h_4": "dla oznakowania przemysłowego",
     "h_5": "Dostarczamy trwałe, grawerowane tabliczki z tworzywa sztucznego w najwyższej jakości – idealne dla przemysłu, urządzeń energetycznych i zastosowań komercyjnych.",
     "h_6": "Zaprojektuj online",
-    "h_7": "Zamówienia złożone przed godziną 16:00 wysyłamy tego samego dnia roboczego.",
+    "h_7": "Zamówienia złożone przed godziną 16:00 wysyłamy tego samego dnia.",
     "h_8": "Dlaczego",
     "h_9": "Uczciwe ceny. Jakość przemysłowa.",
     "h_10": "Wiemy, że budżet odgrywa dziś ważną rolę.",
@@ -1932,14 +1932,14 @@
     "h_17": "Rabaty ilościowe",
     "h_18": "Staramy się oferować Ci najlepsze ceny. Dlatego wprowadziliśmy system rabatów ilościowych:",
     "h_19": "Im wyższa wartość zamówienia, tym niższa cena.",
-    "h_20": "Rabat dotyczy tylko bieżącego projektu (niekumulatywny) i jest naliczany automatycznie:",
+    "h_20": "Rabat dotyczy całego bieżącego projektu i jest naliczany automatycznie:",
     "h_21": "Wartość zamówienia:",
     "h_22": "od 30 € do 50 € — 5%",
     "h_23": "od 50 € do 100 € — 10%",
     "h_24": "od 100 € do 200 € — 15%",
     "h_25": "od 200 € do 500 € — 20%",
     "h_26": "od 500 € do 10000 € — 25%",
-    "h_27": "Rabat dotyczy tylko bieżącego projektu i nie obejmuje akcesoriów.",
+    "h_27": "Rabat dotyczy całego bieżącego projektu, ale nie obejmuje dostawy.",
     "h_28": "Indywidualnie grawerowane",
     "h_29": "tabliczki",
     "h_30": "proste w wykonaniu",

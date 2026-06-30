@@ -783,7 +783,7 @@
   },
   "qr": {
     "title": "QR-Code",
-    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 20 x 20 mm",
+    "minimumSize": "Die Mindestgröße für einen QR-Code beträgt 15 x 15 mm",
     "defaults": {
       "message": "Standardnachricht"
     },
@@ -821,7 +821,7 @@
     "placeholders": {
       "website": "example.com oder https://example.com",
       "email": "example@domain.com",
-      "phone": "+49123456789",
+      "phone": "+490123456789",
       "networkName": "Name des WLAN-Netzwerks",
       "password": "WLAN-Passwort",
       "message": "Geben Sie hier Ihre Nachricht ein..."
@@ -1000,7 +1000,7 @@
         "69": "Schwarzer Kreis",
         "70": "Weißer Kreis",
         "71": "Schwarzes Quadrat (groß)",
-        "72": "Weißes Quadrat (гroß)",
+        "72": "Weißes Quadrat (groß)",
         "infinity": "Unendlichkeit",
         "arrow.right": "Pfeil nach rechts",
         "arrow.left": "Pfeil nach links",
@@ -1085,7 +1085,7 @@
   },
   "cart": "Korb",
   "currentSign": "Aktuelles Schild",
-  "totalForAllSigns": "Schilder gesamt",
+  "totalForAllSigns": "Projektbetrag",
   "discount": "Rabatt",
   "totalPrice": "Gesamtpreis",
   "accessoriesSelected": "Die von Ihnen ausgewählten Zubehörartikel:",
@@ -1360,7 +1360,7 @@
   "itemExtraAlt": "{{name}} Zusatzbild"
 },
 "payModal": {
-  "backToPayment": "Zurück zur Zahlung",
+  "backToPayment": "Zurück zur Kasse",
   "title": "Wählen Sie Ihre Zahlungsmethode",
   "description": "Sie können Ihre Bestellung mit einer der folgenden Zahlungsmethoden abschließen:",
   "placeOrder": "BESTELLUNG AUFGEBEN",
@@ -1770,12 +1770,12 @@
     "admin": "Admin"
   },
   "features": {
-    "easy": "Intuitiv",
-    "design": "gestaltet",
-    "fast": "Blitzschnell",
-    "manufacturing": "gefertigt",
-    "quick": "Express",
-    "delivery": "geliefert"
+    "easy": "Intuitive",
+    "design": "Gestaltung",
+    "fast": "Blitzschnelle",
+    "manufacturing": "Fertigung",
+    "quick": "Express-",
+    "delivery": "Lieferung"
   },
   "sections": {
     "menu": "Menü",
@@ -1939,7 +1939,7 @@
   "h_24": "von 100 € bis 200 € — 15 %",
   "h_25": "von 200 € bis 500 € — 20 %",
   "h_26": "von 500 € bis 10000 € — 25 %",
-  "h_27": "Der Rabatt gilt nur für das aktuelle Projekt und umfasst kein Zubehör.",
+  "h_27": "Der Rabatt wird auf das gesamte aktuelle Projekt angewendet, gilt jedoch nicht für die Lieferung.",
   "h_28": "Individuell gravierte",
   "h_29": "Schilder",
   "h_30": "einfach gemacht",

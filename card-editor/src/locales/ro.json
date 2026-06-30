@@ -261,8 +261,8 @@
     "t_13": "2. Prețuri și TVA",
     "t_14": "Toate prețurile de pe site-ul nostru sunt exprimate în euro (€).",
     "t_15": "Informații fiscale importante:",
-    "t_16": "SignXpert este o companie înregistrată în Germania, căreia i se aplică §19 UStG (regimul german pentru întreprinderi mici). Prin urmare, nu percepem TVA și nu îl evidențiem pe facturile noastre. Pentru clienții din România se aplică cota de TVA românească în vigoare (19%), dacă acest lucru este prevăzut de lege.",
-    "t_17": "„Toate prețurile sunt prețuri finale, fără costuri de livrare. Conform §19 UStG, TVA nu este perceput.“",
+    "t_16": "SignXpert este o companie înregistrată în Germania și aplică regimul pentru întreprinderi mici conform §19 UStG. Prin urmare, în prezent nu percepem TVA și nu o evidențiem pe facturile noastre.",
+    "t_17": "„Toate prețurile sunt prețuri finale, fără costuri de livrare. Conform §19 UStG, TVA nu este percepută.”",
     "t_18": "Costurile de livrare sunt afișate clar în coș și în ultimul pas al procesului de comandă. Ne rezervăm dreptul de a modifica prețurile comenzilor viitoare fără notificare prealabilă.",
     "t_19": "3. Livrare",
     "t_20": "SignXpert expediază comenzile prin ",
@@ -303,11 +303,11 @@
     "t_55": "Pentru orice întrebări, contactați-ne prin",
     "t_56": "pagina de Contact.",
     "t_57": "11. Cumpărători privați",
-    "t_58": "Cumpărătorii privați pot achiziționa fără a furniza un număr de TVA.",
-    "t_59": "În acest caz, se aplică cota TVA din țara dvs.",
+    "t_58": "Cumpărătorii privați pot comanda fără a furniza un număr de TVA.",
+    "t_59": "Conform §19 UStG, TVA nu este percepută și nu este evidențiată pe factură.",
     "t_60": "12. Clienți business",
-    "t_61": "Clienții business (companiile) se pot înregistra cu un număr de TVA UE valid.",
-    "t_62": "Dacă numărul dvs. de TVA este confirmat, TVA nu va fi aplicat pentru tranzacțiile intra-UE (în afara Germaniei).",
+    "t_61": "Clienții business (companiile) pot introduce un număr de TVA UE valid pentru documentație.",
+    "t_62": "Datorită regimului pentru întreprinderi mici conform §19 UStG, în prezent nu percepem TVA și nu o evidențiem pe factură.",
     "t_63": "Mai multe informații găsiți în",
     "t_64": "Citește mai mult"
   },
@@ -458,11 +458,11 @@
     "answer_2_1": "Puteți plăti comod comanda cu diferitele metode de plată disponibile pe site-ul nostru. Acceptăm Visa, MasterCard, PayPal și alte opțiuni de plată.",
     "answer_2_2": "Puteți plăti direct în timpul procesului de comandă sau puteți alege plata pe factură. Dacă alegeți opțiunea factură, emitem o factură care trebuie plătită în 30 de zile.",
     "answer_2_3": "Toate plățile sunt procesate în siguranță și veți primi o confirmare când plata este finalizată. Astfel, comanda dvs. va fi confirmată rapid și pregătită pentru producție.",
-    "question_3": "Cum pot comanda fără TVA?",
-    "answer_3_1": "Dacă comandați în numele unei companii, puteți comanda fără TVA în anumite condiții. Introduceți numărul dvs. de identificare TVA în câmpul corespunzător de pe pagina de înregistrare și faceți clic pe butonul „Verificați“. Sistemul vă va verifica numărul și vă va informa dacă verificarea a reușit.",
-    "answer_3_list_1": "Dacă numărul dvs. de TVA este valid, TVA nu va fi aplicat pentru tranzacțiile intra-UE (în afara Germaniei).",
-    "answer_3_list_2": "Dacă verificarea eșuează, asigurați-vă mai întâi că numărul a fost introdus corect. Uneori ajută să așteptați puțin și să încercați din nou.",
-    "answer_3_2": "Dacă nu este furnizat niciun număr de TVA sau verificarea eșuează, se va aplica cota TVA în vigoare în țara dvs. Pentru consumatorii și companiile cu sediul în România se aplică cota standard de TVA de 19%, indiferent de un număr de TVA valid. Dacă vă aflați în afara Uniunii Europene, de exemplu în Elveția, Marea Britanie sau alte țări, mărfurile exportate au o cotă de TVA de 0%.",
+    "question_3": "De ce nu se percepe TVA pentru comanda mea?",
+    "answer_3_1": "SignXpert aplică regimul german pentru întreprinderi mici conform §19 UStG. De aceea, în prezent nu percepem TVA și nu o evidențiem pe facturile noastre.",
+    "answer_3_list_1": "Acest lucru se aplică atât cumpărătorilor privați, cât și clienților business.",
+    "answer_3_list_2": "Dacă sunteți client business, puteți introduce numărul dvs. de TVA UE pentru documentație și verificarea datelor companiei.",
+    "answer_3_2": "Dacă nu introduceți un număr de TVA, puteți continua comanda. Conform §19 UStG, TVA nu este percepută în prezent, indiferent dacă este vorba despre o comandă privată sau business.",
     "answer_3_3": "Dacă aveți întrebări suplimentare sau apar probleme, contactați-ne. Echipa noastră vă va ajuta cu plăcere.",
     "question_4": "Pot returna comanda și ce include garanția de satisfacție?",
     "answer_4_1": "La <home>SignXpert</home> suntem convinși că fiecare client ar trebui să fie complet satisfăcut de comanda sa. Dacă produsul dvs. nu îndeplinește din orice motiv așteptările dvs., vom asigura o soluție adecvată – aceasta este garanția noastră completă de satisfacție.",
@@ -596,7 +596,7 @@
       }
     },
     "design": {
-      "title": "Proiectați online <accent>plăcuța gravată</accent>",
+      "title": "Creează online <accent>plăcuța gravată</accent>",
       "intro": "Cu editorul online <editor>SignXpert</editor> puteți crea rapid și ușor plăcuțe gravate personalizate.",
       "highlight": "Proiectați plăcuța direct în browser și vedeți fiecare modificare imediat în previzualizare.",
       "listTitle": "Funcțiile editorului nostru online – pas cu pas",
@@ -607,7 +607,7 @@
       "summary": "Astfel creați etichete gravate profesional, plăcuțe pentru mașini și plăcuțe tehnice în doar câteva minute.",
       "support": "Plăcuțele pot fi comandate și telefonic sau prin e-mail. Echipa noastră vă va ajuta cu designul dacă este necesar.",
       "imageAlt": "Proiectați acum plăcuța personalizată cu SignXpert",
-      "cta": "Proiectați online"
+      "cta": "Creează online"
     },
     "production": {
       "titleLine_1": "Producție personalizată",
@@ -801,10 +801,10 @@
         "message": "Mesaj"
       },
       "descriptions": {
-        "url": "* Scanați pentru a deschide site-ul web",
-        "email": "* Scanați pentru a trimite e-mail",
-        "phone": "* Scanați pentru a apela direct",
-        "whatsapp": "* Scanați pentru a trimite mesaj",
+        "url": "* Scanați pentru a accesa site-ul web",
+        "email": "* Scanați pentru a trimite un e-mail",
+        "phone": "* Scanați pentru a apela",
+        "whatsapp": "* Scanați pentru a trimite un mesaj",
         "wifi": "* Scanați pentru a vă conecta la rețea",
         "message": "* Scanați pentru a citi mesajul"
       },
@@ -821,7 +821,7 @@
       "placeholders": {
         "website": "example.com sau https://example.com",
         "email": "example@domain.com",
-        "phone": "+40700000000",
+        "phone": "+490123456789",
         "networkName": "Numele rețelei Wi-Fi",
         "password": "Parola Wi-Fi",
         "message": "Introduceți mesajul dvs. aici..."
@@ -1085,7 +1085,7 @@
     },
     "cart": "Coș",
     "currentSign": "Plăcuța curentă",
-    "totalForAllSigns": "Plăcuțe total",
+    "totalForAllSigns": "Suma proiectului",
     "discount": "Reducere",
     "totalPrice": "Preț total",
     "accessoriesSelected": "Accesoriile selectate de dvs.:",
@@ -1117,8 +1117,8 @@
     "yes": "DA",
     "invoiceEmailNote": "Această adresă de e-mail va fi folosită pentru trimiterea facturii",
     "invoiceDifferent": "Adresa de facturare (dacă este diferită)",
-    "vatAndTotal": "TVA și suma totală",
-    "vatNote": "Cota de TVA aplicabilă va fi aplicată la comandă.",
+    "vatAndTotal": "Suma totală",
+    "vatNote": "Conform §19 UStG, TVA nu este percepută și nu este evidențiată pe factură.",
     "productionComment": "Lăsați aici un comentariu pentru producție:",
     "fields": {
       "fullName": "Nume și prenume",
@@ -1145,7 +1145,7 @@
       "signsSubtotal": "Subtotal",
       "discount": "Reducere",
       "price": "Preț",
-      "signsTotal": "Total plăcuțe",
+      "signsTotal": "Suma proiectului",
       "accessories": "Accesorii",
       "types": "Tipuri",
       "totalAmount": "Suma totală"
@@ -1156,9 +1156,9 @@
       "comment": "Notă pentru livrare",
       "options": {
         "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS livrare în ziua următoare",
-        "upsExpressBeforeNoon": "UPS Express înainte de 12:00",
-        "upsSaturdayDelivery": "Livrare UPS sâmbătă"
+        "upsNextDayPackage": "UPS ziua următoare",
+        "upsExpressBeforeNoon": "UPS Express până la 12:00",
+        "upsSaturdayDelivery": "UPS livrare sâmbătă"
       },
       "hints": {
         "saturday": "Disponibil doar vineri.",
@@ -1174,8 +1174,8 @@
     },
     "shippingNotes": {
       "title": "Note la expediere",
-      "sameDay": "Comenzile primite înainte de 16:00 sunt expediate în aceeași zi.",
-      "nextDay": "Alegeți UPS livrare în ziua următoare pentru livrare în următoarea zi lucrătoare.",
+      "sameDay": "Comenzile primite înainte de ora 16:00 sunt expediate în aceeași zi.",
+      "nextDay": "Alegeți UPS ziua următoare pentru livrare în următoarea zi lucrătoare.",
       "euros": "Toate prețurile sunt în euro."
     },
     "countries": {
@@ -1251,10 +1251,10 @@
   "topToolbar": {
     "sharedProjectFallback": "Proiect partajat",
     "actions": {
-      "importViaExcel": "Import prin Excel",
+      "importViaExcel": "Import Excel",
       "saveAsTemplate": "Salvați ca șablon",
       "templates": "Șabloane",
-      "preview": "Previzualizare",
+      "preview": "Previz.",
       "newProject": "Proiect nou",
       "yourProject": "Proiecte",
       "saving": "Se salvează...",
@@ -1303,7 +1303,7 @@
   },
   "cartAccessoriesModal": {
     "processing": "Se procesează...",
-    "continueToCheckout": "Continuați la finalizarea comenzii",
+    "continueToCheckout": "Spre finalizare",
     "close": "Închideți",
     "exampleUse": "Exemplu de utilizare"
   },
@@ -1314,7 +1314,7 @@
     "toolbar": {
       "newSign": "Plăcuță nouă",
       "deleteSign": "Ștergeți plăcuța",
-      "importViaExcel": "Import prin Excel",
+      "importViaExcel": "Import Excel",
       "templates": "Șabloane"
     },
     "tooltips": {
@@ -1332,11 +1332,11 @@
         "desc": "Coliere de cablu plastic negre, dimensiune 3,6 × 140 mm"
       },
       "screws95": {
-        "name": "Șuruburi 9,5 mm",
+        "name": "Autofiletante 9,5 mm",
         "desc": "Dimensiune 2,9 × 9,5 mm"
       },
       "screws13": {
-        "name": "Șuruburi 13 mm",
+        "name": "Autofiletante 13 mm",
         "desc": "Dimensiune 2,9 × 13 mm"
       },
       "carabiner": {
@@ -1360,7 +1360,7 @@
     "itemExtraAlt": "Imagine suplimentară {{name}}"
   },
   "payModal": {
-    "backToPayment": "Înapoi la plată",
+    "backToPayment": "Înapoi la finalizare",
     "title": "Alegeți metoda de plată",
     "description": "Puteți finaliza comanda utilizând una dintre următoarele metode de plată:",
     "placeOrder": "PLASAȚI COMANDA",
@@ -1408,8 +1408,8 @@
   "projectCanvasesGrid": {
     "pdf": "PDF",
     "empty": "Nu există spații de lucru în proiectul curent.",
-    "preview": "Previzualizare",
-    "previewAlt": "Previzualizare",
+    "preview": "Previz.",
+    "previewAlt": "Previz.",
     "createNewSign": "Creați o plăcuță nouă",
     "units": {
       "mm": "(mm)",
@@ -1663,20 +1663,20 @@
       "noTrackingYet": "Numărul de urmărire nu este disponibil încă",
       "opening": "Se deschide...",
       "openProject": "Deschideți proiectul",
-      "sumInclVatDelivery": "Total (incl. TVA și livrare)",
+      "sumInclVatDelivery": "Total (incl. livrare)",
       "table": {
         "no": "Nr.",
-        "orderDate": "Data comenzii",
-        "orderNo": "Nr. cmd.",
-        "projectName": "Numele proiectului",
-        "orderSum": "Suma comenzii",
-        "sumDelivery": "Suma + livrare",
+        "orderDate": "Comandat",
+        "orderNo": "Nr. comandă",
+        "projectName": "Nume",
+        "orderSum": "Sumă",
+        "sumDelivery": "Sumă + livrare",
         "status": "Status",
-        "deliveryNote": "Aviz de livrare",
+        "deliveryNote": "Aviz",
         "tracking": "Urmărire",
         "invoice": "Factură",
-        "invoiceStatus": "Status factură",
-        "toPay": "De plătit",
+        "invoiceStatus": "Plată",
+        "toPay": "Plătiți",
         "openProject": "Proiect"
       },
       "status": {
@@ -1771,11 +1771,11 @@
     },
     "features": {
       "easy": "Design",
-      "design": "intuitiv",
+      "design": "Intuitiv",
       "fast": "Producție",
-      "manufacturing": "rapidă",
+      "manufacturing": "Rapidă",
       "quick": "Livrare",
-      "delivery": "expres"
+      "delivery": "Expres"
     },
     "sections": {
       "menu": "Meniu",
@@ -1820,7 +1820,7 @@
     },
     "note": {
       "allPricesFinal": "Toate prețurile sunt prețuri finale.",
-      "noVat": "Prețurile includ cota de TVA aplicabilă.",
+      "noVat": "Conform §19 UStG, TVA nu este percepută.",
       "plusShipping": "Fără costuri de expediere."
     },
     "auth": {
@@ -1884,7 +1884,7 @@
     "rr_22": "*Numele companiei",
     "rr_23": "Nr. TVA UE",
     "rr_24": "Nu aveți număr de TVA? Continuați fără el.",
-    "rr_25": "*În prezent se aplică cota de TVA română (19% TVA).",
+    "rr_25": "*Conform §19 UStG, TVA nu este percepută în prezent.",
     "passwordMustMatch": "Parolele trebuie să se potrivească",
     "registrationFailed": "Înregistrarea a eșuat",
     "pleaseSpecify": "Vă rugăm să specificați",
@@ -1903,13 +1903,13 @@
     }
   },
   "ReadMoreModal": {
-    "title": "Cum pot comanda fără TVA?",
-    "description": "Dacă comandați în numele unei companii, puteți comanda fără TVA în anumite condiții. Introduceți numărul dvs. de identificare TVA în câmpul corespunzător de pe pagina de înregistrare și faceți clic pe butonul „Verificați“. Sistemul vă va verifica numărul și vă va informa dacă verificarea a reușit.",
-    "validVat": "Dacă numărul dvs. de TVA este valid, TVA nu va fi aplicat pentru tranzacțiile intra-UE (în afara Germaniei).",
-    "invalidVat": "Dacă verificarea eșuează, asigurați-vă mai întâi că numărul a fost introdus corect. Uneori ajută să așteptați puțin și să încercați din nou.",
-    "noVatNumber": "Dacă nu este furnizat niciun număr de TVA sau verificarea eșuează, se va aplica cota de TVA în vigoare în țara dvs.",
-    "germanyVat": "Pentru consumatorii și companiile cu sediul în România se aplică cota standard de TVA de 19%.",
-    "outsideEu": "Dacă vă aflați în afara Uniunii Europene, de exemplu în Elveția, Marea Britanie sau alte țări, mărfurile exportate au o cotă de TVA de 0%.",
+    "title": "De ce nu se percepe TVA pentru comanda mea?",
+    "description": "SignXpert aplică regimul german pentru întreprinderi mici conform §19 UStG. De aceea, în prezent nu percepem TVA și nu o evidențiem pe facturile noastre.",
+    "validVat": "Dacă sunteți client business, puteți introduce numărul dvs. de TVA UE pentru documentație și verificarea datelor companiei.",
+    "invalidVat": "Dacă verificarea numărului de TVA eșuează, puteți verifica datele introduse și încerca din nou.",
+    "noVatNumber": "Dacă nu introduceți un număr de TVA, puteți continua comanda fără acesta.",
+    "germanyVat": "Conform §19 UStG, TVA nu este percepută în prezent, indiferent dacă este vorba despre o comandă privată sau business.",
+    "outsideEu": "Pentru livrări în afara Uniunii Europene pot exista reguli vamale și fiscale suplimentare în țara de destinație.",
     "contactUs": "Dacă aveți întrebări suplimentare sau apar probleme, contactați-ne. Echipa noastră vă va ajuta cu plăcere."
   },
   "HomePlaceholder": {
@@ -1918,8 +1918,8 @@
     "h_3": "– Calitate de expert",
     "h_4": "pentru marcarea industrială",
     "h_5": "Livrăm plăcuțe din plastic gravate, durabile, de calitate premium – perfecte pentru industrie, instalații energetice și aplicații comerciale.",
-    "h_6": "Proiectați online",
-    "h_7": "Comenzile primite înainte de 16:00 sunt expediate în aceeași zi lucrătoare.",
+    "h_6": "Creează online",
+    "h_7": "Comenzile primite înainte de ora 16:00 sunt expediate în aceeași zi.",
     "h_8": "De ce",
     "h_9": "Prețuri corecte. Calitate industrială.",
     "h_10": "Știm că bugetul joacă astăzi un rol important.",
@@ -1932,14 +1932,14 @@
     "h_17": "Reduceri cantitative",
     "h_18": "Ne străduim să vă oferim cele mai bune prețuri. De aceea am introdus un sistem de reduceri cantitative:",
     "h_19": "Cu cât este mai mare valoarea comenzii, cu atât prețul este mai mic.",
-    "h_20": "Reducerea se aplică doar proiectului curent (necumulativă) și se calculează automat:",
+    "h_20": "Reducerea se aplică întregului proiect curent, dar nu include livrarea.",
     "h_21": "Valoarea comenzii:",
     "h_22": "de la 30 € la 50 € — 5%",
     "h_23": "de la 50 € la 100 € — 10%",
     "h_24": "de la 100 € la 200 € — 15%",
     "h_25": "de la 200 € la 500 € — 20%",
     "h_26": "de la 500 € la 10000 € — 25%",
-    "h_27": "Reducerea se aplică doar proiectului curent și nu include accesoriile.",
+    "h_27": "Reducerea se aplică întregului proiect curent, dar nu include livrarea.",
     "h_28": "Plăcuțe gravate",
     "h_29": "personalizate",
     "h_30": "ușor de creat",
@@ -1957,7 +1957,7 @@
     "h_42": "rapidă și livrare",
     "h_43": "La SignXpert",
     "h_44": "combinăm tehnologia modernă de producție cu un sistem eficient de comenzi online – pentru producție rapidă și expediere promptă.",
-    "h_45": "Comandați înainte de 16:00 pentru expediere în aceeași zi",
+    "h_45": "Comandați înainte de ora 16:00 pentru expediere în aceeași zi",
     "h_46": "livrare fiabilă în România și Europa",
     "h_47": "timpi de răspuns rapizi și serviciu clienți personal",
     "h_48": "Astfel veți primi plăcuțe gravate personalizate rapid și fiabil.",

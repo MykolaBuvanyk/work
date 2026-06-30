@@ -1771,11 +1771,11 @@
     },
     "features": {
       "easy": "Інтуїтивне",
-      "design": "створення",
+      "design": "Створення",
       "fast": "Швидке",
-      "manufacturing": "виготовлення",
+      "manufacturing": "Виготовлення",
       "quick": "Експрес",
-      "delivery": "доставка"
+      "delivery": "Доставка"
     },
     "sections": {
       "menu": "Меню",

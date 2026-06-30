@@ -765,9 +765,9 @@
       "rightCentered": "Otwór po prawej pośrodku"
     },
     "copies": {
-      "exact": "Dokł. kopia",
-      "editable": "Kopia edyt.",
-      "copies": "szt."
+      "exact": "Idealna",
+      "editable": "Edyt.",
+      "copies": "Kopia"
     },
     "footer": {
       "yourSigns": "Twoje tabliczki:",

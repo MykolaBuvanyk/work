@@ -1314,7 +1314,7 @@
     "toolbar": {
       "newSign": "New sign",
       "deleteSign": "Delete sign",
-      "importViaExcel": "Import from Excel",
+      "importViaExcel": "Excel Import",
       "templates": "Templates"
     },
     "tooltips": {

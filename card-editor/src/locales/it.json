@@ -607,7 +607,7 @@
       "summary": "Così puoi creare etichette incise professionali, targhe per macchine e cartelli tecnici in pochi minuti.",
       "support": "I cartelli possono essere ordinati anche telefonicamente o via e-mail. Il nostro team ti supporta volentieri nella progettazione, se necessario.",
       "imageAlt": "Crea ora il tuo cartello personalizzato con SignXpert",
-      "cta": "Crea ora online"
+      "cta": "Crea online ora"
     },
     "production": {
       "titleLine_1": "Produzione su misura",
@@ -715,7 +715,7 @@
     "size": {
       "width": "Larghezza",
       "height": "Altezza",
-      "cornerRadius": "Raggio angoli"
+      "cornerRadius": "Raggio ang."
     },
     "units": {
       "mm": "(mm)",
@@ -917,7 +917,7 @@
       "rotate": "Ruota:",
       "height": "Altezza:",
       "cornerRadius": "Raggio:",
-      "fill": "Incisione superficiale",
+      "fill": "Inc. superficiale",
       "cut": "Ritaglio",
       "thickness": "Spessore",
       "frame": "Bordo"
@@ -1918,7 +1918,7 @@
     "h_3": "- Qualità professionale",
     "h_4": "per la segnaletica industriale",
     "h_5": "Realizziamo cartelli incisi e targhe identificative durevoli in plastica di alta qualità per industria, energia e aziende.",
-    "h_6": "Crea ora online",
+    "h_6": "Crea online ora",
     "h_7": "Ordine entro le 16:00 — spedizione nello stesso giorno lavorativo",
     "h_8": "Perché",
     "h_9": "Prezzi equi. Qualità industriale.",

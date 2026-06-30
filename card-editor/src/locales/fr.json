@@ -751,7 +751,7 @@
       "cut": "Découpe",
       "cutTitle": "Différentes formes",
       "qrCode": "QR code",
-      "barCode": "Code 1D"
+      "barCode": "Code"
     },
     "holes": {
       "title": "Trous",
@@ -845,7 +845,7 @@
       }
     },
     "barcode": {
-      "title": "Code 1D",
+      "title": "Code-barres",
       "description": "Saisissez le texte ou les chiffres à encoder",
       "defaultText": "ABC-abc-1234",
       "types": {
@@ -1113,7 +1113,7 @@
     "orderSummary": "Récapitulatif de commande",
     "myOrder": "Ma commande",
     "selectCountry": "Sélectionner un pays",
-    "phoneQuestionNote": "Ce numéro de téléphone peut être utilisé pour toute question concernant votre commande.",
+    "phoneQuestionNote": "Ce numéro peut être utilisé pour clarifier des questions.",
     "yes": "Oui",
     "invoiceEmailNote": "Cette adresse e-mail sera utilisée pour l’envoi de votre facture.",
     "invoiceDifferent": "Adresse de facturation (si différente de celle ci-dessus)",

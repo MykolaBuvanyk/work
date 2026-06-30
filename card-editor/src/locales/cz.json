@@ -246,424 +246,424 @@
     }
   },
   "TermsOfPurchasing": {
-    "t_1": "Obchodní podmínky",
-    "t_2": "Informace o společnosti",
-    "t_3": "Obchodní firma:",
-    "t_4": "Kostyantyn Utvenko, SignXpert",
-    "t_5": "Adresa:",
-    "t_6": "1. Obecná ustanovení",
-    "t_7": "Následující obchodní podmínky platí pro všechny objednávky, které zákazníci zadají prostřednictvím webové stránky",
-    "t_8": "Odesláním placené objednávky uzavíráte právně závaznou kupní smlouvu se společností",
-    "t_9": "(dále jen „my“).",
-    "t_10": "Po obdržení vaší objednávky bude na uvedenou e-mailovou adresu automaticky zasláno potvrzení. Ujistěte se prosím, že je vaše e-mailová adresa zadána správně. Bez souhlasu zákonných zástupců neuzavíráme závazné smlouvy s osobami bez způsobilosti k právním úkonům (nezletilými).",
-    "t_11": "Vyhrazujeme si právo odmítnout nebo zrušit objednávky obsahující nepřijatelný obsah, zejména pornografický, rasistický nebo extremistický.",
-    "t_12": "Zákazník odpovídá za to, že jeho návrhy neporušují platné právní předpisy ani práva třetích stran (např. ochranné známky).",
-    "t_13": "2. Ceny a režim malého podnikatele (DPH)",
-    "t_14": "Všechny ceny na našem webu jsou uvedeny v eurech (€).",
-    "t_15": "Důležitá daňová informace:",
-    "t_16": "V souladu s § 19 UStG (německého zákona o dani z obratu) působíme v režimu malého podnikatele. Proto neúčtujeme DPH a neuvádíme ji na našich fakturách.",
-    "t_17": "„Všechny ceny jsou konečné, plus náklady na dopravu. V souladu s § 19 UStG se DPH neúčtuje.“",
-    "t_18": "Náklady na dopravu jsou jasně uvedeny v košíku a v posledním kroku objednávky. Vyhrazujeme si právo měnit ceny pro budoucí objednávky bez předchozího upozornění.",
-    "t_19": "3. Doručení",
-    "t_20": "SignXpert doručuje objednávky prostřednictvím ",
-    "t_21": " a",
-    "t_22": "Způsoby doručení:",
-    "t_23": "V závislosti na velikosti a hmotnosti objednávky probíhá doručení formou balíku nebo doporučeného dopisu.",
-    "t_24": "Dodací lhůty:",
-    "t_25": "Snažíme se dodržet uvedené dodací lhůty. Mohou však nastat zpoždění z důvodů mimo naši kontrolu. Pokud zpoždění přesáhne 30 dní, máte zákonné právo objednávku zrušit.",
-    "t_26": "Přechod rizika:",
-    "t_27": "U spotřebitelů (soukromých osob) nese SignXpert riziko ztráty nebo poškození během přepravy až do okamžiku předání zboží vám. U firemních zákazníků přechází riziko na zákazníka v okamžiku předání zboží přepravci (UPS nebo DHL).",
-    "t_28": "4. Právo na odstoupení od smlouvy",
-    "t_29": "Vyloučení práva na odstoupení od smlouvy:",
-    "t_30": "V souladu s § 312g odst. 2 č. 1 BGB (německého občanského zákoníku) se právo na odstoupení od smlouvy (právo na vrácení)",
-    "t_31": "nevztahuje",
-    "t_32": "na smlouvy o dodání zboží, které nebylo vyrobeno předem a pro jehož výrobu je rozhodující individuální výběr nebo zadání spotřebitele, nebo které je zjevně přizpůsobeno osobním potřebám spotřebitele (zakázkové štítky).",
-    "t_33": "Vzhledem k tomu, že naše výrobky jsou vyráběny podle vašich individuálních požadavků,",
-    "t_34": "zrušení ani vrácení není možné",
-    "t_35": "po zahájení výroby nebo po dodání zboží.",
-    "t_36": "5. Záruka spokojenosti a zákonná záruka",
-    "t_37": "Navzdory vyloučení zákonného práva na vrácení nabízíme",
-    "t_38": "30denní záruku spokojenosti:",
-    "t_39": "Pokud nejste s výrobkem spokojeni, kontaktujte nás. Nejprve se pokusíme nabídnout náhradu. Pokud se problém nepodaří vyřešit, vystavíme dobropis nebo vrátíme peníze.",
-    "t_40": "Tato záruka platí 30 dní od doručení a neomezuje vaše zákonná záruční práva.",
-    "t_41": "Zákonná záruka:",
-    "t_42": "Na všechny výrobky se vztahují zákonná záruční práva. Kromě toho poskytuje SignXpert jednoletou záruku na trvanlivost a funkčnost výrobku.",
-    "t_43": "6. Platba",
-    "t_44": "Objednávky jsou potvrzeny po dokončení procesu objednávky. Nabízíme následující způsoby platby:",
-    "t_45": "Stripe",
-    "t_46": "Sparkasse",
-    "t_47": "Bezpečné zpracování plateb prostřednictvím Stripe. Vaše údaje jsou šifrovány (SSL) a přenášeny přímo poskytovateli platebních služeb.",
-    "t_48": "Bankovní převod:",
-    "t_49": "Objednávky jsou předány do výroby po přijetí platby na náš účet u Sparkasse.",
-    "t_50": "7. Zásady ochrany osobních údajů",
-    "t_51": "Zpracováváme vaše osobní údaje (jméno, adresu, e-mail) za účelem vyřízení vaší objednávky a zákaznického servisu. Veškeré zpracování probíhá v souladu s GDPR a německým zákonem BDSG. Podrobné informace najdete v našich Zásadách ochrany osobních údajů.",
-    "t_52": "8. Reklamace a poškození při přepravě",
-    "t_53": "Po obdržení zásilky ji prosím zkontrolujte. Pokud bylo zboží poškozeno během přepravy nebo má vady:",
-    "t_54": "Kontaktujte nás na adrese",
-    "t_55": "Uveďte číslo objednávky, popis vady a fotografie",
-    "t_56": "Pokud bude reklamace uznána, výrobek opravíme nebo vyměníme na vlastní náklady, případně vrátíme peníze.",
-    "t_57": "9. Spory a salvátorská klauzule",
-    "t_58": "Online řešení sporů:",
-    "t_59": "Evropská komise poskytuje platformu pro online řešení sporů (ODR), dostupnou na adrese:",
-    "t_60": "Nejsme povinni ani ochotni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu.",
-    "t_61": "Salvátorská klauzule:",
-    "t_62": "Pokud se některé ustanovení těchto podmínek ukáže jako neplatné nebo nevymahatelné, zůstávají ostatní ustanovení nadále v plné platnosti.",
-    "t_63": "10. Vyšší moc",
-    "t_64": "SignXpert nenese odpovědnost za zpoždění nebo škody způsobené okolnostmi mimo naši přiměřenou kontrolu (např. přírodní katastrofy, válka, stávky nebo závažné výpadky dopravní infrastruktury)."
+  "t_1": "Obchodní podmínky",
+  "t_2": "Informace o společnosti",
+  "t_3": "Obchodní firma:",
+  "t_4": "Kostyantyn Utvenko, SignXpert",
+  "t_5": "Adresa:",
+  "t_6": "1. Obecná ustanovení",
+  "t_7": "Následující obchodní podmínky platí pro všechny objednávky, které zákazníci zadají prostřednictvím webové stránky",
+  "t_8": "Odesláním placené objednávky uzavíráte právně závaznou kupní smlouvu se společností",
+  "t_9": "(dále jen „my“).",
+  "t_10": "Po obdržení vaší objednávky bude na uvedenou e-mailovou adresu automaticky zasláno potvrzení. Ujistěte se prosím, že je vaše e-mailová adresa zadána správně. Bez souhlasu zákonných zástupců neuzavíráme závazné smlouvy s osobami bez způsobilosti k právním úkonům (nezletilými).",
+  "t_11": "Vyhrazujeme si právo odmítnout nebo zrušit objednávky obsahující nepřijatelný obsah, zejména pornografický, rasistický nebo extremistický.",
+  "t_12": "Zákazník odpovídá za to, že jeho návrhy neporušují platné právní předpisy ani práva třetích stran (např. ochranné známky).",
+  "t_13": "2. Ceny a status malého podnikatele (DPH)",
+  "t_14": "Všechny ceny na našem webu jsou uvedeny v eurech (€).",
+  "t_15": "Důležitá daňová informace:",
+  "t_16": "V souladu s § 19 UStG (německého zákona o dani z obratu) jednáme jako malý podnikatel. Proto neúčtujeme DPH a neuvádíme ji na našich fakturách.",
+  "t_17": "„Všechny ceny jsou konečné, plus náklady na dopravu. V souladu s § 19 UStG se DPH neúčtuje.“",
+  "t_18": "Náklady na dopravu jsou jasně uvedeny v košíku a v posledním kroku objednávky. Vyhrazujeme si právo měnit ceny pro budoucí objednávky bez předchozího upozornění.",
+  "t_19": "3. Doručení",
+  "t_20": "SignXpert doručuje objednávky prostřednictvím ",
+  "t_21": " a",
+  "t_22": "Způsoby doručení:",
+  "t_23": "V závislosti na velikosti a hmotnosti objednávky probíhá doručení formou balíku nebo doporučeného dopisu.",
+  "t_24": "Dodací lhůty:",
+  "t_25": "Snažíme se dodržet uvedené dodací lhůty. Mohou však nastat zpoždění z důvodů mimo naši kontrolu. Pokud zpoždění přesáhne 30 dní, máte zákonné právo objednávku zrušit.",
+  "t_26": "Přechod rizika:",
+  "t_27": "U spotřebitelů (soukromých osob) nese SignXpert riziko ztráty nebo poškození během přepravy až do okamžiku předání zboží vám. U firemních zákazníků přechází riziko na zákazníka v okamžiku předání zboží přepravci (UPS nebo DHL).",
+  "t_28": "4. Právo na odstoupení od smlouvy",
+  "t_29": "Vyloučení práva na odstoupení od smlouvy:",
+  "t_30": "V souladu s § 312g odst. 2 č. 1 BGB (německého občanského zákoníku) se právo na odstoupení od smlouvy (právo na vrácení)",
+  "t_31": "nevztahuje",
+  "t_32": "na smlouvy o dodání zboží, které nebylo vyrobeno předem a pro jehož výrobu je rozhodující individuální výběr nebo zadání spotřebitele, nebo které je zjevně přizpůsobeno osobním potřebám spotřebitele (zakázkové štítky).",
+  "t_33": "Vzhledem k tomu, že naše výrobky jsou vyráběny podle vašich individuálních požadavků,",
+  "t_34": "zrušení ani vrácení není možné",
+  "t_35": "po zahájení výroby nebo po dodání zboží.",
+  "t_36": "5. Záruka spokojenosti a zákonná záruka",
+  "t_37": "Navzdory vyloučení zákonného práva na vrácení nabízíme",
+  "t_38": "30denní záruku spokojenosti:",
+  "t_39": "Pokud nejste s výrobkem spokojeni, kontaktujte nás. Nejprve se pokusíme nabídnout náhradu. Pokud se problém nepodaří vyřešit, vystavíme dobropis nebo vrátíme peníze.",
+  "t_40": "Tato záruka platí 30 dní od doručení a neomezuje vaše zákonná záruční práva.",
+  "t_41": "Zákonná záruka:",
+  "t_42": "Na všechny výrobky se vztahují zákonná záruční práva. Kromě toho poskytuje SignXpert 1letou záruku na trvanlivost a funkčnost výrobku.",
+  "t_43": "6. Platba",
+  "t_44": "Objednávky jsou potvrzeny po dokončení procesu objednávky. Nabízíme následující způsoby platby prostřednictvím",
+  "t_45": "Stripe",
+  "t_46": "Sparkasse",
+  "t_47": "Bezpečné zpracování plateb prostřednictvím Stripe. Vaše údaje jsou šifrovány (SSL) a přenášeny přímo poskytovateli platebních služeb.",
+  "t_48": "Bankovní převod:",
+  "t_49": "Objednávky jsou předány do výroby po přijetí platby na náš účet u Sparkasse.",
+  "t_50": "7. Zásady ochrany osobních údajů",
+  "t_51": "Zpracováváme vaše osobní údaje (jméno, adresu, e-mail) za účelem vyřízení vaší objednávky a zákaznického servisu. Veškeré zpracování probíhá v souladu s GDPR a německým zákonem BDSG. Podrobné informace najdete v našich Zásadách ochrany osobních údajů.",
+  "t_52": "8. Reklamace a poškození při přepravě",
+  "t_53": "Po obdržení zásilky ji prosím zkontrolujte. Pokud bylo zboží poškozeno během přepravy nebo má vady:",
+  "t_54": "Kontaktujte nás na adrese",
+  "t_55": "Uveďte číslo objednávky, popis vady a fotografie",
+  "t_56": "Pokud bude reklamace uznána, výrobek opravíme nebo vyměníme na vlastní náklady, případně vrátíme peníze.",
+  "t_57": "9. Spory a salvátorská klauzule",
+  "t_58": "Online řešení sporů:",
+  "t_59": "Evropská komise poskytuje platformu pro online řešení sporů (ODR), dostupnou na adrese:",
+  "t_60": "Nejsme povinni ani ochotni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu.",
+  "t_61": "Salvátorská klauzule:",
+  "t_62": "Pokud se některé ustanovení těchto podmínek ukáže jako neplatné nebo nevymahatelné, zůstávají ostatní ustanovení nadále v plné platnosti.",
+  "t_63": "10. Vyšší moc",
+  "t_64": "SignXpert nenese odpovědnost za zpoždění nebo škody způsobené okolnostmi mimo naši přiměřenou kontrolu (např. přírodní katastrofy, válka, stávky nebo závažné výpadky dopravní infrastruktury)."
+},
+ "Impressum": {
+  "i_1": "Tiráž",
+  "i_2": "Informace dle § 5 TDDDG",
+  "i_3": "Společnost / Majitel:",
+  "i_4": "Kostyantyn Utvenko, SignXpert",
+  "i_5": "Adresa:",
+  "i_6": "Baumwiesen 2, 72401 Haigerloch, Německo",
+  "i_7": "Kontakt",
+  "i_8": "Telefon:",
+  "i_9": "Kontaktní formulář:",
+  "i_10": "DIČ",
+  "i_11": "V souladu s § 27a německého zákona o dani z obratu:",
+  "i_12": "Odpovědná osoba za redakční obsah",
+  "i_13": "V souladu s § 18 odst. 2 MStV:",
+  "i_14": "Kostyantyn Utvenko",
+  "i_15": "Řešení sporů v EU",
+  "i_16": "Evropská komise poskytuje platformu pro online řešení sporů (ODR):",
+  "i_17": "Naši e-mailovou adresu najdete výše v tiráži.",
+  "i_18": "Řešení spotřebitelských sporů / Univerzální rozhodčí orgán",
+  "i_19": "Nejsme ochotni ani povinni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu.",
+  "legal_1_title": "Odpovědnost za obsah",
+  "legal_1_p1": "Jako poskytovatel služeb odpovídáme za vlastní obsah na těchto stránkách v souladu s obecnými právními předpisy.",
+  "legal_1_p2": "Nejsme však povinni sledovat přenášené nebo uložené informace třetích stran ani vyhledávat okolnosti naznačující protiprávní činnost.",
+  "legal_1_p3": "Povinnosti odstranit nebo zablokovat užívání informací podle obecných právních předpisů zůstávají nedotčeny. Odpovědnost v tomto ohledu je však možná až od okamžiku, kdy se dozvíme o konkrétním porušení práv.",
+  "legal_1_p4": "Jakmile se o takovém porušení dozvíme, příslušný obsah neprodleně odstraníme.",
+  "legal_2_title": "Odpovědnost za odkazy",
+  "legal_2_p1": "Pokud tato webová stránka obsahuje odkazy na externí webové stránky třetích stran, nemáme na jejich obsah žádný vliv.",
+  "legal_2_p2": "Proto nemůžeme nést odpovědnost za tento cizí obsah. Za obsah odkazovaných stránek vždy odpovídá příslušný poskytovatel nebo provozovatel dané stránky.",
+  "legal_2_p3": "Jakmile se dozvíme o porušení práv, dané odkazy neprodleně odstraníme.",
+  "legal_3_title": "Autorská práva",
+  "legal_3_p1": "Obsah a díla vytvořená provozovatelem webových stránek na tomto webu podléhají německému autorskému právu.",
+  "legal_3_p2": "Rozmnožování, zpracování, šíření nebo jakékoli jiné využití nad rámec autorského práva vyžaduje písemný souhlas příslušného autora či tvůrce.",
+  "legal_3_p3": "Stahování a kopírování této webové stránky je povoleno pouze pro soukromé, nekomerční účely.",
+  "legal_3_p4": "Pokud obsah na této webové stránce nebyl vytvořen provozovatelem, jsou respektována autorská práva třetích stran.",
+  "legal_3_p5": "Pokud přesto zjistíte porušení autorských práv, dejte nám prosím vědět. Jakmile se o takovém porušení dozvíme, daný obsah neprodleně odstraníme.",
+  "legal_4_title": "Poznámka k tvorbě obsahu",
+  "legal_4_p1": "Texty a média na této webové stránce byly částečně vytvořeny, přeloženy nebo zpracovány pomocí umělé inteligence."
+},
+"EUOnlineDisputeResolution": {
+  "u_1": "Online řešení sporů v EU",
+  "u_2": "Evropská komise poskytuje platformu pro online řešení sporů (ODR):",
+  "u_3": "Postup řešení sporů",
+  "u_4": "Nejsme povinni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu."
+},
+"privacy-policy": {
+  "description_1": "Vaše důvěra je pro nás důležitá. Abyste se při návštěvě našich webových stránek cítili bezpečně, dodržujeme veškeré německé a evropské právní požadavky týkající se zpracování osobních údajů (GDPR, BDSG, TDDDG). Níže vysvětlujeme, jak vaše údaje shromažďujeme, spravujeme a používáme.",
+  "description_2": "1. Správce údajů",
+  "description_3": "Zásady ochrany osobních údajů",
+  "description_4": "Za shromažďování, zpracování a používání osobních údajů odpovídá majitel společnosti",
+  "description_5": "Značka:",
+  "description_6": "Jméno:",
+  "description_7": "Kostyantyn Utvenko",
+  "description_8": "E-mail:",
+  "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Německo",
+  "description_10": "Kontaktní formulář:",
+  "description_11": "2. Shromažďování, zpracování a používání osobních údajů",
+  "description_12": "Za informace, které nám poskytnete, odpovídáme osobně my. Osobní údaje jsou veškeré informace, které lze přiřadit ke konkrétní osobě. Vaše údaje shromažďujeme a zpracováváme za účelem vyřízení vašich objednávek. Údaje předáváme třetím stranám pouze tehdy, pokud to umožňuje zákon (např. pro logistiku nebo zpracování plateb).",
+  "description_13": "Doby uchovávání:",
+  "description_14": "V souladu s německým obchodním a daňovým právem",
+  "description_15": "Obchodní zákoník — HGB",
+  "description_16": "a",
+  "description_17": "Daňový řád — AO",
+  "description_18": "uchováváme údaje o zákaznících a objednávkách, včetně účetních dokladů a faktur, po dobu",
+  "description_19": "10 let",
+  "description_20": "2.1 Registrace zákaznického účtu a zadání objednávky",
+  "description_21": "Pro splnění našich smluvních povinností (čl. 6 odst. 1 písm. b GDPR) jsou při vytváření účtu nebo zadávání objednávky vyžadovány následující informace:",
+  "description_22": "Vaše e-mailová adresa",
+  "description_23": "Vaše celé jméno",
+  "description_24": "Název společnosti (pokud je relevantní)",
+  "description_25": "DIČ společnosti",
+  "description_26": "Vaše adresa (dodací a fakturační adresa)",
+  "description_27": "Vaše telefonní číslo (používané pouze pro oznámení o doručení a logistickou koordinaci)",
+  "description_28": "Vaše heslo (uloženo v zašifrované podobě)",
+  "description_29": "2.2 Tvorba štítků",
+  "description_30": "Při vytváření štítku ukládáme údaje, které přidáte, za účelem zpracování vaší objednávky. Obsah štítků nikdy nepředáváme třetím stranám pro marketingové účely.",
+  "description_31": "2.3 Zpracování plateb",
+  "description_32": "Pro zajištění bezpečnosti vašich transakcí používáme moderní šifrovací standardy.",
+  "description_33": "Stripe:",
+  "description_34": "Platby kartou a další způsoby online platby jsou zpracovávány prostřednictvím našeho poskytovatele platebních služeb",
+  "description_35": "Stripe",
+  "description_36": "Vaše úplné údaje o kartě jsou přenášeny přímo společnosti Stripe. My máme přístup pouze ke jménu držitele karty, typu karty, posledním 4 číslicím a transakčním údajům potřebným pro zpracování vrácení peněz.",
+  "description_37": "Sparkasse:",
+  "description_38": "V případě přímých bankovních převodů (např. platba na fakturu nebo platba předem) jsou vaše platební údaje (jméno, IBAN, částka) zpracovávány prostřednictvím naší banky,",
+  "description_39": "Sparkasse",
+  "description_40": "PayPal:",
+  "description_41": "Na platby prostřednictvím PayPal se vztahují vlastní zásady ochrany osobních údajů PayPal. My obdržíme pouze informace nezbytné pro přiřazení platby.",
+  "description_42": "2.4 Newsletter",
+  "description_43": "Vaše e-mailová adresa je používána pro zasílání newsletterů a nabídek pouze s vaším výslovným souhlasem. Odhlásit se můžete kdykoli prostřednictvím odkazu v e-mailu nebo v nastavení svého účtu.",
+  "description_44": "3. Kontrola bonity",
+  "description_45": "Vyhrazujeme si právo provést kontrolu bonity před výrobou nebo odesláním vaší objednávky. Potřebné údaje mohou být za tímto účelem předány úvěrovým agenturám (např. SCHUFA).",
+  "description_46": "4. Předávání údajů do třetích zemí",
+  "description_47": "Snažíme se zpracovávat veškeré údaje v rámci EU/EHP. Při využívání globálních služeb (např. Stripe) mohou být údaje předávány do zemí mimo EHP. V takových případech zajišťujeme úroveň ochrany srovnatelnou se standardy EU pomocí standardních smluvních doložek (SCC).",
+  "description_48": "5. Vaše práva",
+  "description_49": "Podle GDPR máte ohledně svých osobních údajů následující práva:",
+  "description_50": "Právo na přístup:",
+  "description_51": "Máte právo požadovat informace o svých uložených údajích a obdržet jejich kopii (čl. 15 GDPR).",
+  "description_52": "Právo na opravu:",
+  "description_53": "Máte právo požadovat opravu nepřesných nebo neúplných údajů (čl. 16 GDPR).",
+  "description_54": "Právo na výmaz:",
+  "description_55": "Máte právo požadovat výmaz svých údajů, pokud nejsou v platnosti zákonné lhůty pro uchovávání (např. 10letá daňová povinnost archivace) (čl. 17 GDPR).",
+  "description_56": "Právo na omezení zpracování:",
+  "description_57": "Za určitých podmínek máte právo požadovat omezení zpracování (čl. 18 GDPR).",
+  "description_58": "Právo na přenositelnost údajů:",
+  "description_59": "Máte právo obdržet své údaje ve strukturovaném, běžně používaném formátu (čl. 20 GDPR).",
+  "description_60": "Právo vznést námitku:",
+  "description_61": "Máte právo vznést námitku proti zpracování svých údajů na základě oprávněných zájmů nebo pro účely přímého marketingu (čl. 21 GDPR).",
+  "description_62": "Právo odvolat souhlas: ",
+  "description_63": "Svůj souhlas s marketingovými účely můžete kdykoli odvolat prostřednictvím odhlašovacího odkazu v našich e-mailech nebo v nastavení svého účtu.",
+  "description_64": "Právo podat stížnost:",
+  "description_65": "V souladu s čl. 77 GDPR máte právo podat stížnost u příslušného dozorového úřadu pro ochranu osobních údajů, pokud se domníváte, že zpracování vašich osobních údajů porušuje GDPR.",
+  "description_66": "Zemský pověřenec pro ochranu osobních údajů a svobodu informací spolkové země Bádensko-Württembersko",
+  "description_67": "Adresa:",
+  "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Německo",
+  "description_69": "6. Soubory protokolu (log soubory)",
+  "description_70": "Při",
+  "description_71": "návštěvě našich stránek váš prohlížeč automaticky přenáší údaje, které jsou ukládány v log souborech serveru:",
+  "description_72": "Datum a čas přístupu, název stránky, IP adresa, objem dat a verze prohlížeče.",
+  "description_73": "Tyto soubory jsou používány výhradně pro zajištění technické bezpečnosti a opravu chyb. Přístup k nim mají pouze vývojáři a jsou automaticky mazány po",
+  "description_74": "30 dnech",
+  "description_75": "Hesla ani citlivé platební údaje se nikdy neukládají.",
+  "description_76": "7. Bezpečný přenos údajů",
+  "description_77": "Vaše osobní údaje jsou přenášeny bezpečně pomocí",
+  "description_78": "šifrování. To se týká objednávky, platby i přihlášení do zákaznického účtu. Naše systémy průběžně aktualizujeme, abychom chránili vaše údaje před neoprávněným přístupem nebo ztrátou.",
+  "description_79": "8. Soubory cookie",
+  "description_80": "Soubory cookie používáme ke zlepšení vašeho uživatelského zážitku v souladu s",
+  "description_81": "a čl. 6 odst. 1 písm. f GDPR.",
+  "description_82": "Nezbytné soubory cookie:",
+  "description_83": "Nezbytné pro fungování webové stránky (např. nákupní košík).",
+  "description_84": "Analytické a marketingové soubory cookie (např. Google):",
+  "description_85": "Používány pouze s vaším",
+  "description_86": "aktivním souhlasem",
+  "description_87": "prostřednictvím cookie lišty.",
+  "description_88": "Svá nastavení můžete kdykoli změnit nebo odvolat svůj souhlas kliknutím na odkaz „Nastavení cookies“ ve spodní části kterékoli stránky webu."
+},
+ "faq": {
+  "title": "Často kladené otázky",
+  "question_1": "Je snadné vytvořit si vlastní štítek online?",
+  "answer_1_1": "Ano — proces je jednoduchý, intuitivní a probíhá krok za krokem.",
+  "answer_1_2": "V našem online editoru nejprve zvolíte tvar svého štítku. Poté nastavíte rozměry, tloušťku a barvu materiálu. Dále můžete přidat text, obrázky, QR kódy a čárové kódy, vytvořit otvory, zadat požadované množství a individuálně upravit všechna ostatní nastavení.",
+  "answer_1_3": "Každý krok doprovází náhled v reálném čase, takže nejsou potřeba žádné speciální znalosti ani zkušenosti s designem.",
+  "answer_1_4": "Pokud potřebujete další pomoc, podívejte se na náš <quickGuide>stručný návod</quickGuide>, který vás provede celým procesem krok za krokem.",
+  "answer_1_5": "Pokud máte i poté nějaké dotazy, navštivte stránku <contacts>Kontakt</contacts> a obraťte se na náš tým — rád vám pomůže.",
+  "answer_1_6": "Se <home>SignXpert</home> je vytváření profesionálních štítků online jednoduché, pohodlné a efektivní.",
+  "question_2": "Jak mohu zaplatit za svou objednávku?",
+  "answer_2_1": "Svou objednávku můžete pohodlně zaplatit pomocí různých platebních metod dostupných na našem webu. Přijímáme Visa, MasterCard, PayPal a další možnosti platby.",
+  "answer_2_2": "Platit můžete přímo při objednávce nebo zvolit platbu na fakturu. Pokud zvolíte fakturu, vystavíme vám fakturu se splatností 30 dní.",
+  "answer_2_3": "Všechny platby jsou zpracovávány bezpečně a potvrzení obdržíte ihned po dokončení platby. Vaše objednávka je tak rychle potvrzena a připravena k výrobě.",
+  "question_3": "Jak mohu obdržet objednávku bez DPH?",
+  "answer_3_1": "Pokud objednáváte jménem společnosti, můžete za určitých podmínek objednat bez DPH. Zadejte k tomu své DIČ do příslušného pole na registrační stránce a klikněte na tlačítko „Ověřit“. Systém zkontroluje vaše číslo a sdělí vám, zda byla kontrola úspěšná.",
+  "answer_3_list_1": "Pokud je vaše DIČ platné, DPH se u objednávek v rámci EU (kromě Německa) neúčtuje.",
+  "answer_3_list_2": "Pokud kontrola selže, nejprve se ujistěte, že bylo číslo zadáno správně. Někdy pomůže chvíli počkat a zkusit to znovu.",
+  "answer_3_2": "Pokud DIČ neuvedete nebo kontrola selže, bude DPH účtována sazbou platnou ve vaší zemi. Pro soukromé osoby a společnosti registrované v Německu platí standardní sazba DPH 19 % bez ohledu na to, zda je uvedeno platné DIČ. Pokud se nacházíte mimo Evropskou unii, například ve Švýcarsku, Spojeném království nebo jiných zemích, pro vyvážené zboží platí sazba DPH 0 %.",
+  "answer_3_3": "Pokud máte další dotazy nebo problémy, kontaktujte nás prosím. Náš tým vám rád pomůže.",
+  "question_4": "Mohu objednávku vrátit a co zahrnuje vaše záruka spokojenosti?",
+  "answer_4_1": "Ve <home>SignXpert</home> věříme, že každý zákazník by měl být se svou objednávkou plně spokojen. Pokud vám produkt z jakéhokoli důvodu nevyhovuje, postaráme se o vhodné řešení — to je naše plná záruka spokojenosti.",
+  "answer_4_2": "Co záruka zahrnuje:",
+  "answer_4_list_1": "Vztahuje se na všechny výrobky na zakázku.",
+  "answer_4_list_2": "Pokud vaše objednávka obsahuje chybu nebo neodpovídá vašim očekáváním, nejprve problém vyřešíme a zašleme vám náhradní výrobek.",
+  "answer_4_list_3": "Pokud to problém nevyřeší, nabízíme plnou refundaci.",
+  "answer_4_3": "Tipy pro plnou spokojenost:",
+  "answer_4_list_4": "Před odesláním objednávky pečlivě zkontrolujte všechny detaily v editoru: text, umístění prvků a zvolené možnosti.",
+  "answer_4_list_5": "Podívejte se na naši stránku <quickGuide>Stručný návod</quickGuide>, abyste pochopili, jak náš online editor funguje.",
+  "answer_4_list_6": "Ještě jednou zkontrolujte potvrzení objednávky, abyste se ujistili, že je vše v pořádku.",
+  "answer_4_4": "Pokud přesto nejste spokojeni:",
+  "answer_4_list_7": "<contacts>Kontaktujte nás</contacts> co nejdříve, abychom vám mohli rychle pomoci.",
+  "answer_4_list_8": "Záruka platí 30 dní od doručení. Kontaktujte nás prosím v této lhůtě.",
+  "answer_4_5": "Se <home>SignXpert</home> je vytváření vlastního produktu jednoduché, bezpečné a příjemné, a pokud něco nepůjde podle plánu, jsme tu vždy pro vás.",
+  "question_5": "Jaké jsou náklady na dopravu a jaké možnosti a lhůty doručení existují?",
+  "answer_5_1": "Náklady na dopravu u <home>SignXpert</home> závisí na velikosti, hmotnosti a hodnotě vaší objednávky a na zemi určení.",
+  "answer_5_2": "Doručujeme převážně prostřednictvím UPS. Při objednávce máte k dispozici několik možností doručení:",
+  "answer_5_list_1": "Standardní doručení — obvykle trvá 1–3 dny.",
+  "answer_5_list_2": "Expresní doručení — dostupné pro zvlášť naléhavé objednávky (doručení následující pracovní den).",
+  "answer_5_list_3": "Sobotní doručení — dostupné v některých regionech, pokud potřebujete objednávku o víkendu.",
+  "answer_5_3": "Všechny možnosti a ceny jsou jasně zobrazeny při objednávce, takže si můžete vybrat vhodný způsob doručení. Každá zásilka je odeslána se sledovacím číslem, které můžete kdykoli zkontrolovat ve svém účtu <account>Můj účet</account> a sledovat tak stav doručení.",
+  "question_6": "Kde najdu informace o svých objednávkách a platbách?",
+  "answer_6_1": "Pokud již máte účet, <login>nejprve se přihlaste</login> a poté otevřete <account>Můj účet</account>, kde uvidíte všechny své dosavadní objednávky u <home>SignXpert</home>.",
+  "answer_6_2": "V této sekci najdete a můžete spravovat důležité údaje o svých objednávkách:",
+  "answer_6_list_1": "Datum objednávky a číslo objednávky",
+  "answer_6_list_2": "Název projektu",
+  "answer_6_list_3": "Celková částka objednávky",
+  "answer_6_list_4": "Stav objednávky",
+  "answer_6_list_5": "Stáhnout dodací list",
+  "answer_6_list_6": "Sledovat zásilku pomocí odkazu se sledovacím číslem",
+  "answer_6_list_7": "Stáhnout fakturu",
+  "answer_6_list_8": "Zkontrolovat stav platby — pokud vaše objednávka ještě není zaplacena, můžete zaplatit přímo pomocí poskytnutého odkazu",
+  "answer_6_list_9": "Otevřít svůj projekt a zobrazit detaily",
+  "answer_6_3": "Všechny tyto funkce jsou dostupné v sekci <account>Můj účet</account> a poskytují vám plnou kontrolu nad vašimi objednávkami a platbami.",
+  "question_7": "Co mám dělat, pokud jsem zadal nesprávné údaje?",
+  "answer_7_1": "Pokud jste zadali nesprávné údaje, například dodací adresu, fakturační adresu, e-mailovou adresu nebo telefonní číslo, <contacts>kontaktujte nás</contacts> co nejdříve se správnými údaji.",
+  "answer_7_2": "Své údaje si také můžete sami upravit v sekci <account>Můj účet</account> -> Moje údaje. Jakmile provedete změnu a dáte nám o tom vědět, uděláme vše pro to, aby byla vaše objednávka odeslána na správnou adresu.",
+  "question_8": "Co mám dělat, pokud jsem nedostal svou objednávku?",
+  "answer_8_1": "Pokud jste nedostali svou objednávku, postupujte prosím takto:",
+  "answer_8_list_1": "Zkontrolujte údaje příjemce — ujistěte se, že jste zadali správnou dodací adresu, e-mailovou adresu a telefonní číslo.",
+  "answer_8_list_2": "Sledujte svou zásilku pomocí odkazu se sledovacím číslem a zjistěte, kde se nachází a zda jsou k dispozici nové informace.",
+  "answer_8_list_3": "Zkontrolujte dodací lhůtu — vaše objednávka může být stále na cestě.",
+  "answer_8_2": "Pokud jsou údaje správné, zásilku lze sledovat a dodací lhůta již uplynula, <contacts>kontaktujte nás prosím</contacts>. Pomůžeme vám co nejrychleji.",
+  "question_9": "Jak mohu sledovat své doručení?",
+  "answer_9_1": "Většina objednávek u <home>SignXpert</home> je zasílána prostřednictvím UPS a obdrží sledovací číslo, abyste mohli zásilku sledovat.",
+  "answer_9_list_1": "Můžete přejít do sekce <account>Můj účet</account>, najít sledovací číslo a kliknout na něj. Otevře se nové okno, ve kterém uvidíte polohu vaší zásilky i samotné sledovací číslo.",
+  "answer_9_list_2": "Sledovací číslo vám rovněž zašleme e-mailem, jakmile bude vaše objednávka odeslána.",
+  "answer_9_2": "Díky tomu budete vždy znát polohu a stav své zásilky.",
+  "question_10": "Proč jsem neobdržel fakturu?",
+  "answer_10_1": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli při registraci. Pokud jste ji neobdrželi, zkontrolujte prosím složku se spamem.",
+  "answer_10_2": "Fakturu si také můžete kdykoli stáhnout: přejděte do sekce <account>Můj účet</account> a klikněte na tlačítko „Faktura“. Kliknutím na něj si fakturu stáhnete ve formátu PDF.",
+  "answer_10_3": "K objednanému zboží je vždy přiložena papírová faktura. Pokud jste uvedli samostatnou fakturační adresu, bude zaslána poštou na tuto adresu.",
+  "question_11": "Co mám dělat, pokud je můj štítek poškozený nebo vyrobený nesprávně?",
+  "answer_11_1": "Naší nejvyšší prioritou je vaše plná spokojenost s našimi výrobky. Každou objednávku pečlivě vyrábíme podle vašich očekávání.",
+  "answer_11_2": "Pokud zjistíte nesprávný výrobek, vadu, chybu v designu nebo jiný problém, kontaktujte nás prosím co nejdříve.",
+  "answer_11_3": "Použijte naši e-mailovou adresu: <email>info@sign-xpert.com</email>. Do zprávy prosím uveďte následující:",
+  "answer_11_list_1": "E-mailovou adresu, se kterou jste se zaregistrovali",
+  "answer_11_list_2": "Zákaznické číslo",
+  "answer_11_list_3": "Číslo objednávky",
+  "answer_11_list_4": "Přiložte fotografii poškozeného nebo nesprávného výrobku",
+  "answer_11_list_5": "Stručně popište problém",
+  "answer_11_4": "Co nejdříve se vám ozveme, abychom problém vyřešili a zaslali vám správný výrobek."
+},
+"products": {
+  "hero": {
+    "title": "<accent>Vlastní</accent> gravírované plastové štítky a typové štítky",
+    "imageAlt": "Gravírované plastové štítky a etikety",
+    "intro": "Ve <home>SignXpert</home> vyrábíme gravírované plastové štítky, typové štítky a průmyslové etikety z odolného gravírovacího plastu.",
+    "description": "Naše gravírované štítky zajišťují jasné, trvanlivé a profesionální značení strojů, elektrických instalací, kanceláří, budov a pracovišť.",
+    "details": "Přesné laserové gravírování odhaluje kontrastní vrstvu plastu, čímž zajišťuje jasné, trvanlivé a dobře čitelné značení po dlouhá léta — i v náročných průmyslových podmínkách."
   },
-  "Impressum": {
-    "i_1": "Tiráž",
-    "i_2": "Informace dle § 5 TDDDG",
-    "i_3": "Společnost / Majitel:",
-    "i_4": "Kostyantyn Utvenko, SignXpert",
-    "i_5": "Adresa:",
-    "i_6": "Baumwiesen 2, 72401 Haigerloch, Německo",
-    "i_7": "Kontakt",
-    "i_8": "Telefon:",
-    "i_9": "Kontaktní formulář:",
-    "i_10": "DIČ",
-    "i_11": "V souladu s § 27a německého zákona o dani z obratu:",
-    "i_12": "Odpovědná osoba za redakční obsah",
-    "i_13": "V souladu s § 18 odst. 2 MStV:",
-    "i_14": "Kostyantyn Utvenko",
-    "i_15": "Řešení sporů v EU",
-    "i_16": "Evropská komise poskytuje platformu pro online řešení sporů (ODR):",
-    "i_17": "Naši e-mailovou adresu najdete výše v tiráži.",
-    "i_18": "Řešení spotřebitelských sporů / Univerzální rozhodčí orgán",
-    "i_19": "Nejsme ochotni ani povinni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu.",
-    "legal_1_title": "Odpovědnost za obsah",
-    "legal_1_p1": "Jako poskytovatel služeb odpovídáme za vlastní obsah na těchto stránkách v souladu s obecnými právními předpisy.",
-    "legal_1_p2": "Nejsme však povinni sledovat přenášené nebo uložené informace třetích stran ani vyhledávat okolnosti naznačující protiprávní činnost.",
-    "legal_1_p3": "Povinnosti odstranit nebo zablokovat užívání informací podle obecných právních předpisů zůstávají nedotčeny. Odpovědnost v tomto ohledu je však možná až od okamžiku, kdy se dozvíme o konkrétním porušení práv.",
-    "legal_1_p4": "Jakmile se o takovém porušení dozvíme, příslušný obsah neprodleně odstraníme.",
-    "legal_2_title": "Odpovědnost za odkazy",
-    "legal_2_p1": "Pokud tato webová stránka obsahuje odkazy na externí webové stránky třetích stran, nemáme na jejich obsah žádný vliv.",
-    "legal_2_p2": "Proto nemůžeme nést odpovědnost za tento cizí obsah. Za obsah odkazovaných stránek vždy odpovídá příslušný poskytovatel nebo provozovatel dané stránky.",
-    "legal_2_p3": "Jakmile se dozvíme o porušení práv, dané odkazy neprodleně odstraníme.",
-    "legal_3_title": "Autorská práva",
-    "legal_3_p1": "Obsah a díla vytvořená provozovatelem webových stránek na tomto webu podléhají německému autorskému právu.",
-    "legal_3_p2": "Rozmnožování, zpracování, šíření nebo jakékoli jiné využití nad rámec autorského práva vyžaduje písemný souhlas příslušného autora či tvůrce.",
-    "legal_3_p3": "Stahování a kopírování této webové stránky je povoleno pouze pro soukromé, nekomerční účely.",
-    "legal_3_p4": "Pokud obsah na této webové stránce nebyl vytvořen provozovatelem, jsou respektována autorská práva třetích stran.",
-    "legal_3_p5": "Pokud přesto zjistíte porušení autorských práv, dejte nám prosím vědět. Jakmile se o takovém porušení dozvíme, daný obsah neprodleně odstraníme.",
-    "legal_4_title": "Poznámka k tvorbě obsahu",
-    "legal_4_p1": "Texty a média na této webové stránce byly částečně vytvořeny, přeloženy nebo zpracovány pomocí umělé inteligence."
-  },
-  "EUOnlineDisputeResolution": {
-    "u_1": "Online řešení sporů v EU",
-    "u_2": "Evropská komise poskytuje platformu pro online řešení sporů (ODR):",
-    "u_3": "Postup řešení sporů",
-    "u_4": "Nejsme povinni účastnit se řízení o řešení sporů u spotřebitelského rozhodčího orgánu."
-  },
-  "privacy-policy": {
-    "description_1": "Vaše důvěra je pro nás důležitá. Abyste se při návštěvě našich webových stránek cítili bezpečně, dodržujeme veškeré německé a evropské právní požadavky týkající se zpracování osobních údajů (GDPR, BDSG, TDDDG). Níže vysvětlujeme, jak vaše údaje shromažďujeme, spravujeme a používáme.",
-    "description_2": "1. Správce údajů",
-    "description_3": "Zásady ochrany osobních údajů",
-    "description_4": "Za shromažďování, zpracování a používání osobních údajů odpovídá majitel společnosti",
-    "description_5": "Značka:",
-    "description_6": "Jméno:",
-    "description_7": "Kostyantyn Utvenko",
-    "description_8": "E-mail:",
-    "description_9": "Kostyantyn Utvenko, SignXpert, Baumwiesen 2, 72401 Haigerloch, Německo",
-    "description_10": "Kontaktní formulář:",
-    "description_11": "2. Shromažďování, zpracování a používání osobních údajů",
-    "description_12": "S informacemi, které nám poskytnete, nakládáme odpovědně. Osobní údaje jsou veškeré informace, které lze přiřadit ke konkrétní osobě. Vaše údaje shromažďujeme a zpracováváme za účelem vyřízení vašich objednávek. Údaje předáváme třetím stranám pouze tehdy, pokud to umožňuje zákon (např. pro logistiku nebo zpracování plateb).",
-    "description_13": "Doby uchovávání:",
-    "description_14": "V souladu s německým obchodním a daňovým právem",
-    "description_15": "Obchodní zákoník — HGB",
-    "description_16": "a",
-    "description_17": "Daňový řád — AO",
-    "description_18": "uchováváme údaje o zákaznících a objednávkách, včetně účetních dokladů a faktur, po dobu",
-    "description_19": "10 let",
-    "description_20": "2.1 Registrace zákaznického účtu a zadání objednávky",
-    "description_21": "Pro splnění našich smluvních povinností (čl. 6 odst. 1 písm. b GDPR) jsou při vytváření účtu nebo zadávání objednávky vyžadovány následující informace:",
-    "description_22": "Vaše e-mailová adresa",
-    "description_23": "Vaše celé jméno",
-    "description_24": "Název společnosti (pokud je relevantní)",
-    "description_25": "DIČ společnosti",
-    "description_26": "Vaše adresa (dodací a fakturační adresa)",
-    "description_27": "Vaše telefonní číslo (používané pouze pro oznámení o doručení a logistickou koordinaci)",
-    "description_28": "Vaše heslo (uloženo v zašifrované podobě)",
-    "description_29": "2.2 Tvorba štítků",
-    "description_30": "Při vytváření štítku ukládáme údaje, které přidáte, za účelem zpracování vaší objednávky. Obsah štítků nikdy nepředáváme třetím stranám pro marketingové účely.",
-    "description_31": "2.3 Zpracování plateb",
-    "description_32": "Pro zajištění bezpečnosti vašich transakcí používáme moderní šifrovací standardy.",
-    "description_33": "Stripe:",
-    "description_34": "Platby kartou a další způsoby online platby jsou zpracovávány prostřednictvím našeho poskytovatele platebních služeb",
-    "description_35": "Stripe",
-    "description_36": "Vaše úplné údaje o kartě jsou přenášeny přímo společnosti Stripe. My máme přístup pouze ke jménu držitele karty, typu karty, posledním 4 číslicím a transakčním údajům potřebným pro zpracování vrácení peněz.",
-    "description_37": "Sparkasse:",
-    "description_38": "V případě přímých bankovních převodů (např. platba na fakturu nebo platba předem) jsou vaše platební údaje (jméno, IBAN, částka) zpracovávány prostřednictvím naší banky,",
-    "description_39": "Sparkasse",
-    "description_40": "PayPal:",
-    "description_41": "Na platby prostřednictvím PayPal se vztahují vlastní zásady ochrany osobních údajů PayPal. My obdržíme pouze informace nezbytné pro přiřazení platby.",
-    "description_42": "2.4 Newsletter",
-    "description_43": "Vaše e-mailová adresa je používána pro zasílání newsletterů a nabídek pouze s vaším výslovným souhlasem. Odhlásit se můžete kdykoli prostřednictvím odkazu v e-mailu nebo v nastavení svého účtu.",
-    "description_44": "3. Kontrola bonity",
-    "description_45": "Vyhrazujeme si právo provést kontrolu bonity před výrobou nebo odesláním vaší objednávky. Potřebné údaje mohou být za tímto účelem předány úvěrovým agenturám (např. SCHUFA).",
-    "description_46": "4. Předávání údajů do třetích zemí",
-    "description_47": "Snažíme se zpracovávat veškeré údaje v rámci EU/EHP. Při využívání globálních služeb (např. Stripe) mohou být údaje předávány do zemí mimo EHP. V takových případech zajišťujeme úroveň ochrany srovnatelnou se standardy EU pomocí standardních smluvních doložek (SCC).",
-    "description_48": "5. Vaše práva",
-    "description_49": "Podle GDPR máte ohledně svých osobních údajů následující práva:",
-    "description_50": "Právo na přístup:",
-    "description_51": "Máte právo požadovat informace o svých uložených údajích a obdržet jejich kopii (čl. 15 GDPR).",
-    "description_52": "Právo na opravu:",
-    "description_53": "Máte právo požadovat opravu nepřesných nebo neúplných údajů (čl. 16 GDPR).",
-    "description_54": "Právo na výmaz:",
-    "description_55": "Máte právo požadovat výmaz svých údajů, pokud tomu nebrání zákonné lhůty pro uchovávání (např. 10letá daňová povinnost archivace) (čl. 17 GDPR).",
-    "description_56": "Právo na omezení zpracování:",
-    "description_57": "Za určitých podmínek máte právo požadovat omezení zpracování (čl. 18 GDPR).",
-    "description_58": "Právo na přenositelnost údajů:",
-    "description_59": "Máte právo obdržet své údaje ve strukturovaném, běžně používaném formátu (čl. 20 GDPR).",
-    "description_60": "Právo vznést námitku:",
-    "description_61": "Máte právo vznést námitku proti zpracování svých údajů na základě oprávněných zájmů nebo pro účely přímého marketingu (čl. 21 GDPR).",
-    "description_62": "Právo odvolat souhlas: ",
-    "description_63": "Svůj souhlas s marketingovými účely můžete kdykoli odvolat prostřednictvím odhlašovacího odkazu v našich e-mailech nebo v nastavení svého účtu.",
-    "description_64": "Právo podat stížnost:",
-    "description_65": "V souladu s čl. 77 GDPR máte právo podat stížnost u příslušného dozorového úřadu pro ochranu osobních údajů, pokud se domníváte, že zpracování vašich osobních údajů porušuje GDPR.",
-    "description_66": "Zemský pověřenec pro ochranu osobních údajů a svobodu informací spolkové země Bádensko-Württembersko",
-    "description_67": "Adresa:",
-    "description_68": "Lautenschlagerstraße 20, 70173 Stuttgart, Německo",
-    "description_69": "6. Soubory protokolu (log soubory)",
-    "description_70": "Při",
-    "description_71": "návštěvě našich stránek váš prohlížeč automaticky přenáší údaje, které jsou ukládány v log souborech serveru:",
-    "description_72": "Datum a čas přístupu, název stránky, IP adresa, objem dat a verze prohlížeče.",
-    "description_73": "Tyto soubory jsou používány výhradně pro zajištění technické bezpečnosti a opravu chyb. Přístup k nim mají pouze vývojáři a jsou automaticky mazány po",
-    "description_74": "30 dnech",
-    "description_75": "Hesla ani citlivé platební údaje se nikdy neukládají.",
-    "description_76": "7. Bezpečný přenos údajů",
-    "description_77": "Vaše osobní údaje jsou přenášeny bezpečně pomocí",
-    "description_78": "šifrování. To se týká objednávky, platby i přihlášení do zákaznického účtu. Naše systémy průběžně aktualizujeme, abychom chránili vaše údaje před neoprávněným přístupem nebo ztrátou.",
-    "description_79": "8. Soubory cookie",
-    "description_80": "Soubory cookie používáme ke zlepšení vašeho uživatelského zážitku v souladu s TDDDG",
-    "description_81": "a čl. 6 odst. 1 písm. f GDPR.",
-    "description_82": "Nezbytné soubory cookie:",
-    "description_83": "Nezbytné pro fungování webové stránky (např. nákupní košík).",
-    "description_84": "Analytické a marketingové soubory cookie (např. Google):",
-    "description_85": "Používány pouze s vaším",
-    "description_86": "aktivním souhlasem",
-    "description_87": "prostřednictvím cookie lišty.",
-    "description_88": "Svá nastavení můžete kdykoli změnit nebo odvolat svůj souhlas kliknutím na odkaz „Nastavení cookies“ ve spodní části kterékoli stránky webu."
-  },
-  "faq": {
-    "title": "Často kladené otázky",
-    "question_1": "Je snadné vytvořit si vlastní štítek online?",
-    "answer_1_1": "Ano — proces je jednoduchý, intuitivní a probíhá krok za krokem.",
-    "answer_1_2": "V našem online editoru nejprve zvolíte tvar svého štítku. Poté nastavíte rozměry, tloušťku a barvu materiálu. Dále můžete přidat text, obrázky, QR kódy a čárové kódy, vytvořit otvory, zadat požadované množství a individuálně upravit všechna ostatní nastavení.",
-    "answer_1_3": "Každý krok doprovází náhled v reálném čase, takže nejsou potřeba žádné speciální znalosti ani zkušenosti s designem.",
-    "answer_1_4": "Pokud potřebujete další pomoc, podívejte se na náš <quickGuide>stručný návod</quickGuide>, který vás provede celým procesem krok za krokem.",
-    "answer_1_5": "Pokud máte i poté nějaké dotazy, navštivte stránku <contacts>Kontakt</contacts> a obraťte se na náš tým — rád vám pomůže.",
-    "answer_1_6": "Se <home>SignXpert</home> je vytváření profesionálních štítků online jednoduché, pohodlné a efektivní.",
-    "question_2": "Jak mohu zaplatit za svou objednávku?",
-    "answer_2_1": "Svou objednávku můžete pohodlně zaplatit pomocí různých platebních metod dostupných na našem webu. Přijímáme Visa, MasterCard, PayPal a další možnosti platby.",
-    "answer_2_2": "Platit můžete přímo při objednávce nebo zvolit platbu na fakturu. Pokud zvolíte fakturu, vystavíme vám fakturu se splatností 30 dní.",
-    "answer_2_3": "Všechny platby jsou zpracovávány bezpečně a potvrzení obdržíte ihned po dokončení platby. Vaše objednávka je tak rychle potvrzena a připravena k výrobě.",
-    "question_3": "Jak mohu obdržet objednávku bez DPH?",
-    "answer_3_1": "V současné době se v souladu s § 19 UStG (režim malého podnikatele) DPH neúčtuje. Proto je objednávka vystavena bez DPH bez ohledu na to, zda objednáváte jako soukromá osoba nebo firma.",
-    "answer_3_list_1": "Pokud zadáte své DIČ, můžeme jej uvést u vašich firemních údajů a na dokladech, pokud je to relevantní.",
-    "answer_3_list_2": "Pokud kontrola DIČ selže, nejprve se ujistěte, že bylo číslo zadáno správně. V objednávce můžete pokračovat i bez DIČ.",
-    "answer_3_2": "Na faktuře bude uvedena informace, že DPH se v souladu s § 19 UStG neúčtuje. Pokud budete mít k firemním údajům nebo DIČ dotazy, kontaktujte nás prosím.",
-    "answer_3_3": "Pokud máte další dotazy nebo problémy, kontaktujte nás prosím. Náš tým vám rád pomůže.",
-    "question_4": "Mohu objednávku vrátit a co zahrnuje vaše záruka spokojenosti?",
-    "answer_4_1": "Ve <home>SignXpert</home> věříme, že každý zákazník by měl být se svou objednávkou plně spokojen. Pokud vám produkt z jakéhokoli důvodu nevyhovuje, postaráme se o vhodné řešení — to je naše plná záruka spokojenosti.",
-    "answer_4_2": "Co záruka zahrnuje:",
-    "answer_4_list_1": "Vztahuje se na všechny výrobky na zakázku.",
-    "answer_4_list_2": "Pokud vaše objednávka obsahuje chybu nebo neodpovídá vašim očekáváním, nejprve problém vyřešíme a zašleme vám náhradní výrobek.",
-    "answer_4_list_3": "Pokud to problém nevyřeší, nabízíme plnou refundaci.",
-    "answer_4_3": "Tipy pro plnou spokojenost:",
-    "answer_4_list_4": "Před odesláním objednávky pečlivě zkontrolujte všechny detaily v editoru: text, umístění prvků a zvolené možnosti.",
-    "answer_4_list_5": "Podívejte se na naši stránku <quickGuide>Stručný návod</quickGuide>, abyste pochopili, jak náš online editor funguje.",
-    "answer_4_list_6": "Ještě jednou zkontrolujte potvrzení objednávky, abyste se ujistili, že je vše v pořádku.",
-    "answer_4_4": "Pokud přesto nejste spokojeni:",
-    "answer_4_list_7": "<contacts>Kontaktujte nás</contacts> co nejdříve, abychom vám mohli rychle pomoci.",
-    "answer_4_list_8": "Záruka platí 30 dní od doručení. Kontaktujte nás prosím v této lhůtě.",
-    "answer_4_5": "Se <home>SignXpert</home> je vytváření vlastního produktu jednoduché, bezpečné a příjemné, a pokud něco nepůjde podle plánu, jsme tu vždy pro vás.",
-    "question_5": "Jaké jsou náklady na dopravu a jaké možnosti a lhůty doručení existují?",
-    "answer_5_1": "Náklady na dopravu u <home>SignXpert</home> závisí na velikosti, hmotnosti a hodnotě vaší objednávky a na zemi určení.",
-    "answer_5_2": "Doručujeme převážně prostřednictvím UPS. Při objednávce máte k dispozici několik možností doručení:",
-    "answer_5_list_1": "Standardní doručení — obvykle trvá 1–3 dny.",
-    "answer_5_list_2": "Expresní doručení — dostupné pro zvlášť naléhavé objednávky (doručení následující pracovní den).",
-    "answer_5_list_3": "Sobotní doručení — dostupné v některých regionech, pokud potřebujete objednávku o víkendu.",
-    "answer_5_3": "Všechny možnosti a ceny jsou jasně zobrazeny při objednávce, takže si můžete vybrat vhodný způsob doručení. Každá zásilka je odeslána se sledovacím číslem, které můžete kdykoli zkontrolovat ve svém účtu <account>Můj účet</account> a sledovat tak stav doručení.",
-    "question_6": "Kde najdu informace o svých objednávkách a platbách?",
-    "answer_6_1": "Pokud již máte účet, <login>nejprve se přihlaste</login> a poté otevřete <account>Můj účet</account>, kde uvidíte všechny své dosavadní objednávky u <home>SignXpert</home>.",
-    "answer_6_2": "V této sekci najdete a můžete spravovat důležité údaje o svých objednávkách:",
-    "answer_6_list_1": "Datum objednávky a číslo objednávky",
-    "answer_6_list_2": "Název projektu",
-    "answer_6_list_3": "Celková částka objednávky",
-    "answer_6_list_4": "Stav objednávky",
-    "answer_6_list_5": "Stáhnout dodací list",
-    "answer_6_list_6": "Sledovat zásilku pomocí odkazu se sledovacím číslem",
-    "answer_6_list_7": "Stáhnout fakturu",
-    "answer_6_list_8": "Zkontrolovat stav platby — pokud vaše objednávka ještě není zaplacena, můžete zaplatit přímo pomocí poskytnutého odkazu",
-    "answer_6_list_9": "Otevřít svůj projekt a zobrazit detaily",
-    "answer_6_3": "Všechny tyto funkce jsou dostupné v sekci <account>Můj účet</account> a poskytují vám plnou kontrolu nad vašimi objednávkami a platbami.",
-    "question_7": "Co mám dělat, pokud jsem zadal nesprávné údaje?",
-    "answer_7_1": "Pokud jste zadali nesprávné údaje, například dodací adresu, fakturační adresu, e-mailovou adresu nebo telefonní číslo, <contacts>kontaktujte nás</contacts> co nejdříve se správnými údaji.",
-    "answer_7_2": "Své údaje si také můžete sami upravit v sekci <account>Můj účet</account> -> Moje údaje. Jakmile provedete změnu a dáte nám o tom vědět, uděláme vše pro to, aby byla vaše objednávka odeslána na správnou adresu.",
-    "question_8": "Co mám dělat, pokud jsem nedostal svou objednávku?",
-    "answer_8_1": "Pokud jste nedostali svou objednávku, postupujte prosím takto:",
-    "answer_8_list_1": "Zkontrolujte údaje příjemce — ujistěte se, že jste zadali správnou dodací adresu, e-mailovou adresu a telefonní číslo.",
-    "answer_8_list_2": "Sledujte svou zásilku pomocí odkazu se sledovacím číslem a zjistěte, kde se nachází a zda jsou k dispozici nové informace.",
-    "answer_8_list_3": "Zkontrolujte dodací lhůtu — vaše objednávka může být stále na cestě.",
-    "answer_8_2": "Pokud jsou údaje správné, zásilku lze sledovat a dodací lhůta již uplynula, <contacts>kontaktujte nás prosím</contacts>. Pomůžeme vám co nejrychleji.",
-    "question_9": "Jak mohu sledovat své doručení?",
-    "answer_9_1": "Většina objednávek u <home>SignXpert</home> je zasílána prostřednictvím UPS a obdrží sledovací číslo, abyste mohli zásilku sledovat.",
-    "answer_9_list_1": "Můžete přejít do sekce <account>Můj účet</account>, najít sledovací číslo a kliknout na něj. Otevře se nové okno, ve kterém uvidíte polohu vaší zásilky i samotné sledovací číslo.",
-    "answer_9_list_2": "Sledovací číslo vám rovněž zašleme e-mailem, jakmile bude vaše objednávka odeslána.",
-    "answer_9_2": "Díky tomu budete vždy znát polohu a stav své zásilky.",
-    "question_10": "Proč jsem neobdržel fakturu?",
-    "answer_10_1": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli při registraci. Pokud jste ji neobdrželi, zkontrolujte prosím složku se spamem.",
-    "answer_10_2": "Fakturu si také můžete kdykoli stáhnout: přejděte do sekce <account>Můj účet</account> a klikněte na tlačítko „Faktura“. Kliknutím na něj si fakturu stáhnete ve formátu PDF.",
-    "answer_10_3": "K objednanému zboží je vždy přiložena papírová faktura. Pokud jste uvedli samostatnou fakturační adresu, bude zaslána poštou na tuto adresu.",
-    "question_11": "Co mám dělat, pokud je můj štítek poškozený nebo vyrobený nesprávně?",
-    "answer_11_1": "Naší nejvyšší prioritou je vaše plná spokojenost s našimi výrobky. Každou objednávku pečlivě vyrábíme podle vašich očekávání.",
-    "answer_11_2": "Pokud zjistíte nesprávný výrobek, vadu, chybu v designu nebo jiný problém, kontaktujte nás prosím co nejdříve.",
-    "answer_11_3": "Použijte naši e-mailovou adresu: <email>info@sign-xpert.com</email>. Do zprávy prosím uveďte následující:",
-    "answer_11_list_1": "E-mailovou adresu, se kterou jste se zaregistrovali",
-    "answer_11_list_2": "Zákaznické číslo",
-    "answer_11_list_3": "Číslo objednávky",
-    "answer_11_list_4": "Přiložte fotografii poškozeného nebo nesprávného výrobku",
-    "answer_11_list_5": "Stručně popište problém",
-    "answer_11_4": "Co nejdříve se vám ozveme, abychom problém vyřešili a zaslali vám správný výrobek."
-  },
-  "products": {
-    "hero": {
-      "title": "<accent>Vlastní</accent> gravírované plastové štítky a typové štítky",
-      "imageAlt": "Gravírované plastové štítky a etikety",
-      "intro": "Ve společnosti <home>SignXpert</home> vyrábíme gravírované plastové štítky, typové štítky a průmyslové etikety z odolného gravírovacího plastu.",
-      "description": "Naše gravírované štítky zajišťují jasné, trvanlivé a profesionální značení strojů, elektrických instalací, kanceláří, budov a pracovišť.",
-      "details": "Přesné laserové gravírování odhaluje kontrastní vrstvu plastu, čímž zajišťuje jasné, trvanlivé a dobře čitelné značení po dlouhá léta — i v náročných průmyslových podmínkách."
+  "uses": {
+    "title": "Naše gravírované plastové štítky se běžně používají v:",
+    "industry": {
+      "title": "Průmyslu\na výrobě",
+      "alt": "Průmysl a výroba"
     },
-    "uses": {
-      "title": "Naše gravírované plastové štítky se běžně používají v:",
-      "industry": {
-        "title": "Průmyslu\na výrobě",
-        "alt": "Průmysl a výroba"
-      },
-      "electrical": {
-        "title": "Elektrických\ninstalacích",
-        "alt": "Elektrické instalace"
-      },
-      "machinery": {
-        "title": "Značení strojů\na zařízení",
-        "alt": "Značení strojů a zařízení"
-      },
-      "offices": {
-        "title": "Kancelářích\na budovách",
-        "alt": "Kanceláře a budovy"
-      },
-      "technical": {
-        "title": "Technických\nzařízeních",
-        "alt": "Technická zařízení"
-      }
+    "electrical": {
+      "title": "Elektrických\ninstalacích",
+      "alt": "Elektrické instalace"
     },
-    "features": {
-      "title": "<accent>Detaily produktu</accent>",
-      "descriptionStrong": "Naše gravírované plastové štítky jsou vyrobeny z kvalitního dvouvrstvého plastu pro technické a průmyslové použití.",
-      "description": "Díky přímému gravírování zůstává nápis trvale čitelný, odolný vůči vyblednutí a oděru — jasná výhoda oproti samolepkám.",
-      "selfAdhesive": {
-        "title": "Samolepicí provedení se\nsilným lepidlem 3M",
-        "alt": "Samolepicí provedení se silným lepidlem 3M"
-      },
-      "versatile": {
-        "title": "Univerzální použití v průmyslových\na kancelářských prostorách",
-        "alt": "Univerzální použití v průmyslových a kancelářských prostorách"
-      },
-      "fireClass": {
-        "title": "Třída hořlavosti B2\n(DIN 4102)",
-        "alt": "Třída hořlavosti B2 podle DIN 4102"
-      },
-      "uvResistant": {
-        "title": "UV odolný materiál\npro venkovní použití",
-        "alt": "UV odolný materiál pro venkovní použití"
-      },
-      "largeFormat": {
-        "title": "Velkoformátové varianty až\n600 x 295 mm",
-        "alt": "Velkoformátové varianty až 600 x 295 mm"
-      },
-      "thickness": {
-        "title": "Tloušťka materiálu\n0,8 mm a 1,6 mm",
-        "alt": "Tloušťka materiálu 0,8 mm a 1,6 mm"
-      },
-      "durable": {
-        "title": "Trvanlivé a\nodolné gravírování",
-        "alt": "Trvanlivé a odolné gravírování"
-      },
-      "contrast": {
-        "title": "Vysoký kontrast pro optimální\nčitelnost",
-        "alt": "Vysoký kontrast pro optimální čitelnost"
-      }
+    "machinery": {
+      "title": "Značení strojů\na zařízení",
+      "alt": "Značení strojů a zařízení"
     },
-    "design": {
-      "title": "Vytvořte si gravírovaný <accent>štítek online</accent>",
-      "intro": "S <editor>online editorem</editor> SignXpert si můžete rychle a snadno navrhnout vlastní gravírované štítky.",
-      "highlight": "Navrhněte si svůj štítek přímo v prohlížeči a každou změnu uvidíte okamžitě v živém náhledu.",
-      "listTitle": "Co nabízí náš online editor — krok za krokem",
-      "item_1": "Výběr velikosti a rozvržení — zvolte požadovanou velikost a vhodné rozvržení svého štítku",
-      "item_2": "Přizpůsobení designu — individuálně upravte text, symboly a barvy",
-      "item_3": "Přidání upevnění — přidejte otvory nebo samolepicí zadní stranu",
-      "item_4": "Náhled v reálném čase — pomocí živého náhledu uvidíte každou změnu okamžitě",
-      "summary": "Tímto způsobem vytvoříte profesionální gravírované štítky, typové štítky strojů a technické štítky během několika minut.",
-      "support": "Štítky lze také objednat telefonicky nebo e-mailem. Náš tým vám v případě potřeby rád pomůže s designem.",
-      "imageAlt": "Vytvořte si svůj vlastní štítek se SignXpert hned teď",
-      "cta": "Vytvořit online"
+    "offices": {
+      "title": "Kancelářích\na budovách",
+      "alt": "Kanceláře a budovy"
     },
-    "production": {
-      "titleLine_1": "Výroba na zakázku",
-      "titleLine_2": "se <accent>SignXpert</accent>",
-      "lead": "Ve společnosti SignXpert je každý gravírovaný štítek vyroben individuálně podle vašich požadavků — od jednoho kusu až po velkosériovou výrobu.",
-      "description_1": "Svůj štítek si můžete navrhnout přímo v našem online editoru, nahrát vlastní soubory, nebo nám jednoduše zaslat své technické požadavky a preference rozvržení.",
-      "description_2": "Flexibilita — od jednotlivých kusů po velké série.",
-      "description_3": "Ať už potřebujete jeden štítek, několik různých variant, nebo velké množství identických štítků — vyrábíme spolehlivě, přesně a s trvale vysokou kvalitou.",
-      "imageAlt": "Výroba na zakázku se SignXpert"
-    },
-    "categories": {
-      "title": "Naše <accent>kategorie výrobků</accent> a typické použití",
-      "electricalPanel": {
-        "title": "Značení rozváděčů",
-        "item_1": "Elektrické skříně",
-        "item_2": "Rozvodná zařízení",
-        "item_3": "Ovládací skříně",
-        "item_4": "Štítky obvodů"
-      },
-      "machineNameplates": {
-        "title": "Typové štítky strojů",
-        "item_1": "Značení strojů",
-        "item_2": "Výrobní štítky",
-        "item_3": "Technické typové štítky",
-        "item_4": "Značení zařízení"
-      },
-      "warningSafety": {
-        "title": "Výstražné a bezpečnostní štítky",
-        "item_1": "Bezpečnostní výstrahy",
-        "item_2": "Značení nebezpečí",
-        "item_3": "Bezpečnostní štítky strojů",
-        "item_4": "Provozní pokyny"
-      },
-      "controlPanel": {
-        "title": "Značení ovládacích panelů",
-        "item_1": "Štítky tlačítek",
-        "item_2": "Štítky přepínačů",
-        "item_3": "Ovládací panely strojů",
-        "item_4": "Ovládací rozhraní"
-      },
-      "serialNumber": {
-        "title": "Štítky s výrobním číslem",
-        "item_1": "Štítky s výrobním číslem",
-        "item_2": "Inventární štítky",
-        "item_3": "Identifikační štítky zařízení",
-        "item_4": "Inventární etikety"
-      },
-      "doorOffice": {
-        "title": "Dveřní a kancelářské štítky",
-        "item_1": "Štítky na dveře kanceláří",
-        "item_2": "Značení místností",
-        "item_3": "Značení pracovišť",
-        "item_4": "Jmenovky",
-        "item_5": "Parkovací cedule"
-      }
+    "technical": {
+      "title": "Technických\nzařízeních",
+      "alt": "Technická zařízení"
     }
+  },
+   "features": {
+  "title": "<accent>Detaily produktu</accent>",
+  "descriptionStrong": "Naše gravírované plastové štítky jsou vyrobeny z kvalitního dvouvrstvého plastu pro technické a průmyslové použití.",
+  "description": "Díky přímému gravírování zůstává nápis trvale čitelný, odolný vůči vyblednutí a oděru — jasná výhoda oproti samolepkám.",
+  "selfAdhesive": {
+    "title": "Samolepicí provedení se\nsilným lepidlem 3M",
+    "alt": "Samolepicí provedení se silným lepidlem 3M"
+  },
+  "versatile": {
+    "title": "Univerzální použití v průmyslových\na kancelářských prostorách",
+    "alt": "Univerzální použití v průmyslových a kancelářských prostorách"
+  },
+  "fireClass": {
+    "title": "Třída hořlavosti B2\n(DIN 4102)",
+    "alt": "Třída hořlavosti B2 podle DIN 4102"
+  },
+  "uvResistant": {
+    "title": "UV odolný materiál\npro venkovní použití",
+    "alt": "UV odolný materiál pro venkovní použití"
+  },
+  "largeFormat": {
+    "title": "Velkoformátové varianty až\n600 x 295 mm",
+    "alt": "Velkoformátové varianty až 600 x 295 mm"
+  },
+  "thickness": {
+    "title": "Tloušťka materiálu\n0,8 mm a 1,6 mm",
+    "alt": "Tloušťka materiálu 0,8 mm a 1,6 mm"
+  },
+  "durable": {
+    "title": "Trvanlivé a\nodolné gravírování",
+    "alt": "Trvanlivé a odolné gravírování"
+  },
+  "contrast": {
+    "title": "Vysoký kontrast pro optimální\nčitelnost",
+    "alt": "Vysoký kontrast pro optimální čitelnost"
+  }
+},
+"design": {
+  "title": "Vytvořte si gravírovaný <accent>štítek online</accent>",
+  "intro": "S <editor>online editorem</editor> SignXpert si můžete rychle a snadno vytvořit vlastní gravírované štítky.",
+  "highlight": "Navrhněte si svůj štítek přímo v prohlížeči a každou změnu uvidíte okamžitě v živém náhledu.",
+  "listTitle": "Co nabízí náš online editor — krok za krokem",
+  "item_1": "Výběr velikosti a rozvržení — zvolte požadovanou velikost a vhodné rozvržení svého štítku",
+  "item_2": "Přizpůsobení designu — individuálně upravte text, symboly a barvy",
+  "item_3": "Přidání upevnění — přidejte otvory nebo samolepicí podklad",
+  "item_4": "Náhled v reálném čase — pomocí živého náhledu uvidíte každou změnu okamžitě",
+  "summary": "Tímto způsobem vytvoříte profesionální gravírované etikety, typové štítky strojů a technické štítky během několika minut.",
+  "support": "Štítky lze také objednat telefonicky nebo e-mailem. Náš tým vám v případě potřeby rád pomůže s designem.",
+  "imageAlt": "Vytvořte si svůj vlastní štítek se SignXpert hned teď",
+  "cta": "Vytvořit online hned teď"
+},
+"production": {
+  "titleLine_1": "Výroba na zakázku",
+  "titleLine_2": "se <accent>SignXpert</accent>",
+  "lead": "Ve SignXpert je každý gravírovaný štítek vyroben individuálně podle vašich požadavků — od jednoho kusu až po velkosériovou výrobu.",
+  "description_1": "Svůj štítek si můžete navrhnout přímo v našem online editoru, nahrát vlastní soubory, nebo nám jednoduše zaslat své technické požadavky a preference rozvržení.",
+  "description_2": "Flexibilita — od jednotlivých kusů po velké série.",
+  "description_3": "Ať už potřebujete jeden štítek, několik různých variant, nebo velké množství identických štítků — vyrábíme spolehlivě, přesně a s trvale vysokou kvalitou.",
+  "imageAlt": "Výroba na zakázku se SignXpert"
+},
+"categories": {
+  "title": "Naše <accent>kategorie produktů</accent> a typické použití",
+"electricalPanel": {
+  "title": "Značení rozváděčů",
+  "item_1": "Elektrické skříně",
+  "item_2": "Rozvodná zařízení",
+  "item_3": "Ovládací skříně",
+  "item_4": "Štítky obvodů"
+  },
+  "machineNameplates": {
+    "title": "Typové štítky strojů",
+    "item_1": "Značení strojů",
+    "item_2": "Výrobní štítky",
+    "item_3": "Technické typové štítky",
+    "item_4": "Značení zařízení"
+  },
+  "warningSafety": {
+    "title": "Výstražné a bezpečnostní štítky",
+    "item_1": "Bezpečnostní výstrahy",
+    "item_2": "Značení nebezpečí",
+    "item_3": "Bezpečnostní štítky strojů",
+    "item_4": "Provozní pokyny"
+  },
+  "controlPanel": {
+  "title": "Značení ovládacích panelů",
+  "item_1": "Štítky tlačítek",
+  "item_2": "Štítky přepínačů",
+  "item_3": "Ovládací panely strojů",
+  "item_4": "Ovládací rozhraní"
+},
+  "serialNumber": {
+    "title": "Štítky s výrobním číslem",
+    "item_1": "Štítky s výrobním číslem",
+    "item_2": "Inventární štítky",
+    "item_3": "Identifikační štítky zařízení",
+    "item_4": "Inventární etikety"
+  },
+  "doorOffice": {
+    "title": "Dveřní a kancelářské štítky",
+    "item_1": "Štítky na dveře kanceláří",
+    "item_2": "Značení místností",
+    "item_3": "Značení pracovišť",
+    "item_4": "Jmenovky",
+    "item_5": "Parkovací cedule"
+  }
+  }
   },
   "toolbar": {
     "actions": {
@@ -1076,52 +1076,633 @@
         "square.white.large": "Bílý čtverec (velký)"
       }
     }
+  },  "infoAboutProject": {
+  "project": {
+    "label": "Projekt",
+    "notSaved": "Neuloženo",
+    "untitled": "Bez názvu"
   },
-  "infoAboutProject": {
-    "project": {
-      "label": "Projekt",
-      "notSaved": "Neuloženo",
-      "untitled": "Bez názvu"
-    },
-    "cart": "Košík",
-    "currentSign": "Aktuální štítek",
-    "totalForAllSigns": "Cena projektu",
+  "cart": "Košík",
+  "currentSign": "Aktuální štítek",
+  "totalForAllSigns": "Celkem za všechny štítky",
+  "discount": "Sleva",
+  "totalPrice": "Celková cena",
+  "accessoriesSelected": "Vámi vybrané příslušenství:",
+  "alerts": {
+    "addToCartFailed": "Přidání projektu do košíku se nezdařilo. Zkuste to prosím znovu.",
+    "prepareOrderFailed": "Přípravu souhrnu objednávky se nepodařilo dokončit. Zkuste to prosím znovu.",
+    "enterProjectName": "Zadejte prosím název projektu",
+    "saveProjectFailed": "Uložení projektu se nezdařilo. Zkuste to prosím znovu."
+  }
+},
+"checkout": {
+  "actions": {
+    "backToAccessories": "Zpět na příslušenství",
+    "proceedToPayment": "Pokračovat k platbě",
+    "change": "Změnit",
+    "close": "Zavřít"
+  },
+  "alerts": {
+    "selectCountry": "Vyberte prosím zemi"
+  },
+  "processingRequest": "Váš požadavek se zpracovává... Počkejte prosím, může to chvíli trvat.",
+  "updateDeliveryAddress": "Aktualizovat nebo přidat dodací adresu",
+  "deliveryAddress": "Dodací adresa",
+  "invoiceAddress": "Fakturační adresa",
+  "orderSummary": "Souhrn objednávky",
+  "myOrder": "Moje objednávka",
+  "selectCountry": "Vybrat zemi",
+  "phoneQuestionNote": "Povolit upřesňující dotazy na mobilní číslo.",
+  "yes": "Ano",
+  "invoiceEmailNote": "Tato e-mailová adresa bude použita k zaslání vaší faktury",
+  "invoiceDifferent": "Fakturační adresa (pokud se liší)",
+  "vatAndTotal": "DPH a celková částka",
+  "vatNote": "V souladu s § 19 UStG se DPH neúčtuje.",
+  "productionComment": "Zde nechte komentář pro výrobu:",
+  "fields": {
+    "fullName": "Jméno a příjmení",
+    "companyName": "Název společnosti",
+    "address1": "Adresa 1",
+    "address2": "Adresa 2",
+    "address3": "Adresa 3",
+    "town": "Město",
+    "postalCode": "PSČ",
+    "country": "Země",
+    "region": "Region",
+    "customerReference": "Reference zákazníka",
+    "invoiceRegion": "Region fakturace",
+    "emailAddress": "E-mailová adresa",
+    "mobilePhone": "Číslo mobilního telefonu"
+  },
+  "customerReference": {
+    "placeholder": "např. č. objednávky, č. projektu — objeví se na faktuře"
+  },
+  "summary": {
+    "description": "Popis",
+    "quantity": "Množství",
+    "totalSigns": "Celkový počet štítků",
+    "signsSubtotal": "Mezisoučet",
     "discount": "Sleva",
-    "totalPrice": "Celková cena",
-    "accessoriesSelected": "Vámi vybrané příslušenství:",
-    "alerts": {
-      "addToCartFailed": "Přidání projektu do košíku se nezdařilo. Zkuste to prosím znovu.",
-      "prepareOrderFailed": "Souhrn objednávky se nepodařilo připravit. Zkuste to prosím znovu.",
-      "enterProjectName": "Zadejte prosím název projektu",
-      "saveProjectFailed": "Uložení projektu se nezdařilo. Zkuste to prosím znovu."
+    "price": "Cena",
+    "signsTotal": "Celková cena štítků",
+    "accessories": "Příslušenství",
+    "types": "Typy",
+    "totalAmount": "Celková částka"
+  },
+  "delivery": {
+    "title": "Doručení",
+    "price": "Cena dopravy",
+    "comment": "Poznámka k doručení",
+    "options": {
+      "upsEnvelope": "UPS Standard",
+      "upsNextDayPackage": "UPS balík následující den",
+      "upsExpressBeforeNoon": "UPS Express do 12:00",
+      "upsSaturdayDelivery": "UPS doručení v sobotu"
+    },
+    "hints": {
+      "saturday": "Dostupné pouze v pátek.",
+      "weekdays": "Doručení od pondělí do pátku."
     }
   },
-  "checkout": {
-    "actions": {
-      "backToAccessories": "Zpět na příslušenství",
-      "proceedToPayment": "Pokračovat k platbě",
-      "change": "Změnit",
-      "close": "Zavřít"
+  "promoCode": {
+    "label": "Promo kód",
+    "placeholder": "Zadejte promo kód",
+    "apply": "Uplatnit kód",
+    "invalid": "Neplatný promo kód",
+    "discount": "Sleva z promo kódu"
+  },
+  "shippingNotes": {
+    "title": "Poznámky k doručení",
+    "sameDay": "Objednávky přijaté do 16:00 odesíláme tentýž den.",
+    "nextDay": "Pro doručení následující pracovní den zvolte UPS balík následující den.",
+    "euros": "Všechny ceny jsou uvedeny v eurech."
+  },
+  "countries": {
+    "austria": "Rakousko",
+    "belgium": "Belgie",
+    "croatia": "Chorvatsko",
+    "czechRepublic": "Česká republika",
+    "denmark": "Dánsko",
+    "estonia": "Estonsko",
+    "france": "Francie",
+    "germany": "Německo",
+    "hungary": "Maďarsko",
+    "ireland": "Irsko",
+    "italy": "Itálie",
+    "lithuania": "Litva",
+    "luxembourg": "Lucembursko",
+    "netherlands": "Nizozemsko",
+    "poland": "Polsko",
+    "romania": "Rumunsko",
+    "slovakia": "Slovensko",
+    "slovenia": "Slovinsko",
+    "spain": "Španělsko",
+    "sweden": "Švédsko",
+    "switzerland": "Švýcarsko",
+    "ukraine": "Ukrajina",
+    "unitedKingdom": "Spojené království"
+  }
+},
+"yourProjectsModal": {
+  "title": "Moje projekty",
+  "info": {
+    "chooseOrOrder": "Můžete otevřít uložené projekty,",
+    "addSelected": "zadat objednávku, přidat předchozí projekty přímo do aktuálního projektu a sdílet jej pomocí odkazu."
+  },
+  "cart": "Košík",
+  "confirmMerge": "První vybraný projekt bude použit jako základ, všechny ostatní budou přidány. Pokračovat?",
+  "yes": "Ano",
+  "cancel": "Zrušit",
+  "openingNotice": "Načítání vašich projektů může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
+  "previousImages": "Předchozí obrázky",
+  "nextImages": "Další obrázky",
+  "projectImageAlt": "Projekt {{name}}, obrázek {{number}}",
+  "edit": "Upravit",
+  "delete": "Smazat",
+  "shareProject": "Sdílet projekt",
+  "addToCurrentProject": "Přidat do aktuálního projektu",
+  "copyShareLink": "Kopírovat odkaz",
+  "table": {
+    "number": "Č.",
+    "name": "Název",
+    "lastDateSaved": "Poslední uložení",
+    "lastOrderDate": "Poslední objednávka",
+    "image": "Obrázek"
+  },
+  "alerts": {
+    "deleteFailed": "Projekt se nepodařilo smazat",
+    "projectNotFound": "Projekt nebyl nalezen",
+    "shareCreateFailed": "Odkaz pro sdílení se nepodařilo vytvořit",
+    "shareCopied": "Odkaz byl zkopírován do schránky",
+    "selectAtLeastOne": "Vyberte prosím alespoň jeden projekt k přidání",
+    "canvasNotReady": "Plátno ještě není připraveno. Zkuste to prosím znovu.",
+    "selectExactlyOne": "Vyberte prosím přesně jeden projekt, do kterého chcete přidat aktuální změny",
+    "captureFailed": "Aktuální plátno se nepodařilo zachytit",
+    "nothingToAdd": "Není co přidat: nebylo nalezeno žádné neuložené plátno",
+    "addCurrentFailed": "Aktuální změny se nepodařilo přidat do vybraného projektu",
+    "addCurrentSuccess": "Vaše aktuální změny byly úspěšně přidány do vybraného projektu",
+    "addCanvasesError": "Při přidávání pláten došlo k chybě",
+    "addCanvasesSuccess": "Plátna z {{count}} projektu(ů) byla úspěšně přidána",
+    "addCanvasesFailed": "Plátna se nepodařilo přidat. Ujistěte se, že je otevřen aktuální projekt.",
+    "prepareCartFailed": "Vybraný projekt se nepodařilo připravit pro košík."
+  }
+},
+  "topToolbar": {
+  "sharedProjectFallback": "Sdílený projekt",
+  "actions": {
+    "importViaExcel": "Import z Excelu",
+    "saveAsTemplate": "Uložit jako šablonu",
+    "templates": "Šablony",
+    "preview": "Náhled",
+    "newProject": "Nový projekt",
+    "yourProject": "Projekty",
+    "saving": "Ukládání...",
+    "saveProject": "Uložit",
+    "saveProjectAs": "Uložit jako",
+    "undo": "Zpět",
+    "redo": "Znovu"
+  },
+  "alerts": {
+    "openSharedProjectFailed": "Sdílený projekt se nepodařilo otevřít. Zkuste to prosím znovu.",
+    "openSharedProjectExpired": "Sdílený projekt se nepodařilo otevřít. Platnost odkazu pravděpodobně vypršela.",
+    "enterProjectName": "Zadejte prosím název projektu",
+    "saveProjectFailed": "Uložení projektu se nezdařilo. Zkuste to prosím znovu."
+  },
+  "shareImport": {
+    "before": "Než otevřete",
+    "sharedProject": "sdílený projekt",
+    "middle": ", prosím",
+    "save": "uložte",
+    "or": "nebo",
+    "discard": "zahoďte",
+    "after": "svou aktuální práci."
+  }
+},
+"saveAsModal": {
+  "title": "Uložit projekt jako",
+  "name": "Název",
+  "projectNamePlaceholder": "Název projektu",
+  "save": "Uložit",
+  "cancel": "Zrušit",
+  "savingNotice": "Uložení projektu může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
+  "previousImages": "Předchozí obrázky",
+  "nextImages": "Další obrázky",
+  "projectImageAlt": "Projekt {{name}}, obrázek {{number}}",
+  "table": {
+    "number": "Č.",
+    "name": "Název",
+    "date": "Datum",
+    "image": "Obrázek"
+  }
+},
+"cartSaveProjectModal": {
+  "message": "Před přidáním do košíku prosím uložte svůj projekt.",
+  "save": "Uložit",
+  "cancel": "Zrušit"
+},
+"cartAccessoriesModal": {
+  "processing": "Zpracovává se...",
+  "continueToCheckout": "Pokračovat k objednávce",
+  "close": "Zavřít",
+  "exampleUse": "Příklad použití"
+},
+"accessories": {
+  "title": "Příslušenství",
+  "moreAccessories": "Další příslušenství",
+  "accessoryIconAlt": "Ikona {{name}}",
+  "toolbar": {
+    "newSign": "Nový štítek",
+    "deleteSign": "Smazat štítek",
+    "importViaExcel": "Import z Excelu",
+    "templates": "Šablony"
+  },
+  "tooltips": {
+    "maxSignsReached": "Dosažen maximální počet štítků (30). Vytvořte nový projekt.",
+    "createNewCanvas": "Vytvořit nové plátno (štítek)",
+    "deleteCurrentCanvas": "Smazat aktuální plátno (štítek)",
+    "toggleAccessory": "Zobrazit/skrýt příslušenství"
+  },
+  "alerts": {
+    "maxSignsReached": "Dosažen maximální počet štítků pro tento projekt (30). Vytvořte prosím nový projekt."
+  },
+  "items": {
+    "cableTies": {
+      "name": "Stahovací pásky",
+      "desc": "Černé plastové stahovací pásky, velikost 3,6 × 140 mm"
     },
-    "alerts": {
-      "selectCountry": "Vyberte prosím zemi"
+    "screws95": {
+      "name": "Šrouby 9,5 mm",
+      "desc": "Velikost 2,9 × 9,5 mm"
     },
-    "processingRequest": "Váš požadavek se zpracovává... Počkejte prosím, může to chvíli trvat.",
-    "updateDeliveryAddress": "Aktualizovat nebo přidat dodací adresu",
-    "deliveryAddress": "Dodací adresa",
-    "invoiceAddress": "Fakturační adresa",
-    "orderSummary": "Souhrn objednávky",
-    "myOrder": "Moje objednávka",
-    "selectCountry": "Vybrat zemi",
-    "phoneQuestionNote": "Můžeme vás na tomto mobilním čísle kontaktovat s případnými dotazy k objednávce.",
-    "yes": "Ano",
-    "invoiceEmailNote": "Tato e-mailová adresa bude použita k zaslání vaší faktury",
-    "invoiceDifferent": "Fakturační adresa (pokud se liší)",
-    "vatAndTotal": "DPH a celková částka",
-    "vatNote": "V souladu s § 19 UStG se DPH neúčtuje.",
-    "productionComment": "Zde nechte komentář pro výrobu:",
+    "screws13": {
+      "name": "Šrouby 13 mm",
+      "desc": "Velikost 2,9 × 13 mm"
+    },
+    "carabiner": {
+      "name": "Karabina",
+      "desc": "Kovová karabina 40 mm"
+    },
+    "keyrings": {
+      "name": "Kroužky na klíče",
+      "desc": "30 mm"
+    },
+    "ballChains": {
+      "name": "Kuličkové řetízky",
+      "desc": "Délka 10 cm"
+    }
+  }
+},
+"accessoriesModal": {
+  "close": "Zavřít",
+  "exampleUse": "Příklad použití",
+  "itemImageAlt": "Obrázek {{name}}",
+  "itemExtraAlt": "Doplňkový obrázek {{name}}"
+},
+"payModal": {
+  "backToPayment": "Zpět k platbě",
+  "title": "Vyberte způsob platby",
+  "description": "Svou objednávku můžete dokončit jedním z následujících způsobů platby:",
+  "placeOrder": "ZADAT OBJEDNÁVKU",
+  "alerts": {
+    "paymentDataFailed": "Platební údaje se nepodařilo načíst."
+  },
+  "invoice": {
+    "title": "Nákup na fakturu",
+    "placeOrder": "Zadejte objednávku a fakturu uhraďte do 30 dnů.",
+    "shipped": "Jakmile bude vaše objednávka odeslána, faktura bude zaslána na váš e-mail a přiložena k zásilce.",
+    "optionsIntro": "Fakturu můžete uhradit jedním z následujících způsobů:",
+    "onlinePrefix": "• Online ve svém účtu: přihlaste se, otevřete",
+    "myAccount": "Můj účet",
+    "myOrders": "Moje objednávky",
+    "onlineSuffix": ", najděte svou objednávku a klikněte na",
+    "pay": "Zaplatit",
+    "bankTransfer": "• Bankovní převod — fakturu můžete uhradit také ručně podle uvedených bankovních údajů.",
+    "received": "Jakmile platbu obdržíme, objednávka bude označena jako zaplacená.",
+    "preferred": "(Tento způsob preferuje řada našich firemních zákazníků.)"
+  },
+  "online": {
+    "title": "Zaplatit online",
+    "loadingGateway": "Načítání platebního systému..."
+  }
+},
+"paySuccess": {
+  "title": "Platba úspěšná",
+  "message": "Děkujeme za váš nákup! Vaše platba byla úspěšně zpracována.",
+  "sub": "Detaily své objednávky si můžete prohlédnout ve svém účtu.",
+  "goToAccount": "Přejít do účtu",
+  "backToHome": "Zpět na úvod"
+},
+"orderSuccess": {
+  "close": "Zavřít",
+  "title": "Děkujeme za vaši objednávku!",
+  "processing": "Nyní zpracováváme vaši objednávku. Jakmile bude zaregistrována, obdržíte potvrzení objednávky e-mailem.",
+  "accountStatus": "Stav své objednávky můžete kdykoli sledovat ve svém účtu.",
+  "ratingTitle": "Jak se vám líbila zkušenost se SignXpert?",
+  "rateAria": "Ohodnotit {{value}} z 5",
+  "commentLabel": "Zanechte nám prosím komentář — budeme rádi za vaši zpětnou vazbu!",
+  "sending": "Odesílání...",
+  "send": "Odeslat",
+  "kindRegards": "S pozdravem,"
+},
+"projectCanvasesGrid": {
+  "pdf": "PDF",
+  "empty": "V aktuálním projektu nejsou žádná plátna.",
+  "preview": "Náhled",
+  "previewAlt": "Náhled",
+  "createNewSign": "Vytvořit nový štítek",
+  "units": {
+    "mm": "(mm)",
+    "pcs": "ks"
+  },
+  "tooltips": {
+    "maxSignsReached": "Dosažen maximální počet štítků (30). Vytvořte nový projekt.",
+    "createNewCanvas": "Vytvořit nové plátno (štítek)"
+  },
+  "alerts": {
+    "maxSignsReached": "Dosažen maximální počet štítků pro tento projekt (30). Vytvořte prosím nový projekt."
+  }
+},
+"templatesModal": {
+  "title": "Šablony",
+  "loading": "Načítání...",
+  "subtitle": "Zde si můžete vybrat z různých šablon nebo použít své dříve uložené šablony.",
+  "myTemplates": "Moje šablony",
+  "uncategorized": "Bez kategorie",
+  "category": "Kategorie",
+  "previewAlt": "Náhled",
+  "actions": {
+    "delete": "Smazat",
+    "edit": "Upravit",
+    "rename": "Přejmenovat",
+    "addNew": "Přidat novou",
+    "back": "Zpět"
+  },
+  "empty": {
+    "myTemplates": "Zatím žádné šablony",
+    "category": "V této kategorii nejsou žádné šablony"
+  },
+  "prompts": {
+    "categoryName": "Název kategorie",
+    "newCategoryName": "Nový název kategorie",
+    "newTemplateName": "Nový název šablony"
+  },
+  "confirm": {
+    "deleteCategory": "Smazat kategorii „{{name}}“? Šablony budou přesunuty do „Bez kategorie“.",
+    "deleteTemplate": "Smazat šablonu „{{name}}“?"
+  },
+  "alerts": {
+    "canvasNotReady": "Plátno ještě není připraveno",
+    "emptyTemplateCanvas": "Plátno šablony je prázdné nebo neplatné",
+    "uncategorizedDelete": "Kategorii „Bez kategorie“ nelze smazat",
+    "uncategorizedRename": "Kategorii „Bez kategorie“ nelze přejmenovat",
+    "deleteCategoryFailed": "Kategorii se nepodařilo smazat",
+    "enterCategoryName": "Zadejte prosím název kategorie",
+    "updateCategoryFailed": "Kategorii se nepodařilo aktualizovat",
+    "createCategoryFailed": "Kategorii se nepodařilo vytvořit",
+    "applyTemplateFailed": "Šablonu se nepodařilo použít",
+    "enterTemplateName": "Zadejte prosím název šablony",
+    "renameTemplateFailed": "Šablonu se nepodařilo přejmenovat",
+    "deleteTemplateFailed": "Šablonu se nepodařilo smazat",
+    "updateTemplateFailed": "Šablonu se nepodařilo aktualizovat"
+  }
+},
+ "saveAsTemplateModal": {
+  "title": "Uložit šablonu jako",
+  "name": "Název",
+  "category": "Kategorie",
+  "templateNamePlaceholder": "Název šablony",
+  "uncategorized": "Bez kategorie",
+  "saving": "Ukládání...",
+  "save": "Uložit",
+  "cancel": "Zrušit",
+  "alerts": {
+    "enterTemplateName": "Zadejte prosím název šablony",
+    "saveFailed": "Uložení šablony se nezdařilo. Zkuste to prosím znovu."
+  }
+},
+"layoutPlannerModal": {
+  "title": "Plán rozvržení tisku",
+  "subtitle": "Formát {{format}} · {{width}}×{{height}} mm · Rozestup mezi štítky {{spacing}} mm · {{orientation}} · Materiál: {{material}}",
+  "close": "Zavřít",
+  "sheetFormat": "Formát listu",
+  "orientation": "Orientace",
+  "orientationValues": {
+    "portrait": "Na výšku",
+    "landscape": "Na šířku"
+  },
+  "contourGaps": "Mezery obrysu",
+  "enabled": "Zapnuto",
+  "disabled": "Vypnuto",
+  "all": "Vše",
+  "materialGroup": "Skupina (barva/tloušťka)",
+  "allMaterials": "Všechny materiály ({{count}} ks)",
+  "pieces": "{{count}} ks",
+  "canvasNameFallback": "Plátno {{number}}",
+  "pdfMode": "Režim (PDF)",
+  "minPageWidth": "Min. šířka stránky",
+  "minPageHeight": "Min. výška stránky",
+  "maxPageWidth": "Max. šířka stránky",
+  "maxPageHeight": "Max. výška stránky",
+  "pageMarginToFrame": "Okraj stránky (k rámu)",
+  "frameSpacing": "Rozestup rámu",
+  "signSpacing": "Rozestup mezi štítky",
+  "sortOrder": "Pořadí řazení",
+  "addSheetInfo": "Přidat informace o listu",
+  "preparingPdf": "Příprava PDF...",
+  "downloadPdf": "Stáhnout PDF",
+  "autoByMode": "Určeno automaticky podle zvoleného režimu",
+  "units": {
+    "mm": "mm"
+  },
+  "hints": {
+    "zeroDefaults": "0 = výchozí hodnoty",
+    "twoDefaults": "2 = výchozí hodnoty",
+    "ignoredForMj": "ignorováno v režimu MJ",
+    "mjTopRightBottom": "Režim MJ: pouze nahoře/vpravo/dole",
+    "allSides": "platí pro všechny strany",
+    "onlyIfSheetsUsed": "Pouze pokud se používají listy"
+  },
+  "sort": {
+    "highFirst": "Nejprve největší",
+    "lowFirst": "Nejprve nejmenší"
+  },
+  "summary": {
+    "sheets": "Listy",
+    "placed": "umístěno",
+    "leftover": "zbývá",
+    "coverage": "Pokrytí"
+  },
+  "empty": {
+    "nothingToPlace": "Nejsou zde žádné štítky k umístění.",
+    "noCopiesFit": "Žádná kopie se nevejde na vybraný formát. Zkuste větší list nebo zmenšete okraje."
+  },
+  "alerts": {
+    "exportPdfFailed": "PDF se nepodařilo uložit. Ujistěte se, že exportní server běží a je dostupný."
+  },
+  "sheetPreview": {
+    "title": "List {{number}}",
+    "stats": "{{width}}×{{height}} mm · Pokrytí {{usage}}%",
+    "canvasAlt": "Plátno"
+  },
+  "leftovers": {
+    "title": "Neumístěno ({{count}})",
+    "copy": "Kopie {{index}}/{{total}}",
+    "size": "{{width}}×{{height}} mm"
+  },
+  "exportModes": {
+    "normal": "Normální",
+    "normalMjFrame": "Normální (MJ) rám",
+    "sheetOptimizedMjFr": "Optimalizace listu (MJ) rám",
+    "sheetA4Portrait": "List A4 na výšku",
+    "sheetA5Portrait": "List A5 na výšku",
+    "sheetA4Landscape": "List A4 na šířku",
+    "productionOptimized": "Optimalizováno pro výrobu"
+  }
+},
+"contacts": {
+  "description_90": "Kontakt",
+  "description_91": "Zákaznická podpora",
+  "description_92": "Sídlo společnosti",
+  "description_93": "Provozní doba",
+  "description_94": "Pondělí – Pátek, 8:00 – 19:00",
+  "description_95": "Nebo nám napište prostřednictvím formuláře.",
+  "description_96": "Firma / Organizace",
+  "description_97": "*Dotaz",
+  "description_98": "ODESLAT",
+  "description_99": "Zadejte prosím svou e-mailovou adresu.",
+  "description_100": "Zadejte prosím platnou e-mailovou adresu.",
+  "description_101": "Zadejte prosím svůj dotaz.",
+  "description_102": "Děkujeme za vaši zprávu společnosti SignXpert. Váš dotaz jsme přijali a co nejdříve se vám ozveme.",
+  "description_103": "Chyba při odesílání zprávy. Zkuste to prosím znovu."
+},
+"QuickGuide": {
+"d_1": "Nabízíme",
+"d_2": "Intuitivní",
+"d_3": "design",
+"d_4": "naprosto jednoduše",
+"d_5": "Rychlá",
+"d_6": "výroba",
+"d_7": "Do 1 dne",
+"d_8": "Expresní",
+"d_9": "doprava",
+"d_10": "24–48 hod.",
+"d_11": "Jak používat editor",
+"d_12": "Nový projekt",
+"d_13": "Kontakt",
+"start": {
+  "title": "Jak začít",
+  "register": "Vytvořit účet",
+  "create": "Vytvořit projekt",
+  "save": "Uložit projekt",
+  "cart": "Dokončit objednávku"
+},
+"editor": {
+  "choose": "Vyberte krok za krokem:",
+  "imageAlt": "Editor SignXpert",
+  "steps": {
+    "shape": "Tvar — zvolte požadovaný tvar pro svůj štítek nebo etiketu.",
+    "size": "Velikost — maximálně 600 mm × 295 mm.",
+    "thickness": "Tloušťka materiálu: 0,8 / 1,6 / 3,2 mm — na výběr s lepidlem nebo bez něj.",
+    "color": "Barva — podle tloušťky materiálu jsou k dispozici různé barvy.",
+    "elements": "Můžete přidat řadu prvků a vše flexibilně vyzkoušet. Tlačítkem „Tvar“ můžete vytvářet rámy, výřezy nebo gravírovací designy.",
+    "holes": "Možné jsou otvory libovolné velikosti, nebo si vytvořte vlastní výřezy pomocí tlačítka „Tvar“."
+  },
+  "sideNotes": {
+    "duplicates": "Vytvářejte přesné duplikáty. Počet se zobrazuje pod náhledem.",
+    "copy": "Vytvořte upravitelnou kopii a individuálně si ji přizpůsobte.",
+    "manage": "Spravujte vytvořené štítky. Importujte text přímo z Excelu a využívejte šablony (předpřipravené nebo vlastní uložené).",
+    "accessories": "Máme na skladě řadu příslušenství — nemusíte nic dalšího shánět ani kupovat.",
+    "navigate": "Pohodlně se pohybujte mezi vytvořenými štítky."
+  },
+  "topNotes": {
+    "plastic": "Používáme gravírovací plast,\nkterý nebledne ani nemění barvu.",
+    "templates": "Uložte si vlastní šablonu pro budoucí použití.\nNový projekt můžete kdykoli vytvořit nebo otevřít\nstávající.",
+    "price": "Vaše ceny již zahrnují daně\na slevy. Pravidelně nabízíme\nnašim zákazníkům výhodné slevy."
+  },
+  "bottomNotes": {
+    "requests": "Zde nechte zvláštní požadavky\n— každý z nich čteme\na zohledňujeme.",
+    "thumbnails": "Zde vidíte náhled\nvašich vytvořených štítků.",
+    "elements": "Snadno přesouvejte,\npřidávejte, mažte, kopírujte\na upravujte prvky.",
+    "properties": "Zde měníte text,\nrozměry a další vlastnosti."
+    }
+  }
+},
+"Login": {
+  "l_1": "Vytvořit nový účet",
+  "l_2": "Abyste si u nás mohli objednat, musíte si nejprve vytvořit účet. Je to rychlé a snadné!",
+  "l_3": "Pole označená hvězdičkou (*) jsou povinná. Zvolte si heslo. Brzy obdržíte potvrzovací e-mail."
+},
+"Enter": {
+  "e_1": "Vítejte u SignXpert — jsme rádi, že jste s námi!",
+  "e_2": "Vaše osobní zákaznické číslo: <strong>{{customerNumber}}</strong>",
+  "e_3": "Pro vaše pohodlí jsme vaše zákaznické číslo zaslali také přímo na vaši e-mailovou adresu.",
+  "e_4": "Nyní se můžete <strong>přihlásit</strong> níže a vytvářet projekty a zadávat objednávky.",
+  "e_7": "Pokud potřebujete pomoc, náš tým je vám vždy rád k dispozici.",
+  "e_8": "S pozdravem,",
+  "e_9": "SignXpert"
+},
+"MyAccount": {
+  "common": {
+    "loading": "Načítání...",
+    "saveChanges": "Uložit",
+    "send": "Odeslat",
+    "sending": "Odesílání..."
+  },
+  "header": {
+    "orders": "Moje objednávky",
+    "details": "Moje údaje",
+    "settings": "Moje nastavení"
+  },
+  "orders": {
+    "loadingNote": "Načítání vašich objednávek může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
+    "noProjectSnapshot": "Tato objednávka nemá snímek projektu",
+    "projectSnapshotNoId": "Snímek projektu nemá ID",
+    "openProjectFailed": "Objednaný projekt se nepodařilo otevřít",
+    "downloadFileFailed": "Chyba při stahování souboru",
+    "noTrackingYet": "Zatím nebylo přiřazeno sledovací číslo",
+    "opening": "Otevírání...",
+    "openProject": "Otevřít projekt",
+    "sumInclVatDelivery": "Částka (vč. DPH a dopravy)",
+    "table": {
+      "no": "Č.",
+      "orderDate": "Datum objednávky",
+      "orderNo": "Č. objednávky",
+      "projectName": "Název projektu",
+      "orderSum": "Částka objednávky",
+      "sumDelivery": "Částka + doprava",
+      "status": "Stav",
+      "deliveryNote": "Dodací list",
+      "tracking": "Sledování",
+      "invoice": "Faktura",
+      "invoiceStatus": "Stav faktury",
+      "toPay": "K úhradě",
+      "openProject": "Projekt"
+    },
+    "status": {
+      "received": "Přijato",
+      "paid": "Zaplaceno",
+      "unpaid": "Nezaplaceno"
+      ,"printed": "Vytištěno",
+      "manufact": "Ve výrobě",
+      "delivered": "Doručeno",
+      "shipped": "Odesláno",
+      "returned": "Vráceno",
+      "waiting": "Čeká se",
+      "deleted": "Smazáno"
+    }
+  },
+  "details": {
+    "invoiceDeliveryNotice": "*Faktura a dodací list budou přiloženy k vaší zásilce a zaslány na stejnou adresu.",
+    "updateText": "Pokud chcete aktualizovat své registrační údaje, můžete to udělat zde a poté kliknout na „Uložit“.",
+    "addressTitle": "Adresa",
+    "invoiceAddressTitle": "Fakturační adresa (pokud se liší od adresy vlevo)",
+    "invoiceEmailText": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli.",
+    "invoiceEmailExtraText": "V případě potřeby můžete přidat i další e-mailovou adresu oddělenou čárkou.",
+    "errorLoadingUserData": "Chyba při načítání uživatelských dat",
+    "changesSaved": "Změny byly úspěšně uloženy!",
+    "saveFailed": "Uložení se nezdařilo",
     "fields": {
-      "fullName": "Jméno a příjmení",
+      "name": "Jméno",
       "companyName": "Název společnosti",
       "address1": "Adresa 1",
       "address2": "Adresa 2",
@@ -1129,706 +1710,124 @@
       "town": "Město",
       "postalCode": "PSČ",
       "country": "Země",
-      "region": "Region",
-      "customerReference": "Zákaznická reference",
-      "invoiceRegion": "Kraj/region fakturační adresy",
-      "emailAddress": "E-mailová adresa",
-      "mobilePhone": "Číslo mobilního telefonu"
-    },
-    "customerReference": {
-      "placeholder": "např. č. objednávky, č. projektu — objeví se na faktuře"
-    },
-    "summary": {
-      "description": "Popis",
-      "quantity": "Množství",
-      "totalSigns": "Celkový počet štítků",
-      "signsSubtotal": "Mezisoučet",
-      "discount": "Sleva",
-      "price": "Cena",
-      "signsTotal": "Částka projektu",
-      "accessories": "Příslušenství",
-      "types": "Typy",
-      "totalAmount": "Celková částka"
-    },
-    "delivery": {
-      "title": "Doručení",
-      "price": "Cena dopravy",
-      "comment": "Poznámka k doručení",
-      "options": {
-        "upsEnvelope": "UPS Standard",
-        "upsNextDayPackage": "UPS následující den",
-        "upsExpressBeforeNoon": "UPS Express do 12:00",
-        "upsSaturdayDelivery": "UPS doručení v sobotu"
-      },
-      "hints": {
-        "saturday": "Dostupné pouze v pátek.",
-        "weekdays": "Doručení od pondělí do pátku."
-      }
-    },
-    "promoCode": {
-      "label": "Promo kód",
-      "placeholder": "Zadejte promo kód",
-      "apply": "Uplatnit kód",
-      "invalid": "Neplatný promo kód",
-      "discount": "Sleva z promo kódu"
-    },
-    "shippingNotes": {
-      "title": "Poznámky k doručení",
-      "sameDay": "Objednávky přijaté do 16:00 odesíláme tentýž den.",
-      "nextDay": "Pro doručení následující pracovní den zvolte UPS následující den.",
-      "euros": "Všechny ceny jsou uvedeny v eurech."
-    },
-    "countries": {
-      "austria": "Rakousko",
-      "belgium": "Belgie",
-      "croatia": "Chorvatsko",
-      "czechRepublic": "Česká republika",
-      "denmark": "Dánsko",
-      "estonia": "Estonsko",
-      "france": "Francie",
-      "germany": "Německo",
-      "hungary": "Maďarsko",
-      "ireland": "Irsko",
-      "italy": "Itálie",
-      "lithuania": "Litva",
-      "luxembourg": "Lucembursko",
-      "netherlands": "Nizozemsko",
-      "poland": "Polsko",
-      "romania": "Rumunsko",
-      "slovakia": "Slovensko",
-      "slovenia": "Slovinsko",
-      "spain": "Španělsko",
-      "sweden": "Švédsko",
-      "switzerland": "Švýcarsko",
-      "ukraine": "Ukrajina",
-      "unitedKingdom": "Spojené království"
+      "requiredCountry": "*Země",
+      "email": "E-mailová adresa",
+      "mobilePhone": "Mobilní telefon",
+      "vatNumber": "DIČ"
     }
   },
-  "yourProjectsModal": {
-    "title": "Moje projekty",
-    "info": {
-      "chooseOrOrder": "Můžete otevřít uložené projekty,",
-      "addSelected": "zadat objednávku, přidat předchozí projekty přímo do aktuálního projektu a sdílet jej pomocí odkazu."
-    },
-    "cart": "Košík",
-    "confirmMerge": "První vybraný projekt bude použit jako základ, všechny ostatní budou přidány. Pokračovat?",
-    "yes": "Ano",
-    "cancel": "Zrušit",
-    "openingNotice": "Načítání vašich projektů může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
-    "previousImages": "Předchozí obrázky",
-    "nextImages": "Další obrázky",
-    "projectImageAlt": "Projekt {{name}}, obrázek {{number}}",
-    "edit": "Upravit",
-    "delete": "Smazat",
-    "shareProject": "Sdílet projekt",
-    "addToCurrentProject": "Přidat do aktuálního projektu",
-    "copyShareLink": "Kopírovat odkaz",
-    "table": {
-      "number": "Č.",
-      "name": "Název",
-      "lastDateSaved": "Poslední uložení",
-      "lastOrderDate": "Poslední objednávka",
-      "image": "Obrázek"
-    },
-    "alerts": {
-      "deleteFailed": "Projekt se nepodařilo smazat",
-      "projectNotFound": "Projekt nebyl nalezen",
-      "shareCreateFailed": "Odkaz pro sdílení se nepodařilo vytvořit",
-      "shareCopied": "Odkaz byl zkopírován do schránky",
-      "selectAtLeastOne": "Vyberte prosím alespoň jeden projekt k přidání",
-      "canvasNotReady": "Plátno ještě není připraveno. Zkuste to prosím znovu.",
-      "selectExactlyOne": "Vyberte prosím přesně jeden projekt, do kterého chcete přidat aktuální změny",
-      "captureFailed": "Aktuální plátno se nepodařilo zachytit",
-      "nothingToAdd": "Není co přidat: nebylo nalezeno žádné neuložené plátno",
-      "addCurrentFailed": "Aktuální změny se nepodařilo přidat do vybraného projektu",
-      "addCurrentSuccess": "Vaše aktuální změny byly úspěšně přidány do vybraného projektu",
-      "addCanvasesError": "Při přidávání pláten došlo k chybě",
-      "addCanvasesSuccess": "Plátna z {{count}} projektu(ů) byla úspěšně přidána",
-      "addCanvasesFailed": "Plátna se nepodařilo přidat. Ujistěte se, že je otevřen aktuální projekt.",
-      "prepareCartFailed": "Vybraný projekt se nepodařilo připravit pro košík."
-    }
+  "settings": {
+    "title": "Zde můžete uvést další informace, které budou automaticky přidány ke každé vaší objednávce.",
+    "additionalInformation": "Doplňující informace",
+    "errorLoadingMessage": "Chyba při načítání vaší zprávy",
+    "messageSaved": "Zpráva byla úspěšně uložena!",
+    "saveMessageFailed": "Zprávu se nepodařilo uložit"
   },
-  "topToolbar": {
-    "sharedProjectFallback": "Sdílený projekt",
-    "actions": {
-      "importViaExcel": "Import z Excelu",
-      "saveAsTemplate": "Uložit jako šablonu",
-      "templates": "Šablony",
-      "preview": "Náhled",
-      "newProject": "Nový projekt",
-      "yourProject": "Projekty",
-      "saving": "Ukládání...",
-      "saveProject": "Uložit",
-      "saveProjectAs": "Uložit jako",
-      "undo": "Zpět",
-      "redo": "Znovu"
-    },
-    "alerts": {
-      "openSharedProjectFailed": "Sdílený projekt se nepodařilo otevřít. Zkuste to prosím znovu.",
-      "openSharedProjectExpired": "Sdílený projekt se nepodařilo otevřít. Platnost odkazu pravděpodobně vypršela.",
-      "enterProjectName": "Zadejte prosím název projektu",
-      "saveProjectFailed": "Uložení projektu se nezdařilo. Zkuste to prosím znovu."
-    },
-    "shareImport": {
-      "before": "Než otevřete",
-      "sharedProject": "sdílený projekt",
-      "middle": ", prosím",
-      "save": "uložte",
-      "or": "nebo",
-      "discard": "zahoďte",
-      "after": "svou aktuální práci."
-    }
-  },
-  "saveAsModal": {
-    "title": "Uložit projekt jako",
-    "name": "Název",
-    "projectNamePlaceholder": "Název projektu",
-    "save": "Uložit",
-    "cancel": "Zrušit",
-    "savingNotice": "Uložení projektu může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
-    "previousImages": "Předchozí obrázky",
-    "nextImages": "Další obrázky",
-    "projectImageAlt": "Projekt {{name}}, obrázek {{number}}",
-    "table": {
-      "number": "Č.",
-      "name": "Název",
-      "date": "Datum",
-      "image": "Obrázek"
-    }
-  },
-  "cartSaveProjectModal": {
-    "message": "Před přidáním do košíku prosím uložte svůj projekt.",
-    "save": "Uložit",
-    "cancel": "Zrušit"
-  },
-  "cartAccessoriesModal": {
-    "processing": "Zpracovává se...",
-    "continueToCheckout": "Pokračovat k objednávce",
-    "close": "Zavřít",
-    "exampleUse": "Příklad použití"
-  },
-  "accessories": {
-    "title": "Příslušenství",
-    "moreAccessories": "Další příslušenství",
-    "accessoryIconAlt": "Ikona {{name}}",
-    "toolbar": {
-      "newSign": "Nový štítek",
-      "deleteSign": "Smazat štítek",
-      "importViaExcel": "Import z Excelu",
-      "templates": "Šablony"
-    },
-    "tooltips": {
-      "maxSignsReached": "Dosažen maximální počet štítků (30). Vytvořte nový projekt.",
-      "createNewCanvas": "Vytvořit nové plátno (štítek)",
-      "deleteCurrentCanvas": "Smazat aktuální plátno (štítek)",
-      "toggleAccessory": "Zobrazit/skrýt příslušenství"
-    },
-    "alerts": {
-      "maxSignsReached": "Dosažen maximální počet štítků pro tento projekt (30). Vytvořte prosím nový projekt."
-    },
-    "items": {
-      "cableTies": {
-        "name": "Stahovací pásky",
-        "desc": "Černé plastové stahovací pásky, velikost 3,6 × 140 mm"
-      },
-      "screws95": {
-        "name": "Samořezné šrouby 9,5 mm",
-        "desc": "Velikost 2,9 × 9,5 mm"
-      },
-      "screws13": {
-        "name": "Samořezné šrouby 13 mm",
-        "desc": "Velikost 2,9 × 13 mm"
-      },
-      "carabiner": {
-        "name": "Karabina",
-        "desc": "Kovová karabina 40 mm"
-      },
-      "keyrings": {
-        "name": "Kroužky na klíče",
-        "desc": "30 mm"
-      },
-      "ballChains": {
-        "name": "Kuličkové řetízky",
-        "desc": "Délka 10 cm"
-      }
-    }
-  },
-  "accessoriesModal": {
-    "close": "Zavřít",
-    "exampleUse": "Příklad použití",
-    "itemImageAlt": "Obrázek {{name}}",
-    "itemExtraAlt": "Doplňkový obrázek {{name}}"
-  },
-  "payModal": {
-    "backToPayment": "Zpět k pokladně",
-    "title": "Vyberte způsob platby",
-    "description": "Svou objednávku můžete dokončit jedním z následujících způsobů platby:",
-    "placeOrder": "ZADAT OBJEDNÁVKU",
-    "alerts": {
-      "paymentDataFailed": "Platební údaje se nepodařilo načíst."
-    },
-    "invoice": {
-      "title": "Platba na fakturu",
-      "placeOrder": "Odešlete objednávku a fakturu uhraďte do 30 dnů.",
-      "shipped": "Jakmile bude vaše objednávka odeslána, faktura bude zaslána na váš e-mail a přiložena k zásilce.",
-      "optionsIntro": "Fakturu můžete uhradit jedním z následujících způsobů:",
-      "onlinePrefix": "• Online ve svém účtu: přihlaste se, otevřete",
-      "myAccount": "Můj účet",
-      "myOrders": "Moje objednávky",
-      "onlineSuffix": ", najděte svou objednávku a klikněte na",
-      "pay": "Zaplatit",
-      "bankTransfer": "• Bankovní převod — fakturu můžete uhradit také ručně podle uvedených bankovních údajů.",
-      "received": "Jakmile platbu obdržíme, objednávka bude označena jako zaplacená.",
-      "preferred": "(Tento způsob preferuje řada našich firemních zákazníků.)"
-    },
-    "online": {
-      "title": "Zaplatit online",
-      "loadingGateway": "Načítání platebního systému..."
-    }
-  },
-  "paySuccess": {
-    "title": "Platba úspěšná",
-    "message": "Děkujeme za váš nákup! Vaše platba byla úspěšně zpracována.",
-    "sub": "Detaily své objednávky si můžete prohlédnout ve svém účtu.",
-    "goToAccount": "Přejít do účtu",
-    "backToHome": "Zpět na úvod"
-  },
-  "orderSuccess": {
-    "close": "Zavřít",
-    "title": "Děkujeme za vaši objednávku!",
-    "processing": "Nyní zpracováváme vaši objednávku. Jakmile bude zaregistrována, obdržíte potvrzení objednávky e-mailem.",
-    "accountStatus": "Stav své objednávky můžete kdykoli sledovat ve svém účtu.",
-    "ratingTitle": "Jak hodnotíte svou zkušenost se SignXpert?",
-    "rateAria": "Ohodnotit {{value}} z 5",
-    "commentLabel": "Napište nám prosím komentář — budeme rádi za vaši zpětnou vazbu!",
-    "sending": "Odesílání...",
-    "send": "Odeslat",
-    "kindRegards": "S pozdravem,"
-  },
-  "projectCanvasesGrid": {
-    "pdf": "PDF",
-    "empty": "V aktuálním projektu nejsou žádná plátna.",
-    "preview": "Náhled",
-    "previewAlt": "Náhled",
-    "createNewSign": "Vytvořit nový štítek",
-    "units": {
-      "mm": "(mm)",
-      "pcs": "ks"
-    },
-    "tooltips": {
-      "maxSignsReached": "Dosažen maximální počet štítků (30). Vytvořte nový projekt.",
-      "createNewCanvas": "Vytvořit nové plátno (štítek)"
-    },
-    "alerts": {
-      "maxSignsReached": "Dosažen maximální počet štítků pro tento projekt (30). Vytvořte prosím nový projekt."
-    }
-  },
-  "templatesModal": {
-    "title": "Šablony",
-    "loading": "Načítání...",
-    "subtitle": "Zde si můžete vybrat z různých šablon nebo použít své dříve uložené šablony.",
-    "myTemplates": "Moje šablony",
-    "uncategorized": "Bez kategorie",
-    "category": "Kategorie",
-    "previewAlt": "Náhled",
-    "actions": {
-      "delete": "Smazat",
-      "edit": "Upravit",
-      "rename": "Přejmenovat",
-      "addNew": "Přidat novou",
-      "back": "Zpět"
-    },
-    "empty": {
-      "myTemplates": "Zatím žádné šablony",
-      "category": "V této kategorii nejsou žádné šablony"
-    },
-    "prompts": {
-      "categoryName": "Název kategorie",
-      "newCategoryName": "Nový název kategorie",
-      "newTemplateName": "Nový název šablony"
-    },
-    "confirm": {
-      "deleteCategory": "Smazat kategorii „{{name}}“? Šablony budou přesunuty do „Bez kategorie“.",
-      "deleteTemplate": "Smazat šablonu „{{name}}“?"
-    },
-    "alerts": {
-      "canvasNotReady": "Plátno ještě není připraveno",
-      "emptyTemplateCanvas": "Plátno šablony je prázdné nebo neplatné",
-      "uncategorizedDelete": "Kategorii „Bez kategorie“ nelze smazat",
-      "uncategorizedRename": "Kategorii „Bez kategorie“ nelze přejmenovat",
-      "deleteCategoryFailed": "Kategorii se nepodařilo smazat",
-      "enterCategoryName": "Zadejte prosím název kategorie",
-      "updateCategoryFailed": "Kategorii se nepodařilo aktualizovat",
-      "createCategoryFailed": "Kategorii se nepodařilo vytvořit",
-      "applyTemplateFailed": "Šablonu se nepodařilo použít",
-      "enterTemplateName": "Zadejte prosím název šablony",
-      "renameTemplateFailed": "Šablonu se nepodařilo přejmenovat",
-      "deleteTemplateFailed": "Šablonu se nepodařilo smazat",
-      "updateTemplateFailed": "Šablonu se nepodařilo aktualizovat"
-    }
-  },
-  "saveAsTemplateModal": {
-    "title": "Uložit šablonu jako",
-    "name": "Název",
-    "category": "Kategorie",
-    "templateNamePlaceholder": "Název šablony",
-    "uncategorized": "Bez kategorie",
-    "saving": "Ukládání...",
-    "save": "Uložit",
-    "cancel": "Zrušit",
-    "alerts": {
-      "enterTemplateName": "Zadejte prosím název šablony",
-      "saveFailed": "Uložení šablony se nezdařilo. Zkuste to prosím znovu."
-    }
-  },
-  "layoutPlannerModal": {
-    "title": "Plán rozvržení tisku",
-    "subtitle": "Formát {{format}} · {{width}}×{{height}} mm · Rozestup mezi štítky {{spacing}} mm · {{orientation}} · Materiál: {{material}}",
-    "close": "Zavřít",
-    "sheetFormat": "Formát listu",
-    "orientation": "Orientace",
-    "orientationValues": {
-      "portrait": "Na výšku",
-      "landscape": "Na šířku"
-    },
-    "contourGaps": "Mezery obrysu",
-    "enabled": "Zapnuto",
-    "disabled": "Vypnuto",
-    "all": "Vše",
-    "materialGroup": "Skupina (barva/tloušťka)",
-    "allMaterials": "Všechny materiály ({{count}} ks)",
-    "pieces": "{{count}} ks",
-    "canvasNameFallback": "Plátno {{number}}",
-    "pdfMode": "Režim (PDF)",
-    "minPageWidth": "Min. šířka stránky",
-    "minPageHeight": "Min. výška stránky",
-    "maxPageWidth": "Max. šířka stránky",
-    "maxPageHeight": "Max. výška stránky",
-    "pageMarginToFrame": "Okraj stránky (k rámu)",
-    "frameSpacing": "Rozestup rámu",
-    "signSpacing": "Rozestup mezi štítky",
-    "sortOrder": "Pořadí řazení",
-    "addSheetInfo": "Přidat informace o listu",
-    "preparingPdf": "Příprava PDF...",
-    "downloadPdf": "Stáhnout PDF",
-    "autoByMode": "Určeno automaticky podle zvoleného režimu",
-    "units": {
-      "mm": "mm"
-    },
-    "hints": {
-      "zeroDefaults": "0 = výchozí hodnoty",
-      "twoDefaults": "2 = výchozí hodnoty",
-      "ignoredForMj": "ignorováno v režimu MJ",
-      "mjTopRightBottom": "Režim MJ: pouze nahoře/vpravo/dole",
-      "allSides": "platí pro všechny strany",
-      "onlyIfSheetsUsed": "Pouze pokud se používají listy"
-    },
-    "sort": {
-      "highFirst": "Nejprve největší",
-      "lowFirst": "Nejprve nejmenší"
-    },
-    "summary": {
-      "sheets": "Listy",
-      "placed": "umístěno",
-      "leftover": "zbývá",
-      "coverage": "Pokrytí"
-    },
-    "empty": {
-      "nothingToPlace": "Nejsou zde žádné štítky k umístění.",
-      "noCopiesFit": "Žádná kopie se nevejde na vybraný formát. Zkuste větší list nebo zmenšete okraje."
-    },
-    "alerts": {
-      "exportPdfFailed": "PDF se nepodařilo uložit. Ujistěte se, že exportní server běží a je dostupný."
-    },
-    "sheetPreview": {
-      "title": "List {{number}}",
-      "stats": "{{width}}×{{height}} mm · Pokrytí {{usage}}%",
-      "canvasAlt": "Plátno"
-    },
-    "leftovers": {
-      "title": "Neumístěno ({{count}})",
-      "copy": "Kopie {{index}}/{{total}}",
-      "size": "{{width}}×{{height}} mm"
-    },
-    "exportModes": {
-      "normal": "Normální",
-      "normalMjFrame": "Normální (MJ) rám",
-      "sheetOptimizedMjFr": "Optimalizace listu (MJ) rám",
-      "sheetA4Portrait": "List A4 na výšku",
-      "sheetA5Portrait": "List A5 na výšku",
-      "sheetA4Landscape": "List A4 na šířku",
-      "productionOptimized": "Optimalizováno pro výrobu"
-    }
-  },
-  "contacts": {
-    "description_90": "Kontakt",
-    "description_91": "Zákaznická podpora",
-    "description_92": "Sídlo společnosti",
-    "description_93": "Provozní doba",
-    "description_94": "Pondělí – Pátek, 8:00 – 19:00",
-    "description_95": "Nebo nám napište prostřednictvím formuláře.",
-    "description_96": "Firma / Organizace",
-    "description_97": "*Dotaz",
-    "description_98": "ODESLAT",
-    "description_99": "Zadejte prosím svou e-mailovou adresu.",
-    "description_100": "Zadejte prosím platnou e-mailovou adresu.",
-    "description_101": "Zadejte prosím svůj dotaz.",
-    "description_102": "Děkujeme za vaši zprávu společnosti SignXpert. Váš dotaz jsme přijali a co nejdříve se vám ozveme.",
-    "description_103": "Chyba při odesílání zprávy. Zkuste to prosím znovu."
-  },
-  "QuickGuide": {
-    "d_1": "Nabízíme",
-    "d_2": "Intuitivní",
-    "d_3": "návrh",
-    "d_4": "bez složitostí",
-    "d_5": "Rychlá",
-    "d_6": "výroba",
-    "d_7": "do 1 dne",
-    "d_8": "Expresní",
-    "d_9": "doručení",
-    "d_10": "24–48 hod.",
-    "d_11": "Jak používat editor",
-    "d_12": "Nový projekt",
-    "d_13": "Kontakt",
-    "start": {
-      "title": "Jak začít",
-      "register": "Vytvořit účet",
-      "create": "Vytvořit projekt",
-      "save": "Uložit projekt",
-      "cart": "Dokončit objednávku"
-    },
-    "editor": {
-      "choose": "Vyberte krok za krokem:",
-      "imageAlt": "Editor SignXpert",
-      "steps": {
-        "shape": "Tvar — zvolte požadovaný tvar pro svůj štítek nebo etiketu.",
-        "size": "Velikost — maximálně 600 mm × 295 mm.",
-        "thickness": "Tloušťka materiálu: 0,8 / 1,6 / 3,2 mm — na výběr s lepidlem nebo bez něj.",
-        "color": "Barva — podle tloušťky materiálu jsou k dispozici různé barvy.",
-        "elements": "Můžete přidat řadu prvků a vše flexibilně vyzkoušet. Tlačítkem „Tvar“ můžete vytvářet rámy, výřezy nebo gravírovací designy.",
-        "holes": "Možné jsou otvory libovolné velikosti, nebo si vytvořte vlastní výřezy pomocí tlačítka „Tvar“."
-      },
-      "sideNotes": {
-        "duplicates": "Vytvářejte přesné duplikáty. Počet se zobrazuje pod náhledem.",
-        "copy": "Vytvořte upravitelnou kopii a individuálně si ji přizpůsobte.",
-        "manage": "Spravujte vytvořené štítky. Importujte text přímo z Excelu a využívejte šablony (předpřipravené nebo vlastní uložené).",
-        "accessories": "Máme na skladě řadu příslušenství — nemusíte nic dalšího shánět ani kupovat.",
-        "navigate": "Pohodlně se pohybujte mezi vytvořenými štítky."
-      },
-      "topNotes": {
-        "plastic": "Používáme gravírovací plast,\nkterý nebledne ani nemění barvu.",
-        "templates": "Uložte si vlastní šablonu pro budoucí použití.\nNový projekt můžete kdykoli vytvořit nebo otevřít\nstávající.",
-        "price": "Vaše ceny již zahrnují daně\na slevy. Pravidelně nabízíme\nnašim zákazníkům výhodné slevy."
-      },
-      "bottomNotes": {
-        "requests": "Zde nechte zvláštní požadavky\n— každý z nich čteme\na zohledňujeme.",
-        "thumbnails": "Zde vidíte náhled\nvašich vytvořených štítků.",
-        "elements": "Snadno přesouvejte,\npřidávejte, mažte, kopírujte\na upravujte prvky.",
-        "properties": "Zde měníte text,\nrozměry a další vlastnosti."
-      }
-    }
-  },
-  "Login": {
-    "l_1": "Vytvořit nový účet",
-    "l_2": "Abyste si u nás mohli objednat, musíte si nejprve vytvořit účet. Je to rychlé a snadné!",
-    "l_3": "Pole označená hvězdičkou (*) jsou povinná. Zvolte si heslo. Poté obdržíte potvrzovací e-mail."
-  },
-  "Enter": {
-    "e_1": "Vítejte u SignXpert — jsme rádi, že jste s námi!",
-    "e_2": "Vaše osobní zákaznické číslo: <strong>{{customerNumber}}</strong>",
-    "e_3": "Pro vaše pohodlí jsme vaše zákaznické číslo zaslali také přímo na vaši e-mailovou adresu.",
-    "e_4": "Nyní se můžete <strong>přihlásit</strong> níže a vytvářet projekty a zadávat objednávky.",
-    "e_7": "Pokud potřebujete pomoc, náš tým je vám vždy rád k dispozici.",
-    "e_8": "S pozdravem,",
-    "e_9": "SignXpert"
-  },
-  "MyAccount": {
-    "common": {
-      "loading": "Načítání...",
-      "saveChanges": "Uložit",
-      "send": "Odeslat",
-      "sending": "Odesílání..."
-    },
-    "header": {
-      "orders": "Moje objednávky",
-      "details": "Moje údaje",
-      "settings": "Moje nastavení"
-    },
-    "orders": {
-      "loadingNote": "Načítání vašich objednávek může chvíli trvat. Počkejte prosím, než se zde zobrazí.",
-      "noProjectSnapshot": "Tato objednávka nemá snímek projektu",
-      "projectSnapshotNoId": "Snímek projektu nemá ID",
-      "openProjectFailed": "Objednaný projekt se nepodařilo otevřít",
-      "downloadFileFailed": "Chyba při stahování souboru",
-      "noTrackingYet": "Zatím nebylo přiřazeno sledovací číslo",
-      "opening": "Otevírání...",
-      "openProject": "Otevřít projekt",
-      "sumInclVatDelivery": "Částka (vč. dopravy)",
-      "table": {
-        "no": "Č.",
-        "orderDate": "Objednáno",
-        "orderNo": "Č. objednávky",
-        "projectName": "Název projektu",
-        "orderSum": "Částka",
-        "sumDelivery": "Částka + doprava",
-        "status": "Stav",
-        "deliveryNote": "Dodací list",
-        "tracking": "Sledovat",
-        "invoice": "Faktura",
-        "invoiceStatus": "Stav platby",
-        "toPay": "Zaplatit",
-        "openProject": "Projekt"
-      },
-      "status": {
-        "received": "Přijato",
-        "paid": "Zaplaceno",
-        "unpaid": "Nezaplaceno",
-        "printed": "Vytištěno",
-        "manufact": "Ve výrobě",
-        "delivered": "Doručeno",
-        "shipped": "Odesláno",
-        "returned": "Vráceno",
-        "waiting": "Čeká se",
-        "deleted": "Smazáno"
-      }
-    },
-    "details": {
-      "invoiceDeliveryNotice": "*Faktura a dodací list budou přiloženy k vaší zásilce a zaslány na stejnou adresu.",
-      "updateText": "Pokud chcete aktualizovat své registrační údaje, můžete to udělat zde a poté kliknout na „Uložit“.",
-      "addressTitle": "Adresa",
-      "invoiceAddressTitle": "Fakturační adresa (pokud se liší od adresy vlevo)",
-      "invoiceEmailText": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli.",
-      "invoiceEmailExtraText": "V případě potřeby můžete přidat i další e-mailovou adresu oddělenou čárkou.",
-      "errorLoadingUserData": "Chyba při načítání uživatelských dat",
-      "changesSaved": "Změny byly úspěšně uloženy!",
-      "saveFailed": "Uložení se nezdařilo",
-      "fields": {
-        "name": "Jméno",
-        "companyName": "Název společnosti",
-        "address1": "Adresa 1",
-        "address2": "Adresa 2",
-        "address3": "Adresa 3",
-        "town": "Město",
-        "postalCode": "PSČ",
-        "country": "Země",
-        "requiredCountry": "*Země",
-        "email": "E-mailová adresa",
-        "mobilePhone": "Mobilní telefon",
-        "vatNumber": "DIČ"
-      }
-    },
-    "settings": {
-      "title": "Zde můžete uvést další informace, které budou automaticky přidány ke každé vaší objednávce.",
-      "additionalInformation": "Doplňující informace",
-      "errorLoadingMessage": "Chyba při načítání vaší zprávy",
-      "messageSaved": "Zpráva byla úspěšně uložena!",
-      "saveMessageFailed": "Zprávu se nepodařilo uložit"
-    },
-    "password": {
-      "title": "Změnit heslo",
-      "existingPassword": "Stávající heslo",
-      "newPassword": "Nové heslo",
-      "confirmNewPassword": "Potvrdit nové heslo",
-      "forgotPasswordText": "* Zapomněli jste heslo? Klikněte na „Odeslat“ a my vám zašleme nové dočasné heslo na e-mail.",
-      "passwordsDoNotMatch": "Hesla se neshodují",
-      "passwordUpdated": "Heslo bylo aktualizováno",
-      "incorrectPassword": "Nesprávné heslo",
-      "emailNotFound": "Vaši e-mailovou adresu se nepodařilo najít v profilu.",
-      "newPasswordSent": "Nové heslo bylo zasláno na vaši e-mailovou adresu.",
-      "sendPasswordFailed": "E-mail s novým heslem se nepodařilo odeslat."
-    }
-  },
+  "password": {
+    "title": "Změnit heslo",
+    "existingPassword": "Stávající heslo",
+    "newPassword": "Nové heslo",
+    "confirmNewPassword": "Potvrdit nové heslo",
+    "forgotPasswordText": "* Zapomněli jste heslo? Klikněte na „Odeslat“ a my vám zašleme nové dočasné heslo na e-mail.",
+    "passwordsDoNotMatch": "Hesla se neshodují",
+    "passwordUpdated": "Heslo bylo aktualizováno",
+    "incorrectPassword": "Nesprávné heslo",
+    "emailNotFound": "Vaši e-mailovou adresu se nepodařilo najít v profilu.",
+    "newPasswordSent": "Nové heslo bylo zasláno na vaši e-mailovou adresu.",
+    "sendPasswordFailed": "E-mail s novým heslem se nepodařilo odeslat."
+  }
+},
   "PreviewModal": {
-    "title": "Náhled",
-    "updating": "Aktualizace...",
-    "refresh": "Obnovit",
-    "downloadSvg": "Stáhnout SVG",
-    "reset": "Resetovat",
-    "canvasPreviewAlt": "Náhled plátna",
-    "noData": "Žádná data"
+  "title": "Náhled",
+  "updating": "Aktualizace...",
+  "refresh": "Obnovit",
+  "downloadSvg": "Stáhnout SVG",
+  "reset": "Resetovat",
+  "canvasPreviewAlt": "Náhled plátna",
+  "noData": "Žádná data"
+},
+"cookieConsent": {
+  "title": "Data zlepšují váš zážitek",
+  "descriptionBeforeLink": "Abychom zlepšili váš zážitek na našich platformách a zobrazovali vám relevantnější informace, používáme soubory cookie a podobné technologie, a to jak od SignXpert, tak od poskytovatelů třetích stran, a také data zasílaná přímo z našich serverů. Svá nastavení můžete kdykoli změnit v",
+  "privacyLink": "Nastavení soukromí a cookies",
+  "necessaryTitle": "Nezbytně nutné (vždy aktivní)",
+  "necessaryDescription": "Zajišťují základní funkce pro vaše nastavení jazyka, regionu a nákupu.",
+  "acceptAll": "Přijmout vše",
+  "declineAll": "Odmítnout vše"
+},
+"Header": {
+  "nav": {
+    "home": "Domů",
+    "registration": "Registrace",
+    "myAccount": "Můj účet",
+    "newProject": "Nový projekt",
+    "products": "Produkty",
+    "industries": "Odvětví",
+    "faq": "FAQ",
+    "quickGuide": "Stručný návod",
+    "contacts": "Kontakt",
+    "admin": "Admin"
   },
-  "cookieConsent": {
-    "title": "Díky datům vám můžeme nabídnout lepší zážitek",
-    "descriptionBeforeLink": "Abychom zlepšili váš zážitek na našem webu a zobrazovali vám relevantnější informace, používáme soubory cookie a podobné technologie od SignXpert i poskytovatelů třetích stran a také data zasílaná přímo z našich serverů. Svá nastavení můžete kdykoli změnit v",
-    "privacyLink": "Nastavení soukromí a cookies",
-    "necessaryTitle": "Nezbytně nutné (vždy aktivní)",
-    "necessaryDescription": "Zajišťují základní funkce webu, například nastavení jazyka, regionu a nákupního košíku.",
-    "acceptAll": "Přijmout vše",
-    "declineAll": "Odmítnout vše"
+  "features": {
+    "easy": "Intuitivně",
+    "design": "navrženo",
+    "fast": "Bleskově",
+    "manufacturing": "vyrobeno",
+    "quick": "Expresně",
+    "delivery": "doručeno"
   },
-  "Header": {
-    "nav": {
-      "home": "Domů",
-      "registration": "Registrace",
-      "myAccount": "Můj účet",
-      "newProject": "Nový projekt",
-      "products": "Výrobky",
-      "industries": "Odvětví",
-      "faq": "FAQ",
-      "quickGuide": "Stručný návod",
-      "contacts": "Kontakt",
-      "admin": "Admin"
-    },
-    "features": {
-      "easy": "Intuitivní",
-      "design": "Návrh",
-      "fast": "Rychlá",
-      "manufacturing": "Výroba",
-      "quick": "Expresní",
-      "delivery": "Doručení"
-    },
-    "sections": {
-      "menu": "Menu",
-      "account": "Účet"
-    },
-    "auth": {
-      "logout": "Odhlásit se",
-      "loginOr": "Přihlásit se nebo",
-      "register": "Registrovat se",
-      "loginRegisterSlash": "Přihlásit se / Registrovat se"
-    }
+  "sections": {
+    "menu": "Menu",
+    "account": "Účet"
   },
-  "Footer": {
-    "slogan": "Gravírování · Průmyslové štítky",
-    "address": {
-      "country": "Německo"
-    },
-    "menuTitle": "Menu:",
-    "infoTitle": "Informace:",
-    "paymentMethod": "Způsob platby",
-    "deliveryMethod": "Způsob doručení",
-    "copyright": "© 2026, SignXpert. Všechna práva vyhrazena.",
-    "nav": {
-      "home": "Domů",
-      "myAccount": "Můj účet",
-      "newProject": "Nový projekt",
-      "templates": "Šablony",
-      "products": "Produkty",
-      "industries": "Odvětví",
-      "faq": "FAQ",
-      "quickGuide": "Stručný návod",
-      "contacts": "Kontakt"
-    },
-    "info": {
-      "privacyPolicy": "Zásady ochrany osobních údajů",
-      "termsOfPurchasing": "Obchodní podmínky",
-      "cookieSettings": "Nastavení cookies",
-      "company": "Firma / Organizace",
-      "consumer": "Soukromá osoba",
-      "impressum": "Tiráž",
-      "euOnlineDisputeResolution": "Online řešení sporů v EU"
-    },
-    "note": {
-      "allPricesFinal": "Všechny ceny jsou konečné.",
-      "noVat": "V souladu s § 19 UStG se DPH neúčtuje.",
-      "plusShipping": "Plus náklady na dopravu."
-    },
-    "auth": {
-      "logout": "Odhlásit se",
-      "loginOr": "Přihlásit se nebo",
-      "register": "Registrovat se"
-    }
+  "auth": {
+    "logout": "Odhlásit se",
+    "loginOr": "Přihlásit se nebo",
+    "register": "Registrovat se",
+    "loginRegisterSlash": "Přihlásit se / Registrovat se"
+  }
+},
+"Footer": {
+  "slogan": "Gravírování · Průmyslové štítky",
+  "address": {
+    "country": "Německo"
   },
+  "menuTitle": "Menu:",
+  "infoTitle": "Informace:",
+  "paymentMethod": "Způsob platby",
+  "deliveryMethod": "Způsob doručení",
+  "copyright": "© 2026, SignXpert. Všechna práva vyhrazena.",
+  "nav": {
+    "home": "Domů",
+    "myAccount": "Můj účet",
+    "newProject": "Nový projekt",
+    "templates": "Šablony",
+    "products": "Produkty",
+    "industries": "Odvětví",
+    "faq": "FAQ",
+    "quickGuide": "Stručný návod",
+    "contacts": "Kontakt"
+  },
+  "info": {
+    "privacyPolicy": "Zásady ochrany osobních údajů",
+    "termsOfPurchasing": "Obchodní podmínky",
+    "cookieSettings": "Nastavení cookies",
+    "company": "Firma / Organizace",
+    "consumer": "Soukromá osoba",
+    "impressum": "Tiráž",
+    "euOnlineDisputeResolution": "Online řešení sporů v EU"
+  },
+  "note": {
+    "allPricesFinal": "Všechny ceny jsou konečné.",
+    "noVat": "V souladu s § 19 UStG se DPH neúčtuje.",
+    "plusShipping": "Plus náklady na dopravu."
+  },
+  "auth": {
+    "logout": "Odhlásit se",
+    "loginOr": "Přihlásit se nebo",
+    "register": "Registrovat se"
+  }
+},
   "NewProjectsModal": {
     "message": "Než vytvoříte <strong>nový projekt</strong>, prosím <strong>uložte</strong> nebo <strong>zahoďte</strong> svou aktuální práci.",
     "save": "Uložit",
@@ -1839,218 +1838,218 @@
     "material": "Materiál",
     "engravedPlastic": "Gravírovací plast"
   },
-  "LoginForm": {
-    "l_4": "Již jste zákazníkem?",
-    "l_5": "E-mailová adresa nebo zákaznické číslo",
-    "l_6": "Heslo",
-    "l_7": "Zapomněli jste heslo?",
-    "l_8": "Obdržíte e-mail s novým heslem.",
-    "l_9": "E-mailová adresa",
-    "l_10": "Odeslat",
-    "l_11": "Přihlásit se",
-    "l_12": "Ještě nemáte účet? Zaregistrujte se nyní",
-    "error": "Chyba",
-    "enterEmail": "Zadejte prosím svou e-mailovou adresu.",
-    "newPasswordSent": "Nové heslo bylo zasláno na vaši e-mailovou adresu.",
-    "sendPasswordFailed": "E-mail s novým heslem se nepodařilo odeslat."
-  },
-  "LoginRegister": {
-    "r_1": "Vytvořit nový účet",
-    "r_2": "Soukromá osoba",
-    "r_3": "Firma / Organizace"
-  },
-  "RegisterConsumer": {
-    "rr_1": "*Jméno a příjmení",
-    "rr_2": "*Adresa 1",
-    "rr_3": "Adresa 2",
-    "rr_4": "Adresa 3",
-    "rr_5": "*Město",
-    "rr_6": "*PSČ",
-    "rr_7": "*Země",
-    "rr_8": "*E-mailová adresa",
-    "rr_9": "*Mobilní telefon",
-    "rr_10": "*Heslo",
-    "rr_11": "*Potvrdit heslo",
-    "rr_12": "Doplňující informace",
-    "rr_13": "Fakturační adresa (pokud se liší)",
-    "rr_14": "Ano, chci se přihlásit k odběru newsletteru a dostávat novinky a nabídky.",
-    "rr_15": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli.",
-    "rr_16": "V případě potřeby můžete přidat i další e-mailovou adresu oddělenou čárkou.",
-    "rr_17": "Dejte nám prosím vědět, jak jste se o nás dozvěděli — pomůže nám to se zlepšovat!",
-    "rr_18": "Vyberte odpověď",
-    "rr_19": "Zaregistrovat se",
-    "rr_20": "SignXpert shromažďuje vaše osobní údaje při vytváření účtu a používá je pro marketingové účely i pro zpracování a vyřizování budoucích objednávek. Více se dozvíte v našich",
-    "rr_21": "Zásadách ochrany osobních údajů.",
-    "rr_22": "*Název společnosti",
-    "rr_23": "DIČ",
-    "rr_24": "Nemáte DIČ? Pokračujte bez něj.",
-    "rr_25": "*V současné době se v souladu s § 19 UStG (úprava pro malé podnikatele) DPH neúčtuje.",
-    "passwordMustMatch": "Hesla se musí shodovat",
-    "registrationFailed": "Registrace se nezdařila",
-    "pleaseSpecify": "Upřesněte prosím",
-    "vatConfirmed": "DIČ bylo potvrzeno. Děkujeme!",
-    "vatNotConfirmed": "DIČ nebylo potvrzeno. Zkontrolujte prosím číslo a zkuste to znovu.",
-    "tellAbout": {
-      "onlineInternet": "Online / Internet",
-      "throughSamples": "Prostřednictvím vzorků",
-      "viaFlyer": "Prostřednictvím letáku",
-      "colleague": "Kolega",
-      "socialMedia": "Sociální sítě",
-      "eventExhibition": "Akce / Výstava",
-      "newsletter": "Newsletter",
-      "email": "E-mail",
-      "other": "Jiné"
-    }
-  },
-  "ReadMoreModal": {
-    "title": "Jak mohu obdržet objednávku bez DPH?",
-    "description": "V současné době se v souladu s § 19 UStG (režim malého podnikatele) DPH neúčtuje. Proto je objednávka vystavena bez DPH bez ohledu na to, zda objednáváte jako soukromá osoba nebo firma.",
-    "validVat": "Pokud zadáte své DIČ, můžeme jej uvést u vašich firemních údajů a na dokladech, pokud je to relevantní.",
-    "invalidVat": "Pokud kontrola DIČ selže, nejprve se ujistěte, že bylo číslo zadáno správně. V objednávce můžete pokračovat i bez DIČ.",
-    "noVatNumber": "Pokud DIČ neuvedete, na zpracování objednávky to nemá vliv.",
-    "germanyVat": "Na faktuře bude uvedena informace, že DPH se v souladu s § 19 UStG neúčtuje.",
-    "outsideEu": "U objednávek mimo Evropskou unii mohou být při dovozu účtovány místní poplatky nebo daně podle pravidel cílové země.",
-    "contactUs": "Pokud máte další dotazy nebo problémy, kontaktujte nás prosím. Náš tým vám rád pomůže."
-  },
-  "HomePlaceholder": {
-    "h_1": "Od návrhu k doručení — váš štítek",
-    "h_2": "za 24 hodin!",
-    "h_3": "— profesionální kvalita",
-    "h_4": "pro průmyslové značení",
-    "h_5": "Dodáváme trvanlivé gravírované plastové štítky prémiové kvality — ideální pro průmyslové, energetické a komerční použití.",
-    "h_6": "Vytvořit online",
-    "h_7": "Objednávky přijaté do 16:00 odesíláme tentýž den.",
-    "h_8": "Proč",
-    "h_9": "Férové ceny. Průmyslová kvalita.",
-    "h_10": "Chápeme, že rozpočet dnes hraje důležitou roli.",
-    "h_11": "SignXpert nabízí kvalitní štítky a rychlou výrobu za konkurenceschopné ceny — profesionální výsledky bez zbytečných nákladů.",
-    "h_12": "Množstevní slevy",
-    "h_13": "Čím více objednáte, tím nižší je cena.",
-    "h_14": "Náš transparentní systém slev automaticky snižuje cenu s rostoucím objemem vaší objednávky — chytrý způsob, jak ušetřit.",
-    "h_15": "*Více informací",
-    "h_16": "zde",
-    "h_17": "Množstevní slevy",
-    "h_18": "Snažíme se vám nabídnout co nejlepší ceny. Proto jsme zavedli systém množstevních slev:",
-    "h_19": "Čím vyšší je částka vaší objednávky, tím nižší je cena.",
-    "h_20": "Sleva platí pouze pro aktuální projekt (nesčítá se) a počítá se automaticky:",
-    "h_21": "Částka objednávky:",
-    "h_22": "od 30 € do 50 € — 5 %",
-    "h_23": "od 50 € do 100 € — 10 %",
-    "h_24": "od 100 € do 200 € — 15 %",
-    "h_25": "od 200 € do 500 € — 20 %",
-    "h_26": "od 500 € do 10 000 € — 25 %",
-    "h_27": "Sleva platí pro celý aktuální projekt, nevztahuje se však na dopravu.",
-    "h_28": "Vlastní gravírované",
-    "h_29": "štítky",
-    "h_30": "jednoduše a snadno",
-    "h_31": "Vytvořte si vlastní gravírované štítky a průmyslové značení během několika minut pomocí",
-    "h_32": "S naším jednoduchým",
-    "h_33": "online editorem štítků",
-    "h_34": "si můžete vytvořit vlastní štítky zcela podle svých požadavků:",
-    "h_35": "Stroje a zařízení",
-    "h_36": "Rozváděče",
-    "h_37": "Technická zařízení",
-    "h_38": "Kanceláře",
-    "h_39": "— přesně tak, jak potřebujete.",
-    "h_40": "Ať už jde o jeden kus nebo sérii, SignXpert zaručuje spolehlivou kvalitu a rychlou výrobu.",
-    "h_41": "Rychlá",
-    "h_42": "výroba a doprava",
-    "h_43": "Ve společnosti SignXpert",
-    "h_44": "kombinujeme moderní výrobní technologie s efektivním systémem online objednávek — pro rychlou výrobu a promptní expedici.",
-    "h_45": "Objednejte do 16:00 pro odeslání tentýž den",
-    "h_46": "spolehlivé doručení po celé České republice a Evropě",
-    "h_47": "rychlá doba odezvy a osobní zákaznická podpora",
-    "h_48": "Díky tomu obdržíte své vlastní gravírované štítky rychle a spolehlivě.",
-    "h_49": "Trvanlivé",
-    "h_50": "gravírované plastové štítky",
-    "h_51": "Všechny produkty SignXpert jsou vyrobeny z kvalitního dvouvrstvého gravírovacího plastu a jsou dostupné v různých barevných kombinacích.",
-    "h_52": "Při laserovém gravírování je odstraněna horní vrstva, čímž se odhalí kontrastní barva pod ní. Vzniká tak trvanlivé, vysoce kontrastní značení, které zůstává dobře čitelné po dlouhá léta.",
-    "h_53": "Vaše výhody se",
-    "h_54": "Výroba na zakázku od 1 kusu",
-    "h_55": "Profesionální řešení pro průmysl a firmy",
-    "h_56": "Vysoce přesné laserové gravírování",
-    "h_57": "Samolepicí štítky"
-  },
-  "Products": {
-    "p_1": "Vlastní",
-    "p_2": "gravírované plastové štítky a typové štítky",
-    "p_3": "Ve",
-    "p_4": "vyrábíme kvalitní plastové štítky, typové štítky a průmyslové etikety z odolného gravírovacího plastu.",
-    "p_5": "Naše gravírované štítky zajišťují jasné, trvanlivé a profesionální značení strojů, elektrických instalací, kanceláří, budov a pracovišť.",
-    "p_6": "Díky přesnému laserovému gravírování je odstraněna horní vrstva plastu, čímž se odhalí kontrastní barva pod ní. Vzniká tak trvale kontrastní značení, které zůstává dobře čitelné po dlouhá léta, a to i v náročných průmyslových podmínkách.",
-    "p_7": "Naše gravírované plastové štítky se běžně používají v:",
-    "p_8": "Průmyslu a výrobě",
-    "p_9": "Elektrických instalacích",
-    "p_10": "Značení strojů a zařízení",
-    "p_11": "Kancelářích a budovách",
-    "p_12": "Technických zařízeních",
-    "p_13": "Výrobek",
-    "p_14": "Vlastnosti",
-    "p_15": "Naše gravírované plastové štítky jsou vyrobeny z kvalitního dvouvrstvého plastu speciálně vyvinutého pro technické a průmyslové použití.",
-    "p_16": "Gravírováno přímo do materiálu: trvale čitelné, odolné vůči vyblednutí a oděru — jasná výhoda oproti běžným samolepkám.",
-    "p_17": "Samolepicí provedení se silným lepidlem 3M",
-    "p_18": "Univerzální použití v průmyslových a kancelářských prostorách",
-    "p_19": "Třída hořlavosti B2 (DIN 4102)",
-    "p_20": "UV odolný materiál pro venkovní použití",
-    "p_21": "Velkoformátové varianty až 600 x 295 mm",
-    "p_22": "Tloušťka materiálu 0,8 mm a 1,6 mm",
-    "p_23": "Trvanlivé a odolné gravírování",
-    "p_24": "Vysoký kontrast pro optimální čitelnost",
-    "p_25": "Vytvořte si svůj gravírovaný",
-    "p_26": "štítek online",
-    "p_27": "S",
-    "p_28": "online editorem SignXpert",
-    "p_29": "si můžete rychle a snadno navrhnout vlastní gravírované štítky.",
-    "p_30": "Navrhněte si svůj štítek přímo v prohlížeči a každou změnu uvidíte okamžitě v náhledu.",
-    "p_31": "Co nabízí náš online editor:",
-    "p_32": "Výběr velikosti a rozvržení vašeho štítku",
-    "p_33": "Přizpůsobení textu, symbolů a barev",
-    "p_34": "Přidání otvorů nebo samolepicí zadní strany",
-    "p_35": "Zobrazení vašeho štítku v reálném čase",
-    "p_36": "Vytvoření profesionálních gravírovaných štítků, typových štítků strojů a technických štítků během několika minut",
-    "p_37": "Se SignXpert",
-    "p_38": "Štítky lze také objednat telefonicky nebo e-mailem. Náš tým vám v případě potřeby rád pomůže s designem.",
-    "p_39": "Vytvořit štítek",
-    "p_40": "Výroba na zakázku se",
-    "p_41": "Ve společnosti SignXpert je každý gravírovaný štítek vyroben individuálně podle vašich požadavků.",
-    "p_42": "Ať už potřebujete jeden štítek nebo velkou výrobní sérii — zaručujeme spolehlivou kvalitu a přesné gravírování.",
-    "p_43": "Svůj štítek si můžete navrhnout přímo v našem online editoru, nahrát vlastní soubory nebo nám zaslat své požadavky.",
-    "p_44": "Naším cílem je nabízet trvanlivé, profesionální a snadno objednatelné gravírované plastové štítky pro průmysl a firmy.",
-    "p_45": "Naše",
-    "p_46": "kategorie výrobků",
-    "p_47": "a typické použití",
-    "p_48": "Značení rozváděčů",
-    "p_49": "Elektrické skříně",
-    "p_50": "Rozvodná zařízení",
-    "p_51": "Ovládací skříně",
-    "p_52": "Značení obvodů",
-    "p_53": "Typové štítky strojů",
-    "p_54": "Značení strojů",
-    "p_55": "Výrobní štítky",
-    "p_56": "Technické typové štítky",
-    "p_57": "Značení zařízení",
-    "p_58": "Výstražné a bezpečnostní štítky",
-    "p_59": "Bezpečnostní výstrahy",
-    "p_60": "Značení nebezpečí",
-    "p_61": "Bezpečnostní štítky strojů",
-    "p_62": "Provozní pokyny",
-    "p_63": "Značení ovládacích panelů",
-    "p_64": "Štítky tlačítek",
-    "p_65": "Štítky přepínačů",
-    "p_66": "Ovládací panely strojů",
-    "p_67": "Štítky ovládacích rozhraní",
-    "p_68": "Štítky s výrobním číslem",
-    "p_69": "Štítky s výrobním číslem",
-    "p_70": "Inventární štítky",
-    "p_71": "Štítky zařízení",
-    "p_72": "Inventární značení",
-    "p_73": "Dveřní a kancelářské štítky",
-    "p_74": "Štítky na dveře kanceláří",
-    "p_75": "Značení místností",
-    "p_76": "Značení pracovišť",
-    "p_77": "Jmenovky",
-    "p_78": "Parkovací cedule"
-  },
+"LoginForm": {
+  "l_4": "Již jste zákazník",
+  "l_5": "E-mailová adresa nebo zákaznické číslo",
+  "l_6": "Heslo",
+  "l_7": "Zapomněli jste heslo?",
+  "l_8": "Obdržíte e-mail s novým heslem.",
+  "l_9": "E-mailová adresa",
+  "l_10": "Odeslat",
+  "l_11": "Přihlásit se",
+  "l_12": "Ještě nemáte účet? Zaregistrujte se nyní",
+  "error": "Chyba",
+  "enterEmail": "Zadejte prosím svou e-mailovou adresu.",
+  "newPasswordSent": "Nové heslo bylo zasláno na vaši e-mailovou adresu.",
+  "sendPasswordFailed": "E-mail s novým heslem se nepodařilo odeslat."
+},
+"LoginRegister": {
+  "r_1": "Vytvořit nový účet",
+  "r_2": "Soukromá osoba",
+  "r_3": "Firma / Organizace"
+},
+"RegisterConsumer": {
+  "rr_1": "*Jméno a příjmení",
+  "rr_2": "*Adresa 1",
+  "rr_3": "Adresa 2",
+  "rr_4": "Adresa 3",
+  "rr_5": "*Město",
+  "rr_6": "*PSČ",
+  "rr_7": "*Země",
+  "rr_8": "*E-mailová adresa",
+  "rr_9": "*Mobilní telefon",
+  "rr_10": "*Heslo",
+  "rr_11": "*Potvrdit heslo",
+  "rr_12": "Doplňující informace",
+  "rr_13": "Fakturační adresa (pokud se liší)",
+  "rr_14": "Ano, chci se přihlásit k odběru newsletteru a dostávat novinky a nabídky.",
+  "rr_15": "Fakturu zasíláme na e-mailovou adresu, kterou jste uvedli.",
+  "rr_16": "V případě potřeby můžete přidat i další e-mailovou adresu oddělenou čárkou.",
+  "rr_17": "Dejte nám prosím vědět, jak jste se o nás dozvěděli — pomůže nám to se zlepšovat!",
+  "rr_18": "Vyberte odpověď",
+  "rr_19": "Zaregistrovat se",
+  "rr_20": "SignXpert shromažďuje vaše osobní údaje při vytváření účtu a používá je pro marketingové účely, jakož i pro zpracování a vyřizování budoucích objednávek. Více se dozvíte v našich",
+  "rr_21": "Zásadách ochrany osobních údajů.",
+  "rr_22": "*Název společnosti",
+  "rr_23": "DIČ",
+  "rr_24": "Nemáte DIČ? Pokračujte bez něj.",
+  "rr_25": "*V současné době se v souladu s § 19 UStG (úprava pro malé podnikatele) DPH neúčtuje.",
+  "passwordMustMatch": "Hesla se musí shodovat",
+  "registrationFailed": "Registrace se nezdařila",
+  "pleaseSpecify": "Upřesněte prosím",
+  "vatConfirmed": "DIČ bylo potvrzeno. Děkujeme!",
+  "vatNotConfirmed": "DIČ nebylo potvrzeno. Zkontrolujte prosím číslo a zkuste to znovu.",
+  "tellAbout": {
+    "onlineInternet": "Online / Internet",
+    "throughSamples": "Prostřednictvím vzorků",
+    "viaFlyer": "Prostřednictvím letáku",
+    "colleague": "Kolega",
+    "socialMedia": "Sociální sítě",
+    "eventExhibition": "Akce / Výstava",
+    "newsletter": "Newsletter",
+    "email": "E-mail",
+    "other": "Jiné"
+  }
+},
+"ReadMoreModal": {
+  "title": "Jak mohu obdržet objednávku bez DPH?",
+  "description": "Pokud objednáváte jménem společnosti, můžete za určitých podmínek objednat bez DPH. Zadejte k tomu své DIČ do příslušného pole na registrační stránce a klikněte na tlačítko „Ověřit“. Systém zkontroluje vaše číslo a sdělí vám, zda byla kontrola úspěšná.",
+  "validVat": "Pokud je vaše DIČ platné, DPH se u objednávek v rámci EU (kromě Německa) neúčtuje.",
+  "invalidVat": "Pokud kontrola selže, nejprve se ujistěte, že bylo číslo zadáno správně. Někdy pomůže chvíli počkat a zkusit to znovu.",
+  "noVatNumber": "Pokud DIČ neuvedete nebo kontrola selže, bude DPH účtována sazbou platnou ve vaší zemi.",
+  "germanyVat": "Pro soukromé osoby a společnosti registrované v Německu platí standardní sazba DPH 19 % bez ohledu na to, zda je uvedeno platné DIČ.",
+  "outsideEu": "Pokud se nacházíte mimo Evropskou unii, například ve Švýcarsku, Spojeném království nebo jiných zemích, pro vyvážené zboží platí sazba DPH 0 %.",
+  "contactUs": "Pokud máte další dotazy nebo problémy, kontaktujte nás prosím. Náš tým vám rád pomůže."
+},
+"HomePlaceholder": {
+  "h_1": "Od návrhu k doručení — váš štítek",
+  "h_2": "za 24 hodin!",
+  "h_3": "— odborná kvalita",
+  "h_4": "pro průmyslové značení",
+  "h_5": "Dodáváme trvanlivé gravírované plastové štítky prémiové kvality — ideální pro průmyslové, energetické a komerční použití.",
+  "h_6": "Vytvořit online hned teď",
+  "h_7": "Objednávky přijaté do 16:00 odesíláme tentýž pracovní den.",
+  "h_8": "Proč",
+  "h_9": "Férové ceny. Průmyslová kvalita.",
+  "h_10": "Chápeme, že rozpočet dnes hraje důležitou roli.",
+  "h_11": "SignXpert nabízí kvalitní štítky a rychlou výrobu za konkurenceschopné ceny — profesionální výsledky bez zbytečných nákladů.",
+  "h_12": "Množstevní slevy",
+  "h_13": "Čím více objednáte, tím nižší je cena.",
+  "h_14": "Náš transparentní systém slev automaticky snižuje cenu s rostoucím objemem vaší objednávky — chytrý způsob, jak ušetřit.",
+  "h_15": "*Více informací",
+  "h_16": "zde",
+  "h_17": "Množstevní slevy",
+  "h_18": "Snažíme se vám nabídnout co nejlepší ceny. Proto jsme zavedli systém množstevních slev:",
+  "h_19": "Čím vyšší je částka vaší objednávky, tím nižší je cena.",
+  "h_20": "Sleva platí pouze pro aktuální projekt (nesčítá se) a počítá se automaticky:",
+  "h_21": "Částka objednávky:",
+  "h_22": "od 30 € do 50 € — 5 %",
+  "h_23": "od 50 € do 100 € — 10 %",
+  "h_24": "od 100 € do 200 € — 15 %",
+  "h_25": "od 200 € do 500 € — 20 %",
+  "h_26": "od 500 € do 10 000 € — 25 %",
+  "h_27": "Sleva platí pouze pro aktuální projekt a nevztahuje se na příslušenství.",
+  "h_28": "Vlastní gravírované",
+  "h_29": "štítky",
+  "h_30": "jednoduše a snadno",
+  "h_31": "Vytvořte si vlastní gravírované štítky a průmyslové značení během několika minut s",
+  "h_32": "S naším jednoduchým",
+  "h_33": "online editorem štítků",
+  "h_34": "si můžete vytvořit vlastní štítky zcela podle svých požadavků:",
+  "h_35": "Stroje a zařízení",
+  "h_36": "Rozváděče",
+  "h_37": "Technická zařízení",
+  "h_38": "Kanceláře",
+  "h_39": "— přesně tak, jak potřebujete.",
+  "h_40": "Ať už jde o jeden kus nebo sérii, SignXpert zaručuje spolehlivou kvalitu a rychlou výrobu.",
+  "h_41": "Rychlá",
+  "h_42": "výroba a doprava",
+  "h_43": "Ve SignXpert",
+  "h_44": "kombinujeme moderní výrobní technologie s efektivním systémem online objednávek — pro rychlou výrobu a promptní expedici.",
+  "h_45": "Objednejte do 16:00 pro expedici tentýž den",
+  "h_46": "spolehlivé doručení po celé České republice a Evropě",
+  "h_47": "rychlá doba odezvy a osobní zákaznická podpora",
+  "h_48": "Díky tomu obdržíte své vlastní gravírované štítky rychle a spolehlivě.",
+  "h_49": "Trvanlivé",
+  "h_50": "gravírované plastové štítky",
+  "h_51": "Všechny produkty SignXpert jsou vyrobeny z kvalitního dvouvrstvého gravírovacího plastu a jsou dostupné v různých barevných kombinacích.",
+  "h_52": "Při laserovém gravírování je odstraněna horní vrstva, čímž se odhalí kontrastní barva pod ní. Vzniká tak trvanlivé, vysoce kontrastní značení, které zůstává dobře čitelné po dlouhá léta.",
+  "h_53": "Vaše výhody se",
+  "h_54": "Výroba na zakázku od 1 kusu",
+  "h_55": "Profesionální řešení pro průmysl a firmy",
+  "h_56": "Vysoce přesné laserové gravírování",
+  "h_57": "Samolepicí štítky"
+},
+"Products": {
+  "p_1": "Vlastní",
+  "p_2": "gravírované plastové štítky a typové štítky",
+  "p_3": "Ve",
+  "p_4": "vyrábíme kvalitní plastové štítky, typové štítky a průmyslové etikety z odolného gravírovacího plastu.",
+  "p_5": "Naše gravírované štítky zajišťují jasné, trvanlivé a profesionální značení strojů, elektrických instalací, kanceláří, budov a pracovišť.",
+  "p_6": "Díky přesnému laserovému gravírování je odstraněna horní vrstva plastu, čímž se odhalí kontrastní barva pod ní. Vzniká tak trvale kontrastní značení, které zůstává dobře čitelné po dlouhá léta, a to i v náročných průmyslových podmínkách.",
+  "p_7": "Naše gravírované plastové štítky se běžně používají v:",
+  "p_8": "Průmyslu a výrobě",
+  "p_9": "Elektrických instalacích",
+  "p_10": "Značení strojů a zařízení",
+  "p_11": "Kancelářích a budovách",
+  "p_12": "Technických zařízeních",
+  "p_13": "Produkt",
+  "p_14": "Vlastnosti",
+  "p_15": "Naše gravírované plastové štítky jsou vyrobeny z kvalitního dvouvrstvého plastu speciálně vyvinutého pro technické a průmyslové použití.",
+  "p_16": "Gravírováno přímo do materiálu: trvale jasné, odolné vůči vyblednutí a oděru — jasná výhoda oproti běžným samolepkám.",
+  "p_17": "Samolepicí provedení se silným lepidlem 3M",
+  "p_18": "Univerzální použití v průmyslových a kancelářských prostorách",
+  "p_19": "Třída hořlavosti B2 (DIN 4102)",
+  "p_20": "UV odolný materiál pro venkovní použití",
+  "p_21": "Velkoformátové varianty až 600 x 295 mm",
+  "p_22": "Tloušťka materiálu 0,8 mm a 1,6 mm",
+  "p_23": "Trvanlivé a odolné gravírování",
+  "p_24": "Vysoký kontrast pro optimální čitelnost",
+  "p_25": "Vytvořte si svůj gravírovaný",
+  "p_26": "štítek online",
+  "p_27": "S",
+  "p_28": "online editorem SignXpert",
+  "p_29": "si můžete rychle a snadno vytvořit vlastní gravírované štítky.",
+  "p_30": "Navrhněte si svůj štítek přímo v prohlížeči a každou změnu uvidíte okamžitě v náhledu.",
+  "p_31": "Co nabízí náš online editor:",
+  "p_32": "Výběr velikosti a rozvržení vašeho štítku",
+  "p_33": "Přizpůsobení textu, symbolů a barev",
+  "p_34": "Přidání otvorů nebo samolepicího podkladu",
+  "p_35": "Zobrazení vašeho štítku v reálném čase",
+  "p_36": "Vytvoření profesionálních gravírovaných etiket, typových štítků strojů a technických štítků během několika minut",
+  "p_37": "Se SignXpert",
+  "p_38": "Štítky lze také objednat telefonicky nebo e-mailem. Náš tým vám v případě potřeby rád pomůže s designem.",
+  "p_39": "Vytvořit štítek",
+  "p_40": "Výroba na zakázku se",
+  "p_41": "Ve SignXpert je každý gravírovaný štítek vyroben individuálně podle vašich požadavků.",
+  "p_42": "Ať už potřebujete jeden štítek nebo velkou výrobní sérii — zaručujeme spolehlivou kvalitu a přesné gravírování.",
+  "p_43": "Svůj štítek si můžete navrhnout přímo v našem online editoru, nahrát vlastní soubory nebo nám zaslat své požadavky.",
+  "p_44": "Naším cílem je nabízet trvanlivé, profesionální a snadno objednatelné gravírované plastové štítky pro průmysl a firmy.",
+  "p_45": "Naše",
+  "p_46": "kategorie produktů",
+  "p_47": "a typické použití",
+  "p_48": "Značení rozváděčů",
+  "p_49": "Elektrické skříně",
+  "p_50": "Rozvodná zařízení",
+  "p_51": "Ovládací skříně",
+  "p_52": "Značení obvodů",
+  "p_53": "Typové štítky strojů",
+  "p_54": "Značení strojů",
+  "p_55": "Výrobní štítky",
+  "p_56": "Technické typové štítky",
+  "p_57": "Značení zařízení",
+  "p_58": "Výstražné a bezpečnostní štítky",
+  "p_59": "Bezpečnostní výstrahy",
+  "p_60": "Značení nebezpečí",
+  "p_61": "Bezpečnostní štítky strojů",
+  "p_62": "Provozní pokyny",
+  "p_63": "Značení ovládacích panelů",
+  "p_64": "Štítky tlačítek",
+  "p_65": "Štítky přepínačů",
+  "p_66": "Ovládací panely strojů",
+  "p_67": "Štítky ovládacích rozhraní",
+  "p_68": "Štítky s výrobním číslem",
+  "p_69": "Štítky s výrobním číslem",
+  "p_70": "Inventární štítky",
+  "p_71": "Štítky zařízení",
+  "p_72": "Inventární značení",
+  "p_73": "Dveřní a kancelářské štítky",
+  "p_74": "Štítky na dveře kanceláří",
+  "p_75": "Značení místností",
+  "p_76": "Značení pracovišť",
+  "p_77": "Jmenovky",
+  "p_78": "Parkovací cedule"
+},
   "industries": {
     "title": "Odvětví",
     "sections": {

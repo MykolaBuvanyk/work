@@ -528,6 +528,27 @@ const TEXT_TO_SVG_CACHE = new Map();
 const TEXT_TO_SVG_ANCHOR = 'left top';
 const PLACEMENT_TEXT_TO_SVG_ANCHOR = 'left baseline';
 const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
+  'CustomFont-New-Fonts-Caveat-Bold',
+  'CustomFont-New-Fonts-Caveat-Medium',
+  'CustomFont-New-Fonts-Caveat-Regular',
+  'CustomFont-New-Fonts-Caveat-VariableFont-wght',
+  'CustomFont-New-Fonts-ComicNeue-Bold',
+  'CustomFont-New-Fonts-ComicNeue-BoldItalic',
+  'CustomFont-New-Fonts-ComicNeue-Italic',
+  'CustomFont-New-Fonts-ComicNeue-Regular',
+  'CustomFont-New-Fonts-ComicRelief-Bold',
+  'CustomFont-New-Fonts-ComicRelief-Regular',
+  'CustomFont-New-Fonts-Courgette-Regular',
+  'CustomFont-New-Fonts-DancingScript-Bold',
+  'CustomFont-New-Fonts-DancingScript-Medium',
+  'CustomFont-New-Fonts-DancingScript-Regular',
+  'CustomFont-New-Fonts-DancingScript-VariableFont-wght',
+  'CustomFont-New-Fonts-GreatVibes-Regular',
+  'CustomFont-New-Fonts-Handlee-Regular',
+  'CustomFont-New-Fonts-Kalam-Bold',
+  'CustomFont-New-Fonts-Kalam-Regular',
+  'CustomFont-New-Fonts-Lobster-Regular',
+  'CustomFont-New-Fonts-Satisfy-Regular',
   'ComicSansMS',
   'ComicSansMS-Bold',
   'ComicSansMS-BoldItalic',
@@ -544,6 +565,40 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
   'Sacramento-Regular',
   'Satisfy-Regular',
 ]);
+const HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES = new Set([
+  'caveat',
+  'caveat bold',
+  'caveat medium',
+  'caveat regular',
+  'caveat variable',
+  'comic neue',
+  'comic neue bold',
+  'comic neue bold italic',
+  'comic neue italic',
+  'comic relief',
+  'comic relief bold',
+  'comic sans ms',
+  'comic sans ms bold',
+  'comic sans ms bold italic',
+  'courgette',
+  'dancing script',
+  'dancing script bold',
+  'dancing script medium',
+  'dancing script regular',
+  'dancing script variable',
+  'daniel',
+  'daniel bold',
+  'exmouth',
+  'exmouth script',
+  'great vibes',
+  'handlee',
+  'kalam',
+  'kalam bold',
+  'lobster',
+  'pacifico',
+  'sacramento',
+  'satisfy',
+].map(normalizeFontAlias));
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -557,8 +612,28 @@ const FONT_ALIAS_LOOKUP = PDF_FONT_DEFINITIONS.reduce((map, def) => {
 
 const getFontDefinition = fontId => FONT_DEFINITION_MAP.get(fontId);
 
-const shouldClipGlyphOverlapsForFont = fontId =>
-  HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS.has(fontId);
+const shouldClipGlyphOverlapsForFont = fontId => {
+  if (HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS.has(fontId)) {
+    return true;
+  }
+
+  const def = getFontDefinition(fontId);
+  if (!def) {
+    return false;
+  }
+
+  const candidates = [
+    def.id,
+    def.file,
+    getFontNameFromFile(def.file),
+    ...(Array.isArray(def.aliases) ? def.aliases : []),
+  ];
+
+  return candidates.some(candidate => {
+    const normalized = normalizeFontAlias(candidate);
+    return normalized && HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES.has(normalized);
+  });
+};
 
 const resolveFontPath = fontId => {
   const def = getFontDefinition(fontId);
@@ -709,34 +784,27 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
       const rightBounds = rightGlyph.bounds;
       if (!leftBounds.intersects(rightBounds)) continue;
 
-      let overlap = null;
       let clipped = null;
       try {
-        // Detect the actual contour-overlap region between neighbor glyphs.
-        overlap = leftGlyph.intersect(rightGlyph, { insert: false });
-      } catch {
-        overlap = null;
-      }
-
-      if (!overlap || !overlap.pathData || !overlap.pathData.trim()) {
-        try {
-          if (overlap) overlap.remove();
-        } catch {}
-        continue;
-      }
-
-      try {
-        // Trim only where contours actually intersect, preserving non-overlapping parts.
-        clipped = leftGlyph.subtract(overlap, { insert: false });
+        // Cut the previous glyph by the next glyph so neighboring letter contours
+        // meet at the boundary instead of being drawn on top of each other.
+        clipped = leftGlyph.subtract(rightGlyph, { insert: false });
       } catch {
         clipped = null;
       }
 
-      try {
-        overlap.remove();
-      } catch {}
-
       if (clipped && clipped.pathData) {
+        const originalPathData =
+          typeof leftGlyph.pathData === 'string' ? leftGlyph.pathData.trim() : '';
+        const clippedPathData =
+          typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
+        if (!clippedPathData || clippedPathData === originalPathData) {
+          try {
+            clipped.remove();
+          } catch {}
+          continue;
+        }
+
         try {
           leftGlyph.remove();
         } catch {}

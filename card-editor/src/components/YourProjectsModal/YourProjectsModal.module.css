@@ -63,7 +63,7 @@
   display: grid;
   grid-template-columns: 23px auto;
   align-items: center;
-  width: 75px;
+  width: 90px;
   padding: 5px;
   gap: 10px;
   color: rgba(0, 108, 164, 1);

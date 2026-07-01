@@ -31,7 +31,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 75px;
+    width:fit-content;
+    max-width: 90px;
+    gap: 5px;
     padding: 5px;
 }
 .para{

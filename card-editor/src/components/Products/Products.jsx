@@ -354,7 +354,7 @@ const Products = () => {
                 <br />
                 <Trans
                   i18nKey="products.production.titleLine_2"
-                  components={{ accent: <span style={{ color: '#006CA4' }} /> }}
+                  components={{ home: <Link to="/" className={styles.brandHomeLink} /> }}
                 />
               </h2>
               <p style={{ fontWeight: 'bold', marginBottom: '20px' }}>

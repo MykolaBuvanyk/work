@@ -4,11 +4,9 @@ import Link from '../Localized/LocalizedLink'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 
-const LANGUAGE_PREFIXES = new Set(['de', 'en', 'fr', 'ua'])
-
 const getAccountPath = pathname => {
     const parts = String(pathname || '').split('/').filter(Boolean)
-    const pathParts = LANGUAGE_PREFIXES.has(parts[0]) ? parts.slice(1) : parts
+    const pathParts = /^[a-z]{2}$/i.test(parts[0] || '') ? parts.slice(1) : parts
     return `/${pathParts.join('/')}`.replace(/\/$/, '') || '/'
 }
 

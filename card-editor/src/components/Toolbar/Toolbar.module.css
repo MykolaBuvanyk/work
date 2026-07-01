@@ -25,6 +25,12 @@
   margin: 0;
 }
 
+.numberingTop {
+  padding-top: 5px;
+}
+.numberingTop3 {
+  padding-top: 2px;
+}
 .section h3 {
   font-size: 14px;
   margin: 0px;

@@ -10451,7 +10451,7 @@ export const Toolbar = ({ formData }) => {
       )}
       {/* 1. Shape */}
       <div className={styles.section}>
-        <div className={styles.numbering}>
+        <div className={`${styles.numbering} ${styles.numberingTop}`}>
           <p>1</p>
         </div>
         <div className={styles.icons}>
@@ -10518,7 +10518,7 @@ export const Toolbar = ({ formData }) => {
       </div>
       {/* 2. Size */}
       <div className={styles.section}>
-        <div className={styles.numbering}>
+        <div className={`${styles.numbering} ${styles.numberingTop}`}>
           <p>2</p>
         </div>
         <div className={styles.grid}>
@@ -10693,7 +10693,7 @@ export const Toolbar = ({ formData }) => {
       </div>
       {/* 3. Thickness */}
       <div className={styles.section}>
-        <div className={styles.numbering}>
+        <div className={`${styles.numbering} ${styles.numberingTop3}`}>
           <p>3</p>
         </div>
         <div className={styles.thicknessWrapper}>

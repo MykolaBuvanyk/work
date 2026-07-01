@@ -291,10 +291,12 @@ const Industries = () => {
               className={`${styles.industryRow} ${section.reverse ? styles.reverse : ''}`.trim()}
             >
               {!section.reverse && (
-                <div className={styles.industryMedia}>
-                  <img src={section.image} alt={t(section.titleKey)} />
-                  <h2>{t(section.titleKey)}</h2>
-                </div>
+                <>
+                  <div className={styles.industryImage}>
+                    <img src={section.image} alt={t(section.titleKey)} />
+                  </div>
+                  <h2 className={styles.industryTitle}>{t(section.titleKey)}</h2>
+                </>
               )}
 
               <div className={styles.industryContent}>
@@ -317,10 +319,12 @@ const Industries = () => {
               </div>
 
               {section.reverse && (
-                <div className={styles.industryMedia}>
-                  <img src={section.image} alt={t(section.titleKey)} />
-                  <h2>{t(section.titleKey)}</h2>
-                </div>
+                <>
+                  <div className={styles.industryImage}>
+                    <img src={section.image} alt={t(section.titleKey)} />
+                  </div>
+                  <h2 className={styles.industryTitle}>{t(section.titleKey)}</h2>
+                </>
               )}
             </section>
 

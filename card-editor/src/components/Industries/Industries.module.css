@@ -27,8 +27,10 @@
 .industryRow {
   display: grid;
   grid-template-columns: 1fr 0.95fr;
+  grid-template-rows: auto auto;
   gap: 42px;
-  align-items: stretch;
+  row-gap: 10px;
+  align-items: start;
   padding: 10px 0 6px;
 }
 
@@ -36,25 +38,44 @@
   grid-template-columns: 0.95fr 1fr;
 }
 
-.industryMedia img {
+.industryImage {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+
+.industryImage img {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9.6;
   object-fit: cover;
 }
 
-.industryMedia h2 {
-  margin: 10px 0 0;
+.industryTitle {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
   text-align: center;
   font-size: 20px;
   font-weight: 700;
 }
 
 .industryContent {
+  grid-column: 2;
+  grid-row: 1;
   padding: 0 4px;
   display: flex;
-  min-height: 360px;
-  height: auto;
+  align-self: stretch;
+  min-height: 0;
+}
+
+.industryRow.reverse .industryImage,
+.industryRow.reverse .industryTitle {
+  grid-column: 2;
+}
+
+.industryRow.reverse .industryContent {
+  grid-column: 1;
 }
 
 .industryContent ul {
@@ -163,11 +184,31 @@
   .industryRow.reverse {
     grid-template-columns: 1fr;
     gap: 24px;
+    row-gap: 10px;
+  }
+
+  .industryImage,
+  .industryTitle,
+  .industryContent,
+  .industryRow.reverse .industryImage,
+  .industryRow.reverse .industryTitle,
+  .industryRow.reverse .industryContent {
+    grid-column: 1;
+  }
+
+  .industryImage {
+    grid-row: 1;
+  }
+
+  .industryTitle {
+    grid-row: 2;
   }
 
   .industryContent {
+    grid-row: 3;
     min-height: unset;
     height: auto;
+    margin-top: 14px;
   }
 
   .industryContent ul {
@@ -217,7 +258,7 @@
     font-size: 18px;
   }
 
-  .industryMedia h2 {
+  .industryTitle {
     font-size: 16px;
   }
 

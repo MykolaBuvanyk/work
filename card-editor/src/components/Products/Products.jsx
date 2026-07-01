@@ -191,7 +191,7 @@ const Products = () => {
 
           <div className={styles.heroGrid}>
             <div className={styles.heroVisual}>
-              <img src="/images/products/hero-bg.png" alt={t('products.hero.imageAlt')} />
+              <img src="/images/products/cat.JPG" alt={t('products.hero.imageAlt')} />
             </div>
 
             <div className={styles.heroContent}>
@@ -366,7 +366,7 @@ const Products = () => {
             </div>
 
             <aside className={styles.infoBlockBadge}>
-              <img src="/images/products/design1.jpg" alt={t('products.production.imageAlt')} />
+              <img src="/images/products/cat.JPG" alt={t('products.production.imageAlt')} />
             </aside>
           </div>
         </div>

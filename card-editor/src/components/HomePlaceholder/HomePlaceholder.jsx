@@ -304,7 +304,7 @@ const HomePlaceholder = () => {
             </div>
 
             <div className={styles.photoBox}>
-              <img src="/images/home/durable-signs.jpg" alt="Durable engraved plastic signs" />
+              <img src="/images/products/cat.JPG" alt="Durable engraved plastic signs" />
             </div>
           </div>
         </div>

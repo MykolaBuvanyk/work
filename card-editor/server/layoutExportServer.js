@@ -527,7 +527,40 @@ const FONTKIT_CACHE = new Map();
 const TEXT_TO_SVG_CACHE = new Map();
 const TEXT_TO_SVG_ANCHOR = 'left top';
 const PLACEMENT_TEXT_TO_SVG_ANCHOR = 'left baseline';
+const REQUESTED_GLYPH_OVERLAP_FONT_IDS = new Set([
+  'Baloo2-Regular',
+  'Baloo2-Medium',
+  'Baloo2-Bold',
+  'CustomFont-New-Fonts-Baloo2-Bold',
+  'CustomFont-New-Fonts-Baloo2-Medium',
+  'CustomFont-New-Fonts-Baloo2-Regular',
+  'CustomFont-New-Fonts-GoogleSans-Bold',
+  'CustomFont-New-Fonts-GoogleSans-BoldItalic',
+  'CustomFont-New-Fonts-GoogleSans-Italic',
+  'CustomFont-New-Fonts-GoogleSans-Medium',
+  'CustomFont-New-Fonts-GoogleSans-MediumItalic',
+  'CustomFont-New-Fonts-GoogleSans-Regular',
+  'CustomFont-New-Fonts-Montserrat-Bold',
+  'CustomFont-New-Fonts-Montserrat-Italic',
+  'CustomFont-New-Fonts-Montserrat-Medium',
+  'CustomFont-New-Fonts-Montserrat-Regular',
+  'CustomFont-New-Fonts-Roboto-Bold',
+  'CustomFont-New-Fonts-Roboto-BoldItalic',
+  'CustomFont-New-Fonts-Roboto-Italic',
+  'CustomFont-New-Fonts-Roboto-Medium',
+  'CustomFont-New-Fonts-Roboto-MediumItalic',
+  'CustomFont-New-Fonts-Roboto-Regular',
+  'Roboto-Regular',
+  'Roboto-Bold',
+  'Roboto-Italic',
+  'Roboto-BoldItalic',
+]);
 const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
+  ...REQUESTED_GLYPH_OVERLAP_FONT_IDS,
+  'CustomFont-New-Fonts-Teko-Bold',
+  'CustomFont-New-Fonts-Teko-Medium',
+  'CustomFont-New-Fonts-Teko-Regular',
+  'CustomFont-New-Fonts-Teko-VariableFont-wght',
   'CustomFont-New-Fonts-Caveat-Bold',
   'CustomFont-New-Fonts-Caveat-Medium',
   'CustomFont-New-Fonts-Caveat-Regular',
@@ -564,8 +597,55 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
   'Pacifico-Regular',
   'Sacramento-Regular',
   'Satisfy-Regular',
+  'Teko-Regular',
+  'Teko-SemiBold',
+  'Teko-Bold',
 ]);
+const REQUESTED_GLYPH_OVERLAP_FONT_ALIASES = new Set([
+  'baloo 2',
+  'baloo 2 bold',
+  'baloo 2 medium',
+  'baloo2',
+  'baloo2 bold',
+  'baloo2 medium',
+  'google sans',
+  'google sans bold',
+  'google sans bold italic',
+  'google sans italic',
+  'google sans medium',
+  'google sans medium italic',
+  'googlesans',
+  'googlesans bold',
+  'googlesans bold italic',
+  'googlesans italic',
+  'googlesans medium',
+  'googlesans medium italic',
+  'montserrat',
+  'montserrat bold',
+  'montserrat italic',
+  'montserrat medium',
+  'monserrat',
+  'monserrat bold',
+  'monserrat italic',
+  'monserrat medium',
+  'roboto',
+  'roboto bold',
+  'roboto bold italic',
+  'roboto bolditalic',
+  'roboto italic',
+  'roboto medium',
+  'roboto medium italic',
+  'roboto mediumitalic',
+].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
 const HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES = new Set([
+  ...REQUESTED_GLYPH_OVERLAP_FONT_ALIASES,
+  'teko',
+  'teko bold',
+  'teko medium',
+  'teko regular',
+  'teko semibold',
+  'teko semi bold',
+  'teko variable',
   'caveat',
   'caveat bold',
   'caveat medium',
@@ -598,7 +678,7 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES = new Set([
   'pacifico',
   'sacramento',
   'satisfy',
-].map(normalizeFontAlias));
+].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -612,8 +692,14 @@ const FONT_ALIAS_LOOKUP = PDF_FONT_DEFINITIONS.reduce((map, def) => {
 
 const getFontDefinition = fontId => FONT_DEFINITION_MAP.get(fontId);
 
-const shouldClipGlyphOverlapsForFont = fontId => {
-  if (HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS.has(fontId)) {
+const fontCandidateMatchesAliasSet = (candidate, aliasSet) => {
+  const normalized = normalizeFontAlias(candidate);
+  if (!normalized) return false;
+  return aliasSet.has(normalized) || aliasSet.has(compactFontAlias(normalized));
+};
+
+const fontMatchesAliasSet = (fontId, idSet, aliasSet) => {
+  if (idSet.has(fontId)) {
     return true;
   }
 
@@ -629,10 +715,22 @@ const shouldClipGlyphOverlapsForFont = fontId => {
     ...(Array.isArray(def.aliases) ? def.aliases : []),
   ];
 
-  return candidates.some(candidate => {
-    const normalized = normalizeFontAlias(candidate);
-    return normalized && HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES.has(normalized);
-  });
+  return candidates.some(candidate => fontCandidateMatchesAliasSet(candidate, aliasSet));
+};
+
+const shouldForceCleanGlyphPathForFont = fontId =>
+  fontMatchesAliasSet(
+    fontId,
+    REQUESTED_GLYPH_OVERLAP_FONT_IDS,
+    REQUESTED_GLYPH_OVERLAP_FONT_ALIASES
+  );
+
+const shouldClipGlyphOverlapsForFont = fontId => {
+  return fontMatchesAliasSet(
+    fontId,
+    HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS,
+    HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES
+  );
 };
 
 const resolveFontPath = fontId => {
@@ -713,7 +811,250 @@ const getPaperGlyphScope = () => {
   }
 };
 
-const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
+const pathItemsHaveContourIntersection = (firstItem, secondItem) => {
+  if (!firstItem || !secondItem || !firstItem.bounds || !secondItem.bounds) {
+    return false;
+  }
+  if (!firstItem.bounds.intersects(secondItem.bounds)) {
+    return false;
+  }
+
+  try {
+    if (typeof firstItem.getIntersections === 'function') {
+      return firstItem.getIntersections(secondItem).length > 0;
+    }
+  } catch {}
+
+  return false;
+};
+
+const clipPathItemInternalOverlaps = (scope, pathItem) => {
+  const children = Array.isArray(pathItem?.children) ? [...pathItem.children] : [];
+  if (!scope || !pathItem || children.length < 2) {
+    return { item: pathItem, didClip: false };
+  }
+
+  let didClip = false;
+
+  for (let i = 0; i + 1 < children.length; i += 1) {
+    let current = children[i];
+    if (!current || !current.bounds) continue;
+
+    for (let j = i + 1; j < children.length; j += 1) {
+      const next = children[j];
+      if (!pathItemsHaveContourIntersection(current, next)) continue;
+      if (
+        typeof current.clockwise === 'boolean' &&
+        typeof next.clockwise === 'boolean' &&
+        current.clockwise !== next.clockwise
+      ) {
+        continue;
+      }
+
+      let clipped = null;
+      try {
+        clipped = current.subtract(next, { insert: false });
+      } catch {
+        clipped = null;
+      }
+
+      if (clipped && clipped.pathData) {
+        const originalPathData =
+          typeof current.pathData === 'string' ? current.pathData.trim() : '';
+        const clippedPathData =
+          typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
+
+        if (clippedPathData && clippedPathData !== originalPathData) {
+          try {
+            current.remove();
+          } catch {}
+          children[i] = clipped;
+          current = clipped;
+          didClip = true;
+          continue;
+        }
+      }
+
+      try {
+        if (clipped) clipped.remove();
+      } catch {}
+    }
+  }
+
+  if (!didClip) {
+    return { item: pathItem, didClip: false };
+  }
+
+  const clippedPathData = children
+    .filter(item => item && typeof item.pathData === 'string' && item.pathData.trim())
+    .map(item => item.pathData)
+    .join(' ')
+    .trim();
+
+  if (!clippedPathData) {
+    return { item: pathItem, didClip: false };
+  }
+
+  let cleanedItem = null;
+  try {
+    cleanedItem = new scope.CompoundPath(clippedPathData);
+  } catch {
+    cleanedItem = null;
+  }
+
+  if (!cleanedItem) {
+    return { item: pathItem, didClip: false };
+  }
+
+  try {
+    pathItem.remove();
+  } catch {}
+
+  children.forEach(item => {
+    if (!item || item === cleanedItem) return;
+    try {
+      item.remove();
+    } catch {}
+  });
+
+  return { item: cleanedItem, didClip: true };
+};
+
+const hasSameDirectionInternalOverlap = children => {
+  if (!Array.isArray(children) || children.length < 2) {
+    return false;
+  }
+
+  for (let i = 0; i + 1 < children.length; i += 1) {
+    const current = children[i];
+    if (!current || !current.bounds) continue;
+
+    for (let j = i + 1; j < children.length; j += 1) {
+      const next = children[j];
+      if (!pathItemsHaveContourIntersection(current, next)) continue;
+      if (
+        typeof current.clockwise === 'boolean' &&
+        typeof next.clockwise === 'boolean' &&
+        current.clockwise !== next.clockwise
+      ) {
+        continue;
+      }
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const unitePathItems = (items = []) => {
+  const usableItems = items.filter(item => item && typeof item.pathData === 'string');
+  if (usableItems.length === 0) {
+    return null;
+  }
+
+  let united = usableItems[0];
+  for (let i = 1; i < usableItems.length; i += 1) {
+    const next = usableItems[i];
+    let merged = null;
+    try {
+      merged = united.unite(next, { insert: false });
+    } catch {
+      merged = null;
+    }
+
+    if (!merged || !merged.pathData) {
+      try {
+        if (merged) merged.remove();
+      } catch {}
+      continue;
+    }
+
+    try {
+      if (united !== usableItems[0]) {
+        united.remove();
+      }
+    } catch {}
+    united = merged;
+  }
+
+  return united;
+};
+
+const unitePathItemInternalOverlaps = (scope, pathItem) => {
+  const children = Array.isArray(pathItem?.children) ? [...pathItem.children] : [];
+  if (!scope || !pathItem || children.length < 2 || !hasSameDirectionInternalOverlap(children)) {
+    return { item: pathItem, didClip: false };
+  }
+
+  const clockwiseItems = [];
+  const counterClockwiseItems = [];
+  const unknownItems = [];
+
+  children.forEach(child => {
+    if (!child || typeof child.pathData !== 'string' || !child.pathData.trim()) return;
+    if (child.clockwise === true) {
+      clockwiseItems.push(child);
+    } else if (child.clockwise === false) {
+      counterClockwiseItems.push(child);
+    } else {
+      unknownItems.push(child);
+    }
+  });
+
+  const unitedItems = [];
+  const clockwiseUnion = unitePathItems(clockwiseItems);
+  const counterClockwiseUnion = unitePathItems(counterClockwiseItems);
+
+  if (clockwiseUnion) unitedItems.push(clockwiseUnion);
+  if (counterClockwiseUnion) unitedItems.push(counterClockwiseUnion);
+  unknownItems.forEach(item => unitedItems.push(item));
+
+  const unitedPathData = unitedItems
+    .filter(item => item && typeof item.pathData === 'string' && item.pathData.trim())
+    .map(item => item.pathData)
+    .join(' ')
+    .trim();
+
+  if (!unitedPathData) {
+    return { item: pathItem, didClip: false };
+  }
+
+  let cleanedItem = null;
+  try {
+    cleanedItem = new scope.CompoundPath(unitedPathData);
+  } catch {
+    cleanedItem = null;
+  }
+
+  if (!cleanedItem) {
+    return { item: pathItem, didClip: false };
+  }
+
+  try {
+    pathItem.remove();
+  } catch {}
+
+  [...children, ...unitedItems].forEach(item => {
+    if (!item || item === cleanedItem) return;
+    try {
+      item.remove();
+    } catch {}
+  });
+
+  return { item: cleanedItem, didClip: true };
+};
+
+const buildIntersectedGlyphPathData = (
+  textToSvgInstance,
+  text,
+  fontSize,
+  {
+    anchor = PLACEMENT_TEXT_TO_SVG_ANCHOR,
+    clipNeighborGlyphOverlaps = false,
+    uniteInternalGlyphOverlaps = true,
+    forceCleanPathData = false,
+  } = {}
+) => {
   if (!textToSvgInstance || !text || !Number.isFinite(fontSize) || fontSize <= 0) {
     return null;
   }
@@ -758,7 +1099,13 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
       if (glyphPathData && glyphPathData.trim()) {
         try {
           const pathItem = new scope.CompoundPath(glyphPathData);
-          glyphItems.push(pathItem);
+          const clippedGlyph = uniteInternalGlyphOverlaps
+            ? unitePathItemInternalOverlaps(scope, pathItem)
+            : clipPathItemInternalOverlaps(scope, pathItem);
+          glyphItems.push(clippedGlyph.item);
+          if (clippedGlyph.didClip) {
+            didClipGlyphOverlap = true;
+          }
         } catch {
           // Ignore single-glyph parse failures and keep the rest.
         }
@@ -775,60 +1122,84 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
       cursorXPx += (advance + kerning) * unitToPx;
     }
 
-    for (let i = 0; i + 1 < glyphItems.length; i += 1) {
-      const leftGlyph = glyphItems[i];
-      const rightGlyph = glyphItems[i + 1];
-      if (!leftGlyph || !rightGlyph || !leftGlyph.bounds || !rightGlyph.bounds) continue;
+    if (clipNeighborGlyphOverlaps) {
+      for (let i = 0; i + 1 < glyphItems.length; i += 1) {
+        const leftGlyph = glyphItems[i];
+        const rightGlyph = glyphItems[i + 1];
+        if (!leftGlyph || !rightGlyph || !leftGlyph.bounds || !rightGlyph.bounds) continue;
 
-      const leftBounds = leftGlyph.bounds;
-      const rightBounds = rightGlyph.bounds;
-      if (!leftBounds.intersects(rightBounds)) continue;
+        const leftBounds = leftGlyph.bounds;
+        const rightBounds = rightGlyph.bounds;
+        if (!leftBounds.intersects(rightBounds)) continue;
 
-      let clipped = null;
-      try {
-        // Cut the previous glyph by the next glyph so neighboring letter contours
-        // meet at the boundary instead of being drawn on top of each other.
-        clipped = leftGlyph.subtract(rightGlyph, { insert: false });
-      } catch {
-        clipped = null;
-      }
-
-      if (clipped && clipped.pathData) {
-        const originalPathData =
-          typeof leftGlyph.pathData === 'string' ? leftGlyph.pathData.trim() : '';
-        const clippedPathData =
-          typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
-        if (!clippedPathData || clippedPathData === originalPathData) {
-          try {
-            clipped.remove();
-          } catch {}
-          continue;
+        let clipped = null;
+        try {
+          // Cut the previous glyph by the next glyph so neighboring letter contours
+          // meet at the boundary instead of being drawn on top of each other.
+          clipped = leftGlyph.subtract(rightGlyph, { insert: false });
+        } catch {
+          clipped = null;
         }
 
-        try {
-          leftGlyph.remove();
-        } catch {}
-        glyphItems[i] = clipped;
-        didClipGlyphOverlap = true;
-      } else {
-        try {
-          if (clipped) clipped.remove();
-        } catch {}
+        if (clipped && clipped.pathData) {
+          const originalPathData =
+            typeof leftGlyph.pathData === 'string' ? leftGlyph.pathData.trim() : '';
+          const clippedPathData =
+            typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
+          if (!clippedPathData || clippedPathData === originalPathData) {
+            try {
+              clipped.remove();
+            } catch {}
+            continue;
+          }
+
+          try {
+            leftGlyph.remove();
+          } catch {}
+          glyphItems[i] = clipped;
+          didClipGlyphOverlap = true;
+        } else {
+          try {
+            if (clipped) clipped.remove();
+          } catch {}
+        }
       }
     }
 
-    // If no glyph was actually trimmed, keep TextToSVG's native positioning.
-    // Rebuilding glyphs here can slightly change kerning/placement in the PDF.
-    if (!didClipGlyphOverlap) {
+    // If no glyph was actually trimmed, keep TextToSVG's native positioning
+    // unless this font is known to render overlapping outlines in PDF stroke mode.
+    if (!didClipGlyphOverlap && !forceCleanPathData) {
       scope.project.clear();
       return null;
     }
 
-    const pathData = glyphItems
+    let pathData = glyphItems
       .filter(item => item && typeof item.pathData === 'string' && item.pathData.trim())
       .map(item => item.pathData)
       .join(' ')
       .trim();
+
+    if (pathData && anchor && anchor !== PLACEMENT_TEXT_TO_SVG_ANCHOR) {
+      try {
+        const cleanedItem = new scope.CompoundPath(pathData);
+        const nativePathData = textToSvgInstance.getD(String(text), {
+          fontSize,
+          anchor,
+        });
+        const nativeItem = new scope.CompoundPath(nativePathData);
+        if (cleanedItem?.bounds && nativeItem?.bounds) {
+          cleanedItem.translate(
+            nativeItem.bounds.x - cleanedItem.bounds.x,
+            nativeItem.bounds.y - cleanedItem.bounds.y
+          );
+          pathData = cleanedItem.pathData || pathData;
+        }
+        try {
+          cleanedItem.remove();
+          nativeItem.remove();
+        } catch {}
+      } catch {}
+    }
 
     scope.project.clear();
     return pathData || null;
@@ -838,6 +1209,39 @@ const buildIntersectedGlyphPathData = (textToSvgInstance, text, fontSize) => {
     } catch {}
     return null;
   }
+};
+
+const getCleanTextToSvgPathData = (
+  textToSvgInstance,
+  text,
+  fontSize,
+  {
+    anchor = PLACEMENT_TEXT_TO_SVG_ANCHOR,
+    fontId = null,
+    clipNeighborGlyphOverlaps = null,
+    uniteInternalGlyphOverlaps = true,
+  } = {}
+) => {
+  if (!textToSvgInstance || !text) {
+    return null;
+  }
+
+  const shouldClipNeighborGlyphOverlaps =
+    clipNeighborGlyphOverlaps ?? shouldClipGlyphOverlapsForFont(fontId);
+  const shouldForceCleanPathData = shouldForceCleanGlyphPathForFont(fontId);
+
+  return (
+    buildIntersectedGlyphPathData(textToSvgInstance, text, fontSize, {
+      anchor,
+      clipNeighborGlyphOverlaps: shouldClipNeighborGlyphOverlaps,
+      uniteInternalGlyphOverlaps,
+      forceCleanPathData: shouldForceCleanPathData,
+    }) ||
+    textToSvgInstance.getD(text, {
+      fontSize,
+      anchor,
+    })
+  );
 };
 
 const fontSupportsCodePoint = (fontInstance, codePoint) => {
@@ -2951,9 +3355,10 @@ app.post('/api/layout-pdf', async (req, res) => {
               const textToSvg = getTextToSvgInstance(run.fontId) || getTextToSvgInstance(DEFAULT_FONT_ID);
               if (textToSvg) {
                 try {
-                  const pathData = textToSvg.getD(run.text, {
+                  const pathData = getCleanTextToSvgPathData(textToSvg, run.text, fontSize, {
                     fontSize,
                     anchor,
+                    fontId: run.fontId,
                   });
                   const metrics = textToSvg.getMetrics(run.text, {
                     fontSize,
@@ -3505,21 +3910,15 @@ app.post('/api/layout-pdf', async (req, res) => {
 
                     if (segment.textToSvg) {
                       try {
-                        const shouldClipGlyphOverlaps = shouldClipGlyphOverlapsForFont(
-                          segment.fontId
-                        );
-                        const pathData =
-                          (shouldClipGlyphOverlaps
-                            ? buildIntersectedGlyphPathData(
-                                segment.textToSvg,
-                                segment.text,
-                                scaledFontSize
-                              )
-                            : null) ||
-                          segment.textToSvg.getD(segment.text, {
-                            fontSize: scaledFontSize,
+                        const pathData = getCleanTextToSvgPathData(
+                          segment.textToSvg,
+                          segment.text,
+                          scaledFontSize,
+                          {
                             anchor: PLACEMENT_TEXT_TO_SVG_ANCHOR,
-                          });
+                            fontId: segment.fontId,
+                          }
+                        );
                         doc.save();
                         doc.translate(segmentX, useWidthScale ? 0 : baselineY);
                         doc.path(pathData);
@@ -3794,9 +4193,10 @@ app.post('/api/layout-pdf', async (req, res) => {
 
               if (entry?.textToSvg) {
                 try {
-                  const pathData = entry.textToSvg.getD(run.text, {
+                  const pathData = getCleanTextToSvgPathData(entry.textToSvg, run.text, fontSize, {
                     fontSize,
                     anchor: centeredAnchor,
+                    fontId: run.fontId,
                   });
                   doc.save();
                   doc.translate(segmentX, 0);

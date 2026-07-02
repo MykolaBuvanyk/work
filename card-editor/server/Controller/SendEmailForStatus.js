@@ -1030,23 +1030,22 @@ class SendEmailForStatus {
         try{
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert - Order Received #${orderNumber} ${nameOrCompany}`
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const lang = userLang(order.user);
+            const subject=`${t('email.created.subject', lang)} #${orderNumber} ${nameOrCompany}`;
             const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
             const urlOrders=localizedUrl(urlFrontend, 'account', lang);
             const urlHome=localizedUrl(urlFrontend, '', lang);
-            const orLabel = t('email.common.or', lang);
             
             const html=`
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SignXpert Order Confirmation</title>
+    <title>${t('email.created.title', lang)}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333333;">
 
@@ -1063,71 +1062,71 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding-bottom: 30px;">
-                            <h2 style="font-size: 22px; margin: 0; color: #000; font-weight: bold;">Your order has been received – SignXpert</h2>
+                            <h2 style="font-size: 22px; margin: 0; color: #000; font-weight: bold;">${t('email.created.heading', lang)}</h2>
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
-                            Hello, <span style="color: #337ab7;">${nameOrCompany}</span>!
+                            ${t('common.helloComma', lang)} <span style="color: #337ab7;">${nameOrCompany}</span>!
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 20px;">
-                            Thank you very much for your order — we truly appreciate your trust in SignXpert.
+                            ${t('email.created.thankYou', lang)}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 25px;">
-                            We have received your order and will check that everything looks correct with your project. If we have any questions, we will contact you.
+                            ${t('email.created.body1', lang)}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.8; padding-bottom: 25px;">
-                            <strong>Order number:</strong> ${orderNumber}<br>
-                            <strong>Customer number:</strong> ${String(order.user.id).padStart(3, '0')}<br>
-                            <strong>Order date:</strong> ${create}
+                            <strong>${t('common.orderNoLabel', lang)}</strong> ${orderNumber}<br>
+                            <strong>${t('common.customerNoLabel', lang)}</strong> ${String(order.user.id).padStart(3, '0')}<br>
+                            <strong>${t('common.orderDateLabel', lang)}</strong> ${create}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 25px;">
-                            You can follow the status of your order at any time in your account.<br>
-                            Simply log in to <a href="${urlAccount}" style="color: #0056b3; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0056b3; text-decoration: underline;">My Orders</a>, where you can view:
+                            ${t('email.created.followStatus', lang)}<br>
+                            ${t('email.created.simplyLogInWhereView', lang)} <a href="${urlAccount}" style="color: #0056b3; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlOrders}" style="color: #0056b3; text-decoration: underline;">${t('common.myOrders', lang)}</a>, ${t('email.created.whereYouCanView', lang)}
                             <ul style="margin: 10px 0; padding-left: 20px;">
-                                <li>Order status</li>
-                                <li>Invoice</li>
-                                <li>Project details</li>
-                                <li>Delivery information</li>
+                                <li>${t('email.created.listOrderStatus', lang)}</li>
+                                <li>${t('email.created.listInvoice', lang)}</li>
+                                <li>${t('email.created.listProjectDetails', lang)}</li>
+                                <li>${t('email.created.listDeliveryInformation', lang)}</li>
                             </ul>
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6;">
-                            If you notice anything that needs correction, please contact us as soon as possible.
+                            ${t('email.created.contactCorrection', lang)}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6;">
-                            As soon as your order has been produced, packed, and shipped, you will receive a separate email with your tracking number. The invoice will be attached to that email.
+                            ${t('email.created.shipmentReady', lang)}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 40px;">
-                            If you have any questions or need any assistance, we are always happy to help.
+                            ${t('email.created.anyQuestions', lang)}
                         </td>
                     </tr>
 
                     <tr>
                         <td style="font-size: 16px; line-height: 1.6; padding-bottom: 40px;">
-                            Best regards,<br>
-                            <strong>SignXpert Team</strong>
+                            ${t('common.bestRegards', lang)},<br>
+                            <strong>${t('common.signxpertTeam', lang)}</strong>
                         </td>
                     </tr>
 

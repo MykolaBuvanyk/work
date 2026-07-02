@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Administratoriaus el. paštas nesukonfigūruotas",
   "errors.orderNotFound": "Užsakymas nerastas",
   "errors.forbidden": "Draudžiama",
-  "errors.failedPasswordRecovery": "Nepavyko išsiųsti slaptažodžio atkūrimo el. laiško"
+  "errors.failedPasswordRecovery": "Nepavyko išsiųsti slaptažodžio atkūrimo el. laiško",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kabelių rišikliai",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Juodi plastikiniai kabelių rišikliai, dydis 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Savisriegiai 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Dydis 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Savisriegiai 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Dydis 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabinai",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metalinis karabino kabliukas 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Raktų žiedai",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Grandinėlė su kamuoliukais",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Ilgis 10 cm"
 }

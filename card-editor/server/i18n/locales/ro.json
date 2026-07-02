@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Emailul administratorului nu este configurat",
   "errors.orderNotFound": "Comanda nu a fost găsită",
   "errors.forbidden": "Interzis",
-  "errors.failedPasswordRecovery": "Trimiterea emailului de recuperare a parolei a eșuat"
+  "errors.failedPasswordRecovery": "Trimiterea emailului de recuperare a parolei a eșuat",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Coliere de cablu",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Coliere de cablu plastic negre, dimensiune 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Autofiletante 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Dimensiune 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Autofiletante 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Dimensiune 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Carabină",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Carabină metalică 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Inele pentru chei",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Lanț cu bile",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Lungime 10 cm"
 }

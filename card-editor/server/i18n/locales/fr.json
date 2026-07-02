@@ -285,5 +285,17 @@
   "errors.adminEmailNotConfigured": "L’adresse e-mail de l’administrateur n’est pas configurée",
   "errors.orderNotFound": "Commande introuvable",
   "errors.forbidden": "Accès interdit",
-  "errors.failedPasswordRecovery": "Échec de l’envoi de l’e-mail de récupération du mot de passe"
+  "errors.failedPasswordRecovery": "Échec de l’envoi de l’e-mail de récupération du mot de passe",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Colliers de serrage",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Colliers de serrage en plastique noir, taille 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Vis à tôle 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Vis autotaraudeuses 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Vis à tôle 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Vis autotaraudeuses 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Mousqueton",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Clip à ressort métallique 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Anneaux porte-clés",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Chaînes à billes",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "longueur 10 cm"
 }

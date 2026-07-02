@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Az adminisztrátori e-mail cím nincs beállítva",
   "errors.orderNotFound": "A rendelés nem található",
   "errors.forbidden": "Tiltott",
-  "errors.failedPasswordRecovery": "A jelszó-helyreállító e-mail küldése sikertelen"
+  "errors.failedPasswordRecovery": "A jelszó-helyreállító e-mail küldése sikertelen",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kábelkötegelők",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Fekete műanyag kábelkötegelők, méret 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Önmetsző 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Méret 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Önmetsző 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Méret 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabinerek",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Fém karabiner kapocs 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Kulcskarikák",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Golyóslánc",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Hosszúság 10 cm"
 }

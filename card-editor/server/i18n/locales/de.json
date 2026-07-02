@@ -288,5 +288,17 @@
   "errors.orderNotFound": "Bestellung nicht gefunden",
   "errors.forbidden": "Zugriff verweigert",
   "email.reminder.paymentStatusNote": "Ihren Zahlungsstatus können Sie jederzeit in Ihrem Konto einsehen unter",
-  "errors.failedPasswordRecovery": "E-Mail zur Passwort-Wiederherstellung konnte nicht gesendet werden"
+  "errors.failedPasswordRecovery": "E-Mail zur Passwort-Wiederherstellung konnte nicht gesendet werden",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kabelbinder",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Schwarze Kunststoff-Kabelbinder, Größe 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Schrauben 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Größe 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Schrauben 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Größe 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabiner",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metall-Karabinerhaken 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Schlüsselringe",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Kugelkette",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Länge 10 cm"
 }

@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Admin-e-mail er ikke konfigureret",
   "errors.orderNotFound": "Ordre ikke fundet",
   "errors.forbidden": "Forbudt",
-  "errors.failedPasswordRecovery": "Kunne ikke sende e-mail om adgangskodegendannelse"
+  "errors.failedPasswordRecovery": "Kunne ikke sende e-mail om adgangskodegendannelse",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kabelbindere",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Sorte plastik-kabelbindere, størrelse 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Selvskærende skruer 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Størrelse 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Selvskærende skruer 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Størrelse 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabinhage",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metalkarabinhage 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Nøgleringe",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Kuglekæder",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Længde 10 cm"
 }

@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "El correo electrónico del administrador no está configurado",
   "errors.orderNotFound": "Pedido no encontrado",
   "errors.forbidden": "Prohibido",
-  "errors.failedPasswordRecovery": "No se pudo enviar el correo de recuperación de contraseña"
+  "errors.failedPasswordRecovery": "No se pudo enviar el correo de recuperación de contraseña",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Bridas",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Bridas de plástico negro, tamaño 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Autorroscantes 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Autorroscantes, tamaño 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Autorroscantes 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Autorroscantes, tamaño 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Mosquetón",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Mosquetón metálico de 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Anillas para llaves",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Cadenas de bolitas",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Longitud de 10 cm"
 }

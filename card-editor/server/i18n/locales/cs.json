@@ -288,4 +288,17 @@
   "errors.orderNotFound": "Objednávka nenalezena",
   "errors.forbidden": "Zakázáno",
   "errors.failedPasswordRecovery": "Nepodařilo se odeslat e-mail pro obnovení hesla"
+,
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Stahovací pásky",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Černé plastové stahovací pásky, velikost 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Samořezné šrouby 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Velikost 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Samořezné šrouby 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Velikost 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabina",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Kovová karabina 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Kroužky na klíče",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Kuličkové řetízky",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Délka 10 cm"
 }

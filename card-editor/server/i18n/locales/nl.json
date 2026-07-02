@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Beheerders-e-mailadres is niet geconfigureerd",
   "errors.orderNotFound": "Bestelling niet gevonden",
   "errors.forbidden": "Verboden",
-  "errors.failedPasswordRecovery": "Verzenden van wachtwoordherstel-e-mail mislukt"
+  "errors.failedPasswordRecovery": "Verzenden van wachtwoordherstel-e-mail mislukt",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kabelbinders",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Zwarte kunststof kabelbinders, maat 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Zelftappers 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Maat 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Zelftappers 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Maat 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabijnhaak",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metalen karabijnhaak 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Sleutelringen",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Balletjesketting",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Lengte 10 cm"
 }

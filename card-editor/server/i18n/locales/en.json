@@ -288,5 +288,17 @@
   "errors.adminEmailNotConfigured": "Admin email is not configured",
   "errors.orderNotFound": "Order not found",
   "errors.forbidden": "Forbidden",
-  "errors.failedPasswordRecovery": "Failed to send password recovery email"
+  "errors.failedPasswordRecovery": "Failed to send password recovery email",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Cable ties",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Black plastic cable ties, size 3.6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Screws 9.5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Self-tapping screws, size 2.9 × 9.5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Screws 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Self-tapping screws, size 2.9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Carabiner",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metal carabiner 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Keyrings",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Ball chains",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Length 10 cm"
 }

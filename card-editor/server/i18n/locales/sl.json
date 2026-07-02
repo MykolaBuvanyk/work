@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "E-pošta skrbnika ni konfigurirana",
   "errors.orderNotFound": "Naročilo ni najdeno",
   "errors.forbidden": "Prepovedano",
-  "errors.failedPasswordRecovery": "Pošiljanje e-pošte za obnovitev gesla ni uspelo"
+  "errors.failedPasswordRecovery": "Pošiljanje e-pošte za obnovitev gesla ni uspelo",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Kabelske vezice",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Črne plastične kabelske vezice, velikost 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Samorezni 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Velikost 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Samorezni 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Velikost 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabin",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Kovinski karabiner 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Obeski za ključe",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Kroglična verižica",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Dolžina 10 cm"
 }

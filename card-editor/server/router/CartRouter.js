@@ -901,6 +901,51 @@ const normalizeAccessories = (input) => {
     .filter((x) => x.qty > 0 && (x.id != null || x.name != null));
 };
 
+const ACCESSORY_TRANSLATION_KEY_BY_ID = {
+  1: 'cableTies',
+  2: 'screws95',
+  3: 'screws13',
+  4: 'carabiner',
+  5: 'keyrings',
+  6: 'ballChains',
+};
+
+const ACCESSORY_TRANSLATION_KEY_BY_NAME = {
+  'cable ties': 'cableTies',
+  'screws 9.5 mm': 'screws95',
+  'screws 9,5 mm': 'screws95',
+  'screws 13 mm': 'screws13',
+  carabiner: 'carabiner',
+  keyrings: 'keyrings',
+  'ball chains': 'ballChains',
+};
+
+const resolveAccessoryTranslationKey = (item) => {
+  const byId = ACCESSORY_TRANSLATION_KEY_BY_ID[Number(item?.id)];
+  if (byId) return byId;
+
+  const name = String(item?.name || '').trim().toLowerCase();
+  return ACCESSORY_TRANSLATION_KEY_BY_NAME[name] || null;
+};
+
+const translateAccessoryField = (itemKey, field, lang, fallback) => {
+  if (!itemKey) return fallback;
+
+  const translationKey = `pdf.deliveryNote.accessories.items.${itemKey}.${field}`;
+  const translated = t(translationKey, lang);
+  return translated === translationKey ? fallback : translated;
+};
+
+const localizeAccessories = (accessories, lang = DEFAULT_LANGUAGE) =>
+  accessories.map((item) => {
+    const itemKey = resolveAccessoryTranslationKey(item);
+    return {
+      ...item,
+      name: translateAccessoryField(itemKey, 'name', lang, item.name),
+      desc: translateAccessoryField(itemKey, 'desc', lang, item.desc),
+    };
+  });
+
 const formatDisplayNumber = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
@@ -1156,7 +1201,7 @@ const buildDeliveryNoteSummary = (order, orderMongo, lang = DEFAULT_LANGUAGE) =>
     return {
       projectTitle: String(storedSummary?.projectTitle || order?.orderName || orderMongo?.projectName || ''),
       totalSigns: expandedStoredSigns.length || Math.max(0, Math.floor(toNumber(storedSummary?.totalSigns, toNumber(order?.signs, 0)))),
-      accessories: normalizeAccessories(storedSummary?.accessories),
+      accessories: localizeAccessories(normalizeAccessories(storedSummary?.accessories), lang),
       signs: expandedStoredSigns,
     };
   }
@@ -1192,7 +1237,7 @@ const buildDeliveryNoteSummary = (order, orderMongo, lang = DEFAULT_LANGUAGE) =>
   return {
     projectTitle: String(order?.orderName || orderMongo?.projectName || ''),
     totalSigns: signs.reduce((sum, sign) => sum + sign.copiesCount, 0) || Math.max(0, Math.floor(toNumber(order?.signs, 0))),
-    accessories: normalizeAccessories(orderMongo?.accessories),
+    accessories: localizeAccessories(normalizeAccessories(orderMongo?.accessories), lang),
     signs,
   };
 };

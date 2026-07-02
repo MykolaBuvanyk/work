@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "Administratörens e-post är inte konfigurerad",
   "errors.orderNotFound": "Beställningen hittades inte",
   "errors.forbidden": "Förbjuden",
-  "errors.failedPasswordRecovery": "Kunde inte skicka e-post för återställning av lösenord"
+  "errors.failedPasswordRecovery": "Kunde inte skicka e-post för återställning av lösenord",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Buntband",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Svarta buntband av plast, storlek 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Självgängande 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Självgängande skruvar, storlek 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Självgängande 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Självgängande skruvar, storlek 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karbinhake",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Metallisk karbinhake 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Nyckelringar",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Kulkedja",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Längd 10 cm"
 }

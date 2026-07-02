@@ -289,5 +289,17 @@
   "errors.adminEmailNotConfigured": "L’email dell’amministratore non è configurata",
   "errors.orderNotFound": "Ordine non trovato",
   "errors.forbidden": "Accesso vietato",
-  "errors.failedPasswordRecovery": "Impossibile inviare l’email di recupero password"
+  "errors.failedPasswordRecovery": "Impossibile inviare l’email di recupero password",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Fascette",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Fascette nere in plastica, dimensioni 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Viti autofilettanti 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Viti autofilettanti, misura 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Viti autofilettanti 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Viti autofilettanti, misura 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Moschettone",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Moschettone metallico 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Anelli portachiavi",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Catenella a sfere",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Lunghezza 10 cm"
 }

@@ -285,5 +285,17 @@
   "errors.adminEmailNotConfigured": "Email адміністратора не налаштовано",
   "errors.orderNotFound": "Замовлення не знайдено",
   "errors.forbidden": "Доступ заборонено",
-  "errors.failedPasswordRecovery": "Не вдалося надіслати лист для відновлення пароля"
+  "errors.failedPasswordRecovery": "Не вдалося надіслати лист для відновлення пароля",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Кабельні стяжки",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Чорні пластикові кабельні стяжки, розмір 3,6 × 140 мм",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Саморізи 9,5 мм",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Розмір 2,9 × 9,5 мм",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Саморізи 13 мм",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Розмір 2,9 × 13 мм",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Карабін",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Металевий карабін 40 мм",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Кільця для ключів",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 мм",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Кулькові ланцюжки",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Довжина 10 см"
 }

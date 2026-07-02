@@ -287,5 +287,17 @@
   "errors.adminEmailNotConfigured": "E-mail administrátora nie je nakonfigurovaný",
   "errors.orderNotFound": "Objednávka nenájdená",
   "errors.forbidden": "Zakázané",
-  "errors.failedPasswordRecovery": "Nepodarilo sa odoslať e-mail na obnovenie hesla"
+  "errors.failedPasswordRecovery": "Nepodarilo sa odoslať e-mail na obnovenie hesla",
+  "pdf.deliveryNote.accessories.items.cableTies.name": "Sťahovacie pásky",
+  "pdf.deliveryNote.accessories.items.cableTies.desc": "Čierne plastové sťahovacie pásky, veľkosť 3,6 × 140 mm",
+  "pdf.deliveryNote.accessories.items.screws95.name": "Samorezy 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws95.desc": "Veľkosť 2,9 × 9,5 mm",
+  "pdf.deliveryNote.accessories.items.screws13.name": "Samorezy 13 mm",
+  "pdf.deliveryNote.accessories.items.screws13.desc": "Veľkosť 2,9 × 13 mm",
+  "pdf.deliveryNote.accessories.items.carabiner.name": "Karabína",
+  "pdf.deliveryNote.accessories.items.carabiner.desc": "Kovová karabína 40 mm",
+  "pdf.deliveryNote.accessories.items.keyrings.name": "Krúžky na kľúče",
+  "pdf.deliveryNote.accessories.items.keyrings.desc": "30 mm",
+  "pdf.deliveryNote.accessories.items.ballChains.name": "Retiazka s guličkami",
+  "pdf.deliveryNote.accessories.items.ballChains.desc": "Dĺžka 10 cm"
 }

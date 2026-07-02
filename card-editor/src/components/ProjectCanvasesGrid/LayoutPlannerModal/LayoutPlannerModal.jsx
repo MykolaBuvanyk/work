@@ -232,15 +232,34 @@ const PREVIEW_OUTLINE_COLOR = "#0000FF";
 const OUTLINE_STROKE_COLOR = LAYOUT_OUTLINE_COLOR;
 const TEXT_STROKE_COLOR = "#008181";
 const HANDWRITTEN_TEXT_OUTLINE_FONTS = new Set([
+  "caveat",
+  "caveat bold",
+  "caveat medium",
+  "caveat regular",
+  "caveat variable",
+  "comic neue",
+  "comic neue bold",
+  "comic neue bold italic",
+  "comic neue italic",
+  "comic relief",
+  "comic relief bold",
   "comic sans ms",
+  "comic sans ms bold",
+  "comic sans ms bold italic",
   "courgette",
   "dancing script",
+  "dancing script bold",
+  "dancing script medium",
+  "dancing script regular",
+  "dancing script variable",
   "daniel",
+  "daniel bold",
   "exmouth",
   "exmouth script",
   "great vibes",
   "handlee",
   "kalam",
+  "kalam bold",
   "lobster",
   "pacifico",
   "sacramento",
@@ -4895,7 +4914,6 @@ const convertTextToOutlinedPaths = (rootElement) => {
   }
 
   const textNodes = Array.from(rootElement.querySelectorAll("text"));
-  const svgNamespace = "http://www.w3.org/2000/svg";
 
   textNodes.forEach((textNode) => {
     try {
@@ -4907,42 +4925,12 @@ const convertTextToOutlinedPaths = (rootElement) => {
         return;
       }
 
-      const doc = textNode.ownerDocument;
-      const baseStyle = collectStyleFromNode(textNode);
-      const opacityAttr = textNode.getAttribute("opacity") || baseStyle.opacity;
-      const fillOpacityAttr =
-        textNode.getAttribute("fill-opacity") || baseStyle["fill-opacity"];
+      // Keep handwritten/cursive text as <text> for the PDF export server.
+      // The server cuts overlapping glyph contours per-letter; converting here
+      // would bake the overlaps into generic paths that cannot be fixed later.
+      applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
+      return;
 
-      const outlinedElements = convertTextNodeWithPaper(scope, doc, textNode);
-
-      if (!outlinedElements.length) {
-        applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);
-        return;
-      }
-
-      // Paper import uses applyMatrix:true, so outlined path coordinates already
-      // include the text transform. Re-applying transform on the wrapper shifts
-      // and scales Textbox text in PDF compared with the Fabric canvas.
-      const needsGroup = Boolean(opacityAttr || fillOpacityAttr);
-      if (needsGroup) {
-        const group = doc.createElementNS(svgNamespace, "g");
-        if (opacityAttr != null) {
-          group.setAttribute("opacity", opacityAttr);
-        }
-        if (fillOpacityAttr != null) {
-          group.setAttribute("fill-opacity", fillOpacityAttr);
-        }
-        outlinedElements.forEach((element) => {
-          group.appendChild(element);
-        });
-        parent.insertBefore(group, textNode);
-      } else {
-        outlinedElements.forEach((element) => {
-          parent.insertBefore(element, textNode);
-        });
-      }
-
-      parent.removeChild(textNode);
     } catch (error) {
       console.error("Failed to convert text node to outline", error);
       applyStrokeStyleRecursive(textNode, TEXT_STROKE_COLOR);

@@ -158,9 +158,9 @@ class SendEmailForStatus {
         const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
         const user=order.user;
-        const subject=`SignXpert - Payment Received  #${String(order.id).padStart(3, '0')} (${nameOrCompany})`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
         const lang = userLang(order.user);
+        const subject=`${t('email.paymentReceived.userSubject', lang)} #${String(order.id).padStart(3, '0')} (${nameOrCompany})`;
         const urlAccount = localizedUrl(urlFrontend, 'account', lang);
         const urlOrders = localizedUrl(urlFrontend, 'account/detail', lang);
         const urlHome = localizedUrl(urlFrontend, '', lang);
@@ -169,11 +169,11 @@ class SendEmailForStatus {
         if(orderInMongo.checkout.paymentMethod!='invoice')return;
 
         const messageHtml=`<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Received - SignXpert</title>
+    <title>${t('email.paymentReceived.userTitle', lang)}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -189,27 +189,27 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Payment has been received – #${String(order.id).padStart(3, '0')}</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">${t('email.paymentReceived.userHeading', lang)} - #${String(order.id).padStart(3, '0')}</h2>
                         </td>
                     </tr>
 
                     <tr>
                         <td style="padding: 10px 60px; color: #000000; font-size: 15px; line-height: 1.5;">
                             
-                            <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
+                            <p style="margin: 0 0 25px 0;">${t('common.helloComma', lang)} ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
                             
-                            <p style="margin: 0 0 10px 0;">Thank you for your payment.</p>
-                            <p style="margin: 0 0 25px 0;">We have successfully received it for Order #${String(order.id).padStart(3, '0')}.</p>
+                            <p style="margin: 0 0 10px 0;">${t('email.paymentReceived.thankYou', lang)}</p>
+                            <p style="margin: 0 0 25px 0;">${t('email.paymentReceived.successfullyReceived', lang)} #${String(order.id).padStart(3, '0')}.</p>
                             
-                            <p style="margin: 0 0 5px 0;">Total amount: <strong>€${order.sum}</strong></p>
+                            <p style="margin: 0 0 5px 0;">${t('common.totalAmountLabel', lang)} <strong>€${order.sum}</strong></p>
                         
                             <p style="margin: 0 0 25px 0;">
-                                You can check the detailed status of your order anytime in your account.<br>
-                                Simply log in to <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0073bc; text-decoration: underline;">My Orders</a>
+                                ${t('email.paymentReceived.checkStatus', lang)}<br>
+                                ${t('email.paymentReceived.simplyLogIn', lang)} <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlOrders}" style="color: #0073bc; text-decoration: underline;">${t('common.myOrders', lang)}</a>
                             </p>
                             
-                            <p style="margin: 40px 0 5px 0;">Best regards,</p>
-                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+                            <p style="margin: 40px 0 5px 0;">${t('common.bestRegards', lang)},</p>
+                            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', lang)}</p>
                         </td>
                     </tr>
 
@@ -233,18 +233,18 @@ class SendEmailForStatus {
     static SendUserNewPassword=async(user,newPassword)=>{
         const nameOrCompany=user.company?user.company:user.firstName;
         const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
-        const subjectAdmin=`SignXpert - Password Recovery for ${nameOrCompany}`;
         const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
         const lang = userLang(user);
+        const subjectAdmin=`${t('email.password.subject', lang)} ${nameOrCompany}`;
         const urlAccount = localizedUrl(urlFrontend, 'account', lang);
         const urlDetails = localizedUrl(urlFrontend, 'account/detail', lang);
         const urlHome = localizedUrl(urlFrontend, '', lang);
         const messageHtml=`<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Recovery for SignXpert</title>
+    <title>${t('email.password.title', lang)}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -260,35 +260,35 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 20px 40px;">
-                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">Password Recovery for SignXpert</h2>
+                            <h2 style="margin: 0; color: #000000; font-size: 20px; font-weight: normal;">${t('email.password.heading', lang)}</h2>
                         </td>
                     </tr>
 
                     <tr>
                         <td style="padding: 10px 60px; color: #000000; font-size: 15px; line-height: 1.5;">
                             
-                            <p style="margin: 0 0 25px 0;">Hello, ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
+                            <p style="margin: 0 0 25px 0;">${t('common.helloComma', lang)} ${user.firstName}, ${user.company?`(${user.company})`:''}</p>
                             
-                            <p style="margin: 0 0 25px 0;">Customer number: ${String(user.id).padStart(3, '0')}</p>
+                            <p style="margin: 0 0 25px 0;">${t('common.customerNumberLabel', lang)} ${String(user.id).padStart(3, '0')}</p>
                             
-                            <p style="margin: 0 0 25px 0;">We received a request to reset your password on SignXpert.</p>
+                            <p style="margin: 0 0 25px 0;">${t('email.password.requestIntro', lang)}</p>
                             
                             <p style="margin: 0 0 25px 0;">
-                                Your temporary password is:<br>
+                                ${t('email.password.temporaryIs', lang)}<br>
                                 ${newPassword}
                             </p>
 
                             <p style="margin: 0 0 25px 0;">
-                                For security, we recommend changing it to a new password immediately after logging in.<br>
-                                Simply log in to <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlDetails}" style="color: #0073bc; text-decoration: underline;">My Details</a> in your account to update your password.
+                                ${t('email.password.securityNote', lang)}<br>
+                                ${t('email.password.simplyLogIn', lang)} <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlDetails}" style="color: #0073bc; text-decoration: underline;">${t('common.myDetails', lang)}</a> ${t('email.password.inYourAccount', lang)}
                             </p>
                             
-                            <p style="margin: 0 0 25px 0;">If you didn't request a password reset, please ignore this email.</p>
+                            <p style="margin: 0 0 25px 0;">${t('email.password.ifNotRequest', lang)}</p>
                             
-                            <p style="margin: 0 0 35px 0;">Thank you for using SignXpert!</p>
+                            <p style="margin: 0 0 35px 0;">${t('common.thankYouForUsing', lang)}</p>
                             
-                            <p style="margin: 0 0 5px 0;">Best regards,</p>
-                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+                            <p style="margin: 0 0 5px 0;">${t('common.bestRegards', lang)},</p>
+                            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', lang)}</p>
                         </td>
                     </tr>
 
@@ -1512,11 +1512,11 @@ class SendEmailForStatus {
         try{
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert -  Order Delivered #${orderNumber} ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const lang = userLang(order.user);
+            const subject=`${t('email.delivered.subject', lang)} #${orderNumber} ${nameOrCompany}`;
             const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
             const urlOrders=localizedUrl(urlFrontend, 'account', lang);
             const contact=localizedUrl(urlFrontend, 'contacts', lang)
@@ -1524,11 +1524,11 @@ class SendEmailForStatus {
             
             const html=`
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your order has been delivered - SignXpert</title>
+    <title>${t('email.delivered.title', lang)}</title>
     <style>
         body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; -webkit-font-smoothing: antialiased; }
         table { border-collapse: collapse; }
@@ -1556,41 +1556,41 @@ class SendEmailForStatus {
 
                     <tr>
                         <td align="center" style="padding: 10px 40px 20px 40px;">
-                            <h1 style="font-size: 22px; color: #000000; margin: 0; font-weight: bold;">Your order has been delivered</h1>
+                            <h1 style="font-size: 22px; color: #000000; margin: 0; font-weight: bold;">${t('email.delivered.heading', lang)}</h1>
                         </td>
                     </tr>
 
                     <tr>
                         <td class="content" align="left" style="padding: 0 40px 30px 40px; color: #333333; font-size: 15px; line-height: 1.6;">
-                            <p>Hello, <strong>${nameOrCompany}</strong>!</p>
+                            <p>${t('common.helloComma', lang)} <strong>${nameOrCompany}</strong>!</p>
 
-                            <p>Good news!<br>
-                            Your order has been successfully delivered.</p>
+                            <p>${t('email.shipped.goodNews', lang)}<br>
+                            ${t('email.delivered.goodNewsDelivered', lang)}</p>
 
-                            <p>We hope everything meets your expectations and that you are happy with your custom signs.</p>
+                            <p>${t('email.delivered.hopeExpectations', lang)}</p>
 
-                            <p>We would be grateful if you could take a moment to leave us a review — your feedback helps us improve and continue providing the best service.</p>
+                            <p>${t('email.delivered.askForReview', lang)}</p>
 
                             <table border="0" cellspacing="0" cellpadding="0" style="margin: 30px auto;">
                                 <tr>
                                     <td align="center" bgcolor="#006DA5" style="border-radius: 8px;">
                                         <a href="{review_url}" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 40px; border-radius: 8px; border: 1px solid #006DA5; display: inline-block; font-weight: bold;">
-                                            Leave a Review
+                                            ${t('email.delivered.ctaLeaveReview', lang)}
                                         </a>
                                     </td>
                                 </tr>
                             </table>
 
-                            <p>If you notice anything unusual or have any questions, please don’t hesitate to <a href="${contact}" style="color: #006DA5;">contact</a> us — we are always happy to help.</p>
+                            <p>${t('email.delivered.contactIfUnusual', lang)} <a href="${contact}" style="color: #006DA5;">${t('email.delivered.contactWord', lang)}</a> ${t('email.delivered.usHelp', lang)}</p>
 
                             <p style="margin-top: 25px;">
-                                <strong>Thank you for working with SignXpert!</strong><br>
-                                <strong>We can’t wait to welcome you back and help bring your next custom project to life.</strong>
+                                <strong>${t('common.thankYouForWorking', lang)}</strong><br>
+                                <strong>${t('email.delivered.welcomeBack', lang)}</strong>
                             </p>
 
                             <p style="margin-top: 30px;">
-                                Best regards,<br>
-                                <strong>SignXpert Team</strong>
+                                ${t('common.bestRegards', lang)},<br>
+                                <strong>${t('common.signxpertTeam', lang)}</strong>
                             </p>
                         </td>
                     </tr>
@@ -1636,11 +1636,11 @@ class SendEmailForStatus {
         try{
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert -  Problem with Delivery #${orderNumber} ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const lang = userLang(order.user);
+            const subject=`${t('email.errorDelivery.subject', lang)} #${orderNumber} ${nameOrCompany}`;
             const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
             const urlOrders=localizedUrl(urlFrontend, 'account', lang);
             const contact=localizedUrl(urlFrontend, 'contacts', lang)
@@ -1648,11 +1648,11 @@ class SendEmailForStatus {
             
             const html=`
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Issue Notification</title>
+    <title>${t('email.errorDelivery.title', lang)}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; background-color: #ffffff; margin-top: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
@@ -1668,33 +1668,33 @@ class SendEmailForStatus {
 
         <tr>
             <td style="padding: 20px 40px; text-align: center;">
-                <h1 style="font-size: 22px; color: #000000; margin: 0;">Issue with your delivery — Action required</h1>
+                <h1 style="font-size: 22px; color: #000000; margin: 0;">${t('email.errorDelivery.heading', lang)}</h1>
             </td>
         </tr>
 
         <tr>
             <td style="padding: 20px 40px; font-size: 16px; line-height: 1.6; color: #333333;">
-                <p>Hello, <span style="color: #0066cc;">${nameOrCompany}</span>!</p>
+                <p>${t('common.helloComma', lang)} <span style="color: #0066cc;">${nameOrCompany}</span>!</p>
 
-                <p>The carrier has reported an issue with the delivery of your order.</p>
+                <p>${t('email.errorDelivery.carrierReport', lang)}</p>
 
-                <p style="margin-bottom: 10px;">This may occur due to:</p>
+                <p style="margin-bottom: 10px;">${t('email.errorDelivery.mayOccur', lang)}</p>
                 <ul style="margin-top: 0; padding-left: 20px;">
-                    <li>Incorrect address</li>
-                    <li>Delivery attempt failed</li>
-                    <li>Returned to sender</li>
+                    <li>${t('email.errorDelivery.reasonIncorrect', lang)}</li>
+                    <li>${t('email.errorDelivery.reasonFailed', lang)}</li>
+                    <li>${t('email.errorDelivery.reasonReturned', lang)}</li>
                 </ul>
 
-                <p>Please contact us as soon as possible to confirm the correct delivery details or resolve the issue.</p>
+                <p>${t('email.errorDelivery.contactConfirm', lang)}</p>
 
-                <p>We will update the carrier immediately to ensure your order reaches you without further delay.</p>
+                <p>${t('email.errorDelivery.updateCarrier', lang)}</p>
             </td>
         </tr>
 
         <tr>
             <td style="padding: 20px 40px 40px 40px; font-size: 16px; color: #333333;">
-                <p style="margin: 0;">Best regards,</p>
-                <p style="margin: 5px 0 0 0; font-weight: bold;">SignXpert Team</p>
+                <p style="margin: 0;">${t('common.bestRegards', lang)},</p>
+                <p style="margin: 5px 0 0 0; font-weight: bold;">${t('common.signxpertTeam', lang)}</p>
             </td>
         </tr>
 

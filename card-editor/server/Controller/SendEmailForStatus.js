@@ -1305,8 +1305,9 @@ class SendEmailForStatus {
             const logo = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
             const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
             const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
+            const lang = normalizeLanguage(req.body?.language || String(req.headers?.['accept-language'] || '').split(',')[0] || DEFAULT_LANGUAGE);
             const adminUrlHome = localizedUrl(urlFrontend, '', ADMIN_LANG);
-            const userUrlHome = localizedUrl(urlFrontend, '', DEFAULT_LANGUAGE);
+            const userUrlHome = localizedUrl(urlFrontend, '', lang);
 
             if (!ADMIN_EMAIL) {
                 throw ErrorApi.badRequest('Admin email is not configured');
@@ -1315,7 +1316,22 @@ class SendEmailForStatus {
             const safeName = escapeHtml(name || 'Not provided');
             const safeEmail = escapeHtml(email);
             const safeQuestion = escapeHtml(question);
-            const subject = `Request from contact page: ${name || email} (${email})`;
+            const subject = `${t('email.contact.subjectPrefix', ADMIN_LANG)} ${name || email} (${email})`;
+            const adminTitle = t('email.contact.adminTitle', ADMIN_LANG);
+            const adminIntro = t('email.contact.adminIntro', ADMIN_LANG);
+            const adminMessageHeading = t('email.contact.messageHeading', ADMIN_LANG);
+            const adminSystemNotification = t('common.systemNotification', ADMIN_LANG);
+            const adminBestRegards = t('common.bestRegards', ADMIN_LANG);
+            const adminTeam = t('common.signxpertTeam', ADMIN_LANG);
+            const userTitle = t('email.contact.userTitle', lang);
+            const userIntro = t('email.contact.userIntro', lang);
+            const userReceived = t('email.contact.userReceived', lang);
+            const userCopyHeading = t('email.contact.copyHeading', lang);
+            const userMessageLabel = t('email.contact.yourMessageLabel', lang);
+            const userUrgentNote = t('email.contact.urgentNote', lang);
+            const userBestRegards = t('common.bestRegards', lang);
+            const userTeam = t('common.signxpertTeam', lang);
+            const userHello = name ? `${t('common.helloComma', lang)} ${safeName}` : t('common.helloComma', lang);
 
             const messageHTML = `
     <!DOCTYPE html>
@@ -1338,49 +1354,49 @@ class SendEmailForStatus {
             <!-- TITLE -->
             <tr>
             <td align="center" style="font-size:22px; font-weight:600; padding-bottom:24px;">
-                New Contact Request – SignXpert
+                ${adminTitle}
             </td>
             </tr>
 
             <!-- TEXT -->
             <tr>
             <td style="font-size:14px; padding-bottom:10px;">
-                Hello,
+                ${t('common.helloComma', ADMIN_LANG)}
             </td>
             </tr>
 
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                You have received a new message via the contact form.
+                ${adminIntro}
             </td>
             </tr>
 
             <!-- CUSTOMER -->
             <tr>
             <td style="font-size:14px; font-weight:bold; padding-bottom:10px;">
-                Customer details:
+                ${t('common.customerDetailsLabel', ADMIN_LANG)}
             </td>
             </tr>
 
             <tr>
-            <td style="font-size:14px;">Name: ${safeName}</td>
+            <td style="font-size:14px;">${t('common.nameLabel', ADMIN_LANG)} ${safeName}</td>
             </tr>
 
             <tr>
-            <td style="font-size:14px; padding-bottom:10px;">Email: ${safeEmail}</td>
+            <td style="font-size:14px; padding-bottom:10px;">${t('common.emailLabel', ADMIN_LANG)} ${safeEmail}</td>
             </tr>
 
             <!-- DATE -->
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                Date: ${new Date().toLocaleString()}
+                ${t('common.dateLabel', ADMIN_LANG)} ${new Date().toLocaleString()}
             </td>
             </tr>
 
             <!-- MESSAGE -->
             <tr>
             <td style="font-size:14px; font-weight:bold; color:#006aa8; padding-bottom:10px;">
-                Message:
+                ${adminMessageHeading}
             </td>
             </tr>
 
@@ -1393,17 +1409,17 @@ class SendEmailForStatus {
             <!-- FOOTER -->
             <tr>
             <td style="padding-top:30px; font-size:14px;">
-                SignXpert System Notification
+                ${adminSystemNotification}
             </td>
             </tr>
 
             <tr>
-            <td style="font-size:14px;">Best regards,</td>
+            <td style="font-size:14px;">${adminBestRegards},</td>
             </tr>
 
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                SignXpert Team
+                ${adminTeam}
             </td>
             </tr>
 
@@ -1448,34 +1464,34 @@ class SendEmailForStatus {
         <!-- TITLE -->
         <tr>
           <td align="center" style="font-size:22px; font-weight:600; padding-bottom:24px;">
-            Thank you for contacting SignXpert
+                        ${userTitle}
           </td>
         </tr>
 
         <!-- TEXT -->
         <tr>
           <td style="font-size:14px; padding-bottom:10px;">
-            Hello${name ? ` ${safeName}` : ''},
+                        ${userHello}
           </td>
         </tr>
 
         <tr>
           <td style="font-size:14px; padding-bottom:20px;">
-            Thank you for contacting SignXpert.<br/>
-            We have received your message and will get back to you as soon as possible.
+                        ${userIntro}<br/>
+                        ${userReceived}
           </td>
         </tr>
 
         <!-- MESSAGE COPY -->
         <tr>
           <td style="font-size:14px; padding-bottom:10px;">
-            Here is a copy of your message:
+                        ${userCopyHeading}
           </td>
         </tr>
 
         <tr>
           <td style="font-size:14px; font-weight:bold; padding-bottom:8px;">
-            Your message:
+                        ${userMessageLabel}
           </td>
         </tr>
 
@@ -1488,20 +1504,20 @@ class SendEmailForStatus {
         <!-- INFO -->
         <tr>
           <td style="font-size:14px; padding-top:20px;">
-            If your request is urgent, feel free to contact us directly.
+                        ${userUrgentNote}
           </td>
         </tr>
 
         <!-- SIGNATURE -->
         <tr>
           <td style="padding-top:30px; font-size:14px;">
-            Best regards,
+                        ${userBestRegards},
           </td>
         </tr>
 
         <tr>
           <td style="font-size:14px; padding-bottom:20px;">
-            SignXpert Team
+                        ${userTeam}
           </td>
         </tr>
 
@@ -1526,7 +1542,7 @@ class SendEmailForStatus {
             await sendEmail(
                 email,
                 userMessageHTML,
-                'SignXpert - We’ve received your message'
+                t('email.contact.userSubject', lang)
             );
 
             res.status(200).json({ success: true });

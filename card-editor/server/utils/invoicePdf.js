@@ -154,6 +154,7 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
     const vatAmount = Number.isFinite(Number(checkout?.vatAmount))
       ? Number(checkout.vatAmount)
       : Math.max(0, round2(totalAmount - netAmount - shippingCost));
+    const customerReferenceRaw = String(checkout?.customerReference || '').trim();
     const pdfText = (key, vars) => escapeHtml(t(key, lang, vars));
     const invoiceReferenceLabel = `${pdfText('pdf.invoice.referenceOrderNo')} ${invoiceNumber}`;
     const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
@@ -260,6 +261,7 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
         <table class="details-table">
           <tr><td><strong>${pdfText('pdf.invoice.invoiceNoLabel')}</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
           <tr><td>${pdfText('pdf.invoice.customerNoLabel')}</td><td>${customerNumber}</td></tr>
+          ${customerReferenceRaw ? `<tr><td>${pdfText('pdf.invoice.customerReferenceLabel')}</td><td>${escapeHtml(customerReferenceRaw)}</td></tr>` : ''}
           ${vatNumber ? `<tr><td>${pdfText('common.vatIdLabel')}</td><td>${vatNumber}</td></tr>` : ''}
           <tr><td>${pdfText('pdf.invoice.dateLabel')}</td><td>${invoiceDate}</td></tr>
           ${isInvoiceUnpaidCase

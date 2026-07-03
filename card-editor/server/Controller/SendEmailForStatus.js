@@ -1317,12 +1317,6 @@ class SendEmailForStatus {
             const safeEmail = escapeHtml(email);
             const safeQuestion = escapeHtml(question);
             const subject = `${t('email.contact.subjectPrefix', ADMIN_LANG)} ${name || email} (${email})`;
-            const adminTitle = t('email.contact.adminTitle', ADMIN_LANG);
-            const adminIntro = t('email.contact.adminIntro', ADMIN_LANG);
-            const adminMessageHeading = t('email.contact.messageHeading', ADMIN_LANG);
-            const adminSystemNotification = t('common.systemNotification', ADMIN_LANG);
-            const adminBestRegards = t('common.bestRegards', ADMIN_LANG);
-            const adminTeam = t('common.signxpertTeam', ADMIN_LANG);
             const userTitle = t('email.contact.userTitle', lang);
             const userIntro = t('email.contact.userIntro', lang);
             const userReceived = t('email.contact.userReceived', lang);
@@ -1354,49 +1348,49 @@ class SendEmailForStatus {
             <!-- TITLE -->
             <tr>
             <td align="center" style="font-size:22px; font-weight:600; padding-bottom:24px;">
-                ${adminTitle}
+                New contact enquiry - SignXpert
             </td>
             </tr>
 
             <!-- TEXT -->
             <tr>
             <td style="font-size:14px; padding-bottom:10px;">
-                ${t('common.helloComma', ADMIN_LANG)}
+                Hello,
             </td>
             </tr>
 
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                ${adminIntro}
+                You have received a new message via the contact form.
             </td>
             </tr>
 
             <!-- CUSTOMER -->
             <tr>
             <td style="font-size:14px; font-weight:bold; padding-bottom:10px;">
-                ${t('common.customerDetailsLabel', ADMIN_LANG)}
+                Customer details:
             </td>
             </tr>
 
             <tr>
-            <td style="font-size:14px;">${t('common.nameLabel', ADMIN_LANG)} ${safeName}</td>
+            <td style="font-size:14px;">Name: ${safeName}</td>
             </tr>
 
             <tr>
-            <td style="font-size:14px; padding-bottom:10px;">${t('common.emailLabel', ADMIN_LANG)} ${safeEmail}</td>
+            <td style="font-size:14px; padding-bottom:10px;">Email: ${safeEmail}</td>
             </tr>
 
             <!-- DATE -->
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                ${t('common.dateLabel', ADMIN_LANG)} ${new Date().toLocaleString()}
+                Date: ${new Date().toLocaleString()}
             </td>
             </tr>
 
             <!-- MESSAGE -->
             <tr>
             <td style="font-size:14px; font-weight:bold; color:#006aa8; padding-bottom:10px;">
-                ${adminMessageHeading}
+                Message:
             </td>
             </tr>
 
@@ -1409,17 +1403,17 @@ class SendEmailForStatus {
             <!-- FOOTER -->
             <tr>
             <td style="padding-top:30px; font-size:14px;">
-                ${adminSystemNotification}
+                SignXpert system notification
             </td>
             </tr>
 
             <tr>
-            <td style="font-size:14px;">${adminBestRegards},</td>
+            <td style="font-size:14px;">Best regards,</td>
             </tr>
 
             <tr>
             <td style="font-size:14px; padding-bottom:20px;">
-                ${adminTeam}
+                SignXpert Team
             </td>
             </tr>
 

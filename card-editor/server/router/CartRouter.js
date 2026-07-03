@@ -251,6 +251,26 @@ const mergeInvoiceRecipients = (...values) => {
   return result.join(', ');
 };
 
+const scheduleTemporaryOrderReminder = (orderId) => {
+  // Temporary test reminder: remove this after verifying the reminder email flow.
+  setTimeout(async () => {
+    try {
+      const order = await Order.findOne({
+        where: {
+          id: orderId,
+          isPaid: false,
+        },
+        include: [{ model: User }],
+      });
+
+      if (!order || order.status === 'Deleted') return;
+      await SendEmailForStatus.ReminderPay(order);
+    } catch (error) {
+      console.error('temporary order reminder error:', error);
+    }
+  }, 60 * 1000);
+};
+
 const parseAdditionalPayload = (rawValue) => {
   const raw = String(rawValue || '').trim();
   if (!raw) {
@@ -1444,6 +1464,10 @@ CartRouter.post('/', requireAuth, async (req, res, next) => {
       isPaid: user.type == 'Admin' ? null : isOnlinePaidOrder,
       language: user?.language || countryToLanguage(orderCountry),
     })
+
+    if (order.isPaid === false) {
+      scheduleTemporaryOrderReminder(order.id);
+    }
 
     if (coupon) {
       await CouponUsage.create({

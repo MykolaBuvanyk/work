@@ -261,14 +261,14 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
         <table class="details-table">
           <tr><td><strong>${pdfText('pdf.invoice.invoiceNoLabel')}</strong></td><td><strong>${invoiceNumber}</strong></td></tr>
           <tr><td>${pdfText('pdf.invoice.customerNoLabel')}</td><td>${customerNumber}</td></tr>
-          ${customerReferenceRaw ? `<tr><td>${pdfText('pdf.invoice.customerReferenceLabel')}</td><td>${escapeHtml(customerReferenceRaw)}</td></tr>` : ''}
           ${vatNumber ? `<tr><td>${pdfText('common.vatIdLabel')}</td><td>${vatNumber}</td></tr>` : ''}
           <tr><td>${pdfText('pdf.invoice.dateLabel')}</td><td>${invoiceDate}</td></tr>
           ${isInvoiceUnpaidCase
             ? `<tr><td>${pdfText('pdf.invoice.invoiceDueDateLabel')}</td><td>${invoiceDueDate}</td></tr>
-          <tr><td>${pdfText('pdf.invoice.paymentTermsLabel')}</td><td>${t('common.thirtyDaysNet', lang)}</td></tr>`
+            <tr><td>${pdfText('pdf.invoice.paymentTermsLabel')}</td><td>${t('common.thirtyDaysNet', lang)}</td></tr>`
             : `<tr><td>${pdfText('pdf.invoice.paymentStatusLabel')}</td><td>${paymentStatus}</td></tr>`}
-          <tr><td>${pdfText('pdf.invoice.paymentReferenceLabel')}</td><td>${invoiceReferenceLabel}</td></tr>
+            <tr><td>${pdfText('pdf.invoice.paymentReferenceLabel')}</td><td>${invoiceReferenceLabel}</td></tr>
+            ${customerReferenceRaw ? `<tr><td>${pdfText('pdf.invoice.customerReferenceLabel')}</td><td>${escapeHtml(customerReferenceRaw)}</td></tr>` : ''}
         </table>
       </div>
     </div>

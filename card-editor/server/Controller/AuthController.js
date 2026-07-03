@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url'; // Обов'язково додаємо цей рядок
 import sendEmail from './utils/sendEmail.js';
 import SendEmailForStatus from './SendEmailForStatus.js';
-import { countryToLanguage } from '../i18n/index.js';
+import { countryToLanguage, t } from '../i18n/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -148,11 +148,13 @@ class AuthController {
       );
 
 
-      const subject = `Welcome to SignXpert. Your account is ready!`;
+      const subject = t('email.welcome.subject', userLanguage);
       const urlFrontend = process.env.VITE_LAYOUT_FRONTEND_URL;
       const editorUrl = localizedUrl(urlFrontend, 'online-sign-editor', userLanguage);
       const homeUrl = localizedUrl(urlFrontend, '', userLanguage);
       const messageHtml = `
+<html lang="${userLanguage}">
+<body style="margin: 0; padding: 0;">
 <div style="background-color: #f4f4f4; padding: 40px 20px; font-family: Arial, sans-serif;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #333333;">
         
@@ -162,29 +164,29 @@ class AuthController {
 
         <div style="text-align: center; margin-bottom: 30px;">
             <h1 style="font-size: 22px; font-weight: bold; color: #000000; margin: 0;">
-                Your account is ready! Welcome to SignXpert
+                ${t('email.welcome.heading', userLanguage)}
             </h1>
         </div>
 
         <div style="font-size: 16px; line-height: 1.5;">
-            <p style="margin: 0 0 15px 0;">Hello, <span style="color: #337ab7; font-weight: bold;">${firstName}</span>!</p>
-            <p style="margin: 0 0 15px 0;">We’re excited to have you with us.</p>
-            <p style="margin: 0 0 25px 0;">Your account has been successfully created, and you can now start designing your projects.</p>
+            <p style="margin: 0 0 15px 0;">${t('email.welcome.helloName', userLanguage)} <span style="color: #337ab7; font-weight: bold;">${firstName}</span>!</p>
+            <p style="margin: 0 0 15px 0;">${t('email.welcome.excited', userLanguage)}</p>
+            <p style="margin: 0 0 25px 0;">${t('email.welcome.accountCreated', userLanguage)}</p>
 
             <div style="margin-bottom: 25px;">
-                <p style="margin: 0;">Customer number: <strong>${String(newUser.id).padStart(3, '0')}</strong></p>
+                <p style="margin: 0;">${t('email.welcome.customerNumberInline', userLanguage)} <strong>${String(newUser.id).padStart(3, '0')}</strong></p>
                 <p style="margin: 0;">Email: <a href="mailto:${email}" style="color: #337ab7; text-decoration: underline;">${email}</a></p>
             </div>
 
-            <p style="margin: 0 0 5px 0;">Ready to start creating?</p>
-            <p style="margin: 0 0 30px 0;">Our online editor is available right in your browser — the fastest way to bring your ideas to life.</p>
+            <p style="margin: 0 0 5px 0;">${t('email.welcome.readyToStart', userLanguage)}</p>
+            <p style="margin: 0 0 30px 0;">${t('email.welcome.editorPitch', userLanguage)}</p>
 
             <div style="text-align: center; margin-bottom: 40px;">
-                <a href="${editorUrl}" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">Create now</a>
+                <a href="${editorUrl}" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">${t('email.welcome.ctaCreateNow', userLanguage)}</a>
             </div>
 
-            <p style="margin: 0;">Best regards,</p>
-            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
+            <p style="margin: 0;">${t('common.bestRegards', userLanguage)},</p>
+            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', userLanguage)}</p>
 
             <div style="text-align: right; font-size: 14px; line-height: 1.4;">
                 <p style="margin: 0;"><a href="${homeUrl}" style="color: #337ab7; text-decoration: underline;">sign-xpert.com</a></p>
@@ -194,6 +196,8 @@ class AuthController {
         </div>
     </div>
 </div>
+</body>
+</html>
 `;
 
       sendEmail(email, messageHtml, subject, null, userLanguage)

@@ -1722,11 +1722,11 @@ class SendEmailForStatus {
             if(order.isPaid)return true;
             const orderNumber=String(order.id).padStart(3, '0')
             const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
-            const subject=`SignXpert – Friendly Reminder: Invoice #${orderNumber} for ${nameOrCompany}`;
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;
             const lang = userLang(order.user);
+            const subject=`${t('email.reminder.subject', lang)} #${orderNumber} ${nameOrCompany}`;
             const urlAccount=localizedUrl(urlFrontend, 'account/detail', lang);
             const urlOrders=localizedUrl(urlFrontend, 'account', lang);
             const contact=localizedUrl(urlFrontend, 'contacts', lang)
@@ -1739,11 +1739,11 @@ class SendEmailForStatus {
             
             const html=`
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="${lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice Reminder</title>
+    <title>${t('email.reminder.title', lang)}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; background-color: #ffffff; margin-top: 20px; margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e0e0e0;">
@@ -1760,54 +1760,54 @@ class SendEmailForStatus {
 
         <tr>
             <td style="padding: 10px 40px; text-align: center;">
-                <h1 style="font-size: 20px; color: #000000; margin: 0;">Friendly Reminder - Your Invoice is Due</h1>
+                <h1 style="font-size: 20px; color: #000000; margin: 0;">${t('email.reminder.heading', lang)}</h1>
             </td>
         </tr>
 
         <tr>
             <td style="padding: 20px 40px; font-size: 15px; line-height: 1.5; color: #333333;">
-                <p>Hello, <span style="color: #0066cc;">${nameOrCompany}</span>!</p>
-                <p>We hope you are enjoying your custom signs!</p>
+                <p>${t('common.helloComma', lang)} <span style="color: #0066cc;">${nameOrCompany}</span>!</p>
+                <p>${t('email.reminder.enjoyingSigns', lang)}</p>
 
                 <p>${outstandingNote}</p>
 
-                <p>You can also view and settle your invoice at any time via our website:<br>
+                <p>${t('email.invoice.viewSettleIntro', lang)}<br>
                 <a href="${urlHome}" style="color: #0066cc; text-decoration: underline;">www.sign-xpert.com</a><br>
-                Simply log in and navigate to:</p>
+                ${t('email.invoice.simplyLogInNavigate', lang)}</p>
 
                 <p style="font-weight: bold;">
-                    <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">My Orders</a>
+                    <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">${t('common.myOrders', lang)}</a>
                 </p>
 
-                <p>Select the relevant order and click <strong>"Pay"</strong></p>
+                <p>${t('email.invoice.selectClickPay', lang)} <strong>"${t('common.payButton', lang)}"</strong></p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
                     <tr>
                         <td bgcolor="#006eb3" style="border-radius: 6px; text-align: center;">
-                            <a href="${payURL}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff !important; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none !important; text-transform: uppercase;"><span style="color: #ffffff !important; text-decoration: none !important;">Pay</span></a>
+                            <a href="${payURL}" style="background-color: #006eb3; border: 1px solid #005a94; border-radius: 6px; color: #ffffff !important; display: inline-block; font-size: 16px; font-weight: bold; padding: 12px 60px; text-decoration: none !important; text-transform: uppercase;"><span style="color: #ffffff !important; text-decoration: none !important;">${t('common.payButton', lang)}</span></a>
                         </td>
                     </tr>
                 </table>
 
-                <p style="margin-top: 25px;">Multiple secure payment methods are available directly in your account.</p>
+                <p style="margin-top: 25px;">${t('email.invoice.multiplePaymentMethods', lang)}</p>
 
-                <p>If you prefer to pay by bank transfer, please use the bank details provided on the invoice and make sure to quote:</p>
+                <p>${t('email.invoice.bankTransferQuote', lang)}</p>
 
-                <p style="margin: 0;"><strong>Order number: ${orderNumber}</strong></p>
+                <p style="margin: 0;"><strong>${t('email.invoice.orderNumberLabel', lang)} ${orderNumber}</strong></p>
                 <p style="margin: 5px 0;">${orLabel}</p>
-                <p style="margin: 0;"><strong>Customer number: ${String(order.user.id).padStart(3, '0')}</strong></p>
+                <p style="margin: 0;"><strong>${t('email.invoice.customerNumberLabel', lang)} ${String(order.user.id).padStart(3, '0')}</strong></p>
 
-                <p>This helps us allocate your payment correctly.</p>
+                <p>${t('email.invoice.helpAllocate', lang)}</p>
 
-                <p>Should you wish to update your billing address or the email address used for receiving invoices, you can do so in:</p>
+                <p>${t('email.invoice.updateBilling', lang)}</p>
                 <p style="font-weight: bold;">
-                    <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">My Account</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">My Details</a>
+                    <a href="${urlAccount}" style="color: #0066cc; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">${t('common.myDetails', lang)}</a>
                 </p>
 
                 <p>${paymentStatusNote} <a href="${urlOrders}" style="color: #0066cc; text-decoration: underline;">"${myOrdersLabel}"</a>.</p>
 
-                <p>Thank you again for choosing SignXpert.<br>
-                <strong>We truly appreciate your business and look forward to working with you again soon!</strong></p>
+                <p>${t('common.thankYouAgainForChoosing', lang)}<br>
+                <strong>${t('email.reminder.appreciateBusiness', lang)}</strong></p>
             </td>
         </tr>
 
@@ -1816,8 +1816,8 @@ class SendEmailForStatus {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="font-size: 15px; color: #333333;">
-                            <p style="margin: 0;">Best regards,</p>
-                            <p style="margin: 5px 0 0 0; font-weight: bold;">SignXpert Team</p>
+                            <p style="margin: 0;">${t('common.bestRegards', lang)},</p>
+                            <p style="margin: 5px 0 0 0; font-weight: bold;">${t('common.signxpertTeam', lang)}</p>
                         </td>
                         <td style="text-align: right; font-size: 13px;">
                             <a href="${urlHome}" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">sign-xpert.com</a>
@@ -1833,7 +1833,7 @@ class SendEmailForStatus {
 </html>`       
             const to=order.user.email;
             //await sendEmail(to,html,subject);
-            await SendEmailForStatus.SendEmailWithFile(order,html, subject, to);
+            await SendEmailForStatus.SendEmailWithFile(order,html, subject, to, lang);
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);

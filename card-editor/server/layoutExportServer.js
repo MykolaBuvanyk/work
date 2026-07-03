@@ -4328,14 +4328,13 @@ const start = async () => {
 
 const CheckIsPay=async()=>{
   try{
-    const date14DaysAgo = new Date();
-    date14DaysAgo.setDate(date14DaysAgo.getDate() - 14);
+    const reminderCutoff = new Date(Date.now() - 60 * 1000);
 
     const orders = await Order.findAll({
       where: {
         isPaid: false,
         createdAt: {
-          [Op.lte]: date14DaysAgo
+          [Op.lte]: reminderCutoff
         }
       },
       include:[{
@@ -4350,7 +4349,7 @@ const CheckIsPay=async()=>{
   }
 }
 
-cron.schedule('0 3 * * *', async () => {
+cron.schedule('* * * * *', async () => {
   console.log('Running CheckIsPay job...');
   await CheckIsPay();
 });

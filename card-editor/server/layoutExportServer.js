@@ -183,21 +183,21 @@ const FONT_DEFINITIONS = [
     aliases: ['audiowide'],
   },
   { id: 'Baloo-Regular', file: 'Baloo-Regular.ttf', aliases: ['baloo'] },
-  {
-    id: 'Baloo2-Regular',
-    file: 'Baloo2-Regular.ttf',
-    aliases: ['baloo 2', 'baloo2'],
-  },
-  {
-    id: 'Baloo2-Medium',
-    file: 'Baloo2-Medium.ttf',
-    aliases: ['baloo 2 medium', 'baloo2 medium', 'baloo 2-medium'],
-  },
-  {
-    id: 'Baloo2-Bold',
-    file: 'Baloo2-Bold.ttf',
-    aliases: ['baloo 2 bold', 'baloo2 bold', 'baloo 2-bold'],
-  },
+  // {
+  //   id: 'Baloo2-Regular',
+  //   file: 'Baloo2-Regular.ttf',
+  //   aliases: ['baloo 2', 'baloo2'],
+  // },
+  // {
+  //   id: 'Baloo2-Medium',
+  //   file: 'Baloo2-Medium.ttf',
+  //   aliases: ['baloo 2 medium', 'baloo2 medium', 'baloo 2-medium'],
+  // },
+  // {
+  //   id: 'Baloo2-Bold',
+  //   file: 'Baloo2-Bold.ttf',
+  //   aliases: ['baloo 2 bold', 'baloo2 bold', 'baloo 2-bold'],
+  // },
   {
     id: 'BreeSerif-Regular',
     file: 'BreeSerif-Regular.ttf',
@@ -529,13 +529,13 @@ const TEXT_TO_SVG_ANCHOR = 'left top';
 const PLACEMENT_TEXT_TO_SVG_ANCHOR = 'left baseline';
 const REQUESTED_GLYPH_OVERLAP_FONT_IDS = new Set([
   'Baloo-Regular',
-  'Baloo2-Regular',
-  'Baloo2-Medium',
-  'Baloo2-Bold',
+  // 'Baloo2-Regular',
+  // 'Baloo2-Medium',
+  // 'Baloo2-Bold',
   'CustomFont-New-Fonts-Baloo-Regular',
-  'CustomFont-New-Fonts-Baloo2-Bold',
-  'CustomFont-New-Fonts-Baloo2-Medium',
-  'CustomFont-New-Fonts-Baloo2-Regular',
+  // 'CustomFont-New-Fonts-Baloo2-Bold',
+  // 'CustomFont-New-Fonts-Baloo2-Medium',
+  // 'CustomFont-New-Fonts-Baloo2-Regular',
   'CustomFont-New-Fonts-GoogleSans-Bold',
   'CustomFont-New-Fonts-GoogleSans-BoldItalic',
   'CustomFont-New-Fonts-GoogleSans-Italic',
@@ -605,12 +605,12 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS = new Set([
 ]);
 const REQUESTED_GLYPH_OVERLAP_FONT_ALIASES = new Set([
   'baloo',
-  'baloo 2',
-  'baloo 2 bold',
-  'baloo 2 medium',
-  'baloo2',
-  'baloo2 bold',
-  'baloo2 medium',
+  // 'baloo 2',
+  // 'baloo 2 bold',
+  // 'baloo 2 medium',
+  // 'baloo2',
+  // 'baloo2 bold',
+  // 'baloo2 medium',
   'google sans',
   'google sans bold',
   'google sans bold italic',
@@ -738,22 +738,22 @@ const shouldClipGlyphOverlapsForFont = fontId => {
 
 const BALOO_FILLED_OUTLINE_FONT_IDS = new Set([
   'Baloo-Regular',
-  'Baloo2-Regular',
-  'Baloo2-Medium',
-  'Baloo2-Bold',
+  // 'Baloo2-Regular',
+  // 'Baloo2-Medium',
+  // 'Baloo2-Bold',
   'CustomFont-New-Fonts-Baloo-Regular',
-  'CustomFont-New-Fonts-Baloo2-Bold',
-  'CustomFont-New-Fonts-Baloo2-Medium',
-  'CustomFont-New-Fonts-Baloo2-Regular',
+  // 'CustomFont-New-Fonts-Baloo2-Bold',
+  // 'CustomFont-New-Fonts-Baloo2-Medium',
+  // 'CustomFont-New-Fonts-Baloo2-Regular',
 ]);
 const BALOO_FILLED_OUTLINE_FONT_ALIASES = new Set([
   'baloo',
-  'baloo 2',
-  'baloo 2 bold',
-  'baloo 2 medium',
-  'baloo2',
-  'baloo2 bold',
-  'baloo2 medium',
+  // 'baloo 2',
+  // 'baloo 2 bold',
+  // 'baloo 2 medium',
+  // 'baloo2',
+  // 'baloo2 bold',
+  // 'baloo2 medium',
 ].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
 
 const getFilledOutlineFlattenToleranceForFont = fontId => {

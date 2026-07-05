@@ -9,6 +9,31 @@ import {
 } from "../../constants/fonts";
 import styles from "./TextList.module.css";
 
+const HIDDEN_FONT_FAMILIES = new Set([
+  "baloo 2",
+  "baloo 2 medium",
+  "baloo 2 bold",
+]);
+
+const normalizeHiddenFontFamily = (family) =>
+  String(family || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+const isHiddenFontFamily = (family) =>
+  HIDDEN_FONT_FAMILIES.has(normalizeHiddenFontFamily(family));
+
+const filterVisibleFontOptions = (fonts) =>
+  (Array.isArray(fonts) ? fonts : []).filter(
+    (font) => !isHiddenFontFamily(font?.value || font?.name)
+  );
+
+const filterVisibleFontFiles = (fonts) =>
+  (Array.isArray(fonts) ? fonts : []).filter(
+    (font) => !isHiddenFontFamily(font?.name)
+  );
+
 const TextList = () => {
   const { canvas, globalColors } = useCanvasContext();
   const DEFAULT_TEXT_LABEL = "Text";
@@ -16,7 +41,9 @@ const TextList = () => {
   const [selectedTextId, setSelectedTextId] = useState(null);
   const [editingTextId, setEditingTextId] = useState(null);
   const [newTextValue, setNewTextValue] = useState(DEFAULT_TEXT_LABEL);
-  const [availableFonts, setAvailableFonts] = useState(CUSTOM_FONT_OPTIONS);
+  const [availableFonts, setAvailableFonts] = useState(() =>
+    filterVisibleFontOptions(CUSTOM_FONT_OPTIONS)
+  );
   const [fontSizeDrafts, setFontSizeDrafts] = useState({});
   const [editingFontSizeId, setEditingFontSizeId] = useState(null);
   const isUpdatingRef = useRef(false);
@@ -123,8 +150,8 @@ const TextList = () => {
   const loadAvailableFonts = async () => {
     try {
       // Список файлів шрифтів з папки fonts
-      const fontFiles = CUSTOM_FONT_FILES;
-      setAvailableFonts(CUSTOM_FONT_OPTIONS);
+      const fontFiles = filterVisibleFontFiles(CUSTOM_FONT_FILES);
+      setAvailableFonts(filterVisibleFontOptions(CUSTOM_FONT_OPTIONS));
 
       // Keep the dropdown populated while FontFace registrations finish.
       // Завантажуємо кастомні шрифти
@@ -149,7 +176,10 @@ const TextList = () => {
       }
 
       // Show only custom fonts declared in fonts.js.
-      const allFonts = loadedFonts.length > 0 ? loadedFonts : CUSTOM_FONT_OPTIONS;
+      const allFonts =
+        loadedFonts.length > 0
+          ? loadedFonts
+          : filterVisibleFontOptions(CUSTOM_FONT_OPTIONS);
 
       // Видаляємо дублікати за значенням value (назвою шрифту)
       const uniqueFonts = allFonts.reduce((acc, font) => {
@@ -159,14 +189,14 @@ const TextList = () => {
         return acc;
       }, []);
 
-      setAvailableFonts(uniqueFonts);
+      setAvailableFonts(filterVisibleFontOptions(uniqueFonts));
       console.log(
         `Завантажено ${loadedFonts.length} кастомних шрифтів, всього унікальних: ${uniqueFonts.length}`
       );
     } catch (error) {
       console.error("Помилка завантаження шрифтів:", error);
       // Keep the custom list visible even if browser font registration fails.
-      setAvailableFonts(CUSTOM_FONT_OPTIONS);
+      setAvailableFonts(filterVisibleFontOptions(CUSTOM_FONT_OPTIONS));
     }
   };
 

@@ -217,7 +217,7 @@ const PrivacyPolicy = () => {
             </div>
           </section>
 
-          {/* 8 */}
+         {/* 8. Cookies */}
           <section className={styles.section}>
             <h2 className={styles.sectionHeading}>{t("privacy-policy.description_79")}</h2>
             <div className={styles.body}>
@@ -228,14 +228,38 @@ const PrivacyPolicy = () => {
                 <strong>{t("privacy-policy.description_82")}</strong> {t("privacy-policy.description_83")}
               </p>
               <p>
-                <strong>{t("privacy-policy.description_84")}</strong> {t("privacy-policy.description_85")} <em>{t("privacy-policy.description_86")}</em> {t("privacy-policy.description_87")}
+                <strong>{t("privacy-policy.description_84")}</strong> {t("privacy-policy.description_85")} <em>{t("privacy-policy.description_86")}</em>{t("privacy-policy.description_87")}
               </p>
               <p>
                 {t("privacy-policy.description_88")}
               </p>
+
+              {/* 8.1 Use of Google Analytics */}
+              <h3 className={styles.sectionHeading} style={{ marginTop: '1.5rem' }}>
+                {t("privacy-policy.description_89")}
+              </h3>
+              <p>
+                {t("privacy-policy.description_90")}
+              </p>
+              <p>
+                <strong>{t("privacy-policy.description_91")}</strong> {t("privacy-policy.description_92")}
+              </p>
+              <p>
+                <strong>{t("privacy-policy.description_93")}</strong> {t("privacy-policy.description_94")}
+              </p>
+              <p>
+                <strong>{t("privacy-policy.description_95")}</strong> {t("privacy-policy.description_96")}
+              </p>
+              <p>
+                <strong>{t("privacy-policy.description_97")}</strong> {t("privacy-policy.description_98")}
+              </p>
+              <p>
+                <strong>{t("privacy-policy.description_99")}</strong> {t("privacy-policy.description_100")}
+              </p>
             </div>
           </section>
-        </div>
+            </div>
+
 
         <button id="cookie" type="button" className={styles.cookieBtn} onClick={openCookie}>
           {t("Footer.info.cookieSettings")}

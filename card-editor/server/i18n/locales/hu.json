@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Tisztelt Ügyfelünk,",
-  "common.bestRegards": "Üdvözlettel",
-  "common.signxpertTeam": "A SignXpert csapata",
   "common.systemNotification": "SignXpert rendszerértesítés",
   "common.thankYouForChoosing": "Köszönjük, hogy a SignXpertet választotta!",
   "common.thankYouForChoosingDot": "Köszönjük, hogy a SignXpertet választotta.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "Rendelése részletes állapotát bármikor ellenőrizheti fiókjában.",
   "email.invoice.thankYouEnjoy": "Köszönjük, hogy a SignXpertet választotta – reméljük, elégedett lesz egyedi tábláival!",
   "email.invoice.questionsAssistance": "Ha kérdése van, vagy segítségre van szüksége, nyugodtan vegye fel velünk a kapcsolatot.",
-  "email.invoice.bestRegards": "Üdvözlettel",
-  "email.invoice.signxpertTeam": "A SignXpert csapata",
   "email.invoice.appreciate": "Nagyra értékeljük bizalmát, és várjuk a további együttműködést.",
   "email.common.or": "vagy",
   "email.delivered.subject": "SignXpert – Rendelés kézbesítve",

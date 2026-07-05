@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Tere,",
-  "common.bestRegards": "Parimate soovidega",
-  "common.signxpertTeam": "SignXperti meeskond",
   "common.systemNotification": "SignXperti süsteemiteade",
   "common.thankYouForChoosing": "Täname, et valisite SignXperti!",
   "common.thankYouForChoosingDot": "Täname, et valisite SignXperti.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "Samuti saate igal ajal kontrollida oma tellimuse üksikasjalikku staatust oma kontol.",
   "email.invoice.thankYouEnjoy": "Täname, et valisite SignXperti – loodame, et jääte oma siltidega rahule!",
   "email.invoice.questionsAssistance": "Kui teil on küsimusi või vajate abi, võtke meiega julgelt ühendust.",
-  "email.invoice.bestRegards": "Parimate soovidega",
-  "email.invoice.signxpertTeam": "SignXperti meeskond",
   "email.invoice.appreciate": "Hindame kõrgelt teie usaldust ja ootame põnevusega järgmist koostööd.",
   "email.common.or": "või",
   "email.delivered.subject": "SignXpert – Tellimus kohale toimetatud",

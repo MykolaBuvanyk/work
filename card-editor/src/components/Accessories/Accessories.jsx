@@ -14,6 +14,7 @@ import {
 import styles from "./Accessories.module.css";
 import AccessoriesModal from "../AccessoriesModal/AccessoriesModal";
 import TemplatesModal from "../TemplatesModal/TemplatesModal";
+import { formatMoney } from "../../utils/formatMoney";
 // Modal images (used only inside modal, but state lives here for two-way sync)
 import imgCableTies from "/images/accessories/CableTies 1.png";
 import imgPh95 from "/images/accessories/ph1 2.9 x 9.5 mm 2.png";
@@ -197,7 +198,7 @@ const TopToolbar = ({ className, formData }) => {
       })
     );
 
-  const formatPrice = (val) => `€ ${val.toFixed(2)}`;
+  const formatPrice = (val) => formatMoney(val);
   const extractSize = (desc) => {
     if (!desc) return "";
     const m = desc.match(/(\d+(?:[.,]\d+)?)\s*[×x*]\s*(\d+(?:[.,]\d+)?)/i);

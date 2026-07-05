@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Dobrý den,",
-  "common.bestRegards": "S pozdravem",
-  "common.signxpertTeam": "Tým SignXpert",
   "common.systemNotification": "Systémové oznámení SignXpert",
   "common.thankYouForChoosing": "Děkujeme, že jste si vybrali SignXpert!",
   "common.thankYouForChoosingDot": "Děkujeme, že jste si vybrali SignXpert.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "Podrobný stav objednávky můžete také kdykoli zkontrolovat ve svém účtu.",
   "email.invoice.thankYouEnjoy": "Děkujeme, že jste si vybrali SignXpert – doufáme, že budete se svými cedulemi na míru spokojeni!",
   "email.invoice.questionsAssistance": "V případě jakýchkoli dotazů nebo potřeby pomoci nás neváhejte kontaktovat.",
-  "email.invoice.bestRegards": "S pozdravem",
-  "email.invoice.signxpertTeam": "Tým SignXpert",
   "email.invoice.appreciate": "Velmi si vážíme vaší důvěry a těšíme se na další spolupráci s vámi.",
   "email.common.or": "nebo",
   "email.delivered.subject": "SignXpert – Objednávka doručena",

@@ -4,6 +4,7 @@ import 'dotenv/config'; // для ES модулів
 import { countryToLanguage, DEFAULT_LANGUAGE, normalizeLanguage, t } from '../i18n/index.js';
 import { localize } from '../i18n/localize.js';
 import { generateInvoicePdfBuffer } from '../utils/invoicePdf.js';
+import { formatMoneyDisplay } from '../utils/formatMoneyDisplay.js';
 
 // Derive UI language for a user (from saved language, fallback to country mapping, else default).
 const userLang = (user) => normalizeLanguage(user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE);
@@ -132,8 +133,6 @@ class SendEmailForStatus {
                             
                             <p style="margin: 0 0 40px 0; font-style: italic; color: #888; font-size: 14px;">SignXpert System Notification</p>
                             
-                            <p style="margin: 0 0 5px 0;">Best regards,</p>
-                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
                         </td>
                     </tr>
 
@@ -201,15 +200,13 @@ class SendEmailForStatus {
                             <p style="margin: 0 0 10px 0;">${t('email.paymentReceived.thankYou', lang)}</p>
                             <p style="margin: 0 0 25px 0;">${t('email.paymentReceived.successfullyReceived', lang)} #${String(order.id).padStart(3, '0')}.</p>
                             
-                            <p style="margin: 0 0 5px 0;">${t('common.totalAmountLabel', lang)} <strong>€${order.sum}</strong></p>
+                            <p style="margin: 0 0 5px 0;">${t('common.totalAmountLabel', lang)} <strong>${formatMoneyDisplay(order.sum)}</strong></p>
                         
                             <p style="margin: 0 0 25px 0;">
                                 ${t('email.paymentReceived.checkStatus', lang)}<br>
                                 ${t('email.paymentReceived.simplyLogIn', lang)} <a href="${urlAccount}" style="color: #0073bc; text-decoration: underline;">${t('common.myAccount', lang)}</a> &rarr; <a href="${urlOrders}" style="color: #0073bc; text-decoration: underline;">${t('common.myOrders', lang)}</a>
                             </p>
                             
-                            <p style="margin: 40px 0 5px 0;">${t('common.bestRegards', lang)},</p>
-                            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', lang)}</p>
                         </td>
                     </tr>
 
@@ -287,8 +284,6 @@ class SendEmailForStatus {
                             
                             <p style="margin: 0 0 35px 0;">${t('common.thankYouForUsing', lang)}</p>
                             
-                            <p style="margin: 0 0 5px 0;">${t('common.bestRegards', lang)},</p>
-                            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', lang)}</p>
                         </td>
                     </tr>
 
@@ -374,8 +369,6 @@ class SendEmailForStatus {
                             
                             <p style="margin: 0 0 35px 0; font-style: italic; color: #888; font-size: 14px;">SignXpert System Notification</p>
                             
-                            <p style="margin: 0 0 5px 0;">Best regards,</p>
-                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
                         </td>
                     </tr>
 
@@ -433,9 +426,9 @@ class SendEmailForStatus {
                         <p>Customer details:<br>Name: ${order.user.firstName}<br>Email: ${order.user.email}<br>Phone: ${order.user.phone}</p>
                     </div>
                     <div style="margin: 20px 0; padding: 15px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
-                        <p>Total amount: <strong>€${order.sum}</strong></p>
-                        <p>Payment status: <strong>€${order.isPaid?'pay':'un paid'}</strong></p>
-                        <p>Delivery type: <strong>€${order.deliveryType}</strong></p>
+                        <p>Total amount: <strong>${formatMoneyDisplay(order.sum)}</strong></p>
+                        <p>Payment status: <strong>${order.isPaid?'pay':'un paid'}</strong></p>
+                        <p>Delivery type: <strong>${order.deliveryType}</strong></p>
                     </div>
                     ${reviewSection}
                     <p style="font-style: italic; color: #888;">SignXpert System Notification</p>
@@ -576,13 +569,6 @@ class SendEmailForStatus {
                     </tr>
 
                     <tr>
-                        <td style="font-size: 16px; line-height: 1.6; padding-bottom: 40px;">
-                            ${t('common.bestRegards', lang)},<br>
-                            <strong>${t('common.signxpertTeam', lang)}</strong>
-                        </td>
-                    </tr>
-
-                    <tr>
                         <td align="right" style="font-size: 14px; border-top: 1px solid #eeeeee; padding-top: 20px;">
                             <a href="${urlHome}" style="color: #0056b3; text-decoration: underline;">sign-xpert.com</a><br>
                             <a href="mailto:info@sign-xpert.com" style="color: #0056b3; text-decoration: underline;">info@sign-xpert.com</a><br>
@@ -687,10 +673,6 @@ class SendEmailForStatus {
 
                             <p>If you have any questions or need any assistance, we are always happy to help.</p>
 
-                            <p style="margin-top: 30px;">
-                                Best regards,<br>
-                                <strong>SignXpert Team</strong>
-                            </p>
                         </td>
                     </tr>
 
@@ -801,8 +783,6 @@ class SendEmailForStatus {
                             
                             <p style="margin: 0 0 30px 0;">If you have any questions or need assistance, don't hesitate to contact us.</p>
                             
-                            <p style="margin: 0 0 5px 0;">Best regards,</p>
-                            <p style="margin: 0 0 40px 0;">SignXpert Team</p>
                         </td>
                     </tr>
 
@@ -924,13 +904,6 @@ class SendEmailForStatus {
         </tr>
 
         <tr>
-            <td style="font-size: 16px; color: #000000; padding-bottom: 30px;">
-                ${t('email.invoice.bestRegards', lang)}<br>
-                ${t('email.invoice.signxpertTeam', lang)}
-            </td>
-        </tr>
-
-        <tr>
             <td style="border-top: 1px solid #eeeeee; padding-top: 20px; text-align: right; font-size: 14px; color: #001CD3;">
                 <a href="https://sign-xpert.com" style="color: #001CD3; text-decoration: none;">sign-xpert.com</a><br>
                 <a href="mailto:info@sign-xpert.com" style="color: #001CD3; text-decoration: none;">info@sign-xpert.com</a><br>
@@ -1040,10 +1013,6 @@ class SendEmailForStatus {
                                 <strong>${t('email.delivered.welcomeBack', lang)}</strong>
                             </p>
 
-                            <p style="margin-top: 30px;">
-                                ${t('common.bestRegards', lang)},<br>
-                                <strong>${t('common.signxpertTeam', lang)}</strong>
-                            </p>
                         </td>
                     </tr>
 
@@ -1140,13 +1109,6 @@ class SendEmailForStatus {
                 <p>${t('email.errorDelivery.contactConfirm', lang)}</p>
 
                 <p>${t('email.errorDelivery.updateCarrier', lang)}</p>
-            </td>
-        </tr>
-
-        <tr>
-            <td style="padding: 20px 40px 40px 40px; font-size: 16px; color: #333333;">
-                <p style="margin: 0;">${t('common.bestRegards', lang)},</p>
-                <p style="margin: 5px 0 0 0; font-weight: bold;">${t('common.signxpertTeam', lang)}</p>
             </td>
         </tr>
 
@@ -1267,10 +1229,6 @@ class SendEmailForStatus {
             <td style="padding: 20px 40px 40px 40px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
-                        <td style="font-size: 15px; color: #333333;">
-                            <p style="margin: 0;">${t('common.bestRegards', lang)},</p>
-                            <p style="margin: 5px 0 0 0; font-weight: bold;">${t('common.signxpertTeam', lang)}</p>
-                        </td>
                         <td style="text-align: right; font-size: 13px;">
                             <a href="${urlHome}" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">sign-xpert.com</a>
                             <a href="mailto:info@sign-xpert.com" style="color: #0066cc; text-decoration: underline; display: block; margin-bottom: 4px;">info@sign-xpert.com</a>
@@ -1323,8 +1281,6 @@ class SendEmailForStatus {
             const userCopyHeading = t('email.contact.copyHeading', lang);
             const userMessageLabel = t('email.contact.yourMessageLabel', lang);
             const userUrgentNote = t('email.contact.urgentNote', lang);
-            const userBestRegards = t('common.bestRegards', lang);
-            const userTeam = t('common.signxpertTeam', lang);
             const userHello = name ? `${t('common.helloComma', lang)} ${safeName}` : t('common.helloComma', lang);
 
             const messageHTML = `
@@ -1404,16 +1360,6 @@ class SendEmailForStatus {
             <tr>
             <td style="padding-top:30px; font-size:14px;">
                 SignXpert system notification
-            </td>
-            </tr>
-
-            <tr>
-            <td style="font-size:14px;">Best regards,</td>
-            </tr>
-
-            <tr>
-            <td style="font-size:14px; padding-bottom:20px;">
-                SignXpert Team
             </td>
             </tr>
 
@@ -1499,19 +1445,6 @@ class SendEmailForStatus {
         <tr>
           <td style="font-size:14px; padding-top:20px;">
                         ${userUrgentNote}
-          </td>
-        </tr>
-
-        <!-- SIGNATURE -->
-        <tr>
-          <td style="padding-top:30px; font-size:14px;">
-                        ${userBestRegards},
-          </td>
-        </tr>
-
-        <tr>
-          <td style="font-size:14px; padding-bottom:20px;">
-                        ${userTeam}
           </td>
         </tr>
 

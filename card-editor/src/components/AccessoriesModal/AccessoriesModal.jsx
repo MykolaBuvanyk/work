@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./AccessoriesModal.module.css";
+import { formatMoney } from "../../utils/formatMoney";
 
 const AccessoriesModal = ({
   isOpen,
@@ -99,7 +100,7 @@ const AccessoriesModal = ({
     return isNaN(n) || n < 0 ? 0 : Math.floor(n);
   };
 
-  const formatPrice = (val) => `€ ${Number(val || 0).toFixed(2)}`;
+  const formatPrice = (val) => formatMoney(val);
   const getAccessoryName = (item) => (item?.nameKey ? t(item.nameKey) : item.name);
   const getAccessoryDesc = (item) => (item?.descKey ? t(item.descKey) : item.desc);
 

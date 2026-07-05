@@ -5,6 +5,7 @@ import { $authHost } from '../../http';
 import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedPath } from '../../utils/localizedPath';
+import { formatMoney } from '../../utils/formatMoney';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -193,8 +194,8 @@ const Account = () => {
                                 <td style={{whiteSpace:'nowrap'}}>{new Date(order.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
                                 <td>{order.id}</td>
                                 <td>{order.orderName || 'Water sifgns 23'}</td>
-                                <td>{order.netAfterDiscount?.toFixed(2)}</td>
-                                <td>{order.sum?.toFixed(2)}</td>
+                                <td>{formatMoney(order.netAfterDiscount)}</td>
+                                <td>{formatMoney(order.sum)}</td>
                                 <td>{translateStatus(order.status)}</td>
                                 <td onClick={() => downloadPdf(order.id, '2')} className="clickable"><DelNoteIcon /></td>
                                 <td
@@ -255,11 +256,11 @@ const Account = () => {
                             <div className="order-card__sums">
                                 <div className="order-card__sum">
                                     <span className="order-card__label">{t('MyAccount.orders.table.orderSum')}</span>
-                                    <strong>{order.netAfterDiscount?.toFixed(2)}$</strong>
+                                    <strong>{formatMoney(order.netAfterDiscount)}</strong>
                                 </div>
                                 <div className="order-card__sum">
                                     <span className="order-card__label">{t('MyAccount.orders.sumInclVatDelivery')}</span>
-                                    <strong>{order.sum?.toFixed(2)}</strong>
+                                    <strong>{formatMoney(order.sum)}</strong>
                                 </div>
                             </div>
                             <div className="order-card__statuses">

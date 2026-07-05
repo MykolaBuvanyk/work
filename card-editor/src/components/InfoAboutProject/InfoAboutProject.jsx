@@ -18,6 +18,7 @@ import CartAccessoriesModal from "../CartAccessoriesModal/CartAccessoriesModal";
 import OrderTestModal from "../OrderTestModal/OrderTestModal";
 import { $authHost } from "../../http";
 import PayModal from "../PayModal/PayModal";
+import { formatMoney } from "../../utils/formatMoney";
 
 const COLOR_THEME_BY_INDEX_CAPS = {
   0: "WHITE / BLACK",
@@ -363,9 +364,9 @@ const InfoAboutProject = () => {
   const { price, netAfterDiscount, discountPercent, discountAmount, orderSubtotal, orderCanvasesSubtotal, accessoriesPrice, totalPrice, isLoading } =
     useCurrentSignPrice();
 
-  const formatted = `€ ${Number(price || 0).toFixed(2)}`;
-  const formattedDiscount = `€ ${Number(discountAmount || 0).toFixed(2)}`;
-  const formattedTotal = `€ ${Number(totalPrice || 0).toFixed(2)}`;
+  const formatted = formatMoney(price);
+  const formattedDiscount = formatMoney(discountAmount);
+  const formattedTotal = formatMoney(totalPrice);
 
   const readProjectMetaFromStorage = () => {
     try {
@@ -836,7 +837,7 @@ const InfoAboutProject = () => {
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>{t('infoAboutProject.totalForAllSigns')}</p>
-        <span className={styles.price}>{isLoading ? "…" : `€ ${Number(orderSubtotal || 0).toFixed(2)}`}</span>
+        <span className={styles.price}>{isLoading ? "…" : formatMoney(orderSubtotal)}</span>
       </div>
       <div className={styles.infoAboutProjectEl}>
         <p className={styles.para}>

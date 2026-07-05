@@ -7,6 +7,7 @@ import { $authHost } from '../http';
 import { SlArrowDown } from 'react-icons/sl';
 import ReactPaginate from 'react-paginate';
 import combinedCountries from '../components/Countries';
+import { formatMoney } from '../utils/formatMoney';
 
 const limit=25;
 
@@ -25,8 +26,7 @@ function formatDate(dateStr) {
 }
 
 const formatMoneyToCents = (value) => {
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric.toFixed(2) : '0.00';
+  return formatMoney(value);
 };
 
 
@@ -301,7 +301,7 @@ const Admin = () => {
                 <button>check</button>
               </div>
               <div className="sum">
-                <input type="number" readOnly value={formatMoneyToCents(sum)} />
+                <input type="text" readOnly value={formatMoneyToCents(sum)} />
               </div>
             </div>
           </div>
@@ -334,7 +334,7 @@ const Admin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{String(order.userId).padStart(3, "0")}</td>
                     <td>{order.signs}</td>
-                    <td>{order.user.type=='Admin'? '-':order.sum}</td>
+                    <td>{order.user.type=='Admin'? '-':formatMoney(order.sum)}</td>
                     <td>{order.country}</td>
                     <td>{order.status}</td>
                     <td>{formatDate(order.createdAt)}</td>

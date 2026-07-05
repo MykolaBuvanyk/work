@@ -22,6 +22,7 @@ import {
 } from '../assets/Icons';
 import { useNavigate } from 'react-router-dom';
 import combinedCountries from '../components/Countries';
+import { formatMoney } from '../utils/formatMoney';
 
 const PX_PER_MM = 72 / 25.4;
 const GIT_OPTIMIZED_SHEET_WIDTH_MM = 600;
@@ -145,7 +146,7 @@ const hasAddressLines = (address) => {
 const resolveDeliveryPrice = (order) => {
   const rawPrice = Number(order?.orderMongo?.checkout?.deliveryPrice);
   if (Number.isFinite(rawPrice)) {
-    return rawPrice.toFixed(2);
+    return formatMoney(rawPrice);
   }
   return '---';
 };
@@ -1793,7 +1794,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
           <button type="button" className="order-count-link" onClick={handleCustomerOrdersCountClick}>
             {customerOrdersCount}
           </button>
-          ; {customerOrdersTotal.toFixed(2)})
+          ; {formatMoney(customerOrdersTotal)})
         </span>
         <div />
       </div>
@@ -1882,7 +1883,7 @@ const Order = ({orderId,update, onToggleUserOrdersFilter}) => {
       </div>
       <div className="row">
         <p>Order Sum</p>
-        <span>{order.netAfterDiscount}</span>
+        <span>{formatMoney(order.netAfterDiscount)}</span>
         <div />
       </div>
       <div className="row">

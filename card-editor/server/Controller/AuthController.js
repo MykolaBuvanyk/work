@@ -185,9 +185,6 @@ class AuthController {
                 <a href="${editorUrl}" style="background-color: #337ab7; color: #ffffff; padding: 14px 45px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">${t('email.welcome.ctaCreateNow', userLanguage)}</a>
             </div>
 
-            <p style="margin: 0;">${t('common.bestRegards', userLanguage)},</p>
-            <p style="margin: 0 0 40px 0;">${t('common.signxpertTeam', userLanguage)}</p>
-
             <div style="text-align: right; font-size: 14px; line-height: 1.4;">
                 <p style="margin: 0;"><a href="${homeUrl}" style="color: #337ab7; text-decoration: underline;">sign-xpert.com</a></p>
                 <p style="margin: 0;"><a href="mailto:info@sign-xpert.com" style="color: #337ab7; text-decoration: underline;">info@sign-xpert.com</a></p>

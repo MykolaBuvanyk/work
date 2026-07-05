@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { $authHost } from '../http';
 import combinedCountries from '../components/Countries';
+import { formatMoney } from '../utils/formatMoney';
 
 function resolveCountryCode(raw) {
   if (!raw) return '';
@@ -330,15 +331,15 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
                   <div style={{textAlign:'right'}}>
                     {r.amountWithVat && (
                       <div style={{fontWeight:700, fontSize:'16px', color:'#0073bc'}}>
-                        {r.currency} {r.amountWithVat}
+                        {formatMoney(r.amountWithVat, r.currency)}
                       </div>
                     )}
                     <div style={{fontSize:'12px', color: r.amountWithVat ? '#666' : '#0073bc', fontWeight: r.amountWithVat ? 400 : 700}}>
-                      {r.amountWithVat ? `excl. VAT: ${r.currency} ${parseFloat(r.amount).toFixed(2)}` : `${r.currency} ${parseFloat(r.amount).toFixed(2)}`}
+                      {r.amountWithVat ? `excl. VAT: ${formatMoney(r.amount, r.currency)}` : formatMoney(r.amount, r.currency)}
                     </div>
                     {r.publishedAmount && (
                       <div style={{fontSize:'11px', color:'#999', textDecoration:'line-through'}}>
-                        {r.currency} {parseFloat(r.publishedAmount).toFixed(2)}
+                        {formatMoney(r.publishedAmount, r.currency)}
                       </div>
                     )}
                   </div>

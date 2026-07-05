@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Buongiorno,",
-  "common.bestRegards": "Cordiali saluti",
-  "common.signxpertTeam": "Il team SignXpert",
   "common.systemNotification": "Notifica di sistema SignXpert",
   "common.thankYouForChoosing": "Grazie per aver scelto SignXpert!",
   "common.thankYouForChoosingDot": "Grazie per aver scelto SignXpert.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "Può inoltre consultare in qualsiasi momento lo stato dettagliato del Suo ordine nel Suo account.",
   "email.invoice.thankYouEnjoy": "Grazie per aver scelto SignXpert – ci auguriamo che le Sue targhe personalizzate siano di Suo gradimento!",
   "email.invoice.questionsAssistance": "Per qualsiasi domanda o necessità di assistenza, non esiti a contattarci.",
-  "email.invoice.bestRegards": "Cordiali saluti",
-  "email.invoice.signxpertTeam": "Il team SignXpert",
   "email.invoice.appreciate": "Apprezziamo molto la Sua fiducia e non vediamo l'ora di collaborare nuovamente con Lei.",
   "email.common.or": "o",
   "email.delivered.subject": "SignXpert – Ordine consegnato",

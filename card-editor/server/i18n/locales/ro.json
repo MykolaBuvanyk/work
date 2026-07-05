@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Bună ziua,",
-  "common.bestRegards": "Cu stimă",
-  "common.signxpertTeam": "Echipa SignXpert",
   "common.systemNotification": "Notificare de sistem SignXpert",
   "common.thankYouForChoosing": "Vă mulțumim că ați ales SignXpert!",
   "common.thankYouForChoosingDot": "Vă mulțumim că ați ales SignXpert.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "De asemenea, puteți verifica starea detaliată a comenzii oricând în contul dumneavoastră.",
   "email.invoice.thankYouEnjoy": "Vă mulțumim că ați ales SignXpert – sperăm să vă bucurați de plăcuțele personalizate!",
   "email.invoice.questionsAssistance": "Dacă aveți întrebări sau aveți nevoie de asistență, nu ezitați să ne contactați.",
-  "email.invoice.bestRegards": "Cu stimă",
-  "email.invoice.signxpertTeam": "Echipa SignXpert",
   "email.invoice.appreciate": "Apreciem foarte mult încrederea dumneavoastră și așteptăm cu nerăbdare o nouă colaborare.",
   "email.common.or": "sau",
   "email.delivered.subject": "SignXpert – Comandă livrată",

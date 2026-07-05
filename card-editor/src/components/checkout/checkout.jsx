@@ -10,6 +10,7 @@ import FieldRow from '../ui/field-row/field-row'
 import Radio from '../ui/radio/radio'
 import { $authHost, $host } from '../../http'
 import { useCanvasContext } from '../../contexts/CanvasContext'
+import { formatMoney } from '../../utils/formatMoney'
 
 import CloseIcon from '/images/icon/close.svg'
 
@@ -1234,7 +1235,7 @@ export default function Checkout({
 													</tr>
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.price')}: {Number(signsSubtotal || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {formatMoney(signsSubtotal)}</td>
 													</tr>
 												</tbody>
 											</table>
@@ -1264,7 +1265,7 @@ export default function Checkout({
 													)}
 													<tr>
 														<td className='summary-table__blank'></td>
-														<td>{t('checkout.summary.price')}: {Number(accessoriesPrice || 0).toFixed(2)} €</td>
+														<td>{t('checkout.summary.price')}: {formatMoney(accessoriesPrice)}</td>
 													</tr>
 												</tbody>
 											</table>
@@ -1276,14 +1277,14 @@ export default function Checkout({
 													<td>
 														{t('checkout.summary.discount')} ({Number(discountPercent || 0).toFixed(0)}%)
 													</td>
-													<td>{Number(discountAmount || 0).toFixed(2)} €</td>
+													<td>{formatMoney(discountAmount)}</td>
 												</tr>
 												{appliedCoupon && (
 													<tr>
 														<td>
 															{t('checkout.promoCode.discount')} ({Number(appliedCoupon.discount || 0).toFixed(0)}%)
 														</td>
-														<td>{Number(couponDiscountAmount || 0).toFixed(2)} €</td>
+														<td>{formatMoney(couponDiscountAmount)}</td>
 													</tr>
 												)}
 											</tbody>
@@ -1348,7 +1349,7 @@ export default function Checkout({
 												<tr>
 													<td className='summary-table__blank'></td>
 													<td>
-														{t('checkout.delivery.price')}: {deliveryPrice.toFixed(2)} €
+														{t('checkout.delivery.price')}: {formatMoney(deliveryPrice)}
 													</td>
 												</tr>
 											</tbody>
@@ -1380,13 +1381,13 @@ export default function Checkout({
 											<tbody>
 												{/* <tr>
 													<td>VAT {Number(vatPercentForCheckout || 0).toFixed(0)}%</td>
-													<td>{Number(vatAmountForCheckout || 0).toFixed(2)} €</td>
+													<td>{formatMoney(vatAmountForCheckout)}</td>
 												</tr> */}
 												<tr>
 													<td>
 														<strong>{t('checkout.summary.totalAmount')}</strong>
 													</td>
-													<td>{Number(totalAmount || 0).toFixed(2)} €</td>
+													<td>{formatMoney(totalAmount)}</td>
 												</tr>
 											</tbody>
 										</table>

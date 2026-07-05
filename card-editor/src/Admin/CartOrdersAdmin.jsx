@@ -3,6 +3,7 @@ import "./AdminContainer.scss";
 import { useSelector } from "react-redux";
 import { fetchCartAdminById, fetchCartAdminList } from "../http/cart";
 import CartOrderDetails from "./CartOrderDetails";
+import { formatMoney } from "../utils/formatMoney";
 
 const formatDateTime = (value) => {
   if (!value) return "";
@@ -131,7 +132,7 @@ const CartOrdersAdmin = () => {
                     <td className="order-no">{order.id}</td>
                     <td>{order.userId}</td>
                     <td>{order.projectName}</td>
-                    <td>{typeof order.totalPrice === "number" ? order.totalPrice.toFixed(2) : order.totalPrice}</td>
+                    <td>{formatMoney(order.totalPrice)}</td>
                     <td>{order.status}</td>
                   </tr>
                 ))

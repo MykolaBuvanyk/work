@@ -420,7 +420,7 @@ const UpdateAvaible = () => {
             </div>
             <div className="bunuses-text">
               <div className="bonuses-title">
-                <p style={{fontWeight:'bold'}}>Bonuses: </p> <span>€</span>
+                <p style={{fontWeight:'bold'}}>Bonuses:</p>
               </div>
               <div id="procent-discount">
                 {formData.discount.map((x, idx) => (
@@ -481,19 +481,20 @@ const UpdateAvaible = () => {
                   {['materialArea', 'engravingArea', 'holesPerimeter'].map(field => (
                     <div className="list" key={field}>
                       <p>{field.replace(/([A-Z])/g, ' $1').toLowerCase()}</p>
-                      <span>€</span>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.listThinkness[tKey][field][0]}
                         onChange={e => handleThicknessUpdate(tKey, field, e.target.value, 0)}
                       />
+                      <span>€</span>
                       <input
                         type="number"
                         step="0.01"
                         value={formData.listThinkness[tKey][field][1]}
                         onChange={e => handleThicknessUpdate(tKey, field, e.target.value, 1)}
                       />
+                      <span>€</span>
                       <span>* ( cm² )</span>
                     </div>
                   ))}

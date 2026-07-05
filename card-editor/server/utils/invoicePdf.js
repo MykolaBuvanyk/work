@@ -2,6 +2,7 @@ import puppeteer from 'puppeteer';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
 import { t } from '../i18n/index.js';
+import { formatMoneyDisplay } from './formatMoneyDisplay.js';
 
 const basicZugferdInvoicer = zugferd({
   profile: EN16931,
@@ -14,7 +15,6 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
   const {
     escapeHtml,
     formatInvoiceDate,
-    formatMoney,
     round2,
     toNumber,
     hasContent,
@@ -150,7 +150,7 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
       : Number.isFinite(Number(orderMongo?.totalPrice))
         ? Number(orderMongo.totalPrice)
         : round2(netAmount + shippingCost);
-    const totalAmountFormatted = formatMoney(totalAmount);
+    const totalAmountFormatted = formatMoneyDisplay(totalAmount);
     const vatAmount = Number.isFinite(Number(checkout?.vatAmount))
       ? Number(checkout.vatAmount)
       : Math.max(0, round2(totalAmount - netAmount - shippingCost));
@@ -285,19 +285,19 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
         <tr>
           <td>${invoiceNumber}</td>
           <td>${pdfText('pdf.invoice.countSigns')}${signsCount} (${projectName})</td>
-          <td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td>
+          <td class="money-cell">${formatMoneyDisplay(subtotal)}</td>
         </tr>
       </tbody>
     </table>
 
     <div class="calc-section">
       <table class="calc-table">
-        <tr><td>${pdfText('pdf.invoice.subtotalLabel')}</td><td class="money-cell">€&nbsp;${formatMoney(subtotal)}</td></tr>
-        <tr><td>${pdfText('pdf.invoice.discountLabel')} (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">€&nbsp;${formatMoney(discountAmount)}</td></tr>
-        <tr><td>${pdfText('pdf.invoice.shippingAndPackaging')}${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">€&nbsp;${formatMoney(shippingCost)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.subtotalLabel')}</td><td class="money-cell">${formatMoneyDisplay(subtotal)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.discountLabel')} (${displayDiscountPercent.toFixed(0)} %)</td><td class="money-cell">${formatMoneyDisplay(discountAmount)}</td></tr>
+        <tr><td>${pdfText('pdf.invoice.shippingAndPackaging')}${deliveryLabel ? ` (${deliveryLabel})` : ''}</td><td class="money-cell">${formatMoneyDisplay(shippingCost)}</td></tr>
         <tr class="total-row">
           <td style="padding-top: 15px; padding-bottom: 6px;"><u>${pdfText('pdf.invoice.totalAmount')}</u></td>
-          <td class="money-cell" style="padding-top: 12px; padding-bottom: 6px;">€&nbsp;${totalAmountFormatted}</td>
+          <td class="money-cell" style="padding-top: 12px; padding-bottom: 6px;">${totalAmountFormatted}</td>
         </tr>
       </table>
     </div>
@@ -306,7 +306,7 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
     <div class="payment-info">
       <h3><u>${pdfText('pdf.invoice.paymentInformationHeading')}</u></h3>
       <div class="payment-grid">
-        <div>${pdfText('pdf.invoice.amountDue')}</div><div class="payment-value">€&nbsp;${totalAmountFormatted}</div>
+        <div>${pdfText('pdf.invoice.amountDue')}</div><div class="payment-value">${totalAmountFormatted}</div>
         <div>${pdfText('pdf.invoice.accountHolder')}</div><div>Kostyantyn Utvenko</div>
         <div>${pdfText('pdf.invoice.ibanLabel')}</div><div>DE78 6535 1260 0134 0819 40</div>
         <div>${pdfText('pdf.invoice.bicSwiftLabel')}</div><div>SOLADES1BAL</div>

@@ -1,7 +1,5 @@
 {
   "common.helloComma": "Hej,",
-  "common.bestRegards": "Med vänlig hälsning",
-  "common.signxpertTeam": "SignXpert-teamet",
   "common.systemNotification": "SignXpert-systemmeddelande",
   "common.thankYouForChoosing": "Tack för att du valde SignXpert!",
   "common.thankYouForChoosingDot": "Tack för att du valde SignXpert.",
@@ -153,8 +151,6 @@
   "email.invoice.checkDetailedStatus": "Du kan även se den detaljerade statusen för din order när som helst i ditt konto.",
   "email.invoice.thankYouEnjoy": "Tack för att du valde SignXpert – vi hoppas att du blir nöjd med dina skräddarsydda skyltar!",
   "email.invoice.questionsAssistance": "Om du har några frågor eller behöver hjälp, tveka inte att kontakta oss.",
-  "email.invoice.bestRegards": "Med vänlig hälsning",
-  "email.invoice.signxpertTeam": "SignXpert-teamet",
   "email.invoice.appreciate": "Vi uppskattar verkligen ditt förtroende och ser fram emot att samarbeta med dig igen.",
   "email.common.or": "eller",
   "email.delivered.subject": "SignXpert – Order levererad",

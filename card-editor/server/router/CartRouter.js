@@ -11,6 +11,7 @@ import { col, fn, Op, where } from 'sequelize';
 import puppeteer from 'puppeteer';
 import SendEmailForStatus from '../Controller/SendEmailForStatus.js';
 import { generateInvoicePdfBuffer } from '../utils/invoicePdf.js';
+import { formatMoneyDisplay } from '../utils/formatMoneyDisplay.js';
 import Stripe  from 'stripe';
 import { zugferd } from 'node-zugferd';
 import { EN16931 } from 'node-zugferd/profile/en16931';
@@ -2096,7 +2097,7 @@ CartRouter.get('/getPdfs/:idOrder', requireAuth, async (req, res, next) => {
       }));
 
     const deliveryLabel = escapeHtml(order.deliveryType || checkout?.deliveryLabel || '');
-    const orderSum = escapeHtml(formatMoney(order.sum));
+    const orderSum = escapeHtml(formatMoneyDisplay(order.sum));
 
     const firstPageHeaderHtml = `
     <div class="header">

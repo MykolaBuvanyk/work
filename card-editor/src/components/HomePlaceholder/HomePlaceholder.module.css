@@ -99,13 +99,11 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.88) 0%,
-    rgba(255, 255, 255, 0.72) 28%,
-    rgba(255, 255, 255, 0.24) 58%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.88) 0%,
+      rgba(255, 255, 255, 0.72) 28%,
+      rgba(255, 255, 255, 0.24) 58%,
+      rgba(255, 255, 255, 0.05) 100%);
 }
 
 .heroContainer {
@@ -359,12 +357,12 @@
 
 .textBox {
   background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-self: center;
-    margin: 0 auto;
-    width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  margin: 0 auto;
+  width: 80%;
 }
 
 .customHeading {
@@ -496,7 +494,12 @@
   transform: scale(1.111111) translateY(18px);
 }
 
+.reviewsSection{
+  color: transparent;
+}
+
 @media (max-width: 1100px) {
+
   .whyGrid,
   .equalGrid,
   .benefitsGrid {
@@ -762,6 +765,7 @@
   .fastSection .photoBox {
     order: 2;
   }
+
   .fastSection .sideTextBox {
     order: 1;
   }

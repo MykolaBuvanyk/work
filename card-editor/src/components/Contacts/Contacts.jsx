@@ -5,7 +5,7 @@ import { $host } from '../../http';
 import { useTranslation } from 'react-i18next';
 
 const Contacts = () => {
-  const {t}=useTranslation()
+  const { t, i18n } = useTranslation();
   const [errors, setErrors] = useState({});
   const phoneNumber = '+4915776625125';
   const displayPhoneNumber = '+49 157 766 25 125';
@@ -46,6 +46,7 @@ const Contacts = () => {
       name: formData.get('name'),
       email: formData.get('email'),
       question: formData.get('question'),
+      language: i18n.resolvedLanguage || i18n.language,
     };
 
     const nextErrors = validateContactForm(data);

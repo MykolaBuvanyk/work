@@ -1,5 +1,7 @@
 {
   "common.helloComma": "Laba diena,",
+  "common.bestRegards": "Pagarbiai",
+  "common.signxpertTeam": "SignXpert komanda",
   "common.systemNotification": "SignXpert sistemos pranešimas",
   "common.thankYouForChoosing": "Dėkojame, kad pasirinkote SignXpert!",
   "common.thankYouForChoosingDot": "Dėkojame, kad pasirinkote SignXpert.",
@@ -151,6 +153,8 @@
   "email.invoice.checkDetailedStatus": "Išsamią užsakymo būseną taip pat galite patikrinti bet kada savo paskyroje.",
   "email.invoice.thankYouEnjoy": "Dėkojame, kad pasirinkote SignXpert – tikimės, kad liksite patenkinti savo individualiomis iškabomis!",
   "email.invoice.questionsAssistance": "Jei turite klausimų ar reikia pagalbos, drąsiai susisiekite su mumis.",
+  "email.invoice.bestRegards": "Pagarbiai",
+  "email.invoice.signxpertTeam": "SignXpert komanda",
   "email.invoice.appreciate": "Labai vertiname Jūsų pasitikėjimą ir laukiame tolesnio bendradarbiavimo.",
   "email.common.or": "arba",
   "email.delivered.subject": "SignXpert – Užsakymas pristatytas",

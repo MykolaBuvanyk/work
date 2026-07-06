@@ -1,5 +1,7 @@
 {
   "common.helloComma": "Hallo,",
+  "common.bestRegards": "Met vriendelijke groet",
+  "common.signxpertTeam": "Het SignXpert-team",
   "common.systemNotification": "SignXpert-systeemmelding",
   "common.thankYouForChoosing": "Bedankt dat u voor SignXpert heeft gekozen!",
   "common.thankYouForChoosingDot": "Bedankt dat u voor SignXpert heeft gekozen.",
@@ -151,6 +153,8 @@
   "email.invoice.checkDetailedStatus": "U kunt de gedetailleerde status van uw bestelling ook altijd bekijken in uw account.",
   "email.invoice.thankYouEnjoy": "Bedankt dat u voor SignXpert heeft gekozen – we hopen dat u tevreden bent met uw op maat gemaakte borden!",
   "email.invoice.questionsAssistance": "Bij vragen of als u hulp nodig heeft, neem gerust contact met ons op.",
+  "email.invoice.bestRegards": "Met vriendelijke groet",
+  "email.invoice.signxpertTeam": "Het SignXpert-team",
   "email.invoice.appreciate": "We stellen uw vertrouwen zeer op prijs en kijken uit naar verdere samenwerking.",
   "email.common.or": "of",
   "email.delivered.subject": "SignXpert – Bestelling bezorgd",

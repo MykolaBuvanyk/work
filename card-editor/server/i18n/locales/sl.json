@@ -1,5 +1,7 @@
 {
   "common.helloComma": "Spoštovani,",
+  "common.bestRegards": "Lep pozdrav",
+  "common.signxpertTeam": "Ekipa SignXpert",
   "common.systemNotification": "Sistemsko obvestilo SignXpert",
   "common.thankYouForChoosing": "Hvala, da ste izbrali SignXpert!",
   "common.thankYouForChoosingDot": "Hvala, da ste izbrali SignXpert.",
@@ -151,6 +153,8 @@
   "email.invoice.checkDetailedStatus": "Podrobno stanje naročila lahko tudi kadar koli preverite v svojem računu.",
   "email.invoice.thankYouEnjoy": "Hvala, da ste izbrali SignXpert – upamo, da boste zadovoljni s svojimi tablami po meri!",
   "email.invoice.questionsAssistance": "Če imate kakršna koli vprašanja ali potrebujete pomoč, nas brez obotavljanja kontaktirajte.",
+  "email.invoice.bestRegards": "Lep pozdrav",
+  "email.invoice.signxpertTeam": "Ekipa SignXpert",
   "email.invoice.appreciate": "Zelo cenimo vaše zaupanje in se veselimo nadaljnjega sodelovanja.",
   "email.common.or": "ali",
   "email.delivered.subject": "SignXpert – Naročilo dostavljeno",

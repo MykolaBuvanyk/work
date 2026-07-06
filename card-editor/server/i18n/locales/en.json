@@ -1,5 +1,7 @@
 {
   "common.helloComma": "Hello,",
+  "common.bestRegards": "Best regards",
+  "common.signxpertTeam": "SignXpert Team",
   "common.systemNotification": "SignXpert system notification",
   "common.thankYouForChoosing": "Thank you for choosing SignXpert!",
   "common.thankYouForChoosingDot": "Thank you for choosing SignXpert.",
@@ -151,6 +153,8 @@
   "email.invoice.checkDetailedStatus": "You can also check the detailed status of your order at any time in your account.",
   "email.invoice.thankYouEnjoy": "Thank you for choosing SignXpert - we hope you enjoy your custom signs!",
   "email.invoice.questionsAssistance": "If you have any questions or need assistance, please do not hesitate to contact us.",
+  "email.invoice.bestRegards": "Best regards",
+  "email.invoice.signxpertTeam": "SignXpert Team",
   "email.invoice.appreciate": "We greatly appreciate your trust and look forward to working with you again.",
   "email.common.or": "or",
   "email.delivered.subject": "SignXpert - Order delivered",

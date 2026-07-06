@@ -1,5 +1,7 @@
 {
   "common.helloComma": "Hallo,",
+  "common.bestRegards": "Mit freundlichen Grüßen",
+  "common.signxpertTeam": "SignXpert-Team",
   "common.systemNotification": "SignXpert-Systembenachrichtigung",
   "common.thankYouForChoosing": "Vielen Dank, dass Sie sich für SignXpert entschieden haben!",
   "common.thankYouForChoosingDot": "Vielen Dank, dass Sie sich für SignXpert entschieden haben.",
@@ -151,6 +153,8 @@
   "email.invoice.checkDetailedStatus": "Den detaillierten Status Ihrer Bestellung können Sie außerdem jederzeit in Ihrem Konto einsehen.",
   "email.invoice.thankYouEnjoy": "Vielen Dank, dass Sie sich für SignXpert entschieden haben – wir hoffen, Sie haben viel Freude an Ihren individuellen Schildern!",
   "email.invoice.questionsAssistance": "Falls Sie Fragen haben oder Unterstützung benötigen, zögern Sie bitte nicht, uns zu kontaktieren.",
+  "email.invoice.bestRegards": "Mit freundlichen Gr??en",
+  "email.invoice.signxpertTeam": "SignXpert-Team",
   "email.invoice.appreciate": "Wir schätzen Ihr Vertrauen sehr und freuen uns auf die weitere Zusammenarbeit mit Ihnen.",
   "email.common.or": "oder",
   "email.delivered.subject": "SignXpert – Bestellung zugestellt",

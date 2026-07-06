@@ -490,6 +490,21 @@
   transform: scale(1.222222);
 }
 
+.reviewsSection {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 0 92px;
+}
+
+.reviewsFrame {
+  display: block;
+  width: 100%;
+  min-height: 420px;
+  border: 0;
+  background: transparent;
+}
+
 .benefitCard:hover h3,
 .benefitCard:hover p {
   color: #006ca4;

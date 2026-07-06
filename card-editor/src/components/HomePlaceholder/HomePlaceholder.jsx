@@ -14,7 +14,6 @@ const heroImages = [
 const HomePlaceholder = () => {
   const [activeHeroImage, setActiveHeroImage] = useState(0);
   const [isVolumeDiscountModalOpen, setIsVolumeDiscountModalOpen] = useState(false);
-  const [reviewsFrameHeight, setReviewsFrameHeight] = useState(420);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -42,50 +41,7 @@ const HomePlaceholder = () => {
     };
   }, [isVolumeDiscountModalOpen]);
 
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data?.type !== 'featurable-reviews-height') return;
-      setReviewsFrameHeight(Math.max(360, Number(event.data.height) || 420));
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
-
   const {t}=useTranslation();
-  const reviewsWidgetHtml = `
-<!doctype html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      html,
-      body {
-        margin: 0;
-        padding: 0;
-        background: transparent;
-        color-scheme: light;
-        font-family: Arial, sans-serif;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="featurable-b2df91ed-c742-42c0-8c91-b4e8ce1add27" data-featurable-async data-location-code="de"></div>
-    <script src="https://featurable.com/assets/bundle.js" defer charset="UTF-8"></script>
-    <script>
-      const sendHeight = () => {
-        const height = Math.ceil(document.documentElement.scrollHeight);
-        window.parent.postMessage({ type: 'featurable-reviews-height', height }, '*');
-      };
-      window.addEventListener('load', sendHeight);
-      setInterval(sendHeight, 500);
-    <\/script>
-  </body>
-</html>`;
 
   return (
     <main className={styles.page}>
@@ -390,17 +346,7 @@ const HomePlaceholder = () => {
               <h3> {t("HomePlaceholder.h_57")}</h3>
             </article>
           </div>
-
         </div>
-      </section>
-
-      <section className={styles.reviewsSection}>
-        <iframe
-          className={styles.reviewsFrame}
-          title="Google reviews"
-          srcDoc={reviewsWidgetHtml}
-          style={{ height: `${reviewsFrameHeight}px` }}
-        />
       </section>
     </main>
   );

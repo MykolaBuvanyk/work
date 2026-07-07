@@ -14,7 +14,22 @@ const heroImages = [
 const HomePlaceholder = () => {
   const [activeHeroImage, setActiveHeroImage] = useState(0);
   const [isVolumeDiscountModalOpen, setIsVolumeDiscountModalOpen] = useState(false);
+  useEffect(() => {
+    const oldScript = document.querySelector(
+      'script[src="https://featurable.com/assets/bundle.js"]'
+    );
 
+    if (oldScript) {
+      oldScript.remove();
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://featurable.com/assets/bundle.js';
+    script.defer = true;
+    script.charset = 'UTF-8';
+
+    document.body.appendChild(script);
+  }, []);
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       setActiveHeroImage((currentImage) => (currentImage + 1) % heroImages.length);
@@ -24,7 +39,7 @@ const HomePlaceholder = () => {
       window.clearInterval(intervalId);
     };
   }, []);
-
+  
   useEffect(() => {
     if (!isVolumeDiscountModalOpen) return undefined;
 
@@ -41,11 +56,11 @@ const HomePlaceholder = () => {
     };
   }, [isVolumeDiscountModalOpen]);
 
-  const {t}=useTranslation();
+  const { t } = useTranslation();
 
   return (
     <main className={styles.page}>
-      <section style={{padding:0}} className={styles.topTitleSection}>
+      <section style={{ padding: 0 }} className={styles.topTitleSection}>
         <div className={styles.container}>
           <h1 className={styles.topTitle}>
             {t("HomePlaceholder.h_1")} <span> {t("HomePlaceholder.h_2")}</span>
@@ -58,9 +73,8 @@ const HomePlaceholder = () => {
           {heroImages.map((image, index) => (
             <div
               key={image}
-              className={`${styles.heroBackground} ${
-                index === activeHeroImage ? styles.heroBackgroundActive : ''
-              }`}
+              className={`${styles.heroBackground} ${index === activeHeroImage ? styles.heroBackgroundActive : ''
+                }`}
               style={{ backgroundImage: `url(${image})` }}
             />
           ))}
@@ -73,15 +87,15 @@ const HomePlaceholder = () => {
             <h2 className={styles.heroTitle}>
               <span className={styles.brandBlue}>SignXpert</span>  {t("HomePlaceholder.h_3")}
               <br />
-               {t("HomePlaceholder.h_4")}
+              {t("HomePlaceholder.h_4")}
             </h2>
 
             <p className={styles.heroDescription}>
-               {t("HomePlaceholder.h_5")}
+              {t("HomePlaceholder.h_5")}
             </p>
 
             <Link to="/online-sign-editor" className={styles.heroButton}>
-               {t("HomePlaceholder.h_6")}
+              {t("HomePlaceholder.h_6")}
             </Link>
 
             <p className={styles.heroNote}> {t("HomePlaceholder.h_7")}</p>
@@ -92,7 +106,7 @@ const HomePlaceholder = () => {
       <section className={styles.whySection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center}`}>
-             {t("HomePlaceholder.h_8")} <span className={styles.brandBlue}>SignXpert</span>
+            {t("HomePlaceholder.h_8")} <span className={styles.brandBlue}>SignXpert</span>
           </h2>
 
           <div className={styles.whyGrid}>
@@ -101,7 +115,7 @@ const HomePlaceholder = () => {
                 <h3> {t("HomePlaceholder.h_9")}</h3>
 
                 <p className={styles.accentText}>
-                   {t("HomePlaceholder.h_10")}
+                  {t("HomePlaceholder.h_10")}
                 </p>
 
                 <p>
@@ -119,7 +133,7 @@ const HomePlaceholder = () => {
                 <p className={styles.accentText}> {t("HomePlaceholder.h_13")}</p>
 
                 <p>
-                   {t("HomePlaceholder.h_14")}
+                  {t("HomePlaceholder.h_14")}
                 </p>
 
                 <p className={styles.readMore}>
@@ -130,7 +144,7 @@ const HomePlaceholder = () => {
                       className={styles.readMoreButton}
                       onClick={() => setIsVolumeDiscountModalOpen(true)}
                     >
-                       {t("HomePlaceholder.h_16")}
+                      {t("HomePlaceholder.h_16")}
                     </button>
                   </em>
                 </p>
@@ -190,12 +204,12 @@ const HomePlaceholder = () => {
           <div className={styles.volumeDiscountContent}>
             <p>
               <strong>
-                 {t("HomePlaceholder.h_18")}
+                {t("HomePlaceholder.h_18")}
               </strong>
             </p>
             <p> {t("HomePlaceholder.h_19")}</p>
             <p>
-               {t("HomePlaceholder.h_20")}
+              {t("HomePlaceholder.h_20")}
             </p>
 
             <div className={styles.volumeDiscountList}>
@@ -209,7 +223,7 @@ const HomePlaceholder = () => {
 
             <p className={styles.volumeDiscountNote}>
               <strong>
-                 {t("HomePlaceholder.h_27")}
+                {t("HomePlaceholder.h_27")}
               </strong>
             </p>
           </div>
@@ -219,13 +233,13 @@ const HomePlaceholder = () => {
       <section className={styles.customSection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center} ${styles.customTitle}`}>
-             {t("HomePlaceholder.h_28")} <span className={styles.highlightYellow}> {t("HomePlaceholder.h_29")}</span>  {t("HomePlaceholder.h_30")}
+            {t("HomePlaceholder.h_28")} <span className={styles.highlightYellow}> {t("HomePlaceholder.h_29")}</span>  {t("HomePlaceholder.h_30")}
           </h2>
 
           <div className={styles.equalGrid}>
             <div className={`${styles.textBox} ${styles.customTextBox}`}>
               <h3 className={styles.customHeading}>
-                 {t("HomePlaceholder.h_31")}{' '}
+                {t("HomePlaceholder.h_31")}{' '}
                 <span className={styles.brandBlue}>SignXpert</span>
               </h3>
 
@@ -241,7 +255,7 @@ const HomePlaceholder = () => {
               </ul>
               <p style={{ color: '#006ca4' }}> {t("HomePlaceholder.h_39")}</p>
               <p>
-                 {t("HomePlaceholder.h_40")}
+                {t("HomePlaceholder.h_40")}
               </p>
             </div>
 
@@ -277,7 +291,7 @@ const HomePlaceholder = () => {
               </ul>
 
               <p>
-                 {t("HomePlaceholder.h_48")}
+                {t("HomePlaceholder.h_48")}
               </p>
             </div>
           </div>
@@ -294,12 +308,12 @@ const HomePlaceholder = () => {
 
               <p>
                 <strong>
-                   {t("HomePlaceholder.h_51")}
+                  {t("HomePlaceholder.h_51")}
                 </strong>
               </p>
 
               <p>
-                 {t("HomePlaceholder.h_52")}
+                {t("HomePlaceholder.h_52")}
               </p>
             </div>
 
@@ -313,7 +327,7 @@ const HomePlaceholder = () => {
       <section className={styles.benefitsSection}>
         <div className={styles.container}>
           <h2 className={`${styles.sectionTitle} ${styles.center}`}>
-             {t("HomePlaceholder.h_53")} <span className={styles.brandBlue}>SignXpert</span>
+            {t("HomePlaceholder.h_53")} <span className={styles.brandBlue}>SignXpert</span>
           </h2>
 
           <div className={styles.benefitsGrid}>
@@ -347,6 +361,13 @@ const HomePlaceholder = () => {
             </article>
           </div>
         </div>
+      </section>
+      <section className={styles.reviewsSection}>
+        <div
+          id="featurable-b2df91ed-c742-42c0-8c91-b4e8ce1add27"
+          data-featurable-async
+          data-location-code="de"
+        />
       </section>
     </main>
   );

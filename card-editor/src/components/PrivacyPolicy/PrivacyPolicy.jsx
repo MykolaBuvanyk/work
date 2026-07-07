@@ -39,7 +39,7 @@ const PrivacyPolicy = () => {
               <p><strong>VAT ID (USt-IdNr.):</strong> DE461817538</p>
               <p>
                 <strong>E-mail:</strong>{' '}
-                <a href="mailto:info@signxpert.com">info@signxpert.com</a>
+                <a href="mailto:info@sign-xpert.com">info@sign-xpert.com</a>
               </p>
               <p>
                 <strong>URL:</strong>{' '}

@@ -5,6 +5,7 @@ import { countryToLanguage, DEFAULT_LANGUAGE, normalizeLanguage, t } from '../i1
 import { localize } from '../i18n/localize.js';
 import { generateInvoicePdfBuffer } from '../utils/invoicePdf.js';
 import { formatMoneyDisplay } from '../utils/formatMoneyDisplay.js';
+import { Order, User } from "../models/models.js";
 
 // Derive UI language for a user (from saved language, fallback to country mapping, else default).
 const userLang = (user) => normalizeLanguage(user?.language || countryToLanguage(user?.country) || DEFAULT_LANGUAGE);
@@ -1172,9 +1173,20 @@ class SendEmailForStatus {
 
     static ReminderPay = async (order) => {
         try{
-            if(order.isPaid)return true;
+            const freshOrder = order?.id
+                ? await Order.findOne({
+                    where: { id: order.id },
+                    include: [{ model: User }],
+                })
+                : null;
+            order = freshOrder || order;
+            if(order?.isPaid !== false || order?.status === 'Deleted')return true;
+            if(!order?.user){
+                console.warn(`Skip invoice reminder for order ${order?.id}: user not found`);
+                return true;
+            }
             const orderNumber=String(order.id).padStart(3, '0')
-            const nameOrCompany=order.user.company?order.user.company:order.user.firstName;
+            const nameOrCompany=order.user.company || order.user.firstName || order.user.email || '';
             const logoPng=process.env.VITE_LAYOUT_SERVER+'images/images/logo.png';
             const create=formatDate(order.createdAt);
             const urlFrontend=process.env.VITE_LAYOUT_FRONTEND_URL;

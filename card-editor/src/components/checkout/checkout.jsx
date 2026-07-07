@@ -796,7 +796,7 @@ export default function Checkout({
 	}, [deliveryAddress.region, normalizedUserType, vatConfig])
 
 	const vatAmountForCheckout = round2(subtotalExclVat * (Number(vatPercentForCheckout || 0) / 100))
-	const totalAmount = round2(subtotalExclVat + vatAmountForCheckout)
+	const totalAmount = round2(subtotalExclVat)//прибрав vat
 
 	return (
 		<div className='checkout'>

@@ -1284,9 +1284,11 @@ class SendEmailForStatus {
     </table>
 </body>
 </html>`       
-            const to=order.user.email;
-            //await sendEmail(to,html,subject);
-            await SendEmailForStatus.SendEmailWithFile(order,html, subject, to, lang);
+            const recipients = getInvoiceRecipients(order.user);
+            if (recipients.length === 0) {
+                recipients.push(order.user.email);
+            }
+            await Promise.all(recipients.map((to) => SendEmailForStatus.SendEmailWithFile(order, html, subject, to, lang)));
             return true;
         }catch(err){
             console.error('error send email where status printed.'+err);

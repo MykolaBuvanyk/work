@@ -3,8 +3,10 @@ import { useTranslation } from "react-i18next";
 import styles from "./TemplatesModal.module.css";
 import {
   fetchTemplates,
+  fetchMyTemplates,
   fetchTemplateCategories,
   fetchTemplateById,
+  fetchMyTemplateById,
   updateTemplate,
   deleteTemplate,
   createTemplateCategory,
@@ -18,7 +20,6 @@ import {
   ensureFontsLoaded,
   restoreElementProperties,
 } from "../../utils/projectStorage";
-import { deleteTemplate as deleteLocalTemplate, getAllTemplates, getTemplateById, renameTemplate, saveTemplateSnapshot } from "../../utils/templateStorage";
 import * as fabric from "fabric";
 
 const MY_TEMPLATES_KEY = "__my_templates__";
@@ -62,7 +63,7 @@ const TemplatesModal = ({ onClose }) => {
     }
 
     const snapshot = opts?.isMy
-      ? (await getTemplateById(templateId))?.canvas || null
+      ? (await fetchMyTemplateById(templateId))?.canvas || null
       : (await fetchTemplateById(templateId))?.canvas || null;
     const json = snapshot?.json || snapshot?.jsonTemplate || null;
 
@@ -193,32 +194,19 @@ const TemplatesModal = ({ onClose }) => {
   };
 
   const reloadAll = async () => {
-    const local = await getAllTemplates().catch(() => []);
-    const mappedLocal = (Array.isArray(local) ? local : []).map((t) => {
-      const canvas = t?.canvas || {};
-      return {
-        id: t.id,
-        name: t.name,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt,
-        templatePreview: canvas.templatePreview || null,
-        preview: canvas.preview || null,
-        previewSvg: canvas.previewSvg || null,
-      };
-    });
-    setMyTemplates(mappedLocal);
-
-    // Server templates/categories are optional: still allow My Templates without backend.
     try {
-      const [tpls, cats] = await Promise.all([
+      const [tpls, mine, cats] = await Promise.all([
         fetchTemplates(),
+        fetchMyTemplates(),
         fetchTemplateCategories(),
       ]);
       setTemplates(Array.isArray(tpls) ? tpls : []);
+      setMyTemplates(Array.isArray(mine) ? mine : []);
       setCategories(Array.isArray(cats) ? cats : []);
     } catch (e) {
       console.warn("Templates/categories server fetch failed", e);
       setTemplates([]);
+      setMyTemplates([]);
       setCategories([]);
     }
   };
@@ -228,34 +216,21 @@ const TemplatesModal = ({ onClose }) => {
     setLoading(true);
     (async () => {
       try {
-        const local = await getAllTemplates().catch(() => []);
-        const mappedLocal = (Array.isArray(local) ? local : []).map((t) => {
-          const canvas = t?.canvas || {};
-          return {
-            id: t.id,
-            name: t.name,
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            templatePreview: canvas.templatePreview || null,
-            preview: canvas.preview || null,
-            previewSvg: canvas.previewSvg || null,
-          };
-        });
-        if (mounted) setMyTemplates(mappedLocal);
-
-        const [tpls, cats] = await Promise.all([
+        const [tpls, mine, cats] = await Promise.all([
           fetchTemplates(),
+          fetchMyTemplates(),
           fetchTemplateCategories(),
         ]);
         if (!mounted) return;
         setTemplates(Array.isArray(tpls) ? tpls : []);
+        setMyTemplates(Array.isArray(mine) ? mine : []);
         setCategories(Array.isArray(cats) ? cats : []);
       } catch (e) {
         console.error("Failed to fetch templates/categories", e);
         if (!mounted) return;
         setTemplates([]);
+        setMyTemplates([]);
         setCategories([]);
-        // My Templates may still be available even if server failed.
       } finally {
         if (!mounted) return;
         setLoading(false);
@@ -622,10 +597,10 @@ const TemplatesModal = ({ onClose }) => {
                             return;
                           }
                           try {
-                            await renameTemplate(tpl.id, trimmed);
+                            await updateTemplate(tpl.id, trimmed);
                             await reloadAll();
                           } catch (e) {
-                            console.error("Local template rename failed", e);
+                            console.error("Template rename failed", e);
                             alert(t("templatesModal.alerts.renameTemplateFailed"));
                           }
                         }}
@@ -640,10 +615,10 @@ const TemplatesModal = ({ onClose }) => {
                           );
                           if (!ok) return;
                           try {
-                            await deleteLocalTemplate(tpl.id);
+                            await deleteTemplate(tpl.id);
                             await reloadAll();
                           } catch (e) {
-                            console.error("Local template delete failed", e);
+                            console.error("Template delete failed", e);
                             alert(t("templatesModal.alerts.deleteTemplateFailed"));
                           }
                         }}

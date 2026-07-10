@@ -8,7 +8,6 @@ import InfoAboutProject from "../InfoAboutProject/InfoAboutProject";
 import SaveAsModal from "../SaveAsModal/SaveAsModal";
 import SaveAsTemplateModal from "../SaveAsTemplateModal/SaveAsTemplateModal";
 import TemplatesModal from "../TemplatesModal/TemplatesModal";
-import { saveTemplateSnapshot } from "../../utils/templateStorage";
 import YourProjectsModal from "../YourProjectsModal/YourProjectsModal";
 import NewProjectsModal from "../NewProjectsModal/NewProjectsModal";
 import PreviewModal from "../PreviewModal/PreviewModal";
@@ -1085,11 +1084,7 @@ const TopToolbar = ({ className }) => {
                 throw new Error("Failed to export canvas");
               }
 
-              if (isAdmin) {
-                await createTemplate(name, snapshot, categoryId);
-              } else {
-                await saveTemplateSnapshot(name, snapshot);
-              }
+              await createTemplate(name, snapshot, isAdmin ? categoryId : null);
             } finally {
               setIsSaving(false);
             }

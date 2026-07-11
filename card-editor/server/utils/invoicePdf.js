@@ -376,9 +376,8 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
       customerCountrySubdivision: customerCountrySubdivisionRaw,
       customerVatNumber: customerVatNumberRaw,
       buyerReference: String(checkout?.customerReference || order.user?.reference || order.userId || order.id || ''),
-      remittanceInformation: checkout?.customerReference
-        ? `${t('pdf.invoice.customerReferenceLabel', lang)} ${checkout.customerReference}`
-        : `${t('pdf.invoice.referenceOrderNo', lang)} ${invoiceNumberRaw}`,
+      // BT-83 / Verwendungszweck must always identify the order, not the buyer's reference.
+      remittanceInformation: `${t('pdf.invoice.referenceOrderNo', 'de')} ${orderNumberRaw}`,
       paymentDueDate: invoiceDueDateDate,
       signsCount: signsCountRaw,
       projectName: projectNameRaw,

@@ -385,7 +385,10 @@ export const buildZugferdInvoiceData = ({
   const lineGlobalIdentifierValue = String(order?.id || invoiceNumber || '').trim();
   const settledPaidAmount = isPaidInvoice ? formatMoney(totalAmount) : undefined;
   const duePayableAmount = isPaidInvoice ? '0.00' : formatMoney(totalAmount);
-  const paymentTermsDescription = isPaidInvoice ? 'Rechnung bereits beglichen' : '30 days net';
+  // ZUGFeRD/XML payment terms must stay in German regardless of the invoice UI language.
+  const paymentTermsDescription = isPaidInvoice
+    ? 'Rechnung bereits beglichen'
+    : t('common.thirtyDaysNet', 'de');
   const paymentTermsDueDate = isPaidInvoice
     ? invoicePaymentDate
     : paymentDueDate || new Date(order?.createdAt || Date.now());

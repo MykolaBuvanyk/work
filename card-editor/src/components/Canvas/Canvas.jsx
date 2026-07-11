@@ -2913,6 +2913,13 @@ const Canvas = ({ className }) => {
         touchSizeX: 0,
         touchSizeY: 0,
       });
+
+      // Controls above replace Fabric's original control instances. Recalculate
+      // oCoords only after the replacement so hover hit-testing keeps matching
+      // the visible resize dots after the pointer leaves and re-enters the frame.
+      try {
+        obj.setCoords?.();
+      } catch { }
     };
 
     fCanvas.on('selection:created', e => {
@@ -2949,6 +2956,20 @@ const Canvas = ({ className }) => {
         fCanvas.requestRenderAll();
       }
     });
+
+    // Fabric caches control hit polygons in `oCoords`. Custom controls can keep
+    // drawing at the current bounds while this cache still points to a previous
+    // hover/transform position. Refresh it in the capture phase, before Fabric's
+    // own pointer handler decides between a resize control and object movement.
+    const refreshActiveControlHitAreas = () => {
+      try {
+        const active = fCanvas.getActiveObject?.();
+        if (!active || isHole(active) || isStaticCutShape(active)) return;
+        active.setCoords?.();
+      } catch { }
+    };
+    fCanvas.upperCanvasEl?.addEventListener('pointermove', refreshActiveControlHitAreas, true);
+    fCanvas.upperCanvasEl?.addEventListener('mousemove', refreshActiveControlHitAreas, true);
 
     // Прапор масштабування для показу підказки + фіксація 1:1 для кіл
     fCanvas.on('object:scaling', e => {
@@ -3117,6 +3138,13 @@ const Canvas = ({ className }) => {
       const t = e?.target;
       if (!t) return;
       if (t.__isScaling) t.__isScaling = false;
+      // Scaling changes the object's bounds, but Fabric does not reliably
+      // refresh the hit polygons of our custom controls. Without this, the
+      // visible dots stay at the new bounds while hover detection remains at
+      // the previous bounds, so the next drag moves the object instead.
+      try {
+        t.setCoords?.();
+      } catch { }
       // Тримати підказку ще 1 секунду після завершення тягнення
       if (t.__wasScaling) {
         t.__wasScaling = false;
@@ -3925,6 +3953,10 @@ const Canvas = ({ className }) => {
       fCanvas.__gradientRebuildRetryTimer = null;
       try {
         document.removeEventListener('pointerdown', outsideClickHandler, true);
+      } catch { }
+      try {
+        fCanvas.upperCanvasEl?.removeEventListener('pointermove', refreshActiveControlHitAreas, true);
+        fCanvas.upperCanvasEl?.removeEventListener('mousemove', refreshActiveControlHitAreas, true);
       } catch { }
       fCanvas.off('before:render', clearTop);
       fCanvas.off('after:render', drawSingleTextCaret);

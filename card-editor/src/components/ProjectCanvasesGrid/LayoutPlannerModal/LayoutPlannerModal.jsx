@@ -4324,6 +4324,12 @@ const generateGappedPathData = (scope, node, gapPx) => {
       // Determine which straight run is the TOP edge (horizontal + smallest Y),
       // so we can add TWO gaps near the shackle (lock requirement).
       const HORIZONTAL_TOLERANCE_RAD = (12 * Math.PI) / 180; // 12 degrees
+      const isVerticalAngle = (angle, toleranceRad) => {
+        if (!Number.isFinite(angle)) return false;
+        const d1 = angleDistance(angle, Math.PI / 2);
+        const d2 = angleDistance(angle, -Math.PI / 2);
+        return Math.min(d1, d2) <= toleranceRad;
+      };
       const runStats = runs.map(() => ({ avgY: 0, avgX: 0, count: 0, baseAngle: NaN }));
       runs.forEach((run, runId) => {
         if (!run) return;
@@ -4421,53 +4427,130 @@ const generateGappedPathData = (scope, node, gapPx) => {
           ? shackleXs.reduce((a, b) => a + b, 0) / shackleXs.length
           : NaN;
 
-        // Candidate horizontal runs: include even if they were not selected as "longest".
         const minRunLenForTop = Math.max(gap * 3, medRun * 1.5);
-        const horizontalCandidates = runs
-          .map((run, runId) => ({ run, runId }))
-          .filter(({ run }) => run && Number.isFinite(run.length) && run.length >= minRunLenForTop)
-          .filter(({ runId }) => {
-            const stat = runStats[runId];
-            if (!stat || !stat.count) return false;
-            return isHorizontalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD);
-          })
-          .map(({ runId, run }) => ({
-            runId,
-            length: run.length,
-            avgY: runStats[runId].avgY,
-            avgX: runStats[runId].avgX,
-          }));
+        const makeSplitEdgeCandidates = (orientation) =>
+          runs
+            .map((run, runId) => ({ run, runId }))
+            .filter(({ run }) => run && Number.isFinite(run.length) && run.length >= minRunLenForTop)
+            .filter(({ runId }) => {
+              const stat = runStats[runId];
+              if (!stat || !stat.count) return false;
+              return orientation === "vertical"
+                ? isVerticalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD)
+                : isHorizontalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD);
+            })
+            .map(({ runId, run }) => ({
+              runId,
+              length: run.length,
+              cross: orientation === "vertical" ? runStats[runId].avgX : runStats[runId].avgY,
+              along: orientation === "vertical" ? runStats[runId].avgY : runStats[runId].avgX,
+            }));
 
-        if (horizontalCandidates.length) {
-          // In SVG coordinates, "top" is the smallest Y.
-          const minY = Math.min(...horizontalCandidates.map((c) => c.avgY));
-          const topBand = horizontalCandidates.filter((c) => Math.abs(c.avgY - minY) <= 2);
+        const pickSplitEdgeRuns = (candidates, shackleCross, shackleAlong) => {
+          if (!candidates.length) return [];
 
-          // Pick two runs: left and right of shackleX if known, else two longest from the top band.
-          let picked = [];
-          if (Number.isFinite(shackleX)) {
-            const left = topBand
-              .filter((c) => Number.isFinite(c.avgX) && c.avgX < shackleX)
-              .sort((a, b) => Math.abs(a.avgX - shackleX) - Math.abs(b.avgX - shackleX))[0];
-            const right = topBand
-              .filter((c) => Number.isFinite(c.avgX) && c.avgX > shackleX)
-              .sort((a, b) => Math.abs(a.avgX - shackleX) - Math.abs(b.avgX - shackleX))[0];
+          const bands = [];
+          candidates
+            .slice()
+            .sort((a, b) => a.cross - b.cross)
+            .forEach((candidate) => {
+              const band = bands.find((item) => Math.abs(item.cross - candidate.cross) <= 2);
+              if (band) {
+                band.items.push(candidate);
+                band.cross =
+                  band.items.reduce((sum, item) => sum + item.cross, 0) / band.items.length;
+              } else {
+                bands.push({ cross: candidate.cross, items: [candidate] });
+              }
+            });
 
-            if (left) picked.push(left);
-            if (right) picked.push(right);
+          const sortedBands = bands.sort((a, b) => {
+            const aHasPair = a.items.length >= 2 ? 0 : 1;
+            const bHasPair = b.items.length >= 2 ? 0 : 1;
+            if (aHasPair !== bHasPair) return aHasPair - bHasPair;
+            if (Number.isFinite(shackleCross)) {
+              return Math.abs(a.cross - shackleCross) - Math.abs(b.cross - shackleCross);
+            }
+            return a.cross - b.cross;
+          });
+
+          const band = sortedBands[0];
+          if (!band) return [];
+
+          const picked = [];
+          if (Number.isFinite(shackleAlong)) {
+            const before = band.items
+              .filter((c) => Number.isFinite(c.along) && c.along < shackleAlong)
+              .sort((a, b) => Math.abs(a.along - shackleAlong) - Math.abs(b.along - shackleAlong))[0];
+            const after = band.items
+              .filter((c) => Number.isFinite(c.along) && c.along > shackleAlong)
+              .sort((a, b) => Math.abs(a.along - shackleAlong) - Math.abs(b.along - shackleAlong))[0];
+
+            if (before) picked.push(before);
+            if (after) picked.push(after);
           }
 
           if (picked.length < 2) {
-            const byLen = topBand.slice().sort((a, b) => b.length - a.length);
-            byLen.forEach((c) => {
-              if (picked.length >= 2) return;
-              if (!picked.some((p) => p.runId === c.runId)) picked.push(c);
-            });
+            band.items
+              .slice()
+              .sort((a, b) => b.length - a.length)
+              .forEach((c) => {
+                if (picked.length >= 2) return;
+                if (!picked.some((p) => p.runId === c.runId)) picked.push(c);
+              });
           }
 
-          // If still only one top run exists, we'll still gap it once (better than nothing).
-          picked.slice(0, 2).forEach((c) => specialOneGapTopRunIds.add(c.runId));
-        }
+          return picked.slice(0, 2);
+        };
+
+        const horizontalPicked = pickSplitEdgeRuns(
+          makeSplitEdgeCandidates("horizontal"),
+          shackleY,
+          shackleX
+        );
+        const verticalPicked = pickSplitEdgeRuns(
+          makeSplitEdgeCandidates("vertical"),
+          shackleX,
+          shackleY
+        );
+        const picked =
+          verticalPicked.length > horizontalPicked.length ? verticalPicked : horizontalPicked;
+
+        picked.forEach((c) => specialOneGapTopRunIds.add(c.runId));
+
+        const addOuterEdgeRuns = (orientation) => {
+          const candidates = runs
+            .map((run, runId) => ({ run, runId }))
+            .filter(({ run }) => run && Number.isFinite(run.length) && run.length >= minRunLenForTop)
+            .filter(({ runId }) => {
+              const stat = runStats[runId];
+              if (!stat || !stat.count) return false;
+              return orientation === "vertical"
+                ? isVerticalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD)
+                : isHorizontalAngle(stat.baseAngle, HORIZONTAL_TOLERANCE_RAD);
+            })
+            .map(({ runId, run }) => ({
+              runId,
+              length: run.length,
+              cross: orientation === "vertical" ? runStats[runId].avgX : runStats[runId].avgY,
+            }));
+
+          if (!candidates.length) return;
+
+          const minCross = Math.min(...candidates.map((c) => c.cross));
+          const maxCross = Math.max(...candidates.map((c) => c.cross));
+          candidates.forEach((candidate) => {
+            if (
+              Math.abs(candidate.cross - minCross) <= 2 ||
+              Math.abs(candidate.cross - maxCross) <= 2
+            ) {
+              selectedRunIds.add(candidate.runId);
+            }
+          });
+        };
+
+        addOuterEdgeRuns("horizontal");
+        addOuterEdgeRuns("vertical");
 
         // As a fallback, if we couldn't detect the shackle and no top runs were found,
         // pick the top-most selected horizontal run.

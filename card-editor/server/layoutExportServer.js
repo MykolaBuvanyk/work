@@ -682,6 +682,28 @@ const HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES = new Set([
   'sacramento',
   'satisfy',
 ].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
+const ROBOTO_GLYPH_OVERLAP_FONT_ALIASES = new Set([
+  'roboto',
+  'roboto bold',
+  'roboto bold italic',
+  'roboto bolditalic',
+  'roboto italic',
+  'roboto medium',
+  'roboto medium italic',
+  'roboto mediumitalic',
+].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
+const ROBOTO_GLYPH_OVERLAP_FONT_IDS = new Set([
+  'CustomFont-New-Fonts-Roboto-Bold',
+  'CustomFont-New-Fonts-Roboto-BoldItalic',
+  'CustomFont-New-Fonts-Roboto-Italic',
+  'CustomFont-New-Fonts-Roboto-Medium',
+  'CustomFont-New-Fonts-Roboto-MediumItalic',
+  'CustomFont-New-Fonts-Roboto-Regular',
+  'Roboto-Regular',
+  'Roboto-Bold',
+  'Roboto-Italic',
+  'Roboto-BoldItalic',
+]);
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -721,7 +743,15 @@ const fontMatchesAliasSet = (fontId, idSet, aliasSet) => {
   return candidates.some(candidate => fontCandidateMatchesAliasSet(candidate, aliasSet));
 };
 
+const isRobotoGlyphOverlapFont = fontId =>
+  fontMatchesAliasSet(
+    fontId,
+    ROBOTO_GLYPH_OVERLAP_FONT_IDS,
+    ROBOTO_GLYPH_OVERLAP_FONT_ALIASES
+  );
+
 const shouldForceCleanGlyphPathForFont = fontId =>
+  isRobotoGlyphOverlapFont(fontId) ||
   fontMatchesAliasSet(
     fontId,
     REQUESTED_GLYPH_OVERLAP_FONT_IDS,
@@ -729,7 +759,7 @@ const shouldForceCleanGlyphPathForFont = fontId =>
   );
 
 const shouldClipGlyphOverlapsForFont = fontId => {
-  return fontMatchesAliasSet(
+  return isRobotoGlyphOverlapFont(fontId) || fontMatchesAliasSet(
     fontId,
     HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS,
     HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES
@@ -967,57 +997,99 @@ const normalizePathItemFilledOutline = (pathItem, flattenTolerance = 0) => {
   return { item: normalized, didClip: true };
 };
 
-const clipPathItemInternalOverlaps = (scope, pathItem) => {
+const clipPathItemInternalOverlaps = (
+  scope,
+  pathItem,
+  { preserveOppositeDirectionContours = true } = {}
+) => {
   const children = Array.isArray(pathItem?.children) ? [...pathItem.children] : [];
   if (!scope || !pathItem || children.length < 2) {
     return { item: pathItem, didClip: false };
   }
 
   let didClip = false;
+  const maxPasses = preserveOppositeDirectionContours ? 2 : 5;
 
-  for (let i = 0; i + 1 < children.length; i += 1) {
-    let current = children[i];
-    if (!current || !current.bounds) continue;
+  const subtractContour = (source, cutter) => {
+    if (!source || !cutter) return null;
+    const originalPathData =
+      typeof source.pathData === 'string' ? source.pathData.trim() : '';
+    if (!originalPathData) return null;
 
-    for (let j = i + 1; j < children.length; j += 1) {
-      const next = children[j];
-      if (!pathItemsHaveContourIntersection(current, next)) continue;
-      if (
-        typeof current.clockwise === 'boolean' &&
-        typeof next.clockwise === 'boolean' &&
-        current.clockwise !== next.clockwise
-      ) {
-        continue;
-      }
+    let clipped = null;
+    try {
+      clipped = source.subtract(cutter, { insert: false });
+    } catch {
+      clipped = null;
+    }
 
-      let clipped = null;
-      try {
-        clipped = current.subtract(next, { insert: false });
-      } catch {
-        clipped = null;
-      }
-
-      if (clipped && clipped.pathData) {
-        const originalPathData =
-          typeof current.pathData === 'string' ? current.pathData.trim() : '';
-        const clippedPathData =
-          typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
-
-        if (clippedPathData && clippedPathData !== originalPathData) {
-          try {
-            current.remove();
-          } catch {}
-          children[i] = clipped;
-          current = clipped;
-          didClip = true;
-          continue;
-        }
-      }
-
+    if (!clipped || !clipped.pathData) {
       try {
         if (clipped) clipped.remove();
       } catch {}
+      return null;
     }
+
+    const clippedPathData =
+      typeof clipped.pathData === 'string' ? clipped.pathData.trim() : '';
+    if (!clippedPathData || clippedPathData === originalPathData) {
+      try {
+        clipped.remove();
+      } catch {}
+      return null;
+    }
+
+    return clipped;
+  };
+
+  for (let pass = 0; pass < maxPasses; pass += 1) {
+    let didClipThisPass = false;
+
+    for (let i = 0; i + 1 < children.length; i += 1) {
+      let current = children[i];
+      if (!current || !current.bounds) continue;
+
+      for (let j = i + 1; j < children.length; j += 1) {
+        let next = children[j];
+        if (!next || !next.bounds) continue;
+        if (!pathItemsHaveContourIntersection(current, next)) continue;
+        if (
+          preserveOppositeDirectionContours &&
+          typeof current.clockwise === 'boolean' &&
+          typeof next.clockwise === 'boolean' &&
+          current.clockwise !== next.clockwise
+        ) {
+          continue;
+        }
+
+        const clippedCurrent = subtractContour(current, next);
+        if (clippedCurrent) {
+          try {
+            current.remove();
+          } catch {}
+          children[i] = clippedCurrent;
+          current = clippedCurrent;
+          didClip = true;
+          didClipThisPass = true;
+          continue;
+        }
+
+        if (!preserveOppositeDirectionContours) {
+          const clippedNext = subtractContour(next, current);
+          if (clippedNext) {
+            try {
+              next.remove();
+            } catch {}
+            children[j] = clippedNext;
+            next = clippedNext;
+            didClip = true;
+            didClipThisPass = true;
+          }
+        }
+      }
+    }
+
+    if (!didClipThisPass) break;
   }
 
   if (!didClip) {
@@ -1183,6 +1255,106 @@ const unitePathItemInternalOverlaps = (scope, pathItem) => {
   return { item: cleanedItem, didClip: true };
 };
 
+const reorientPathItemContours = pathItem => {
+  if (!pathItem || typeof pathItem.reorient !== 'function') {
+    return { item: pathItem, didClip: false };
+  }
+
+  const originalPathData =
+    typeof pathItem.pathData === 'string' ? pathItem.pathData.trim() : '';
+
+  try {
+    pathItem.reorient(true, true);
+  } catch {
+    return { item: pathItem, didClip: false };
+  }
+
+  const reorientedPathData =
+    typeof pathItem.pathData === 'string' ? pathItem.pathData.trim() : '';
+
+  return {
+    item: pathItem,
+    didClip: Boolean(reorientedPathData && reorientedPathData !== originalPathData),
+  };
+};
+
+const forceUniteSameDirectionContours = (scope, pathItem) => {
+  const children = Array.isArray(pathItem?.children) ? [...pathItem.children] : [];
+  if (!scope || !pathItem || children.length < 2) {
+    return { item: pathItem, didClip: false };
+  }
+
+  const clockwiseItems = [];
+  const counterClockwiseItems = [];
+  const unknownItems = [];
+
+  children.forEach(child => {
+    if (!child || typeof child.pathData !== 'string' || !child.pathData.trim()) return;
+    if (child.clockwise === true) {
+      clockwiseItems.push(child);
+    } else if (child.clockwise === false) {
+      counterClockwiseItems.push(child);
+    } else {
+      unknownItems.push(child);
+    }
+  });
+
+  const unitedItems = [];
+  const clockwiseUnion = unitePathItems(clockwiseItems);
+  const counterClockwiseUnion = unitePathItems(counterClockwiseItems);
+
+  if (clockwiseUnion) unitedItems.push(clockwiseUnion);
+  if (counterClockwiseUnion) unitedItems.push(counterClockwiseUnion);
+  unknownItems.forEach(item => unitedItems.push(item));
+
+  const unitedPathData = unitedItems
+    .filter(item => item && typeof item.pathData === 'string' && item.pathData.trim())
+    .map(item => item.pathData)
+    .join(' ')
+    .trim();
+
+  if (!unitedPathData) {
+    return { item: pathItem, didClip: false };
+  }
+
+  let cleanedItem = null;
+  try {
+    cleanedItem = new scope.CompoundPath(unitedPathData);
+  } catch {
+    cleanedItem = null;
+  }
+
+  if (!cleanedItem || !cleanedItem.pathData) {
+    return { item: pathItem, didClip: false };
+  }
+
+  const originalPathData =
+    typeof pathItem.pathData === 'string' ? pathItem.pathData.trim() : '';
+  const cleanedPathData =
+    typeof cleanedItem.pathData === 'string' ? cleanedItem.pathData.trim() : '';
+  if (!cleanedPathData || cleanedPathData === originalPathData) {
+    try {
+      cleanedItem.remove();
+    } catch {}
+    return { item: pathItem, didClip: false };
+  }
+
+  try {
+    pathItem.remove();
+  } catch {}
+
+  [...children, ...unitedItems].forEach(item => {
+    if (!item || item === cleanedItem) return;
+    try {
+      item.remove();
+    } catch {}
+  });
+
+  return { item: cleanedItem, didClip: true };
+};
+
+const ROBOTO_FORCE_UNITE_GLYPH_CHARS = new Set(['W', 'w', '4']);
+
 const buildIntersectedGlyphPathData = (
   textToSvgInstance,
   text,
@@ -1194,6 +1366,9 @@ const buildIntersectedGlyphPathData = (
     uniteInternalGlyphOverlaps = false,
     normalizeFilledGlyphOutline = false,
     forceCleanPathData = false,
+    clipOppositeDirectionContours = false,
+    reorientGlyphContours = false,
+    forceUniteGlyphChars = null,
   } = {}
 ) => {
   if (!textToSvgInstance || !text || !Number.isFinite(fontSize) || fontSize <= 0) {
@@ -1220,6 +1395,7 @@ const buildIntersectedGlyphPathData = (
     }
 
     const glyphItems = [];
+    const textChars = Array.from(String(text));
     const unitsPerEm = Number(font.unitsPerEm) || 1000;
     const unitToPx = fontSize / unitsPerEm;
     let cursorXPx = 0;
@@ -1241,12 +1417,29 @@ const buildIntersectedGlyphPathData = (
         try {
           const pathItem = new scope.CompoundPath(glyphPathData);
           const flattenTolerance = getFilledOutlineFlattenToleranceForFont(fontId);
-          const preparedGlyph = normalizeFilledGlyphOutline
+          let preparedGlyph = normalizeFilledGlyphOutline
             ? normalizePathItemFilledOutline(pathItem, flattenTolerance)
             : resolvePathItemSelfIntersections(pathItem);
+          if (reorientGlyphContours) {
+            const reorientedGlyph = reorientPathItemContours(preparedGlyph.item);
+            preparedGlyph = {
+              item: reorientedGlyph.item,
+              didClip: preparedGlyph.didClip || reorientedGlyph.didClip,
+            };
+          }
+          const sourceChar = textChars[i] || '';
+          if (forceUniteGlyphChars?.has(sourceChar)) {
+            const unitedGlyph = forceUniteSameDirectionContours(scope, preparedGlyph.item);
+            preparedGlyph = {
+              item: unitedGlyph.item,
+              didClip: preparedGlyph.didClip || unitedGlyph.didClip,
+            };
+          }
           const clippedGlyph = uniteInternalGlyphOverlaps
             ? unitePathItemInternalOverlaps(scope, preparedGlyph.item)
-            : clipPathItemInternalOverlaps(scope, preparedGlyph.item);
+            : clipPathItemInternalOverlaps(scope, preparedGlyph.item, {
+                preserveOppositeDirectionContours: !clipOppositeDirectionContours,
+              });
           glyphItems.push(clippedGlyph.item);
           if (preparedGlyph.didClip || clippedGlyph.didClip) {
             didClipGlyphOverlap = true;
@@ -1301,7 +1494,8 @@ const buildIntersectedGlyphPathData = (
           try {
             leftGlyph.remove();
           } catch {}
-          glyphItems[i] = clipped;
+          const resolvedClipped = resolvePathItemSelfIntersections(clipped);
+          glyphItems[i] = resolvedClipped.item;
           didClipGlyphOverlap = true;
         } else {
           try {
@@ -1324,6 +1518,20 @@ const buildIntersectedGlyphPathData = (
       .join(' ')
       .trim();
 
+    if (pathData && forceCleanPathData) {
+      try {
+        const finalItem = new scope.CompoundPath(pathData);
+        const preparedFinal = resolvePathItemSelfIntersections(finalItem);
+        const clippedFinal = clipPathItemInternalOverlaps(scope, preparedFinal.item, {
+          preserveOppositeDirectionContours: !clipOppositeDirectionContours,
+        });
+        pathData = clippedFinal.item?.pathData || pathData;
+        try {
+          clippedFinal.item?.remove();
+        } catch {}
+      } catch {}
+    }
+
     if (pathData && anchor && anchor !== PLACEMENT_TEXT_TO_SVG_ANCHOR) {
       try {
         const cleanedItem = new scope.CompoundPath(pathData);
@@ -1338,6 +1546,15 @@ const buildIntersectedGlyphPathData = (
             nativeItem.bounds.y - cleanedItem.bounds.y
           );
           pathData = cleanedItem.pathData || pathData;
+        }
+        if (forceCleanPathData) {
+          try {
+            const resolvedAnchored = resolvePathItemSelfIntersections(cleanedItem);
+            const clippedAnchored = clipPathItemInternalOverlaps(scope, resolvedAnchored.item, {
+              preserveOppositeDirectionContours: !clipOppositeDirectionContours,
+            });
+            pathData = clippedAnchored.item?.pathData || pathData;
+          } catch {}
         }
         try {
           cleanedItem.remove();
@@ -1374,6 +1591,9 @@ const getCleanTextToSvgPathData = (
   const shouldClipNeighborGlyphOverlaps =
     clipNeighborGlyphOverlaps ?? shouldClipGlyphOverlapsForFont(fontId);
   const shouldForceCleanPathData = shouldForceCleanGlyphPathForFont(fontId);
+  const shouldUseRobotoGlyphContourFix = isRobotoGlyphOverlapFont(fontId);
+  const shouldNormalizeFilledGlyphOutline =
+    shouldForceCleanPathData && !shouldUseRobotoGlyphContourFix;
 
   return (
     buildIntersectedGlyphPathData(textToSvgInstance, text, fontSize, {
@@ -1381,8 +1601,13 @@ const getCleanTextToSvgPathData = (
       fontId,
       clipNeighborGlyphOverlaps: shouldClipNeighborGlyphOverlaps,
       uniteInternalGlyphOverlaps,
-      normalizeFilledGlyphOutline: shouldForceCleanPathData,
+      normalizeFilledGlyphOutline: shouldNormalizeFilledGlyphOutline,
       forceCleanPathData: shouldForceCleanPathData,
+      clipOppositeDirectionContours: false,
+      reorientGlyphContours: shouldUseRobotoGlyphContourFix,
+      forceUniteGlyphChars: shouldUseRobotoGlyphContourFix
+        ? ROBOTO_FORCE_UNITE_GLYPH_CHARS
+        : null,
     }) ||
     textToSvgInstance.getD(text, {
       fontSize,

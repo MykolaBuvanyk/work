@@ -104,6 +104,8 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
 
     const invoiceNumberRaw = String(order.id || '');
     const invoiceNumber = escapeHtml(invoiceNumberRaw);
+    const orderNumberRaw = String(order?.id || '').trim().padStart(3, '0');
+    const orderNumber = escapeHtml(orderNumberRaw);
     const customerNumber = escapeHtml(order.userId);
     const invoiceDate = escapeHtml(formatInvoiceDate(order.createdAt));
     const invoiceDueDateDate = new Date(new Date(order.createdAt).setMonth(new Date(order.createdAt).getMonth() + 1));
@@ -156,7 +158,7 @@ export const generateInvoicePdfBuffer = async ({ order, orderMongo, lang }) => {
       : Math.max(0, round2(totalAmount - netAmount - shippingCost));
     const customerReferenceRaw = String(checkout?.customerReference || '').trim();
     const pdfText = (key, vars) => escapeHtml(t(key, lang, vars));
-    const invoiceReferenceLabel = `${pdfText('pdf.invoice.referenceOrderNo')} ${invoiceNumber}`;
+    const invoiceReferenceLabel = `${pdfText('pdf.invoice.referenceOrderNo')} ${orderNumber}`;
     const logoPng = process.env.VITE_LAYOUT_SERVER + 'images/images/logo.png';
 
     const htmlContent = `

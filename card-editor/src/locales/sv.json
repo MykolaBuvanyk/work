@@ -693,7 +693,7 @@
       "selectImageFile": "Välj en bildfil.",
       "fileTooLarge": "Filen är för stor. Maximal storlek: 5 MB.",
       "canvasNotInitialized": "Arbetsytan har inte initierats.",
-      "excelRowsImported": "{{count}} textrader importerade.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Det gick inte att importera text: {{message}}",
       "excelReadFailed": "Det gick inte att läsa Excel-filen."
     },

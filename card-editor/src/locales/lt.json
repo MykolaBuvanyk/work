@@ -693,7 +693,7 @@
       "selectImageFile": "Prašome pasirinkti vaizdo failą.",
       "fileTooLarge": "Failas per didelis. Maksimalus dydis: 5 MB.",
       "canvasNotInitialized": "Darbo sritis nebuvo inicializuota.",
-      "excelRowsImported": "Importuotos {{count}} teksto eilutės.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Nepavyko importuoti teksto: {{message}}",
       "excelReadFailed": "Nepavyko nuskaityti Excel failo."
     },

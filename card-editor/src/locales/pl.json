@@ -693,7 +693,7 @@
       "selectImageFile": "Wybierz plik obrazu.",
       "fileTooLarge": "Plik jest za duży. Maksymalny rozmiar: 5 MB.",
       "canvasNotInitialized": "Obszar roboczy nie został zainicjowany.",
-      "excelRowsImported": "Zaimportowano {{count}} wierszy tekstu.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Nie można zaimportować tekstu: {{message}}",
       "excelReadFailed": "Nie można odczytać pliku Excel."
     },

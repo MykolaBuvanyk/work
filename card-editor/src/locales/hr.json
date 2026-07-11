@@ -693,7 +693,7 @@
       "selectImageFile": "Odaberite datoteku slike.",
       "fileTooLarge": "Datoteka je prevelika. Maksimalna veličina: 5 MB.",
       "canvasNotInitialized": "Platno nije inicijalizirano.",
-      "excelRowsImported": "Uvezeno je {{count}} redaka teksta.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Uvoz teksta nije uspio: {{message}}",
       "excelReadFailed": "Excel datoteku nije bilo moguće pročitati."
     },

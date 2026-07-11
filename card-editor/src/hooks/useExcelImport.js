@@ -1,4 +1,5 @@
 import { useCanvasContext } from "../contexts/CanvasContext";
+import { useTranslation } from "react-i18next";
 import * as fabric from "fabric";
 import qrGenerator from "qrcode-generator";
 import JsBarcode from "jsbarcode";
@@ -32,6 +33,7 @@ const pxToMm = (px) => (Number(px) || 0) / PX_PER_MM;
 
 export const useExcelImport = () => {
   const { canvas, globalColors, updateGlobalColors } = useCanvasContext();
+  const { t } = useTranslation();
 
   /* ========== EXCEL EXPORT - DISABLED ==========
    * Функція exportToExcel закоментована.
@@ -1240,7 +1242,7 @@ export const useExcelImport = () => {
             canvas.setActiveObject(createdObjects[0]);
           }
 
-          alert(`Імпортовано ${createdObjects.length} текстових рядків`);
+          alert(t("toolbar.alerts.excelRowsImported", { count: createdObjects.length }));
         } catch (error) {
           console.error("Помилка імпорту тексту з Excel:", error);
           alert(`Не вдалося імпортувати текст: ${error.message}`);

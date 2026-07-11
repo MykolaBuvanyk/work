@@ -693,7 +693,7 @@
       "selectImageFile": "Будь ласка, виберіть файл зображення.",
       "fileTooLarge": "Файл занадто великий. Максимальний розмір: 5MB.",
       "canvasNotInitialized": "Полотно не ініціалізовано.",
-      "excelRowsImported": "Імпортовано {{count}} текстових рядків.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Не вдалося імпортувати текст: {{message}}",
       "excelReadFailed": "Не вдалося прочитати файл Excel."
     },

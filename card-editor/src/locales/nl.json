@@ -693,7 +693,7 @@
       "selectImageFile": "Selecteer een afbeeldingsbestand.",
       "fileTooLarge": "Het bestand is te groot. Maximale grootte: 5 MB.",
       "canvasNotInitialized": "Het werkgebied is niet geïnitialiseerd.",
-      "excelRowsImported": "{{count}} tekstregels geïmporteerd.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Tekst kon niet worden geïmporteerd: {{message}}",
       "excelReadFailed": "Het Excel-bestand kon niet worden gelezen."
     },

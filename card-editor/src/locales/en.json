@@ -693,7 +693,7 @@
       "selectImageFile": "Please select an image file.",
       "fileTooLarge": "File is too large. Maximum size: 5 MB.",
       "canvasNotInitialized": "Canvas is not initialized.",
-      "excelRowsImported": "Imported {{count}} text rows.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Could not import text: {{message}}",
       "excelReadFailed": "Could not read the Excel file."
     },

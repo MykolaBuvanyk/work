@@ -693,7 +693,7 @@
       "selectImageFile": "Selectați un fișier imagine.",
       "fileTooLarge": "Fișierul este prea mare. Dimensiunea maximă: 5 MB.",
       "canvasNotInitialized": "Spațiul de lucru nu a fost inițializat.",
-      "excelRowsImported": "{{count}} rânduri de text importate.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Nu se poate importa textul: {{message}}",
       "excelReadFailed": "Nu se poate citi fișierul Excel."
     },

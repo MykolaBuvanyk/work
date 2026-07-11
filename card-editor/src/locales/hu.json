@@ -693,7 +693,7 @@
       "selectImageFile": "Kérjük, válasszon képfájlt.",
       "fileTooLarge": "A fájl mérete túl nagy. Maximum méret: 5 MB.",
       "canvasNotInitialized": "A munkafelület nem lett inicializálva.",
-      "excelRowsImported": "{{count}} szövegsor importálva.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Nem sikerült importálni a szöveget: {{message}}",
       "excelReadFailed": "Az Excel-fájl nem olvasható."
     },

@@ -693,7 +693,7 @@
       "selectImageFile": "Palun vali pildifail.",
       "fileTooLarge": "Fail on liiga suur. Maksimaalne suurus: 5 MB.",
       "canvasNotInitialized": "Lõuend pole initsialiseeritud.",
-      "excelRowsImported": "Imporditi {{count}} tekstirida.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Teksti importimine ebaõnnestus: {{message}}",
       "excelReadFailed": "Exceli faili ei õnnestunud lugeda."
     },

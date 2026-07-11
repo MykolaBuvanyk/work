@@ -693,7 +693,7 @@
       "selectImageFile": "Vælg venligst en billedfil.",
       "fileTooLarge": "Filen er for stor. Maksimal størrelse: 5 MB.",
       "canvasNotInitialized": "Lærredet er ikke initialiseret.",
-      "excelRowsImported": "{{count}} tekstrækker importeret.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Import af tekst mislykkedes: {{message}}",
       "excelReadFailed": "Excel-filen kunne ikke læses."
     },

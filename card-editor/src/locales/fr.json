@@ -693,7 +693,7 @@
       "selectImageFile": "Veuillez sélectionner un fichier image.",
       "fileTooLarge": "Le fichier est trop volumineux. Taille maximale : 5 Mo.",
       "canvasNotInitialized": "Le canevas n’est pas initialisé.",
-      "excelRowsImported": "{{count}} lignes de texte importées.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Impossible d’importer le texte : {{message}}",
       "excelReadFailed": "Impossible de lire le fichier Excel."
     },

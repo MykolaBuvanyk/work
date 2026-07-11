@@ -693,7 +693,7 @@
       "selectImageFile": "Vyberte súbor obrázka.",
       "fileTooLarge": "Súbor je príliš veľký. Maximálna veľkosť: 5 MB.",
       "canvasNotInitialized": "Pracovná plocha nebola inicializovaná.",
-      "excelRowsImported": "Importovaných {{count}} riadkov textu.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Nie je možné importovať text: {{message}}",
       "excelReadFailed": "Nie je možné načítať súbor Excel."
     },

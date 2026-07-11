@@ -693,7 +693,7 @@
       "selectImageFile": "Vyberte prosím soubor obrázku.",
       "fileTooLarge": "Soubor je příliš velký. Maximální velikost: 5 MB.",
       "canvasNotInitialized": "Plátno není inicializováno.",
-      "excelRowsImported": "Importováno {{count}} textových řádků.",
+      "excelRowsImported": "{{count}} text lines imported.",
       "excelImportFailed": "Import textu se nezdařil: {{message}}",
       "excelReadFailed": "Soubor Excel se nepodařilo přečíst."
     },

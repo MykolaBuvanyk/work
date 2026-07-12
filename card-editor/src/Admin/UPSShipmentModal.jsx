@@ -6,10 +6,16 @@ import { formatMoney } from '../utils/formatMoney';
 function resolveCountryCode(raw) {
   if (!raw) return '';
   const s = raw.trim();
+  if (s === 'UK') return 'GB';
+  if (s === 'GREAT BRITAIN') return 'GB';
   if (s.length === 2) return s.toUpperCase();
   const found = combinedCountries.find(
     c => c.label.toLowerCase() === s.toLowerCase()
   );
+  if (found) {
+    // Якщо знайшли і код раптом UK — форсуємо GB, інакше віддаємо код країни
+    return found.code === 'UK' ? 'GB' : found.code;
+  }
   return found ? found.code : s.toUpperCase().slice(0, 2);
 }
 
@@ -84,7 +90,7 @@ export default function UPSShipmentModal({ order, deliverySectionData, onClose, 
         address: form.address,
         city: form.city,
         postalCode: form.postalCode,
-        country: form.country,
+        country: form.country=='UK'?'GB':form.country,
         weight: form.weight,
         length: form.length,
         width: form.width,

@@ -1042,7 +1042,9 @@ const ensureDesignFontsLoaded = async (designs = []) => {
 const resolveDesignJsonTemplate = (design = {}) =>
   design?.jsonTemplate || design?.json || design?.meta?.jsonTemplate || null;
 
-const TEXT_OBJECT_TYPES = new Set(["i-text", "text", "textbox"]);
+const TEXT_OBJECT_TYPES = new Set(["i-text", "itext", "text", "textbox"]);
+const isTextObjectType = (type) =>
+  TEXT_OBJECT_TYPES.has(String(type || "").trim().toLowerCase());
 
 const sanitizeFabricJsonForSvgExport = (jsonTemplate) => {
   if (!jsonTemplate || typeof jsonTemplate !== "object") return jsonTemplate;
@@ -1105,7 +1107,7 @@ const annotateFabricTextMetricsInSvgMarkup = (markup, fabricObjects = []) => {
   }
 
   const textObjects = (Array.isArray(fabricObjects) ? fabricObjects : []).filter(
-    (object) => object && TEXT_OBJECT_TYPES.has(object.type)
+    (object) => object && isTextObjectType(object.type)
   );
   if (!textObjects.length) return markup;
 
@@ -1172,6 +1174,9 @@ export const generateSvgMarkupFromJsonTemplate = async (
     const safeJsonTemplate = sanitizeFabricJsonForSvgExport(
       JSON.parse(JSON.stringify(jsonTemplate))
     );
+    // SVG metrics must be collected after every custom face is ready. This is
+    // also the path used from the admin export screen.
+    await ensureFontsLoaded(collectFontFamiliesFromJson(safeJsonTemplate));
 
     staticCanvas = new fabric.StaticCanvas(null, {
       width,
@@ -1213,6 +1218,14 @@ export const generateSvgMarkupFromJsonTemplate = async (
         }
       });
     }
+
+    // Recalculate Fabric's cached text dimensions after deserialization.
+    staticCanvas.getObjects?.().forEach((object) => {
+      if (!isTextObjectType(object?.type)) return;
+      object.initDimensions?.();
+      object.setCoords?.();
+      object.dirty = true;
+    });
 
     // Objects loaded into a fresh StaticCanvas do not retain runtime shape patching.
     // Re-apply shape serialization patch so SVG export contains frame metadata

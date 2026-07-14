@@ -18,6 +18,9 @@ import {
   transferUnsavedSignsToProjectByIds,
   restoreElementProperties,
   extractToolbarState,
+  collectFontFamiliesFromJson,
+  ensureFontsLoaded,
+  loadCanvasFontsAndRerender,
 } from "../../utils/projectStorage";
 import { sanitizeFabricJsonForLoad } from "../../utils/sanitizeFabricJsonForLoad";
 import { createShareLink } from "../../http/share";
@@ -133,6 +136,7 @@ const YourProjectsModal = ({ onClose }) => {
       });
 
       const safeCanvasJson = sanitizeFabricJsonForLoad(canvasJson);
+      await ensureFontsLoaded(collectFontFamiliesFromJson(safeCanvasJson));
 
       await new Promise((resolve, reject) => {
         let settled = false;
@@ -341,6 +345,9 @@ const YourProjectsModal = ({ onClose }) => {
     if (!canvas || !canvasEntry?.json || typeof canvas.loadFromJSON !== "function") return;
 
     const safeCanvasJson = sanitizeFabricJsonForLoad(canvasEntry.json);
+    // Load faces before Fabric creates text objects; otherwise it measures the
+    // fallback face and keeps a too-narrow Audiowide bounding box.
+    await ensureFontsLoaded(collectFontFamiliesFromJson(safeCanvasJson));
 
     const toolbarState = canvasEntry?.toolbarState || extractToolbarState(canvasEntry);
     canvas.__suspendUndoRedo = true;
@@ -371,6 +378,7 @@ const YourProjectsModal = ({ onClose }) => {
       });
 
       await restoreElementProperties(canvas, toolbarState);
+      await loadCanvasFontsAndRerender(canvas);
 
       try {
         canvas.set?.("hasSavedTheme", true);

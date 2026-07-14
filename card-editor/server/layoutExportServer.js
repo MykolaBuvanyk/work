@@ -39,7 +39,11 @@ const CUSTOM_BORDER_STROKE_COLOR = '#008181';
 const CUSTOM_BORDER_STROKE_WIDTH_PT = 1;
 const TEXT_OUTLINE_COLOR = '#008181';
 const TEXT_STROKE_WIDTH_PT = 0.5;
-const FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE =0.99;
+const FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE = 0.99;
+// Applied around the finished glyph bounds (not around the left baseline), so
+// the correction is distributed equally across all four sides of the text.
+const PDF_TEXT_VISUAL_SCALE_X = 0.99;
+const PDF_TEXT_VISUAL_SCALE_Y = 0.99;
 const PDF_TEXT_X_NUDGE_EM = 0;
 const PDF_TEXT_Y_NUDGE_EM = 0;
 const PLACEMENT_TEXT_GLOBAL_Y_SHIFT_MM = -0.25;
@@ -704,6 +708,28 @@ const ROBOTO_GLYPH_OVERLAP_FONT_IDS = new Set([
   'Roboto-Italic',
   'Roboto-BoldItalic',
 ]);
+const GOOGLE_SANS_GLYPH_OVERLAP_FONT_ALIASES = new Set([
+  'google sans',
+  'google sans bold',
+  'google sans bold italic',
+  'google sans italic',
+  'google sans medium',
+  'google sans medium italic',
+  'googlesans',
+  'googlesans bold',
+  'googlesans bold italic',
+  'googlesans italic',
+  'googlesans medium',
+  'googlesans medium italic',
+].flatMap(alias => [normalizeFontAlias(alias), compactFontAlias(alias)]));
+const GOOGLE_SANS_GLYPH_OVERLAP_FONT_IDS = new Set([
+  'CustomFont-New-Fonts-GoogleSans-Bold',
+  'CustomFont-New-Fonts-GoogleSans-BoldItalic',
+  'CustomFont-New-Fonts-GoogleSans-Italic',
+  'CustomFont-New-Fonts-GoogleSans-Medium',
+  'CustomFont-New-Fonts-GoogleSans-MediumItalic',
+  'CustomFont-New-Fonts-GoogleSans-Regular',
+]);
 
 const DEFAULT_FONT_ID = 'ArialMT';
 
@@ -750,16 +776,36 @@ const isRobotoGlyphOverlapFont = fontId =>
     ROBOTO_GLYPH_OVERLAP_FONT_ALIASES
   );
 
-const shouldForceCleanGlyphPathForFont = fontId =>
-  isRobotoGlyphOverlapFont(fontId) ||
+const isGoogleSansGlyphOverlapFont = fontId =>
   fontMatchesAliasSet(
+    fontId,
+    GOOGLE_SANS_GLYPH_OVERLAP_FONT_IDS,
+    GOOGLE_SANS_GLYPH_OVERLAP_FONT_ALIASES
+  );
+
+const isGoogleSansBoldItalicGlyphOverlapFont = fontId => {
+  const directCompactId = compactFontAlias(fontId);
+  if (directCompactId.includes('googlesansbolditalic')) return true;
+
+  const def = getFontDefinition(fontId);
+  if (!def) return false;
+  return [def.id, def.file, ...(Array.isArray(def.aliases) ? def.aliases : [])].some(
+    candidate => compactFontAlias(candidate).includes('googlesansbolditalic')
+  );
+};
+
+const usesNativeOpenTypeGlyphContours = fontId =>
+  isRobotoGlyphOverlapFont(fontId) || isGoogleSansGlyphOverlapFont(fontId);
+
+const shouldForceCleanGlyphPathForFont = fontId =>
+  !usesNativeOpenTypeGlyphContours(fontId) && fontMatchesAliasSet(
     fontId,
     REQUESTED_GLYPH_OVERLAP_FONT_IDS,
     REQUESTED_GLYPH_OVERLAP_FONT_ALIASES
   );
 
 const shouldClipGlyphOverlapsForFont = fontId => {
-  return isRobotoGlyphOverlapFont(fontId) || fontMatchesAliasSet(
+  return !usesNativeOpenTypeGlyphContours(fontId) && fontMatchesAliasSet(
     fontId,
     HANDWRITTEN_GLYPH_OVERLAP_FONT_IDS,
     HANDWRITTEN_GLYPH_OVERLAP_FONT_ALIASES
@@ -1353,7 +1399,411 @@ const forceUniteSameDirectionContours = (scope, pathItem) => {
   return { item: cleanedItem, didClip: true };
 };
 
-const ROBOTO_FORCE_UNITE_GLYPH_CHARS = new Set(['W', 'w', '4']);
+const getAbsolutePathItemArea = item => {
+  if (!item) return 0;
+  const children = Array.isArray(item.children) ? item.children : [];
+  if (children.length > 0) {
+    return children.reduce((sum, child) => sum + getAbsolutePathItemArea(child), 0);
+  }
+  const area = Math.abs(Number(item.area) || 0);
+  return Number.isFinite(area) ? area : 0;
+};
+
+const safelyResolveGoogleRobotoLowercaseE = (
+  scope,
+  glyphPathData,
+  fontSize,
+  requiredCrossingCount = null
+) => {
+  let source = null;
+  let workingPath = null;
+  let resolved = null;
+  try {
+    source = new scope.CompoundPath(glyphPathData);
+    const children = Array.isArray(source.children) ? source.children : [];
+    const crossingCount = countPathItemSelfCrossings(source);
+    if (
+      children.length !== 1 ||
+      crossingCount === 0 ||
+      (Number.isFinite(requiredCrossingCount) && crossingCount !== requiredCrossingCount)
+    ) {
+      return glyphPathData;
+    }
+
+    const sourceBounds = source.bounds?.clone?.() || source.bounds;
+    workingPath = children[0].clone({ insert: false });
+    resolved = workingPath.resolveCrossings?.() || workingPath;
+    if (!resolved?.pathData || !resolved.bounds) return glyphPathData;
+
+    const tolerance = Math.max(0.05, (Number(fontSize) || 0) * 0.001);
+    const keepsOuterBounds =
+      sourceBounds &&
+      Math.abs(resolved.bounds.left - sourceBounds.left) <= tolerance &&
+      Math.abs(resolved.bounds.top - sourceBounds.top) <= tolerance &&
+      Math.abs(resolved.bounds.right - sourceBounds.right) <= tolerance &&
+      Math.abs(resolved.bounds.bottom - sourceBounds.bottom) <= tolerance;
+    const removesSelfCrossings = countPathItemSelfCrossings(resolved) === 0;
+
+    return keepsOuterBounds && removesSelfCrossings
+      ? resolved.pathData
+      : glyphPathData;
+  } catch {
+    return glyphPathData;
+  } finally {
+    try {
+      source?.remove();
+      if (resolved && resolved !== workingPath) resolved.remove();
+      workingPath?.remove();
+    } catch {}
+  }
+};
+
+const countPathItemContourIntersections = pathItem => {
+  const children = Array.isArray(pathItem?.children) ? pathItem.children : [];
+  let count = 0;
+  for (let i = 0; i + 1 < children.length; i += 1) {
+    for (let j = i + 1; j < children.length; j += 1) {
+      try {
+        count += children[i].getIntersections(children[j]).length;
+      } catch {}
+    }
+  }
+  return count;
+};
+
+const safelyNormalizeGoogleRobotoUppercaseGlyph = (
+  scope,
+  glyphPathData,
+  fontSize
+) => {
+  let source = null;
+  let clone = null;
+  let normalized = null;
+  try {
+    source = new scope.CompoundPath(glyphPathData);
+    const sourceBounds = source.bounds?.clone?.() || source.bounds;
+    clone = source.clone({ insert: false });
+    normalized = source.unite(clone, { insert: false });
+    if (!normalized?.pathData || !normalized.bounds || !sourceBounds) {
+      return glyphPathData;
+    }
+
+    const tolerance = Math.max(0.05, (Number(fontSize) || 0) * 0.001);
+    const keepsOuterBounds =
+      Math.abs(normalized.bounds.left - sourceBounds.left) <= tolerance &&
+      Math.abs(normalized.bounds.top - sourceBounds.top) <= tolerance &&
+      Math.abs(normalized.bounds.right - sourceBounds.right) <= tolerance &&
+      Math.abs(normalized.bounds.bottom - sourceBounds.bottom) <= tolerance;
+    const hasCleanContours =
+      countPathItemSelfCrossings(normalized) === 0 &&
+      countPathItemContourIntersections(normalized) === 0;
+    const hasGeometry = getAbsolutePathItemArea(normalized) > 0;
+
+    return keepsOuterBounds && hasCleanContours && hasGeometry
+      ? normalized.pathData
+      : glyphPathData;
+  } catch {
+    return glyphPathData;
+  } finally {
+    try {
+      source?.remove();
+      clone?.remove();
+      normalized?.remove();
+    } catch {}
+  }
+};
+
+const glyphContoursOverlap = (first, second) => {
+  if (!first?.bounds || !second?.bounds || !first.bounds.intersects(second.bounds)) {
+    return false;
+  }
+
+  try {
+    if (typeof first.getIntersections === 'function' && first.getIntersections(second).length > 0) {
+      return true;
+    }
+  } catch {}
+
+  return false;
+};
+
+const safelyUniteGoogleRobotoContourPair = (first, second, fontSize) => {
+  if (!first || !second || !glyphContoursOverlap(first, second)) {
+    return null;
+  }
+
+  let united = null;
+  try {
+    united = first.unite(second, { insert: false });
+  } catch {
+    united = null;
+  }
+
+  if (!united?.pathData || !united.bounds) {
+    try {
+      united?.remove();
+    } catch {}
+    return null;
+  }
+
+  const tolerance = Math.max(0.05, (Number(fontSize) || 0) * 0.001);
+  const expectedLeft = Math.min(first.bounds.left, second.bounds.left);
+  const expectedTop = Math.min(first.bounds.top, second.bounds.top);
+  const expectedRight = Math.max(first.bounds.right, second.bounds.right);
+  const expectedBottom = Math.max(first.bounds.bottom, second.bounds.bottom);
+  const keepsOuterBounds =
+    Math.abs(united.bounds.left - expectedLeft) <= tolerance &&
+    Math.abs(united.bounds.top - expectedTop) <= tolerance &&
+    Math.abs(united.bounds.right - expectedRight) <= tolerance &&
+    Math.abs(united.bounds.bottom - expectedBottom) <= tolerance;
+
+  // A valid union can remove the duplicated overlap, but it must never contain
+  // less filled geometry than either of its source contours.
+  const minimumExpectedArea =
+    Math.max(getAbsolutePathItemArea(first), getAbsolutePathItemArea(second)) * 0.995;
+  const keepsSourceArea = getAbsolutePathItemArea(united) >= minimumExpectedArea;
+
+  if (!keepsOuterBounds || !keepsSourceArea) {
+    try {
+      united.remove();
+    } catch {}
+    return null;
+  }
+
+  return united;
+};
+
+const safelyUniteGoogleRobotoContourGroup = (items, fontSize) => {
+  const result = items.filter(Boolean);
+  let didUnite = false;
+
+  // Restart after every accepted union because the new contour can intersect
+  // another contour that neither original item covered on its own.
+  for (let pass = 0; pass < 20; pass += 1) {
+    let mergedThisPass = false;
+    for (let i = 0; i + 1 < result.length && !mergedThisPass; i += 1) {
+      for (let j = i + 1; j < result.length; j += 1) {
+        const united = safelyUniteGoogleRobotoContourPair(result[i], result[j], fontSize);
+        if (!united) continue;
+
+        try {
+          result[i].remove();
+          result[j].remove();
+        } catch {}
+        result.splice(j, 1);
+        result[i] = united;
+        didUnite = true;
+        mergedThisPass = true;
+        break;
+      }
+    }
+    if (!mergedThisPass) break;
+  }
+
+  return { items: result, didUnite };
+};
+
+const safelyUniteGoogleRobotoGlyph = (
+  scope,
+  glyphPathData,
+  fontSize,
+  {
+    sourceChar = '',
+    glyphUnicode = null,
+    glyphName = '',
+    resolveThreeCrossingGlyph = false,
+    normalizeUppercaseB = false,
+    normalizeUppercaseP = false,
+  } = {}
+) => {
+  const isLowercaseE =
+    sourceChar === 'e' ||
+    Number(glyphUnicode) === 101 ||
+    String(glyphName || '').trim().toLowerCase() === 'e';
+  const normalizedGlyphName = String(glyphName || '').trim().toUpperCase();
+  const isUppercaseB =
+    sourceChar === 'B' || Number(glyphUnicode) === 66 || normalizedGlyphName === 'B';
+  const isUppercaseP =
+    sourceChar === 'P' || Number(glyphUnicode) === 80 || normalizedGlyphName === 'P';
+  let preparedGlyphPathData =
+    isLowercaseE || resolveThreeCrossingGlyph
+      ? safelyResolveGoogleRobotoLowercaseE(
+          scope,
+          glyphPathData,
+          fontSize,
+          resolveThreeCrossingGlyph && !isLowercaseE ? 3 : null
+        )
+      : glyphPathData;
+  if ((normalizeUppercaseB && isUppercaseB) || (normalizeUppercaseP && isUppercaseP)) {
+    preparedGlyphPathData = safelyNormalizeGoogleRobotoUppercaseGlyph(
+      scope,
+      preparedGlyphPathData,
+      fontSize
+    );
+  }
+  let source = null;
+  try {
+    source = new scope.CompoundPath(preparedGlyphPathData);
+  } catch {
+    return glyphPathData;
+  }
+
+  const children = Array.isArray(source.children) ? [...source.children] : [];
+  if (children.length < 2) {
+    try {
+      source.remove();
+    } catch {}
+    return preparedGlyphPathData;
+  }
+
+  const sourceBounds = source.bounds?.clone?.() || source.bounds;
+  const sourceArea = getAbsolutePathItemArea(source);
+  const clockwise = [];
+  const counterClockwise = [];
+  const unknown = [];
+  children.forEach(child => {
+    if (child.clockwise === true) clockwise.push(child);
+    else if (child.clockwise === false) counterClockwise.push(child);
+    else unknown.push(child);
+  });
+
+  const clockwiseResult = safelyUniteGoogleRobotoContourGroup(clockwise, fontSize);
+  const counterClockwiseResult = safelyUniteGoogleRobotoContourGroup(counterClockwise, fontSize);
+  const outputItems = [
+    ...clockwiseResult.items,
+    ...counterClockwiseResult.items,
+    ...unknown,
+  ];
+  const didUnite = clockwiseResult.didUnite || counterClockwiseResult.didUnite;
+
+  if (!didUnite) {
+    try {
+      source.remove();
+    } catch {}
+    return preparedGlyphPathData;
+  }
+
+  const unitedPathData = outputItems
+    .map(item => (typeof item?.pathData === 'string' ? item.pathData.trim() : ''))
+    .filter(Boolean)
+    .join(' ');
+
+  let result = null;
+  try {
+    result = unitedPathData ? new scope.CompoundPath(unitedPathData) : null;
+  } catch {
+    result = null;
+  }
+
+  const tolerance = Math.max(0.05, (Number(fontSize) || 0) * 0.001);
+  const keepsGlyphBounds =
+    result?.bounds &&
+    sourceBounds &&
+    Math.abs(result.bounds.left - sourceBounds.left) <= tolerance &&
+    Math.abs(result.bounds.top - sourceBounds.top) <= tolerance &&
+    Math.abs(result.bounds.right - sourceBounds.right) <= tolerance &&
+    Math.abs(result.bounds.bottom - sourceBounds.bottom) <= tolerance;
+  // This final guard catches a malformed multi-step boolean even when its
+  // bounding box happens to remain unchanged.
+  const keepsGlyphArea =
+    result && getAbsolutePathItemArea(result) >= sourceArea * 0.7;
+  const safePathData =
+    keepsGlyphBounds && keepsGlyphArea ? result.pathData : preparedGlyphPathData;
+
+  try {
+    source.remove();
+    result?.remove();
+    outputItems.forEach(item => item?.remove?.());
+  } catch {}
+
+  return safePathData || preparedGlyphPathData;
+};
+
+const buildGoogleRobotoGlyphPathData = (
+  textToSvgInstance,
+  text,
+  fontSize,
+  anchor = PLACEMENT_TEXT_TO_SVG_ANCHOR,
+  {
+    resolveThreeCrossingGlyphs = false,
+    normalizeUppercaseB = false,
+    normalizeUppercaseP = false,
+  } = {}
+) => {
+  const font = textToSvgInstance?.font;
+  if (!font || typeof font.stringToGlyphs !== 'function') return null;
+  const scope = getPaperGlyphScope();
+  if (!scope) return null;
+
+  try {
+    scope.project.clear();
+    const glyphs = font.stringToGlyphs(String(text));
+    const unitsPerEm = Number(font.unitsPerEm) || 1000;
+    const unitToPx = fontSize / unitsPerEm;
+    let cursorXPx = 0;
+    const glyphPathParts = [];
+    const sourceChars = Array.from(String(text));
+
+    for (let i = 0; i < glyphs.length; i += 1) {
+      const glyph = glyphs[i];
+      if (!glyph) continue;
+      let glyphPathData = '';
+      try {
+        const glyphPath = glyph.getPath(cursorXPx, 0, fontSize, { kerning: false });
+        glyphPathData = glyphPath?.toPathData?.(5) || '';
+      } catch {}
+
+      if (glyphPathData.trim()) {
+        glyphPathParts.push(
+          safelyUniteGoogleRobotoGlyph(
+            scope,
+            glyphPathData,
+            fontSize,
+            {
+              sourceChar: sourceChars[i] || '',
+              glyphUnicode: glyph.unicode,
+              glyphName: glyph.name,
+              resolveThreeCrossingGlyph: resolveThreeCrossingGlyphs,
+              normalizeUppercaseB,
+              normalizeUppercaseP,
+            }
+          )
+        );
+      }
+
+      const nextGlyph = i + 1 < glyphs.length ? glyphs[i + 1] : null;
+      const kerning =
+        nextGlyph && typeof font.getKerningValue === 'function'
+          ? Number(font.getKerningValue(glyph, nextGlyph)) || 0
+          : 0;
+      cursorXPx += ((Number(glyph.advanceWidth) || 0) + kerning) * unitToPx;
+    }
+
+    let pathData = glyphPathParts.filter(Boolean).join(' ').trim();
+    if (!pathData) return null;
+
+    if (anchor && anchor !== PLACEMENT_TEXT_TO_SVG_ANCHOR) {
+      const resultItem = new scope.CompoundPath(pathData);
+      const nativePathData = textToSvgInstance.getD(String(text), { fontSize, anchor });
+      const nativeItem = new scope.CompoundPath(nativePathData);
+      if (resultItem.bounds && nativeItem.bounds) {
+        resultItem.translate(
+          nativeItem.bounds.x - resultItem.bounds.x,
+          nativeItem.bounds.y - resultItem.bounds.y
+        );
+        pathData = resultItem.pathData || pathData;
+      }
+    }
+
+    scope.project.clear();
+    return pathData;
+  } catch {
+    try {
+      scope.project.clear();
+    } catch {}
+    return null;
+  }
+};
 
 const buildIntersectedGlyphPathData = (
   textToSvgInstance,
@@ -1588,12 +2038,23 @@ const getCleanTextToSvgPathData = (
     return null;
   }
 
+  // Google Sans and Roboto use a dedicated, non-subtractive union. Each glyph is
+  // validated independently so a failed boolean can never remove the glyph.
+  if (usesNativeOpenTypeGlyphContours(fontId)) {
+    return (
+      buildGoogleRobotoGlyphPathData(textToSvgInstance, text, fontSize, anchor, {
+        resolveThreeCrossingGlyphs: isGoogleSansBoldItalicGlyphOverlapFont(fontId),
+        normalizeUppercaseB: isGoogleSansGlyphOverlapFont(fontId),
+        normalizeUppercaseP: usesNativeOpenTypeGlyphContours(fontId),
+      }) ||
+      textToSvgInstance.getD(text, { fontSize, anchor })
+    );
+  }
+
   const shouldClipNeighborGlyphOverlaps =
     clipNeighborGlyphOverlaps ?? shouldClipGlyphOverlapsForFont(fontId);
   const shouldForceCleanPathData = shouldForceCleanGlyphPathForFont(fontId);
-  const shouldUseRobotoGlyphContourFix = isRobotoGlyphOverlapFont(fontId);
-  const shouldNormalizeFilledGlyphOutline =
-    shouldForceCleanPathData && !shouldUseRobotoGlyphContourFix;
+  const shouldNormalizeFilledGlyphOutline = shouldForceCleanPathData;
 
   return (
     buildIntersectedGlyphPathData(textToSvgInstance, text, fontSize, {
@@ -1604,10 +2065,8 @@ const getCleanTextToSvgPathData = (
       normalizeFilledGlyphOutline: shouldNormalizeFilledGlyphOutline,
       forceCleanPathData: shouldForceCleanPathData,
       clipOppositeDirectionContours: false,
-      reorientGlyphContours: shouldUseRobotoGlyphContourFix,
-      forceUniteGlyphChars: shouldUseRobotoGlyphContourFix
-        ? ROBOTO_FORCE_UNITE_GLYPH_CHARS
-        : null,
+      reorientGlyphContours: false,
+      forceUniteGlyphChars: null,
     }) ||
     textToSvgInstance.getD(text, {
       fontSize,
@@ -4032,6 +4491,15 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const fontWeightAttr = resolveTextStyleValue(textNode, 'font-weight');
                 const fontStyleAttr = resolveTextStyleValue(textNode, 'font-style');
                 const fontSize = resolveTextNodeFontSize(textNode);
+                const fabricTextType = String(
+                  textNode.getAttribute('data-fabric-text-type') || ''
+                )
+                  .trim()
+                  .toLowerCase();
+                const fabricTextHeight = parsePositiveNumberAttr(
+                  textNode,
+                  'data-fabric-text-height'
+                );
 
                 const { baseX, baseY, source: positionSource } =
                   resolveTextNodePosition(textNode);
@@ -4068,9 +4536,18 @@ app.post('/api/layout-pdf', async (req, res) => {
                   fontSize,
                   svgScaleForFontUnits
                 );
+                // Fabric's one-line Text/IText height is fontSize * 1.13. The
+                // annotated object height is more reliable than reinterpreting
+                // CSS font-size units on the server and keeps PDF glyph height
+                // identical to the canvas.
+                const fabricDerivedFontSize =
+                  fabricTextHeight && fabricTextType !== 'textbox' && !textContent.includes('\n')
+                    ? fabricTextHeight / FABRIC_FONT_SIZE_MULT
+                    : null;
+                const sourceFontSize = fabricDerivedFontSize || normalizedFontSize;
                 const scaledFontSize = hasMatrixRotation
-                  ? normalizedFontSize
-                  : normalizedFontSize * fontScaleY;
+                  ? sourceFontSize
+                  : sourceFontSize * fontScaleY;
                 const strokeWidthPt = hasMatrixRotation
                   ? Math.max(TEXT_STROKE_WIDTH_PT / Math.max(averageScale, 0.01), 0.01)
                   : Math.max(TEXT_STROKE_WIDTH_PT * averageScale, 0.01);
@@ -4104,6 +4581,9 @@ app.post('/api/layout-pdf', async (req, res) => {
                     width,
                     lineHeight,
                     baselineOffset: computeBaselineOffset(scaledFontSize),
+                    boundsTop: -computeBaselineOffset(scaledFontSize),
+                    boundsBottom:
+                      lineHeight - computeBaselineOffset(scaledFontSize),
                     fontId: resolvedFontId,
                     textToSvg: null,
                   };
@@ -4128,6 +4608,9 @@ app.post('/api/layout-pdf', async (req, res) => {
                       fontId: fallback.fontId,
                       width: fallback.width,
                       lineHeight: fallback.lineHeight,
+                      baselineOffset: fallback.baselineOffset,
+                      boundsTop: fallback.boundsTop,
+                      boundsBottom: fallback.boundsBottom,
                       textToSvg: null,
                     };
                   }
@@ -4139,12 +4622,17 @@ app.post('/api/layout-pdf', async (req, res) => {
                     });
                     const width = metrics?.width ?? 0;
                     const height = metrics?.height ?? scaledFontSize;
+                    const boundsTop = Number.isFinite(Number(metrics?.y))
+                      ? Number(metrics.y)
+                      : -(Number(metrics?.ascender) || height * 0.8);
                     return {
                       ...run,
                       fontId: activeFontId,
                       width,
                       lineHeight: height,
                       baselineOffset: computeBaselineOffset(scaledFontSize),
+                      boundsTop,
+                      boundsBottom: boundsTop + height,
                       textToSvg: textToSvgInstance,
                     };
                   } catch (metricsError) {
@@ -4160,17 +4648,14 @@ app.post('/api/layout-pdf', async (req, res) => {
                       width: fallback.width,
                       lineHeight: fallback.lineHeight,
                       baselineOffset: fallback.baselineOffset,
+                      boundsTop: fallback.boundsTop,
+                      boundsBottom: fallback.boundsBottom,
                       textToSvg: null,
                     };
                   }
                 });
 
                 const textWidth = segmentMetrics.reduce((acc, segment) => acc + segment.width, 0);
-                const fabricTextType = String(
-                  textNode.getAttribute('data-fabric-text-type') || ''
-                )
-                  .trim()
-                  .toLowerCase();
                 const fabricTextWidth = parsePositiveNumberAttr(
                   textNode,
                   'data-fabric-text-width'
@@ -4198,6 +4683,14 @@ app.post('/api/layout-pdf', async (req, res) => {
                     0
                   ) ||
                   scaledFontSize * 0.8;
+                const textBoundsTop = segmentMetrics.reduce(
+                  (min, segment) => Math.min(min, Number(segment.boundsTop) || 0),
+                  0
+                );
+                const textBoundsBottom = segmentMetrics.reduce(
+                  (max, segment) => Math.max(max, Number(segment.boundsBottom) || 0),
+                  0
+                );
 
                 let drawXLocal = 0;
                 if (anchorMode === 'end' || anchorMode === 'right') {
@@ -4247,13 +4740,35 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const drawSegments = (segmentStartX, baselineY, widthScale = 1) => {
                   const safeWidthScale =
                     Number.isFinite(widthScale) && widthScale > 0 ? widthScale : 1;
-                  const useWidthScale = Math.abs(safeWidthScale - 1) > 0.0001;
-                  let segmentX = useWidthScale ? 0 : segmentStartX;
-                  if (useWidthScale) {
-                    doc.save();
-                    doc.translate(segmentStartX, baselineY);
+                  const safeVisualScaleX =
+                    Number.isFinite(PDF_TEXT_VISUAL_SCALE_X) && PDF_TEXT_VISUAL_SCALE_X > 0
+                      ? PDF_TEXT_VISUAL_SCALE_X
+                      : 1;
+                  const safeVisualScaleY =
+                    Number.isFinite(PDF_TEXT_VISUAL_SCALE_Y) && PDF_TEXT_VISUAL_SCALE_Y > 0
+                      ? PDF_TEXT_VISUAL_SCALE_Y
+                      : 1;
+                  const visualCenterX = textWidth / 2;
+                  const visualCenterY = (textBoundsTop + textBoundsBottom) / 2;
+
+                  // Work in a local baseline coordinate system. Scaling around
+                  // the actual glyph-bounds center keeps left/right and
+                  // top/bottom corrections symmetrical.
+                  doc.save();
+                  doc.translate(segmentStartX, baselineY);
+                  if (Math.abs(safeWidthScale - 1) > 0.0001) {
                     doc.scale(safeWidthScale, 1);
                   }
+                  if (
+                    Math.abs(safeVisualScaleX - 1) > 0.0001 ||
+                    Math.abs(safeVisualScaleY - 1) > 0.0001
+                  ) {
+                    doc.translate(visualCenterX, visualCenterY);
+                    doc.scale(safeVisualScaleX, safeVisualScaleY);
+                    doc.translate(-visualCenterX, -visualCenterY);
+                  }
+
+                  let segmentX = 0;
 
                   segmentMetrics.forEach(segment => {
                     if (!segment.text) {
@@ -4270,8 +4785,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                       doc.text(
                         segment.text,
                         segmentX,
-                        (useWidthScale ? 0 : baselineY) -
-                          (Number(segment.baselineOffset) || maxBaselineOffset),
+                        -(Number(segment.baselineOffset) || maxBaselineOffset),
                         {
                         lineBreak: false,
                         stroke: true,
@@ -4292,7 +4806,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                           }
                         );
                         doc.save();
-                        doc.translate(segmentX, useWidthScale ? 0 : baselineY);
+                        doc.translate(segmentX, 0);
                         doc.path(pathData);
                         doc.stroke();
                         doc.restore();
@@ -4318,8 +4832,8 @@ app.post('/api/layout-pdf', async (req, res) => {
                       0.2
                     );
                     const outlineWidth = Math.max(strokeWidthPt, 0.2);
-                    const lineStartX = useWidthScale ? 0 : segmentStartX;
-                    const lineY = (useWidthScale ? 0 : baselineY) + underlineOffset;
+                    const lineStartX = 0;
+                    const lineY = underlineOffset;
                     const lineWidth = Math.max(textWidth, 0);
                     doc.save();
                     doc.lineWidth(outlineWidth);
@@ -4329,9 +4843,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                     doc.restore();
                   }
 
-                  if (useWidthScale) {
-                    doc.restore();
-                  }
+                  doc.restore();
                 };
 
                 if (hasMatrixRotation) {

@@ -4,6 +4,11 @@ import "../utils/CircleWithCut";
 import { useCanvasContext } from "../contexts/CanvasContext";
 import { ensureShapeObjectSvgId } from "../utils/shapeSvgId";
 import { sanitizeFabricJsonForLoad } from "../utils/sanitizeFabricJsonForLoad";
+import {
+  collectFontFamiliesFromJson,
+  ensureFontsLoaded,
+  loadCanvasFontsAndRerender,
+} from "../utils/projectStorage";
 
 const scheduleFrame = (fn) => {
   if (typeof window === "undefined") {
@@ -117,6 +122,7 @@ export const useFabricCanvas = () => {
           const safeJsonTemplate = sanitizeFabricJsonForLoad(
             design.jsonTemplate
           );
+          await ensureFontsLoaded(collectFontFamiliesFromJson(safeJsonTemplate));
           await new Promise((resolve, reject) => {
             let settled = false;
             const finish = () => {
@@ -141,6 +147,7 @@ export const useFabricCanvas = () => {
               reject(loadErr);
             }
           });
+          await loadCanvasFontsAndRerender(canvas);
         }
 
         const applySavedThemeToCircleLines = () => {

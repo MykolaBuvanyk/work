@@ -90,8 +90,21 @@ CUSTOM_FONT_FILES.forEach((font) => {
 });
 
 const FONT_DATA_URI_CACHE = new Map();
+// `document.fonts.check()` returns true when the browser can fall back to a
+// system font. Keep our own record so a missing custom face is never mistaken
+// for a loaded one (most visible with the wider Audiowide face).
+const RUNTIME_FONT_FACE_CACHE = new Set();
 
-const TEXT_OBJECT_TYPES = new Set(["i-text", "text", "textbox"]);
+const TEXT_OBJECT_TYPES = new Set(["i-text", "itext", "text", "textbox"]);
+const isTextObjectType = (type) =>
+  TEXT_OBJECT_TYPES.has(String(type || "").trim().toLowerCase());
+
+const clearFabricFontMetricsCache = async () => {
+  try {
+    const fabricModule = await import("fabric");
+    fabricModule?.cache?.clearFontCache?.();
+  } catch {}
+};
 
 const base64Encode = (binary) => {
   if (typeof window !== "undefined" && typeof window.btoa === "function") {
@@ -138,29 +151,21 @@ export async function ensureFontsLoaded(fontFamilies = []) {
         .trim()
         .replace(/^['"]|['"]$/g, "");
 
-      if (hasDocumentFonts) {
-        try {
-          // If already available, skip
-          if (
-            document.fonts.check(`12px ${plain}`) ||
-            document.fonts.check(`12px "${plain}"`)
-          ) {
-            return true;
-          }
-        } catch {}
-      }
-
       const fontFile = getFontFileByName(plain);
       if (canUseFontFace && fontFile) {
+        if (RUNTIME_FONT_FACE_CACHE.has(normalizeFontName(plain))) {
+          return true;
+        }
         const srcUrl = encodeURI(`${FONT_PUBLIC_PATH}/${fontFile}`);
         try {
           const ff = new FontFace(plain, `url("${srcUrl}")`);
           const loaded = await ff.load();
           if (hasDocumentFonts) {
             try {
-              document.fonts.add(loaded);
-            } catch {}
+            document.fonts.add(loaded);
+          } catch {}
           }
+          RUNTIME_FONT_FACE_CACHE.add(normalizeFontName(plain));
         } catch (e) {
           // Fallback to document.fonts.load even if FontFace failed
           if (hasDocumentFonts) {
@@ -182,6 +187,17 @@ export async function ensureFontsLoaded(fontFamilies = []) {
   try {
     await Promise.all(fontFamilies.map(loadOne));
   } catch {}
+
+  // Fabric caches per-character widths globally under the requested family
+  // name. If it measured Audiowide before the FontFace finished loading, that
+  // fallback width survives every initDimensions() call until this cache is
+  // explicitly cleared.
+  if (hasDocumentFonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
+  await clearFabricFontMetricsCache();
   return true;
 }
 
@@ -192,7 +208,7 @@ export async function loadCanvasFontsAndRerender(canvas) {
     await ensureFontsLoaded(families);
     try {
       canvas.getObjects().forEach((obj) => {
-        if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+        if (!obj || !isTextObjectType(obj.type)) return;
         try {
           // Reapply font to trigger Fabric's metrics recalculation
           if (obj.fontFamily) obj.set({ fontFamily: obj.fontFamily });
@@ -218,7 +234,7 @@ export function reapplyTextAttributes(canvas) {
   if (!canvas || typeof canvas.getObjects !== "function") return false;
   try {
     canvas.getObjects().forEach((obj) => {
-      if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+      if (!obj || !isTextObjectType(obj.type)) return;
       try {
         const nextProps = {};
         if (obj.fontFamily) nextProps.fontFamily = obj.fontFamily;
@@ -291,7 +307,7 @@ export const collectFontFamiliesFromCanvas = (canvas) => {
   const fonts = new Set();
   try {
     canvas.getObjects().forEach((obj) => {
-      if (!obj || !TEXT_OBJECT_TYPES.has(obj.type)) return;
+      if (!obj || !isTextObjectType(obj.type)) return;
       if (!obj.fontFamily) return;
       const family = String(obj.fontFamily)
         .split(",")[0]
@@ -311,7 +327,7 @@ export const collectFontFamiliesFromJson = (json) => {
     const objects = (json && json.objects) || [];
     objects.forEach((obj) => {
       if (!obj || !obj.type) return;
-      if (!TEXT_OBJECT_TYPES.has(obj.type)) return;
+      if (!isTextObjectType(obj.type)) return;
       if (!obj.fontFamily) return;
       const family = String(obj.fontFamily)
         .split(",")[0]

@@ -2508,7 +2508,11 @@ const addInnerContoursForShapes = (rootElement, { enableBorderContours = false, 
   shapeNodes.forEach((shapeNode) =>
     processNodeWithInnerContour(shapeNode, {
       doubleInnerContour: false,
-      applyStrokeCenterCompensation: false,
+      // Fabric stores the shape geometry on the stroke centerline. The two PDF
+      // contour paths represent the visible outer/inner stroke edges, so start
+      // from -thickness/2 and +thickness/2 around that centerline. Without this
+      // compensation the complete PDF band is shifted inward by thickness/2.
+      applyStrokeCenterCompensation: true,
     })
   );
   // For border: keep green overlay on the same geometry as blue,

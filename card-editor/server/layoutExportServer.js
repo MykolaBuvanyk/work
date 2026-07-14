@@ -42,8 +42,8 @@ const TEXT_STROKE_WIDTH_PT = 0.5;
 const FONT_SIZE_PX_TO_PT_NEAR_UNIT_SCALE = 0.99;
 // Applied around the finished glyph bounds (not around the left baseline), so
 // the correction is distributed equally across all four sides of the text.
-const PDF_TEXT_VISUAL_SCALE_X = 0.99;
-const PDF_TEXT_VISUAL_SCALE_Y = 0.99;
+const PDF_TEXT_VISUAL_SCALE_X = 1;
+const PDF_TEXT_VISUAL_SCALE_Y = 0.98;
 const PDF_TEXT_X_NUDGE_EM = 0;
 const PDF_TEXT_Y_NUDGE_EM = 0;
 const PLACEMENT_TEXT_GLOBAL_Y_SHIFT_MM = 0;
@@ -4663,7 +4663,7 @@ app.post('/api/layout-pdf', async (req, res) => {
                 const shouldUseFabricTextWidth =
                   fabricTextWidth &&
                   fabricTextType !== 'textbox' &&
-                  positionSource !== 'tspan';
+                  !textContent.includes('\n');
                 const targetTextWidth = shouldUseFabricTextWidth
                   ? hasMatrixRotation
                     ? fabricTextWidth

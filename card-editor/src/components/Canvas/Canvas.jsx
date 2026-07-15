@@ -2520,13 +2520,52 @@ const Canvas = ({ className }) => {
             cloned.setCoords();
           } catch { }
         }
-        fCanvas.add(cloned);
+
+        const isActiveSelection =
+          typeof cloned.getObjects === 'function' &&
+          (cloned.isType?.('ActiveSelection') || cloned.type?.toLowerCase() === 'activeselection');
+        const clonedObjects = isActiveSelection ? [...cloned.getObjects()] : [cloned];
+
+        if (isActiveSelection) {
+          // ActiveSelection is only a temporary selection wrapper and must never be
+          // inserted into the canvas object list. Its children retain the selection
+          // transform and become normal canvas objects when the selection is cleared.
+          fCanvas.discardActiveObject();
+          cloned.canvas = fCanvas;
+          clonedObjects.forEach(obj => fCanvas.add(obj));
+        } else {
+          fCanvas.add(cloned);
+        }
+
+        // Every duplicated shape needs its own export id. This is especially important
+        // for a multi-selection because cloning the wrapper also clones all child ids.
+        clonedObjects.forEach(obj => {
+          try {
+            const sourceId = obj.id || obj.svgTagId || obj.shapeSvgId || obj?.data?.shapeSvgId || '';
+            if (typeof sourceId === 'string' && sourceId.startsWith('border-')) {
+              ensureShapeSvgId(obj, fCanvas, { prefix: 'border' });
+            } else if (
+              typeof sourceId === 'string' &&
+              (sourceId.startsWith('shape-') ||
+                obj.fromShapeTab === true ||
+                (obj.data && obj.data.fromShapeTab === true))
+            ) {
+              ensureShapeObjectSvgId(obj, fCanvas);
+            }
+          } catch { }
+        });
+
         fCanvas.setActiveObject(cloned);
+        clonedObjects.forEach(obj => {
+          try {
+            ensureActionControls(obj);
+          } catch { }
+        });
         try {
           ensureActionControls(cloned);
         } catch { }
         try {
-          fCanvas.fire('selection:updated', { selected: [cloned], target: cloned });
+          fCanvas.fire('selection:updated', { selected: clonedObjects, target: cloned });
         } catch { }
         try {
           if (cloned.fromIconMenu === true || (cloned.data && cloned.data.fromIconMenu === true)) {
@@ -2574,10 +2613,21 @@ const Canvas = ({ className }) => {
       return true;
     };
     const deleteHandler = (evt, transform) => {
-      const t = transform.target;
+      const t = transform?.target;
       if (!t) return true;
-      fCanvas.remove(t);
-      fCanvas.discardActiveObject();
+      const isActiveSelection =
+        typeof t.getObjects === 'function' &&
+        (t.isType?.('ActiveSelection') || t.type?.toLowerCase() === 'activeselection');
+      if (isActiveSelection) {
+        // The ActiveSelection itself is not stored on the canvas. Clear it first so
+        // Fabric restores every child to canvas coordinates, then remove the children.
+        const selectedObjects = [...t.getObjects()];
+        fCanvas.discardActiveObject();
+        selectedObjects.forEach(obj => fCanvas.remove(obj));
+      } else {
+        fCanvas.remove(t);
+        fCanvas.discardActiveObject();
+      }
       fCanvas.requestRenderAll();
       return true;
     };

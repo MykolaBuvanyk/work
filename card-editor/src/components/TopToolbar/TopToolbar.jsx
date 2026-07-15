@@ -475,7 +475,10 @@ const TopToolbar = ({ className }) => {
     const activeObject = canvas.getActiveObject();
     if (activeObject) {
       // Якщо обраний об'єкт є групою (кілька елементів)
-      if (activeObject.type === "activeSelection") {
+      if (
+        activeObject.isType?.("ActiveSelection") ||
+        activeObject.type?.toLowerCase() === "activeselection"
+      ) {
         const objects = activeObject.getObjects();
         canvas.discardActiveObject();
         objects.forEach((obj) => canvas.remove(obj));

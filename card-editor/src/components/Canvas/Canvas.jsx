@@ -2973,9 +2973,10 @@ const Canvas = ({ className }) => {
     };
 
     fCanvas.on('selection:created', e => {
-      const o = e.selected?.[0];
-      if (o) {
-        if (isHole(o)) {
+      const selectedObjects = e.selected || [];
+      const activeSelection = fCanvas.getActiveObject?.() || e.target || selectedObjects[0];
+      if (activeSelection) {
+        if (selectedObjects.some(isHole)) {
           try {
             fCanvas.discardActiveObject();
           } catch { }
@@ -2983,16 +2984,17 @@ const Canvas = ({ className }) => {
           setShapePropertiesOpen(false);
           return;
         }
-        disableTextDirectEditing(o);
-        ensureActionControls(o);
+        selectedObjects.forEach(disableTextDirectEditing);
+        ensureActionControls(activeSelection);
         syncDomActionPanel();
         fCanvas.requestRenderAll();
       }
     });
     fCanvas.on('selection:updated', e => {
-      const o = e.selected?.[0];
-      if (o) {
-        if (isHole(o)) {
+      const selectedObjects = e.selected || [];
+      const activeSelection = fCanvas.getActiveObject?.() || e.target || selectedObjects[0];
+      if (activeSelection) {
+        if (selectedObjects.some(isHole)) {
           try {
             fCanvas.discardActiveObject();
           } catch { }
@@ -3000,8 +3002,8 @@ const Canvas = ({ className }) => {
           setShapePropertiesOpen(false);
           return;
         }
-        disableTextDirectEditing(o);
-        ensureActionControls(o);
+        selectedObjects.forEach(disableTextDirectEditing);
+        ensureActionControls(activeSelection);
         syncDomActionPanel();
         fCanvas.requestRenderAll();
       }

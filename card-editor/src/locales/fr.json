@@ -1413,7 +1413,7 @@
     "commentLabel": "Veuillez nous laisser un commentaire - nous serions ravis d’avoir votre avis !",
     "sending": "Envoi...",
     "send": "Envoyer",
-    "kindRegards": "Cordialement,"
+    "kindRegards": "Cordialement"
   },
   "projectCanvasesGrid": {
     "pdf": "PDF",
@@ -1649,7 +1649,7 @@
     "e_3": "Pour vous faciliter les choses, nous avons également envoyé votre numéro client directement à votre adresse e-mail.",
     "e_4": "Vous pouvez maintenant vous <strong>connecter</strong> ci-dessous pour commencer à créer des projets et passer des commandes.",
     "e_7": "Si vous avez besoin d’aide, notre équipe se fera toujours un plaisir de vous accompagner.",
-    "e_8": "Cordialement,",
+    "e_8": "Cordialement",
     "e_9": "SignXpert"
   },
   "MyAccount": {

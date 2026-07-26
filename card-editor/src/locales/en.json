@@ -1440,7 +1440,7 @@
     "commentLabel": "Please leave us a comment — we'd love to hear your feedback!",
     "sending": "Sending...",
     "send": "Send",
-    "kindRegards": "Best regards,"
+    "kindRegards": "Best regards"
   },
   "projectCanvasesGrid": {
     "pdf": "PDF",
@@ -1676,7 +1676,7 @@
     "e_3": "For your convenience, we've also sent your customer number directly to your email address.",
     "e_4": "You can now <strong>log in</strong> below to create projects and place orders.",
     "e_7": "If you need any help, our team is always happy to assist.",
-    "e_8": "Best regards,",
+    "e_8": "Best regards",
     "e_9": "SignXpert"
   },
   "MyAccount": {

@@ -1413,7 +1413,7 @@
     "commentLabel": "Jäta meile kommentaar — hindame sinu tagasisidet!",
     "sending": "Saatmine...",
     "send": "Saada",
-    "kindRegards": "Parimate soovidega,"
+    "kindRegards": "Parimate soovidega"
   },
   "projectCanvasesGrid": {
     "pdf": "PDF",
@@ -1649,7 +1649,7 @@
     "e_3": "Sinu mugavuse huvides oleme sinu kliendinumbri saatnud ka otse sinu e-posti aadressile.",
     "e_4": "Nüüd saad allpool <strong>sisse logida</strong>, et luua projekte ja esitada tellimusi.",
     "e_7": "Kui vajad abi, on meie meeskond alati hea meelega valmis aitama.",
-    "e_8": "Parimate soovidega,",
+    "e_8": "Parimate soovidega",
     "e_9": "SignXpert"
   },
   "MyAccount": {

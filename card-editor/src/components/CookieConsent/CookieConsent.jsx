@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '../Localized/LocalizedLink';
+import { loadGoogleAnalytics } from '../../utils/googleAnalytics';
 import styles from './CookieConsent.module.css';
 
 const CookieConsent = () => {
@@ -9,6 +10,11 @@ const CookieConsent = () => {
 
   useEffect(() => {
     const cookieConsent = localStorage.getItem('cookieConsent');
+
+    if (cookieConsent === 'accepted') {
+      loadGoogleAnalytics();
+    }
+
     if (!cookieConsent) {
       setIsVisible(true);
     }
@@ -16,6 +22,7 @@ const CookieConsent = () => {
 
   const handleAccept = () => {
     localStorage.setItem('cookieConsent', 'accepted');
+    loadGoogleAnalytics();
     setIsVisible(false);
   };
 

@@ -1413,7 +1413,7 @@
     "commentLabel": "Hagyjon nekünk megjegyzést – szívesen fogadjuk visszajelzését!",
     "sending": "Küldés...",
     "send": "Küldés",
-    "kindRegards": "Üdvözlettel,"
+    "kindRegards": "Üdvözlettel"
   },
   "projectCanvasesGrid": {
     "pdf": "PDF",
@@ -1649,7 +1649,7 @@
     "e_3": "Az Ön kényelme érdekében ügyfélszámát közvetlenül az e-mail-címére is elküldtük.",
     "e_4": "Most <strong>bejelentkezhet</strong> alább projektek létrehozásához és rendelések leadásához.",
     "e_7": "Ha segítségre van szüksége, csapatunk bármikor szívesen segít.",
-    "e_8": "Üdvözlettel,",
+    "e_8": "Üdvözlettel",
     "e_9": "SignXpert"
   },
   "MyAccount": {

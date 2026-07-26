@@ -5,10 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:client && npm run build:server && node scripts/prerender.mjs",
+    "build:client": "vite build",
+    "build:server": "vite build --ssr src/entry-server.jsx --outDir .prerender-server",
+    "check:prerender": "node scripts/check-prerender.mjs",
+    "check:hydration": "node scripts/check-hydration.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "export-server": "node server/layoutExportServer.js"
+    "export-server": "node server/layoutExportServer.js",
+    "hash-password": "node server/scripts/hashPassword.js"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.0",

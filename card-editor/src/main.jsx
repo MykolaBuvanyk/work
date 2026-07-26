@@ -1,14 +1,26 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.jsx";
+import AppRoot from "./AppRoot.jsx";
 import "./utils/customCaret";
-import { BrowserRouter } from "react-router-dom";
 
-createRoot(document.getElementById("root")).render(
+const container = document.getElementById("root");
+const app = (
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <AppRoot />
   </StrictMode>
 );
+
+if (container.hasChildNodes()) {
+  hydrateRoot(container, app, {
+    onRecoverableError(error, errorInfo) {
+      console.error(
+        'React hydration recovery:',
+        error,
+        errorInfo?.componentStack || ''
+      );
+    },
+  });
+} else {
+  createRoot(container).render(app);
+}

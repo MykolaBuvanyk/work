@@ -4,6 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { prefixedLngs } from './i18n';
 
 const BASE_URL = 'https://sign-xpert.com';
+const DEFAULT_LANGUAGE = 'de';
+
+const localeByLanguage = {
+  de: 'de_DE',
+  en: 'en_GB',
+};
+
+const getLanguagePath = (language, cleanPath) => {
+  const suffix = cleanPath === '/' ? '' : cleanPath;
+  return language === DEFAULT_LANGUAGE
+    ? (suffix || '/')
+    : `/${language}${suffix}`;
+};
+
+const stripTranslationMarkup = (value) =>
+  String(value)
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export default function Seo() {
   const { t } = useTranslation();
@@ -17,16 +36,20 @@ export default function Seo() {
   const currentLang =
     prefixedLngs.find((lng) =>
       pathParts[0] === lng
-    ) || 'de';
+    ) || DEFAULT_LANGUAGE;
 
   const lang = currentLang;
 
   // прибираємо префікс мови з url
   // /de/catalog -> /catalog
   // /lt -> /
-  const cleanPath =
+  const rawCleanPath =
     pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') ||
     '/';
+  const cleanPath =
+    rawCleanPath !== '/' && rawCleanPath.endsWith('/')
+      ? rawCleanPath.slice(0, -1)
+      : rawCleanPath;
 
   // page key
   // / -> home
@@ -44,10 +67,91 @@ export default function Seo() {
   );
 
   // canonical
-  const canonicalUrl = `${BASE_URL}${pathname}`;
+  const canonicalPath = getLanguagePath(lang, cleanPath);
+  const canonicalUrl = `${BASE_URL}${canonicalPath === '/' ? '' : canonicalPath}`;
 
   // og image
   const imageUrl = `${BASE_URL}/images/images/logo.png`;
+
+  const schemaGraph = [
+    {
+      '@type': 'Organization',
+      '@id': `${BASE_URL}/#organization`,
+      name: 'SignXpert',
+      url: BASE_URL,
+      logo: imageUrl,
+      email: 'info@sign-xpert.com',
+      telephone: '+49 157 766 25 125',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Baumwiesen 2',
+        postalCode: '72401',
+        addressLocality: 'Haigerloch',
+        addressCountry: 'DE',
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${BASE_URL}/#website`,
+      url: BASE_URL,
+      name: 'SignXpert',
+      inLanguage: lang,
+      publisher: {
+        '@id': `${BASE_URL}/#organization`,
+      },
+    },
+    {
+      '@type': 'WebPage',
+      '@id': `${canonicalUrl}#webpage`,
+      url: canonicalUrl,
+      name: title,
+      description,
+      inLanguage: lang,
+      isPartOf: {
+        '@id': `${BASE_URL}/#website`,
+      },
+      about: {
+        '@id': `${BASE_URL}/#organization`,
+      },
+    },
+  ];
+
+  if (page === 'faq') {
+    const faqItems = [
+      {
+        question: 'faq.question_1',
+        answers: ['faq.answer_1_1', 'faq.answer_1_2', 'faq.answer_1_3'],
+      },
+      {
+        question: 'faq.question_2',
+        answers: ['faq.answer_2_1', 'faq.answer_2_2', 'faq.answer_2_3'],
+      },
+      {
+        question: 'faq.question_3',
+        answers: ['faq.answer_3_1', 'faq.answer_3_2', 'faq.answer_3_3'],
+      },
+    ];
+
+    schemaGraph.push({
+      '@type': 'FAQPage',
+      '@id': `${canonicalUrl}#faq`,
+      mainEntity: faqItems.map(({ question, answers }) => ({
+        '@type': 'Question',
+        name: stripTranslationMarkup(t(question)),
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: stripTranslationMarkup(
+            answers.map((answerKey) => t(answerKey)).join(' ')
+          ),
+        },
+      })),
+    });
+  }
+
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': schemaGraph,
+  };
 
   return (
     <Helmet>
@@ -66,6 +170,7 @@ export default function Seo() {
         name="description"
         content={description}
       />
+      <meta name="robots" content="index,follow,max-image-preview:large" />
 
       {/* canonical */}
       <link
@@ -74,18 +179,21 @@ export default function Seo() {
       />
 
       {/* hreflang */}
-      {prefixedLngs.map((lngPrefix) => {
-        const hrefLang = lngPrefix.replace(
-          '/',
-          ''
-        );
+      <link
+        rel="alternate"
+        hrefLang="de"
+        href={`${BASE_URL}${cleanPath === '/' ? '' : cleanPath}`}
+      />
+
+      {prefixedLngs.map((hrefLang) => {
+        const languagePath = getLanguagePath(hrefLang, cleanPath);
 
         return (
           <link
             key={hrefLang}
             rel="alternate"
             hrefLang={hrefLang}
-            href={`${BASE_URL}/${lngPrefix}${cleanPath}`}
+            href={`${BASE_URL}${languagePath}`}
           />
         );
       })}
@@ -93,7 +201,7 @@ export default function Seo() {
       <link
         rel="alternate"
         hrefLang="x-default"
-        href={`${BASE_URL}${cleanPath}`}
+        href={`${BASE_URL}${cleanPath === '/' ? '' : cleanPath}`}
       />
 
       {/* open graph */}
@@ -104,7 +212,7 @@ export default function Seo() {
 
       <meta
         property="og:locale"
-        content={lang}
+        content={localeByLanguage[lang] || `${lang}_${lang.toUpperCase()}`}
       />
 
       <meta
@@ -147,6 +255,10 @@ export default function Seo() {
         name="twitter:image"
         content={imageUrl}
       />
+
+      <script type="application/ld+json">
+        {JSON.stringify(structuredData)}
+      </script>
     </Helmet>
   );
 }

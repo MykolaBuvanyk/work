@@ -12,6 +12,7 @@ import Canvas from '../Canvas/Canvas';
 import { CanvasProvider } from '../../contexts/CanvasContext';
 import { $host } from '../../http';
 import { useTranslation } from 'react-i18next';
+import PublicPageOverview from '../PublicPageOverview/PublicPageOverview';
 
 
 const Home = () => {
@@ -31,7 +32,17 @@ const Home = () => {
     getFormData();
   }, []);
 
-  if (formData.colour16.length == 0) return <>...loading</>;
+  if (formData.colour16.length == 0) {
+    return (
+      <PublicPageOverview
+        eyebrow={t('prerenderOverview.editor.eyebrow')}
+        title={t('prerenderOverview.editor.title')}
+        description={t('prerenderOverview.editor.description')}
+        features={t('prerenderOverview.editor.features', { returnObjects: true })}
+        status={t('prerenderOverview.editor.loading')}
+      />
+    );
+  }
 
   return (
     <CanvasProvider>

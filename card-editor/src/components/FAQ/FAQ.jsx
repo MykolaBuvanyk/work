@@ -21,9 +21,9 @@ export default function FAQ({ title = 'FAQ', items = [] }) {
 
   return (
     <section className={styles.faq} aria-labelledby="faq-title">
-      <h2 id="faq-title" className={styles.title}>
+      <h1 id="faq-title" className={styles.title}>
         {t(title, { defaultValue: title })}
-      </h2>
+      </h1>
       <div className={styles.items}>
         {items.map((it, i) => (
           <FaqItem key={i} question={it.question} answer={it.answer} />

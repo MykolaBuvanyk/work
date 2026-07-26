@@ -5,7 +5,7 @@ import { SlArrowDown } from 'react-icons/sl';
 import { LuMenu, LuShoppingCart, LuX, LuHouse, LuFilePlus, LuTag, LuLightbulb, LuMessageSquare, LuUser, LuArrowRight, LuGlobe, LuFactory } from 'react-icons/lu';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, mergeUser } from '../../store/reducers/user';
-import Flag from 'react-flagkit';
+import FlagImport from 'react-flagkit';
 import { $authHost } from '../../http';
 import { resetEditorStateForUserSwitch } from '../../utils/projectStorage';
 import LogoSvg from './LogoSvg';
@@ -13,6 +13,10 @@ import i18n, { prefixedLngs } from '../../i18n';
 import Link from '../Localized/LocalizedLink';
 import useNavigate from '../Localized/useLocalizedNavigate';
 import { useTranslation } from 'react-i18next';
+
+// react-flagkit exposes a nested default when loaded by Node during SSR,
+// while Vite's browser bundle resolves it directly.
+const Flag = FlagImport.default || FlagImport;
  
 // eslint-disable-next-line react-refresh/only-export-components
 export const languageCountries = [
@@ -262,8 +266,9 @@ const Header = () => {
   };
   const currentLanguage = languageCountries.find(x => x.code.toLowerCase() === i18n.language) || languageCountries[0];
   const activePathParts = pathname.split('/').filter(Boolean);
+  const pathWithoutLanguage = activePathParts.slice(1).join('/');
   const activePathname = prefixedLngs.includes(activePathParts[0])
-    ? `/${activePathParts.slice(1).join('/')}` || '/'
+    ? (pathWithoutLanguage ? `/${pathWithoutLanguage}` : '/')
     : pathname;
 
   const realNavigate=UseRealNavigate();
@@ -274,7 +279,7 @@ const Header = () => {
     const lang = code.toLowerCase();
     const isDefaultLanguage = lang === 'de';
 
-    const pathParts = location.pathname.split('/').filter(Boolean);
+    const pathParts = pathname.split('/').filter(Boolean);
 
     const hasLangPrefix = prefixedLngs.includes(pathParts[0]);
 
@@ -290,7 +295,7 @@ const Header = () => {
   };
 
     useEffect(() => {
-      const pathParts = location.pathname.split('/').filter(Boolean);
+      const pathParts = pathname.split('/').filter(Boolean);
 
       // чи є префікс мови
       const urlLang = prefixedLngs.includes(pathParts[0])
@@ -301,7 +306,7 @@ const Header = () => {
       if (i18n.language !== urlLang) {
         i18n.changeLanguage(urlLang);
       }
-    }, [location.pathname]);
+    }, [pathname]);
 
   return (
     <>
@@ -493,7 +498,7 @@ const Header = () => {
               {//<Flag country="DE" size={32} />
 }
               <Flag size={22} country={currentLanguage.codeFlag} /> {currentLanguage.code}
-              <div className={isLangOpen&&styles.rotate}>
+              <div className={isLangOpen ? styles.rotate : undefined}>
                 <SlArrowDown size={14} />
               </div>
             </div>

@@ -6,6 +6,8 @@ import { clearAllUnsavedSigns, putProject } from '../../utils/projectStorage';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedPath } from '../../utils/localizedPath';
 import { formatMoney } from '../../utils/formatMoney';
+import { useSelector } from 'react-redux';
+import PublicPageOverview from '../PublicPageOverview/PublicPageOverview';
 
 // Іконки (можна замінити на реальні SVG або FontAwesome)
 const DelNoteIcon = () => <span className="icon-green">📄</span>;
@@ -15,6 +17,7 @@ const OpenProjectIcon = () => <span className="icon-folder">📂</span>;
 
 const Account = () => {
     const { t } = useTranslation();
+    const isAuth = useSelector((state) => state.user.isAuth);
     const translateStatus = (status) => {
         if (!status) return t('MyAccount.orders.status.received');
         const key = String(status).toLowerCase();
@@ -40,10 +43,17 @@ const Account = () => {
     };
 
     useEffect(() => {
+        if (!isAuth) {
+            setIsOrdersLoading(false);
+            return;
+        }
+
         getMyOrders();
-    }, [page]);
+    }, [isAuth, page]);
 
     useEffect(() => {
+        if (!isAuth) return;
+
         if (!Array.isArray(myOrders) || myOrders.length === 0) {
             console.log('Latest order in account:', null);
             return;
@@ -56,7 +66,7 @@ const Account = () => {
         }, myOrders[0]);
 
         console.log('Latest order in account:', latestOrder);
-    }, [myOrders]);
+    }, [isAuth, myOrders]);
 
     const downloadPdf = async (id, type) => {
         try {
@@ -158,6 +168,25 @@ const Account = () => {
         }
     };
 
+
+    if (!isAuth) {
+        return (
+            <PublicPageOverview
+                eyebrow={t('prerenderOverview.account.eyebrow')}
+                title={t('prerenderOverview.account.title')}
+                description={t('prerenderOverview.account.description')}
+                features={t('prerenderOverview.account.features', { returnObjects: true })}
+                primaryAction={{
+                    to: '/login',
+                    label: t('prerenderOverview.account.login'),
+                }}
+                secondaryAction={{
+                    to: '/online-sign-editor',
+                    label: t('prerenderOverview.account.editor'),
+                }}
+            />
+        );
+    }
 
     return (
         <div id='account-container'>

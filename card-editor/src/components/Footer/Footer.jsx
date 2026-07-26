@@ -13,19 +13,19 @@ const Footer = () => {
   const dispatch = useDispatch();
   
   return (
-    <footer id='footer' class="footer">
-      <div class="footer-inner">
+    <footer id='footer' className="footer">
+      <div className="footer-inner">
 
-        <div class="footer-company">
-          <div class="logo-footer">
+        <div className="footer-company">
+          <div className="logo-footer">
             <img src="/images/logo.svg" alt="SignXpert" />
           </div>
 
-          <div class="footer-slogan">
+          <div className="footer-slogan">
             {t('Footer.slogan')}
           </div>
 
-          <div class="footer-address">
+          <div className="footer-address">
             <p>Baumwiesen 2</p>
             <p>72401 Haigerloch</p>
             <p>{t('Footer.address.country')}</p>
@@ -34,7 +34,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div class="footer-menu">
+        <div className="footer-menu">
           <h4 style={{fontWeight:'700'}}>{t('Footer.menuTitle')}</h4>
           <ul>
             <li><Link to="/">{t('Footer.nav.home')}</Link></li>
@@ -48,7 +48,7 @@ const Footer = () => {
           </ul>
         </div>
 
-        <div class="footer-info">
+        <div className="footer-info">
           <h4>{t('Footer.infoTitle')}</h4>
           <ul>
             <li><Link to="/privacy-policy">{t('Footer.info.privacyPolicy')}</Link></li>
@@ -57,69 +57,69 @@ const Footer = () => {
             <li><Link to="/eu-online-dispute-resolution">{t('Footer.info.euOnlineDisputeResolution')}</Link></li>
           </ul>
 
-          <div class="footer-note">
-            <span class="footer-note-title-spacer" aria-hidden="true"></span>
+          <div className="footer-note">
+            <span className="footer-note-title-spacer" aria-hidden="true"></span>
             <p>{t('Footer.note.allPricesFinal')}</p>
             <p>{t('Footer.note.noVat')}</p>
             <p>{t('Footer.note.plusShipping')}</p>
           </div>
         </div>
 
-        <div class="footer-methods">
-          <div class="footer-payment">
+        <div className="footer-methods">
+          <div className="footer-payment">
             <h4>{t('Footer.paymentMethod')}</h4>
 
-            <div class="payment-grid">
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+            <div className="payment-grid">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/invoice.svg" alt="Invoice" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/visa.svg" alt="Visa" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/mastercard.svg" alt="MasterCard" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/paypal.svg" alt="PayPal" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/apple.svg" alt="Apple Pay" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/sepa.svg" alt="SEPA" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="footer-delivery">
+          <div className="footer-delivery">
             <h4>{t('Footer.deliveryMethod')}</h4>
 
-            <div class="delivery-grid">
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+            <div className="delivery-grid">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/ups.svg" alt="UPS" />
                 </div>
               </div>
 
-              <div class="footer-icon-card">
-                <div class="footer-icon">
+              <div className="footer-icon-card">
+                <div className="footer-icon">
                   <img src="/images/dhl.svg" alt="DHL" />
                 </div>
               </div>
@@ -127,10 +127,10 @@ const Footer = () => {
           </div>
         </div>
 
-        <div class="footer-user">
+        <div className="footer-user">
           {isAuth?<>
           <div>{user.firstName||'' + ' ' + user.surname||''}</div>
-          <div class="login-btn" style={{fontWeight:'600',cursor:'pointer',fontSize:'13px'}} onClick={()=>dispatch(logout())}>{t('Footer.auth.logout')}</div></>
+          <div className="login-btn" style={{fontWeight:'600',cursor:'pointer',fontSize:'13px'}} onClick={()=>dispatch(logout())}>{t('Footer.auth.logout')}</div></>
             :
           <>
             <div></div>
@@ -142,7 +142,7 @@ const Footer = () => {
 
       </div>
 
-      <div class="footer-copy">
+      <div className="footer-copy">
         {t('Footer.copyright')}
       </div>
     </footer>

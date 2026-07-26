@@ -1,4 +1,31 @@
 {
+  "prerenderOverview": {
+    "editor": {
+      "eyebrow": "Online-Schildereditor",
+      "title": "Individuelle Schilder direkt online gestalten",
+      "description": "Mit dem SignXpert Online-Editor erstellen Sie professionelle gravierte Schilder und Typenschilder passend zu Ihrem Projekt. Konfigurieren Sie Ihr Schild bequem im Browser und sehen Sie das Ergebnis direkt in der Vorschau.",
+      "features": [
+        "Form, Größe, Materialstärke und Farbe auswählen",
+        "Texte, Symbole, Logos und QR-Codes hinzufügen",
+        "Bohrungen und Befestigungsoptionen festlegen",
+        "Projekte speichern, wiederverwenden und online bestellen"
+      ],
+      "loading": "Der Online-Editor wird geladen …"
+    },
+    "account": {
+      "eyebrow": "Mein SignXpert-Konto",
+      "title": "Projekte und Bestellungen zentral verwalten",
+      "description": "Mit einem kostenlosen SignXpert-Konto behalten Sie Ihre Schildprojekte, Bestellungen und Dokumente an einem Ort im Blick. Melden Sie sich an oder registrieren Sie sich, um alle Kontofunktionen zu nutzen.",
+      "features": [
+        "Gespeicherte Projekte öffnen und weiterbearbeiten",
+        "Frühere Bestellungen und ihren Status einsehen",
+        "Lieferscheine und Rechnungen herunterladen",
+        "Zahlungen und UPS-Sendungsverfolgung verwalten"
+      ],
+      "login": "Anmelden oder registrieren",
+      "editor": "Online-Editor öffnen"
+    }
+  },
   "meta": {
     "home": {
       "title": "Individuelle Industrie-Schilder online gestalten | SignXpert",

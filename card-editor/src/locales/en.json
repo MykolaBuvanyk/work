@@ -1,4 +1,31 @@
 {
+  "prerenderOverview": {
+    "editor": {
+      "eyebrow": "Online sign editor",
+      "title": "Design custom signs directly online",
+      "description": "Use the SignXpert online editor to create professional engraved signs and nameplates for your project. Configure your sign in the browser and preview the result immediately.",
+      "features": [
+        "Choose the shape, size, material thickness and colour",
+        "Add text, symbols, logos and QR codes",
+        "Configure holes and mounting options",
+        "Save, reuse and order projects online"
+      ],
+      "loading": "The online editor is loading…"
+    },
+    "account": {
+      "eyebrow": "My SignXpert account",
+      "title": "Manage projects and orders in one place",
+      "description": "A free SignXpert account keeps your sign projects, orders and documents together. Log in or register to use all account features.",
+      "features": [
+        "Open saved projects and continue editing",
+        "View previous orders and their current status",
+        "Download delivery notes and invoices",
+        "Manage payments and UPS shipment tracking"
+      ],
+      "login": "Log in or register",
+      "editor": "Open the online editor"
+    }
+  },
   "meta": {
     "home": {
       "title": "Custom Industrial Signs Online | SignXpert",

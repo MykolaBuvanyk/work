@@ -13,6 +13,8 @@ export const PRERENDER_ROUTES = Object.freeze([
   { path: '/faq', page: 'faq' },
   { path: '/quick-guide', page: 'quick-guide' },
   { path: '/contacts', page: 'contacts' },
+  { path: '/privacy-policy', page: 'privacy-policy' },
+  { path: '/Impressum', page: 'Impressum' },
 ]);
 
 export const PRERENDER_PATHS = Object.freeze(

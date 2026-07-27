@@ -47,8 +47,11 @@ const sitemap = await readFile(path.join(distDir, 'sitemap.xml'), 'utf8');
 if (/https:\/\/sign-xpert\.com\/de(?:\/|<)/i.test(sitemap)) {
   throw new Error('dist/sitemap.xml still contains German /de URLs');
 }
-if (!sitemap.includes('<loc>https://sign-xpert.com/account</loc>')) {
-  throw new Error('dist/sitemap.xml does not contain the public account overview');
+for (const route of PRERENDER_ROUTES) {
+  const url = route.path === '/' ? baseUrl : `${baseUrl}${route.path}`;
+  if (!sitemap.includes(`<loc>${url}</loc>`)) {
+    throw new Error(`dist/sitemap.xml does not contain ${url}`);
+  }
 }
 
 console.log('verified dist/sitemap.xml');

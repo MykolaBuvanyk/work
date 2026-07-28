@@ -1,0 +1,24 @@
+# SignXpert
+
+> SignXpert is a German online service for designing and ordering custom laser-engraved industrial signs, equipment labels, control-cabinet labels, and nameplates.
+
+Website: https://sign-xpert.com
+Language: German
+
+## Important pages
+
+- [Home](https://sign-xpert.com/): Overview of SignXpert, materials, production, pricing, and delivery.
+- [Online sign editor](https://sign-xpert.com/online-sign-editor): Design custom engraved signs online.
+- [Products](https://sign-xpert.com/products): Industrial signs, nameplates, labels, materials, and applications.
+- [Industries](https://sign-xpert.com/industries): Signage and identification solutions by industry.
+- [FAQ](https://sign-xpert.com/faq): Frequently asked questions about products, ordering, production, and delivery.
+- [Quick guide](https://sign-xpert.com/quick-guide): Instructions for creating and ordering a sign.
+- [Account overview](https://sign-xpert.com/account): Public overview of account features for unauthenticated visitors.
+- [Contact](https://sign-xpert.com/contacts): SignXpert contact and support information.
+- [Privacy policy](https://sign-xpert.com/privacy-policy): Information about data protection and privacy.
+- [Imprint](https://sign-xpert.com/Impressum): Legal provider and company information.
+
+## Discovery
+
+- [Sitemap](https://sign-xpert.com/sitemap.xml)
+- [Robots policy](https://sign-xpert.com/robots.txt)

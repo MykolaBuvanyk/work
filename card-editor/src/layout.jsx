@@ -18,7 +18,6 @@ export default function Layout() {
         <Seo />
         <header>
           <Header />
-          Тест3
         </header>
 
         <main>
